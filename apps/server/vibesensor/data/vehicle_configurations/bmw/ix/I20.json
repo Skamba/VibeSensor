@@ -115,13 +115,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-i20-xdrive40-eu-2022-ss1-awd",
@@ -184,13 +178,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-i20-xdrive50-eu-2022-ss1-awd",
@@ -253,13 +241,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

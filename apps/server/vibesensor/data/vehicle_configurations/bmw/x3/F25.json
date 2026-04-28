@@ -463,10 +463,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -564,10 +562,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -672,13 +668,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive20i-eu-2011-zf8hp-awd",
@@ -783,13 +773,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive28i-eu-2011-zf8hp-awd",
@@ -930,10 +914,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1073,10 +1055,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1216,10 +1196,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1335,10 +1313,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1481,13 +1457,7 @@
           ]
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-sdrive18d-eu-2012-mt6-rwd",
@@ -1575,10 +1545,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1670,10 +1638,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     },
@@ -1824,10 +1790,8 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
       }
     }

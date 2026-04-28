@@ -99,9 +99,12 @@ order-analysis fields inline with their own metadata:
   and tire setup values live next to their confidence, evidence refs,
   verification notes, and unresolved items
 - `configuration_confidence` summarizes whole-row confidence
-- `order_analysis_policy` states whether the row is usable for engine,
-  driveshaft, and wheel-order analysis and whether manual confirmation is still
-  required
+- the order-analysis policy is derived at load time from the row math inputs
+  (top-gear ratio, driven final-drive, drivetrain) by
+  `derive_order_analysis_policy`. Rows that need to deviate from the derivation
+  carry a sparse `order_analysis_policy_override` block with an explicit
+  `reason` and only the differing flags. Rows that match the derivation omit
+  the block entirely.
 
 `apps/server/vibesensor/data/car_sources/*.json` now contains only reusable
 source-document metadata. `evidence_refs` inside canonical rows resolve through

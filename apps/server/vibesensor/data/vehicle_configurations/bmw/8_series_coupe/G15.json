@@ -264,11 +264,9 @@
         }
       ],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -368,11 +366,9 @@
         }
       ],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -481,13 +477,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g15-m8-competition-eu-2019-zf8hp-awd",
@@ -595,13 +585,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g15-m850i-xdrive-eu-2019-zf8hp-awd",
@@ -689,11 +673,9 @@
         }
       ],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     }
   ]

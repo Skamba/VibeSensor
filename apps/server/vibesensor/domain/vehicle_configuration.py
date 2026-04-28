@@ -22,6 +22,9 @@ __all__ = [
     "VehicleFuelType",
     "VehicleOrderAnalysisKind",
     "VehicleOrderAnalysisPolicy",
+    "VehicleOrderAnalysisPolicyOverride",
+    "apply_order_analysis_policy_override",
+    "derive_order_analysis_policy",
 ]
 
 VehicleFuelType = Literal["ICE", "PHEV", "EV"]
@@ -112,6 +115,90 @@ class VehicleOrderAnalysisPolicy:
     usable_for_driveshaft_order: bool
     usable_for_wheel_order: bool
     requires_manual_confirmation: bool
+
+
+@dataclass(frozen=True, slots=True)
+class VehicleOrderAnalysisPolicyOverride:
+    """Sparse override applied on top of the derived order-analysis policy.
+
+    Each non-``None`` field replaces the corresponding derived flag. ``reason``
+    documents why the row deviates from the derivation.
+    """
+
+    reason: str
+    usable_for_engine_order: bool | None = None
+    usable_for_driveshaft_order: bool | None = None
+    usable_for_wheel_order: bool | None = None
+    requires_manual_confirmation: bool | None = None
+
+
+def derive_order_analysis_policy(
+    *,
+    top_gear_ratio: float | None,
+    final_drive_front: float | None,
+    final_drive_rear: float | None,
+    drivetrain: VehicleDrivetrain | None,
+) -> VehicleOrderAnalysisPolicy:
+    """Compute the default order-analysis policy from row math inputs.
+
+    A row is *feasible* for an analysis kind when its math inputs are present:
+
+    - ``wheel_order``: tire dimensions (always present on canonical rows).
+    - ``driveshaft_order``: driven final-drive ratio.
+    - ``engine_order``: driven final-drive ratio + top-gear ratio.
+
+    The derived policy uses feasibility for the ``usable_for_*`` flags and
+    sets ``requires_manual_confirmation`` to ``True`` by default. Specific
+    rows can override individual flags via
+    :class:`VehicleOrderAnalysisPolicyOverride`.
+    """
+
+    if drivetrain == "FWD":
+        driven_final_drive: float | None = final_drive_front
+    elif drivetrain == "RWD":
+        driven_final_drive = final_drive_rear
+    else:
+        driven_final_drive = final_drive_rear or final_drive_front
+    has_driven = driven_final_drive is not None
+    has_top_gear = top_gear_ratio is not None
+    return VehicleOrderAnalysisPolicy(
+        usable_for_engine_order=has_top_gear and has_driven,
+        usable_for_driveshaft_order=has_driven,
+        usable_for_wheel_order=True,
+        requires_manual_confirmation=True,
+    )
+
+
+def apply_order_analysis_policy_override(
+    derived: VehicleOrderAnalysisPolicy,
+    override: VehicleOrderAnalysisPolicyOverride | None,
+) -> VehicleOrderAnalysisPolicy:
+    """Return a policy with *override* fields replacing matching *derived* fields."""
+
+    if override is None:
+        return derived
+    return VehicleOrderAnalysisPolicy(
+        usable_for_engine_order=(
+            derived.usable_for_engine_order
+            if override.usable_for_engine_order is None
+            else override.usable_for_engine_order
+        ),
+        usable_for_driveshaft_order=(
+            derived.usable_for_driveshaft_order
+            if override.usable_for_driveshaft_order is None
+            else override.usable_for_driveshaft_order
+        ),
+        usable_for_wheel_order=(
+            derived.usable_for_wheel_order
+            if override.usable_for_wheel_order is None
+            else override.usable_for_wheel_order
+        ),
+        requires_manual_confirmation=(
+            derived.requires_manual_confirmation
+            if override.requires_manual_confirmation is None
+            else override.requires_manual_confirmation
+        ),
+    )
 
 
 @dataclass(frozen=True, slots=True)

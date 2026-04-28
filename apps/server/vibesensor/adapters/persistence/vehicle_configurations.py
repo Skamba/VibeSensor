@@ -21,7 +21,9 @@ from vibesensor.domain import (
     VehicleFieldConfidence,
     VehicleFieldMetadata,
     VehicleFuelType,
-    VehicleOrderAnalysisPolicy,
+    VehicleOrderAnalysisPolicyOverride,
+    apply_order_analysis_policy_override,
+    derive_order_analysis_policy,
 )
 from vibesensor.shared._data_files import resolve_static_data_file
 
@@ -115,11 +117,12 @@ class VehicleConfigurationIssueRow(TypedDict):
     evidence_refs: NotRequired[list[str]]
 
 
-class VehicleOrderAnalysisPolicyRow(TypedDict):
-    usable_for_engine_order: bool
-    usable_for_driveshaft_order: bool
-    usable_for_wheel_order: bool
-    requires_manual_confirmation: bool
+class VehicleOrderAnalysisPolicyOverrideRow(TypedDict):
+    reason: str
+    usable_for_engine_order: NotRequired[bool]
+    usable_for_driveshaft_order: NotRequired[bool]
+    usable_for_wheel_order: NotRequired[bool]
+    requires_manual_confirmation: NotRequired[bool]
 
 
 class VehicleConfigurationRow(TypedDict):
@@ -134,7 +137,6 @@ class VehicleConfigurationRow(TypedDict):
     ratios: VehicleRatiosRow
     tires: VehicleTiresRow
     configuration_confidence: VehicleConfigurationConfidence
-    order_analysis_policy: VehicleOrderAnalysisPolicyRow
     market: NotRequired[str]
     model_code: NotRequired[str]
     body_code: NotRequired[str]
@@ -144,6 +146,7 @@ class VehicleConfigurationRow(TypedDict):
     engine_name: NotRequired[str]
     verification_notes: NotRequired[list[VehicleConfigurationNoteRow]]
     unresolved: NotRequired[list[VehicleConfigurationIssueRow]]
+    order_analysis_policy_override: NotRequired[VehicleOrderAnalysisPolicyOverrideRow]
 
 
 for _typed_dict in (
@@ -154,7 +157,7 @@ for _typed_dict in (
     VehicleFieldMetadataRow,
     VehicleNumericFieldRow,
     VehicleNumericSequenceFieldRow,
-    VehicleOrderAnalysisPolicyRow,
+    VehicleOrderAnalysisPolicyOverrideRow,
     VehicleRatiosRow,
     VehicleTireDimensionsRow,
     VehicleTireOptionRow,
@@ -210,6 +213,30 @@ def _tire_option_from_row(row: VehicleTireOptionRow) -> VehicleConfigurationTire
 def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguration:
     ratios = row["ratios"]
     default_tire_setup = _tire_setup_from_row(row["tires"]["default"])
+    drivetrain_value = row["drivetrain"]["value"]
+    final_drive_front = (
+        ratios["final_drive_front"]["value"] if "final_drive_front" in ratios else None
+    )
+    final_drive_rear = ratios["final_drive_rear"]["value"] if "final_drive_rear" in ratios else None
+    derived_policy = derive_order_analysis_policy(
+        top_gear_ratio=ratios["top_gear_ratio"]["value"],
+        final_drive_front=final_drive_front,
+        final_drive_rear=final_drive_rear,
+        drivetrain=drivetrain_value,
+    )
+    override_row = row.get("order_analysis_policy_override")
+    override = (
+        VehicleOrderAnalysisPolicyOverride(
+            reason=override_row["reason"],
+            usable_for_engine_order=override_row.get("usable_for_engine_order"),
+            usable_for_driveshaft_order=override_row.get("usable_for_driveshaft_order"),
+            usable_for_wheel_order=override_row.get("usable_for_wheel_order"),
+            requires_manual_confirmation=override_row.get("requires_manual_confirmation"),
+        )
+        if override_row is not None
+        else None
+    )
+    final_policy = apply_order_analysis_policy_override(derived_policy, override)
     return VehicleConfiguration(
         id=row["id"],
         brand=row["brand"],
@@ -224,7 +251,7 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
         engine_code=row.get("engine_code"),
         engine_name=row.get("engine_name"),
         fuel_type=row["fuel_type"],
-        drivetrain=row["drivetrain"]["value"],
+        drivetrain=drivetrain_value,
         drivetrain_metadata=_metadata_from_row(row["drivetrain"]),
         transmission_code=row["transmission"].get("code"),
         transmission_name=row["transmission"]["name"],
@@ -235,17 +262,13 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
         gear_ratios_metadata=(
             _metadata_from_row(ratios["gear_ratios"]) if "gear_ratios" in ratios else None
         ),
-        final_drive_front=(
-            ratios["final_drive_front"]["value"] if "final_drive_front" in ratios else None
-        ),
+        final_drive_front=final_drive_front,
         final_drive_front_metadata=(
             _metadata_from_row(ratios["final_drive_front"])
             if "final_drive_front" in ratios
             else None
         ),
-        final_drive_rear=(
-            ratios["final_drive_rear"]["value"] if "final_drive_rear" in ratios else None
-        ),
+        final_drive_rear=final_drive_rear,
         final_drive_rear_metadata=(
             _metadata_from_row(ratios["final_drive_rear"]) if "final_drive_rear" in ratios else None
         ),
@@ -258,7 +281,7 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
         ),
         tire_metadata=_metadata_from_row(row["tires"]["default"]),
         configuration_confidence=row["configuration_confidence"],
-        order_analysis_policy=VehicleOrderAnalysisPolicy(**row["order_analysis_policy"]),
+        order_analysis_policy=final_policy,
         verification_notes=tuple(
             VehicleConfigurationNote(
                 note=note["note"],
