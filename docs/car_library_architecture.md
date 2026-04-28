@@ -11,33 +11,39 @@ generation/body code:
 - `vehicle_configurations/<brand>/<model_family>/<generation_or_body_code>.json`
 - example: `vehicle_configurations/bmw/5_series/G30.json`
 
-Shard shape:
+Shard shape (top-level keys: optional `definitions`, optional
+`defaults`, required `configurations`):
 
 ```json
 {
   "definitions": {
-    "notes": {"n1": "<repeated note text>"},
-    "evidence_ref_sets": {"e1": ["source_pack:source-id", "..."]}
-  },
-  "defaults": {
-    "brand": "BMW",
-    "type": "sedan",
-    "market": "EU",
-    "model_code": "G20",
-    "body_code": "G20",
-    "model_name": "3 Series (G20, 2018-2024)"
-  },
-  "configurations": [
-    {
-      "id": "...",
-      "drivetrain": {
-        "confidence": "...",
-        "value": "RWD",
-        "notes_ref": "n1",
+    "notes": {"n1": "<repeated note>"},
+    "evidence_ref_sets": {"e1": ["source_pack:source-id"]},
+    "tire_setups": {
+      "standard_18": {
+        "confidence": "official_exact",
+        "front": {"width_mm": 225, "aspect_pct": 45, "rim_in": 18},
+        "rear":  {"width_mm": 255, "aspect_pct": 40, "rim_in": 18},
+        "default_axle_for_speed": "rear",
         "evidence_refs_ref": "e1"
       }
     }
-  ]
+  },
+  "defaults": {"brand": "BMW", "model_code": "G20"},
+  "configurations": [{"id": "...", "tires": {"default_ref": "standard_18"}}]
+}
+```
+
+A row references shard-local definitions like this:
+
+```json
+{
+  "drivetrain": {"confidence": "...", "value": "RWD",
+                 "notes_ref": "n1", "evidence_refs_ref": "e1"},
+  "tires": {
+    "default_ref": "standard_18",
+    "options": [{"name": "Sport 19", "setup_ref": "standard_18"}]
+  }
 }
 ```
 
@@ -45,8 +51,12 @@ Shard shape:
 Field metadata (`drivetrain`, `transmission`, `ratios.*`, `tires.*`, etc.)
 may use `notes_ref` instead of inline `notes`, and `evidence_refs_ref`
 instead of inline `evidence_refs`. Verification-note rows may also use
-`note_ref`. The loader expands every ref into its inline form before
-strict shape validation. Unknown refs fail closed.
+`note_ref`. Tire setups can be lifted into `definitions.tire_setups`
+and referenced from rows via `tires.default_ref` (full default block)
+and from option entries via `setup_ref` (option keeps its `name` and
+may override individual setup keys; the lifted setup keys merge in
+without overwriting). The loader expands every ref into its inline form
+before strict shape validation. Unknown refs fail closed.
 
 `defaults` is also optional. When present, every key in `defaults` is
 shallow-merged into each row before strict validation, so rows can omit

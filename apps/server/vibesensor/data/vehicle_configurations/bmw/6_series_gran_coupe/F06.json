@@ -31,6 +31,40 @@
         "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
         "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_245_20": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n3",
+        "rear": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 275.0
+        }
+      },
+      "setup_245_19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n2",
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        }
+      }
     }
   },
   "defaults": {
@@ -416,37 +450,11 @@
             "name": "Germany standard 18\""
           },
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 40.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
+            "setup_ref": "setup_245_19",
             "name": "Optional staggered 19\""
           },
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 35.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
+            "setup_ref": "setup_245_20",
             "name": "Optional staggered 20\""
           }
         ]
@@ -690,37 +698,11 @@
             "name": "Standard 18\""
           },
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 40.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
+            "setup_ref": "setup_245_19",
             "name": "Optional staggered 19\""
           },
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 35.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
+            "setup_ref": "setup_245_20",
             "name": "Optional staggered 20\""
           }
         ]

@@ -31,6 +31,46 @@
         "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
         "legacy_research_sources:349959b1860e"
       ]
+    },
+    "tire_setups": {
+      "setup_245_19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n2",
+        "rear": {
+          "aspect_pct": 40.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        }
+      },
+      "setup_245_19_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n4"
+      },
+      "setup_225_18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n1"
+      }
     }
   },
   "defaults": {
@@ -93,31 +133,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Standard 18\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18"
       },
       "verification_notes": [
         {
@@ -180,38 +202,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_19",
             "name": "Standard 19\""
           },
           {
@@ -236,7 +229,8 @@
             "default_axle_for_speed": "rear",
             "name": "M Sport 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_245_19"
       },
       "verification_notes": [
         {
@@ -293,28 +287,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_19_2",
             "name": "Standard 19\""
           },
           {
@@ -333,7 +308,8 @@
             "default_axle_for_speed": "rear",
             "name": "Optional staggered 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_245_19_2"
       },
       "verification_notes": [
         {

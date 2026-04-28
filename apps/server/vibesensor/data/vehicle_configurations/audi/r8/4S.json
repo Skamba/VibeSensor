@@ -14,6 +14,28 @@
       "e2": [
         "legacy_research_sources:a1a7fdd8c2e4"
       ]
+    },
+    "tire_setups": {
+      "setup_305_21": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 25.0,
+          "rim_in": 21.0,
+          "width_mm": 305.0
+        }
+      },
+      "setup_295_20": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 295.0
+        }
+      }
     }
   },
   "defaults": {
@@ -53,40 +75,17 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e1",
-          "front": {
-            "width_mm": 295.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 25.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_21",
             "name": "Performance 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_295_20"
       },
       "verification_notes": [
         {
@@ -144,40 +143,17 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e1",
-          "front": {
-            "width_mm": 295.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 25.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_21",
             "name": "Performance 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_295_20"
       },
       "verification_notes": [
         {
