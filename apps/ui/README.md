@@ -507,6 +507,7 @@ browser, navigation, or visual snapshots.
 ```bash
 npm run test:unit            # run the Vitest unit suite once
 npm run test:unit:watch      # watch mode during local iteration
+make ui-test                 # same unit suite from the repo root
 ```
 
 Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
