@@ -15,38 +15,35 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "value": 0.68
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "value": 3.444
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -56,15 +53,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 55.0,
@@ -74,15 +68,12 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
@@ -92,15 +83,12 @@
           "name": "Sport 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -122,6 +110,46 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
       }
     ],
     "unresolved": [
@@ -147,8 +175,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -168,38 +196,35 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "value": 3.077
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -209,15 +234,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 55.0,
@@ -227,15 +249,12 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
@@ -245,15 +264,12 @@
           "name": "Sport 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:428937eb9fd6",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:753cf52ddd21"
+            "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+            "secondary_technical_sources:q5-8r-facelift-gen-autodata"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -275,6 +291,46 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
       }
     ],
     "unresolved": [
@@ -300,8 +356,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -321,12 +377,12 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for pre-facelift 2.0 TFSI 211hp Q5 8R (production 2008-2011); facelift switched to ZF 8HP. Repo year span 2011-2017 too broad — DCT7 era ~2010-2012 only. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for pre-facelift 2.0 TFSI 211hp Q5 8R (production 2008-2011); facelift switched to ZF 8HP. Repo year span 2011-2017 too broad — DCT7 era ~2010-2012 only. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)"
     },
@@ -355,9 +411,11 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:753cf52ddd21",
+          "secondary_technical_sources:q5-8r-2-0-tfsi-211-dct7-autodata",
+          "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for pre-facelift 2.0 TFSI 211hp Q5 8R (production 2008-2011); facelift switched to ZF 8HP. Repo year span 2011-2017 too broad — DCT7 era ~2010-2012 only. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -464,8 +522,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -485,12 +543,12 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for facelift 2.0 TFSI Q5 8R (211hp Oct 2012-2013; 225hp 2012-2015). Repo year window 2011-2017 should be ~2012-2015. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for facelift 2.0 TFSI Q5 8R (211hp Oct 2012-2013; 225hp 2012-2015). Repo year window 2011-2017 should be ~2012-2015. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -519,9 +577,11 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:753cf52ddd21",
+          "secondary_technical_sources:q5-8rf-2-0-tfsi-225-zf8hp-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for facelift 2.0 TFSI Q5 8R (211hp Oct 2012-2013; 225hp 2012-2015). Repo year window 2011-2017 should be ~2012-2015. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -628,8 +688,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -649,12 +709,12 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for 3.0 TDI Q5 8R from May 2008 through ~mid-2014 (240hp pre-facelift to Sep 2012; 245hp early facelift Jun 2012-2014). After 2014 the 3.0 TDI quattro switched to ZF 8HP. Repo year span 2011-2017 too broad. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for 3.0 TDI Q5 8R from May 2008 through ~mid-2014 (240hp pre-facelift to Sep 2012; 245hp early facelift Jun 2012-2014). After 2014 the 3.0 TDI quattro switched to ZF 8HP. Repo year span 2011-2017 too broad. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)"
     },
@@ -683,9 +743,11 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:753cf52ddd21",
+          "secondary_technical_sources:q5-8r-3-0-tdi-240-dct7-autodata",
+          "secondary_technical_sources:q5-8rf-3-0-tdi-245-dct7-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms DCT7 (DL501) + quattro for 3.0 TDI Q5 8R from May 2008 through ~mid-2014 (240hp pre-facelift to Sep 2012; 245hp early facelift Jun 2012-2014). After 2014 the 3.0 TDI quattro switched to ZF 8HP. Repo year span 2011-2017 too broad. Auto-data lists standard tire 235/60 R18 (not 235/55 R18). Gear ratio values remain family_default.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -792,8 +854,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -813,12 +875,12 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for late-facelift 3.0 TDI 240hp Q5 8R (2013-2017). Auto-data lists this variant with 235/55 R19 / 255/45 R20 as standard tires (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for late-facelift 3.0 TDI 240hp Q5 8R (2013-2017). Auto-data lists this variant with 235/55 R19 / 255/45 R20 as standard tires (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -847,9 +909,11 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:753cf52ddd21",
+          "secondary_technical_sources:q5-8rf-3-0-tdi-240-zf8hp-autodata",
+          "secondary_technical_sources:q5-8r-facelift-gen-autodata"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Sonnet redo research (2026-04 v2): auto-data confirms ZF 8HP (8-speed tiptronic) + quattro for late-facelift 3.0 TDI 240hp Q5 8R (2013-2017). Auto-data lists this variant with 235/55 R19 / 255/45 R20 as standard tires (not 235/55 R18). Gear ratio values remain family_default — no primary source.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 55.0,
@@ -956,8 +1020,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

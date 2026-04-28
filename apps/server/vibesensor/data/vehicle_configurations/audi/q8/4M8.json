@@ -14,58 +14,59 @@
     "engine_name": "3.0L V6 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "unverified",
       "evidence_refs": [
         "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "secondary_technical_sources:q8-4m8-wikipedia",
         "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
       ],
-      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm permanent quattro AWD with self-locking center differential for the checked Q8 55 TFSI state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "unverified",
       "evidence_refs": [
         "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "secondary_technical_sources:q8-4m8-wikipedia",
         "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
       ],
-      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm 8-speed tiptronic wording for the checked Q8 55 TFSI state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
+        "value": 3.333,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
+        "value": 3.333,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:3da53a121d0a",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:834b58fa6ac6",
-          "legacy_research_sources:858568b097e7",
-          "legacy_research_sources:987b02afd090",
-          "legacy_research_sources:9a9f7660e688",
-          "legacy_research_sources:9ac37563abd5",
-          "legacy_research_sources:c6f574693b14",
-          "legacy_research_sources:d13f1c818845"
+          "secondary_technical_sources:q8-4m8-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 4M8 has never been offered without quattro - Wikipedia confirms layout 'front-engine, four-wheel-drive' for ALL Q8 variants and lists only '55 TFSI quattro' as the petrol ICE variant (no plain '55 TFSI' was ever produced or sold). This row is a duplicate of audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd under an incorrect abbreviated badge. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence and safety gates set to require manual confirmation. Authoritative entry is the '55 TFSI quattro' row.",
         "front": {
           "width_mm": 285.0,
           "aspect_pct": 40.0,
@@ -157,6 +158,46 @@
           "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
           "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "secondary_technical_sources:q8-4m8-wikipedia",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "secondary_technical_sources:q8-4m8-wikipedia",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -212,26 +253,32 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "secondary_technical_sources:q8-4m8-wikipedia",
         "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
       ],
-      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm permanent quattro AWD with self-locking center differential for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm permanent quattro AWD with self-locking center differential for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row. Sonnet redo research (2026-04 v2): Q8 55 TFSI quattro confirmed by Wikipedia engine table - 3.0 L V6 TFSI 250 kW (340 PS) / 500 Nm, AWD quattro 40:60 split, ZF 8-speed Tiptronic. Production started June 2018 (MY2019). ZF sub-variant likely 8HP76/I (2018 3rd-gen, 8th-gear 0.640) but the repo's inherited 0.667 8th-gear ratio is the older 8HP75/I value (2014, 1st iteration). Top gear ratio downgraded to no_confidence pending Audi MediaCenter Q8 tech-data PDF.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "secondary_technical_sources:zf8hp-wikipedia",
         "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "secondary_technical_sources:q8-4m8-wikipedia",
         "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
       ],
-      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm 8-speed tiptronic wording for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm 8-speed tiptronic wording for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row. Sonnet redo research (2026-04 v2): Q8 55 TFSI quattro confirmed by Wikipedia engine table - 3.0 L V6 TFSI 250 kW (340 PS) / 500 Nm, AWD quattro 40:60 split, ZF 8-speed Tiptronic. Production started June 2018 (MY2019). ZF sub-variant likely 8HP76/I (2018 3rd-gen, 8th-gear 0.640) but the repo's inherited 0.667 8th-gear ratio is the older 8HP75/I value (2014, 1st iteration). Top gear ratio downgraded to no_confidence pending Audi MediaCenter Q8 tech-data PDF.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): Q8 55 TFSI quattro confirmed by Wikipedia engine table - 3.0 L V6 TFSI 250 kW (340 PS) / 500 Nm, AWD quattro 40:60 split, ZF 8-speed Tiptronic. Production started June 2018 (MY2019). ZF sub-variant likely 8HP76/I (2018 3rd-gen, 8th-gear 0.640) but the repo's inherited 0.667 8th-gear ratio is the older 8HP75/I value (2014, 1st iteration). Top gear ratio downgraded to no_confidence pending Audi MediaCenter Q8 tech-data PDF.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:zf8hp-wikipedia"
+        ]
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -355,6 +402,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:zf8hp-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -408,49 +461,54 @@
     "fuel_type": "PHEV",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q8-4m8-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
       "code": "ZF8HP",
-      "name": "8-speed tiptronic (ZF 8HP)"
+      "name": "8-speed tiptronic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:q8-4m8-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
+        "value": 3.333,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
+        "value": 3.333,
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:3da53a121d0a",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:834b58fa6ac6",
-          "legacy_research_sources:858568b097e7",
-          "legacy_research_sources:987b02afd090",
-          "legacy_research_sources:9a9f7660e688",
-          "legacy_research_sources:9ac37563abd5",
-          "legacy_research_sources:c6f574693b14",
-          "legacy_research_sources:d13f1c818845"
+          "secondary_technical_sources:q8-4m8-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. Audi Q8 60 TFSI e has only ever been sold as '60 TFSI e quattro' (always AWD), and EU PHEV pre-sales began in 2020 - not 2019. This row duplicates audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd under an incorrect badge AND wrong production_start_year. Drivetrain, transmission, ratios, and tires are downgraded to no_confidence with safety gates requiring manual confirmation. Authoritative entry is the '60 TFSI e quattro' (2020) row.",
         "front": {
           "width_mm": 285.0,
           "aspect_pct": 40.0,
@@ -541,6 +599,42 @@
           "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
           "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q8-4m8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -574,8 +668,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -596,27 +690,33 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
-        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf",
+        "secondary_technical_sources:q8-4m8-wikipedia",
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf"
       ],
-      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms permanent quattro AWD for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row.",
+      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms permanent quattro AWD for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row. Sonnet redo research (2026-04 v2): Q8 60 TFSI e quattro confirmed by Wikipedia: 3.0 L V6 TFSI + AC e-motor + 17.3 kWh battery, 335 kW (456 PS) / 700 Nm system output, AWD quattro, ZF 8-speed Tiptronic. EU pre-sales 2020. The same 8HP75/I-vs-8HP76/I ratio uncertainty applies as for the ICE 55 TFSI quattro - top gear 0.667 downgraded to no_confidence pending Audi MediaCenter PDF.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
-        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf",
+        "secondary_technical_sources:zf8hp-wikipedia",
+        "secondary_technical_sources:q8-4m8-wikipedia",
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf"
       ],
-      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms the 8-speed tiptronic transmission wording for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row.",
+      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms the 8-speed tiptronic transmission wording for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row. Sonnet redo research (2026-04 v2): Q8 60 TFSI e quattro confirmed by Wikipedia: 3.0 L V6 TFSI + AC e-motor + 17.3 kWh battery, 335 kW (456 PS) / 700 Nm system output, AWD quattro, ZF 8-speed Tiptronic. EU pre-sales 2020. The same 8HP75/I-vs-8HP76/I ratio uncertainty applies as for the ICE 55 TFSI quattro - top gear 0.667 downgraded to no_confidence pending Audi MediaCenter PDF.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): Q8 60 TFSI e quattro confirmed by Wikipedia: 3.0 L V6 TFSI + AC e-motor + 17.3 kWh battery, 335 kW (456 PS) / 700 Nm system output, AWD quattro, ZF 8-speed Tiptronic. EU pre-sales 2020. The same 8HP75/I-vs-8HP76/I ratio uncertainty applies as for the ICE 55 TFSI quattro - top gear 0.667 downgraded to no_confidence pending Audi MediaCenter PDF.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:zf8hp-wikipedia"
+        ]
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -736,6 +836,12 @@
           "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
           "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:zf8hp-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -768,8 +874,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

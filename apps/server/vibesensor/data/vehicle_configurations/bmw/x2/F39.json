@@ -15,38 +15,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -117,6 +135,52 @@
         "evidence_refs": [
           "bmw_market_pages:f39-x2-brochure-2021-cy"
         ]
+      },
+      {
+        "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact DCT7 automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
+        "evidence_refs": [
+          "bmw_market_pages:f39-x2-brochure-2021-cy"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -126,13 +190,20 @@
         "evidence_refs": [
           "bmw_market_pages:f39-x2-brochure-2021-cy"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact DCT7 automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
+        "evidence_refs": [
+          "bmw_market_pages:f39-x2-brochure-2021-cy"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -152,38 +223,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -254,6 +343,52 @@
         "evidence_refs": [
           "bmw_market_pages:f39-x2-brochure-2021-cy"
         ]
+      },
+      {
+        "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact 8-speed automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
+        "evidence_refs": [
+          "bmw_market_pages:f39-x2-brochure-2021-cy"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -263,13 +398,20 @@
         "evidence_refs": [
           "bmw_market_pages:f39-x2-brochure-2021-cy"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact 8-speed automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
+        "evidence_refs": [
+          "bmw_market_pages:f39-x2-brochure-2021-cy"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -289,38 +431,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -395,6 +555,53 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:cdf00de14164"
         ]
+      },
+      {
+        "note": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -419,13 +626,21 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:cdf00de14164"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -444,52 +659,75 @@
     "engine_name": "2.0L",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 sDrive18d automatic row as a front-wheel-drive state.",
+      "notes": "BMW X2 F39 sDrive18d 8-speed Steptronic (Aisin AWF8F35) FWD. Confirmed by BMW PressClub spec PDF T0282289EN/403768 (03/2018) and T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B47C20O0 (110 kW / 150 hp), gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: repo's transmission code label 'ZF8HP' is a misnomer (ZF 8HP is longitudinal-only); the actual gearbox is the Aisin AWF8F35 transverse 8AT. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 sDrive18d automatic row as an 8-speed Steptronic state. The repo keeps its existing canonical ZF8HP automatic mapping for this row.",
+      "notes": "BMW X2 F39 sDrive18d 8-speed Steptronic (Aisin AWF8F35) FWD. Confirmed by BMW PressClub spec PDF T0282289EN/403768 (03/2018) and T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B47C20O0 (110 kW / 150 hp), gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: repo's transmission code label 'ZF8HP' is a misnomer (ZF 8HP is longitudinal-only); the actual gearbox is the Aisin AWF8F35 transverse 8AT. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed Steptronic (Aisin AWF8F35)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 0.673 as the top-gear ratio for the broad F39 sDrive18d automatic row.",
+        "notes": "Aisin AWF8F35 8th gear from BMW PressClub T0282289EN/403768 (03/2018).",
         "value": 0.673
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 2.851 as the final-drive ratio for the broad F39 sDrive18d automatic row.",
+        "notes": "Aisin AWF8F35 final drive (FWD).",
         "value": 2.851
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F35 gear set per BMW PressClub spec."
       }
     },
     "tires": {
       "default": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
-          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive18d automatic row.",
+        "notes": "BMW X2 F39 sDrive18d 8-speed Steptronic (Aisin AWF8F35) FWD. Confirmed by BMW PressClub spec PDF T0282289EN/403768 (03/2018) and T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B47C20O0 (110 kW / 150 hp), gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: repo's transmission code label 'ZF8HP' is a misnomer (ZF 8HP is longitudinal-only); the actual gearbox is the Aisin AWF8F35 transverse 8AT. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 55.0,
@@ -558,6 +796,14 @@
           "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -601,52 +847,73 @@
     "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 sDrive18i automatic row as a front-wheel-drive state.",
+      "notes": "BMW X2 F39 sDrive18i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0282289EN/403769 (03/2018), T0286557EN/419617 (09/2018), and T0327517EN/473618 (03/2021). Engine B38A15M0 (100 kW / 136 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final-drive) values; FD published separately as 4.176. Individual gear set derived: [3.769, 2.161, 1.380, 0.978, 0.766, 0.614, 0.547]. Standard tyre 225/55 R17 97W.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 sDrive18i automatic row as a seven-speed Steptronic transmission with double clutch. The repo normalizes that wording to the canonical DCT7 label.",
+      "notes": "BMW X2 F39 sDrive18i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0282289EN/403769 (03/2018), T0286557EN/419617 (09/2018), and T0327517EN/473618 (03/2021). Engine B38A15M0 (100 kW / 136 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final-drive) values; FD published separately as 4.176. Individual gear set derived: [3.769, 2.161, 1.380, 0.978, 0.766, 0.614, 0.547]. Standard tyre 225/55 R17 97W.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (Getrag 7DCI300)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs support the broad F39 sDrive18i automatic row with DCT overall top ratio 2.285 and final drive 4.176, which yields an effective top gear of 0.547.",
+        "notes": "Getrag 7DCI300 7th gear individual ratio derived from BMW spec overall ratio 2.285 / FD 4.176.",
         "value": 0.547
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 4.176 as the final-drive ratio for the broad F39 sDrive18i automatic row.",
+        "notes": "Getrag 7DCI300 final drive per BMW spec.",
         "value": 4.176
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "value": [
+          3.769,
+          2.161,
+          1.38,
+          0.978,
+          0.766,
+          0.614,
+          0.547
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec"
+        ],
+        "notes": "Individual gear ratios derived by dividing BMW spec OVERALL ratios (15.741/9.024/5.766/4.085/3.197/2.562/2.285) by FD 4.176. BMW publishes overall ratios for DCT7; individual derivation is arithmetic."
       }
     },
     "tires": {
       "default": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
-          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive18i automatic row.",
+        "notes": "BMW X2 F39 sDrive18i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0282289EN/403769 (03/2018), T0286557EN/419617 (09/2018), and T0327517EN/473618 (03/2021). Engine B38A15M0 (100 kW / 136 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final-drive) values; FD published separately as 4.176. Individual gear set derived: [3.769, 2.161, 1.380, 0.978, 0.766, 0.614, 0.547]. Standard tyre 225/55 R17 97W.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 55.0,
@@ -759,38 +1026,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -868,6 +1153,54 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Official 2018 and 2021 F39 sDrive18i technical-data sheets show six-speed manual with optional 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -892,13 +1225,22 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:cdf00de14164"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 2018 and 2021 F39 sDrive18i technical-data sheets show six-speed manual with optional 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -917,52 +1259,69 @@
     "engine_name": "2.0L",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs both support the broad F39 sDrive20i automatic row as a front-wheel-drive state.",
+      "notes": "BMW X2 F39 sDrive20i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B48A20M0 (141 kW / 192 hp). BMW publishes DCT7 OVERALL ratios; FD 3.789 published separately. Individual gear set derived: [4.155, 2.381, 1.522, 1.079, 0.844, 0.677, 0.547] - same 7th gear (0.547) as sDrive18i, expected for same gearbox. Standard tyre 225/55 R17 97W.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs both support the broad F39 sDrive20i automatic row as a seven-speed Steptronic transmission with double clutch. The repo normalizes that wording to the canonical DCT7 label.",
+      "notes": "BMW X2 F39 sDrive20i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B48A20M0 (141 kW / 192 hp). BMW publishes DCT7 OVERALL ratios; FD 3.789 published separately. Individual gear set derived: [4.155, 2.381, 1.522, 1.079, 0.844, 0.677, 0.547] - same 7th gear (0.547) as sDrive18i, expected for same gearbox. Standard tyre 225/55 R17 97W.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (Getrag 7DCI300)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 0.547 as the top-gear ratio for the broad F39 sDrive20i automatic row.",
+        "notes": "Getrag 7DCI300 7th gear individual ratio (BMW spec overall 2.073 / FD 3.789).",
         "value": 0.547
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 3.789 as the final-drive ratio for the broad F39 sDrive20i automatic row.",
+        "notes": "Getrag 7DCI300 final drive per BMW spec.",
         "value": 3.789
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "value": [
+          4.155,
+          2.381,
+          1.522,
+          1.079,
+          0.844,
+          0.677,
+          0.547
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Individual gear ratios derived by dividing BMW OVERALL ratios by FD 3.789."
       }
     },
     "tires": {
       "default": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive20i automatic row.",
+        "notes": "BMW X2 F39 sDrive20i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B48A20M0 (141 kW / 192 hp). BMW publishes DCT7 OVERALL ratios; FD 3.789 published separately. Individual gear set derived: [4.155, 2.381, 1.522, 1.079, 0.844, 0.677, 0.547] - same 7th gear (0.547) as sDrive18i, expected for same gearbox. Standard tyre 225/55 R17 97W.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 55.0,
@@ -1075,38 +1434,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -1178,6 +1555,54 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1188,13 +1613,22 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1214,38 +1648,51 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -1319,6 +1766,48 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1331,13 +1820,21 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1357,38 +1854,51 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "FWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -1462,6 +1972,48 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1474,13 +2026,21 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1500,43 +2060,66 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -1611,6 +2194,61 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:cdf00de14164"
         ]
+      },
+      {
+        "note": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1635,13 +2273,21 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:cdf00de14164"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1660,61 +2306,81 @@
     "engine_name": "2.0L",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs both support the broad F39 xDrive20d automatic row as an all-wheel-drive state.",
+      "notes": "BMW X2 F39 xDrive20d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec, xDrive20d section, FD=2.851) and T0327517EN/473618 (03/2021). Engine B47C20O1 (140 kW / 190 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. AWD via Haldex coupling on rear axle.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs both support the broad F39 xDrive20d automatic row as an 8-speed Steptronic state. The repo keeps its existing canonical ZF8HP automatic mapping for this row.",
+      "notes": "BMW X2 F39 xDrive20d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec, xDrive20d section, FD=2.851) and T0327517EN/473618 (03/2021). Engine B47C20O1 (140 kW / 190 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. AWD via Haldex coupling on rear axle.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed Steptronic (Aisin AWF8F45)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 0.673 as the top-gear ratio for the broad F39 xDrive20d automatic row.",
+        "notes": "Aisin AWF8F45 8th gear.",
         "value": 0.673
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "BMW publishes one exact AWD drive ratio for the broad F39 xDrive20d automatic row. The repo mirrors the official 2.851 ratio into both axle fields for its canonical AWD representation.",
+        "notes": "Aisin AWF8F45 final drive for xDrive20d.",
         "value": 2.851
       },
       "final_drive_rear": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "BMW publishes one exact AWD drive ratio for the broad F39 xDrive20d automatic row. The repo mirrors the official 2.851 ratio into both axle fields for its canonical AWD representation.",
+        "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive; UKL2 Haldex AWD has a single FD value with rear coupling output ratio not separately published.",
         "value": 2.851
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F45 gear set per BMW PressClub spec."
       }
     },
     "tires": {
       "default": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 xDrive20d automatic row.",
+        "notes": "BMW X2 F39 xDrive20d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec, xDrive20d section, FD=2.851) and T0327517EN/473618 (03/2021). Engine B47C20O1 (140 kW / 190 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. AWD via Haldex coupling on rear axle.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 55.0,
@@ -1783,6 +2449,13 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1827,43 +2500,66 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -1935,6 +2631,61 @@
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Official F39 xDrive20i technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1945,13 +2696,21 @@
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 xDrive20i technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1970,61 +2729,79 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 xDrive20i automatic row as an all-wheel-drive state.",
+      "notes": "BMW X2 F39 xDrive20i 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0282289EN/403771 (03/2018 xDrive20i spec) and T0327517EN/473618 (03/2021). Engine B48A20M1 (141 kW / 192 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 3.200 (higher than diesel 2.851). Standard tyre 225/55 R17 97W.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
-      "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs both support the broad F39 xDrive20i automatic row as an 8-speed Steptronic state. The repo keeps its existing canonical ZF8HP automatic mapping for this row.",
+      "notes": "BMW X2 F39 xDrive20i 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0282289EN/403771 (03/2018 xDrive20i spec) and T0327517EN/473618 (03/2021). Engine B48A20M1 (141 kW / 192 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 3.200 (higher than diesel 2.851). Standard tyre 225/55 R17 97W.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed Steptronic (Aisin AWF8F45)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 0.673 as the top-gear ratio for the broad F39 xDrive20i automatic row.",
+        "notes": "Aisin AWF8F45 8th gear.",
         "value": 0.673
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "BMW publishes one exact AWD drive ratio for the broad F39 xDrive20i automatic row. The repo mirrors the official 3.200 ratio into both axle fields for its canonical AWD representation.",
+        "notes": "Aisin AWF8F45 final drive for xDrive20i petrol.",
         "value": 3.2
       },
       "final_drive_rear": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "BMW publishes one exact AWD drive ratio for the broad F39 xDrive20i automatic row. The repo mirrors the official 3.200 ratio into both axle fields for its canonical AWD representation.",
+        "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive; UKL2 Haldex AWD has a single FD.",
         "value": 3.2
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F45 gear set."
       }
     },
     "tires": {
       "default": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 xDrive20i automatic row.",
+        "notes": "BMW X2 F39 xDrive20i 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0282289EN/403771 (03/2018 xDrive20i spec) and T0327517EN/473618 (03/2021). Engine B48A20M1 (141 kW / 192 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 3.200 (higher than diesel 2.851). Standard tyre 225/55 R17 97W.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 55.0,
@@ -2093,6 +2870,13 @@
           "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2137,43 +2921,60 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -2245,6 +3046,55 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2255,13 +3105,21 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -2280,48 +3138,78 @@
     "engine_name": "2.0L",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ],
+      "notes": "BMW X2 F39 xDrive25d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0327517EN/473618 (03/2021 multi-variant spec, xDrive25d section). Engine B47C20O2 (170 kW / 231 hp) AWD tune. Same Aisin AWF8F45 gear set as xDrive20d: 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: an existing repo source note for f39-xdrive20d-xdrive25d-2017-spec-pdf cites FD 2.955 from a 10/2017 launch spec - this value was either pre-production or a transcription error and is superseded by the 2.851 confirmed in two subsequent multi-variant spec PDFs (09/2018 and 03/2021).",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ],
+      "notes": "BMW X2 F39 xDrive25d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0327517EN/473618 (03/2021 multi-variant spec, xDrive25d section). Engine B47C20O2 (170 kW / 231 hp) AWD tune. Same Aisin AWF8F45 gear set as xDrive20d: 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: an existing repo source note for f39-xdrive20d-xdrive25d-2017-spec-pdf cites FD 2.955 from a 10/2017 launch spec - this value was either pre-production or a transcription error and is superseded by the 2.851 confirmed in two subsequent multi-variant spec PDFs (09/2018 and 03/2021).",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed Steptronic (Aisin AWF8F45)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F45 8th gear.",
+        "value": 0.673
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F45 final drive for xDrive25d. Supersedes the 2.955 value cited in the 10/2017 launch spec note (treated as pre-production).",
+        "value": 2.851
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive.",
+        "value": 2.851
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "Aisin AWF8F45 gear set."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "BMW X2 F39 xDrive25d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0327517EN/473618 (03/2021 multi-variant spec, xDrive25d section). Engine B47C20O2 (170 kW / 231 hp) AWD tune. Same Aisin AWF8F45 gear set as xDrive20d: 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: an existing repo source note for f39-xdrive20d-xdrive25d-2017-spec-pdf cites FD 2.955 from a 10/2017 launch spec - this value was either pre-production or a transcription error and is superseded by the 2.851 confirmed in two subsequent multi-variant spec PDFs (09/2018 and 03/2021).",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -2390,6 +3278,19 @@
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-price-list-2022-de"
         ]
+      },
+      {
+        "note": "Official F39 technical-data sheets promote the xDrive25d automatic core fields to 8-speed Steptronic, 0.673 top gear, 2.851 final drive, all-wheel drive, and 225/55 R17 baseline tires; optional tire/package and full-span continuity remain unresolved.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2400,6 +3301,14 @@
           "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-price-list-2022-de"
+        ]
+      },
+      {
+        "item": "BMW X2 xDrive25d automatic year-by-year continuity and tire options",
+        "reason": "The official 2017/2021 technical-data evidence supports the core automatic row fields, but this pass did not recover one exact optional wheel/tire matrix or a full year-by-year chain for every 2018-2023 state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -2427,43 +3336,60 @@
     "fuel_type": "EV",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -2537,6 +3463,56 @@
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-brochure-2022-gr"
         ]
+      },
+      {
+        "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2549,13 +3525,22 @@
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-brochure-2022-gr"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -2575,43 +3560,60 @@
     "fuel_type": "EV",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -2685,6 +3687,56 @@
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-brochure-2022-gr"
         ]
+      },
+      {
+        "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2697,13 +3749,22 @@
           "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
           "bmw_market_pages:f39-x2-brochure-2022-gr"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -2723,43 +3784,60 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
+      "name": "7-speed dual-clutch (DKG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.71
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.71,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.636
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.636,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -2833,6 +3911,55 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2845,13 +3972,21 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -2871,43 +4006,60 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+      "value": "AWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+        "secondary_technical_sources:bmw-x2-f39-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.674,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.294
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 3.294,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:510dd2aed163",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:cdf00de14164"
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 45.0,
@@ -2981,6 +4133,55 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "secondary_technical_sources:bmw-x2-f39-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2993,13 +4194,21 @@
           "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
           "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
         ]
+      },
+      {
+        "item": "Unsupported exact F39 transmission/market mapping",
+        "reason": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+          "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

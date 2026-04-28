@@ -120,12 +120,16 @@
           "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
           "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -241,12 +245,16 @@
           "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
           "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -371,12 +379,16 @@
           "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
           "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -502,12 +514,16 @@
           "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
           "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -662,6 +678,10 @@
           "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
           "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -834,13 +854,17 @@
           "legacy_research_sources:27e3d1aa1f09",
           "legacy_research_sources:5c1b0ad4cf7e"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1023,13 +1047,17 @@
           "legacy_research_sources:ca1480e64c12",
           "legacy_research_sources:e2ab2042d8b2"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1184,12 +1212,16 @@
         "evidence_refs": [
           "legacy_research_sources:5c1b0ad4cf7e"
         ]
+      },
+      {
+        "item": "G32 source-finding pass status",
+        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }

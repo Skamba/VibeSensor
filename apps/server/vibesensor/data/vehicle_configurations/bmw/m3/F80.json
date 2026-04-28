@@ -14,30 +14,40 @@
     "engine_name": "S55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (Getrag GS6-45BZ)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
         "value": 0.846,
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 manual top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+        "value": 3.462,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+        ]
       },
       "gear_ratios": {
         "value": [
@@ -50,29 +60,31 @@
         ],
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 manual top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:956542619eaf",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:bd5f589fe214"
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. BMW 03/2014 tech-spec PDF: 255/40 ZR18 front, 275/40 ZR18 rear.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        }
       },
       "options": [
         {
@@ -110,6 +122,25 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Performance 20\""
+        },
+        {
+          "name": "Optional 19-inch",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+          ],
+          "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. 19-inch alternative documented in F82 M4 sibling and M3 marketing materials."
         }
       ]
     },
@@ -128,6 +159,9 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Default tire name (research note): EU standard 18-inch (launch fitment)"
       }
     ],
     "unresolved": [
@@ -171,25 +205,33 @@
     "engine_name": "S55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (M-DCT)"
+      "name": "7-speed dual-clutch M-DCT (Getrag GS7D36BG / 7DCI600)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
         "value": 0.671,
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "final_drive_rear": {
         "value": 3.462,
@@ -198,7 +240,7 @@
           "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
           "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf"
         ],
-        "notes": "Official BMW 03/2014 launch-period and 01/2018 Portugal technical-data PDFs both list 3.462 as the F80 M3 DCT final drive. The prior 3.154 carryover was not an F80 launch-period value."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "gear_ratios": {
         "value": [
@@ -212,29 +254,32 @@
         ],
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:956542619eaf",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:bd5f589fe214"
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. BMW 03/2014 tech-spec PDF: 255/40 ZR18 front, 275/40 ZR18 rear.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        }
       },
       "options": [
         {
@@ -272,6 +317,25 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Performance 20\""
+        },
+        {
+          "name": "Optional 19-inch",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
+          ],
+          "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. 19-inch alternative documented in F82 M4 sibling and M3 marketing materials."
         }
       ]
     },
@@ -292,6 +356,9 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Default tire name (research note): EU standard 18-inch (launch fitment)"
       }
     ],
     "unresolved": [
@@ -334,30 +401,42 @@
     "engine_name": "S55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (Getrag GS6-45BZ)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
         "value": 0.846,
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 manual top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+        "value": 3.462,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article"
+        ]
       },
       "gear_ratios": {
         "value": [
@@ -370,29 +449,32 @@
         ],
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 manual top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:956542619eaf",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:bd5f589fe214"
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. BMW Competition 01/2016 tech-spec PDF: 265/30 ZR20 front, 285/30 ZR20 rear.",
         "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
+          "width_mm": 265.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -430,6 +512,25 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Performance 20\""
+        },
+        {
+          "name": "Competition forged 19-inch",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+          ],
+          "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. 19-inch forged option widely documented as Competition alternative wheel."
         }
       ]
     },
@@ -450,6 +551,9 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Default tire name (research note): Competition standard 20-inch"
       }
     ],
     "unresolved": [
@@ -492,33 +596,42 @@
     "engine_name": "S55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
       "code": "DCT7",
-      "name": "7-speed dual-clutch (M-DCT)"
+      "name": "7-speed dual-clutch M-DCT (Getrag GS7D36BG / 7DCI600)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
         "value": 0.671,
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "final_drive_rear": {
         "value": 3.462,
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article"
         ],
-        "notes": "The official BMW 01/2016 Competition Package technical-data PDF lists 3.462 as the exact F80 M3 Competition DCT final drive. The prior 3.154 carryover was not an F80 Competition value."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       },
       "gear_ratios": {
         "value": [
@@ -532,29 +645,32 @@
         ],
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:fbef3422499f"
         ],
-        "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:956542619eaf",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:bd5f589fe214"
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. BMW Competition 01/2016 tech-spec PDF: 265/30 ZR20 front, 285/30 ZR20 rear.",
         "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
+          "width_mm": 265.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -592,6 +708,25 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Performance 20\""
+        },
+        {
+          "name": "Competition forged 19-inch",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+          ],
+          "notes": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. 19-inch forged option widely documented as Competition alternative wheel."
         }
       ]
     },
@@ -612,6 +747,9 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Default tire name (research note): Competition standard 20-inch"
       }
     ],
     "unresolved": [

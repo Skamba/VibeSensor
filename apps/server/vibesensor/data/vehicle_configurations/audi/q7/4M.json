@@ -178,6 +178,14 @@
           "audi_mediacenter_sources:4m-q7-revised-2024-release",
           "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "Audi Q7 45 TFSI quattro is a non-EU regional variant; not in the Germany MY2026 price list",
+        "reason": "The Audi Germany MY2026 price list (`audi-q7-2026-pricelist-de.pdf`) lists Q7 petrol only as TFSI quattro 250 kW (V6) and TFSI e quattro 290/360 kW. No 45 TFSI gasoline variant appears for Germany. The 45 TFSI 1984 cc 185 kW Q7 is documented only in the Audi Middle East brochure (non-EU). The broad EU 2016-2026 production span for this row is therefore unsupported.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf",
+          "audi_mediacenter_sources:4m-q7-45-tfsi-middle-east-brochure-pdf"
+        ]
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -205,21 +213,21 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
         "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-revised-2024-release"
       ],
-      "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently describe the exact facelift-era Q7 55 TFSI / TFSI quattro 250 kW state as permanent quattro all-wheel drive with self-locking center differential.",
+      "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Drivetrain: quattro permanent AWD with self-locking centre differential.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
         "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-revised-2024-release"
       ],
-      "notes": "Official Audi 2024 and 2026 technical-data PDFs print 8-speed tiptronic wording for the exact facelift-era Q7 petrol row. The repo keeps ZF8HP as the canonical automatic-family code for that official tiptronic mapping.",
+      "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -227,11 +235,11 @@
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
         ],
-        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently list 0.640 as the eighth-gear ratio for the exact facelift-era Q7 petrol row.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
         "value": 0.64
       },
       "gear_ratios": {
@@ -254,23 +262,23 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
         ],
-        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently publish 3.204 as the exact final-drive value for the facelift-era Q7 petrol row. The repo duplicates that single official value into the front field because Audi's printed final-drive line includes an auxiliary trailing slot (1.000 or -) that the schema does not model separately.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
         "value": 3.204
       },
       "final_drive_rear": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
         ],
-        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently publish 3.204 as the exact final-drive value for the facelift-era Q7 petrol row. The repo duplicates that single official value into the rear field because Audi's printed final-drive line includes an auxiliary trailing slot (1.000 or -) that the schema does not model separately.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
         "value": 3.204
       }
     },
@@ -278,17 +286,14 @@
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
-          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
-          "audi_mediacenter_sources:4m-q7-revised-2024-release",
           "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ],
-        "notes": "Official Audi 2024 and 2026 technical-data PDFs list 255/60 R18 on 8J x 18 wheels as the basic setup for the exact facelift-era Q7 petrol row. Official 2024 launch and 2026 Germany price-list material meanwhile show 19-inch wheels as the sales-standard V6 fitment, so treat this 18-inch value as the exact basic/homologation baseline rather than one universally standard retail package.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Standard delivered tire per Germany MY2026 price list is 255/55 R19 on 8.5 J  19 5-V-spoke wheel; eTD WLTP reference tire is 255/60 R18 on 8 J × 18 forged aluminium wheel.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 60.0,
-          "rim_in": 18.0
+          "aspect_pct": 55.0,
+          "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -409,12 +414,20 @@
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
         ]
+      },
+      {
+        "item": "Variant name '55 TFSI' without quattro suffix does not match official Audi badging",
+        "reason": "Audi MediaCenter eTD PDFs and the Q7 facelift launch press release brand the 250 kW V6 ICE Q7 as 'Q7 55 TFSI quattro'. The bare '55 TFSI' is not a real EU badge; the canonical quattro row is `audi-4m-55-tfsi-quattro-eu-2016-zf8hp-awd`.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
+        ]
       }
     ],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -436,62 +449,63 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:29114921acdf",
-        "legacy_research_sources:b248c52777b2"
+        "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
       ],
-      "notes": "Exact official Audi MediaCenter Q7 TFSI e model-page and technical-data PDF evidence confirm permanent quattro AWD for the checked 55 TFSI e configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
+      "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Drivetrain: quattro permanent AWD with self-locking centre differential.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:29114921acdf",
-        "legacy_research_sources:b248c52777b2"
+        "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
       ],
-      "notes": "Exact official Audi MediaCenter Q7 TFSI e model-page and technical-data PDF evidence confirm the 8-speed tiptronic transmission wording for the checked 55 TFSI e configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
+      "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. PHEV-specific ZF 8HP ratio set top gear is 0.667.",
+        "value": 0.667,
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.333
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
+        ],
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Q7 4M PHEV final drive ratio is 3.204 (single value front and rear).",
+        "value": 3.204
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.333
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
+        ],
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Q7 4M PHEV final drive ratio is 3.204 (single value front and rear).",
+        "value": 3.204
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Standard tire per the official PHEV TD PDF and Germany MY2026 price list is 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 50.0,
-          "rim_in": 20.0
+          "aspect_pct": 55.0,
+          "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -677,11 +691,11 @@
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -702,62 +716,68 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:62c1bbb53e87",
-        "legacy_research_sources:e6c066ac31ae"
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-revised-2024-release"
       ],
-      "notes": "Exact official Audi MediaCenter Q7 model-page and technical-data PDF evidence confirm permanent quattro AWD for the checked 55 TFSI configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
+      "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Drivetrain: quattro permanent AWD with self-locking centre differential.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:62c1bbb53e87",
-        "legacy_research_sources:e6c066ac31ae"
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-revised-2024-release"
       ],
-      "notes": "Exact official Audi MediaCenter Q7 model-page and technical-data PDF evidence confirm the 8-speed tiptronic transmission wording for the checked 55 TFSI configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
+      "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list.",
+        "value": 0.64
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.333
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Q7 4M ICE final drive ratio is 3.204 (single value front and rear).",
+        "value": 3.204
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.333
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Q7 4M ICE final drive ratio is 3.204 (single value front and rear).",
+        "value": 3.204
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDFs (Germany programme, status 2024-03-27 and 2026-02-04) for the Q7 55 TFSI quattro tiptronic 250 kW MHEV (V6 2995 cc): 8-speed tiptronic (ZF 8HP), gear set 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640, reverse -3.478, final drive 3.204, eTD reference tire 255/60 R18, Germany standard delivered tire 255/55 R19 per the MY2026 price list. Standard delivered tire per Germany MY2026 price list is 255/55 R19 on 8.5 J  19 5-V-spoke wheel; eTD WLTP reference tire is 255/60 R18 on 8 J × 18 forged aluminium wheel.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 50.0,
-          "rim_in": 20.0
+          "aspect_pct": 55.0,
+          "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -943,11 +963,11 @@
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1202,13 +1222,22 @@
           "legacy_research_sources:ec1f2b5d8fc4",
           "legacy_research_sources:fc63799e6f4d"
         ]
+      },
+      {
+        "item": "Audi Q7 45 TFSI is not offered in the EU/Germany market for the 2024-2026 facelift period",
+        "reason": "The Audi Germany MY2026 price list explicitly lists Q7 petrol only as TFSI quattro 250 kW (V6) and TFSI e quattro 290/360 kW; no 45 TFSI 2.0 TSI EU listing exists for the 2024-2026 facelift phase. The 45 TFSI gasoline Q7 is a non-EU (Middle East) regional variant.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf",
+          "audi_mediacenter_sources:4m-q7-45-tfsi-middle-east-brochure-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release"
+        ]
       }
     ],
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1230,18 +1259,18 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
-        "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
+        "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
       ],
-      "notes": "Exact official Audi technical-data and price-list material confirms permanent quattro AWD for the checked facelift-era Q7 55 TFSI e state, while production-safe applicability across the full retimed 2024-2026 row remains unresolved.",
+      "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Drivetrain: quattro permanent AWD with self-locking centre differential.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
-        "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
+        "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
       ],
-      "notes": "Checked official Audi 2025 technical-data and MY2026 Germany price-list material confirm market-facing 8-speed tiptronic wording for the exact facelift-era Q7 55 TFSI e state. The repo keeps ZF8HP as the canonical gearbox-family mapping because the checked official Audi sources do not publish a gearbox-family code.",
+      "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -1249,9 +1278,10 @@
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
         ],
-        "notes": "Official Audi 2025 technical-data PDF lists 0.667 as the top-gear ratio for the exact facelift-era Q7 55 TFSI e quattro tiptronic state represented by this narrowed 2024-2026 row.",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. PHEV-specific ZF 8HP ratio set top gear is 0.667.",
         "value": 0.667
       },
       "gear_ratios": {
@@ -1274,17 +1304,19 @@
       "final_drive_front": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
         ],
-        "notes": "Official Audi 2025 technical-data PDF publishes a single 3.204 final-drive value for the exact facelift-era Q7 55 TFSI e quattro tiptronic state, so the narrowed AWD row now carries that same exact ratio on both axle fields.",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V.",
         "value": 3.204
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
         ],
-        "notes": "Official Audi 2025 technical-data PDF publishes a single 3.204 final-drive value for the exact facelift-era Q7 55 TFSI e quattro tiptronic state, so the narrowed AWD row now carries that same exact ratio on both axle fields.",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V.",
         "value": 3.204
       }
     },
@@ -1295,7 +1327,7 @@
           "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ],
-        "notes": "Official Audi 2025 technical-data PDF and MY2026 Germany price list agree on 255/55 R19 as the exact baseline tire package for the facelift-era Q7 55 TFSI e quattro state represented by this narrowed 2024-2026 row.",
+        "notes": "Confirmed by Audi MediaCenter TD PDF (Germany programme, status 2025-12-15) for the Q7 TFSI e quattro tiptronic 290 kW PHEV: 8-speed tiptronic (ZF 8HP, PHEV-specific ratio set), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, reverse -3.317, final drive 3.204, standard tire 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel. System output 290 kW (394 PS); battery 25.9/22.0 kWh gross/net at 400V. Standard tire per the official PHEV TD PDF and Germany MY2026 price list is 255/55 R19 on 8.5 J × 19 cast aluminium flow-forming wheel.",
         "front": {
           "width_mm": 255.0,
           "aspect_pct": 55.0,
@@ -1400,13 +1432,21 @@
           "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
           "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "Variant name '55 TFSI e' without quattro suffix does not match official Audi badging",
+        "reason": "Audi MediaCenter TD PDFs and the 2024 PHEV upgrade press release brand the 290 kW PHEV Q7 as 'Q7 TFSI e quattro' / 'Q7 55 TFSI e quattro'. The bare '55 TFSI e' is not a real EU badge; the canonical quattro row is `audi-4m-55-tfsi-e-quattro-eu-2016-zf8hp-awd`.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release"
+        ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

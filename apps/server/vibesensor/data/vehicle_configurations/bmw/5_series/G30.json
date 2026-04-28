@@ -867,7 +867,7 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -982,8 +982,8 @@
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1435,13 +1435,17 @@
           "legacy_research_sources:f89b00916d7f",
           "legacy_research_sources:f9d6f511233d"
         ]
+      },
+      {
+        "item": "No official EU G30 523d evidence located in this source pass",
+        "reason": "Official BMW Italy 2023 G30/G31 price list lists 518d, 520d, 530d, 540d and excludes 523d. No saved official BMW EU PressClub or price-list source documents an EU G30 523d. The only saved 523d evidence is a secondary mirror of a BMW Japan 2023 option list documenting `523d xDrive` (AWD), which contradicts this row's RWD/EU framing. Marked no_confidence pending a real BMW Japan archive PDF or any official BMW EU 523d source."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1659,8 +1663,8 @@
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1671,13 +1675,13 @@
     "market": "EU",
     "model_code": "G30",
     "body_code": "G30",
-    "production_start_year": 2017,
+    "production_start_year": 2020,
     "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2017-2023)",
+    "model_name": "5 Series (G30, 2020-2023)",
     "variant_name": "545e xDrive",
     "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
-    "fuel_type": "ICE",
+    "engine_name": "3.0L I6 Turbo PHEV",
+    "fuel_type": "PHEV",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
@@ -2064,13 +2068,17 @@
           "legacy_research_sources:f89b00916d7f",
           "legacy_research_sources:f9d6f511233d"
         ]
+      },
+      {
+        "item": "545e xDrive original migration metadata had fuel_type=ICE and 2017-2023 span",
+        "reason": "Official BMW global launch article (T0313447EN) and Germany 11/2020 technical PDF (T0317777DE/461542) document the 545e xDrive as a late-G30 plug-in hybrid xDrive sedan introduced for the 2020/2021 model year, not a 2017 ICE configuration. Engine remains 3.0L I6 turbo paired with an electric motor; fuel_type corrected to PHEV and start year narrowed to 2020. Earlier-year continuity is impossible by definition; later-year continuity through 2023 remains within the published lifecycle of the row."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

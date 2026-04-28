@@ -16,51 +16,63 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:6454b4fe504c",
-        "legacy_research_sources:9f8d6ee410eb"
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights, Car and Driver MT6 test (Michelin PS4S 275/35ZR-19 / 285/30ZR-20 BMW ★ OE), C&D specs page, MotorTrend 2022/2023 specs all confirm base G82 M4 = 6-speed manual (GS6-45BZ) RWD only. Final drive 3.46 (3 independent US sources, 2021-2023 MY consistent) — repo's prior 3.846 was a stale F82 family_default inheritance. 6th gear 0.812 matches GS6-45BZ family. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear per C&D test panel. BMW PressClub primary PDF was login-gated; no EU spec sheet listing individual MT6 ratios I-V was accessible.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights, Car and Driver MT6 test (Michelin PS4S 275/35ZR-19 / 285/30ZR-20 BMW ★ OE), C&D specs page, MotorTrend 2022/2023 specs all confirm base G82 M4 = 6-speed manual (GS6-45BZ) RWD only. Final drive 3.46 (3 independent US sources, 2021-2023 MY consistent) — repo's prior 3.846 was a stale F82 family_default inheritance. 6th gear 0.812 matches GS6-45BZ family. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear per C&D test panel. BMW PressClub primary PDF was login-gated; no EU spec sheet listing individual MT6 ratios I-V was accessible.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (GS6-45BZ)",
+      "evidence_refs": [
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+        "secondary_technical_sources:g82-m4-caranddriver-specs",
+        "secondary_technical_sources:g82-m4-motortrend-2022-specs"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 0.812
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights, Car and Driver MT6 test (Michelin PS4S 275/35ZR-19 / 285/30ZR-20 BMW ★ OE), C&D specs page, MotorTrend 2022/2023 specs all confirm base G82 M4 = 6-speed manual (GS6-45BZ) RWD only. Final drive 3.46 (3 independent US sources, 2021-2023 MY consistent) — repo's prior 3.846 was a stale F82 family_default inheritance. 6th gear 0.812 matches GS6-45BZ family. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear per C&D test panel. BMW PressClub primary PDF was login-gated; no EU spec sheet listing individual MT6 ratios I-V was accessible.",
+        "value": 0.812,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-caranddriver-specs"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 3.846
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights, Car and Driver MT6 test (Michelin PS4S 275/35ZR-19 / 285/30ZR-20 BMW ★ OE), C&D specs page, MotorTrend 2022/2023 specs all confirm base G82 M4 = 6-speed manual (GS6-45BZ) RWD only. Final drive 3.46 (3 independent US sources, 2021-2023 MY consistent) — repo's prior 3.846 was a stale F82 family_default inheritance. 6th gear 0.812 matches GS6-45BZ family. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear per C&D test panel. BMW PressClub primary PDF was login-gated; no EU spec sheet listing individual MT6 ratios I-V was accessible.",
+        "value": 3.46,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-caranddriver-specs",
+          "secondary_technical_sources:g82-m4-motortrend-2022-specs",
+          "secondary_technical_sources:g82-m4-motortrend-2023-specs"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:45650dc1f28e",
-          "legacy_research_sources:6454b4fe504c",
-          "legacy_research_sources:6925daca8aa1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:9f8d6ee410eb",
-          "legacy_research_sources:bf1e088e1d64",
-          "legacy_research_sources:e26b69822173"
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights, Car and Driver MT6 test (Michelin PS4S 275/35ZR-19 / 285/30ZR-20 BMW ★ OE), C&D specs page, MotorTrend 2022/2023 specs all confirm base G82 M4 = 6-speed manual (GS6-45BZ) RWD only. Final drive 3.46 (3 independent US sources, 2021-2023 MY consistent) — repo's prior 3.846 was a stale F82 family_default inheritance. 6th gear 0.812 matches GS6-45BZ family. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear per C&D test panel. BMW PressClub primary PDF was login-gated; no EU spec sheet listing individual MT6 ratios I-V was accessible.",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 19.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -163,8 +175,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -183,47 +195,57 @@
     "engine_name": "S58 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "unverified",
       "evidence_refs": [
-        "legacy_research_sources:6454b4fe504c",
-        "legacy_research_sources:9f8d6ee410eb"
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 0.667
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 3.154
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:45650dc1f28e",
-          "legacy_research_sources:6454b4fe504c",
-          "legacy_research_sources:6925daca8aa1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:9f8d6ee410eb",
-          "legacy_research_sources:bf1e088e1d64",
-          "legacy_research_sources:e26b69822173"
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
@@ -233,19 +255,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:45650dc1f28e",
-            "legacy_research_sources:6454b4fe504c",
-            "legacy_research_sources:6925daca8aa1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:9f8d6ee410eb",
-            "legacy_research_sources:bf1e088e1d64",
-            "legacy_research_sources:e26b69822173"
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
@@ -255,19 +271,13 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:45650dc1f28e",
-            "legacy_research_sources:6454b4fe504c",
-            "legacy_research_sources:6925daca8aa1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:9f8d6ee410eb",
-            "legacy_research_sources:bf1e088e1d64",
-            "legacy_research_sources:e26b69822173"
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): The base (non-Competition) G82 M4 is offered ONLY with the 6-speed manual transmission and ONLY in RWD. BMW USA Technical Highlights lists 6-speed manual for base M4. Car and Driver: 'the base M4 is manual only and makes 473 horsepower; the Competition is available only with the automatic.' MotorTrend overview: 'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' This base + 8AT row does not exist in any market. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 30.0,
@@ -295,6 +305,62 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       }
     ],
     "unresolved": [
@@ -332,8 +398,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -354,45 +420,60 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "legacy_research_sources:6454b4fe504c",
-        "legacy_research_sources:9f8d6ee410eb"
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+        "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+        "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
+        "value": 0.812,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
+        "value": 3.077,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:45650dc1f28e",
-          "legacy_research_sources:6454b4fe504c",
-          "legacy_research_sources:6925daca8aa1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:9f8d6ee410eb",
-          "legacy_research_sources:bf1e088e1d64",
-          "legacy_research_sources:e26b69822173"
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
@@ -402,19 +483,14 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:45650dc1f28e",
-            "legacy_research_sources:6454b4fe504c",
-            "legacy_research_sources:6925daca8aa1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:9f8d6ee410eb",
-            "legacy_research_sources:bf1e088e1d64",
-            "legacy_research_sources:e26b69822173"
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+            "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
@@ -424,19 +500,14 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:45650dc1f28e",
-            "legacy_research_sources:6454b4fe504c",
-            "legacy_research_sources:6925daca8aa1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:9f8d6ee410eb",
-            "legacy_research_sources:bf1e088e1d64",
-            "legacy_research_sources:e26b69822173"
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+            "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Sonnet redo research (2026-04 v2): The G82 M4 Competition (RWD or xDrive) is offered ONLY with the ZF 8HP M-Steptronic 8-speed automatic. BMW USA Technical Highlights lists 8-speed automatic for both M4 Competition variants. Car and Driver review of the Competition: 'Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic.' MotorTrend overview: 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD.' A Competition + MT6 combination does not exist in any market. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 30.0,
@@ -460,6 +531,69 @@
           "legacy_research_sources:9f8d6ee410eb",
           "legacy_research_sources:bf1e088e1d64",
           "legacy_research_sources:e26b69822173"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
         ]
       }
     ],
@@ -498,8 +632,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -518,53 +652,81 @@
     "engine_name": "S58 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:6454b4fe504c",
-        "legacy_research_sources:9f8d6ee410eb"
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed M-Steptronic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated.",
+        "value": 0.64,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated.",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "reputable_secondary_crosschecked",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "evidence_refs": [
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-comp-drive"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated. Forward gear ratios derived from Row 4 (M4 Competition xDrive) which uses the same ZF 8HP M-Steptronic."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:45650dc1f28e",
-          "legacy_research_sources:6454b4fe504c",
-          "legacy_research_sources:6925daca8aa1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:9f8d6ee410eb",
-          "legacy_research_sources:bf1e088e1d64",
-          "legacy_research_sources:e26b69822173"
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition RWD = ZF 8HP M-Steptronic 8-speed automatic, 503hp, RWD. The ZF 8HP M-Steptronic gearbox used here is the same hardware as the M4 Competition xDrive (Row 4) which the repo already documents with full ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior values for this RWD row (top 0.667, FD 2.813) were inconsistent with the same physical gearbox/diff used on the xDrive row and were stale family_default values. Corrected to match the xDrive ratios. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel). BMW PressClub primary PDF login-gated.",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 19.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -664,8 +826,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -686,17 +848,21 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:6454b4fe504c",
-        "legacy_research_sources:9f8d6ee410eb"
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition xDrive = 523hp, 8-speed M-Steptronic (ZF 8HP), AWD. Forward gear ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with final drive 3.154 already in repo and consistent with ZF 8HP M-Steptronic spec. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel).",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition xDrive = 523hp, 8-speed M-Steptronic (ZF 8HP), AWD. Forward gear ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with final drive 3.154 already in repo and consistent with ZF 8HP M-Steptronic spec. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel).",
       "code": "ZF8HP",
-      "name": "8-speed M Steptronic transmission with Drivelogic"
+      "name": "8-speed M-Steptronic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -731,25 +897,23 @@
     },
     "tires": {
       "default": {
-        "confidence": "official_exact",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:45650dc1f28e",
-          "legacy_research_sources:6454b4fe504c",
-          "legacy_research_sources:6925daca8aa1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:9f8d6ee410eb",
-          "legacy_research_sources:bf1e088e1d64",
-          "legacy_research_sources:e26b69822173"
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-caranddriver-mt6-test"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA Technical Highlights confirms G82 M4 Competition xDrive = 523hp, 8-speed M-Steptronic (ZF 8HP), AWD. Forward gear ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with final drive 3.154 already in repo and consistent with ZF 8HP M-Steptronic spec. EU OE tires 275/35ZR-19 front / 285/30ZR-20 rear (same architecture as base M4 per C&D test panel).",
         "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear",
+        "rear": {
           "width_mm": 285.0,
           "aspect_pct": 30.0,
           "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
+        }
       },
       "options": [
         {
@@ -835,8 +999,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

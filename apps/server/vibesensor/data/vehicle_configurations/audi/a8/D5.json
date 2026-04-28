@@ -183,13 +183,22 @@
           "audi_mediacenter_sources:d5-a8-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
         ]
+      },
+      {
+        "item": "Audi A8 50 TFSI petrol is China-market only; no EU/Germany variant exists",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) explicitly states: 'The 3.0 TFSI powers the Audi A8 55 TFSI quattro and the A8 L 55 TFSI quattro with 250 kW (340 PS). A variant with 210 kW (286 PS) is available in China.' No A8 50 TFSI eTD PDF exists on the Audi MediaCenter for any market other than China; the EU/Germany petrol range for the D5 is the 55 TFSI quattro only. This row should be removed from EU scope or re-filed under market: CN.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release",
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
+        ]
       }
     ],
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -208,13 +217,13 @@
     "engine_name": "3.0L V6 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "unverified",
       "evidence_refs": [
         "legacy_research_sources:b20cb3ff78c5",
         "legacy_research_sources:bd797ac39b22",
         "legacy_research_sources:c2eafaaa3bb4"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Drivetrain confidence downgraded: there is no EU A8 50 TFSI quattro, so the legacy press-release citation does not apply to this row.",
       "value": "AWD"
     },
     "transmission": {
@@ -377,13 +386,22 @@
           "audi_mediacenter_sources:d5-a8-55-tfsi-2024-tech-data-pdf",
           "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
         ]
+      },
+      {
+        "item": "Audi A8 50 TFSI petrol is China-market only; no EU/Germany variant exists",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) explicitly states: 'The 3.0 TFSI powers the Audi A8 55 TFSI quattro and the A8 L 55 TFSI quattro with 250 kW (340 PS). A variant with 210 kW (286 PS) is available in China.' No A8 50 TFSI eTD PDF exists on the Audi MediaCenter for any market other than China; the EU/Germany petrol range for the D5 is the 55 TFSI quattro only. This row should be removed from EU scope or re-filed under market: CN.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release",
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
+        ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -402,61 +420,59 @@
     "engine_name": "3.0L V6 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:b20cb3ff78c5",
-        "legacy_research_sources:bd797ac39b22",
-        "legacy_research_sources:c2eafaaa3bb4"
+        "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.64
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
+        "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:39e9836c4406",
-          "legacy_research_sources:3b7e4dcf4760",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:4c4a6ad675f8",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7160abc38bb3",
-          "legacy_research_sources:b20cb3ff78c5",
-          "legacy_research_sources:bd797ac39b22",
-          "legacy_research_sources:c2eafaaa3bb4",
-          "legacy_research_sources:e2310c408b54",
-          "legacy_research_sources:ed5679233d8c",
-          "legacy_research_sources:fc9d1c242093"
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). Basic tires per eTD: 235/55 R18 on 8J×18 forged wheels.",
         "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "width_mm": 235.0,
+          "aspect_pct": 55.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -577,13 +593,28 @@
         "evidence_refs": [
           "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "22-inch S line wheel option (275/30 R22) not confirmed by official D5.5 sources",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) describes the wheel range as 18 to 21 inches; no official eTD or price list fetched in this run lists a 22-inch factory option for the A8/A8 L.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
+      },
+      {
+        "item": "Variant name '55 TFSI' without quattro suffix does not match any official Audi badge",
+        "reason": "Audi MediaCenter eTD PDFs and the D5.5 launch press release consistently brand the EU/Germany A8 3.0 TFSI as 'A8 55 TFSI quattro'. No A8 55 TFSI without quattro is sold in the EU. The canonical EU petrol row is `audi-d5-55-tfsi-quattro-eu-2018-zf8hp-awd`.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -604,59 +635,57 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:b20cb3ff78c5",
-        "legacy_research_sources:bd797ac39b22",
-        "legacy_research_sources:c2eafaaa3bb4"
+        "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.64
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
+        "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:39e9836c4406",
-          "legacy_research_sources:3b7e4dcf4760",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:4c4a6ad675f8",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7160abc38bb3",
-          "legacy_research_sources:b20cb3ff78c5",
-          "legacy_research_sources:bd797ac39b22",
-          "legacy_research_sources:c2eafaaa3bb4",
-          "legacy_research_sources:e2310c408b54",
-          "legacy_research_sources:ed5679233d8c",
-          "legacy_research_sources:fc9d1c242093"
+          "audi_mediacenter_sources:d5-a8-55-tfsi-2025-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). Basic tires per eTD: 235/55 R18 on 8J×18 forged wheels.",
         "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "width_mm": 235.0,
+          "aspect_pct": 55.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -788,13 +817,20 @@
           "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release",
           "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "22-inch S line wheel option (275/30 R22) not confirmed by official D5.5 sources",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) describes the wheel range as 18 to 21 inches; no official eTD or price list fetched in this run lists a 22-inch factory option for the A8/A8 L.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -813,61 +849,59 @@
     "engine_name": "3.0L V6 TFSI Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:b20cb3ff78c5",
-        "legacy_research_sources:bd797ac39b22",
-        "legacy_research_sources:c2eafaaa3bb4"
+        "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.64
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
+        "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:39e9836c4406",
-          "legacy_research_sources:3b7e4dcf4760",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:4c4a6ad675f8",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7160abc38bb3",
-          "legacy_research_sources:b20cb3ff78c5",
-          "legacy_research_sources:bd797ac39b22",
-          "legacy_research_sources:c2eafaaa3bb4",
-          "legacy_research_sources:e2310c408b54",
-          "legacy_research_sources:ed5679233d8c",
-          "legacy_research_sources:fc9d1c242093"
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. Basic tires per eTD: 255/45 R19 on 9J×19 cast aluminium flow-forming wheels.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -986,13 +1020,28 @@
           "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release",
           "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "22-inch S line wheel option (275/30 R22) not confirmed by official D5.5 sources",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) describes the wheel range as 18 to 21 inches; no official eTD or price list fetched in this run lists a 22-inch factory option for the A8/A8 L PHEV.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
+      },
+      {
+        "item": "Variant name '60 TFSI e' without quattro suffix does not match any official Audi badge",
+        "reason": "Audi MediaCenter eTD PDFs and the D5.5 launch press release consistently brand the EU/Germany A8 PHEV as 'A8 60 TFSI e quattro'. The canonical EU PHEV row is `audi-d5-60-tfsi-e-quattro-eu-2018-zf8hp-awd`.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf",
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1013,59 +1062,57 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:b20cb3ff78c5",
-        "legacy_research_sources:bd797ac39b22",
-        "legacy_research_sources:c2eafaaa3bb4"
+        "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
+      "notes": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
-        "value": 0.64
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
+        "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
-        "value": 2.848
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
+        ],
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
+        "value": 3.076
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:39e9836c4406",
-          "legacy_research_sources:3b7e4dcf4760",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:4c4a6ad675f8",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7160abc38bb3",
-          "legacy_research_sources:b20cb3ff78c5",
-          "legacy_research_sources:bd797ac39b22",
-          "legacy_research_sources:c2eafaaa3bb4",
-          "legacy_research_sources:e2310c408b54",
-          "legacy_research_sources:ed5679233d8c",
-          "legacy_research_sources:fc9d1c242093"
+          "audi_mediacenter_sources:d5-a8-60-tfsi-e-2025-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
+        "notes": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. Basic tires per eTD: 255/45 R19 on 9J×19 cast aluminium flow-forming wheels.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
@@ -1184,13 +1231,20 @@
           "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release",
           "audi_mediacenter_sources:d5-a8-2026-price-list-pdf"
         ]
+      },
+      {
+        "item": "22-inch S line wheel option (275/30 R22) not confirmed by official D5.5 sources",
+        "reason": "The Audi MediaCenter D5.5 launch press release (2021-11-02) describes the wheel range as 18 to 21 inches; no official eTD or price list fetched in this run lists a 22-inch factory option for the A8/A8 L PHEV.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:d5-a8-2021-enhanced-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

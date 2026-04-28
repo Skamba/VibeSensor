@@ -77,7 +77,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20d.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -91,7 +91,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20d.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -99,6 +99,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -108,31 +174,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive20d exact optional wheel/tire matrix for the narrowed 2011 row",
-        "reason": "The official BMW 09/2010 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2011 xDrive20d row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive20d separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -215,7 +271,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20d.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -229,7 +285,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20d.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -237,6 +293,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -246,31 +368,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive20d exact optional wheel/tire matrix for the narrowed 2011 row",
-        "reason": "The official BMW 09/2010 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2011 xDrive20d row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive20d separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -351,7 +463,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20i 6-speed manual configuration.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20i.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -365,7 +477,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
           ],
-          "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20i 6-speed manual configuration.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -375,40 +487,93 @@
           "name": "Standard 17\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20i family.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
             "aspect_pct": 45.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20i family.",
           "front": {
-            "width_mm": 265.0,
+            "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          }
         }
       ]
     },
@@ -421,23 +586,23 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+        ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X3 (F25, 2011-2017) EU ratio-relevant variant mapping",
-        "reason": "The official BMW 09/2010 and 04/2014 EU homologation sheets close launch- and facelift-era wheel/tire package availability for this xDrive20i family, but this broad 2011-2017 row still does not encode the full homologated matrix inline or prove exact public continuity through 2017.",
+        "item": "BMW X3 F25 xDrive20i 2011-2017 continuity",
+        "reason": "Official 2011 and 2014 BMW technical-data and EU wheel/tire approval sheets agree for launch and facelift-era values, but this broad row still does not independently prove exact public continuity through the final 2017 model year.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf",
           "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
-        ]
-      },
-      {
-        "item": "BMW X3 (F25, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The official BMW 09/2011 technical-data PDF publishes one exact final-drive ratio for the xDrive20i manual state; the repo duplicates that value across front and rear final-drive fields because BMW does not publish separate axle ratios in this sheet.",
-        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
         ]
       }
@@ -530,7 +695,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20i 8-speed automatic configuration.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20i.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -544,7 +709,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
           ],
-          "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20i 8-speed automatic configuration.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -554,40 +719,93 @@
           "name": "Standard 17\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20i family.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
             "aspect_pct": 45.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20i family.",
           "front": {
-            "width_mm": 265.0,
+            "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 xDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          }
         }
       ]
     },
@@ -600,23 +818,23 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+        ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X3 (F25, 2011-2017) EU ratio-relevant variant mapping",
-        "reason": "The official BMW 09/2010 and 04/2014 EU homologation sheets close launch- and facelift-era wheel/tire package availability for this xDrive20i family, but this broad 2011-2017 row still does not encode the full homologated matrix inline or prove exact public continuity through 2017.",
+        "item": "BMW X3 F25 xDrive20i 2011-2017 continuity",
+        "reason": "Official 2011 and 2014 BMW technical-data and EU wheel/tire approval sheets agree for launch and facelift-era values, but this broad row still does not independently prove exact public continuity through the final 2017 model year.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf",
           "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
-        ]
-      },
-      {
-        "item": "BMW X3 (F25, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The official BMW 09/2011 technical-data PDF publishes one exact final-drive ratio for the xDrive20i automatic state; the repo duplicates that value across front and rear final-drive fields because BMW does not publish separate axle ratios in this sheet.",
-        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive20i-2011-tech-spec-pdf"
         ]
       }
@@ -709,7 +927,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive28i.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -723,7 +941,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive28i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -733,40 +951,70 @@
           "name": "Standard 17\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive28i family.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
             "aspect_pct": 45.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive28i family.",
           "front": {
-            "width_mm": 265.0,
+            "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -777,31 +1025,21 @@
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive28i exact optional wheel/tire matrix for the narrowed 2011 row",
-        "reason": "The official BMW 09/2010 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2011 xDrive28i row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive28i separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -884,7 +1122,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive28i.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -898,7 +1136,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive28i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -906,6 +1144,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive28i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -915,31 +1219,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive28i exact optional wheel/tire matrix for the narrowed 2012 row",
-        "reason": "The official BMW 04/2012 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2012 xDrive28i row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive28i separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1022,7 +1316,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive30d.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -1036,7 +1330,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive30d.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -1044,6 +1338,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive30d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive30d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive30d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive30d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -1053,31 +1413,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive30d exact optional wheel/tire matrix for the narrowed 2011 row",
-        "reason": "The official BMW 09/2010 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2011 xDrive30d row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive30d separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1160,7 +1510,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35d.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -1174,7 +1524,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
           ],
-          "notes": "The official BMW 09/2011 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35d.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
@@ -1182,6 +1532,44 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive35d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive35d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -1191,31 +1579,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive35d exact optional wheel/tire matrix for the narrowed 2011 row",
-        "reason": "The official BMW 09/2010 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2011 xDrive35d row, but this pass does not yet encode all homologated packages inline.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
-        ]
       },
       {
-        "item": "BMW X3 xDrive35d separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1305,7 +1683,7 @@
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 and 04/2014 technical-data PDFs agree on 245/50 R18 as the baseline tire for the exact X3 xDrive35i automatic configuration.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35i.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -1320,7 +1698,7 @@
             "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
             "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf"
           ],
-          "notes": "The official BMW 09/2011 and 04/2014 technical-data PDFs agree on 245/50 R18 as the baseline tire for the exact X3 xDrive35i automatic configuration.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35i.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
@@ -1330,40 +1708,63 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive35i family.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 45.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:49e6110566bb",
-            "legacy_research_sources:933efbe6a7d1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive35i family.",
           "front": {
-            "width_mm": 265.0,
+            "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 xDrive35i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          }
         }
       ]
     },
@@ -1374,23 +1775,22 @@
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+        ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X3 xDrive35i exact optional wheel/tire matrix across the represented row",
-        "reason": "The official BMW 09/2010 and 04/2014 EU homologation sheets close the launch- and facelift-era wheel/tire package availability for this xDrive35i family, but this broad row still does not encode the full homologated matrix inline or prove exact public continuity through 2017.",
+        "item": "BMW X3 F25 xDrive35i 2011-2017 continuity",
+        "reason": "Official 2011 and 2014 BMW technical-data and EU wheel/tire approval sheets agree for launch and facelift-era values, but this broad row still does not independently prove exact public continuity through the final 2017 model year.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
-          "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf",
           "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
-          "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
-        ]
-      },
-      {
-        "item": "BMW X3 xDrive35i separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-        "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf"
         ]
@@ -1474,7 +1874,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
         ],
-        "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive18d.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -1488,7 +1888,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
           ],
-          "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive18d.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -1496,6 +1896,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -1505,24 +1971,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "BMW X3 sDrive18d exact optional wheel/tire matrix for the narrowed 2012 row",
-        "reason": "The official BMW 04/2012 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2012 sDrive18d row, but this pass does not yet encode all homologated packages inline.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf",
           "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1597,7 +2060,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
         ],
-        "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive18d.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -1611,7 +2074,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
           ],
-          "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive18d.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -1619,6 +2082,72 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 sDrive18d family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
         }
       ]
     },
@@ -1628,24 +2157,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "BMW X3 sDrive18d exact optional wheel/tire matrix for the narrowed 2012 row",
-        "reason": "The official BMW 04/2012 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2012 sDrive18d row, but this pass does not yet encode all homologated packages inline.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf",
           "bmw_pressclub_sources:f25-euro-zula-04-12-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1720,7 +2246,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
         ],
-        "notes": "The official BMW 04/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+        "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive20i.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -1734,7 +2260,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
           ],
-          "notes": "The official BMW 04/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+          "notes": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive20i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -1742,6 +2268,91 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 sDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 sDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 sDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 sDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          }
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
+          ],
+          "notes": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 sDrive20i family.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\"",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          }
         }
       ]
     },
@@ -1751,24 +2362,21 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "BMW X3 sDrive20i exact optional wheel/tire matrix for the narrowed 2014 row",
-        "reason": "The official BMW 04/2014 EU homologation sheet closes the standard, factory-option, and accessory wheel/tire matrix for this narrowed 2014 sDrive20i row, but this pass does not yet encode all homologated packages inline.",
+        "note": "This run replaced inherited F25 family-default tire options with BMW EU wheel/tire approval-sheet packages, including corrected staggered 19- and 20-inch rear tire dimensions.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
           "bmw_pressclub_sources:f25-euro-zula-04-14-pdf"
         ]
       }
     ],
+    "unresolved": [],
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   }
 ]

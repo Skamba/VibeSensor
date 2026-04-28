@@ -15,46 +15,56 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "value": "FWD"
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
+      "value": "FWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "secondary_technical_sources:q5-fy-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
+      "name": "7-speed S tronic (DL382)",
+      "evidence_refs": [
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "secondary_technical_sources:q5-fy-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 0.725
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
+        "value": 0.725,
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 5.302
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
+        "value": 5.302,
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "legacy_research_sources:0704ea887c86",
-          "legacy_research_sources:4395fed0b13e",
-          "legacy_research_sources:54af60a9ddf0",
-          "legacy_research_sources:58f92c263343",
-          "legacy_research_sources:6db6eab4aafb",
-          "legacy_research_sources:7e60864b72c3",
-          "legacy_research_sources:84ab012d7125",
-          "legacy_research_sources:a6de0bcaa857",
-          "legacy_research_sources:aaa1bd276e93",
-          "legacy_research_sources:b24b22157008",
-          "legacy_research_sources:e6b28c39d7e6",
-          "legacy_research_sources:efd444c9156f",
-          "legacy_research_sources:f8d3f991ca53"
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
         "front": {
           "width_mm": 235.0,
           "aspect_pct": 50.0,
@@ -64,23 +74,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:0704ea887c86",
-            "legacy_research_sources:4395fed0b13e",
-            "legacy_research_sources:54af60a9ddf0",
-            "legacy_research_sources:58f92c263343",
-            "legacy_research_sources:6db6eab4aafb",
-            "legacy_research_sources:7e60864b72c3",
-            "legacy_research_sources:84ab012d7125",
-            "legacy_research_sources:a6de0bcaa857",
-            "legacy_research_sources:aaa1bd276e93",
-            "legacy_research_sources:b24b22157008",
-            "legacy_research_sources:e6b28c39d7e6",
-            "legacy_research_sources:efd444c9156f",
-            "legacy_research_sources:f8d3f991ca53"
+            "secondary_technical_sources:q5-fy-adac-prefacelift",
+            "secondary_technical_sources:q5-fy-adac-facelift",
+            "secondary_technical_sources:q5-fy-wikipedia"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 50.0,
@@ -90,23 +90,13 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:0704ea887c86",
-            "legacy_research_sources:4395fed0b13e",
-            "legacy_research_sources:54af60a9ddf0",
-            "legacy_research_sources:58f92c263343",
-            "legacy_research_sources:6db6eab4aafb",
-            "legacy_research_sources:7e60864b72c3",
-            "legacy_research_sources:84ab012d7125",
-            "legacy_research_sources:a6de0bcaa857",
-            "legacy_research_sources:aaa1bd276e93",
-            "legacy_research_sources:b24b22157008",
-            "legacy_research_sources:e6b28c39d7e6",
-            "legacy_research_sources:efd444c9156f",
-            "legacy_research_sources:f8d3f991ca53"
+            "secondary_technical_sources:q5-fy-adac-prefacelift",
+            "secondary_technical_sources:q5-fy-adac-facelift",
+            "secondary_technical_sources:q5-fy-wikipedia"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -116,23 +106,13 @@
           "name": "Sport 20\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "unverified",
           "evidence_refs": [
-            "legacy_research_sources:0704ea887c86",
-            "legacy_research_sources:4395fed0b13e",
-            "legacy_research_sources:54af60a9ddf0",
-            "legacy_research_sources:58f92c263343",
-            "legacy_research_sources:6db6eab4aafb",
-            "legacy_research_sources:7e60864b72c3",
-            "legacy_research_sources:84ab012d7125",
-            "legacy_research_sources:a6de0bcaa857",
-            "legacy_research_sources:aaa1bd276e93",
-            "legacy_research_sources:b24b22157008",
-            "legacy_research_sources:e6b28c39d7e6",
-            "legacy_research_sources:efd444c9156f",
-            "legacy_research_sources:f8d3f991ca53"
+            "secondary_technical_sources:q5-fy-adac-prefacelift",
+            "secondary_technical_sources:q5-fy-adac-facelift",
+            "secondary_technical_sources:q5-fy-wikipedia"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -164,6 +144,70 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -304,8 +348,8 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -317,7 +361,7 @@
     "model_code": "FY",
     "body_code": "FY",
     "production_start_year": 2018,
-    "production_end_year": 2019,
+    "production_end_year": 2020,
     "model_name": "Q5 (FY, 2018-2019)",
     "variant_name": "35 TDI quattro",
     "engine_code": "2.0L",
@@ -326,19 +370,22 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-prefacelift"
       ],
-      "notes": "Official Audi 09/27/2019 technical-data material confirms that the exact FY Q5 35 TDI quattro S tronic state uses quattro all-wheel drive with ultra technology.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog pre-facelift confirms 'Q5 35 TDI quattro S tronic' production span 08/2018-07/2020 at 110 kW/150 PS, quattro, 7-speed S tronic (DL382). Repo's prior production_end_year of 2019 is too narrow; corrected to 2020. Tire 235/65 R17 confirmed by existing Audi MediaCenter PDF reference (already in repo as official_exact). Forward gear ratios for the DL382 7-speed remain unpopulated - no accessible primary source PDF (Audi MediaCenter PDFs returned 404, auto-data and ultimatespecs returned wrong vehicles or redirects). The 'DCT7' code is the correct family but the precise internal designation is DL382 (longitudinal wet-clutch DCT, marketed as 'S tronic 7-speed').",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-wikipedia"
       ],
-      "notes": "Official Audi 09/27/2019 technical-data material confirms 7-speed S tronic transmission wording and a dual-clutch layout for the exact FY Q5 35 TDI quattro state. The repo keeps the normalized DCT7 code, but the checked official source does not publish a gearbox-family code.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog pre-facelift confirms 'Q5 35 TDI quattro S tronic' production span 08/2018-07/2020 at 110 kW/150 PS, quattro, 7-speed S tronic (DL382). Repo's prior production_end_year of 2019 is too narrow; corrected to 2020. Tire 235/65 R17 confirmed by existing Audi MediaCenter PDF reference (already in repo as official_exact). Forward gear ratios for the DL382 7-speed remain unpopulated - no accessible primary source PDF (Audi MediaCenter PDFs returned 404, auto-data and ultimatespecs returned wrong vehicles or redirects). The 'DCT7' code is the correct family but the precise internal designation is DL382 (longitudinal wet-clutch DCT, marketed as 'S tronic 7-speed').",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DL382)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -452,8 +499,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -472,23 +519,28 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
-        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf"
       ],
-      "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm quattro all-wheel drive with ultra technology for the exact FY Q5 45 TFSI quattro state. Applied as official-derived evidence for the corrected 2019-2024 row.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms 'Q5 45 TFSI quattro S tronic' production span 01/2019-07/2020 at 180 kW (pre-facelift) and 09/2020-11/2024 at 195 kW (facelift). Existing repo evidence from two Audi MediaCenter tech-data PDFs (2019 and 2024) corroborates 7-speed S tronic + quattro ultra. Power state increase at facelift could be split into two rows for precision; the current single row spanning 2019-2024 is a reasonable approximation. Tire 235/65 R17 confirmed official_derived. Forward gear ratios remain unpopulated - no accessible primary EU spec source. The internal transmission designation is DL382 (longitudinal wet-clutch DCT marketed as 'S tronic 7-speed').",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
-        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-wikipedia",
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf"
       ],
-      "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm a 7-speed S tronic transmission for the exact FY Q5 45 TFSI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms 'Q5 45 TFSI quattro S tronic' production span 01/2019-07/2020 at 180 kW (pre-facelift) and 09/2020-11/2024 at 195 kW (facelift). Existing repo evidence from two Audi MediaCenter tech-data PDFs (2019 and 2024) corroborates 7-speed S tronic + quattro ultra. Power state increase at facelift could be split into two rows for precision; the current single row spanning 2019-2024 is a reasonable approximation. Tire 235/65 R17 confirmed official_derived. Forward gear ratios remain unpopulated - no accessible primary EU spec source. The internal transmission designation is DL382 (longitudinal wet-clutch DCT marketed as 'S tronic 7-speed').",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DL382)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -601,8 +653,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -623,23 +675,30 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
         "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
-        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "secondary_technical_sources:q5-fy-tfsi-e-caranddriver"
       ],
-      "notes": "Official Audi launch, 2021 technical-data, and 2024 technical-data material confirm quattro ultra AWD for the exact FY 55 TFSI e quattro state. The row keeps a broader 2019-2025 span, but direct numeric drivetrain continuity is only evidenced from the official 2021 and 2024 technical-data sheets.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms 'Q5 55 TFSI e quattro S tronic' production span 09/2019-08/2020 (pre-facelift) and 02/2021-11/2024 (facelift). Car and Driver 2021 spec page explicitly lists 'Transmission: 7-Speed S tronic Dual-Clutch Auto' - decisively refuting any suggestion that the FY PHEV uses the 8-speed Tiptronic (ZF 8HP) found on Q7/Q8 PHEVs (different platforms). The Q5 FY PHEV uses an e-S tronic (DL382-derived 7-speed wet-clutch DCT with integrated electric motor on the MLB Evo platform). Three Audi MediaCenter PDFs (2019 launch, 2021 tech-data, 2024 tech-data) already in repo confirm 7-speed S tronic + quattro ultra. Tire 235/60 R18 confirmed official_exact. Forward gear ratios remain unpopulated.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
         "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
-        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-prefacelift",
+        "secondary_technical_sources:q5-fy-adac-facelift",
+        "secondary_technical_sources:q5-fy-wikipedia",
+        "secondary_technical_sources:q5-fy-tfsi-e-caranddriver"
       ],
-      "notes": "Official Audi launch, 2021 technical-data, and 2024 technical-data material confirm the 7-speed S tronic gearbox for the exact FY 55 TFSI e quattro state, including the PHEV layout with the electric motor integrated into that transmission. The public gearbox family code remains unresolved.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms 'Q5 55 TFSI e quattro S tronic' production span 09/2019-08/2020 (pre-facelift) and 02/2021-11/2024 (facelift). Car and Driver 2021 spec page explicitly lists 'Transmission: 7-Speed S tronic Dual-Clutch Auto' - decisively refuting any suggestion that the FY PHEV uses the 8-speed Tiptronic (ZF 8HP) found on Q7/Q8 PHEVs (different platforms). The Q5 FY PHEV uses an e-S tronic (DL382-derived 7-speed wet-clutch DCT with integrated electric motor on the MLB Evo platform). Three Audi MediaCenter PDFs (2019 launch, 2021 tech-data, 2024 tech-data) already in repo confirm 7-speed S tronic + quattro ultra. Tire 235/60 R18 confirmed official_exact. Forward gear ratios remain unpopulated.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
+      "name": "7-speed e-S tronic (DL382-based PHEV variant)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -807,8 +866,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -829,19 +888,22 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-facelift"
       ],
-      "notes": "Official Audi 06/04/2024 technical-data material confirms that the exact later FY Q5 40 TDI quattro state uses quattro all-wheel drive with ultra technology.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog facelift catalogue confirms 'Q5 40 TDI quattro S tronic' production span 09/2020-11/2024 at 150 kW/204 PS, quattro, 7-speed S tronic (DL382). The '40 TDI' commercial designation was introduced at the 09/2020 facelift; pre-facelift equivalents had different power states. Repo's production_start_year 2020 / end 2024 is correct (the '-2017-' substring in the row id is a legacy naming artifact, not the actual variant start). Tire 235/65 R17 confirmed official_exact via existing Audi MediaCenter 2024 tech-data PDF reference. Forward gear ratios remain unpopulated - no accessible primary EU spec source for the DL382 in this application. The internal transmission designation is DL382.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        "secondary_technical_sources:q5-fy-wikipedia",
+        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q5-fy-adac-facelift"
       ],
-      "notes": "Official Audi 06/04/2024 technical-data material confirms the later FY Q5 40 TDI quattro state uses 7-speed S tronic wording and a dual-clutch layout. The repo keeps the normalized DCT7 code, but the checked official source does not publish a gearbox-family code.",
+      "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog facelift catalogue confirms 'Q5 40 TDI quattro S tronic' production span 09/2020-11/2024 at 150 kW/204 PS, quattro, 7-speed S tronic (DL382). The '40 TDI' commercial designation was introduced at the 09/2020 facelift; pre-facelift equivalents had different power states. Repo's production_start_year 2020 / end 2024 is correct (the '-2017-' substring in the row id is a legacy naming artifact, not the actual variant start). Tire 235/65 R17 confirmed official_exact via existing Audi MediaCenter 2024 tech-data PDF reference. Forward gear ratios remain unpopulated - no accessible primary EU spec source for the DL382 in this application. The internal transmission designation is DL382.",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DL382)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -958,8 +1020,8 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }
