@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, Protocol, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -46,6 +47,154 @@ _RAW_CAPTURE_SCHEMA_VERSION = 7
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
+type _JsonFieldDecoder = Callable[[JsonObject], object]
+type _JsonFieldEncoder = Callable[[object], object]
+type _IncludePredicate = Callable[[object], bool]
+type _JsonConstructor[T] = Callable[..., T]
+
+
+class _JsonObjectEncodable(Protocol):
+    def to_json_object(self) -> JsonObject: ...
+
+
+@dataclass(frozen=True, slots=True)
+class _JsonFieldSpec:
+    payload_key: str
+    attr_name: str
+    decode: _JsonFieldDecoder
+    encode: _JsonFieldEncoder
+    include: _IncludePredicate
+
+
+def _field(
+    payload_key: str,
+    *,
+    attr_name: str | None = None,
+    decode: _JsonFieldDecoder,
+    encode: _JsonFieldEncoder | None = None,
+    include: _IncludePredicate | None = None,
+) -> _JsonFieldSpec:
+    return _JsonFieldSpec(
+        payload_key=payload_key,
+        attr_name=attr_name or payload_key,
+        decode=decode,
+        encode=encode or _identity_json_value,
+        include=include or _always_include,
+    )
+
+
+def _always_include(_value: object) -> bool:
+    return True
+
+
+def _include_if_not_none(value: object) -> bool:
+    return value is not None
+
+
+def _include_if_nonempty(value: object) -> bool:
+    return bool(value)
+
+
+def _include_if_loss_events(value: object) -> bool:
+    return cast(RawCaptureLossStats, value).total_loss_event_count > 0
+
+
+def _identity_json_value(value: object) -> object:
+    return value
+
+
+def _encode_json_object(value: object) -> object:
+    return cast(_JsonObjectEncodable, value).to_json_object()
+
+
+def _encode_json_object_list(value: object) -> object:
+    return [item.to_json_object() for item in cast(tuple[_JsonObjectEncodable, ...], value)]
+
+
+def _int_decoder(payload_key: str, default: int = 0) -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        return _int_from_json(data.get(payload_key), default)
+
+    return decode
+
+
+def _int_or_none_decoder(payload_key: str) -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        return _int_or_none(data.get(payload_key))
+
+    return decode
+
+
+def _str_decoder(payload_key: str, default: str = "") -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        return _str_from_json(data.get(payload_key), default)
+
+    return decode
+
+
+def _nested_object_decoder(
+    payload_key: str,
+    constructor: Callable[[JsonObject], object],
+    *,
+    default_factory: Callable[[], object],
+) -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        raw = data.get(payload_key)
+        return constructor(raw) if is_json_object(raw) else default_factory()
+
+    return decode
+
+
+def _optional_object_decoder(
+    payload_key: str,
+    constructor: Callable[[JsonObject], object],
+) -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        raw = data.get(payload_key)
+        return constructor(raw) if is_json_object(raw) else None
+
+    return decode
+
+
+def _tuple_decoder(
+    payload_key: str,
+    constructor: Callable[[JsonObject], object],
+) -> _JsonFieldDecoder:
+    def decode(data: JsonObject) -> object:
+        raw = data.get(payload_key)
+        if not isinstance(raw, list):
+            return ()
+        return tuple(constructor(item) for item in raw if is_json_object(item))
+
+    return decode
+
+
+def _json_object_kwargs(
+    data: JsonObject,
+    specs: tuple[_JsonFieldSpec, ...],
+) -> dict[str, object]:
+    return {spec.attr_name: spec.decode(data) for spec in specs}
+
+
+def _build_from_json_object[T](
+    data: JsonObject,
+    specs: tuple[_JsonFieldSpec, ...],
+    constructor: _JsonConstructor[T],
+    **overrides: object,
+) -> T:
+    kwargs = _json_object_kwargs(data, specs)
+    kwargs.update(overrides)
+    return constructor(**kwargs)
+
+
+def _project_json_object(source: object, specs: tuple[_JsonFieldSpec, ...]) -> JsonObject:
+    payload: dict[str, object] = {}
+    for spec in specs:
+        value = getattr(source, spec.attr_name)
+        if spec.include(value):
+            payload[spec.payload_key] = spec.encode(value)
+    return cast(JsonObject, payload)
+
 
 @dataclass(frozen=True, slots=True)
 class RawCaptureChunk:
@@ -68,21 +217,11 @@ class RawCaptureChunkIndex:
     byte_offset: int
 
     def to_json_object(self) -> JsonObject:
-        return {
-            "sample_start": self.sample_start,
-            "sample_count": self.sample_count,
-            "t0_us": self.t0_us,
-            "byte_offset": self.byte_offset,
-        }
+        return _project_json_object(self, _RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureChunkIndex:
-        return cls(
-            sample_start=_int_from_json(data.get("sample_start")),
-            sample_count=_int_from_json(data.get("sample_count")),
-            t0_us=_int_from_json(data.get("t0_us")),
-            byte_offset=_int_from_json(data.get("byte_offset")),
-        )
+        return _build_from_json_object(data, _RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS, cls)
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,23 +248,11 @@ class RawCaptureLossStats:
         return self.total_dropped_chunk_count + max(0, self.late_packet_chunk_count)
 
     def to_json_object(self) -> JsonObject:
-        return {
-            "udp_ingest_queue_drop_count": self.udp_ingest_queue_drop_count,
-            "late_packet_chunk_count": self.late_packet_chunk_count,
-            "queue_overflow_chunk_count": self.queue_overflow_chunk_count,
-            "invalid_chunk_count": self.invalid_chunk_count,
-            "write_error_chunk_count": self.write_error_chunk_count,
-        }
+        return _project_json_object(self, _RAW_CAPTURE_LOSS_STATS_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureLossStats:
-        return cls(
-            udp_ingest_queue_drop_count=_int_from_json(data.get("udp_ingest_queue_drop_count")),
-            late_packet_chunk_count=_int_from_json(data.get("late_packet_chunk_count")),
-            queue_overflow_chunk_count=_int_from_json(data.get("queue_overflow_chunk_count")),
-            invalid_chunk_count=_int_from_json(data.get("invalid_chunk_count")),
-            write_error_chunk_count=_int_from_json(data.get("write_error_chunk_count")),
-        )
+        return _build_from_json_object(data, _RAW_CAPTURE_LOSS_STATS_JSON_FIELDS, cls)
 
     def merged(self, other: RawCaptureLossStats) -> RawCaptureLossStats:
         return RawCaptureLossStats(
@@ -161,23 +288,11 @@ class RawCaptureSensorLossStats:
         return max(0, self.losses.late_packet_chunk_count)
 
     def to_json_object(self) -> JsonObject:
-        return {
-            "client_id": self.client_id,
-            "losses": self.losses.to_json_object(),
-        }
+        return _project_json_object(self, _RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureSensorLossStats:
-        losses_raw = data.get("losses")
-        losses = (
-            RawCaptureLossStats.from_mapping(losses_raw)
-            if is_json_object(losses_raw)
-            else RawCaptureLossStats()
-        )
-        return cls(
-            client_id=_str_from_json(data.get("client_id")),
-            losses=losses,
-        )
+        return _build_from_json_object(data, _RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS, cls)
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,36 +319,11 @@ class RawCaptureSensorClockSync:
         return max(0, self.observed_monotonic_us - self.last_sync_monotonic_us)
 
     def to_json_object(self) -> JsonObject:
-        payload: JsonObject = {
-            "clock_domain": self.clock_domain,
-            "proof_state": self.proof_state,
-        }
-        if self.observed_monotonic_us is not None:
-            payload["observed_monotonic_us"] = self.observed_monotonic_us
-        if self.last_sync_monotonic_us is not None:
-            payload["last_sync_monotonic_us"] = self.last_sync_monotonic_us
-        if self.sync_offset_us is not None:
-            payload["sync_offset_us"] = self.sync_offset_us
-        if self.sync_rtt_us is not None:
-            payload["sync_rtt_us"] = self.sync_rtt_us
-        if self.max_sync_age_us is not None:
-            payload["max_sync_age_us"] = self.max_sync_age_us
-        if self.max_sync_rtt_us is not None:
-            payload["max_sync_rtt_us"] = self.max_sync_rtt_us
-        return payload
+        return _project_json_object(self, _RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureSensorClockSync:
-        return cls(
-            clock_domain=_str_from_json(data.get("clock_domain"), "unverified"),  # type: ignore[arg-type]
-            proof_state=_str_from_json(data.get("proof_state"), "missing_sync"),  # type: ignore[arg-type]
-            observed_monotonic_us=_int_or_none(data.get("observed_monotonic_us")),
-            last_sync_monotonic_us=_int_or_none(data.get("last_sync_monotonic_us")),
-            sync_offset_us=_int_or_none(data.get("sync_offset_us")),
-            sync_rtt_us=_int_or_none(data.get("sync_rtt_us")),
-            max_sync_age_us=_int_or_none(data.get("max_sync_age_us")),
-            max_sync_rtt_us=_int_or_none(data.get("max_sync_rtt_us")),
-        )
+        return _build_from_json_object(data, _RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS, cls)
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,51 +362,19 @@ class RawCaptureSensorManifest:
         )
 
     def to_json_object(self) -> JsonObject:
-        payload: JsonObject = {
-            "client_id": self.client_id,
-            "sample_rate_hz": self.sample_rate_hz,
-            "data_file": self.data_file,
-            "index_file": self.index_file,
-            "sample_count": self.sample_count,
-            "chunk_count": self.chunk_count,
-            "bytes_written": self.bytes_written,
-            "sample_rate_proof_state": self.sample_rate_proof_state,
-        }
-        if self.first_t0_us is not None:
-            payload["first_t0_us"] = self.first_t0_us
-        if self.last_t0_us is not None:
-            payload["last_t0_us"] = self.last_t0_us
-        if self.clock_sync is not None:
-            payload["clock_sync"] = self.clock_sync.to_json_object()
-        if self.declared_sample_rate_hz is not None:
-            payload["declared_sample_rate_hz"] = self.declared_sample_rate_hz
-        return payload
+        return _project_json_object(self, _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureSensorManifest:
-        sample_rate_hz = _int_from_json(data.get("sample_rate_hz"))
-        return cls(
-            client_id=_str_from_json(data.get("client_id")),
-            sample_rate_hz=sample_rate_hz,
-            data_file=_str_from_json(data.get("data_file")),
-            index_file=_str_from_json(data.get("index_file")),
-            sample_count=_int_from_json(data.get("sample_count")),
-            chunk_count=_int_from_json(data.get("chunk_count")),
-            bytes_written=_int_from_json(data.get("bytes_written")),
-            first_t0_us=_int_or_none(data.get("first_t0_us")),
-            last_t0_us=_int_or_none(data.get("last_t0_us")),
-            clock_sync=(
-                RawCaptureSensorClockSync.from_mapping(clock_sync_raw)
-                if is_json_object(clock_sync_raw := data.get("clock_sync"))
-                else None
-            ),
+        kwargs = _json_object_kwargs(data, _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS)
+        sample_rate_hz = cast(int, kwargs["sample_rate_hz"])
+        return _build_from_json_object(
+            data,
+            _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS,
+            cls,
             declared_sample_rate_hz=(
-                _int_or_none(data.get("declared_sample_rate_hz")) or sample_rate_hz or None
+                cast(int | None, kwargs["declared_sample_rate_hz"]) or sample_rate_hz or None
             ),
-            sample_rate_proof_state=_str_from_json(
-                data.get("sample_rate_proof_state"),
-                "declared_only",
-            ),  # type: ignore[arg-type]
         )
 
 
@@ -338,61 +396,11 @@ class RawCaptureManifest:
     capture_mode: str = _RAW_CAPTURE_MODE
 
     def to_json_object(self) -> JsonObject:
-        payload: JsonObject = {
-            "schema_version": self.schema_version,
-            "storage_type": self.storage_type,
-            "capture_mode": self.capture_mode,
-            "run_id": self.run_id,
-            "relative_dir": self.relative_dir,
-            "total_samples": self.total_samples,
-            "total_bytes": self.total_bytes,
-            "created_at": self.created_at,
-            "sensors": [sensor.to_json_object() for sensor in self.sensors],
-        }
-        if self.run_start_monotonic_us is not None:
-            payload["run_start_monotonic_us"] = self.run_start_monotonic_us
-        if self.sensor_losses:
-            payload["sensor_losses"] = [
-                sensor_loss.to_json_object() for sensor_loss in self.sensor_losses
-            ]
-        if self.losses.total_loss_event_count > 0:
-            payload["losses"] = self.losses.to_json_object()
-        return payload
+        return _project_json_object(self, _RAW_CAPTURE_MANIFEST_JSON_FIELDS)
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureManifest:
-        sensors_raw = data.get("sensors")
-        sensors: list[RawCaptureSensorManifest] = []
-        if isinstance(sensors_raw, list):
-            for item in sensors_raw:
-                if is_json_object(item):
-                    sensors.append(RawCaptureSensorManifest.from_mapping(item))
-        sensor_losses_raw = data.get("sensor_losses")
-        sensor_losses: list[RawCaptureSensorLossStats] = []
-        if isinstance(sensor_losses_raw, list):
-            for item in sensor_losses_raw:
-                if is_json_object(item):
-                    sensor_losses.append(RawCaptureSensorLossStats.from_mapping(item))
-        losses_raw = data.get("losses")
-        losses = (
-            RawCaptureLossStats.from_mapping(losses_raw)
-            if is_json_object(losses_raw)
-            else RawCaptureLossStats()
-        )
-        return cls(
-            schema_version=_int_from_json(data.get("schema_version"), _RAW_CAPTURE_SCHEMA_VERSION),
-            storage_type=_str_from_json(data.get("storage_type"), _RAW_CAPTURE_STORAGE_TYPE),
-            capture_mode=_str_from_json(data.get("capture_mode"), _RAW_CAPTURE_MODE),
-            run_id=_str_from_json(data.get("run_id")),
-            relative_dir=_str_from_json(data.get("relative_dir")),
-            sensors=tuple(sensors),
-            total_samples=_int_from_json(data.get("total_samples")),
-            total_bytes=_int_from_json(data.get("total_bytes")),
-            created_at=_str_from_json(data.get("created_at")),
-            run_start_monotonic_us=_int_or_none(data.get("run_start_monotonic_us")),
-            sensor_losses=tuple(sensor_losses),
-            losses=losses,
-        )
+        return _build_from_json_object(data, _RAW_CAPTURE_MANIFEST_JSON_FIELDS, cls)
 
     def sensor_manifest(self, client_id: str) -> RawCaptureSensorManifest | None:
         for sensor in self.sensors:
@@ -503,6 +511,155 @@ class RawRunCapture:
             if sensor.manifest.client_id == client_id:
                 return sensor
         return None
+
+
+_RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field("sample_start", decode=_int_decoder("sample_start")),
+    _field("sample_count", decode=_int_decoder("sample_count")),
+    _field("t0_us", decode=_int_decoder("t0_us")),
+    _field("byte_offset", decode=_int_decoder("byte_offset")),
+)
+_RAW_CAPTURE_LOSS_STATS_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field(
+        "udp_ingest_queue_drop_count",
+        decode=_int_decoder("udp_ingest_queue_drop_count"),
+    ),
+    _field("late_packet_chunk_count", decode=_int_decoder("late_packet_chunk_count")),
+    _field(
+        "queue_overflow_chunk_count",
+        decode=_int_decoder("queue_overflow_chunk_count"),
+    ),
+    _field("invalid_chunk_count", decode=_int_decoder("invalid_chunk_count")),
+    _field("write_error_chunk_count", decode=_int_decoder("write_error_chunk_count")),
+)
+_RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field("client_id", decode=_str_decoder("client_id")),
+    _field(
+        "losses",
+        decode=_nested_object_decoder(
+            "losses",
+            RawCaptureLossStats.from_mapping,
+            default_factory=RawCaptureLossStats,
+        ),
+        encode=_encode_json_object,
+    ),
+)
+_RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field("clock_domain", decode=_str_decoder("clock_domain", "unverified")),
+    _field("proof_state", decode=_str_decoder("proof_state", "missing_sync")),
+    _field(
+        "observed_monotonic_us",
+        decode=_int_or_none_decoder("observed_monotonic_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "last_sync_monotonic_us",
+        decode=_int_or_none_decoder("last_sync_monotonic_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "sync_offset_us",
+        decode=_int_or_none_decoder("sync_offset_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "sync_rtt_us",
+        decode=_int_or_none_decoder("sync_rtt_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "max_sync_age_us",
+        decode=_int_or_none_decoder("max_sync_age_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "max_sync_rtt_us",
+        decode=_int_or_none_decoder("max_sync_rtt_us"),
+        include=_include_if_not_none,
+    ),
+)
+_RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field("client_id", decode=_str_decoder("client_id")),
+    _field("sample_rate_hz", decode=_int_decoder("sample_rate_hz")),
+    _field("data_file", decode=_str_decoder("data_file")),
+    _field("index_file", decode=_str_decoder("index_file")),
+    _field("sample_count", decode=_int_decoder("sample_count")),
+    _field("chunk_count", decode=_int_decoder("chunk_count")),
+    _field("bytes_written", decode=_int_decoder("bytes_written")),
+    _field(
+        "first_t0_us",
+        decode=_int_or_none_decoder("first_t0_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "last_t0_us",
+        decode=_int_or_none_decoder("last_t0_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "clock_sync",
+        decode=_optional_object_decoder(
+            "clock_sync",
+            RawCaptureSensorClockSync.from_mapping,
+        ),
+        encode=_encode_json_object,
+        include=_include_if_not_none,
+    ),
+    _field(
+        "declared_sample_rate_hz",
+        decode=_int_or_none_decoder("declared_sample_rate_hz"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "sample_rate_proof_state",
+        decode=_str_decoder("sample_rate_proof_state", "declared_only"),
+    ),
+)
+_RAW_CAPTURE_MANIFEST_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
+    _field(
+        "schema_version",
+        decode=_int_decoder("schema_version", _RAW_CAPTURE_SCHEMA_VERSION),
+    ),
+    _field(
+        "storage_type",
+        decode=_str_decoder("storage_type", _RAW_CAPTURE_STORAGE_TYPE),
+    ),
+    _field(
+        "capture_mode",
+        decode=_str_decoder("capture_mode", _RAW_CAPTURE_MODE),
+    ),
+    _field("run_id", decode=_str_decoder("run_id")),
+    _field("relative_dir", decode=_str_decoder("relative_dir")),
+    _field(
+        "sensors",
+        decode=_tuple_decoder("sensors", RawCaptureSensorManifest.from_mapping),
+        encode=_encode_json_object_list,
+    ),
+    _field("total_samples", decode=_int_decoder("total_samples")),
+    _field("total_bytes", decode=_int_decoder("total_bytes")),
+    _field("created_at", decode=_str_decoder("created_at")),
+    _field(
+        "run_start_monotonic_us",
+        decode=_int_or_none_decoder("run_start_monotonic_us"),
+        include=_include_if_not_none,
+    ),
+    _field(
+        "sensor_losses",
+        decode=_tuple_decoder("sensor_losses", RawCaptureSensorLossStats.from_mapping),
+        encode=_encode_json_object_list,
+        include=_include_if_nonempty,
+    ),
+    _field(
+        "losses",
+        decode=_nested_object_decoder(
+            "losses",
+            RawCaptureLossStats.from_mapping,
+            default_factory=RawCaptureLossStats,
+        ),
+        encode=_encode_json_object,
+        include=_include_if_loss_events,
+    ),
+)
 
 
 def _int_or_none(value: JsonValue | object) -> int | None:
