@@ -8,7 +8,7 @@
  *  4. EXPECTED_SCHEMA_VERSION matches the server's current version
  */
 
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { adaptServerPayload } from "../src/server_payload";
 import {
   EXPECTED_SCHEMA_VERSION,
@@ -36,6 +36,10 @@ const _wsFrameSamplesRequired: _WsFrameSamplesRequired = true;
 const _httpFrameSamplesRequired: _HttpFrameSamplesRequired = true;
 void _wsFrameSamplesRequired;
 void _httpFrameSamplesRequired;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function makeStrengthMetrics(
   overrides: Partial<StrengthMetricsPayload> = {},
@@ -65,6 +69,16 @@ function expectInvalidPayload(payload: unknown): void {
   );
 }
 
+async function loadFreshServerPayloadModule(): Promise<{
+  adaptServerPayload: typeof import("../src/server_payload").adaptServerPayload;
+  uiLogger: typeof import("../src/ui_logger").uiLogger;
+}> {
+  vi.resetModules();
+  const { uiLogger } = await import("../src/ui_logger");
+  const { adaptServerPayload } = await import("../src/server_payload");
+  return { adaptServerPayload, uiLogger };
+}
+
 function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
   expect(adapted.spectra).not.toBeNull();
   if (!adapted.spectra) throw new Error("Expected adapted spectra");
@@ -86,12 +100,34 @@ describe("schema_version handling", () => {
     expectInvalidPayload(noVersion);
   });
 
-  test("accepts unknown schema_version (logs warning, does not throw)", () => {
+  test("accepts unknown schema_version (logs warning, does not throw)", async () => {
+    const { adaptServerPayload, uiLogger } = await loadFreshServerPayloadModule();
+    const errorSpy = vi.spyOn(uiLogger, "error").mockImplementation(() => undefined);
+
     const adapted = adaptServerPayload({
       ...basePayload,
       schema_version: "999",
     });
+
     expect(adapted).toBeDefined();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("logs unknown schema_version once across repeated mismatches", async () => {
+    const { adaptServerPayload, uiLogger } = await loadFreshServerPayloadModule();
+    const errorSpy = vi.spyOn(uiLogger, "error").mockImplementation(() => undefined);
+
+    adaptServerPayload({
+      ...basePayload,
+      schema_version: "999",
+    });
+    adaptServerPayload({
+      ...basePayload,
+      schema_version: "999",
+      server_time: "2026-01-01T00:00:01Z",
+    });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
   test("rejects invalid field types via runtime validation", () => {
