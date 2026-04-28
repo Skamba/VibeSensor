@@ -94,6 +94,25 @@ def test_plan_commands_combines_docs_ui_and_hygiene_checks() -> None:
     )
 
 
+def test_plan_commands_runs_ui_unit_tests_for_changed_ui_source_files() -> None:
+    module = _load_run_changed_module()
+
+    commands = module._plan_commands(("apps/ui/src/ws_payload_validator.ts",))
+
+    assert commands == (
+        module.PlannedCommand("ui-test", ("make", "ui-test")),
+        module.PlannedCommand("ui-typecheck", ("make", "ui-typecheck")),
+    )
+
+
+def test_plan_commands_keeps_non_source_ui_changes_on_typecheck_only() -> None:
+    module = _load_run_changed_module()
+
+    commands = module._plan_commands(("apps/ui/package.json",))
+
+    assert commands == (module.PlannedCommand("ui-typecheck", ("make", "ui-typecheck")),)
+
+
 def test_plan_commands_falls_back_to_make_test_for_unmapped_backend_changes() -> None:
     module = _load_run_changed_module()
 
