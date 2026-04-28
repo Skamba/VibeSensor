@@ -153,7 +153,7 @@ Focused CI job groups and full-stack validation:
 
 ```bash
 python3 tools/tests/run_ci_parallel.py --ci-lite
-python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-smoke
 python3 tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
 ```
@@ -181,7 +181,7 @@ cd apps/ui && npm run test:unit
 cd apps/ui && npm run build
 cd apps/ui && npm run test:visual
 cd apps/ui && npm run test:visual:audit   # optional broader visual sweep
-python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-unit --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
 ```
 
 The UI has three test layers; pick the one that matches the seam under test:
@@ -200,9 +200,11 @@ The UI has three test layers; pick the one that matches the seam under test:
   `npm run test:visual:update` only for intentional baseline changes.
 - `npm run test:visual:audit` is the opt-in four-project visual audit sweep
   when you need dark/tablet coverage on purpose instead of in the default lane.
-- `frontend-typecheck` is the UI contract/type/tooling gate: it syncs generated
-  contract artifacts, then runs Biome, dependency-cruiser, knip, and TypeScript.
-  `ui-unit` runs the Vitest suite and `ui-smoke` is the CI browser path. Use
+- `frontend-quality` is the UI lint/tooling gate: it runs Biome,
+  dependency-cruiser, and knip. `frontend-typecheck` is the generated-contract
+  and TypeScript gate: it syncs generated contract artifacts, then runs
+  `npm run typecheck`. `ui-unit` runs the Vitest suite and `ui-smoke` is the CI
+  browser path. Use `act -j frontend-quality -W .github/workflows/ci.yml`,
   `act -j frontend-typecheck -W .github/workflows/ci.yml`,
   `act -j ui-unit -W .github/workflows/ci.yml`, or
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
@@ -298,6 +300,7 @@ act -j backend-preflight -W .github/workflows/ci.yml
 act -j docs-lint -W .github/workflows/ci.yml
 act -j backend-contract-drift -W .github/workflows/ci.yml
 act -j backend-typecheck -W .github/workflows/ci.yml
+act -j frontend-quality -W .github/workflows/ci.yml
 act -j frontend-typecheck -W .github/workflows/ci.yml
 act -j backend-tests -W .github/workflows/ci.yml
 act -j ui-smoke -W .github/workflows/ci.yml
@@ -335,6 +338,7 @@ No secrets are currently required. If needed in the future, copy
 | `docs-lint` | ✅ Fully supported | — |
 | `backend-contract-drift` | ✅ Fully supported | — |
 | `backend-typecheck` | ✅ Fully supported | — |
+| `frontend-quality` | ✅ Fully supported | — |
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
@@ -364,7 +368,7 @@ rules explicit, documented, and test-backed.
 The current gating contract is:
 
 - docs-only markdown changes run `docs-lint` without the backend, frontend, release, firmware, or e2e stacks
-- frontend-only changes run `repo-hygiene`, `frontend-typecheck`, `ui-smoke`, and `release-smoke`
+- frontend-only changes run `repo-hygiene`, `frontend-quality`, `frontend-typecheck`, `ui-unit`, `ui-smoke`, and `release-smoke`
 - backend-only changes run the split backend quality gates, `backend-typecheck`, `backend-tests`, `release-smoke`, and `e2e`
 - firmware-only changes run `firmware-native-tests`
 - workflow / CI meta changes such as `.github/workflows/ci.yml`, `Makefile`, version pins, Dockerfiles, and workflow-manifest tooling fall back to the full stack
@@ -408,7 +412,8 @@ workflow-backed CI manifest:
 - `docs-lint`: docs misuse and markdown-link validation.
 - `backend-contract-drift`: WS schema and HTTP API contract drift checks.
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
-- `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
+- `frontend-quality`: `npm run lint`, `npm run lint:deps`, and `npm run lint:unused` in `apps/ui/`.
+- `frontend-typecheck`: `npm run sync:generated-contracts` and `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
 - `ui-smoke`, `backend-tests` (matrix job emitting shard `1/5` through `5/5` checks), `e2e`: required test jobs.
 
