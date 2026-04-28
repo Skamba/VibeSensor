@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from _update_manager_test_helpers import FakeRunner
+from test_support.update_status import build_update_status_harness
 
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
+from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.transport.usb_internet import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
 from vibesensor.use_cases.updates.usb_status_inspection import parse_nmcli_device_status
+from vibesensor.use_cases.updates.wifi import build_default_wifi_config
 
 
 def _make_usb_interface(
@@ -89,6 +96,32 @@ class _UsbActivationFailureRunner(FakeRunner):
         return self.default_response
 
 
+def _usb_request() -> UpdateRequest:
+    return UpdateRequest(
+        transport=UpdateTransport.usb_internet,
+        ssid=None,
+        password="",
+    )
+
+
+def _build_usb_session(
+    tmp_path: Path,
+) -> tuple[UpdateUsbInternetSession, AsyncMock, FakeRunner, UpdateStatusTracker]:
+    runner = FakeRunner()
+    tracker = build_update_status_harness(tmp_path / "state.json")
+    status_service = AsyncMock()
+    session = UpdateUsbInternetSession(
+        status_service=status_service,
+        commands=UpdateCommandExecutor(runner=runner),
+        status=tracker,
+        config=build_default_wifi_config(
+            ap_con_name="VibeSensor-AP",
+            wifi_ifname="wlan0",
+        ),
+    )
+    return session, status_service, runner, tracker
+
+
 def test_parse_nmcli_device_status_normalizes_missing_connection_name() -> None:
     statuses = parse_nmcli_device_status("usb0:ethernet:connected:--\n")
 
@@ -96,6 +129,41 @@ def test_parse_nmcli_device_status_normalizes_missing_connection_name() -> None:
     assert statuses["usb0"].device_type == "ethernet"
     assert statuses["usb0"].state == "connected"
     assert statuses["usb0"].connection_name is None
+
+
+@pytest.mark.asyncio
+async def test_usb_internet_lifecycle_noops_preserve_existing_status_state(tmp_path: Path) -> None:
+    session, status_service, runner, tracker = _build_usb_session(tmp_path)
+    tracker.start_job(_usb_request())
+    tracker.transition(UpdatePhase.connecting_usb_internet)
+    tracker.set_uplink_interface("usb0")
+    before = (
+        tracker.status.state,
+        tracker.status.phase,
+        tracker.status.uplink_interface,
+        list(tracker.status.log_tail),
+        list(tracker.status.issues),
+        tracker.status.updated_at,
+        tracker.status.phase_started_at,
+    )
+
+    assert await session.abort_preparation() is None
+    assert await session.complete_success() is None
+    assert await session.cleanup_after_update() is None
+    assert await session.recover_interrupted_update(tracker.status) is None
+
+    after = (
+        tracker.status.state,
+        tracker.status.phase,
+        tracker.status.uplink_interface,
+        list(tracker.status.log_tail),
+        list(tracker.status.issues),
+        tracker.status.updated_at,
+        tracker.status.phase_started_at,
+    )
+    assert after == before
+    assert runner.calls == []
+    status_service.snapshot.assert_not_awaited()
 
 
 @pytest.mark.asyncio
