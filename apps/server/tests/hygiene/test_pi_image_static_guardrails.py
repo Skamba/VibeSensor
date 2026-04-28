@@ -89,3 +89,14 @@ def test_server_systemd_uses_console_script_entrypoint() -> None:
         "ExecStart=__VENV_DIR__/bin/vibesensor-server --config /etc/vibesensor/config.yaml"
         in service_text
     )
+
+
+@pytest.mark.smoke
+def test_pi_image_validation_checks_current_packaged_static_data_layout() -> None:
+    validation_text = (
+        REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "vehicle_configurations" in validation_text
+    assert "car_sources" in validation_text
+    assert "car_library.json" not in validation_text
