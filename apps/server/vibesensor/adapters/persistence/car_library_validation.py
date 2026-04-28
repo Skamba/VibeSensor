@@ -134,6 +134,7 @@ def validate_vehicle_configurations(
     issues: list[CarLibraryValidationIssue] = []
     for config in configs:
         _validate_vehicle_configuration(config, issues)
+    _validate_vehicle_configuration_duplicates(configs, issues)
     return _filter_allowlisted_issues(issues, allowlist)
 
 
@@ -674,6 +675,104 @@ def _tire_spec_from_values(*, width: object, aspect: object, rim: object) -> Tir
             "rim_in": rim_value,
         }
     )
+
+
+def _normalize_label(value: object) -> str:
+    text = str(value or "").casefold()
+    return re.sub(r"[^a-z0-9]+", "", text)
+
+
+def _round_ratio(value: float | None) -> float | None:
+    return None if value is None else round(value, 4)
+
+
+def _tire_signature(tire: TireSpec | None) -> tuple[float, float, float] | None:
+    if tire is None:
+        return None
+    return (round(tire.width_mm, 1), round(tire.aspect_pct, 1), round(tire.rim_in, 1))
+
+
+def _vehicle_configuration_identity_key(
+    config: VehicleConfiguration,
+) -> tuple[object, ...]:
+    return (
+        _normalize_label(config.brand),
+        _normalize_label(config.model_name),
+        _normalize_label(config.variant_name),
+        config.drivetrain,
+        config.fuel_type,
+        _normalize_label(config.transmission_name),
+        _round_ratio(config.top_gear_ratio),
+        _round_ratio(config.final_drive_front),
+        _round_ratio(config.final_drive_rear),
+        _tire_signature(config.default_tire),
+    )
+
+
+def _vehicle_configuration_fuzzy_label_key(
+    config: VehicleConfiguration,
+) -> tuple[str, str, str]:
+    return (
+        _normalize_label(config.brand),
+        _normalize_label(config.model_name),
+        _normalize_label(config.variant_name),
+    )
+
+
+def _validate_vehicle_configuration_duplicates(
+    configs: Sequence[VehicleConfiguration],
+    issues: list[CarLibraryValidationIssue],
+) -> None:
+    by_identity: dict[tuple[object, ...], list[VehicleConfiguration]] = {}
+    by_fuzzy_label: dict[tuple[str, str, str], list[VehicleConfiguration]] = {}
+    for config in configs:
+        if not config.id:
+            continue
+        by_identity.setdefault(_vehicle_configuration_identity_key(config), []).append(config)
+        by_fuzzy_label.setdefault(_vehicle_configuration_fuzzy_label_key(config), []).append(config)
+
+    for group in by_identity.values():
+        if len(group) <= 1:
+            continue
+        peers = sorted(str(other.id) for other in group)
+        for config in group:
+            row_id = str(config.id)
+            others = [pid for pid in peers if pid != row_id]
+            issues.append(
+                CarLibraryValidationIssue(
+                    rule="duplicate_vehicle_configuration",
+                    entity=row_id,
+                    message=(
+                        f"{config.brand} {config.model_name} / {config.variant_name} "
+                        f"shares normalized identity with {', '.join(others)}"
+                    ),
+                )
+            )
+
+    for group in by_fuzzy_label.values():
+        if len(group) <= 1:
+            continue
+        identity_keys = {_vehicle_configuration_identity_key(c) for c in group}
+        if len(identity_keys) <= 1:
+            continue
+        raw_labels = {(c.brand, c.model_name, c.variant_name) for c in group}
+        if len(raw_labels) <= 1:
+            continue
+        peers = sorted(str(other.id) for other in group)
+        for config in group:
+            row_id = str(config.id)
+            others = [pid for pid in peers if pid != row_id]
+            issues.append(
+                CarLibraryValidationIssue(
+                    rule="near_duplicate_vehicle_configuration",
+                    entity=row_id,
+                    message=(
+                        f"{config.brand} {config.model_name} / {config.variant_name} "
+                        "matches another row after label normalization "
+                        f"but has different math: {', '.join(others)}"
+                    ),
+                )
+            )
 
 
 def _filter_allowlisted_issues(
