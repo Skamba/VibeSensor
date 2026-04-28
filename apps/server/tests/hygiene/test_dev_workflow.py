@@ -15,6 +15,7 @@ from tests._paths import REPO_ROOT
 
 _MAKEFILE = REPO_ROOT / "Makefile"
 _DOCKER_DEV_COMPOSE = REPO_ROOT / "docker-compose.dev.yml"
+_UI_KNIP_CONFIG = REPO_ROOT / "apps" / "ui" / "knip.jsonc"
 _UI_PACKAGE_JSON = REPO_ROOT / "apps" / "ui" / "package.json"
 _UI_DEV_SCRIPT = REPO_ROOT / "apps" / "ui" / "dev-docker.sh"
 _UI_README = REPO_ROOT / "apps" / "ui" / "README.md"
@@ -118,6 +119,18 @@ def test_makefile_exposes_ui_unit_test_target_and_readme_pointer() -> None:
     assert "ui-test: ## Run UI unit tests" in makefile_text
     assert "cd $(UI_DIR) && npm run test:unit" in makefile_text
     assert "make ui-test                 # same unit suite from the repo root" in readme_text
+
+
+def test_ui_knip_exports_scope_and_readme_pointer() -> None:
+    scripts = _package_scripts()
+    knip_text = _UI_KNIP_CONFIG.read_text(encoding="utf-8")
+    readme_text = _UI_README.read_text(encoding="utf-8")
+
+    assert scripts["lint:unused"] == "knip --config knip.jsonc"
+    assert '"include": ["files", "dependencies", "exports"]' in knip_text
+    assert "npm run lint:unused  # knip dead-file/dependency/export checks" in readme_text
+    assert "cleaned-up unused" in readme_text
+    assert "Exported-type checks still stay out" in readme_text
 
 
 def test_docker_dev_ui_service_uses_guarded_dev_script_and_healthcheck() -> None:

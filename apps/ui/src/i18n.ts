@@ -8,7 +8,7 @@ export type NumberVar = {
   options?: Intl.NumberFormatOptions;
 };
 
-export const supported = ["en", "nl"] as const;
+const supported = ["en", "nl"] as const;
 type SupportedLanguage = (typeof supported)[number];
 
 const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;

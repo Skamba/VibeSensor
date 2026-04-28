@@ -10,7 +10,7 @@ import {
   type CaptureReadinessCheckPayload,
 } from "./realtime_capture_readiness_models";
 
-export const REALTIME_LOGGING_SUMMARY_ACTIONS = [
+const REALTIME_LOGGING_SUMMARY_ACTIONS = [
   "open-history",
   "open-cars",
   "open-add-car",
