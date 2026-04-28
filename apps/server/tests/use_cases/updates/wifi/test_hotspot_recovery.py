@@ -115,3 +115,24 @@ async def test_restore_hotspot_exhausts_retries_and_records_issue(
         and issue.message == "Failed to restore hotspot after retries"
         for issue in tracker.status.issues
     )
+
+
+@pytest.mark.asyncio
+async def test_restore_hotspot_still_attempts_ap_recovery_after_cleanup_failure(
+    tmp_path: Path,
+) -> None:
+    recovery, runner, tracker = _build_recovery(tmp_path)
+    runner.set_response("connection down VibeSensor-Uplink", 10, "", "down failed")
+
+    assert await recovery.restore_hotspot() is True
+    assert any(
+        "Transient uplink cleanup failed before hotspot restore; attempting AP recovery anyway"
+        in line
+        for line in tracker.status.log_tail
+    )
+    assert any("down failed" in line for line in tracker.status.log_tail)
+
+    commands = [" ".join(call[0]) for call in runner.calls]
+    assert "connection down VibeSensor-Uplink" in commands[0]
+    assert "connection delete VibeSensor-Uplink" in commands[1]
+    assert "connection up VibeSensor-AP" in commands[2]
