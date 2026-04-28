@@ -141,7 +141,7 @@ export function makeDeleteHistoryRunPayload(
   };
 }
 
-export function makeHistoryRunPayload(
+function makeHistoryRunPayload(
   overrides: Partial<HistoryRunPayload> = {},
 ): HistoryRunPayload {
   return {
@@ -155,7 +155,7 @@ export function makeHistoryRunPayload(
   };
 }
 
-export function makeHistoryInsightsAnalyzingPayload(runId: string): HistoryInsightsLike {
+function makeHistoryInsightsAnalyzingPayload(runId: string): HistoryInsightsLike {
   return {
     run_id: runId,
     status: "analyzing",

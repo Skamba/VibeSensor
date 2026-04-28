@@ -82,7 +82,7 @@ export function makeUpdateStartPayload(
   };
 }
 
-export function makeUpdateCancelPayload(
+function makeUpdateCancelPayload(
   overrides: Partial<UpdateCancelPayload> = {},
 ): UpdateCancelPayload {
   return {
@@ -139,7 +139,7 @@ export function makeEspFlashHistoryPayload(
   };
 }
 
-export function makeEspFlashStartPayload(
+function makeEspFlashStartPayload(
   overrides: Partial<EspFlashStartPayload> = {},
 ): EspFlashStartPayload {
   return {
@@ -149,7 +149,7 @@ export function makeEspFlashStartPayload(
   };
 }
 
-export function makeEspFlashCancelPayload(
+function makeEspFlashCancelPayload(
   overrides: Partial<EspFlashCancelPayload> = {},
 ): EspFlashCancelPayload {
   return {

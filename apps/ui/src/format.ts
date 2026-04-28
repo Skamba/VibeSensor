@@ -25,7 +25,7 @@ export function formatEpochTimestamp(epoch: number | null | undefined): string {
 const _defaultNumberFormat = new Intl.NumberFormat();
 const _localeFormatCache = new Map<string, Intl.NumberFormat>();
 
-export function formatInt(value: number): string {
+function formatInt(value: number): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "--";
   return _defaultNumberFormat.format(Math.round(value));
 }

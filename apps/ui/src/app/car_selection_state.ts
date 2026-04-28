@@ -60,7 +60,7 @@ function deriveCarSelectionState(settings: CarSelectionStateSource): CarSelectio
   return { kind: "no_active_car" };
 }
 
-export function hasResolvedActiveCar(settings: CarSelectionStateSource): boolean {
+function hasResolvedActiveCar(settings: CarSelectionStateSource): boolean {
   return deriveCarSelectionState(settings).kind === "active";
 }
 

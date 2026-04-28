@@ -90,6 +90,6 @@ export function HistoryPanel(props: {
   );
 }
 
-export function mountHistoryPanel(host: HTMLElement, view: HistoryPanelView): void {
+function mountHistoryPanel(host: HTMLElement, view: HistoryPanelView): void {
   render(<HistoryPanel actions={view.actions} model={view.model} />, host);
 }

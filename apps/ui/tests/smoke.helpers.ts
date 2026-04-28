@@ -125,7 +125,7 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
   });
 }
 
-export async function installLiveSensorPayload(
+async function installLiveSensorPayload(
   page: Page,
   options: LiveSensorPayloadOptions = {},
 ): Promise<void> {
