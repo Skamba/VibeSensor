@@ -15,17 +15,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8Y",
+    "body_code": "8Y",
+    "model_name": "RS 3 Sedan (8Y, 2021-2026)",
+    "production_start_year": 2021,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "audi-8y-rs3-sedan-eu-2021-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "8Y",
-      "body_code": "8Y",
-      "production_start_year": 2021,
-      "production_end_year": 2026,
-      "model_name": "RS 3 Sedan (8Y, 2021-2026)",
       "variant_name": "RS 3",
       "engine_code": "2.5L",
       "engine_name": "2.5L I5 TFSI Turbo",

@@ -9,17 +9,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "model_name": "RS 3 Sedan (8V, 2017-2020)",
+    "production_start_year": 2017,
+    "production_end_year": 2020
+  },
   "configurations": [
     {
       "id": "audi-8v-rs3-sedan-eu-2017-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "8V",
-      "body_code": "8V",
-      "production_start_year": 2017,
-      "production_end_year": 2020,
-      "model_name": "RS 3 Sedan (8V, 2017-2020)",
       "variant_name": "RS 3",
       "engine_code": "2.5L",
       "engine_name": "2.5L I5 TFSI Turbo",

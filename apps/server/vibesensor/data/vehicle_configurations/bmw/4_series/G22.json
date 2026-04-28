@@ -25,17 +25,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G22",
+    "body_code": "G22",
+    "model_name": "4 Series (G22, 2021-2026)",
+    "production_start_year": 2021,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-g22-420i-eu-2021-zf8hp-rwd",
-      "brand": "BMW",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "G22",
-      "body_code": "G22",
-      "production_start_year": 2021,
-      "production_end_year": 2026,
-      "model_name": "4 Series (G22, 2021-2026)",
       "variant_name": "420i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -161,14 +163,6 @@
     },
     {
       "id": "bmw-g22-430i-xdrive-eu-2021-zf8hp-awd",
-      "brand": "BMW",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "G22",
-      "body_code": "G22",
-      "production_start_year": 2021,
-      "production_end_year": 2026,
-      "model_name": "4 Series (G22, 2021-2026)",
       "variant_name": "430i xDrive",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -299,14 +293,6 @@
     },
     {
       "id": "bmw-g22-m440i-xdrive-eu-2021-zf8hp-awd",
-      "brand": "BMW",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "G22",
-      "body_code": "G22",
-      "production_start_year": 2021,
-      "production_end_year": 2026,
-      "model_name": "4 Series (G22, 2021-2026)",
       "variant_name": "M440i xDrive",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo",

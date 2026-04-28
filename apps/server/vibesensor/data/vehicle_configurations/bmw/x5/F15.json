@@ -28,14 +28,16 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F15",
+    "body_code": "F15"
+  },
   "configurations": [
     {
       "id": "bmw-f15-xdrive35i-eu-2014-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F15",
-      "body_code": "F15",
       "production_start_year": 2014,
       "production_end_year": 2014,
       "model_name": "X5 (F15, 2014)",
@@ -170,11 +172,6 @@
     },
     {
       "id": "bmw-f15-xdrive50i-eu-2014-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F15",
-      "body_code": "F15",
       "production_start_year": 2014,
       "production_end_year": 2014,
       "model_name": "X5 (F15, 2014)",
@@ -309,11 +306,6 @@
     },
     {
       "id": "bmw-f15-xdrive40e-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F15",
-      "body_code": "F15",
       "production_start_year": 2015,
       "production_end_year": 2015,
       "model_name": "X5 (F15, 2015)",

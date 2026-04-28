@@ -192,3 +192,90 @@ def test_load_vehicle_configurations_rejects_legacy_array_shard(tmp_path: Path) 
         tmp_path,
     ):
         assert load_vehicle_configurations() == []
+
+
+def test_load_vehicle_configurations_applies_shard_defaults(tmp_path: Path) -> None:
+    """Top-level ``defaults`` merge into rows that lack the field."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    defaults = cast(dict[str, object], fixture.setdefault("defaults", {}))
+    expected_brand = defaults["brand"] if "brand" in defaults else rows[0]["brand"]
+    for row in rows:
+        row.pop("brand", None)
+    defaults["brand"] = expected_brand
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+
+    assert loaded
+    assert all(config.brand == expected_brand for config in loaded)
+
+
+def test_load_vehicle_configurations_row_overrides_default(tmp_path: Path) -> None:
+    """Row-level keys override shard defaults for that row only."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    assert len(rows) >= 1
+    defaults = cast(dict[str, object], fixture.setdefault("defaults", {}))
+    defaults["brand"] = "DEFAULT_BRAND"
+    overridden_id = str(rows[0]["id"])
+    rows[0]["brand"] = "ROW_BRAND"
+    for row in rows[1:]:
+        row.pop("brand", None)
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+
+    by_id = {config.id: config for config in loaded}
+    assert by_id[overridden_id].brand == "ROW_BRAND"
+    for config_id, config in by_id.items():
+        if config_id != overridden_id:
+            assert config.brand == "DEFAULT_BRAND"
+
+
+def test_load_vehicle_configurations_fails_closed_when_defaults_miss_required(
+    tmp_path: Path,
+) -> None:
+    """Missing required fields after defaults expansion fail closed."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    defaults = cast(dict[str, object], fixture.setdefault("defaults", {}))
+    defaults.pop("brand", None)
+    for row in rows:
+        row.pop("brand", None)
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        assert load_vehicle_configurations() == []
+
+
+def test_load_vehicle_configurations_rejects_unknown_top_level_key(tmp_path: Path) -> None:
+    """Unknown shard top-level keys (e.g. typos) are rejected."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    fixture["unexpected"] = {"brand": "X"}
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        assert load_vehicle_configurations() == []

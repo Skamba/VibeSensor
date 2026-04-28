@@ -33,17 +33,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G02",
+    "body_code": "G02",
+    "model_name": "X4 (G02, 2019-2025)",
+    "production_start_year": 2019,
+    "production_end_year": 2025
+  },
   "configurations": [
     {
       "id": "bmw-g02-m40i-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G02",
-      "body_code": "G02",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "X4 (G02, 2019-2025)",
       "variant_name": "M40i",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo",
@@ -185,14 +187,6 @@
     },
     {
       "id": "bmw-g02-xdrive20i-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G02",
-      "body_code": "G02",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "X4 (G02, 2019-2025)",
       "variant_name": "xDrive20i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -334,14 +328,6 @@
     },
     {
       "id": "bmw-g02-xdrive30i-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G02",
-      "body_code": "G02",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "X4 (G02, 2019-2025)",
       "variant_name": "xDrive30i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",

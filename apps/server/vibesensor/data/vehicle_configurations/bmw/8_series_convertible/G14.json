@@ -26,14 +26,16 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Convertible",
+    "market": "EU",
+    "model_code": "G14",
+    "body_code": "G14"
+  },
   "configurations": [
     {
       "id": "bmw-g14-m850i-xdrive-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "Convertible",
-      "market": "EU",
-      "model_code": "G14",
-      "body_code": "G14",
       "production_start_year": 2019,
       "production_end_year": 2019,
       "model_name": "8 Series Convertible (G14, 2019)",
@@ -163,11 +165,6 @@
     },
     {
       "id": "bmw-g14-840i-eu-2020-zf8hp-rwd",
-      "brand": "BMW",
-      "type": "Convertible",
-      "market": "EU",
-      "model_code": "G14",
-      "body_code": "G14",
       "production_start_year": 2020,
       "production_end_year": 2020,
       "model_name": "8 Series Convertible (G14, 2020)",

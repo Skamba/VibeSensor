@@ -23,17 +23,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "I20",
+    "body_code": "I20",
+    "model_name": "iX (I20, 2022-2026)",
+    "production_start_year": 2022,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-i20-m60-eu-2022-ss1-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "I20",
-      "body_code": "I20",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "iX (I20, 2022-2026)",
       "variant_name": "M60",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor (Performance)",
@@ -137,14 +139,6 @@
     },
     {
       "id": "bmw-i20-xdrive40-eu-2022-ss1-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "I20",
-      "body_code": "I20",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "iX (I20, 2022-2026)",
       "variant_name": "xDrive40",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
@@ -248,14 +242,6 @@
     },
     {
       "id": "bmw-i20-xdrive50-eu-2022-ss1-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "I20",
-      "body_code": "I20",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "iX (I20, 2022-2026)",
       "variant_name": "xDrive50",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",

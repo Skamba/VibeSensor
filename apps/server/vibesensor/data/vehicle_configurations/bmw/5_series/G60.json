@@ -34,17 +34,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G60",
+    "body_code": "G60",
+    "model_name": "5 Series (G60, 2024-2026)",
+    "production_start_year": 2024,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-g60-520i-eu-2024-zf8hp-rwd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "G60",
-      "body_code": "G60",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "5 Series (G60, 2024-2026)",
       "variant_name": "520i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -141,14 +143,6 @@
     },
     {
       "id": "bmw-g60-i5-m60-xdrive-eu-2024-ss1-awd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "G60",
-      "body_code": "G60",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "5 Series (G60, 2024-2026)",
       "variant_name": "i5 M60 xDrive",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
@@ -270,14 +264,6 @@
     },
     {
       "id": "bmw-g60-i5-edrive40-eu-2024-ss1-rwd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "G60",
-      "body_code": "G60",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "5 Series (G60, 2024-2026)",
       "variant_name": "i5 eDrive40",
       "engine_code": "Electric",
       "engine_name": "Electric Single Motor",

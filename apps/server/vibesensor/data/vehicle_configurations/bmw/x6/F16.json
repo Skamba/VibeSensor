@@ -18,15 +18,17 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F16",
+    "body_code": "F16",
+    "production_start_year": 2015
+  },
   "configurations": [
     {
       "id": "bmw-f16-xdrive50i-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F16",
-      "body_code": "F16",
-      "production_start_year": 2015,
       "production_end_year": 2015,
       "model_name": "X6 (F16, 2015)",
       "variant_name": "xDrive50i",
@@ -160,12 +162,6 @@
     },
     {
       "id": "bmw-f16-xdrive35i-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F16",
-      "body_code": "F16",
-      "production_start_year": 2015,
       "production_end_year": 2019,
       "model_name": "X6 (F16, 2015-2019)",
       "variant_name": "xDrive35i",
