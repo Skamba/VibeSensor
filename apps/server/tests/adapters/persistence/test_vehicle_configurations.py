@@ -387,3 +387,63 @@ def test_load_vehicle_configurations_fails_closed_for_unknown_setup_ref(
         tmp_path,
     ):
         assert load_vehicle_configurations() == []
+
+
+def test_load_vehicle_configurations_derives_order_analysis_policy_when_no_override(
+    tmp_path: Path,
+) -> None:
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    rows[0].pop("order_analysis_policy_override", None)
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+    assert loaded
+    config = loaded[0]
+    assert config.order_analysis_policy.usable_for_wheel_order is True
+    assert config.order_analysis_policy.requires_manual_confirmation is True
+
+
+def test_load_vehicle_configurations_applies_order_analysis_policy_override(
+    tmp_path: Path,
+) -> None:
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    rows[0]["order_analysis_policy_override"] = {
+        "reason": "row-marked-not-ready-for-wheel-order",
+        "usable_for_wheel_order": False,
+    }
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+    assert loaded
+    assert loaded[0].order_analysis_policy.usable_for_wheel_order is False
+
+
+def test_load_vehicle_configurations_fails_closed_for_unknown_override_field(
+    tmp_path: Path,
+) -> None:
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    rows[0]["order_analysis_policy_override"] = {
+        "reason": "broken",
+        "bogus_field": True,
+    }
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        assert load_vehicle_configurations() == []

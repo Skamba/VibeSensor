@@ -205,11 +205,10 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -314,13 +313,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g29-sdrive20i-eu-2019-mt6-rwd",
@@ -422,13 +415,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g29-sdrive20i-eu-2019-zf8hp-rwd",
@@ -517,13 +504,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g29-sdrive30i-eu-2019-mt6-rwd",
@@ -615,11 +596,10 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -709,13 +689,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }
