@@ -1,9 +1,5 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence."
-    },
     "evidence_ref_sets": {
       "e1": [
         "bmw_market_pages:g42-2-series-price-list-2024",
@@ -132,7 +128,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -156,7 +151,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -173,7 +167,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -190,7 +183,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -290,7 +282,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -302,7 +293,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -314,7 +304,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -326,7 +315,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -343,7 +331,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -405,29 +392,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -435,7 +417,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -447,7 +428,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -459,7 +439,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -471,7 +450,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -486,9 +464,6 @@
         {
           "note": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation recovered exact 220i Coupé evidence, and Wave 13 now does the same for 230i: the official 03/2022 BMW technical-data PDF valid for ACEA markets provides rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 230i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 230i production override and exact-row update. Wave 13 also adds exact launch-ratio evidence for M240i xDrive plus current Germany market/tire context, but that variant remains source-ledger-only because the public current-market material is already a later 48V state and this pass did not recover one current exact ratio table proving one unchanged 2022-2026 package.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
         }
       ],
       "unresolved": [
@@ -541,24 +516,20 @@
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         }
       },
@@ -566,7 +537,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -578,7 +548,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -590,7 +559,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -602,7 +570,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,

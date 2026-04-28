@@ -1,14 +1,8 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n3": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
-      "n4": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
-      "n5": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
       "n6": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
-      "n7": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
-      "n8": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n9": "Audi A3 8V Saloon 1.6 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia 8V powertrain section confirm FWD MQ350 6MT for 1.6 TDI. Production_start_year 2013 retained per Audi MediaCenter 1.6 TDI ultra press release (Sedan availability mid-2014; first deliveries entering MY2013 model designation). Carfolio reputable_secondary ratios: top 0.59 / FD 3.39 / tire baseline 205/55 R16. Repo placeholder 0.84/3.462/225/45-17 contradicted by every saved exact page.",
       "n10": "Audi A3 8V Saloon 1.6 TDI 7-speed S tronic FWD. CRITICAL CORRECTION: transmission name was '7-speed S tronic (DQ381)' which is wrong. 1.6 TDI peak torque (~250 Nm at 110 PS) sits at the DQ200 limit, not the DQ381 wet-clutch range. ADAC catalogue lists this entry as 'S tronic (7-Gang)' = DQ200; Wikipedia A3 8V section explicitly lists DQ200 for 1.6 TDI. Corrected to DQ200. Ratios from Carfolio reputable_secondary: top 0.64 / FD 3.43; tire baseline 205/55 R16.",
       "n11": "Audi A3 8V Saloon 2.0 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia confirm FWD MQ350 6MT for 2.0 TDI 150 PS variant. No exact Saloon ratio page recovered for the 2.0 TDI manual; ratios remain no_confidence pending official 8V technical-data PDF. Tire baseline 205/55 R16 from auto-data exact secondary; 225/45 R17 was UK Sport-trim option, not universal default.",
@@ -20,13 +14,9 @@
       "n17": "Audi A3 8V Saloon 35 TFSI (1.5 TFSI evo 150 PS) 6-speed manual FWD. CRITICAL DATE FIX: the 1.5 TFSI evo engine and 35 TFSI badge appeared in the 8V lineup from 2017 (Wikipedia A3 8V section: 1.5 TFSI introduced as facelift evolution; ADAC catalogue has no pre-2017 1.5 TFSI entry). 2013 start was wrong; corrected to 2017. Transmission: MQ250 6-speed manual. Carfolio exact Saloon page: top 0.73 / FD 3.65; tire baseline 205/55 R16.",
       "n18": "Audi A3 8V Saloon 35 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2017. Transmission code corrected from DQ381 -> DQ200: 1.5 TFSI evo peak torque 250 Nm sits at the DQ200 dry-clutch ceiling (multiple VW-group 1.5 TFSI applications use DQ200 in this exact configuration). ADAC '7-Gang' label and Wikipedia A3 8V powertrain entry corroborate. Carfolio exact Saloon page: top 0.65 / FD 4.80 (DQ200 sub-trans 1 ratio); tire baseline 205/55 R16.",
       "n19": "Audi A3 8V Saloon 40 TFSI quattro (2.0 TFSI 190 PS) S tronic AWD. CRITICAL: this row merges two production eras. 2013-2016: 1.8 TFSI quattro 180 PS with DQ250-6A 6-speed wet AWD (auto-data 2013 page). 2016-2018: 2.0 TFSI quattro 190 PS / 40 TFSI badge with same DQ250-6A then DQ381-7A from 2017. UK MY2018 price list lists the 2.0 TFSI quattro only with S tronic. Carfolio adjacent 2.0 TFSI quattro S tronic page (non-Saloon labeled but same powertrain): top 0.64 / FD 3.13 - applied as reputable_secondary representative of the 2.0 TFSI quattro DQ381-7A 7-speed era. Tire baseline 205/55 R16.",
-      "n20": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
-      "n21": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n22": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n23": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250 6-speed pre-2017 ratio.",
       "n24": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio.",
-      "n25": "Sonnet redo (2026-04 v2): Haldex AWD rear ratio mirrors front in published specs.",
-      "n26": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data with High confidence, but the recovered public official timing anchors still limit the reliable sedan badge-era scope to the late 8V window rather than a clean 2013 start."
+      "n25": "Sonnet redo (2026-04 v2): Haldex AWD rear ratio mirrors front in published specs."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -194,7 +184,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -206,7 +195,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -218,7 +206,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -233,9 +220,6 @@
         {
           "note": "Official Audi MediaCenter 05/2014 ultra release states that the A3 1.6 TDI ultra had been available on the three-door and Sportback since 2013 while the Sedan version would only arrive 'in future'. The recovered exact sedan-specific manual evidence in this run is later only: a 2016-2018 facelift 1.6 TDI manual sedan with front-wheel drive and 205/55 R16 baseline tires. That makes the broad 2013-2020 sedan row overbroad and leaves the inherited 225/45 R17 default unsupported for the exact sedan state.",
           "evidence_refs_ref": "e16"
-        },
-        {
-          "note_ref": "n20"
         }
       ],
       "unresolved": [
@@ -315,7 +299,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -327,7 +310,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -339,7 +321,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -354,9 +335,6 @@
         {
           "note": "Official Audi MediaCenter 05/2014 ultra release states that the A3 1.6 TDI ultra had been available on the three-door and Sportback since 2013 while the Sedan version would only arrive 'in future'. The recovered exact sedan-specific S tronic evidence in this run is later only: a 2016-2018 facelift 1.6 TDI S tronic sedan with front-wheel drive and 205/55 R16 baseline tires. That makes the broad 2013-2020 sedan row overbroad and leaves the inherited 225/45 R17 default unsupported for the exact sedan automatic state.",
           "evidence_refs_ref": "e18"
-        },
-        {
-          "note_ref": "n20"
         }
       ],
       "unresolved": [
@@ -436,7 +414,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -448,7 +425,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -460,7 +436,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -475,17 +450,6 @@
         {
           "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI 150 hp manual state, that means the broad 2013-2020 row still spans unrecovered early years and inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n7"
-        },
-        {
-          "note_ref": "n21",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n22",
-          "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
@@ -563,7 +527,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -575,7 +538,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -587,7 +549,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -602,9 +563,6 @@
         {
           "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI 150 hp S tronic state, that means the broad 2013-2020 row remains too wide and still inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -688,7 +646,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -700,7 +657,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -712,7 +668,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -727,9 +682,6 @@
         {
           "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI quattro 150 hp manual state, that means the broad 2013-2020 row still spans unrecovered early years and inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
           "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -813,7 +765,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -825,7 +776,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -837,7 +787,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -852,9 +801,6 @@
         {
           "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI quattro 184 hp S tronic state, that means the broad 2013-2020 row remains too wide and still hides the recovered 150 hp manual versus 184 hp automatic AWD split.",
           "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -932,7 +878,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -944,7 +889,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -956,7 +900,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -971,9 +914,6 @@
         {
           "note": "New public official badge-era anchors now show that 30 TFSI belongs to the late 8V program, not to a clean 2013 row start: the recovered UK brochure explicitly says '2018 Model Year / Edition 2.2 01/18' and the Germany brochure is dated November 2018. Combined with exact sedan-specific secondary evidence for the 2018-March 2020 30 TFSI manual state, the broad row remains overbroad and its inherited 225/45 R17 default is unsupported for the recovered late sedan slice.",
           "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n8"
         }
       ],
       "unresolved": [
@@ -1051,7 +991,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1063,7 +1002,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1075,7 +1013,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1090,9 +1027,6 @@
         {
           "note": "New public official badge-era anchors now show that 30 TFSI belongs to the late 8V program, not to a clean 2013 row start: the recovered UK brochure explicitly says '2018 Model Year / Edition 2.2 01/18' and the Germany brochure is dated November 2018. Combined with exact sedan-specific secondary evidence for the 2018-March 2020 30 TFSI S tronic state, the broad row remains overbroad and its inherited 225/45 R17 default is unsupported for the recovered late sedan automatic slice.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n8"
         }
       ],
       "unresolved": [
@@ -1170,7 +1104,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1182,7 +1115,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1194,7 +1126,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1209,9 +1140,6 @@
         {
           "note": "Recovered public badge-era anchors show the 35 TFSI naming window belongs to late 8V, not to a clean 2013 row start: the UK 2018 model-year saloon price-list mirror and Germany November 2018 brochure anchor the public badge-era timing, while exact sedan-specific secondary evidence covers the 2018-2020 35 TFSI manual state. The official Spain 03/2020 new-A3 sedan technical-data PDF is successor-generation 8Y evidence, so it is retained only as negative cross-generation context and must not support this 8V row. The broad 2013-2020 row therefore remains overbroad and its inherited 225/45 R17 default is unsupported for the recovered late sedan slice.",
           "evidence_refs_ref": "e14"
-        },
-        {
-          "note_ref": "n26"
         }
       ],
       "unresolved": [
@@ -1289,7 +1217,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1301,7 +1228,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1313,7 +1239,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1328,9 +1253,6 @@
         {
           "note": "Recovered public badge-era anchors show the 35 TFSI naming window belongs to late 8V, not to a clean 2013 row start: the UK 2018 model-year saloon price-list mirror and Germany November 2018 brochure anchor the public badge-era timing, while exact sedan-specific secondary evidence covers the 2018-2020 35 TFSI S tronic state. The official Spain 03/2020 new-A3 sedan technical-data PDF is successor-generation 8Y evidence, so it is retained only as negative cross-generation context and must not support this 8V row. The broad 2013-2020 row therefore remains too ambiguous on late non-MHEV versus MHEV automatic identity and its inherited tire/ratio package is unsupported.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n26"
         }
       ],
       "unresolved": [
@@ -1414,7 +1336,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1426,7 +1347,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1438,7 +1358,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1453,33 +1372,6 @@
         {
           "note": "New official brochure timing anchors tighten the late-8V scope but still do not rescue this row: recovered public official material only anchors the facelift and badge-era windows, while the exact AWD sedan evidence recovered in this run is automatic-only in both checked eras. With only a pre-facelift 2013-2016 1.8 TFSI quattro S tronic sedan and a facelift 2016-2018 2.0 TFSI quattro S tronic sedan recovered, the broad manual placeholder should be treated as unsupported rather than as an inherited exact configuration.",
           "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n8"
-        },
-        {
-          "note_ref": "n21",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n22",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -1563,7 +1455,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1575,7 +1466,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1587,7 +1477,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1602,9 +1491,6 @@
         {
           "note": "Official brochure timing anchors now make the late 8V window clearer, but they still do not collapse this row to one exact automatic state: recovered public official material spans the facelift and badge-era windows, while the exact AWD sedan evidence still splits into a pre-facelift 2013-2016 1.8 TFSI quattro S tronic state and a facelift 2016-2018 2.0 TFSI quattro S tronic state with a broader tire ladder. The stored broad automatic row therefore still merges at least two powertrain and gearbox-era slices.",
           "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n8"
         }
       ],
       "unresolved": [

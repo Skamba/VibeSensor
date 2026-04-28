@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "The official BMW 12/2013 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive35i state represented by this narrowed 2014-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n3": "The official BMW 12/2013 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive35i state represented by this narrowed 2014-only row.",
       "n4": "The official BMW 08/2014 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive50i state represented by this narrowed 2014-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
@@ -121,7 +120,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 45.0,
@@ -133,7 +131,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -255,7 +252,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 45.0,
@@ -267,7 +263,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -389,7 +384,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 45.0,
@@ -401,7 +395,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,

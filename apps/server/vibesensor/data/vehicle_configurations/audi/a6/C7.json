@@ -1,21 +1,13 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n2": "Wave 17 checked the exact Audi A6 C7 3.0 TFSI quattro target and still did not recover one production-safe year-spanning EU-DE gearbox mapping. Official Audi workshop-manual material allocates the early 220 kW and 228 kW A6 sedan to the 7-speed dual-clutch gearbox 0B5 (S tronic) with 7th gear 0.519, reverse 2.944, and split AWD axle reductions 4.093 front / 4.111 rear, while the only checked official 0BK 8-speed automatic allocation for the 228 kW car is marked USA/Canada/South Korea rather than EU-DE. Official Audi wheel/tyre guide material also points to 225/55 R17 baseline tires with 245/45 R18, 255/40 R19, and 255/35 R20 options for the checked 220/228/245 kW sedan states, contradicting the current broad-row 19/20/21-inch defaults. Production JSON remains unchanged because this pass did not recover an exact late-facelift EU-DE gearbox-code and ratio package, and the current schema cannot safely collapse split AWD reductions plus year/power-state variation into one broad-row final-drive mapping.",
-      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n4": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK) + 3.0 TFSI quattro combination is a USDM/Canada/South Korea allocation only - the EU/UK A6 C7 3.0 TFSI quattro uses DL501 7-speed S tronic instead (see Row 4). Wikipedia A6 C7 transmissions table: '8-speed Tiptronic is used in the US, Canada models' for the 3.0 TFSI quattro 310 PS saloon - no EU/UK entry. Audi workshop-manual material records the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan as marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The combination exists in production but not for the EU market covered by this shard.",
       "n5": "PHANTOM ROW. Audi A6 (C7/4G) MLB longitudinal platform: the DL501 (Audi code 0B5, 7-speed wet-clutch S tronic) is mechanically incompatible with FWD - it is designed exclusively for quattro architectures with integrated rear-axle output. The A6 C7 FWD range used 6-speed manual (0B2/0B3) for entry power states and Multitronic CVT (0AW) for FWD automatic. The S tronic DCT7 did not appear with the 2.0 TFSI until the very late C7.5 facelift (approximately 2016+ as 2.0 45 TFSI ultra), and only in a specific late-lifecycle configuration - not applicable to a 2011 production-start row. Wikipedia A6 C7 transmission table confirms: 180 PS variant = 6-speed manual (std) / multitronic (opt); 211 PS variant = multitronic (std); 245 PS C7.5 (2017+) = 7-speed S tronic. No DL501 for the 2011-era FWD 2.0 TFSI.",
       "n6": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK / 8HP45) on Audi A6 C7 MLB is paired with quattro drivetrains throughout the EU range; FWD automatic uses Multitronic CVT. The 2.0 TFSI + ZF 8HP + FWD combination in the Wikipedia transmission table represents the China-market A6L (long-wheelbase, FAW-VW) where ZF 8HP replaced Multitronic for the Chinese-domestic model - this is a distinct product from the EU 4G sedan/Avant. No checked official Audi material places the ZF 8HP into the EU FWD 2.0 TFSI A6 C7 lineup.",
-      "n7": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n9": "Audi A6 (C7) 3.0 TDI quattro single-turbo + DL501 (0B5) 7-speed S tronic is the standard EU production pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic for all standard 3.0 TDI quattro variants throughout C7 lifecycle (2011-2014: 204/245 PS; 2014-2018: 190/218/272 PS). Engine codes CGLD/CFGC/CKVB (single-turbo, 150-176 kW). RATIO CORRECTIONS APPLIED: top gear 0.68 -> 0.519 (DL501 7th gear per Audi workshop manual, also matches shard's own Wave 17 verification_notes); final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material - the DL501 in A6 C7 quattro uses split AWD reductions, not a single FD value, and 3.444 was incorrect for either axle. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
       "n10": "Audi A6 (C7) 3.0 TFSI supercharged V6 quattro + DL501 (0B5) 7-speed S tronic is the standard EU pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic as standard for 3.0 TFSI quattro (220 kW and 228 kW) EU/UK market. For the 228 kW saloon, Wikipedia explicitly notes: '7-speed S-Tronic is used in the UK model.' S6 C7 (4.0 TFSI biturbo, 309 kW) also uses DL501, confirming the gearbox family. RATIO CORRECTIONS (identical to Row 2): top gear 0.68 -> 0.519; final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide. Note: post-LCI 245 kW state (CREC/CVWA, 2014+) has high probability of retaining 0B5 but is not independently confirmed in current source pack.",
-      "n11": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n12": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n13": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n14": "Audi A6 (C7) 3.0 BiTDI quattro + ZF 8HP (0BK / 8HP50) confirmed by Wikipedia A6 C7 transmissions table: 8-speed Tiptronic exclusively for '3.0 TDI quattro (313 PS, 320 PS, 326 PS)' - the BiTDI product (engine code CDUD, 230 kW). UK-market labelling: '3.0 BiTDI quattro'. SCOPE NOTE: this row's engine_code '3.0L' is ambiguous and conflates single-turbo (CGLD/CFGC/CKVB - paired with DL501 in Row 2) with biturbo (CDUD - paired with ZF 8HP only here); the row should be read as BiTDI sub-variant only. Top gear 0.667 plausible for ZF8HP50 8th gear (standard HP50 ratio set). Final drive 3.077 plausible for ZF 8HP applications on MLB-platform A6/A7/A8 family - both unconfirmed from A6 C7 BiTDI specific official tech data. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
-      "n15": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      "n14": "Audi A6 (C7) 3.0 BiTDI quattro + ZF 8HP (0BK / 8HP50) confirmed by Wikipedia A6 C7 transmissions table: 8-speed Tiptronic exclusively for '3.0 TDI quattro (313 PS, 320 PS, 326 PS)' - the BiTDI product (engine code CDUD, 230 kW). UK-market labelling: '3.0 BiTDI quattro'. SCOPE NOTE: this row's engine_code '3.0L' is ambiguous and conflates single-turbo (CGLD/CFGC/CKVB - paired with DL501 in Row 2) with biturbo (CDUD - paired with ZF 8HP only here); the row should be read as BiTDI sub-variant only. Top gear 0.667 plausible for ZF8HP50 8th gear (standard HP50 ratio set). Final drive 3.077 plausible for ZF 8HP applications on MLB-platform A6/A7/A8 family - both unconfirmed from A6 C7 BiTDI specific official tech data. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -105,7 +97,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -117,7 +108,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -129,7 +119,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -144,29 +133,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -248,7 +214,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -260,7 +225,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -272,7 +236,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -287,29 +250,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -397,7 +337,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -409,7 +348,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -421,7 +359,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -436,9 +373,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -526,7 +460,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -538,7 +471,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -550,7 +482,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -565,21 +496,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n15",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -667,7 +583,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -679,7 +594,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -691,7 +605,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -706,9 +619,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -796,7 +706,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -808,7 +717,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -820,7 +728,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -835,33 +742,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n15",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [

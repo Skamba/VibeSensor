@@ -1,14 +1,10 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n2": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
       "n3": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "n4": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n5": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
-      "n6": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded.",
-      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      "n6": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -104,7 +100,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -116,7 +111,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -128,7 +122,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -140,7 +133,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -155,9 +147,6 @@
         {
           "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed S tronic mapping for this row. The indexed official technical-sheet extract also reports top gear 0.921 with split final drives 4.059 / 3.136, which contradicts the inherited 0.742 and single 3.444 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -217,7 +206,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -229,7 +217,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -241,7 +228,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -253,7 +239,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -268,9 +253,6 @@
         {
           "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed manual mapping for this row. The indexed official technical-sheet extract also reports top gear 0.975 with split final drives 3.944 / 3.087, which contradicts the inherited 0.84 and single 3.462 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -340,7 +322,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -352,7 +333,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -364,7 +344,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -376,7 +355,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -391,17 +369,6 @@
         {
           "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed S tronic availability for this row. A nearby official TT Roadster quattro technical-sheet extract gives close AWD S tronic powertrain evidence with top gear 0.686 and split final drives 3.264 / 4.769, but because that numeric sheet is Roadster-based rather than exact Coupé proof, the inherited AWD S tronic numeric fields remain advisory placeholders in this pass.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e6"
         }
       ],
       "unresolved": [
@@ -470,7 +437,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -482,7 +448,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -494,7 +459,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -506,7 +470,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -520,17 +483,6 @@
       "verification_notes": [
         {
           "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed manual availability for this row, but no direct official manual-quattro technical sheet was recovered. The inherited AWD manual numeric and tire fields therefore remain advisory placeholders in this pass.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
           "evidence_refs_ref": "e3"
         }
       ],

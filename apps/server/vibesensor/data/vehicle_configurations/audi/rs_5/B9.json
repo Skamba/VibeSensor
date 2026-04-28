@@ -113,7 +113,6 @@
               "legacy_research_sources:9b59acace271",
               "legacy_research_sources:b5bb7c63c3d1"
             ],
-            "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 25.0,
@@ -128,9 +127,6 @@
         {
           "note": "Official Audi 2019 and 2024 technical-data PDFs now confirm the exact RS 5 Coupé mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, a single published final-drive ratio 3.204, and a basic square 265/35 R19 tire setup. Production JSON narrows the broad row to the supported 2019-2024 state because this pass still did not recover a launch-year 2018 technical-data sheet proving the same package.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
         }
       ],
       "unresolved": [

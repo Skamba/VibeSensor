@@ -1,11 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640.",
       "n3": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain.",
-      "n4": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox.",
-      "n5": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "n4": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -49,12 +47,10 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -97,7 +93,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
@@ -109,7 +104,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -121,7 +115,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 30.0,
@@ -136,9 +129,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n5"
         }
       ],
       "unresolved": [
@@ -169,12 +159,10 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -217,7 +205,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
@@ -229,7 +216,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -241,7 +227,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 30.0,
@@ -256,9 +241,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n5"
         }
       ],
       "unresolved": [

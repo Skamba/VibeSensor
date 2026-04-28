@@ -4,19 +4,13 @@
       "n1": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) — both official BMW Group ACEA tech-data PDFs — publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
       "n2": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' — same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
       "n3": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF — G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
-      "n4": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n5": "Sonnet redo research (2026-04 v2): BMW PressClub Swiss/DE T0413529DE attachment 579757 (04/2023) — official BMW Group ACEA tech-data PDF — confirms G70 i7 M70 xDrive dual single-speed configuration with front Elektromotor Getriebeübersetzung 8.774 and rear Elektromotor Getriebeübersetzung 8.765. Repo values were already correct via legacy_research_sources reference; this run adds explicit corroboration from the Swiss attachment.",
       "n6": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 i7 eDrive50 (335 kW single rear-motor) was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU). Reference values for context only: i7 xDrive60 rear motor ratio 12.3 and i7 M70 rear motor ratio 8.765 are official_exact, but eDrive50's distinct 335 kW rear motor cannot be assumed equal to either. Family_default 11.1 retained as best estimate, downgraded to no_confidence pending discovery of an official spec PDF. BMW DE 11/2023 Preisliste confirms transmission name '1-Gang, automatisch' (single-speed).",
-      "n7": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n8": "BMW's Germany-market catalog attachments and current Germany price list all list the exact i7 eDrive50 with 245/50 R19 standard tires.",
       "n9": "The official BMW Germany 7 Series price list lists the exact 740d xDrive with 19-inch Doppelspeiche 903 wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
       "n10": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikräder 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
-      "n11": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n12": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n13": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikräder 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
-      "n14": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
-      "n15": "BMW's Germany-market technical-data PDF and current Germany price list both list the exact i7 M70 xDrive with a staggered standard package: 255/40 R21 front and 285/35 R21 rear.",
-      "n16": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence."
+      "n15": "BMW's Germany-market technical-data PDF and current Germany price list both list the exact i7 M70 xDrive with a staggered standard package: 255/40 R21 front and 285/35 R21 rear."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -180,10 +174,6 @@
         {
           "note": "Direct validation of BMW's 04/2022 G70 launch article, the current BMW Germany technical-data page, Germany-market catalog attachments, and the current BMW Germany price list now confirms the exact i7 eDrive50 as the Europe-launch rear-wheel-drive 1-Gang EV with 245/50 R19 standard tires, so this row is retimed from 2023 to a 2022 Europe start.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
@@ -285,7 +275,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -297,7 +286,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -407,7 +395,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -419,7 +406,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n4",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -434,18 +420,6 @@
         {
           "note": "Direct validation of BMW's G70 launch and additional-variants articles, the current BMW Germany technical-data page, and the current BMW Germany 7 Series price list now confirms the exact 750e xDrive as the Europe-market AWD plug-in hybrid variant with eight-speed Steptronic Sport transmission wording and 245/50 R19 standard tires.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -547,7 +521,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n14",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -559,7 +532,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n14",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -574,18 +546,6 @@
         {
           "note": "Direct validation of BMW's G70 launch and additional-variants articles, the current BMW Germany technical-data page, and the current BMW Germany 7 Series price list now confirms the exact M760e xDrive as the Europe-market AWD BMW M plug-in hybrid with eight-speed Steptronic Sport transmission wording and staggered 255/40 R21 front plus 285/35 R21 rear standard tires.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -691,7 +651,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n16",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -703,7 +662,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n16",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,

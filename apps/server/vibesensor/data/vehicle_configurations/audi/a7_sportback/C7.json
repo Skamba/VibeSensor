@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Wave 17 adds exact launch-era official evidence for the diesel A7 Sportback 3.0 TDI quattro: Audi SSP 478 confirms the 180 kW / 245 PS launch car used S tronic quattro and that the A7 Sportback launched with 17-inch wheels standard and 18- to 20-inch wheels optional, but this still does not close exact EU-DE final-drive, top-gear, full-ratio, reverse-ratio, or year-split tire mapping for the diesel row. Production JSON remains unchanged because the checked evidence is still market- or year-mixed and does not prove one exact EU-DE ratio package for either the TFSI or TDI target.",
-      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      "n2": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Wave 17 adds exact launch-era official evidence for the diesel A7 Sportback 3.0 TDI quattro: Audi SSP 478 confirms the 180 kW / 245 PS launch car used S tronic quattro and that the A7 Sportback launched with 17-inch wheels standard and 18- to 20-inch wheels optional, but this still does not close exact EU-DE final-drive, top-gear, full-ratio, reverse-ratio, or year-split tire mapping for the diesel row. Production JSON remains unchanged because the checked evidence is still market- or year-mixed and does not prove one exact EU-DE ratio package for either the TFSI or TDI target."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -58,29 +56,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.68
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.444
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.444
         }
       },
@@ -88,7 +81,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -100,7 +92,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -112,7 +103,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -124,7 +114,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 25.0,
@@ -139,9 +128,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -188,29 +174,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.68
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.444
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.444
         }
       },
@@ -218,7 +199,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -230,7 +210,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -242,7 +221,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -254,7 +232,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 25.0,
@@ -269,9 +246,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [

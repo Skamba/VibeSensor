@@ -1,9 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
       "n4": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. Later Wave 10 validation adds exact 430i xDrive context: the checked 03/2021 launch technical-data PDF does not list 430i xDrive, but the current BMW Germany technical-data page does list 430i xDrive Coupé / 51HB / Allradantrieb / Steptronic Sport Getriebe, and the 2026 Germany price list confirms standard 225/50 R17 tires, optional 225/45 R18 tires, and optional staggered 225/40 R19 front + 255/35 R19 rear tires. Wave 12 validation now adds exact 420i context from checked 03/2021 and 01/2024 official EU-market technical-data PDFs: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 tires. The broad 2021-2026 row remains unchanged because the checked official material still does not prove one unchanged 420i, 430i xDrive, or M440i xDrive package across the full represented span."
     },
     "evidence_ref_sets": {
@@ -45,24 +42,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n3",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n3",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 2.813
         }
       },
@@ -70,7 +63,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n3",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -82,7 +74,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -94,7 +85,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -106,7 +96,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -121,9 +110,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence."
         }
       ],
       "unresolved": [
@@ -170,29 +156,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         }
       },
@@ -200,7 +181,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -212,7 +192,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -224,7 +203,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -236,7 +214,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -251,9 +228,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence."
         }
       ],
       "unresolved": [
@@ -300,29 +274,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 2.813
         }
       },
@@ -330,7 +299,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -342,7 +310,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -354,7 +321,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -366,7 +332,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -381,9 +346,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence."
         }
       ],
       "unresolved": [

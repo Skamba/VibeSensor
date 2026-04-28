@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n3": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this narrowed 2020-only row.",
       "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
@@ -112,7 +111,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -129,7 +127,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -238,7 +235,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -255,7 +251,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,

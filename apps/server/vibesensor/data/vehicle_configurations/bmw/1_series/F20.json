@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d launch-state.",
       "n3": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i launch-state.",
       "n4": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d launch-state.",
@@ -97,7 +96,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -110,12 +108,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.231
         }
       },
@@ -123,7 +119,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e3",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
@@ -135,7 +130,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -147,7 +141,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -159,7 +152,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -207,7 +199,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -220,12 +211,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -233,7 +222,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e3",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
@@ -245,7 +233,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -257,7 +244,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -269,7 +255,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1773,7 +1758,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -1786,12 +1770,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.231
         }
       },
@@ -1799,7 +1781,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e3",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
@@ -1811,7 +1792,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1823,7 +1803,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1835,7 +1814,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1883,7 +1861,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -1896,12 +1873,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -1909,7 +1884,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e3",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
@@ -1921,7 +1895,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1933,7 +1906,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1945,7 +1917,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,

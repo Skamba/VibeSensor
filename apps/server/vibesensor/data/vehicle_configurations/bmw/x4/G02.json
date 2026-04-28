@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Official BMW exact technical-data documents now confirm two checked G02 X4 M40i states for Germany/ACEA markets: 08/2018 with 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires; and 04/2020 with 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, the same final drive 3.385, and the same standard staggered 20-inch fitment. Wave 10 validation now also adds exact xDrive30i context: the checked 09/2018 and 03/2021 official sheets agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but disagree on the full forward and reverse ratios, while the current Germany price list confirms standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. Wave 11 adds the parallel xDrive20i result: the checked 04/2018 and 03/2021 official sheets likewise agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but publish conflicting full forward and reverse ratios, and the current Germany price list confirms the same 18/19/20/21-inch tire matrix. The broad row remains unchanged because BMW's own exact xDrive20i, xDrive30i, and M40i ratio sheets conflict across the represented span and this pass still does not close the full 2019-2025 row with one year-split-safe production package.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "n2": "Official BMW exact technical-data documents now confirm two checked G02 X4 M40i states for Germany/ACEA markets: 08/2018 with 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires; and 04/2020 with 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, the same final drive 3.385, and the same standard staggered 20-inch fitment. Wave 10 validation now also adds exact xDrive30i context: the checked 09/2018 and 03/2021 official sheets agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but disagree on the full forward and reverse ratios, while the current Germany price list confirms standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. Wave 11 adds the parallel xDrive20i result: the checked 04/2018 and 03/2021 official sheets likewise agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but publish conflicting full forward and reverse ratios, and the current Germany price list confirms the same 18/19/20/21-inch tire matrix. The broad row remains unchanged because BMW's own exact xDrive20i, xDrive30i, and M40i ratio sheets conflict across the represented span and this pass still does not close the full 2019-2025 row with one year-split-safe production package."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -66,17 +64,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -84,7 +79,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -96,7 +90,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -108,7 +101,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -120,7 +112,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -135,9 +126,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -207,17 +195,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -225,7 +210,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -237,7 +221,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -249,7 +232,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -261,7 +243,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -276,9 +257,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -348,17 +326,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -366,7 +341,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -378,7 +352,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -390,7 +363,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -402,7 +374,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -417,9 +388,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
