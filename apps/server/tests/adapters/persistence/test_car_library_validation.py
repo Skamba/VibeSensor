@@ -186,3 +186,68 @@ def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:
     issues = validate_vehicle_configurations([low_top_gear], allowlist={})
 
     assert not issues
+
+
+def test_validate_vehicle_configurations_flags_exact_duplicate_rows() -> None:
+    base = _make_valid_vehicle_configuration()
+    a = replace(base, id="bmw|test|a")
+    b = replace(base, id="bmw|test|b")
+
+    issues = validate_vehicle_configurations([a, b], allowlist={})
+
+    rules = [i.rule for i in issues]
+    assert rules.count("duplicate_vehicle_configuration") == 2
+    entities = sorted(i.entity for i in issues if i.rule == "duplicate_vehicle_configuration")
+    assert entities == ["bmw|test|a", "bmw|test|b"]
+
+
+def test_validate_vehicle_configurations_flags_fuzzy_label_collision() -> None:
+    base = _make_valid_vehicle_configuration()
+    a = replace(base, id="bmw|test|a", variant_name="xDrive30i")
+    b = replace(
+        base,
+        id="bmw|test|b",
+        variant_name="x Drive 30 i",
+        top_gear_ratio=0.7,
+        top_gear_ratio_metadata=_metadata("official_exact"),
+    )
+
+    issues = validate_vehicle_configurations([a, b], allowlist={})
+
+    near = [i for i in issues if i.rule == "near_duplicate_vehicle_configuration"]
+    assert len(near) == 2
+    assert {i.entity for i in near} == {"bmw|test|a", "bmw|test|b"}
+
+
+def test_validate_vehicle_configurations_distinct_rows_have_no_duplicate_issues() -> None:
+    base = _make_valid_vehicle_configuration()
+    a = replace(base, id="bmw|test|a", variant_name="xDrive30i")
+    b = replace(
+        base,
+        id="bmw|test|b",
+        variant_name="xDrive40i",
+        top_gear_ratio=0.7,
+        top_gear_ratio_metadata=_metadata("official_exact"),
+    )
+
+    issues = validate_vehicle_configurations([a, b], allowlist={})
+
+    assert not any(
+        i.rule in {"duplicate_vehicle_configuration", "near_duplicate_vehicle_configuration"}
+        for i in issues
+    )
+
+
+def test_validate_vehicle_configurations_allowlist_silences_duplicate() -> None:
+    base = _make_valid_vehicle_configuration()
+    a = replace(base, id="bmw|test|a")
+    b = replace(base, id="bmw|test|b")
+
+    allowlist = {
+        ("duplicate_vehicle_configuration", "bmw|test|a"): "intentional twin row",
+        ("duplicate_vehicle_configuration", "bmw|test|b"): "intentional twin row",
+    }
+
+    issues = validate_vehicle_configurations([a, b], allowlist=allowlist)
+
+    assert not [i for i in issues if i.rule == "duplicate_vehicle_configuration"]

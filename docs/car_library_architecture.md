@@ -212,3 +212,22 @@ schema file. Example VS Code setting:
 
 Schema validation and the backend loader are kept in sync. When the loader
 contract changes, update both at once.
+
+## Duplicate detection
+
+`validate_vehicle_configurations` (in
+`vibesensor.adapters.persistence.car_library_validation`) flags duplicate
+and near-duplicate exact rows after the per-row checks:
+
+- `duplicate_vehicle_configuration` (hard failure): two or more rows share
+  the same normalized identity (brand, model, variant, drivetrain, fuel
+  type, transmission, top gear, final drives, default tire signature).
+- `near_duplicate_vehicle_configuration` (advisory): two or more rows share
+  the same fuzzy label key (brand + model + variant after stripping case,
+  punctuation, and whitespace) but have different math identity. The row
+  IDs of the colliding peers are listed in the message.
+
+Both rules go through the existing
+`apps/server/vibesensor/data/car_library_validation_allowlist.json`. To
+keep an intentional duplicate or label collision, add an entry with the
+rule name, the offending row `id`, and a `reason`.
