@@ -62,7 +62,9 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     assert miss_step["if"] == "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
 
     install_step = next(
-        step for step in steps if isinstance(step, dict) and step.get("name") == "Install dependencies"
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Install dependencies"
     )
     assert install_step["if"] == "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
     install_run = install_step["run"]
@@ -89,6 +91,7 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     platformio_run = platformio_step["run"]
     assert isinstance(platformio_run, str)
     assert (
-        'retry_command 3 "${{ steps.backend-python.outputs.python-path }}" -m pip install "platformio>=6,<7"'
+        'retry_command 3 "${{ steps.backend-python.outputs.python-path }}"'
+        ' -m pip install "platformio>=6,<7"'
         in platformio_run
     )
