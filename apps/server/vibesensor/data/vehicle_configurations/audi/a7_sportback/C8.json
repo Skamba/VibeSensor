@@ -33,14 +33,16 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "C8",
+    "body_code": "C8"
+  },
   "configurations": [
     {
       "id": "audi-c8-a7-45-tfsi-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C8",
-      "body_code": "C8",
       "production_start_year": 2018,
       "production_end_year": 2025,
       "model_name": "A7 Sportback (C8, 2018-2025)",
@@ -200,11 +202,6 @@
     },
     {
       "id": "audi-c8-a7-55-tfsi-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C8",
-      "body_code": "C8",
       "production_start_year": 2019,
       "production_end_year": 2026,
       "model_name": "A7 Sportback (C8, 2019-2026)",

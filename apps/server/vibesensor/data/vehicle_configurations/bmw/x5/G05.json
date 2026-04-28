@@ -33,17 +33,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G05",
+    "body_code": "G05",
+    "model_name": "X5 (G05, 2019-2026)",
+    "production_start_year": 2019,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-g05-m50i-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G05",
-      "body_code": "G05",
-      "production_start_year": 2019,
-      "production_end_year": 2026,
-      "model_name": "X5 (G05, 2019-2026)",
       "variant_name": "M50i",
       "engine_code": "N63",
       "engine_name": "N63 4.4L V8 Turbo",
@@ -174,14 +176,6 @@
     },
     {
       "id": "bmw-g05-xdrive40i-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G05",
-      "body_code": "G05",
-      "production_start_year": 2019,
-      "production_end_year": 2026,
-      "model_name": "X5 (G05, 2019-2026)",
       "variant_name": "xDrive40i",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo",
@@ -312,14 +306,6 @@
     },
     {
       "id": "bmw-g05-xdrive45e-eu-2019-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G05",
-      "body_code": "G05",
-      "production_start_year": 2019,
-      "production_end_year": 2026,
-      "model_name": "X5 (G05, 2019-2026)",
       "variant_name": "xDrive45e",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo PHEV",

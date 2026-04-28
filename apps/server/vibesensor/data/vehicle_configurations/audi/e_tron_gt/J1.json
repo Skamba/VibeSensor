@@ -23,17 +23,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "J1",
+    "body_code": "J1",
+    "model_name": "e-tron GT (J1, 2022-2026)",
+    "production_start_year": 2022,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "audi-j1-rs-e-tron-gt-eu-2022-ss1-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "J1",
-      "body_code": "J1",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "e-tron GT (J1, 2022-2026)",
       "variant_name": "RS e-tron GT",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor (Performance)",
@@ -137,14 +139,6 @@
     },
     {
       "id": "audi-j1-e-tron-gt-quattro-eu-2022-ss1-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "J1",
-      "body_code": "J1",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "e-tron GT (J1, 2022-2026)",
       "variant_name": "e-tron GT quattro",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",

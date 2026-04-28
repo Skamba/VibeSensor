@@ -19,6 +19,14 @@ Shard shape:
     "notes": {"n1": "<repeated note text>"},
     "evidence_ref_sets": {"e1": ["source_pack:source-id", "..."]}
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "sedan",
+    "market": "EU",
+    "model_code": "G20",
+    "body_code": "G20",
+    "model_name": "3 Series (G20, 2018-2024)"
+  },
   "configurations": [
     {
       "id": "...",
@@ -39,6 +47,14 @@ may use `notes_ref` instead of inline `notes`, and `evidence_refs_ref`
 instead of inline `evidence_refs`. Verification-note rows may also use
 `note_ref`. The loader expands every ref into its inline form before
 strict shape validation. Unknown refs fail closed.
+
+`defaults` is also optional. When present, every key in `defaults` is
+shallow-merged into each row before strict validation, so rows can omit
+fields that are uniform across the shard (`brand`, `type`, `market`,
+`model_code`, `body_code`, `model_name`, production years). Row-level
+keys override the default for that row only. Required fields that are
+still missing after the merge fail closed; unknown shard top-level keys
+also fail closed.
 
 Definitions are kept shard-local on purpose: a single generation file
 remains understandable without jumping to a global metadata file.

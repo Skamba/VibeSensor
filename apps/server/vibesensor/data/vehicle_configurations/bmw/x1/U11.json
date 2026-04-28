@@ -32,16 +32,18 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "U11",
+    "body_code": "U11",
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-u11-xdrive23i-eu-2022-dct7-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U11",
-      "body_code": "U11",
       "production_start_year": 2022,
-      "production_end_year": 2026,
       "model_name": "X1 (U11, 2022-2026)",
       "variant_name": "xDrive23i",
       "engine_code": "B48",
@@ -155,13 +157,7 @@
     },
     {
       "id": "bmw-u11-ix1-xdrive30-eu-2023-ss1-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U11",
-      "body_code": "U11",
       "production_start_year": 2023,
-      "production_end_year": 2026,
       "model_name": "X1 (U11, 2023-2026)",
       "variant_name": "iX1 xDrive30",
       "engine_code": "Electric",
@@ -274,13 +270,7 @@
     },
     {
       "id": "bmw-u11-sdrive18i-eu-2023-dct7-fwd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U11",
-      "body_code": "U11",
       "production_start_year": 2023,
-      "production_end_year": 2026,
       "model_name": "X1 (U11, 2023-2026)",
       "variant_name": "sDrive18i",
       "engine_code": "B38",

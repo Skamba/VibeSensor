@@ -21,17 +21,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FZ",
+    "body_code": "FZ",
+    "model_name": "Q4 e-tron (FZ, 2022-2026)",
+    "production_start_year": 2022,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "audi-fz-40-e-tron-eu-2022-ss1-rwd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FZ",
-      "body_code": "FZ",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "Q4 e-tron (FZ, 2022-2026)",
       "variant_name": "40 e-tron",
       "engine_code": "Electric",
       "engine_name": "Electric Single Motor",
@@ -130,14 +132,6 @@
     },
     {
       "id": "audi-fz-50-e-tron-quattro-eu-2022-ss1-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FZ",
-      "body_code": "FZ",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "Q4 e-tron (FZ, 2022-2026)",
       "variant_name": "50 e-tron quattro",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",

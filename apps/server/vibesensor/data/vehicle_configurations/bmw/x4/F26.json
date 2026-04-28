@@ -22,17 +22,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F26",
+    "body_code": "F26",
+    "model_name": "X4 (F26, 2015)",
+    "production_start_year": 2015,
+    "production_end_year": 2015
+  },
   "configurations": [
     {
       "id": "bmw-f26-xdrive20i-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F26",
-      "body_code": "F26",
-      "production_start_year": 2015,
-      "production_end_year": 2015,
-      "model_name": "X4 (F26, 2015)",
       "variant_name": "xDrive20i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -164,14 +166,6 @@
     },
     {
       "id": "bmw-f26-xdrive28i-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F26",
-      "body_code": "F26",
-      "production_start_year": 2015,
-      "production_end_year": 2015,
-      "model_name": "X4 (F26, 2015)",
       "variant_name": "xDrive28i",
       "engine_code": "N20",
       "engine_name": "N20 2.0L I4 Turbo",
@@ -303,14 +297,6 @@
     },
     {
       "id": "bmw-f26-xdrive35i-eu-2015-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "F26",
-      "body_code": "F26",
-      "production_start_year": 2015,
-      "production_end_year": 2015,
-      "model_name": "X4 (F26, 2015)",
       "variant_name": "xDrive35i",
       "engine_code": "N55",
       "engine_name": "N55 3.0L I6 Turbo",

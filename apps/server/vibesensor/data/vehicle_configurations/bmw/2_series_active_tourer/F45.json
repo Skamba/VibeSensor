@@ -104,14 +104,16 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45"
+  },
   "configurations": [
     {
       "id": "bmw-f45-214d-eu-2014-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2014,
       "production_end_year": 2015,
       "model_name": "2 Series Active Tourer (F45, 2014-2015)",
@@ -270,11 +272,6 @@
     },
     {
       "id": "bmw-f45-216d-eu-2014-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2014,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
@@ -431,11 +428,6 @@
     },
     {
       "id": "bmw-f45-216i-eu-2014-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2014,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
@@ -592,11 +584,6 @@
     },
     {
       "id": "bmw-f45-218i-eu-2014-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2014,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
@@ -761,11 +748,6 @@
     },
     {
       "id": "bmw-f45-225i-eu-2014-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2014,
       "production_end_year": 2017,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
@@ -892,11 +874,6 @@
     },
     {
       "id": "bmw-f45-225xe-eu-2014-6-speed-step-awd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2016,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
@@ -1039,11 +1016,6 @@
     },
     {
       "id": "bmw-f45-218d-eu-2018-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2018,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2018)",
@@ -1169,11 +1141,6 @@
     },
     {
       "id": "bmw-f45-220d-eu-2018-zf8hp-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2018,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2018)",
@@ -1314,11 +1281,6 @@
     },
     {
       "id": "bmw-f45-220i-eu-2018-dct7-fwd",
-      "brand": "BMW",
-      "type": "Hatchback",
-      "market": "EU",
-      "model_code": "F45",
-      "body_code": "F45",
       "production_start_year": 2018,
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2018)",

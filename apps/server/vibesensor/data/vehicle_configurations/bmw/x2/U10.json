@@ -34,17 +34,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "U10",
+    "body_code": "U10",
+    "model_name": "X2 (U10, 2024-2026)",
+    "production_start_year": 2024,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-u10-ix2-xdrive30-eu-2024-ss1-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U10",
-      "body_code": "U10",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "X2 (U10, 2024-2026)",
       "variant_name": "iX2 xDrive30",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
@@ -166,14 +168,6 @@
     },
     {
       "id": "bmw-u10-sdrive20i-eu-2024-dct7-fwd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U10",
-      "body_code": "U10",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "X2 (U10, 2024-2026)",
       "variant_name": "sDrive20i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -282,14 +276,6 @@
     },
     {
       "id": "bmw-u10-xdrive25e-eu-2024-dct7-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "U10",
-      "body_code": "U10",
-      "production_start_year": 2024,
-      "production_end_year": 2026,
-      "model_name": "X2 (U10, 2024-2026)",
       "variant_name": "xDrive25e",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo PHEV",
