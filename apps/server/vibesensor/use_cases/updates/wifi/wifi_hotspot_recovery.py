@@ -17,6 +17,10 @@ class _RetryableHotspotRestoreError(Exception):
         self.returncode = returncode
 
 
+class _TransientUplinkCleanupError(Exception):
+    """Best-effort uplink cleanup failed before hotspot restore."""
+
+
 class UpdateHotspotRecovery:
     """Manage the updater's hotspot shutdown and restoration lifecycle."""
 
@@ -50,23 +54,46 @@ class UpdateHotspotRecovery:
     async def cleanup_uplink(self) -> None:
         """Tear down any transient updater uplink connection state."""
 
-        await self._commands.run(
+        failures: list[str] = []
+        down_result = await self._commands.run(
             ["nmcli", "connection", "down", self._config.uplink_connection_name],
             phase="restore",
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        await self._commands.run(
+        if down_result.returncode != 0:
+            detail = down_result.stderr.strip() or down_result.stdout.strip() or "no output"
+            failures.append(
+                "connection down "
+                f"{self._config.uplink_connection_name} failed "
+                f"(rc={down_result.returncode}): {detail}",
+            )
+        delete_result = await self._commands.run(
             ["nmcli", "connection", "delete", self._config.uplink_connection_name],
             phase="restore",
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
+        if delete_result.returncode != 0:
+            detail = delete_result.stderr.strip() or delete_result.stdout.strip() or "no output"
+            failures.append(
+                "connection delete "
+                f"{self._config.uplink_connection_name} failed "
+                f"(rc={delete_result.returncode}): {detail}",
+            )
+        if failures:
+            raise _TransientUplinkCleanupError("; ".join(failures))
 
     async def restore_hotspot(self) -> bool:
         """Re-enable the hotspot, retrying within the configured restore budget."""
 
-        await self.cleanup_uplink()
+        try:
+            await self.cleanup_uplink()
+        except _TransientUplinkCleanupError as exc:
+            self._status.log(
+                "Transient uplink cleanup failed before hotspot restore; "
+                f"attempting AP recovery anyway ({exc})",
+            )
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_after_attempt(self._config.hotspot_restore_retries),

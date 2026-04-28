@@ -173,8 +173,6 @@ class UpdateWifiSession:
         prefix: str,
         failure_message: str,
     ) -> None:
-        self._status.log(f"{prefix}: cleaning up uplink connection")
-        await self._hotspot.cleanup_uplink()
         self._status.log(f"{prefix}: restoring hotspot")
         restored = await self._restore_hotspot()
         if restored:
