@@ -16,22 +16,17 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fcfffa568a6",
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:43771d65c9e5",
-        "legacy_research_sources:5a5c196c955b"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11"
       ],
-      "notes": "BMW's 04/2022 G70 launch article states that Europe launches the new 7 Series initially with the i7, and the current BMW Germany technical-data page plus Germany-market catalog attachments identify the exact i7 eDrive50 as Hinterradantrieb. That is sufficient to retime the row to a 2022 Europe start and confirm RWD for the exact trim.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 i7 eDrive50 (335 kW single rear-motor) was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU). Reference values for context only: i7 xDrive60 rear motor ratio 12.3 and i7 M70 rear motor ratio 8.765 are official_exact, but eDrive50's distinct 335 kW rear motor cannot be assumed equal to either. Family_default 11.1 retained as best estimate, downgraded to no_confidence pending discovery of an official spec PDF. BMW DE 11/2023 Preisliste confirms transmission name '1-Gang, automatisch' (single-speed).",
       "value": "RWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:43771d65c9e5",
-        "legacy_research_sources:5a5c196c955b"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11"
       ],
-      "notes": "The current BMW Germany technical-data page and two Germany-market catalog attachments all describe the exact i7 eDrive50 as a 1-Gang automatic EV drivetrain. The repo maps that directly to the canonical SS1 transmission code.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 i7 eDrive50 (335 kW single rear-motor) was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU). Reference values for context only: i7 xDrive60 rear motor ratio 12.3 and i7 M70 rear motor ratio 8.765 are official_exact, but eDrive50's distinct 335 kW rear motor cannot be assumed equal to either. Family_default 11.1 retained as best estimate, downgraded to no_confidence pending discovery of an official spec PDF. BMW DE 11/2023 Preisliste confirms transmission name '1-Gang, automatisch' (single-speed).",
       "code": "SS1",
       "name": "Single-speed fixed gear (EV)"
     },
@@ -47,9 +42,14 @@
         "value": 1.0
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
-        "value": 11.1
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 i7 eDrive50 (335 kW single rear-motor) was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU). Reference values for context only: i7 xDrive60 rear motor ratio 12.3 and i7 M70 rear motor ratio 8.765 are official_exact, but eDrive50's distinct 335 kW rear motor cannot be assumed equal to either. Family_default 11.1 retained as best estimate, downgraded to no_confidence pending discovery of an official spec PDF. BMW DE 11/2023 Preisliste confirms transmission name '1-Gang, automatisch' (single-speed).",
+        "value": 11.1,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-i7-xdrive60-acea-2022",
+          "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023",
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11"
+        ]
       }
     },
     "tires": {
@@ -118,6 +118,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -137,39 +142,76 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fcfffa568a6",
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8"
+        "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+        "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
       ],
-      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact 740d xDrive as the Europe-market diesel 7 Series with BMW xDrive all-wheel drive.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8",
-        "legacy_research_sources:e4fef97ece37"
+        "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+        "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
       ],
-      "notes": "The current BMW Germany technical-data page exposes the exact 740d xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the diesel mild-hybrid drivetrain as using an eight-speed Steptronic transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.64
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
+        "value": 0.64,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
+        "value": 2.647,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source.",
+        "value": 2.647,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.501,
+          3.52,
+          2.2,
+          1.72,
+          1.301,
+          1.0,
+          0.833,
+          0.64
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source. Forward gear ratios I..VIII per ACEA tech-data PDF."
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 4.543,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+          "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0404080EN attachment 609753 (English, 11/2022) and T0404080DE attachment 609750 (German, 11/2022) \u2014 both official BMW Group ACEA tech-data PDFs \u2014 publish G70 740d xDrive Eight-speed Steptronic ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published value for both axes on AWD xDrive). Repo's prior family_default 2.813 was a stale G11 inheritance and has been corrected. Top gear value 0.640 happens to match family default but is now backed by primary official source. Reverse gear ratio."
       }
     },
     "tires": {
@@ -297,6 +339,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -316,39 +363,51 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fcfffa568a6",
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11"
       ],
-      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact 750e xDrive as the Europe-market plug-in-hybrid 7 Series with BMW xDrive all-wheel drive.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' \u2014 same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8",
-        "legacy_research_sources:e4fef97ece37"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+        "bmw_pressclub_sources:g70-de-preisliste-2026-03"
       ],
-      "notes": "The current BMW Germany technical-data page exposes the exact 750e xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the plug-in hybrid drivetrain as using an eight-speed Steptronic Sport transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' \u2014 same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.64
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' \u2014 same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
+        "value": 0.64,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' \u2014 same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 750e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); the 11/2022 'additional drive variants' article (T0404080EN) only attached the 740d spec, and the BMW press book confirms PHEV launch 'from spring 2023' as a separate event whose spec PDF could not be located. BMW DE 2023+ Preisliste only publishes the marketing name '8-Gang Steptronic Sport' \u2014 same designation as the 740d, suggesting shared ZF 8HP gearbox family, but no numeric ratios. Final drive remained at family_default 2.813 (G11-inherited) and is downgraded to no_confidence: G11 precedent shows PHEV final drives (e.g. 740e 3.077) typically differ from diesel xDrive (740d 2.563), so the 740d's 2.647 cannot be assumed. Top gear 0.640 likewise no_confidence pending source.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       }
     },
     "tires": {
@@ -357,7 +416,7 @@
         "evidence_refs": [
           "legacy_research_sources:e4fef97ece37"
         ],
-        "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikräder 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+        "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikr\u00e4der 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -371,7 +430,7 @@
           "evidence_refs": [
             "legacy_research_sources:e4fef97ece37"
           ],
-          "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikräder 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+          "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikr\u00e4der 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
@@ -476,6 +535,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -495,39 +559,51 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fcfffa568a6",
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11"
       ],
-      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact M760e xDrive as the Europe-market BMW M plug-in-hybrid 7 Series with BMW xDrive all-wheel drive.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF \u2014 G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:386e9ba97f8b",
-        "legacy_research_sources:41656ee717a8",
-        "legacy_research_sources:e4fef97ece37"
+        "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+        "bmw_pressclub_sources:g70-de-preisliste-2026-03"
       ],
-      "notes": "The current BMW Germany technical-data page exposes the exact M760e xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the plug-in hybrid drivetrain as using an eight-speed Steptronic Sport transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF \u2014 G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
-        "value": 0.64
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF \u2014 G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
+        "value": 0.64,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
-        "value": 2.813
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF \u2014 G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
-        "value": 2.813
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): No official BMW ACEA spec PDF for the G70 M760e xDrive PHEV was found in any PressClub market (Global, Deutschland, Schweiz, NL, AT, BE, FR, IT, UK, JP, CA, AU); same situation as 750e xDrive. BMW DE Preisliste only publishes marketing name '8-Gang Steptronic Sport' (same as 740d), suggesting shared ZF 8HP gearbox family, but no numeric ratios. Repo's family_default top_gear 0.640 and final_drive 2.813 (G11 inheritance) downgraded to no_confidence pending discovery of an official spec PDF \u2014 G11 precedent shows PHEV final drives differ from diesel xDrive variants.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+          "bmw_pressclub_sources:g70-additional-variants-article-2022",
+          "bmw_pressclub_sources:g70-launch-press-book-2022"
+        ]
       }
     },
     "tires": {
@@ -536,7 +612,7 @@
         "evidence_refs": [
           "legacy_research_sources:e4fef97ece37"
         ],
-        "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikräder 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
+        "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikr\u00e4der 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
         "front": {
           "width_mm": 255.0,
           "aspect_pct": 40.0,
@@ -555,7 +631,7 @@
           "evidence_refs": [
             "legacy_research_sources:e4fef97ece37"
           ],
-          "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikräder 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
+          "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikr\u00e4der 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -665,6 +741,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -686,9 +767,10 @@
       "evidence_refs": [
         "legacy_research_sources:8ca59a933c62",
         "legacy_research_sources:d9e8060997ac",
-        "legacy_research_sources:f31f1ea854da"
+        "legacy_research_sources:f31f1ea854da",
+        "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023"
       ],
-      "notes": "BMW's i7 M70 xDrive launch article, the exact Germany-market technical-data PDF, and the current BMW Germany M 7 Series technical-data page all identify this row as the dual-motor all-electric xDrive variant, confirming AWD for the exact trim.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub Swiss/DE T0413529DE attachment 579757 (04/2023) \u2014 official BMW Group ACEA tech-data PDF \u2014 confirms G70 i7 M70 xDrive dual single-speed configuration with front Elektromotor Getriebe\u00fcbersetzung 8.774 and rear Elektromotor Getriebe\u00fcbersetzung 8.765. Repo values were already correct via legacy_research_sources reference; this run adds explicit corroboration from the Swiss attachment.",
       "value": "AWD"
     },
     "transmission": {
@@ -696,9 +778,10 @@
       "evidence_refs": [
         "legacy_research_sources:8ca59a933c62",
         "legacy_research_sources:d9e8060997ac",
-        "legacy_research_sources:f31f1ea854da"
+        "legacy_research_sources:f31f1ea854da",
+        "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023"
       ],
-      "notes": "BMW's i7 M70 xDrive launch material, Germany-market technical-data PDF, and current BMW Germany M 7 Series technical-data page all describe the exact trim as a 1-Gang automatic EV drivetrain. The repo maps that directly to the canonical SS1 transmission code.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub Swiss/DE T0413529DE attachment 579757 (04/2023) \u2014 official BMW Group ACEA tech-data PDF \u2014 confirms G70 i7 M70 xDrive dual single-speed configuration with front Elektromotor Getriebe\u00fcbersetzung 8.774 and rear Elektromotor Getriebe\u00fcbersetzung 8.765. Repo values were already correct via legacy_research_sources reference; this run adds explicit corroboration from the Swiss attachment.",
       "code": "SS1",
       "name": "Single-speed fixed gear (EV)"
     },
@@ -716,17 +799,19 @@
       "final_drive_front": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:8ca59a933c62"
+          "legacy_research_sources:8ca59a933c62",
+          "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023"
         ],
-        "notes": "The exact BMW Germany technical-data PDF for the i7 M70 xDrive publishes a front overall ratio of 8.774.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub Swiss/DE T0413529DE attachment 579757 (04/2023) \u2014 official BMW Group ACEA tech-data PDF \u2014 confirms G70 i7 M70 xDrive dual single-speed configuration with front Elektromotor Getriebe\u00fcbersetzung 8.774 and rear Elektromotor Getriebe\u00fcbersetzung 8.765. Repo values were already correct via legacy_research_sources reference; this run adds explicit corroboration from the Swiss attachment.",
         "value": 8.774
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:8ca59a933c62"
+          "legacy_research_sources:8ca59a933c62",
+          "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023"
         ],
-        "notes": "The exact BMW Germany technical-data PDF for the i7 M70 xDrive publishes a rear overall ratio of 8.765.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub Swiss/DE T0413529DE attachment 579757 (04/2023) \u2014 official BMW Group ACEA tech-data PDF \u2014 confirms G70 i7 M70 xDrive dual single-speed configuration with front Elektromotor Getriebe\u00fcbersetzung 8.774 and rear Elektromotor Getriebe\u00fcbersetzung 8.765. Repo values were already correct via legacy_research_sources reference; this run adds explicit corroboration from the Swiss attachment.",
         "value": 8.765
       }
     },
@@ -860,6 +945,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   }
 ]

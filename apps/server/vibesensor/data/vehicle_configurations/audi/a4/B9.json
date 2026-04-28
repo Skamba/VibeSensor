@@ -183,13 +183,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Variant '30 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+        "reason": "Late-B9 official Audi 2019 launch article states four-cylinder TDI engines are offered exclusively with dual-clutch S tronic for the A4 sedan, and the current Audi MediaCenter A4 (until 2024) page lists 30 TDI only as S tronic. No saved official source supports a 30 TDI manual A4 sedan in any B9 year. Marked no_confidence."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -377,13 +381,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -571,13 +579,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Variant '35 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+        "reason": "Same official late-B9 evidence (2019 launch article + current MediaCenter A4 until-2024 page) supports 35 TDI only as 7-speed S tronic FWD. No saved official source supports a 35 TDI manual A4 sedan in any B9 year. Marked no_confidence."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -765,13 +777,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -959,13 +975,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1153,13 +1173,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1344,13 +1368,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+        "reason": "Official Audi 2019 launch article documents 45 TFSI as quattro drive only and gasoline non-entry variants automatic only; current MediaCenter A4 page lists only 45 TFSI quattro S tronic. No saved official source supports an FWD or manual 45 TFSI A4 sedan. Marked no_confidence."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1535,13 +1563,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+        "reason": "Same official late-B9 evidence: 45 TFSI is quattro-only on current Audi MediaCenter pages and 2019 launch article. No saved official source supports an FWD 45 TFSI A4 sedan. Marked no_confidence."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1742,13 +1774,17 @@
           "legacy_research_sources:f33bee2d7717",
           "legacy_research_sources:f3928778422d"
         ]
+      },
+      {
+        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

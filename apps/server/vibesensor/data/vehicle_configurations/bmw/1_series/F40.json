@@ -17,16 +17,22 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "legacy_research_sources:16c091e6cfd6",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020",
+        "bmw_market_pages:f40-1series-uk-inform-2019"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0\u201362 mph 8.5s manual / 8.9s 'Steptronic'.",
       "value": "FWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0\u201362 mph 8.5s manual / 8.9s 'Steptronic'.",
       "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission"
+      "name": "7-speed Steptronic dual-clutch transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-tech-data-2020",
+        "bmw_market_pages:f40-1series-uk-inform-2019"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -42,42 +48,32 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary",
         "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW UK F40 Jan 2020 technical data publishes 118i SE wheel/tyre as 7Jx16 LM, 205/55 R16 91W. The previous 225/40 R18 default appeared to be the M Sport fitment, retained as an option below.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "reputable_secondary",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "BMW UK F40 Jan 2020 technical data lists 8Jx18 LM 225/40 R18 92Y for M Sport-trim 118i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "M Sport 18\""
         },
         {
           "confidence": "family_default",
@@ -179,6 +175,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -196,44 +197,52 @@
     "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission"
+      "name": "8-speed Steptronic Sport transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.673
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.075
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 3.075,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -243,16 +252,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -262,16 +267,12 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 35.0,
@@ -281,16 +282,12 @@
           "name": "Sport Line 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 30.0,
@@ -360,6 +357,11 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -381,16 +383,20 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "legacy_research_sources:16c091e6cfd6",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
       "value": "FWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
       "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission"
+      "name": "7-speed Steptronic dual-clutch transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -543,6 +549,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -560,44 +571,52 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission"
+      "name": "8-speed Steptronic Sport transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.673
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.075
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 3.075,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -607,16 +626,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -626,16 +641,12 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 35.0,
@@ -645,16 +656,12 @@
           "name": "Sport Line 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 30.0,
@@ -724,6 +731,11 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -745,16 +757,22 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "legacy_research_sources:16c091e6cfd6",
+        "bmw_market_pages:f40-1series-uk-m135i-2021",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18.",
       "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission"
+      "name": "7-speed Steptronic dual-clutch transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-m135i-2021",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -775,16 +793,17 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary",
         "evidence_refs": [
           "legacy_research_sources:091077d8a451",
           "legacy_research_sources:16c091e6cfd6",
           "legacy_research_sources:18deedec2c15",
           "legacy_research_sources:82e045fca148",
           "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
+          "legacy_research_sources:eca9fb0d3e74",
+          "bmw_market_pages:f40-1series-uk-m135i-2021"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK Aug 2021 M135i xDrive page confirms 225/40 R18 92Y XL on 8Jx18 alloy.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -912,6 +931,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -929,49 +953,61 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6"
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission"
+      "name": "8-speed Steptronic Sport transmission",
+      "evidence_refs": [
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.673
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.075
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 3.075,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.075
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+        "value": 3.075,
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
+          "bmw_market_pages:f40-1series-uk-inform-2019",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -981,16 +1017,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -1000,16 +1032,12 @@
           "name": "Standard 18\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 35.0,
@@ -1019,16 +1047,12 @@
           "name": "Sport Line 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
+            "bmw_market_pages:f40-1series-uk-inform-2019",
+            "bmw_market_pages:f40-1series-uk-tech-data-2020"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox \u2014 physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 30.0,
@@ -1098,6 +1122,11 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

@@ -185,39 +185,49 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "418i",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I3 Turbo",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "no_confidence",
+        "notes": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
+        "value": 0.812,
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f32-4series-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "no_confidence",
+        "notes": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
+        "value": 3.231,
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f32-4series-wikipedia"
+        ]
       }
     },
     "tires": {
@@ -324,6 +334,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -333,39 +348,49 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "418i",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I3 Turbo",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "no_confidence",
+        "notes": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f32-4series-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "no_confidence",
+        "notes": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
+        "value": 3.077,
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f32-4series-wikipedia"
+        ]
       }
     },
     "tires": {
@@ -472,6 +497,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -481,7 +511,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "420i",
@@ -499,10 +529,13 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo (2026-04 v2): This row carries engine_code B48, but the B48 was introduced at the F32 LCI in 03/2016 (the pre-LCI 420i used the N20). production_start_year corrected from 2014 to 2016. The pre-LCI N20 era of the 420i RWD is a separate configuration that is not represented in this row and remains a coverage gap. transmission/ratio values were not directly extracted from a BMW PressClub spec PDF in this research run.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -635,7 +668,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "420i",
@@ -653,10 +686,13 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo (2026-04 v2): This row carries engine_code B48, but the B48 was introduced at the F32 LCI in 03/2016 (the pre-LCI 420i used the N20). production_start_year corrected from 2014 to 2016. The pre-LCI N20 era of the 420i RWD is a separate configuration that is not represented in this row and remains a coverage gap. transmission/ratio values were not directly extracted from a BMW PressClub spec PDF in this research run.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -978,26 +1014,28 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2014,
-    "production_end_year": 2020,
+    "production_end_year": 2016,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "428i",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
+    "engine_code": "N20",
+    "engine_name": "N20 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe manual row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe manual row. Sonnet redo (2026-04 v2): The 428i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 430i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 428i Coupe manual row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 428i Coupe manual row. Sonnet redo (2026-04 v2): The 428i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 430i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -1125,26 +1163,28 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2014,
-    "production_end_year": 2020,
+    "production_end_year": 2016,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "428i",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
+    "engine_code": "N20",
+    "engine_name": "N20 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe automatic row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe automatic row. Sonnet redo (2026-04 v2): The 428i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 430i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
       "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 428i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 428i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic. Sonnet redo (2026-04 v2): The 428i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 430i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -1275,8 +1315,8 @@
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "430d",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "N57",
+    "engine_name": "N57 3.0L I6 Diesel Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
@@ -1298,11 +1338,11 @@
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
-        "notes": "The official BMW 11/2013 technical-data PDF lists 0.667 as the top-gear ratio for the exact F32 430d Coupe automatic row.",
-        "value": 0.667,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
-        ]
+        ],
+        "notes": "Official BMW 11/2013 technical-data PDF lists 0.667 as the eighth gear for the exact F32 430d Coupe automatic row.",
+        "value": 0.667
       },
       "final_drive_rear": {
         "confidence": "official_exact",
@@ -1310,6 +1350,23 @@
         "value": 2.563,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 11/2013 technical-data PDF directly publishes the full 8-speed forward ratio set for the exact F32 430d Coupe automatic row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
         ]
       }
     },
@@ -1392,6 +1449,12 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "This run promoted the exact official 8-speed gear-ratio array for the F32 430d Coupe automatic from the saved BMW 11/2013 technical-data PDF.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1418,7 +1481,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "430i",
@@ -1430,16 +1493,20 @@
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 430i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 430i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -1572,7 +1639,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "430i",
@@ -1584,16 +1651,20 @@
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 430i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 430i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -1730,8 +1801,8 @@
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "435d xDrive",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "N57T",
+    "engine_name": "N57T 3.0L I6 Twin-Turbo Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
@@ -1754,8 +1825,11 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "This replacement pass focused on the contradicted F32 435d row identity, drivetrain, final drive, and baseline tyre package. The stored 0.667 top gear remains the inherited 8-speed family carryover until the exact ratio table is promoted into production.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 11/2013 technical-data PDF lists 0.667 as the eighth gear for the exact F32 435d xDrive Coupe automatic row.",
         "value": 0.667
       },
       "final_drive_rear": {
@@ -1765,6 +1839,23 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
           "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 11/2013 technical-data PDF directly publishes the full 8-speed forward ratio set for the exact F32 435d xDrive Coupe automatic row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
         ]
       }
     },
@@ -1850,6 +1941,12 @@
           "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
           "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "This run promoted the exact official 8-speed gear-ratio array for the F32 435d xDrive Coupe automatic from the saved BMW 11/2013 technical-data PDF.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1886,26 +1983,28 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2014,
-    "production_end_year": 2020,
+    "production_end_year": 2016,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "435i",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "N55",
+    "engine_name": "N55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe manual row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe manual row. Sonnet redo (2026-04 v2): The 435i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 440i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 435i Coupe manual row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 435i Coupe manual row. Sonnet redo (2026-04 v2): The 435i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 440i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -2033,26 +2132,28 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2014,
-    "production_end_year": 2020,
+    "production_end_year": 2016,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "435i",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "N55",
+    "engine_name": "N55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe automatic row.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe automatic row. Sonnet redo (2026-04 v2): The 435i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 440i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
       "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 435i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 435i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic. Sonnet redo (2026-04 v2): The 435i nameplate was discontinued at the F32 LCI in 03/2016 (replaced by 440i with the new B-series engine). production_end_year corrected to 2016 to reflect actual production span. Engine code clarified per Wikipedia F32 article.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -2179,7 +2280,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "440i",
@@ -2191,16 +2292,20 @@
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 440i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 440i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -2364,7 +2469,7 @@
     "market": "EU",
     "model_code": "F32",
     "body_code": "F32",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "440i",
@@ -2376,16 +2481,20 @@
       "evidence_refs": [
         "legacy_research_sources:0fe428128ffa",
         "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "legacy_research_sources:db56476b60f5",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 440i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 440i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -2553,8 +2662,8 @@
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "M4",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Twin-Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
@@ -2576,18 +2685,33 @@
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 0.846 as the top-gear ratio for the exact F32 M4 Coupe manual row.",
-        "value": 0.846,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
-        ]
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this top gear.",
+        "value": 0.846
       },
       "final_drive_rear": {
         "confidence": "official_exact",
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 3.462 as the final-drive ratio for the exact F32 M4 Coupe manual row.",
-        "value": 3.462,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists final drive 3.462.",
+        "value": 3.462
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this full forward gear-ratio set.",
+        "value": [
+          4.11,
+          2.315,
+          1.542,
+          1.179,
+          1.0,
+          0.846
         ]
       }
     },
@@ -2597,13 +2721,18 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
         "front": {
           "width_mm": 255.0,
           "aspect_pct": 40.0,
           "rim_in": 18.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        }
       },
       "options": [
         {
@@ -2611,62 +2740,31 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
+          "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Official standard staggered 18\""
         }
       ]
     },
     "verification_notes": [
       {
         "note": "This follow-up replaces generic petrol carryover on the F32 M4 manual row with the recovered official BMW 03/2014 values: rear-wheel drive, 6-speed manual, top gear 0.846, final drive 3.462, and launch-period staggered 18-inch tyres.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "This run encoded the official staggered rear tire and full transmission ratio set from the BMW 03/2014 F82 M4 technical-data PDF.",
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
@@ -2707,8 +2805,8 @@
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
     "variant_name": "M4",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Twin-Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "official_exact",
@@ -2730,18 +2828,34 @@
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 0.671 as the top-gear ratio for the exact F32 M4 Coupe double-clutch row.",
-        "value": 0.671,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
-        ]
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this top gear.",
+        "value": 0.671
       },
       "final_drive_rear": {
         "confidence": "official_exact",
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 3.462 as the final-drive ratio for the exact F32 M4 Coupe double-clutch row.",
-        "value": 3.462,
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists final drive 3.462.",
+        "value": 3.462
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this full forward gear-ratio set.",
+        "value": [
+          4.806,
+          2.593,
+          1.701,
+          1.277,
+          1.0,
+          0.844,
+          0.671
         ]
       }
     },
@@ -2751,13 +2865,18 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ],
-        "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
+        "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
         "front": {
           "width_mm": 255.0,
           "aspect_pct": 40.0,
           "rim_in": 18.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        }
       },
       "options": [
         {
@@ -2765,62 +2884,31 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
           ],
-          "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
+          "notes": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Official standard staggered 18\""
         }
       ]
     },
     "verification_notes": [
       {
         "note": "This follow-up replaces the fake F32 M4 ZF8HP placeholder with the exact official BMW 03/2014 M4 DCT row, including the 7-speed M double-clutch transmission, top gear 0.671, final drive 3.462, and launch-period staggered 18-inch tyres.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "This run encoded the official staggered rear tire and full transmission ratio set from the BMW 03/2014 F82 M4 technical-data PDF.",
         "evidence_refs": [
           "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
@@ -2858,8 +2946,8 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2016,
-    "production_end_year": 2016,
-    "model_name": "4 Series (F32, 2016)",
+    "production_end_year": 2020,
+    "model_name": "4 Series (F32, 2016-2020)",
     "variant_name": "440i xDrive",
     "engine_code": "B58",
     "engine_name": "B58 3.0L I6 Turbo",
@@ -2868,17 +2956,19 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-article",
-        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf"
+        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 03/2016 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row.",
+      "notes": "The official BMW 03/2016 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row. Sonnet redo (2026-04 v2): The 440i xDrive remained in production for the full post-LCI F32 era (03/2016 to end of F32 production in 2020). The previous production_end_year of 2016 was a data entry error - it incorrectly captured only the 03/2016 launch documentation date rather than the actual end of production. Corrected to 2020 per Wikipedia F32 production timeline.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf"
+        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 03/2016 technical-data PDF confirms a 6-speed manual transmission for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row. The repo keeps MT6 as the canonical gearbox-family mapping for that official manual transmission.",
+      "notes": "The official BMW 03/2016 technical-data PDF confirms a 6-speed manual transmission for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row. The repo keeps MT6 as the canonical gearbox-family mapping for that official manual transmission. Sonnet redo (2026-04 v2): The 440i xDrive remained in production for the full post-LCI F32 era (03/2016 to end of F32 production in 2020). The previous production_end_year of 2016 was a data entry error - it incorrectly captured only the 03/2016 launch documentation date rather than the actual end of production. Corrected to 2020 per Wikipedia F32 production timeline.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -3023,8 +3113,8 @@
     "model_code": "F32",
     "body_code": "F32",
     "production_start_year": 2016,
-    "production_end_year": 2016,
-    "model_name": "4 Series (F32, 2016)",
+    "production_end_year": 2020,
+    "model_name": "4 Series (F32, 2016-2020)",
     "variant_name": "440i xDrive",
     "engine_code": "B58",
     "engine_name": "B58 3.0L I6 Turbo",
@@ -3033,17 +3123,19 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-article",
-        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf"
+        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 03/2016 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row.",
+      "notes": "The official BMW 03/2016 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row. Sonnet redo (2026-04 v2): The 440i xDrive remained in production for the full post-LCI F32 era (03/2016 to end of F32 production in 2020). The previous production_end_year of 2016 was a data entry error - it incorrectly captured only the 03/2016 launch documentation date rather than the actual end of production. Corrected to 2020 per Wikipedia F32 production timeline.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf"
+        "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf",
+        "secondary_technical_sources:bmw-f32-4series-wikipedia"
       ],
-      "notes": "The official BMW 03/2016 technical-data PDF confirms 8-speed Steptronic wording for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+      "notes": "The official BMW 03/2016 technical-data PDF confirms 8-speed Steptronic wording for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic. Sonnet redo (2026-04 v2): The 440i xDrive remained in production for the full post-LCI F32 era (03/2016 to end of F32 production in 2020). The previous production_end_year of 2016 was a data entry error - it incorrectly captured only the 03/2016 launch documentation date rather than the actual end of production. Corrected to 2020 per Wikipedia F32 production timeline.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },

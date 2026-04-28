@@ -16,30 +16,31 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 730i state represented by this narrowed 2012-only row.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI.",
       "value": "RWD"
     },
     "transmission": {
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
+      "name": "8-speed Steptronic (ZF 8HP)",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 730i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI."
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI.",
         "value": 0.667
       },
       "gear_ratios": {
+        "confidence": "official_exact",
         "value": [
           4.714,
           3.143,
@@ -50,28 +51,35 @@
           0.839,
           0.667
         ],
-        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 730i state represented by this narrowed 2012-only row."
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI. Forward gear ratios I..VIII per ACEA tech-data PDF."
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 3.462 as the rear final-drive ratio for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI.",
         "value": 3.462
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.295,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI. Reverse gear ratio per ACEA tech-data PDF."
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-730i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 245/55 R17 baseline tires for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207820 (valid from 7/2012) confirms F01 SWB 730i (B58 derivate, 190 kW): ZF 8HP, gear ratios I 4.714/II 3.143/III 2.208/IV 1.667/V 1.285/VI 1.000/VII 0.839/VIII 0.667, R 3.295, final drive 3.462; tires 245/55 R17 102W on 8Jx17. Pre-7/2012 730i used ZF 6HP \u2014 this row is scoped to the 2012 LCI.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 55.0,
@@ -119,6 +127,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -138,30 +151,31 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 740i state represented by this narrowed 2012-only row.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18.",
       "value": "RWD"
     },
     "transmission": {
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
+      "name": "8-speed Steptronic (ZF 8HP)",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 740i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18."
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 0.667
       },
       "gear_ratios": {
+        "confidence": "official_exact",
         "value": [
           4.714,
           3.143,
@@ -172,28 +186,35 @@
           0.839,
           0.667
         ],
-        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 740i state represented by this narrowed 2012-only row."
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18. Forward gear ratios I..VIII per ACEA tech-data PDF."
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 3.077
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.295,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18. Reverse gear ratio per ACEA tech-data PDF."
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 740i (V8, 235 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.295, final drive 3.077; tires 245/50 R18 100Y RSC on 8Jx18.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -241,6 +262,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -258,42 +284,47 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
       ],
-      "notes": "Checked official BMW 07/2012 technical-data PDF for the exact F01 750d xDrive state. It publishes 750d xDrive, but it does not publish a 750d RWD row, so this represented 2012 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
+        "value": 3.077,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:113816cb96ee",
-          "legacy_research_sources:41ea423c2abb",
-          "legacy_research_sources:744d8cf9ed79",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:9f629e8bc0c1"
+          "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 45.0,
@@ -303,15 +334,11 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:113816cb96ee",
-            "legacy_research_sources:41ea423c2abb",
-            "legacy_research_sources:744d8cf9ed79",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9f629e8bc0c1"
+            "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -321,15 +348,11 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:113816cb96ee",
-            "legacy_research_sources:41ea423c2abb",
-            "legacy_research_sources:744d8cf9ed79",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9f629e8bc0c1"
+            "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -339,15 +362,11 @@
           "name": "Sport Line 20\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:113816cb96ee",
-            "legacy_research_sources:41ea423c2abb",
-            "legacy_research_sources:744d8cf9ed79",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9f629e8bc0c1"
+            "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207816 (valid from 7/2012) is the official ACEA spec sheet for the F01 SWB diesel lineup and lists ONLY 730d xDrive, 740d xDrive, and 750d xDrive \u2014 every F01 diesel is xDrive-only. There is no RWD 750d in any official BMW publication. The 750d uses the N57S tri-turbo (280 kW/381 hp/740 Nm), distinct from the 740d N57. If the row's intent was the xDrive variant, it should be renamed to 'bmw-f01-750d-xdrive-eu-2012-zf8hp-awd'. Marked no_confidence as a phantom EU configuration (RWD 750d does not exist); row should be considered for removal or rename.",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 35.0,
@@ -381,6 +400,11 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -400,30 +424,31 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 750i state represented by this narrowed 2012-only row.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18.",
       "value": "RWD"
     },
     "transmission": {
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
+      "name": "8-speed Steptronic (ZF 8HP)",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 750i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18."
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 0.667
       },
       "gear_ratios": {
+        "confidence": "official_exact",
         "value": [
           4.714,
           3.143,
@@ -434,28 +459,35 @@
           0.839,
           0.667
         ],
-        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 750i state represented by this narrowed 2012-only row."
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18. Forward gear ratios I..VIII per ACEA tech-data PDF."
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 2.813 as the rear final-drive ratio for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 2.813
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.317,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18. Reverse gear ratio per ACEA tech-data PDF."
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 (valid from 7/2012) confirms F01 SWB 750i (V8, 330 kW): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC on 8Jx18.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -503,6 +535,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -522,30 +559,31 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms xDrive all-wheel drive for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 0.667
       },
       "gear_ratios": {
+        "confidence": "official_exact",
         "value": [
           4.714,
           3.143,
@@ -556,11 +594,10 @@
           0.839,
           0.667
         ],
-        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact 750i xDrive state represented by this narrowed 2012-only row."
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18. Forward gear ratios I..VIII per ACEA tech-data PDF."
       },
       "final_drive_front": {
         "confidence": "official_derived",
@@ -571,21 +608,29 @@
         "value": 2.813
       },
       "final_drive_rear": {
-        "confidence": "official_derived",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18.",
         "value": 2.813
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.317,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18. Reverse gear ratio per ACEA tech-data PDF."
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 as the baseline tire for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -640,6 +685,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -659,30 +709,31 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 760i state represented by this narrowed 2012-only row.",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom.",
       "value": "RWD"
     },
     "transmission": {
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
+      "name": "8-speed Steptronic (ZF 8HP)",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 760i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom."
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom.",
         "value": 0.667
       },
       "gear_ratios": {
+        "confidence": "official_exact",
         "value": [
           4.714,
           3.143,
@@ -693,28 +744,35 @@
           0.839,
           0.667
         ],
-        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 760i state represented by this narrowed 2012-only row."
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom. Forward gear ratios I..VIII per ACEA tech-data PDF."
       },
       "final_drive_rear": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 2.813 as the rear final-drive ratio for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom.",
         "value": 2.813
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.317,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom. Reverse gear ratio per ACEA tech-data PDF."
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf"
         ],
-        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207815 confirms F01 SWB 760i (V12 N74, 400 kW, wheelbase 3070 mm \u2014 distinct from 760Li at 3210 mm in attachment 207817). ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813; tires 245/50 R18 100Y RSC. SWB 760i is a real and separate variant from 760Li \u2014 NOT a phantom.",
         "front": {
           "width_mm": 245.0,
           "aspect_pct": 50.0,
@@ -762,6 +820,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   }
 ]

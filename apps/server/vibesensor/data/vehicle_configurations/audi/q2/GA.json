@@ -14,15 +14,21 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Q2 GA all variants FWD as standard, AWD optional only on quattro derivatives (not in this scope).",
+      "value": "FWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -184,15 +190,22 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
+      "value": "FWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic, 0AM/0CW) per VW Group engineering norms: 1.0 TFSI EA211 at 200 Nm is well within DQ200 250 Nm limit and is the textbook DQ200 application across MQB-A small-car platforms (Polo, Ibiza, A1, Q2). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect: DQ381 is used only above the DQ200 torque limit and replaced DQ250, not DQ200. Existing top_gear_ratio 0.725 and final_drive_front 4.769 are consistent with documented DQ200 1.0-TFSI ratios, so they remain plausible but require Audi MediaCenter tech-data PDF for official_exact confirmation.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DQ381)"
+      "name": "7-speed S tronic (DQ200)",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia",
+        "secondary_technical_sources:vwgroup-dsg-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -356,15 +369,21 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
+      "value": "FWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table for both 1.4 TFSI COD (pre-facelift) and 1.5 TFSI evo (post-facelift) variants.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -528,15 +547,22 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
+      "value": "FWD",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic) per VW Group engineering norms: 1.4 TFSI COD / 1.5 TFSI evo at 250 Nm sits exactly at DQ200 torque limit and is the standard pairing for MQB FWD 250-Nm applications (Golf 1.5 TSI 130 PS, A3 1.4 TFSI 150 PS). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect for this torque level. Existing top_gear_ratio 0.725 and final_drive_front 4.769 retained pending Audi MediaCenter tech-data PDF confirmation.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DQ381)"
+      "name": "7-speed S tronic (DQ200)",
+      "evidence_refs": [
+        "secondary_technical_sources:q2-ga-wikipedia",
+        "secondary_technical_sources:vwgroup-dsg-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {

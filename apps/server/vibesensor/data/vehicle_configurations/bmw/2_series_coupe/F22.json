@@ -14,45 +14,57 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 220i 6-speed manual RWD. The row spans two engine eras: pre-LCI 2014-2016 with N20B20 (top 0.830 / FD 3.077 per BMW PressClub T0165234EN/250293) and post-LCI 2016 onwards with B48 (top 0.668 / FD 3.385 per T0260233EN/359752). Repo retains a single row covering the full generation; primary ratio values reflect the LCI B48 era because (a) it covers the larger share of production years and (b) the 220i MT6 with B48 was the variant carried into the 2017+ refresh. MT6 was retired before the 2021 packet (T0327248EN/473311 lists 220i automatic-only), so MT6 production_end is approximately 2019. Default tyre 205/55 R16 per both ACEA packets. Transmission code 'GS6-17BG' (Getrag 285) confirmed via sibling F32 420i tech sheet.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 220i 6-speed manual RWD. The row spans two engine eras: pre-LCI 2014-2016 with N20B20 (top 0.830 / FD 3.077 per BMW PressClub T0165234EN/250293) and post-LCI 2016 onwards with B48 (top 0.668 / FD 3.385 per T0260233EN/359752). Repo retains a single row covering the full generation; primary ratio values reflect the LCI B48 era because (a) it covers the larger share of production years and (b) the 220i MT6 with B48 was the variant carried into the 2017+ refresh. MT6 was retired before the 2021 packet (T0327248EN/473311 lists 220i automatic-only), so MT6 production_end is approximately 2019. Default tyre 205/55 R16 per both ACEA packets. Transmission code 'GS6-17BG' (Getrag 285) confirmed via sibling F32 420i tech sheet.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (Getrag GS6-17BG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "Post-LCI B48 era 6th gear from BMW PressClub T0260233EN/359752; pre-LCI N20 era was 0.830 (T0165234EN/250293) - era-split documented in row notes.",
+        "value": 0.668,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "Post-LCI B48 final drive from T0260233EN/359752; pre-LCI N20 era was 3.077.",
+        "value": 3.385,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Standard 220i tyre 205/55 R16 per both pre-LCI and post-LCI ACEA tech-data PDFs. Repo placeholder 225/40 R18 was a Sport-trim option, not the catalogue baseline.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -159,14 +171,23 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '220i' across 2014-2021",
+        "reason": "Broad 2014-2021 220i MT6 row spans at least two distinct exact technical states: 03/2014 ACEA packet (T0165234EN/250293) shows MT6 with top gear 0.830, final drive 3.077, standard 205/55 R16, and 270 Nm; 07/2016 ACEA packet (T0260233EN/359752) shows the B48 220i MT6 with top gear 0.668, final drive 3.385, standard 205/55 R16, and 290 Nm. The 2021 packet (T0327248EN/473311) is automatic-only, so broad MT6 continuity to 2021 is unsupported. Default tire 225/40 R18 is contradicted by official 205/55 R16 standard."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -184,45 +205,88 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 220i 8-speed Steptronic (ZF GA8HP45Z) RWD. Era-split: pre-LCI 2014-2016 N20 with 8HP old set (top 0.667 / FD 3.077, T0165234EN/250293) and post-LCI 2016-2021 B48 with 8HP new set (top 0.640 / FD 2.813, T0260233EN/359752 + T0327248EN/473311 confirms 2021 still uses new set). Repo single row holds post-LCI primary values; pre-LCI documented in notes. ZF GA8HP45Z is BMW-published as '8-speed Steptronic'; specific ZF code derived. Default tyre 205/55 R16.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+        "bmw_pressclub_sources:f22-2021-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 220i 8-speed Steptronic (ZF GA8HP45Z) RWD. Era-split: pre-LCI 2014-2016 N20 with 8HP old set (top 0.667 / FD 3.077, T0165234EN/250293) and post-LCI 2016-2021 B48 with 8HP new set (top 0.640 / FD 2.813, T0260233EN/359752 + T0327248EN/473311 confirms 2021 still uses new set). Repo single row holds post-LCI primary values; pre-LCI documented in notes. ZF GA8HP45Z is BMW-published as '8-speed Steptronic'; specific ZF code derived. Default tyre 205/55 R16.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (ZF GA8HP45Z)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+        "bmw_pressclub_sources:f22-2021-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "Post-LCI B48 ZF GA8HP45Z new ratio set 8th gear; pre-LCI N20 era was 0.667 (old set).",
+        "value": 0.64,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "Post-LCI ZF GA8HP45Z final drive; pre-LCI was 3.077.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ],
+        "notes": "Post-LCI ZF GA8HP45Z new ratio set per F22 2016 ACEA packet, cross-confirmed via sibling F32 2016 packet. Pre-LCI old set was [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667]."
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.712,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ],
+        "notes": "Post-LCI ZF GA8HP45Z reverse; pre-LCI was 3.295."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Standard 220i tyre 205/55 R16 per ACEA packets. Repo placeholder 225/40 R18 was an option.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -329,14 +393,23 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '220i' across 2014-2021",
+        "reason": "Broad 2014-2021 220i 8-speed Steptronic row spans three official exact states with different ratio/final-drive sets: 03/2014 (top 0.667, FD 3.077), 07/2016 (top 0.640, FD 2.813), 03/2021 (top 0.640, FD 2.813). One row cannot be exact across this span. Default tire 225/40 R18 is contradicted; official standard is 205/55 R16. ZF8HP transmission code is `official_derived` because BMW publishes only `8-speed Steptronic` wording, not the supplier code."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -347,52 +420,61 @@
     "model_code": "F22",
     "body_code": "F22",
     "production_start_year": 2014,
-    "production_end_year": 2021,
+    "production_end_year": 2016,
     "model_name": "2 Series Coupe (F22, 2014-2021)",
     "variant_name": "228i",
     "engine_code": "B48B20",
     "engine_name": "B48B20 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 228i 6-speed manual RWD. The 228i was a narrow EU market (UK + select ACEA) variant only produced 2014-2016 (discontinued at 07/2016 LCI; absent from T0260233EN/359752 facelift packet). production_end_year corrected 2021 -> 2016. Engine N20B20B (180 kW / 245 hp / 350 Nm). Transmission Getrag GS6-17BG. Top gear 0.701 and FD 3.909 per ACEA packet T0179544EN/267610. Default tyre 205/50 R17.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 228i 6-speed manual RWD. The 228i was a narrow EU market (UK + select ACEA) variant only produced 2014-2016 (discontinued at 07/2016 LCI; absent from T0260233EN/359752 facelift packet). production_end_year corrected 2021 -> 2016. Engine N20B20B (180 kW / 245 hp / 350 Nm). Transmission Getrag GS6-17BG. Top gear 0.701 and FD 3.909 per ACEA packet T0179544EN/267610. Default tyre 205/50 R17.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (Getrag GS6-17BG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "BMW PressClub T0179544EN/267610 (07/2014 ACEA F22 228i tech-data PDF).",
+        "value": 0.701,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "BMW PressClub T0179544EN/267610.",
+        "value": 3.909,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Standard 228i tyre 205/50 R17 per ACEA packet T0179544EN/267610.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -479,14 +561,23 @@
           "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
           "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '228i' across 2014-2021",
+        "reason": "Official 07/2014 ACEA 228i packet (T0179544EN/267610) supports MT6 with 180 kW/245 hp, 350 Nm, top gear 0.701, final drive 3.909, and standard 205/50 R17. No saved official source supports 228i continuity into 2021; the 2016/2021 packets do not include 228i. Broad 2014-2021 row should be narrowed; default 225/40 R18 contradicted."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -497,52 +588,91 @@
     "model_code": "F22",
     "body_code": "F22",
     "production_start_year": 2014,
-    "production_end_year": 2021,
+    "production_end_year": 2016,
     "model_name": "2 Series Coupe (F22, 2014-2021)",
     "variant_name": "228i",
     "engine_code": "B48B20",
     "engine_name": "B48B20 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 228i 8-speed Steptronic (ZF GA8HP45Z) RWD. Production 2014-2016 only. Engine N20B20B. ZF GA8HP45Z old ratio set: [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667], reverse 3.295, FD 3.077 per ACEA T0179544EN/267610 cross-confirmed via sibling F32 428i 2013 launch packet. Default tyre 205/50 R17.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Follow-up official BMW packet review did not recover any supported EU 228i row, so this automatic-family mapping remains an unresolved placeholder rather than a verified F22 transmission state.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 228i 8-speed Steptronic (ZF GA8HP45Z) RWD. Production 2014-2016 only. Engine N20B20B. ZF GA8HP45Z old ratio set: [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667], reverse 3.295, FD 3.077 per ACEA T0179544EN/267610 cross-confirmed via sibling F32 428i 2013 launch packet. Default tyre 205/50 R17.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (ZF GA8HP45Z)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "ZF GA8HP45Z old set 8th gear.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "ZF GA8HP45Z final drive (old set).",
+        "value": 3.077,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ],
+        "notes": "ZF GA8HP45Z old (pre-2016 facelift) ratio set per F22 228i ACEA packet T0179544EN/267610 cross-confirmed via F32 428i 2013 launch packet."
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.295,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ],
+        "notes": "ZF GA8HP45Z old reverse."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Standard 228i tyre 205/50 R17.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -629,14 +759,23 @@
           "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
           "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '228i' across 2014-2021",
+        "reason": "Official 07/2014 228i packet supports the optional 8-speed Steptronic with top gear 0.667, final drive 3.077, and standard 205/50 R17. No saved official source documents 228i continuity past the 07/2014 ACEA window. Broad 2014-2021 span is unsupported; default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -646,53 +785,63 @@
     "market": "EU",
     "model_code": "F22",
     "body_code": "F22",
-    "production_start_year": 2014,
-    "production_end_year": 2021,
+    "production_start_year": 2016,
+    "production_end_year": 2019,
     "model_name": "2 Series Coupe (F22, 2014-2021)",
     "variant_name": "230i",
     "engine_code": "B48",
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 230i 6-speed manual RWD. CRITICAL DATE FIX: 230i first appears in the 07/2016 LCI packet (T0260233EN/359752); it did not exist in 2014. production_start_year corrected 2014 -> 2016. MT6 is absent from the 2021 packet (T0327248EN/473311 lists 230i automatic-only); MT6 production_end approx 2019. Engine B48 (high-output tune). Top gear 0.677 / FD 3.909 per LCI ACEA packet. Default tyre 205/50 R17.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+        "bmw_pressclub_sources:f22-2021-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 230i 6-speed manual RWD. CRITICAL DATE FIX: 230i first appears in the 07/2016 LCI packet (T0260233EN/359752); it did not exist in 2014. production_start_year corrected 2014 -> 2016. MT6 is absent from the 2021 packet (T0327248EN/473311 lists 230i automatic-only); MT6 production_end approx 2019. Engine B48 (high-output tune). Top gear 0.677 / FD 3.909 per LCI ACEA packet. Default tyre 205/50 R17.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (Getrag GS6-17BG)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "BMW PressClub T0260233EN/359752 (07/2016 F22 LCI 230i tech-data).",
+        "value": 0.677,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "BMW PressClub T0260233EN/359752.",
+        "value": 3.909,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Standard 230i tyre 205/50 R17 per LCI ACEA packet.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -780,14 +929,23 @@
           "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
           "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '230i' across 2014-2021",
+        "reason": "230i MT6 is not supported as a 2014 launch row: the official 230i packet (T0260233EN/359752) starts in 07/2016 with MT6, top gear 0.677, final drive 3.909, standard 205/50 R17, and 252 hp. The 2021 packet (T0327248EN/473311) is automatic-only, so manual continuity to 2021 is unsupported. Production start year should be 2016 if the row is retained, and end year for MT6 is unresolved. Default 225/40 R18 contradicted by official 205/50 R17 standard."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -797,7 +955,7 @@
     "market": "EU",
     "model_code": "F22",
     "body_code": "F22",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2021,
     "model_name": "2 Series Coupe (F22, 2014-2021)",
     "variant_name": "230i",
@@ -805,45 +963,86 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "official_exact",
+      "notes": "BMW F22 230i 8-speed Steptronic (ZF GA8HP45Z) RWD. DATE FIX: 230i started 07/2016 (LCI), not 2014. Production through 2021 confirmed by T0327248EN/473311. Engine B48 high-output tune. ZF GA8HP45Z new ratio set: [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, FD 2.813 per T0260233EN/359752 + T0327248EN/473311. Default tyre 205/50 R17.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+        "bmw_pressclub_sources:f22-2021-spec-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "notes": "BMW F22 230i 8-speed Steptronic (ZF GA8HP45Z) RWD. DATE FIX: 230i started 07/2016 (LCI), not 2014. Production through 2021 confirmed by T0327248EN/473311. Engine B48 high-output tune. ZF GA8HP45Z new ratio set: [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, FD 2.813 per T0260233EN/359752 + T0327248EN/473311. Default tyre 205/50 R17.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (ZF GA8HP45Z)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+        "bmw_pressclub_sources:f22-2021-spec-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "ZF GA8HP45Z new set 8th gear.",
+        "value": 0.64,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "ZF GA8HP45Z new final drive.",
+        "value": 2.813,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ],
+        "notes": "ZF GA8HP45Z new (post-2016) ratio set."
+      },
+      "reverse_gear_ratio": {
+        "confidence": "official_exact",
+        "value": 3.712,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ],
+        "notes": "ZF GA8HP45Z new reverse."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Standard 230i tyre 205/50 R17.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": null
       },
       "options": [
         {
@@ -931,14 +1130,23 @@
           "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
           "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
+      },
+      {
+        "item": "F22 broad-row continuity issues for '230i' across 2014-2021",
+        "reason": "230i 8-speed Steptronic is not supported as a 2014 launch row: 07/2016 ACEA packet supports top gear 0.640, final drive 2.813, standard 205/50 R17; 03/2021 packet (8-speed Steptronic Sport) supports the same top gear/final drive and standard 205/50 R17. Production start year should be 2016 if the row is retained. Default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
       }
     ],
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -956,39 +1164,47 @@
     "engine_name": "B58B30O0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 0.812,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 3.231,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -1101,13 +1317,22 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "Variant 'M2' contradicted by official BMW PressClub evidence",
+        "reason": "Official BMW PressClub article (T0238042EN) and 2016 press kit (T0238042EN/368917) document the M2 Coupe as F87 (not F22), launched in 2016 with the N55-era 272 kW/370 hp 3.0L straight-six, MT6 standard. Current row places M2 in F22 with 2014 start year and B58 engine; both metadata facts are contradicted. Marked no_confidence pending shard relocation to F87."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1126,39 +1351,47 @@
     "engine_name": "B58B30O0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.077
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
+        "value": 3.077,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -1271,13 +1504,22 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "Variant 'M2' contradicted by official BMW PressClub evidence",
+        "reason": "Official BMW PressClub M2 launch press kit confirms the optional automatic for the M2 Coupe is a 7-speed M Double Clutch Transmission with Drivelogic (M-DCT/DCT7), not ZF8HP. The launch model is also F87, not F22. Current row's transmission code and shard placement are contradicted. Marked no_confidence pending replacement with an F87 DCT7 row."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1296,39 +1538,47 @@
     "engine_name": "S55B30T0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
+      "value": "RWD",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
+        "value": 0.812,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
+        "value": 3.231,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -1438,13 +1688,22 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "Variant 'M2 Competition' contradicted by official BMW PressClub evidence",
+        "reason": "Official BMW PressClub M2 Competition article (T0279885EN) and 2018 technical-data PDF (415275) document the M2 Competition as F87, 2018-era, S55-family 2979 cc 302 kW/410 hp, with standard 245/35 ZR19 front and 265/35 ZR19 rear. Current row's 2014 start, F22 placement, and inherited 18-inch default are contradicted. Marked no_confidence pending shard relocation to F87."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1463,45 +1722,47 @@
     "engine_name": "S55B30T0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:f1055dc71011"
+        "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
       ],
-      "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "unverified",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:f1055dc71011"
+        "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
       ],
-      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 technical-data PDF publishes a seven-speed M double-clutch transmission with Drivelogic rather than ZF8HP, so this represented automatic row is not a valid exact production state under its current transmission id.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
+        "value": 3.077,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 40.0,
@@ -1611,13 +1872,22 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "item": "Variant 'M2 Competition' contradicted by official BMW PressClub evidence",
+        "reason": "Same official M2 Competition technical-data PDF documents the optional automatic as 7-speed M DCT, not ZF8HP. Shard placement and transmission family are contradicted. Marked no_confidence pending replacement with an F87 DCT7 row."
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_engine_order": false,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

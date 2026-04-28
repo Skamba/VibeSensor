@@ -16,51 +16,67 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:50c07cf41408",
-        "legacy_research_sources:6fd93dc07e14"
+        "secondary_technical_sources:g80-m3-wikipedia",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual (GS6-53BZ)",
+      "evidence_refs": [
+        "secondary_technical_sources:g80-m3-wikipedia",
+        "secondary_technical_sources:g80-m3-motortrend-2021-specs",
+        "secondary_technical_sources:g80-m3-motortrend-2022-specs",
+        "secondary_technical_sources:g80-m3-caranddriver-specs",
+        "secondary_technical_sources:zf-s6-53-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 0.812
+        "confidence": "reputable_secondary",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec). Top gear value 0.812 sourced from C&D/MotorTrend secondary specs; ZF S6-53 article cites 0.872 - discrepancy noted.",
+        "value": 0.812,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-caranddriver-specs",
+          "secondary_technical_sources:g80-m3-motortrend-2021-specs",
+          "secondary_technical_sources:g80-m3-motortrend-2022-specs",
+          "secondary_technical_sources:zf-s6-53-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 3.846
+        "confidence": "reputable_secondary",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
+        "value": 3.46,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-caranddriver-specs",
+          "secondary_technical_sources:g80-m3-motortrend-2021-specs",
+          "secondary_technical_sources:g80-m3-motortrend-2022-specs"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:50c07cf41408",
-          "legacy_research_sources:6fd93dc07e14",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:b8cf19533840",
-          "legacy_research_sources:d78cb5eee4f7",
-          "legacy_research_sources:e0d00fcedc95",
-          "legacy_research_sources:e359a1117b6f"
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 19.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -166,6 +182,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -183,47 +204,57 @@
     "engine_name": "S58 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "no_confidence",
       "evidence_refs": [
-        "legacy_research_sources:50c07cf41408",
-        "legacy_research_sources:6fd93dc07e14"
+        "secondary_technical_sources:g80-m3-wikipedia",
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "confidence": "no_confidence",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed automatic (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:g80-m3-wikipedia",
+        "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+        "secondary_technical_sources:g82-m4-motortrend-overview"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 0.667
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
+        "value": 0.667,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 3.154
+        "confidence": "no_confidence",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "no_confidence",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:50c07cf41408",
-          "legacy_research_sources:6fd93dc07e14",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:b8cf19533840",
-          "legacy_research_sources:d78cb5eee4f7",
-          "legacy_research_sources:e0d00fcedc95",
-          "legacy_research_sources:e359a1117b6f"
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
@@ -233,19 +264,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:50c07cf41408",
-            "legacy_research_sources:6fd93dc07e14",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:b8cf19533840",
-            "legacy_research_sources:d78cb5eee4f7",
-            "legacy_research_sources:e0d00fcedc95",
-            "legacy_research_sources:e359a1117b6f"
+            "secondary_technical_sources:g80-m3-wikipedia",
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
@@ -255,19 +280,13 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "no_confidence",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:50c07cf41408",
-            "legacy_research_sources:6fd93dc07e14",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:b8cf19533840",
-            "legacy_research_sources:d78cb5eee4f7",
-            "legacy_research_sources:e0d00fcedc95",
-            "legacy_research_sources:e359a1117b6f"
+            "secondary_technical_sources:g80-m3-wikipedia",
+            "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+            "secondary_technical_sources:g82-m4-motortrend-overview"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+          "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 30.0,
@@ -334,6 +353,11 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -354,51 +378,74 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:50c07cf41408",
-        "legacy_research_sources:6fd93dc07e14"
+        "secondary_technical_sources:g80-m3-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+      "confidence": "reputable_secondary",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed M-Steptronic Sport (ZF 8HP)",
+      "evidence_refs": [
+        "secondary_technical_sources:g80-m3-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 0.667
+        "confidence": "reputable_secondary",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
+        "value": 0.64,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
-        "value": 3.154
+        "confidence": "reputable_secondary",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "reputable_secondary",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4). Forward gear ratios derived from the Competition xDrive row (same ZF 8HP M-Steptronic)."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:50c07cf41408",
-          "legacy_research_sources:6fd93dc07e14",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:b8cf19533840",
-          "legacy_research_sources:d78cb5eee4f7",
-          "legacy_research_sources:e0d00fcedc95",
-          "legacy_research_sources:e359a1117b6f"
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
         "front": {
           "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 19.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -503,6 +550,11 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -531,7 +583,7 @@
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition xDrive saloon (42AY) AWD, ZF 8HP M-Steptronic with Drivelogic. Repo's existing official_exact ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with final drive 3.154 are confirmed. Default tire entry corrected: prior front dimension 285/30 ZR20 was actually the rear size; corrected to 275/35 ZR19 front + 285/30 ZR20 rear, matching the staggered EU OE setup.",
       "code": "ZF8HP",
       "name": "8-speed M Steptronic transmission with Drivelogic"
     },
@@ -570,23 +622,29 @@
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
+          "legacy_research_sources:e0d00fcedc95",
           "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:d78cb5eee4f7",
           "legacy_research_sources:50c07cf41408",
-          "legacy_research_sources:6fd93dc07e14",
           "legacy_research_sources:95b9bf2bf0cf",
           "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:b8cf19533840",
-          "legacy_research_sources:d78cb5eee4f7",
-          "legacy_research_sources:e0d00fcedc95",
-          "legacy_research_sources:e359a1117b6f"
+          "legacy_research_sources:6fd93dc07e14",
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "legacy_research_sources:e359a1117b6f",
+          "legacy_research_sources:b8cf19533840"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition xDrive saloon (42AY) AWD, ZF 8HP M-Steptronic with Drivelogic. Repo's existing official_exact ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with final drive 3.154 are confirmed. Default tire entry corrected: prior front dimension 285/30 ZR20 was actually the rear size; corrected to 275/35 ZR19 front + 285/30 ZR20 rear, matching the staggered EU OE setup.",
         "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear",
+        "rear": {
           "width_mm": 285.0,
           "aspect_pct": 30.0,
           "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
+        }
       },
       "options": [
         {
@@ -675,6 +733,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": false
     }
   }
 ]

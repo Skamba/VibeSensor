@@ -37,6 +37,13 @@
       "confidence": "medium"
     },
     {
+      "id": "secondary_technical_sources:a3-8v-saloon-2018-uk-price-list-mirror",
+      "url": "https://nd-mediagallery2-public-production.s3.amazonaws.com/673a07dbdd6cac17e2c2021852eb5ef4/a3_and_s3_saloon_pricelist.pdf",
+      "title": "Audi UK A3 and S3 Saloon 2018 model-year price list mirror",
+      "note": "Official-origin Audi UK 2018 model-year A3/S3 Saloon price-list mirror used as public secondary provenance for late-8V saloon engine/transmission availability and wheel/tyre clusters; not used as exact gear-ratio or final-drive evidence.",
+      "confidence": "medium"
+    },
+    {
       "id": "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata",
       "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-1.6-tdi-110hp-23998",
       "title": "Auto-Data A3 8V Sedan 1.6 TDI manual specification entry",
@@ -118,6 +125,48 @@
       "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tfsi-190hp-quattro-s-tronic-23784",
       "title": "Auto-Data A3 8V Sedan 2.0 TFSI quattro S tronic specification entry",
       "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TFSI 190 hp quattro S tronic entry used to document that the later exact AWD sedan state is also automatic-only and belongs to a different facelift-era powertrain slice than the broad 2013-2020 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-1-8-tfsi-mt6-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-355366",
+      "title": "Carfolio A4 B8 1.8 TFSI manual specification entry",
+      "note": "Exact-ish secondary 2011 A4 1.8 TFSI sedan page used as a source-finding lead for front-wheel drive, 6-speed manual transmission, 205/60 R16 tires, top gear 0.69, and final drive 3.30; the saved page title/content says 1.8 TFSI despite an odd URL slug.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-1-8-tfsi-multitronic-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-1.8-tfsi-multitronic-355377",
+      "title": "Carfolio A4 B8 1.8 TFSI multitronic specification entry",
+      "note": "Exact-ish secondary 2012 A4 1.8 TFSI multitronic sedan page used to document that the recovered FWD automatic evidence is 8-step continuously variable multitronic rather than DCT7 or ZF8HP.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2007",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-multitronic-161414",
+      "title": "Carfolio A4 B8 2.0 TDI multitronic pre-2010 specification entry",
+      "note": "Secondary B8-relevant 2.0 TDI multitronic page used only as adjacent evidence that front-wheel-drive B8 diesel automatics used multitronic/CVT rather than DCT7 or ZF8HP; the model year is outside the 2010+ research target, so it is not promoted to exact production data.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2011",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-multitronic-355531",
+      "title": "Carfolio A4 B8 2.0 TDI multitronic specification entry",
+      "note": "Exact-ish secondary 2011 A4 2.0 TDI multitronic sedan page used to document that the recovered FWD automatic evidence is 8-step CVT/multitronic rather than DCT7 or ZF8HP.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2011",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-355410",
+      "title": "Carfolio A4 B8 2.0 TFSI multitronic specification entry",
+      "note": "Exact-ish secondary 2011 A4 2.0 TFSI multitronic sedan page used to document that the recovered FWD automatic evidence is multitronic/CVT rather than DCT7 or ZF8HP.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2013",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-354794",
+      "title": "Carfolio A4 B8 2.0 TFSI facelift multitronic specification entry",
+      "note": "Exact-ish secondary 2013 A4 2.0 TFSI multitronic sedan page used to cross-check that the recovered FWD automatic evidence is multitronic/CVT; ratio cells were blank and must not be promoted.",
       "confidence": "medium"
     },
     {
@@ -314,6 +363,482 @@
       "url": "https://www.wheel-size.com/size/bmw/7-series/2016/",
       "title": "Wheel-Size BMW 7 Series 730i 2016 trim page",
       "note": "Independent secondary trim-list corroboration used to confirm that the 2016 BMW 7 Series lineup includes a 730i I4 255 hp state even though the directly fetched official BMW launch material omits a trim-specific 730i technical-data row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8r-2-0-tfsi-211-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-2.0-tfsi-211hp-quattro-s-tronic-4782",
+      "title": "Auto-Data Q5 8R pre-facelift 2.0 TFSI 211hp quattro S tronic",
+      "note": "Confirms 2.0 TFSI quattro DCT7 in pre-facelift Q5 8R (production 2008-2011); standard tire 235/60 R18.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8r-3-0-tdi-240-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-3.0-tdi-v6-240hp-quattro-s-tronic-4783",
+      "title": "Auto-Data Q5 8R pre-facelift 3.0 TDI 240hp quattro S tronic",
+      "note": "Confirms 3.0 TDI quattro DCT7 in pre-facelift Q5 8R (production 2008-Sep 2012); standard tire 235/60 R18.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8rf-2-0-tfsi-225-zf8hp-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-2.0-tfsi-225hp-quattro-tiptronic-19162",
+      "title": "Auto-Data Q5 8R.5 facelift 2.0 TFSI 225hp quattro tiptronic",
+      "note": "Confirms 2.0 TFSI quattro ZF8HP (8-speed tiptronic) in facelift Q5 8R (2012-2015); standard tire 235/60 R18.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8rf-3-0-tdi-245-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-3.0-tdi-v6-245hp-quattro-s-tronic-19168",
+      "title": "Auto-Data Q5 8R.5 facelift 3.0 TDI 245hp quattro S tronic",
+      "note": "Confirms 3.0 TDI quattro DCT7 in early facelift Q5 8R (Jun 2012-2014); standard tire 235/60 R18.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8rf-3-0-tdi-240-zf8hp-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-3.0-tdi-v6-240hp-quattro-tiptronic-53585",
+      "title": "Auto-Data Q5 8R.5 facelift 3.0 TDI 240hp quattro tiptronic",
+      "note": "Confirms 3.0 TDI quattro ZF8HP (8-speed tiptronic) in late facelift Q5 8R (2013-2017); standard tire 235/55 R19.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-1121",
+      "title": "Auto-Data Q5 8R pre-facelift generation index",
+      "note": "Full variant inventory for Q5 8R (2008-2012); contains no FWD 2.0 TFSI variant \u2014 used as negative evidence.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-8r-facelift-gen-autodata",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-4176",
+      "title": "Auto-Data Q5 8R.5 facelift generation index",
+      "note": "Full variant inventory for Q5 8R facelift (2012-2017); FWD only on 2.0 TDI; no FWD 2.0 TFSI variant \u2014 used as negative evidence.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+      "url": "https://www.bmwusa.com/vehicles/m-series/bmw-4-series-m-models/bmw-m4-coupe-technical-highlights.html",
+      "title": "BMW USA M4 Coupe Technical Highlights",
+      "note": "OEM-published M4 lineup spec page: confirms only three M4 G82 variants exist \u2014 base M4 (473hp, 6-speed manual, RWD), M4 Competition (503hp, 8-speed automatic, RWD), and M4 Competition xDrive (523hp, 8-speed automatic, AWD). Used as evidence that base M4 8AT and Competition MT6 are phantom configurations.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-caranddriver-mt6-test",
+      "url": "https://www.caranddriver.com/reviews/a36268438/2021-bmw-m4-manual-by-the-numbers/",
+      "title": "Car and Driver: 2021 BMW M4 Manual By the Numbers",
+      "note": "C&D test of base M4 manual; spec panel lists Michelin Pilot Sport 4S 275/35ZR-19 (100Y) front / 285/30ZR-20 (99Y) rear (BMW \u2605-marked OE tires) on actual test car. Confirms 'base M4 is manual only'; 'Competition is available only with the automatic'; ZF 8HP replaced previous DCT.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-caranddriver-comp-drive",
+      "url": "https://www.caranddriver.com/reviews/a35799625/2021-bmw-m4-competition-drive/",
+      "title": "Car and Driver: 2021 BMW M4 Competition drive review",
+      "note": "Confirms M4 Competition is 8AT-only ('Unlocking the Competition version's 503 horsepower ... requires ... life with an eight-speed automatic'). Used as negative evidence for Competition MT6 phantom row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-caranddriver-specs",
+      "url": "https://www.caranddriver.com/bmw/m4/specs/",
+      "title": "Car and Driver: BMW M4 specs page",
+      "note": "Spec page for current G82 M4 \u2014 lists base M4 with 6-speed manual, 3.46 axle ratio, US-spec tires 275/40R18 front / 285/35R19 rear (smaller than EU staggered 19/20). FD 3.46 corroborates G82 MT6 final drive (vs old F82 3.846 inheritance).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-motortrend-2022-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m4/2022/specs/",
+      "title": "MotorTrend: 2022 BMW M4 specs",
+      "note": "2022 MY spec page: 6-speed manual, 3.46 axle ratio, RWD. Independent corroboration that G82 base M4 final drive is 3.46 (not 3.846).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-motortrend-2023-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m4/2023/specs/",
+      "title": "MotorTrend: 2023 BMW M4 specs",
+      "note": "2023 MY spec page: same 6-speed manual, 3.46 axle ratio, RWD. Confirms FD 3.46 stable across 2021-2023.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g82-m4-motortrend-overview",
+      "url": "https://www.motortrend.com/cars/bmw/m4/",
+      "title": "MotorTrend: BMW M4 overview",
+      "note": "'the standard coupe is the only 2025 that comes with a six-speed manual transmission. It's offered in a single RWD specification.' / 'M4 Competition variants receive an eight-speed automatic and are offered with RWD or xDrive AWD'. Confirms lineup structure unchanged 2021-2025.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g80-m3-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_M3",
+      "title": "Wikipedia: BMW M3 (G80/G81 section)",
+      "note": "Citing BMW press kit footnotes, lists G80 M3 saloon variants: base M3 (52AY) 353 kW 6-speed manual RWD only; M3 Competition (32AY) 375 kW 8-speed M Steptronic Sport RWD; M3 Competition xDrive (42AY) AWD. Footnote 167 explicitly states the 6-speed manual is the only transmission available on the standard M3, confirming the base 8AT RWD configuration is phantom.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g80-m3-motortrend-2021-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m3/2021/specs/",
+      "title": "MotorTrend: 2021 BMW M3 specs",
+      "note": "2021 MY spec sheet for G80 M3 Sedan: 6-speed manual, 3.46 axle ratio, RWD. Independent confirmation that G80 base M3 final drive is 3.46 (not the legacy 3.846).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g80-m3-motortrend-2022-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m3/2022/specs/",
+      "title": "MotorTrend: 2022 BMW M3 specs",
+      "note": "2022 MY spec sheet: same 6-speed manual, 3.46 axle ratio, RWD. Independent corroboration of FD 3.46 stable across MYs.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g80-m3-caranddriver-specs",
+      "url": "https://www.caranddriver.com/bmw/m3/specs/",
+      "title": "Car and Driver: BMW M3 specs",
+      "note": "Spec page for current G80 M3 \u2014 confirms 6-speed manual, 3.46 axle ratio for base model.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f82-m4-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_M4",
+      "title": "Wikipedia: BMW M4 (F82 section)",
+      "note": "States F82 M4 'two transmission choices are available, the 6-speed manual and the 7-speed M-DCT transmissions.' Confirms transmission lineup for both base M4 and the 2016 Competition Package (444 hp), production span 2014 - June 2020.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:zf-s6-53-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/ZF_S6-53_transmission",
+      "title": "Wikipedia: ZF S6-53 transmission",
+      "note": "ZF S6-53 application list places GS6-53BZ on G80 M3 / G82 M4. Reference for MT6 gear ratios I 4.055 / II 2.396 / III 1.582 / IV 1.192 / V 1.000 / VI 0.872 \u2014 note discrepancy with C&D/MotorTrend reported 6th = 0.812 (left unresolved pending primary BMW ACEA spec).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f82-m4-motortrend-2014-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m4/2014/specs/",
+      "title": "MotorTrend: 2014 BMW M4 specs",
+      "note": "2014 MY F82 spec sheet: 6-speed manual, 3.46 axle ratio, US tires 275/40R18 F / 285/35R19 R. Confirms MT6 lineup.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f82-m4-motortrend-2016-specs",
+      "url": "https://www.motortrend.com/cars/bmw/m4/2016/specs/",
+      "title": "MotorTrend: 2016 BMW M4 specs",
+      "note": "2016 MY F82 spec sheet (Competition era): manual + DCT, US tires 255/40R18 F / 275/40R18 R. Confirms Competition lineup.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-fy-adac-prefacelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy/",
+      "title": "ADAC Autokatalog: Audi Q5 (FY) pre-facelift (2017-07/2020) variant catalogue",
+      "note": "Independent German automotive consumer organization variant catalogue. Lists every Q5 FY pre-facelift variant sold in Germany: confirms NO FWD TFSI exists; all TFSI are quattro; only FWD variant is 35 TDI (diesel). Used as negative evidence for 40 TFSI FWD phantom row, and as production-window evidence for 35 TDI quattro (08/2018-07/2020), 45 TFSI quattro (01/2019-07/2020 at 180 kW), 55 TFSI e quattro (09/2019-08/2020).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-fy-adac-facelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy-facelift/",
+      "title": "ADAC Autokatalog: Audi Q5 (FY) facelift (09/2020-11/2024) variant catalogue",
+      "note": "Facelift catalogue lists 40 TFSI quattro (12/2021+, 150 kW), 40 TDI quattro (09/2020-11/2024, 150 kW), 45 TFSI quattro (09/2020-11/2024, 195 kW), 55 TFSI e quattro (02/2021-11/2024). Confirms all TFSI variants are quattro-only; 35 TDI FWD remains the only FWD Q5 FY in DE.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-fy-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_Q5",
+      "title": "Wikipedia: Audi Q5 (second generation FY)",
+      "note": "Second-generation Q5 FY infobox confirms transmission split: 7-speed S tronic (DL382, 4-cylinder applications) vs 8-speed Tiptronic (ZF 8HP, V6 50 TDI applications). None of the 5 backlog rows fall into the V6 ZF 8HP category.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q5-fy-tfsi-e-caranddriver",
+      "url": "https://www.caranddriver.com/audi/q5/specs/2021/",
+      "title": "Car and Driver: 2021 Audi Q5 specs",
+      "note": "2021 Q5 spec page including 55 TFSI e variant. Explicitly states 'Transmission: 7-Speed S tronic Dual-Clutch Auto' for the PHEV \u2014 refutes any suggestion of 8-speed Tiptronic for the FY PHEV. US axle ratio 5.302 noted (does not apply to EU spec).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+      "url": "https://web.archive.org/web/2019/https://www.audi-mediacenter.com/en/press-releases/extensive-engine-range-for-new-audi-q3-10491",
+      "title": "Audi MediaCenter (Wayback): 'Extensive engine range for new Audi Q3' (2018-11-28)",
+      "note": "Wayback Machine archive of the original Audi MediaCenter Q3 F3 engine-range press release (2018). Confirms all 4 ICE backlog variants by name with power, torque, transmission (S tronic 7-speed), and drivetrain: 35 TDI 150 PS / 340 Nm / FWD / S tronic; 35 TFSI 150 PS / 250 Nm / FWD / S tronic; 40 TDI 190 PS / 400 Nm / quattro / S tronic; 40 TFSI 190 PS / 320 Nm / quattro / S tronic.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
+      "url": "https://web.archive.org/web/2021/https://www.audi-mediacenter.com/en/press-releases/high-efficiency-and-outstanding-driving-pleasure-the-audi-q3-as-a-plug-in-hybrid",
+      "title": "Audi MediaCenter (Wayback): 'The Audi Q3 as a plug-in hybrid' (2020-12-17)",
+      "note": "Wayback Machine archive of the original Audi MediaCenter Q3 F3 PHEV launch press release. Confirms 45 TFSI e is FWD with 6-speed S tronic (DQ400e architecture) and 85 kW PSM electric motor, German production start January 2021.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-f3-mediacenter-launch-wayback",
+      "url": "https://web.archive.org/web/2019/https://www.audi-mediacenter.com/en/press-releases/successful-model-with-new-strengths-the-second-generation-of-the-audi-q3",
+      "title": "Audi MediaCenter (Wayback): 'Successful model with new strengths: second generation Audi Q3' (2018-07-25)",
+      "note": "Wayback Machine archive of the original Q3 F3 launch press release. Confirms MQB A2 platform, dimensions, S tronic transmission family across the lineup, and wheel range 17-20 inches with Audi Sport GmbH 20-inch fitment using 255/40 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-f3-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_Q3",
+      "title": "Wikipedia: Audi Q3 (F3 second generation)",
+      "note": "Article confirms MQB A2 platform; production span August 2018 - June 2025; transmission family identification: DQ381 used for all non-PHEV 7-speed S tronic applications on this platform (DQ200 limited to MQB A small-car platforms; not used on Q3 F3); DQ400e is the 6-speed wet-clutch DCT used in PHEV applications including 45 TFSI e.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-m8-pressclub-usa-t0296777",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0296777EN_US/the-all-new-2020-bmw-m8-coupe-and-m8-convertible",
+      "title": "BMW USA PressClub: T0296777EN_US 2020 M8 Coupe and Convertible",
+      "note": "BMW USA accessible press release confirming M8 (G15/F92) running gear: M Steptronic, M xDrive AWD, S63B44T4 engine (600/617 hp), tires 275/35R20 front and 285/35R20 rear, wheels 9.5x20 front / 10.5x20 rear, 0-60 mph 3.1s standard / 3.0s Competition. No gear ratio table published in the article.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:motortrend-2020-m8",
+      "url": "https://www.motortrend.com/cars/bmw/m8/2020/specs/",
+      "title": "MotorTrend 2020 BMW M8 specifications",
+      "note": "MotorTrend specifications page for 2020 BMW M8 Coupe (US): axle ratio 3.15, tires 275/35R20 front / 285/35R20 rear, 8-speed M Steptronic automatic, AWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:motortrend-2020-840i",
+      "url": "https://www.motortrend.com/cars/bmw/8-series/2020/specs/",
+      "title": "MotorTrend 2020 BMW 8 Series (840i) specifications",
+      "note": "MotorTrend specifications page for 2020 BMW 840i Coupe (US, RWD): axle ratio 2.93, tires 245/45R18 front / 275/40R18 rear, 8-speed automatic, RWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:motortrend-2019-m850i",
+      "url": "https://www.motortrend.com/cars/bmw/8-series/2019/specs/",
+      "title": "MotorTrend 2019 BMW 8 Series (M850i xDrive) specifications",
+      "note": "MotorTrend specifications page for 2019 BMW M850i xDrive Coupe (US): axle ratio 3.40 (US-market), tires 245/35R20 front / 275/30R20 rear, 8-speed automatic, AWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:caranddriver-2020-m8",
+      "url": "https://www.caranddriver.com/bmw/m8/specs/2020/bmw_m8_bmw-m8_2020",
+      "title": "Car and Driver 2020 BMW M8 specifications",
+      "note": "Car and Driver specifications for 2020 BMW M8: axle ratio 3.15, tires 275/35R20 front / 285/35R20 rear, 8-speed M Steptronic, M xDrive AWD with electronically controlled transfer case.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:ultimatespecs-g15-m8-lci",
+      "url": "https://www.ultimatespecs.com/car-specs/BMW/124822/BMW-G15-LCI-8-Series-Coupe-M8.html",
+      "title": "UltimateSpecs: BMW G15 LCI 8 Series Coupe M8",
+      "note": "UltimateSpecs technical specifications page for G15 LCI M8: reverse gear ratio 3.48 (= 3.456 rounded, consistent with ZF 8HP45/M Steptronic family), final drive 3.15, tires 275/35R20 front / 285/35R20 rear, AWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:ultimatespecs-g15-m850i-lci",
+      "url": "https://www.ultimatespecs.com/car-specs/BMW/124820/BMW-G15-LCI-8-Series-Coupe-M850i-xDrive.html",
+      "title": "UltimateSpecs: BMW G15 LCI 8 Series Coupe M850i xDrive",
+      "note": "UltimateSpecs technical specifications page for G15 LCI M850i xDrive: reverse gear ratio 3.99 (= 3.993 ZF 8HP75/76 family rounded), final drive 2.81 (consistent with EU press kit 2.813), tires 245/35R20 front / 275/30R20 rear, AWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:ultimatespecs-g15-840i-lci",
+      "url": "https://www.ultimatespecs.com/car-specs/BMW/124819/BMW-G15-LCI-8-Series-Coupe-840i.html",
+      "title": "UltimateSpecs: BMW G15 LCI 8 Series Coupe 840i",
+      "note": "UltimateSpecs technical specifications page for G15 LCI 840i: tires 245/40R19 front / 275/35R19 rear (LCI 19-inch standard), RWD, 8-speed automatic ZF 8HP.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+      "url": "https://www.zf.com/products/en/cars/products_67110.html",
+      "title": "ZF Friedrichshafen: 8HP automatic transmission family specification",
+      "note": "ZF transmission family reference. The M Steptronic variant (BMW internal designation GS8D45BG) used in S63-engined M cars (M3 G80 Competition, M4 G82 Competition, M5 F90 Competition, M8 F91/F92/F93) publishes forward gear ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 with reverse 3.456. Standard 8HP75/76 variant (B58/N63 applications including 840i, 840i xDrive, 840d, M850i) publishes I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640 with reverse 3.993.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:wikipedia-bmw-8-series-g15",
+      "url": "https://en.wikipedia.org/wiki/BMW_8_Series_(G15)",
+      "title": "Wikipedia: BMW 8 Series (G15)",
+      "note": "Article confirms G15 generation scope: 840i, 840i xDrive, 840d xDrive, M850i xDrive, M8/M8 Competition (internal codes F91/F92/F93). All variants use ZF 8HP Steptronic; M8 variants use the M Steptronic tune. 840d xDrive specifically uses BMW transmission code GA8HP76X. Production timeline: launch November 2018 (M850i first), M8 added June 2019, LCI March 2022.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q2-ga-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_Q2",
+      "title": "Wikipedia: Audi Q2 (GA)",
+      "note": "Article confirms launch lineup at 2016/2017 used '1.0 TFSI' / '1.4 TFSI COD' badge naming; Audi group-wide rename to '30 TFSI' / '35 TFSI' was October 2018 (MY2019). 1.4 TFSI EA211 COD was replaced by 1.5 TFSI EA211 evo at the GA facelift (~2020) which dropped cylinder deactivation. All four ICE rows are FWD with optional 6-speed manual or 7-speed S tronic.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:vwgroup-dsg-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Direct-shift_gearbox",
+      "title": "Wikipedia: Direct-shift gearbox (DSG / S tronic)",
+      "note": "Canonical VW Group DCT variant table. DQ200 (0AM/0CW) 7-speed dry-clutch, max 250 Nm, FWD only, used with 1.0-1.6 L engines. DQ381 (0GC) 7-speed wet-clutch, max 420-430 Nm, replaces DQ250 from 2017. The Q2 GA 30 TFSI (1.0 TFSI 200 Nm FWD) is a textbook DQ200 application; the 35 TFSI (1.4/1.5 TFSI 250 Nm FWD) at exactly the DQ200 torque limit is also typically DQ200 in MQB FWD applications.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q8-4m8-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_Q8",
+      "title": "Wikipedia: Audi Q8 (4M8)",
+      "note": "Article confirms Q8 4M8 layout is exclusively 'front-engine, four-wheel-drive' (always quattro). Sole ICE petrol variant is '55 TFSI quattro' (3.0 V6 TFSI 340 PS / 500 Nm with 48V MHEV). PHEV variants are '55 TFSI e quattro' (381 PS) and '60 TFSI e quattro' (456 PS / 700 Nm). EU PHEV pre-sales started 2020. ZF 8-speed Tiptronic for all. There has never been a non-quattro Q8 variant.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:zf8hp-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/ZF_8HP_transmission",
+      "title": "Wikipedia: ZF 8HP transmission family",
+      "note": "Generation/ratio reference: 8HP75/I (2014, 1st-iter) keeps original 8th-gear ratio 0.667 with 740 Nm capacity; 8HP75/II and 8HP76/I (2018 3rd-gen) use updated 0.640 8th-gear ratio with up to 760 Nm capacity. Q8 4M8 launched mid-2018 alongside 8HP76/I introduction, so the long-standing 0.667 family_default is likely a Q7 4M (2015) inheritance rather than the Q8's actual 0.640 spec; requires Audi MediaCenter PDF for official_exact confirmation.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g01-x3-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_X3_(G01)",
+      "title": "Wikipedia: BMW X3 (G01) third generation",
+      "note": "Article confirms G01 production span 2017-2024 (LCI June 2021), powertrain table including sDrive20i / xDrive20i / xDrive30i / M40i variants. Layout includes 'Front-engine, rear-wheel-drive (sDrive)' confirming RWD sDrive20i is a real configuration. sDrive20i was introduced globally in July 2018, with EU/DE availability supported by F25 precedent (the predecessor F25 sDrive20i was sold in Germany).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:zf8hp-bmw-x3-table",
+      "url": "https://en.wikipedia.org/wiki/ZF_8HP_transmission",
+      "title": "Wikipedia: ZF 8HP transmission family - gear ratios",
+      "note": "ZF 8HP variant ratio reference: 8HP50 (B48 pre-LCI applications) [5.000, 3.200, 2.143, 1.720, 1.314, 1.000, 0.822, 0.640] reverse 3.456; 8HP51 (B58 and B48 post-LCI applications) [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640] reverse 3.712. Both share 8th-gear ratio 0.640. The legacy family_default 0.667 reflects 8HP70 first-generation values that do not apply to G01 X3.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:tt-8j-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_TT",
+      "title": "Wikipedia: Audi TT (8J Mk2 facelift section)",
+      "note": "Article confirms 8J Coupe production April 2006 - March 2014; 8J facelift introduced mid-2010 for MY2011 with revised EA888 2.0 TFSI (211 PS / 350 Nm). Both FWD and quattro variants offered with 6-speed manual (MQ250) or 6-speed S tronic (DQ250) DCT. Repo's 2011 production_start_year correctly represents the facelift generation.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a1-8x-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_A1",
+      "title": "Wikipedia: Audi A1 (8X first generation)",
+      "note": "Article confirms A1 8X engine timeline: launch in 2010 with 1.2 TFSI / 1.4 TFSI / 1.6 TDI / 2.0 TDI; the 1.0 TFSI three-cylinder petrol engine (CHZB 999cc 95 PS) was introduced with the November 2014 facelift on sale from spring 2015. The 1.4 TFSI 122 PS was offered exclusively with 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was never offered for the 1.4 TFSI engine. 5-speed manual was paired with the lower-output 1.2 TFSI 86 PS.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
+      "url": "https://web.archive.org/web/20150101/https://www.audi-mediacenter.com/en/press-releases/audi-a1-15-tfsi-sport-limited-more-efficient-and-even-sportier-1384",
+      "title": "Audi MediaCenter (Wayback): 'First three-cylinder gasoline engine in the history of Audi' (Nov 2014)",
+      "note": "Wayback Machine archive of Audi MediaCenter press release announcing the 1.0 TFSI three-cylinder engine introduction with the November 2014 A1 facelift. Confirms the 1.0 TFSI did not exist in the 2010-2014 pre-facelift lineup. Sale start spring 2015.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a3/8v/",
+      "title": "ADAC Autokatalog: Audi A3 (8V, 2012-2020) variant index",
+      "note": "ADAC Germany catalogue listing all A3 8V variants with MM/YYYY production date ranges and S tronic gear-count labeling. Key findings: (1) 1.6 TDI and smaller petrol S tronic entries carry '(7-Gang)' label = DQ200; (2) 2.0 TDI S tronic entries in pre-facelift period lack '7-Gang' label = DQ250; (3) no 1.0 TFSI (30 TFSI) or 1.5 TFSI (35 TFSI) appear before 2016 facelift; (4) 2.0 TDI 150 PS quattro shows as MT-only in pre-facelift catalogue entries.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-a3-8v-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_A3",
+      "title": "Wikipedia: Audi A3 third-generation (Typ 8V, 2012-2020)",
+      "note": "MQB platform predecessor of 8Y. Explicit transmission codes listed: MQ350 (6-speed manual), DQ200 (7-speed dry S tronic), DQ250 (6-speed wet S tronic), DQ381 (7-speed wet S tronic from 2017), DQ500 (7-speed wet S tronic for S3/RS3). Engine timeline: 1.0 TFSI I3 and 1.5 TFSI evo introduced with the 2016 facelift; pre-facelift petrol lineup was 1.2/1.4/1.8/2.0 TFSI.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:s-tronic-dsg-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/S_tronic",
+      "title": "Wikipedia: S tronic / DSG transmission specifications",
+      "note": "DQ200 7-speed dry clutch (max 250 Nm, FWD-only, codes 0AM/0CW); DQ250 6-speed wet clutch (max 400 Nm, FWD-6F and AWD-6A); DQ381 7-speed wet clutch introduced 2017 European market as DQ250 successor (7F=FWD, 7A=AWD+Haldex); DQ400e 6-speed PHEV; DQ500 7-speed for higher-torque longitudinal/transverse high-output applications.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
+      "url": "https://www.carfolio.com/audi-a3-saloon",
+      "title": "Carfolio Audi A3 Saloon (8V) per-variant technical pages",
+      "note": "Carfolio per-variant pages exposing top gear ratio, final drive, base tyre, drive layout, and gearbox for A3 8V Saloon variants. Reputable-secondary cross-checks against ADAC variant lineup. Specific values cited per-row in repo evidence: 1.6 TDI MT6 top 0.59 / FD 3.39, 1.6 TDI DCT 0.64 / 3.43, 2.0 TDI DCT 0.62 / 3.33 (6-speed wet DQ250), 30 TFSI MT 0.64 / 4.06, 30 TFSI DCT 0.80 / 4.44, 35 TFSI MT 0.73 / 3.65, 35 TFSI DCT 0.65 / 4.80, 2.0 TFSI quattro DCT 0.64 / 3.13.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-18tfsi-fwd-mt6-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-355366",
+      "title": "Carfolio: 2011 Audi A4 1.8 TFSI FWD 6MT (B8)",
+      "note": "URL slug names 2.0 TFSI multitronic but the page content is 2011 A4 1.8 TFSI FWD 6-speed manual. Confirms top gear 0.69, final drive 3.30, default tyre 205/60 R16 on 7Jx16 wheel. Reputable_secondary single-source for 1.8 TFSI MT6 FWD ratios.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-generation-1084",
+      "title": "Auto-Data: Audi A4 B8 (8K) generation variant list (2007-2011 pre-facelift)",
+      "note": "Full pre-facelift B8 variant catalogue. Confirms (1) NO DL501 S tronic entries in pre-facelift A4 B8 - the 7-speed S tronic was added with the B8.5 facelift; (2) FWD automatics use Multitronic CVT only (not DL501, not ZF8HP); (3) AWD automatics use ZF 6HP Tiptronic (not ZF 8HP); (4) ZF 8HP is absent from all B8 EU variants. Decisive phantom-detection source for the FWD-DCT, FWD-ZF8HP, and AWD-ZF8HP rows.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_A4",
+      "title": "Wikipedia: Audi A4 B8 (2007-2016) generation",
+      "note": "Confirms B8 transmission lineup: 6-speed manual, ZF 6HP Tiptronic, Multitronic CVT, DL501 7-speed S tronic from 2009 (initially S4 only, mainstream A4 from B8.5 facelift). Facelift released 2012 for 2013MY. ZF 8HP first applied in Audi A8 D4 (2010) and A6 C7 (2011); A4 ZF 8HP not introduced until B9 (2015+).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:dl501-stronic-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/S_tronic",
+      "title": "Wikipedia: DL501 / S tronic 7-speed dual-clutch transmission",
+      "note": "DL501 production from late 2008; deployed in Audi cars with longitudinal engines from early 2009. Initially AWD-only. Listed applications include A4 B8 and S4 B8. Wet dual-clutch; max 600 Nm. Authoritative source for DL501-as-DCT7 mapping in A4 B8 facelift rows.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-x2-f39-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_X2",
+      "title": "Wikipedia: BMW X2 (F39, 2018-2023)",
+      "note": "BMW X2 F39 first-generation transverse-platform compact crossover (UKL2). Confirms FWD/AWD-only architecture; transmissions: Getrag 7DCI300 7-speed DCT (FWD petrol), Getrag GS6-17BG 6-speed manual, Aisin AWF8F35/AWF8F45 8-speed Steptronic, Aisin AT6 6-speed Steptronic for xDrive25e PHEV. Variant timeline: 2018 launch (sDrive18i, sDrive20i, sDrive18d, xDrive20d, xDrive25d, xDrive18d), 2019 added M35i + sDrive16d, 2020 added xDrive25e PHEV. sDrive28i / xDrive28i are North America-only badges (NOT EU). ZF 8HP is a longitudinal gearbox - physically incompatible with UKL2 transverse platform; any 'ZF8HP' label on F39 rows is a code error.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-f45-2at-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_2_Series_Active_Tourer",
+      "title": "Wikipedia: BMW 2 Series Active Tourer (F45, 2014-2021)",
+      "note": "BMW 2 Series Active Tourer F45 first-gen MPV on UKL2 transverse platform. Confirms variant timeline: 218i/225i/218d at launch (10/2014); 214d added 03/2015; 225xe iPerformance PHEV from 2016 (NOT 2014); LCI in 03/2018 introduced 7DCT (Magna 7DCT300) for 220i and made 8AT standard on 220d. Transmission inventory: Getrag GS6-17BG 6MT, Aisin TF-60SN 6AT (pre-LCI 218i auto + 225xe), Magna 7DCT300 7DCT (post-LCI 220i, 218i, 216d), Aisin AWF8F35 transverse 8AT (218d, 220d, 225i FWD), Aisin AWF8F45 (225i xDrive AWD). 'ZF8HP' code on F45 rows is a misnomer - ZF 8HP is longitudinal-only and physically impossible on UKL2. Production ended 03/2021. Plain FWD 225i discontinued at LCI in 2018 (replaced by 225i xDrive).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-f30-3series-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_3_Series_(F30)",
+      "title": "Wikipedia: BMW 3 Series (F30, 2012-2019)",
+      "note": "BMW 3 Series F30 (sedan, 2012-2019). Confirms LCI in mid-2015 with major engine swap from N20/N55 to B48/B58. Pre-LCI petrol: N13 (316i), N20 (320i, 320i ED, 328i), N55 (335i). LCI petrol: B38 (318i, 3-cyl), B48 (320i, 330i - new badge replacing 328i), B58 (340i - new badge replacing 335i). 'B48' engine code is therefore LCI-only (mid-2015 onwards) - any F30 row claiming B48 from 2012 must have its production_start_year corrected to 2015. Manual gearboxes: ZF GS6-45BZ for 4-cylinder petrol (N20/B48), Getrag GS6X53DZ for 6-cylinder petrol (N55/B58), Getrag GS6-17BG for diesel. Automatic: ZF 8HP45 for 4-cylinder, ZF 8HP50 for 6-cylinder. The '330i', '330i xDrive', and '340i' nameplates are LCI-only - they did NOT exist in pre-LCI F30 (2012-2015).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-f32-4series-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_4_Series_(F32)",
+      "title": "Wikipedia: BMW 4 Series (F32, 2013-2020)",
+      "note": "BMW 4 Series F32 coupe (2013-2020). LCI in 03/2016. Pre-LCI petrol: N20 (420i, 428i), N55 (435i). LCI petrol: B38 (418i 3-cyl introduced at LCI), B48 (420i, 430i - new badge replacing 428i), B58 (440i - new badge replacing 435i). Diesel: N47/B47 (420d, 425d twin-turbo), N57 (430d, 435d xDrive twin-turbo). The 430i and 440i nameplates are LCI-only (mid-2016+). The 418i is also LCI-only. The 428i and 435i nameplates were discontinued at the LCI changeover (so production_end_year is 2016 for those badges). The B48 engine in F32 is LCI-only. M4 (F82 body) coupe shares the F32 platform but has its own body code. Manual gearboxes: ZF GS6-45BZ (4-cyl petrol), Getrag GS6X53DZ (6-cyl petrol), Getrag GS6-17BG (diesel). Auto: ZF 8HP45 / 8HP50.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:bmw-x1-f48-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_X1",
+      "title": "Wikipedia: BMW X1 (F48, 2015-2022)",
+      "note": "BMW X1 F48 second-generation transverse-platform compact crossover (UKL2). LCI in 07/2019. Variants: sDrive16d (B37 1.5L diesel, MT6 only - no automatic ever offered in EU; F48 launch lineup 2015 confirms manual-only), sDrive18d (B47 2.0L diesel, MT6 or Aisin AWF8F35 8AT), sDrive18i (B38 1.5L petrol, MT6 + Aisin 6AT pre-LCI / Magna 7DCT300 post-LCI), sDrive20d (B47 2.0L diesel, MT6 + Aisin AWF8F35 8AT), sDrive20i (B48 2.0L petrol, automatic-only - Aisin AWF8F35 pre-LCI / Magna 7DCT300 post-LCI; no manual offered), xDrive18d/20d/25d (Aisin AWF8F45 8AT AWD), xDrive20i/25i (Aisin AWF8F45 8AT AWD), xDrive25e PHEV (B38 1.5L petrol front + electric rear axle, Aisin AT6 6AT, from 2020). M35i added at LCI 07/2019 (B48 306 hp, AWD, Aisin AWF8F45 8AT). 'ZF8HP' code in repo is a misnomer - actual gearbox on FWD 8AT rows is Aisin AWF8F35 and on AWD 8AT rows is Aisin AWF8F45. ZF 8HP is longitudinal-only and physically impossible on UKL2. sDrive28i / xDrive28i are North America-only badges.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+      "url": "https://www.audi.co.uk/en/inventory/q3.html",
+      "title": "Audi Q3 (8U) UK Brochure Edition 6.2 06/14",
+      "note": "Pre-LCI complete UK variant matrix (saved local copy in research packet). Confirms: 1.4 TFSI 150 PS available with 6-speed manual or 6-speed S tronic (NOT 7-speed); 2.0 TFSI quattro 170/211 PS with 6-speed manual or 7-speed S tronic; 2.0 TDI 140/177 PS FWD = 6-speed manual ONLY (no automatic); 2.0 TDI quattro 140/177 PS = 6-speed manual or 7-speed S tronic. SE base trim tyre is 235/55 R17 (NOT 235/50 R18 which is the S line option; 255/40 R19 is S line Plus). The Q3 8U is on the PQ35 transverse platform, Haldex AWD.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-q3-8u-2016-uk-brochure",
+      "url": "https://www.audi.co.uk/en/inventory/q3.html",
+      "title": "Audi Q3 (8U) UK Brochure ATL 2016",
+      "note": "Post-LCI complete UK variant matrix. Confirms: 1.4 TFSI 150 PS with 6-speed manual or 6-speed S tronic; 2.0 TFSI quattro 180 PS with 7-speed S tronic only; 2.0 TDI 150 PS FWD = 6-speed manual ONLY; 2.0 TDI quattro 150/184 PS = 6-speed manual or 7-speed S tronic. SE base tyre 235/55 R17 continues post-LCI.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-a6-c7-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_A6",
+      "title": "Wikipedia: Audi A6 (4G/C7, 2011-2018)",
+      "note": "Audi A6 C7 (4G) MLB longitudinal platform. Transmission table: 2.0 TFSI 180 PS = 6-speed manual standard / multitronic optional (FWD only); 2.0 TFSI 211 PS FWD = multitronic only; 2.0 TFSI 245 PS (C7.5 2017+) = 7-speed S tronic; 3.0 TDI quattro 204/245 PS (2011-2014) and 190/218/272 PS (2014-2018) = 7-speed S tronic (DL501 / 0B5); 3.0 BiTDI quattro 313-326 PS = 8-speed Tiptronic (ZF 8HP / 0BK); 3.0 TFSI quattro 220-245 kW EU/UK = 7-speed S tronic, US/Canada = 8-speed Tiptronic. The DL501 (0B5) is quattro-only on MLB - mechanically incompatible with FWD. ZF8HP + 2.0 TFSI FWD is the China-market A6L (long-wheelbase) allocation, not EU. RS6 Avant C7 4.0 TFSI biturbo = 8-speed Tiptronic; S6 C7 4.0 TFSI = 7-speed S tronic.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:audi-a5-b8-wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Audi_A5",
+      "title": "Wikipedia: Audi A5 (8T/8F first generation B8, 2007-2016)",
+      "note": "A5 B8 first generation (8T3 Coupe, 8TA Sportback, 8F7 Cabriolet) on MLB platform. Transmission table: FWD 2.0 TFSI automatics = multitronic CVT only (no DCT7, no ZF8HP - both FWD configurations are mechanically and product-line impossible for A5 B8); 2.0 TFSI quattro Coupe = 6-speed manual, 7-speed S tronic (DCT7), 6-speed Tiptronic (ZF 6HP), 8-speed Tiptronic (ZF 8HP - US/Canada only from MY2011); 3.0 TDI quattro Coupe = 6-speed manual, 6-speed Tiptronic (pre-2010), 7-speed S tronic (after May 2010); RS5 = 7-speed S tronic only; S5 4.2 FSI Coupe = 6-speed manual or 6-speed Tiptronic (no DCT7). Footnote [34]: DCT7 replaced ZF 6HP in UK and Germany from 2009 for 2.0 TFSI quattro. Footnote [35]: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets' - decisive that ZF 8HP is North America only, never EU A5 B8.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata",
+      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-2.0-tfsi-180hp-multitronic-4510",
+      "title": "Auto-Data A5 B8 Coupe 2.0 TFSI 180 PS Multitronic specification",
+      "note": "Audi A5 B8 Coupe 2.0 TFSI 180 hp Multitronic CVT (engine codes CAEA/CDNB, auto-data.net ID 4510): FWD, Multitronic CVT, 225/50 R17 standard tyre, production 11/2008-2011. A5-specific positive evidence that FWD A5 B8 automatics use multitronic - directly contradicts any DCT7-FWD or ZF8HP-FWD configurations.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-facelift-2011-3.0-tdi-v6-245hp-quattro-s-tronic-19050",
+      "title": "Auto-Data A5 B8.5 facelift 3.0 TDI 245 PS quattro 7-speed S tronic specification",
+      "note": "Audi A5 B8.5 (facelift) Coupe 3.0 TDI 245 hp quattro with 7-speed S tronic (DL501 0B5) - engine codes CDUC/CKVB/CKVC, auto-data.net ID 19050: AWD, 7-speed DCT, production 2011-2015. Confirms B8.5 facelift transition from pre-facelift 6-speed ZF 6HP to 7-speed DCT7.",
       "confidence": "medium"
     }
   ]
