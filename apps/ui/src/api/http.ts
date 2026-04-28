@@ -30,13 +30,13 @@ export async function apiJsonResponse<T = unknown>(
 ): Promise<ApiJsonResponse<T>> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, signal: externalSignal, ...requestInit } = init ?? {};
   const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(
+  const timeoutId = globalThis.setTimeout(
     () => timeoutController.abort(new DOMException(DEFAULT_TIMEOUT_MESSAGE, "AbortError")),
     timeoutMs,
   );
   const signal = composeSignal(timeoutController.signal, externalSignal ?? undefined);
   const response = await fetch(path, { ...requestInit, signal }).finally(() => {
-    window.clearTimeout(timeoutId);
+    globalThis.clearTimeout(timeoutId);
   });
   const bodyText = await response.text();
   if (!response.ok) {
