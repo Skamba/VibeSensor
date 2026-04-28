@@ -281,11 +281,7 @@ _CORE_ENCODE_ONLY_FIELD_SPECS: tuple[_FindingPayloadFieldSpec, ...] = (
         _project_finding_kind,
         include=_include_if_not_none,
     ),
-    _FindingPayloadFieldSpec(
-        "signatures_observed",
-        _project_signatures_observed,
-        include=_include_if_truthy,
-    ),
+    _FindingPayloadFieldSpec("signatures_observed", _project_signatures_observed),
 )
 _PRESENTATION_FIELD_SPECS: tuple[_FindingPayloadFieldSpec, ...] = (
     _FindingPayloadFieldSpec("evidence_summary", _project_evidence_summary),
