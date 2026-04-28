@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "The official BMW 06/2014 launch technical-data pages publish a single 3.154 final-drive ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n3": "The official BMW 06/2014 launch technical-data pages list 255/50 R19 as the baseline tire for the exact X6 xDrive50i state represented by this narrowed 2015-only row."
     },
@@ -111,7 +110,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 45.0,
@@ -123,7 +121,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -170,29 +167,24 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.154
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.154
         }
       },
@@ -200,7 +192,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 50.0,
@@ -212,7 +203,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 50.0,
@@ -224,7 +214,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 45.0,
@@ -236,7 +225,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -251,9 +239,6 @@
         {
           "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
         }
       ],
       "unresolved": [

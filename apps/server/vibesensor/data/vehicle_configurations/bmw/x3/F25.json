@@ -18,7 +18,6 @@
       "n15": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20i family.",
       "n16": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20i family.",
       "n17": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 xDrive20i family.",
-      "n18": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n19": "The official BMW 09/2011 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive20i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n20": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n21": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive28i family.",
@@ -576,9 +575,6 @@
           "evidence_refs_ref": "e3"
         },
         {
-          "note_ref": "n18"
-        },
-        {
           "note_ref": "n1",
           "evidence_refs_ref": "e6"
         }
@@ -761,9 +757,6 @@
         {
           "note": "The official BMW 09/2011 technical-data PDF now confirms the exact X3 xDrive20i 8-speed automatic configuration: xDrive AWD, 8-speed automatic with Steptronic wording, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published final-drive ratio of 3.385, and 225/60 R17 baseline tires.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n18"
         },
         {
           "note_ref": "n1",

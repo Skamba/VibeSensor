@@ -10,7 +10,6 @@
       "n7": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms 'Q5 55 TFSI e quattro S tronic' production span 09/2019-08/2020 (pre-facelift) and 02/2021-11/2024 (facelift). Car and Driver 2021 spec page explicitly lists 'Transmission: 7-Speed S tronic Dual-Clutch Auto' - decisively refuting any suggestion that the FY PHEV uses the 8-speed Tiptronic (ZF 8HP) found on Q7/Q8 PHEVs (different platforms). The Q5 FY PHEV uses an e-S tronic (DL382-derived 7-speed wet-clutch DCT with integrated electric motor on the MLB Evo platform). Three Audi MediaCenter PDFs (2019 launch, 2021 tech-data, 2024 tech-data) already in repo confirm 7-speed S tronic + quattro ultra. Tire 235/60 R18 confirmed official_exact. Forward gear ratios remain unpopulated.",
       "n8": "Official Audi 2021 and 2024 technical-data PDFs publish one populated final-drive value 5.302 for the exact FY Q5 55 TFSI e quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
       "n9": "Official Audi 2021 and 2024 technical-data PDFs both list 235/60 R18 on 8 J x 18 wheels as the basic non-staggered tire package for the exact FY Q5 55 TFSI e quattro state. Applied as official exact evidence while the optional wheel/tire matrix remains unresolved.",
-      "n10": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence.",
       "n11": "Sonnet redo research (2026-04 v2): ADAC Autokatalog facelift catalogue confirms 'Q5 40 TDI quattro S tronic' production span 09/2020-11/2024 at 150 kW/204 PS, quattro, 7-speed S tronic (DL382). The '40 TDI' commercial designation was introduced at the 09/2020 facelift; pre-facelift equivalents had different power states. Repo's production_start_year 2020 / end 2024 is correct (the '-2017-' substring in the row id is a legacy naming artifact, not the actual variant start). Tire 235/65 R17 confirmed official_exact via existing Audi MediaCenter 2024 tech-data PDF reference. Forward gear ratios remain unpopulated - no accessible primary EU spec source for the DL382 in this application. The internal transmission designation is DL382.",
       "n12": "Official Audi 06/04/2024 technical-data PDF publishes one final-drive value 5.302 for the exact later FY Q5 40 TDI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
       "n13": "Official Audi 06/04/2024 technical-data material confirms 235/65 R17 as the exact basic tire package for the later FY Q5 40 TDI quattro S tronic row, and the exact ADAC facelift variant page cross-checks the same baseline size."
@@ -165,41 +164,6 @@
         {
           "note": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Exact Germany-market technical-data sheets for the Q5 45 TFSI quattro now confirm top gear 0.433, full forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17 across checked 2019 and 2024 documents, which is sufficient to correct the variant-scoped production top gear and add the exact ratio set. Wave 10 validation now also confirms the late-FY exact Q5 40 TFSI quattro mapping from the 06/04/2024 Germany technical-data PDF: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17. Wave 11 validation adds exact 40 TDI quattro context across two contradictory official FY-era Germany states: the 09/27/2019 sheet proves AWD, 6-speed manual, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic tire 235/65 R17; the 06/04/2024 sheet proves quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and the same 235/65 R17 basic tire. Wave 12 validation now adds exact 35 TDI Germany context across two official front-wheel-drive states: the 2019 120 kW Q5 35 TDI S tronic sheet and the 2024 120 kW MHEV Q5 35 TDI S tronic sheet both prove Frontantrieb, the same forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, and the same 235/65 R17 basic tire, but they publish different final drives 5.302 and 4.885 and do not support any checked Germany-market 35 TDI quattro state. The existing 03/27/2025 front-wheel-drive 150 kW Q5 SUV source is retained only as evidence that a newer-generation Q5 state exists and must not be treated as FY 40 TFSI evidence. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
-        },
-        {
-          "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -596,7 +560,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n10",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -608,7 +571,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n10",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,

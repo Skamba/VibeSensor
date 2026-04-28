@@ -2,8 +2,6 @@
   "definitions": {
     "notes": {
       "n1": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n4": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. BMW 03/2014 tech-spec PDF: 255/40 ZR18 front, 275/40 ZR18 rear.",
       "n5": "Sonnet redo research (2026-04 v2): F80 M3 sedan and F82 M4 coupe share identical S55 powertrain, transmission, gear ratios, reverse, and final drive (3.462). BMW PressClub T0179962EN/265695 (03/2014 launch tech-spec PDF) covers both bodies. Competition Pkg from 01/2016 (T0249809EN/412769) retained both MT6 (Getrag GS6-45BZ) and DCT7 (Getrag GS7D36BG / 7DCI600). Production end October 2018. 19-inch alternative documented in F82 M4 sibling and M3 marketing materials.",
       "n6": "Default tire name (research note): EU standard 18-inch (launch fitment)",
@@ -149,7 +147,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -161,7 +158,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -201,9 +197,6 @@
             "legacy_research_sources:bd5f589fe214",
             "legacy_research_sources:fbef3422499f"
           ]
-        },
-        {
-          "note_ref": "n3"
         },
         {
           "note_ref": "n6"
@@ -298,7 +291,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -310,7 +302,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -352,9 +343,6 @@
             "legacy_research_sources:bd5f589fe214",
             "legacy_research_sources:fbef3422499f"
           ]
-        },
-        {
-          "note_ref": "n3"
         },
         {
           "note_ref": "n6"
@@ -448,7 +436,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -460,7 +447,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -492,9 +478,6 @@
         {
           "note": "This research wave narrows the F80 M3 Competition manual row to 2016-2018. Official BMW Competition Package launch material states that the Competition Package becomes available from spring 2016, and the paired Competition technical-data PDF confirms the manual top gear 0.846 and final drive 3.462 for the exact Competition state.",
           "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n3"
         },
         {
           "note_ref": "n9"
@@ -589,7 +572,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -601,7 +583,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -633,9 +614,6 @@
         {
           "note": "This research wave narrows the F80 M3 Competition M-DCT row to 2016-2018 and corrects its final drive to 3.462. Official BMW Competition Package launch material states that the Competition Package becomes available from spring 2016, and the paired Competition technical-data PDF confirms the DCT top gear 0.671 and final drive 3.462 for the exact Competition state.",
           "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n3"
         },
         {
           "note_ref": "n9"

@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
-      "n2": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming.",
-      "n3": "Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence."
+      "n2": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -41,24 +39,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.756
         }
       },
@@ -66,7 +60,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 50.0,
@@ -78,7 +71,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -90,7 +82,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -105,9 +96,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -139,29 +127,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.756
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.756
         }
       },
@@ -169,7 +152,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 50.0,
@@ -181,7 +163,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -193,7 +174,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -208,9 +188,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [

@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
       "n2": "Official Audi 03/20/2024 technical-data PDF publishes one final-drive value 4.410 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
       "n3": "Official Audi 03/20/2024 technical-data material confirms 225/50 R17 as the exact basic tire package for the late-B9 A5 Coupé 45 TFSI quattro S tronic row."
     },
@@ -47,24 +46,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.234
         }
       },
@@ -72,7 +67,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -84,7 +78,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -96,7 +89,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -108,7 +100,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -123,9 +114,6 @@
         {
           "note": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation added exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coupé and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. Wave 13 now adds the parallel late-B9 Germany 35 TDI evidence from checked 03/20/2024 Coupé and 06/13/2024 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows earlier model states and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence."
         }
       ],
       "unresolved": [

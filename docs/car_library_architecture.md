@@ -59,6 +59,29 @@ also fail closed.
 Definitions are kept shard-local on purpose: a single generation file
 remains understandable without jumping to a global metadata file.
 
+### Note hygiene
+
+Field-level `notes` and verification-note rows are reserved for
+information specific to the vehicle configuration: source caveats,
+unresolved research details, or per-variant evidence nuance. Generic
+migration provenance (e.g. "Migrated from legacy grouped car-library
+data ...", "<field>: confidence was 'no_confidence' ... remapped to
+'unverified' for schema compliance.", "Legacy variant-source research
+previously recorded this variant as ...") is intentionally not stored
+inline. That history is documented here in this file, not on every
+field.
+
+The canonical rows under `vehicle_configurations/` were originally
+imported from the legacy grouped car library. During import, fields
+without authoritative provenance were given `unverified` confidence and
+the original `no_confidence` remap was recorded in per-field notes. Once
+the canonical loader and validators stabilized, those migration notes
+were removed in bulk via
+`tools/dev/strip_vehicle_shards_migration_notes.py`. New rows must not
+re-introduce migration boilerplate at the field level; if a value is
+inherited from family-level data, encode that through `confidence` and
+`evidence_refs`, not through prose.
+
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:
 

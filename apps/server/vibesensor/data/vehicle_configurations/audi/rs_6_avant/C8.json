@@ -1,8 +1,5 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-    },
     "evidence_ref_sets": {
       "e1": [
         "legacy_research_sources:07cc5dc911b9",
@@ -41,29 +38,24 @@
           "legacy_research_sources:655c83e80527",
           "legacy_research_sources:ee23956fe3cd"
         ],
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -71,7 +63,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 30.0,
@@ -83,7 +74,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 30.0,
@@ -95,7 +85,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 295.0,
               "aspect_pct": 25.0,
@@ -110,9 +99,6 @@
         {
           "note": "Official Audi Germany technical-data sheets now confirm the exact RS 6 Avant drivetrain mapping, full gear ratios, final drive 3.204, basic 275/35 R21 tires, and optional 285/30 R22 tires for 2023-2025 Germany-market documents. The broad row remains unchanged because this pass did not prove the same mapping across the full 2020-2026 span represented in production data.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
         }
       ],
       "unresolved": [

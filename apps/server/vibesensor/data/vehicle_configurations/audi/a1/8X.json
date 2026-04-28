@@ -1,16 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
       "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-      "n4": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n5": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429.",
-      "n6": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n9": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n10": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+      "n5": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -126,7 +119,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -138,7 +130,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -150,7 +141,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -165,29 +155,6 @@
         {
           "note": "Checked exact official Audi launch and facelift sources. Official Audi material places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 5-speed manual FWD state and a lower 15-inch baseline wheel package. This represented 2011 manual row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -259,7 +226,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -271,7 +237,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -283,7 +248,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -298,29 +262,6 @@
         {
           "note": "Checked exact official Audi launch and facelift sources. Official Audi material again places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 7-speed S tronic FWD state and a lower 15-inch baseline wheel package. This represented 2011 S tronic row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -392,7 +333,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -404,7 +344,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -416,7 +355,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -431,29 +369,6 @@
         {
           "note": "Checked exact official Audi launch and facelift sources. Official Audi launch-era 1.4 TFSI 122 PS technical data and later facelift brochures both show a 6-speed manual rather than a 5-speed, so this represented 2011 5-speed row remains a contradicted advisory placeholder rather than a validated exact state.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -529,7 +444,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
@@ -541,7 +455,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -553,7 +466,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -565,7 +477,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -585,9 +496,6 @@
             "legacy_research_sources:5709c957ea25",
             "legacy_research_sources:cfd6a6b47886"
           ]
-        },
-        {
-          "note_ref": "n4"
         },
         {
           "note": "Reverse gear ratio (research note): 3.988",

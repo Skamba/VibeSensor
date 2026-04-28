@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n3": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state."
     },
     "evidence_ref_sets": {
@@ -79,12 +77,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -92,7 +88,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
@@ -104,7 +99,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 50.0,
@@ -116,7 +110,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -128,7 +121,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -143,9 +135,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 30 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 30 TFSI state, but they publish materially different ratio and final-drive packages while both use 205/60 R16 baseline tires. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -190,12 +179,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.769
         }
       },
@@ -203,7 +190,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
@@ -215,7 +201,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 50.0,
@@ -227,7 +212,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -239,7 +223,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -254,9 +237,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific official Audi source-gap evidence for the broad Q2 30 TFSI S tronic placeholder. The recovered official packet closes Spain 2020 and Germany 2026 manual 30 TFSI states, but it does not recover any official 30 TFSI S tronic technical-data sheet. The checked Audi MediaCenter model page and the recovered Switzerland MY25 price list also do not safely close this broad automatic EU row, so production JSON remains unchanged.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -304,12 +284,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -317,7 +295,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
@@ -329,7 +306,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 50.0,
@@ -341,7 +317,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -353,7 +328,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -368,9 +342,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 35 TFSI state, and the recovered Switzerland MY25 price list confirms late-cycle manual coexistence, but the exact 2020 Spain and 2026 Germany ratio packages differ materially while the official baseline tire program stays at 205/60 R16. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
           "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -418,12 +389,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.769
         }
       },
@@ -431,7 +400,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
@@ -443,7 +411,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 50.0,
@@ -455,7 +422,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -467,7 +433,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -482,9 +447,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI S tronic placeholder. The checked Spain 2020 technical sheet, the 02/04/2026 Audi MediaCenter Germany technical-data PDF, and the recovered Switzerland MY25 price list all support a real front-wheel-drive 35 TFSI S tronic state, but they still represent late market-specific exact states rather than one unchanged EU 2017-2024 row. Those official states contradict the inherited 0.725, 4.769, and 215/50 R17 carryover values, so production JSON remains unchanged.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [

@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n2": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
       "n3": "Sonnet redo research (2026-04 v2): M8 Competition (G15/F93) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
       "n4": "Reverse gear ratio (research note): 3.993",
@@ -305,7 +304,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -322,7 +320,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -382,7 +379,6 @@
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -442,7 +438,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -454,7 +449,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -471,7 +465,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -531,7 +524,6 @@
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -591,7 +583,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -603,7 +594,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -620,7 +610,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -765,10 +754,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e14"
         }
       ],
       "unresolved": [

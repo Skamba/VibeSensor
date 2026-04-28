@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
       "n3": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. This pass adds exact Germany-market technical-data evidence for both the base e-tron GT quattro and the RS e-tron GT: base-car documents confirm AWD, 2-speed automatic wording, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires; RS documents confirm AWD, rear 2-speed architecture context, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires. The broad row remains unchanged because exact EV ratio mapping is axle-split or year-split and the current schema cannot safely encode those details."
     },
     "evidence_ref_sets": {
@@ -43,29 +41,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 8.057
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 8.057
         }
       },
@@ -73,7 +66,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 35.0,
@@ -85,7 +77,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -97,7 +88,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -112,9 +102,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence."
         }
       ],
       "unresolved": [
@@ -146,29 +133,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "SS1",
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 8.057
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 8.057
         }
       },
@@ -176,7 +158,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 35.0,
@@ -188,7 +169,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -200,7 +180,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -215,9 +194,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence."
         }
       ],
       "unresolved": [

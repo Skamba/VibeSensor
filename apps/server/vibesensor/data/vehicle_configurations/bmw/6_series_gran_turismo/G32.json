@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
       "n3": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d xDrive Gran Turismo.",
       "n4": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
       "n5": "Official BMW 11/2020 technical-data PDF lists 245/50 R18 as the standard tire for the exact 640i Gran Turismo state represented by this narrowed 2020-only row."
@@ -466,24 +464,20 @@
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         }
       },
@@ -491,7 +485,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e5",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -503,7 +496,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e5",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -515,7 +507,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e5",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -527,7 +518,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e5",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -626,7 +616,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -638,7 +627,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -650,7 +638,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -708,29 +695,24 @@
           "legacy_research_sources:b2d556993748",
           "legacy_research_sources:ca1480e64c12"
         ],
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed Steptronic transmission"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.64
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.077
         }
       },
@@ -738,7 +720,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -750,7 +731,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -762,7 +742,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -774,7 +753,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -789,9 +767,6 @@
         {
           "note": "Wave 17 now adds exact official BMW technical-data evidence that the G32 640i xDrive uses all-wheel drive, Eight-speed Steptronic transmission wording, final drive 3.077, and top gear 0.640 in checked 11/2020 and later Germany-relevant material. Production JSON promotes only those stable exact gearbox fields because official 2018 and 2020+ documents still disagree on the full forward-ratio and reverse-ratio set, early Germany-market tire continuity is still not closed, and the checked sources do not prove one gearbox-family code across the full 2018-2024 span.",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence."
         }
       ],
       "unresolved": [

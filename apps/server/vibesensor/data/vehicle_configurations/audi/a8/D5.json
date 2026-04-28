@@ -1,14 +1,10 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n3": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "n4": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
       "n5": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
       "n6": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km. D5 petrol axle final drive ratio is 3.076 (single value front and rear).",
-      "n7": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n8": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact 2020 + current 360 kW states) with High confidence.",
       "n9": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged).",
       "n10": "Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-10-23) for A8 55 TFSI quattro tiptronic 250kW MHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 235/55 R18 (8J×18 forged). Basic tires per eTD: 235/55 R18 on 8J×18 forged wheels.",
       "n11": "quattro permanent AWD with self-locking centre differential. Confirmed by Audi MediaCenter eTD PDF (Germany programme, status 2025-12-15) for A8 60 TFSI e quattro tiptronic 340kW PHEV: 8-speed tiptronic (ZF 8HP), gear set 4.714/3.143/2.106/1.667/1.285/1.000/0.839/0.667, final drive 3.076, basic tires 255/45 R19 (9J×19 cast). System output 340 kW (462 PS); battery 17.9/14.4 kWh gross/net at 400V; combined EAER 52–58 km.",
@@ -98,29 +94,24 @@
       "drivetrain": {
         "confidence": "unverified",
         "evidence_refs_ref": "e9",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.64
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         }
       },
@@ -128,7 +119,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -140,7 +130,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -152,7 +141,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -164,7 +152,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -179,9 +166,6 @@
         {
           "note": "Batch 4 review checked adjacent official Germany-market D5 petrol material while cleaning the exact 55 TFSI and 60 TFSI e rows. The checked late-cycle technical-data PDFs and MY2026 price list resolve the petrol range to 55 TFSI quattro, but this pass did not recover an exact Germany-market A8 50 TFSI technical-data or price-list row, so production JSON remains unchanged.",
           "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -218,29 +202,24 @@
       "drivetrain": {
         "confidence": "unverified",
         "evidence_refs_ref": "e9",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence. Drivetrain confidence downgraded: there is no EU A8 50 TFSI quattro, so the legacy press-release citation does not apply to this row.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.64
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 2.848
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 2.848
         }
       },
@@ -248,7 +227,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -260,7 +238,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -272,7 +249,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -284,7 +260,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -299,9 +274,6 @@
         {
           "note": "Batch 4 review checked adjacent official Germany-market D5 petrol material while cleaning the exact 55 TFSI and 60 TFSI e rows. The checked late-cycle technical-data PDFs and MY2026 price list resolve the petrol range to 55 TFSI quattro, but this pass did not recover an exact Germany-market A8 50 TFSI quattro technical-data or price-list row, so production JSON remains unchanged.",
           "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -384,7 +356,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -396,7 +367,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -408,7 +378,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -529,7 +498,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -541,7 +509,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -553,7 +520,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -568,9 +534,6 @@
         {
           "note": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. Wave 14 also checks the exact 50 TFSI quattro target and finds that Germany-market search and facelift material resolve the petrol A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only. Wave 15 adds exact official A8 60 TFSI e quattro facelift-era technical data showing AWD, 8-speed tiptronic, the same forward-ratio family, reverse 3.317, final drive 3.076, and a 255/45 R19 basic tire, but production JSON remains unchanged because this pass did not recover launch-era or year-spanning documents proving one exact 60 TFSI e mapping across the represented D5 row.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -658,7 +621,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -670,7 +632,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -682,7 +643,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -789,7 +749,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -801,7 +760,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -813,7 +771,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,

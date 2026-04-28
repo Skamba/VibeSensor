@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
-      "n2": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW technical data with High confidence."
+      "n2": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -44,29 +42,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 8.698
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 8.698
         }
       },
@@ -74,7 +67,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -86,7 +78,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -98,7 +89,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -113,9 +103,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -147,24 +134,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 8.698
         }
       },
@@ -172,7 +155,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -184,7 +166,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -196,7 +177,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -211,9 +191,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
