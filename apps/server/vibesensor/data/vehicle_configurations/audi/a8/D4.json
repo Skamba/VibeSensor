@@ -29,17 +29,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "D4",
+    "body_code": "D4",
+    "model_name": "A8 (D4, 2011-2017)",
+    "production_start_year": 2011,
+    "production_end_year": 2017
+  },
   "configurations": [
     {
       "id": "audi-d4-3-0-tfsi-quattro-eu-2011-zf8hp-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "D4",
-      "body_code": "D4",
-      "production_start_year": 2011,
-      "production_end_year": 2017,
-      "model_name": "A8 (D4, 2011-2017)",
       "variant_name": "3.0 TFSI quattro",
       "engine_code": "3.0L",
       "engine_name": "3.0L V6 Supercharged",
@@ -155,14 +157,6 @@
     },
     {
       "id": "audi-d4-4-0-tfsi-quattro-eu-2011-zf8hp-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "D4",
-      "body_code": "D4",
-      "production_start_year": 2011,
-      "production_end_year": 2017,
-      "model_name": "A8 (D4, 2011-2017)",
       "variant_name": "4.0 TFSI quattro",
       "engine_code": "4.0L",
       "engine_name": "4.0L V8 Turbo",

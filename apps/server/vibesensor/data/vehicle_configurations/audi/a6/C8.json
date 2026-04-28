@@ -36,17 +36,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "C8",
+    "body_code": "C8",
+    "model_name": "A6 (C8, 2019-2025)",
+    "production_start_year": 2019,
+    "production_end_year": 2025
+  },
   "configurations": [
     {
       "id": "audi-c8-40-tfsi-eu-2019-dct7-fwd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C8",
-      "body_code": "C8",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "A6 (C8, 2019-2025)",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
       "engine_name": "2.0L I4 TFSI Turbo",
@@ -161,14 +163,6 @@
     },
     {
       "id": "audi-c8-45-tfsi-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C8",
-      "body_code": "C8",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "A6 (C8, 2019-2025)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
       "engine_name": "2.0L I4 TFSI Turbo",
@@ -282,14 +276,6 @@
     },
     {
       "id": "audi-c8-55-tfsi-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C8",
-      "body_code": "C8",
-      "production_start_year": 2019,
-      "production_end_year": 2025,
-      "model_name": "A6 (C8, 2019-2025)",
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
       "engine_name": "3.0L V6 TFSI Turbo",

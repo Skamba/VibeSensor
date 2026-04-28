@@ -45,16 +45,18 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G45",
+    "body_code": "G45",
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-g45-m50-xdrive-eu-2024-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G45",
-      "body_code": "G45",
       "production_start_year": 2024,
-      "production_end_year": 2026,
       "model_name": "X3 (G45, 2024-2026)",
       "variant_name": "M50 xDrive",
       "engine_code": "S58",
@@ -197,13 +199,7 @@
     },
     {
       "id": "bmw-g45-xdrive20-eu-2024-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G45",
-      "body_code": "G45",
       "production_start_year": 2024,
-      "production_end_year": 2026,
       "model_name": "X3 (G45, 2024-2026)",
       "variant_name": "xDrive20",
       "engine_code": "B48",
@@ -361,13 +357,7 @@
     },
     {
       "id": "bmw-g45-xdrive30-eu-2025-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G45",
-      "body_code": "G45",
       "production_start_year": 2025,
-      "production_end_year": 2026,
       "model_name": "X3 (G45, 2025-2026)",
       "variant_name": "xDrive30",
       "engine_code": "B48",

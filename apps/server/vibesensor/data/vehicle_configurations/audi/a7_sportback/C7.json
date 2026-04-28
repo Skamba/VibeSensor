@@ -38,17 +38,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "C7",
+    "body_code": "C7",
+    "model_name": "A7 Sportback (C7, 2011-2018)",
+    "production_start_year": 2011,
+    "production_end_year": 2018
+  },
   "configurations": [
     {
       "id": "audi-c7-a7-3-0-tdi-quattro-eu-2011-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C7",
-      "body_code": "C7",
-      "production_start_year": 2011,
-      "production_end_year": 2018,
-      "model_name": "A7 Sportback (C7, 2011-2018)",
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
       "engine_name": "3.0L V6 TDI Diesel",
@@ -179,14 +181,6 @@
     },
     {
       "id": "audi-c7-a7-3-0-tfsi-quattro-eu-2011-dct7-awd",
-      "brand": "Audi",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "C7",
-      "body_code": "C7",
-      "production_start_year": 2011,
-      "production_end_year": 2018,
-      "model_name": "A7 Sportback (C7, 2011-2018)",
       "variant_name": "3.0 TFSI quattro",
       "engine_code": "3.0L",
       "engine_name": "3.0L V6 Supercharged",

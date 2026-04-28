@@ -24,17 +24,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G26",
+    "body_code": "G26",
+    "model_name": "i4 (G26, 2022-2026)",
+    "production_start_year": 2022,
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "bmw-g26-m50-eu-2022-ss1-awd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "G26",
-      "body_code": "G26",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "i4 (G26, 2022-2026)",
       "variant_name": "M50",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
@@ -138,14 +140,6 @@
     },
     {
       "id": "bmw-g26-edrive40-eu-2022-ss1-rwd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "G26",
-      "body_code": "G26",
-      "production_start_year": 2022,
-      "production_end_year": 2026,
-      "model_name": "i4 (G26, 2022-2026)",
       "variant_name": "eDrive40",
       "engine_code": "Electric",
       "engine_name": "Electric Single Motor",

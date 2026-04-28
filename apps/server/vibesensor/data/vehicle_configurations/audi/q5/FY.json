@@ -66,14 +66,16 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY"
+  },
   "configurations": [
     {
       "id": "audi-fy-40-tfsi-eu-2017-dct7-fwd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FY",
-      "body_code": "FY",
       "production_start_year": 2017,
       "production_end_year": 2026,
       "model_name": "Q5 (FY, 2017-2026)",
@@ -247,11 +249,6 @@
     },
     {
       "id": "audi-fy-35-tdi-quattro-eu-2017-dct7-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FY",
-      "body_code": "FY",
       "production_start_year": 2018,
       "production_end_year": 2020,
       "model_name": "Q5 (FY, 2018-2019)",
@@ -377,11 +374,6 @@
     },
     {
       "id": "audi-fy-45-tfsi-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FY",
-      "body_code": "FY",
       "production_start_year": 2019,
       "production_end_year": 2024,
       "model_name": "Q5 (FY, 2019-2024)",
@@ -507,11 +499,6 @@
     },
     {
       "id": "audi-fy-55-tfsi-e-quattro-eu-2019-dct7-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FY",
-      "body_code": "FY",
       "production_start_year": 2019,
       "production_end_year": 2025,
       "model_name": "Q5 (FY, 2019-2025)",
@@ -664,11 +651,6 @@
     },
     {
       "id": "audi-fy-40-tdi-quattro-eu-2017-dct7-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "FY",
-      "body_code": "FY",
       "production_start_year": 2020,
       "production_end_year": 2024,
       "model_name": "Q5 (FY, 2020-2024)",

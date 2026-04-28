@@ -30,17 +30,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F90",
+    "body_code": "F90",
+    "model_name": "M5 (F90, 2018-2024)",
+    "production_start_year": 2018,
+    "production_end_year": 2024
+  },
   "configurations": [
     {
       "id": "bmw-f90-m5-eu-2018-zf8hp-awd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "F90",
-      "body_code": "F90",
-      "production_start_year": 2018,
-      "production_end_year": 2024,
-      "model_name": "M5 (F90, 2018-2024)",
       "variant_name": "M5",
       "engine_code": "S63",
       "engine_name": "S63 4.4L V8 Turbo",
@@ -161,14 +163,6 @@
     },
     {
       "id": "bmw-f90-m5-competition-eu-2018-zf8hp-awd",
-      "brand": "BMW",
-      "type": "Sedan",
-      "market": "EU",
-      "model_code": "F90",
-      "body_code": "F90",
-      "production_start_year": 2018,
-      "production_end_year": 2024,
-      "model_name": "M5 (F90, 2018-2024)",
       "variant_name": "M5 Competition",
       "engine_code": "S63",
       "engine_name": "S63 4.4L V8 Turbo",
