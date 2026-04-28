@@ -58,7 +58,7 @@ function translateKeyOrFallback(
   return translated === key ? fallback : translated;
 }
 
-export function formatEspFlashPhase(
+function formatEspFlashPhase(
   t: (key: string, vars?: Record<string, unknown>) => string,
   phase: string | null | undefined,
 ): string {

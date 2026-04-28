@@ -41,7 +41,7 @@ export interface AnalysisTuningSettings {
 
 export interface VehicleSettings extends CarAspectSettings, AnalysisTuningSettings {}
 
-export const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
+const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_width_mm: defaultAnalysisSettings.tire_width_mm,
   tire_aspect_pct: defaultAnalysisSettings.tire_aspect_pct,
   rim_in: defaultAnalysisSettings.rim_in,
@@ -50,7 +50,7 @@ export const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_deflection_factor: defaultAnalysisSettings.tire_deflection_factor,
 };
 
-export const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
+const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
   wheel_bandwidth_pct: defaultAnalysisSettings.wheel_bandwidth_pct,
   driveshaft_bandwidth_pct: defaultAnalysisSettings.driveshaft_bandwidth_pct,
   engine_bandwidth_pct: defaultAnalysisSettings.engine_bandwidth_pct,
@@ -64,7 +64,7 @@ export const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
 
 export const defaultVehicleSettings: Readonly<VehicleSettings> = defaultAnalysisSettings;
 
-export const carAspectSettingKeys = [
+const carAspectSettingKeys = [
   "tire_width_mm",
   "tire_aspect_pct",
   "rim_in",
@@ -73,7 +73,7 @@ export const carAspectSettingKeys = [
   "tire_deflection_factor",
 ] as const satisfies readonly (keyof CarAspectSettings)[];
 
-export const analysisTuningSettingKeys = [
+const analysisTuningSettingKeys = [
   "wheel_bandwidth_pct",
   "driveshaft_bandwidth_pct",
   "engine_bandwidth_pct",
@@ -224,7 +224,7 @@ function areSpectrumClientDataEqual(left: SpectrumClientData, right: SpectrumCli
     && areStrengthMetricsEqual(left.strength_metrics, right.strength_metrics);
 }
 
-export function areSpectrumFramesEqual(
+function areSpectrumFramesEqual(
   left: SpectrumFrameData,
   right: SpectrumFrameData,
 ): boolean {

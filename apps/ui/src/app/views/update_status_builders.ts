@@ -17,10 +17,10 @@ import type {
 
 export {
   buildUpdateCurrentStatusSectionModel,
-  buildUpdateIssuesSectionModel,
-  buildUpdateLatestAttemptSectionModel,
+  
+  
 } from "./update_current_status_builders";
-export { buildUpdateHealthSectionModel } from "./update_health_status_builders";
+;
 export { buildUpdateLogSectionModel } from "./update_log_status_builder";
 
 export function buildUpdateStatusPanelViewModel(
