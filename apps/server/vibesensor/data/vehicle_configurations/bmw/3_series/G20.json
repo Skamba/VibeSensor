@@ -409,11 +409,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -527,11 +526,10 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -624,13 +622,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g20-318d-eu-2019-zf8hp-rwd",
@@ -724,13 +716,7 @@
           "evidence_refs_ref": "e28"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g20-318i-eu-2019-mt6-rwd",
@@ -826,11 +812,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -938,13 +923,7 @@
           "evidence_refs_ref": "e21"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g20-320ld-eu-2019-mt6-rwd",
@@ -1010,11 +989,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1099,11 +1077,10 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1170,11 +1147,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1241,11 +1217,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1353,13 +1328,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g20-320d-eu-2019-zf8hp-rwd",
@@ -1468,13 +1437,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g20-320e-eu-2019-mt6-rwd",
@@ -1549,11 +1512,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1648,13 +1610,7 @@
           "evidence_refs_ref": "e19"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g20-320i-eu-2019-mt6-rwd",
@@ -1745,11 +1701,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1844,13 +1799,7 @@
           "evidence_refs_ref": "e20"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g20-325li-eu-2019-mt6-rwd",
@@ -1916,11 +1865,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -1987,11 +1935,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2058,11 +2005,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2129,11 +2075,10 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2224,11 +2169,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2345,11 +2289,9 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2456,11 +2398,10 @@
         }
       ],
       "configuration_confidence": "no_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -2570,13 +2511,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g20-330i-xdrive-eu-2019-zf8hp-awd",
@@ -2689,13 +2624,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

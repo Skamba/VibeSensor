@@ -151,13 +151,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-ga-30-tfsi-eu-2017-dct7-fwd",
@@ -226,13 +220,7 @@
           ]
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-ga-35-tfsi-eu-2017-mt6-fwd",
@@ -301,13 +289,7 @@
           ]
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-ga-35-tfsi-eu-2017-dct7-fwd",
@@ -376,13 +358,7 @@
           ]
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

@@ -147,13 +147,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f82-m4-eu-2014-dct7-rwd",
@@ -231,13 +225,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f82-m4-competition-eu-2016-mt6-rwd",
@@ -316,13 +304,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f82-m4-competition-eu-2016-dct7-rwd",
@@ -400,13 +382,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }
