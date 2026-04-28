@@ -3,11 +3,45 @@
 `apps/server/vibesensor/data/vehicle_configurations/**/*.json` is the canonical
 runtime source for car ratio and tire data.
 
-Each shard file is a canonical JSON array of exact vehicle-configuration rows,
-grouped by brand, model family, and generation/body code:
+Each shard file is a canonical JSON object with optional shard-local
+`definitions` and a required `configurations` array of exact
+vehicle-configuration rows, grouped by brand, model family, and
+generation/body code:
 
 - `vehicle_configurations/<brand>/<model_family>/<generation_or_body_code>.json`
 - example: `vehicle_configurations/bmw/5_series/G30.json`
+
+Shard shape:
+
+```json
+{
+  "definitions": {
+    "notes": {"n1": "<repeated note text>"},
+    "evidence_ref_sets": {"e1": ["source_pack:source-id", "..."]}
+  },
+  "configurations": [
+    {
+      "id": "...",
+      "drivetrain": {
+        "confidence": "...",
+        "value": "RWD",
+        "notes_ref": "n1",
+        "evidence_refs_ref": "e1"
+      }
+    }
+  ]
+}
+```
+
+`definitions` is optional; if omitted, all field metadata is inline.
+Field metadata (`drivetrain`, `transmission`, `ratios.*`, `tires.*`, etc.)
+may use `notes_ref` instead of inline `notes`, and `evidence_refs_ref`
+instead of inline `evidence_refs`. Verification-note rows may also use
+`note_ref`. The loader expands every ref into its inline form before
+strict shape validation. Unknown refs fail closed.
+
+Definitions are kept shard-local on purpose: a single generation file
+remains understandable without jumping to a global metadata file.
 
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:
@@ -67,5 +101,5 @@ Canonical validation lives in:
 - `vibesensor.adapters.persistence.car_library_source_evidence` for
   `evidence_refs` resolution against `car_sources/*.json`
 
-The bundled grouped picker is a projection only. Canonical exact-row shard arrays
+The bundled grouped picker is a projection only. Canonical exact-row shards
 remain the single source of truth.

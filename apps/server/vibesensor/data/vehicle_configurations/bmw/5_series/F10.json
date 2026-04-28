@@ -1,1527 +1,1334 @@
-[
-  {
-    "id": "bmw-f10-520i-eu-2011-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "520i",
-    "engine_code": "N20",
-    "engine_name": "N20 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n3": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
+      "n4": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 520i manual launch-state.",
+      "n5": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 520i launch-state.",
+      "n6": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 530i manual launch-state.",
+      "n7": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 530i launch-state.",
+      "n8": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 535i manual launch-state.",
+      "n9": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 535i launch-state.",
+      "n10": "Official BMW 09/2011 technical-data PDF confirms the standard 18-inch square tire setup for the exact 550i launch-state.",
+      "n11": "Official BMW 10/2011 M5 technical-data PDF confirms the standard staggered 19-inch tire setup for the exact launch-state M-DCT row."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:53f10535a911"
+      ],
+      "e2": [
         "legacy_research_sources:52f10520a911"
       ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 520i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:52f10520a911"
+      "e3": [
+        "legacy_research_sources:55f10550a911"
       ],
-      "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 520i launch-state.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.677 as sixth gear for the exact 520i manual launch-state.",
-        "value": 0.677
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.909 as the final-drive ratio for the exact 520i manual launch-state.",
-        "value": 3.909
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          3.683,
-          2.062,
-          1.313,
-          1.0,
-          0.809,
-          0.677
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 520i manual launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 520i manual launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 520i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 520i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 520i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 520i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 12 narrows the broad 520i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with six-speed manual, top gear 0.677, final drive 3.909, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-520i-eu-2011-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "520i",
-    "engine_code": "N20",
-    "engine_name": "N20 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:52f10520a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 520i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:52f10520a911"
-      ],
-      "notes": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic with Steptronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 520i values shown in parentheses.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the automatic 520i values shown in parentheses.",
-        "value": 3.231
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 520i launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 520i launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 520i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 520i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 520i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:52f10520a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 520i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 11 narrows the broad 520i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:52f10520a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-530i-eu-2011-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "530i",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 530i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 530i launch-state.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.701 as sixth gear for the exact 530i manual launch-state.",
-        "value": 0.701
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 4.100 as the final-drive ratio for the exact 530i manual launch-state.",
-        "value": 4.1
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          3.498,
-          2.005,
-          1.313,
-          1.0,
-          0.809,
-          0.701
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 530i manual launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 530i manual launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 530i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 530i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 530i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 530i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 12 narrows the broad 530i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 530i with six-speed manual, top gear 0.701, final drive 4.100, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-530i-eu-2011-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "530i",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 530i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic with Steptronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 530i values shown in parentheses.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.385 as the final-drive ratio for the automatic 530i values shown in parentheses.",
-        "value": 3.385
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 530i launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 530i launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 530i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 530i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 530i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 530i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This F10 research wave corrects the automatic 530i engine metadata to match the official 09/2011 530i/535i technical-data PDF and sibling manual row: the 530i is a 2996 cc straight-six launch-state, not an N20 2.0L I4. The same PDF confirms optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.385, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-535i-eu-2011-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "535i",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 535i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 535i launch-state.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.846 as sixth gear for the exact 535i manual launch-state.",
-        "value": 0.846
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the exact 535i manual launch-state.",
-        "value": 3.231
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          4.11,
-          2.315,
-          1.542,
-          1.179,
-          1.0,
-          0.846
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 535i manual launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 535i manual launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 535i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 535i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 535i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 535i manual launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 12 narrows the broad 535i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with six-speed manual, top gear 0.846, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-535i-eu-2011-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "535i",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 535i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:53f10535a911"
-      ],
-      "notes": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic with Steptronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 535i values shown in parentheses.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the final-drive ratio for the automatic 535i values shown in parentheses.",
-        "value": 3.077
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 535i launch-state.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 535i launch-state.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 535i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" square / winter"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 535i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 535i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:53f10535a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 535i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 11 narrows the broad 535i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.077, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:53f10535a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-550i-eu-2011-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "550i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e4": [
         "bmw_pressclub_sources:f10-550i-2011-spec-article",
         "legacy_research_sources:55f10550a911"
       ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive launch-state family.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f10-550i-2011-spec-article",
-        "legacy_research_sources:55f10550a911"
-      ],
-      "notes": "Contradicted placeholder. The official BMW 09/2011 5 Series Sedan specifications article separates the plain 550i attachment from the 550i xDrive sheet, and the dedicated 550i technical-data PDF then publishes only Eight-speed automatic with Steptronic. This represented MT6 row is therefore not a valid exact production state under its current transmission id.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:14edf445f865",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:9ec5479fbc04",
-          "legacy_research_sources:d58df4be7646"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:14edf445f865",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:9ec5479fbc04",
-            "legacy_research_sources:d58df4be7646"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:14edf445f865",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:9ec5479fbc04",
-            "legacy_research_sources:d58df4be7646"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:14edf445f865",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:9ec5479fbc04",
-            "legacy_research_sources:d58df4be7646"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This F10 research wave revalidates the official BMW 09/2011 5 Series Sedan specifications article and the dedicated 550i technical-data PDF. Together they confirm the plain rear-wheel-drive 550i launch-state as Eight-speed automatic with Steptronic only, final drive 2.813, and baseline 245/45 R18 tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f10-550i-2011-spec-article",
-          "legacy_research_sources:55f10550a911"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW F10 550i exact MT6 production row",
-        "reason": "The checked official BMW 09/2011 5 Series Sedan specifications article and dedicated 550i technical-data PDF publish only Eight-speed automatic with Steptronic for the exact launch-state, and this pass did not recover any official F10 550i MT6 row because that represented manual configuration does not exist in the checked source chain.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f10-550i-2011-spec-article",
-          "legacy_research_sources:55f10550a911"
-        ]
-      },
-      {
-        "item": "BMW F10 550i exact 2011 automatic row replacement",
-        "reason": "The checked official BMW 09/2011 550i technical-data PDF is strong enough to seed the exact automatic row, but that valid sibling configuration is already represented by `bmw-f10-550i-eu-2011-zf8hp-rwd` and should not be silently conflated with this disproved MT6 id.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f10-550i-2011-spec-article",
-          "legacy_research_sources:55f10550a911"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f10-550i-eu-2011-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "5 Series (F10, 2011)",
-    "variant_name": "550i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:55f10550a911"
-      ],
-      "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:55f10550a911"
-      ],
-      "notes": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic with Steptronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:55f10550a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 550i launch-state.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:55f10550a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes 2.813 as the final-drive ratio for the exact 550i launch-state.",
-        "value": 2.813
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:55f10550a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:55f10550a911"
-        ],
-        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 18-inch square tire setup for the exact 550i launch-state.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:55f10550a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 18-inch square tire setup for the exact 550i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:55f10550a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 550i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "18\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:55f10550a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 550i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "19\" staggered"
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:55f10550a911"
-          ],
-          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 550i launch-state.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "20\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 11 narrows the broad 550i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 550i with Eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, standard 245/45 R18 tires, and staggered 18-inch, 19-inch, and 20-inch options.",
-        "evidence_refs": [
-          "legacy_research_sources:55f10550a911"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f10-m5-eu-2011-dct7-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F10",
-    "body_code": "F10",
-    "production_start_year": 2011,
-    "production_end_year": 2011,
-    "model_name": "M5 (F10, 2011)",
-    "variant_name": "M5",
-    "engine_code": "S63B44TU",
-    "engine_name": "S63B44TU V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f10-m5-2011-spec-article",
+      "e5": [
         "legacy_research_sources:f1055dc71011"
       ],
-      "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e6": [
+        "legacy_research_sources:14edf445f865",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:9ac0d28dbf13",
+        "legacy_research_sources:9ec5479fbc04",
+        "legacy_research_sources:d58df4be7646"
+      ],
+      "e7": [
         "bmw_pressclub_sources:f10-m5-2011-spec-article",
         "legacy_research_sources:f1055dc71011"
-      ],
-      "notes": "The official BMW 10/2011 M5 technical-data PDF directly publishes Seven-speed M double-clutch transmission with Drivelogic for the exact launch-state.",
-      "code": "DCT7",
-      "name": "7-speed dual-clutch (M-DCT)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-f10-520i-eu-2011-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "520i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:f1055dc71011"
-        ],
-        "notes": "Official BMW 10/2011 M5 technical-data PDF publishes 0.671 as seventh gear for the exact launch-state M-DCT row.",
-        "value": 0.671
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 520i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
+        "value": "RWD"
       },
-      "gear_ratios": {
+      "transmission": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:f1055dc71011"
-        ],
-        "notes": "Official BMW 10/2011 M5 technical-data PDF publishes the full M-DCT forward-ratio set for the exact launch-state row.",
-        "value": [
-          4.806,
-          2.593,
-          1.701,
-          1.277,
-          1.0,
-          0.844,
-          0.671
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 520i launch-state.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.677 as sixth gear for the exact 520i manual launch-state.",
+          "value": 0.677
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.909 as the final-drive ratio for the exact 520i manual launch-state.",
+          "value": 3.909
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
+          "value": [
+            3.683,
+            2.062,
+            1.313,
+            1.0,
+            0.809,
+            0.677
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n4",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 520i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 520i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 520i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 520i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
         ]
       },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:f1055dc71011"
-        ],
-        "notes": "Official BMW 10/2011 M5 technical-data PDF publishes 3.150 as the final-drive ratio for the exact launch-state M-DCT row.",
-        "value": 3.15
+      "verification_notes": [
+        {
+          "note": "Batch 12 narrows the broad 520i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with six-speed manual, top gear 0.677, final drive 3.909, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
       }
     },
-    "tires": {
-      "default": {
+    {
+      "id": "bmw-f10-520i-eu-2011-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "520i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:f1055dc71011"
-        ],
-        "notes": "Official BMW 10/2011 M5 technical-data PDF confirms the standard staggered 19-inch tire setup for the exact launch-state M-DCT row.",
-        "front": {
-          "width_mm": 265.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "rear": {
-          "width_mm": 295.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 520i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
+        "value": "RWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n3",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:f1055dc71011"
-          ],
-          "notes": "Official BMW 10/2011 M5 technical-data PDF confirms the standard staggered 19-inch tire setup for the exact launch-state M-DCT row.",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 520i values shown in parentheses.",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the automatic 520i values shown in parentheses.",
+          "value": 3.231
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 520i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 520i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 520i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 520i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 11 narrows the broad 520i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-530i-eu-2011-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "530i",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 530i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 530i launch-state.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.701 as sixth gear for the exact 530i manual launch-state.",
+          "value": 0.701
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 4.100 as the final-drive ratio for the exact 530i manual launch-state.",
+          "value": 4.1
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "value": [
+            3.498,
+            2.005,
+            1.313,
+            1.0,
+            0.809,
+            0.701
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n6",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 530i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 530i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 530i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 530i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 12 narrows the broad 530i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 530i with six-speed manual, top gear 0.701, final drive 4.100, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-530i-eu-2011-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "530i",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 530i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n3",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 530i values shown in parentheses.",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.385 as the final-drive ratio for the automatic 530i values shown in parentheses.",
+          "value": 3.385
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n7",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 530i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 530i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 530i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 530i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This F10 research wave corrects the automatic 530i engine metadata to match the official 09/2011 530i/535i technical-data PDF and sibling manual row: the 530i is a 2996 cc straight-six launch-state, not an N20 2.0L I4. The same PDF confirms optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.385, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-535i-eu-2011-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "535i",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 535i launch-state sheet, so this row represents the exact rear-wheel-drive manual configuration.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 535i launch-state.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.846 as sixth gear for the exact 535i manual launch-state.",
+          "value": 0.846
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the exact 535i manual launch-state.",
+          "value": 3.231
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n8",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the exact 535i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 535i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 535i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 535i manual launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 12 narrows the broad 535i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with six-speed manual, top gear 0.846, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-535i-eu-2011-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "535i",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 535i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n3",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 535i values shown in parentheses.",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the final-drive ratio for the automatic 535i values shown in parentheses.",
+          "value": 3.077
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n9",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the 18-inch square winter-compatible option for the automatic 535i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" square / winter"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the automatic 535i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the automatic 535i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the automatic 535i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 11 narrows the broad 535i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.077, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-550i-eu-2011-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "550i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive launch-state family.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e4",
+        "notes": "Contradicted placeholder. The official BMW 09/2011 5 Series Sedan specifications article separates the plain 550i attachment from the 550i xDrive sheet, and the dedicated 550i technical-data PDF then publishes only Eight-speed automatic with Steptronic. This represented MT6 row is therefore not a valid exact production state under its current transmission id.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.812
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e6",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e6",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e6",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This F10 research wave revalidates the official BMW 09/2011 5 Series Sedan specifications article and the dedicated 550i technical-data PDF. Together they confirm the plain rear-wheel-drive 550i launch-state as Eight-speed automatic with Steptronic only, final drive 2.813, and baseline 245/45 R18 tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW F10 550i exact MT6 production row",
+          "reason": "The checked official BMW 09/2011 5 Series Sedan specifications article and dedicated 550i technical-data PDF publish only Eight-speed automatic with Steptronic for the exact launch-state, and this pass did not recover any official F10 550i MT6 row because that represented manual configuration does not exist in the checked source chain.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "BMW F10 550i exact 2011 automatic row replacement",
+          "reason": "The checked official BMW 09/2011 550i technical-data PDF is strong enough to seed the exact automatic row, but that valid sibling configuration is already represented by `bmw-f10-550i-eu-2011-zf8hp-rwd` and should not be silently conflated with this disproved MT6 id.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f10-550i-eu-2011-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "5 Series (F10, 2011)",
+      "variant_name": "550i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive configuration.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes_ref": "n3",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 550i launch-state.",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 2.813 as the final-drive ratio for the exact 550i launch-state.",
+          "value": 2.813
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n1",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n10",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n10",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch option for the exact 550i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "18\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 19-inch option for the exact 550i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" staggered"
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 20-inch option for the exact 550i launch-state.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" staggered"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 11 narrows the broad 550i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 550i with Eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, standard 245/45 R18 tires, and staggered 18-inch, 19-inch, and 20-inch options.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f10-m5-eu-2011-dct7-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F10",
+      "body_code": "F10",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "model_name": "M5 (F10, 2011)",
+      "variant_name": "M5",
+      "engine_code": "S63B44TU",
+      "engine_name": "S63B44TU V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official BMW 10/2011 M5 technical-data PDF directly publishes Seven-speed M double-clutch transmission with Drivelogic for the exact launch-state.",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (M-DCT)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 10/2011 M5 technical-data PDF publishes 0.671 as seventh gear for the exact launch-state M-DCT row.",
+          "value": 0.671
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 10/2011 M5 technical-data PDF publishes the full M-DCT forward-ratio set for the exact launch-state row.",
+          "value": [
+            4.806,
+            2.593,
+            1.701,
+            1.277,
+            1.0,
+            0.844,
+            0.671
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 10/2011 M5 technical-data PDF publishes 3.150 as the final-drive ratio for the exact launch-state M-DCT row.",
+          "value": 3.15
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n11",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 40.0,
@@ -1532,27 +1339,42 @@
             "aspect_pct": 35.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\" staggered"
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This F10 research wave replaces the contradicted MT6 and ZF8HP M5 placeholders with the official 10/2011 launch-state M-DCT configuration. The official BMW M5 technical-data PDF confirms rear-wheel drive, Seven-speed M double-clutch transmission with Drivelogic, forward ratios 4.806 / 2.593 / 1.701 / 1.277 / 1.000 / 0.844 / 0.671, final drive 3.150, and standard staggered 265/40 R19 front plus 295/35 R19 rear tires.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f10-m5-2011-spec-article",
-          "legacy_research_sources:f1055dc71011"
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n11",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 295.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\" staggered"
+          }
         ]
+      },
+      "verification_notes": [
+        {
+          "note": "This F10 research wave replaces the contradicted MT6 and ZF8HP M5 placeholders with the official 10/2011 launch-state M-DCT configuration. The official BMW M5 technical-data PDF confirms rear-wheel drive, Seven-speed M double-clutch transmission with Drivelogic, forward ratios 4.806 / 2.593 / 1.701 / 1.277 / 1.000 / 0.844 / 0.671, final drive 3.150, and standard staggered 265/40 R19 front plus 295/35 R19 rear tires.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
       }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
-  }
-]
+  ]
+}

@@ -1,714 +1,536 @@
-[
-  {
-    "id": "audi-ga-30-tfsi-eu-2017-mt6-fwd",
-    "brand": "Audi",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "GA",
-    "body_code": "GA",
-    "production_start_year": 2017,
-    "production_end_year": 2024,
-    "model_name": "Q2 (GA, 2017-2024)",
-    "variant_name": "30 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Q2 GA all variants FWD as standard, AWD optional only on quattro derivatives (not in this scope).",
-      "value": "FWD",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n3": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:3c0c0aa886bf",
+        "legacy_research_sources:3ff9cb8ff793",
+        "legacy_research_sources:44937c13793f",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:891a3906d052",
+        "legacy_research_sources:a24edcc340c2",
+        "legacy_research_sources:ae186108fea8",
+        "legacy_research_sources:e4d20bd4419f"
+      ],
+      "e2": [
         "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table.",
-      "code": "MT6",
-      "name": "6-speed manual",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 30 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 30 TFSI state, but they publish materially different ratio and final-drive packages while both use 205/60 R16 baseline tires. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi Q2 30 TFSI manual applicability across the represented EU 2017-2024 row span",
-        "reason": "The checked 2020 Spain and 2026 Germany official sheets both prove exact manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
-        ]
-      },
-      {
-        "item": "Represented-row manual ratio, final-drive, and tire applicability",
-        "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-ga-30-tfsi-eu-2017-dct7-fwd",
-    "brand": "Audi",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "GA",
-    "body_code": "GA",
-    "production_start_year": 2017,
-    "production_end_year": 2024,
-    "model_name": "Q2 (GA, 2017-2024)",
-    "variant_name": "30 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
-      "value": "FWD",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic, 0AM/0CW) per VW Group engineering norms: 1.0 TFSI EA211 at 200 Nm is well within DQ200 250 Nm limit and is the textbook DQ200 application across MQB-A small-car platforms (Polo, Ibiza, A1, Q2). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect: DQ381 is used only above the DQ200 torque limit and replaced DQ250, not DQ200. Existing top_gear_ratio 0.725 and final_drive_front 4.769 are consistent with documented DQ200 1.0-TFSI ratios, so they remain plausible but require Audi MediaCenter tech-data PDF for official_exact confirmation.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ200)",
-      "evidence_refs": [
+      ],
+      "e3": [
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "e4": [
         "secondary_technical_sources:q2-ga-wikipedia",
         "secondary_technical_sources:vwgroup-dsg-wikipedia"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:ga-q2-model-page",
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "legacy_research_sources:9a7c1e5d4b62"
+      ],
+      "e6": [
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+        "legacy_research_sources:9a7c1e5d4b62"
+      ],
+      "e7": [
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+        "legacy_research_sources:9a7c1e5d4b62"
       ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 4.769
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi source-gap evidence for the broad Q2 30 TFSI S tronic placeholder. The recovered official packet closes Spain 2020 and Germany 2026 manual 30 TFSI states, but it does not recover any official 30 TFSI S tronic technical-data sheet. The checked Audi MediaCenter model page and the recovered Switzerland MY25 price list also do not safely close this broad automatic EU row, so production JSON remains unchanged.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:ga-q2-model-page",
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "legacy_research_sources:9a7c1e5d4b62"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact Audi Q2 30 TFSI S tronic applicability across the represented EU 2017-2024 row span",
-        "reason": "The recovered official packet does not safely close a 30 TFSI S tronic row: the checked Audi MediaCenter model page does not expose a 30 TFSI S tronic sheet, the Spain 2020 technical packet does not include one, and the recovered Switzerland MY25 price list omits 30 TFSI entirely.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:ga-q2-model-page",
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "legacy_research_sources:9a7c1e5d4b62"
-        ]
-      },
-      {
-        "item": "Represented-row DCT7 ratio, final-drive, and tire applicability",
-        "reason": "Because no checked official 30 TFSI S tronic technical-data sheet was recovered for this row, the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 tire mapping remain unsupported broad-row carryover values.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:ga-q2-model-page",
-          "legacy_research_sources:4f1a7d2b9c0e"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-ga-35-tfsi-eu-2017-mt6-fwd",
-    "brand": "Audi",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "GA",
-    "body_code": "GA",
-    "production_start_year": 2017,
-    "production_end_year": 2024,
-    "model_name": "Q2 (GA, 2017-2024)",
-    "variant_name": "35 TFSI",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
-      "value": "FWD",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table for both 1.4 TFSI COD (pre-facelift) and 1.5 TFSI evo (post-facelift) variants.",
-      "code": "MT6",
-      "name": "6-speed manual",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.84
+  "configurations": [
+    {
+      "id": "audi-ga-30-tfsi-eu-2017-mt6-fwd",
+      "brand": "Audi",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "GA",
+      "body_code": "GA",
+      "production_start_year": 2017,
+      "production_end_year": 2024,
+      "model_name": "Q2 (GA, 2017-2024)",
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Q2 GA all variants FWD as standard, AWD optional only on quattro derivatives (not in this scope).",
+        "value": "FWD",
+        "evidence_refs_ref": "e2"
       },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table.",
+        "code": "MT6",
+        "name": "6-speed manual",
+        "evidence_refs_ref": "e2"
       },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 30 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 30 TFSI state, but they publish materially different ratio and final-drive packages while both use 205/60 R16 baseline tires. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
+          "evidence_refs_ref": "e3"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
+          "note_ref": "n2"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 35 TFSI state, and the recovered Switzerland MY25 price list confirms late-cycle manual coexistence, but the exact 2020 Spain and 2026 Germany ratio packages differ materially while the official baseline tire program stays at 205/60 R16. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
-          "legacy_research_sources:9a7c1e5d4b62"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi Q2 35 TFSI manual applicability across the represented EU 2017-2024 row span",
-        "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
-          "legacy_research_sources:9a7c1e5d4b62"
-        ]
-      },
-      {
-        "item": "Represented-row manual ratio, final-drive, and tire applicability",
-        "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-ga-35-tfsi-eu-2017-dct7-fwd",
-    "brand": "Audi",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "GA",
-    "body_code": "GA",
-    "production_start_year": 2017,
-    "production_end_year": 2024,
-    "model_name": "Q2 (GA, 2017-2024)",
-    "variant_name": "35 TFSI",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state.",
-      "value": "FWD",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic) per VW Group engineering norms: 1.4 TFSI COD / 1.5 TFSI evo at 250 Nm sits exactly at DQ200 torque limit and is the standard pairing for MQB FWD 250-Nm applications (Golf 1.5 TSI 130 PS, A3 1.4 TFSI 150 PS). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect for this torque level. Existing top_gear_ratio 0.725 and final_drive_front 4.769 retained pending Audi MediaCenter tech-data PDF confirmation.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ200)",
-      "evidence_refs": [
-        "secondary_technical_sources:q2-ga-wikipedia",
-        "secondary_technical_sources:vwgroup-dsg-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 4.769
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      ],
+      "unresolved": [
         {
+          "item": "Audi Q2 30 TFSI manual applicability across the represented EU 2017-2024 row span",
+          "reason": "The checked 2020 Spain and 2026 Germany official sheets both prove exact manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Represented-row manual ratio, final-drive, and tire applicability",
+          "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-ga-30-tfsi-eu-2017-dct7-fwd",
+      "brand": "Audi",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "GA",
+      "body_code": "GA",
+      "production_start_year": 2017,
+      "production_end_year": 2024,
+      "model_name": "Q2 (GA, 2017-2024)",
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes_ref": "n3",
+        "value": "FWD",
+        "evidence_refs_ref": "e2"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic, 0AM/0CW) per VW Group engineering norms: 1.0 TFSI EA211 at 200 Nm is well within DQ200 250 Nm limit and is the textbook DQ200 application across MQB-A small-car platforms (Polo, Ibiza, A1, Q2). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect: DQ381 is used only above the DQ200 torque limit and replaced DQ250, not DQ200. Existing top_gear_ratio 0.725 and final_drive_front 4.769 are consistent with documented DQ200 1.0-TFSI ratios, so they remain plausible but require Audi MediaCenter tech-data PDF for official_exact confirmation.",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ200)",
+        "evidence_refs_ref": "e4"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.769
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 50.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi source-gap evidence for the broad Q2 30 TFSI S tronic placeholder. The recovered official packet closes Spain 2020 and Germany 2026 manual 30 TFSI states, but it does not recover any official 30 TFSI S tronic technical-data sheet. The checked Audi MediaCenter model page and the recovered Switzerland MY25 price list also do not safely close this broad automatic EU row, so production JSON remains unchanged.",
+          "evidence_refs_ref": "e5"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3c0c0aa886bf",
-            "legacy_research_sources:3ff9cb8ff793",
-            "legacy_research_sources:44937c13793f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:891a3906d052",
-            "legacy_research_sources:a24edcc340c2",
-            "legacy_research_sources:ae186108fea8",
-            "legacy_research_sources:e4d20bd4419f"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
+          "note_ref": "n2"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Exact Audi Q2 30 TFSI S tronic applicability across the represented EU 2017-2024 row span",
+          "reason": "The recovered official packet does not safely close a 30 TFSI S tronic row: the checked Audi MediaCenter model page does not expose a 30 TFSI S tronic sheet, the Spain 2020 technical packet does not include one, and the recovered Switzerland MY25 price list omits 30 TFSI entirely.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Represented-row DCT7 ratio, final-drive, and tire applicability",
+          "reason": "Because no checked official 30 TFSI S tronic technical-data sheet was recovered for this row, the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 tire mapping remain unsupported broad-row carryover values.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:ga-q2-model-page",
+            "legacy_research_sources:4f1a7d2b9c0e"
+          ]
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI S tronic placeholder. The checked Spain 2020 technical sheet, the 02/04/2026 Audi MediaCenter Germany technical-data PDF, and the recovered Switzerland MY25 price list all support a real front-wheel-drive 35 TFSI S tronic state, but they still represent late market-specific exact states rather than one unchanged EU 2017-2024 row. Those official states contradict the inherited 0.725, 4.769, and 215/50 R17 carryover values, so production JSON remains unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
-          "legacy_research_sources:9a7c1e5d4b62"
+    {
+      "id": "audi-ga-35-tfsi-eu-2017-mt6-fwd",
+      "brand": "Audi",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "GA",
+      "body_code": "GA",
+      "production_start_year": 2017,
+      "production_end_year": 2024,
+      "model_name": "Q2 (GA, 2017-2024)",
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes_ref": "n3",
+        "value": "FWD",
+        "evidence_refs_ref": "e2"
+      },
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table for both 1.4 TFSI COD (pre-facelift) and 1.5 TFSI evo (post-facelift) variants.",
+        "code": "MT6",
+        "name": "6-speed manual",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      "verification_notes": [
+        {
+          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 35 TFSI state, and the recovered Switzerland MY25 price list confirms late-cycle manual coexistence, but the exact 2020 Spain and 2026 Germany ratio packages differ materially while the official baseline tire program stays at 205/60 R16. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "note_ref": "n2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi Q2 35 TFSI manual applicability across the represented EU 2017-2024 row span",
+          "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "Represented-row manual ratio, final-drive, and tire applicability",
+          "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
+          "evidence_refs": [
+            "legacy_research_sources:4f1a7d2b9c0e",
+            "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi Q2 35 TFSI S tronic applicability across the represented EU 2017-2024 row span",
-        "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI S tronic states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
-          "legacy_research_sources:9a7c1e5d4b62"
+    },
+    {
+      "id": "audi-ga-35-tfsi-eu-2017-dct7-fwd",
+      "brand": "Audi",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "GA",
+      "body_code": "GA",
+      "production_start_year": 2017,
+      "production_end_year": 2024,
+      "model_name": "Q2 (GA, 2017-2024)",
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes_ref": "n3",
+        "value": "FWD",
+        "evidence_refs_ref": "e2"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic) per VW Group engineering norms: 1.4 TFSI COD / 1.5 TFSI evo at 250 Nm sits exactly at DQ200 torque limit and is the standard pairing for MQB FWD 250-Nm applications (Golf 1.5 TSI 130 PS, A3 1.4 TFSI 150 PS). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect for this torque level. Existing top_gear_ratio 0.725 and final_drive_front 4.769 retained pending Audi MediaCenter tech-data PDF confirmation.",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ200)",
+        "evidence_refs_ref": "e4"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.769
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
         ]
       },
-      {
-        "item": "Represented-row S tronic ratio, final-drive, and tire applicability",
-        "reason": "The checked official 2020 Spain and 2026 Germany S tronic sheets contradict the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 broad-row carryover values, even though they remain too market- and era-specific for a direct broad-row rewrite.",
-        "evidence_refs": [
-          "legacy_research_sources:4f1a7d2b9c0e",
-          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf"
-        ]
+      "verification_notes": [
+        {
+          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI S tronic placeholder. The checked Spain 2020 technical sheet, the 02/04/2026 Audi MediaCenter Germany technical-data PDF, and the recovered Switzerland MY25 price list all support a real front-wheel-drive 35 TFSI S tronic state, but they still represent late market-specific exact states rather than one unchanged EU 2017-2024 row. Those official states contradict the inherited 0.725, 4.769, and 215/50 R17 carryover values, so production JSON remains unchanged.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "note_ref": "n2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi Q2 35 TFSI S tronic applicability across the represented EU 2017-2024 row span",
+          "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI S tronic states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Represented-row S tronic ratio, final-drive, and tire applicability",
+          "reason": "The checked official 2020 Spain and 2026 Germany S tronic sheets contradict the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 broad-row carryover values, even though they remain too market- and era-specific for a direct broad-row rewrite.",
+          "evidence_refs": [
+            "legacy_research_sources:4f1a7d2b9c0e",
+            "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

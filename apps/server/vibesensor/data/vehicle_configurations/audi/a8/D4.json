@@ -1,430 +1,280 @@
-[
-  {
-    "id": "audi-d4-3-0-tfsi-quattro-eu-2011-zf8hp-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "D4",
-    "body_code": "D4",
-    "production_start_year": 2011,
-    "production_end_year": 2017,
-    "model_name": "A8 (D4, 2011-2017)",
-    "variant_name": "3.0 TFSI quattro",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L V6 Supercharged",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered.",
+      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:02178a0e9ad4",
+        "legacy_research_sources:0ec6aab6f4c9",
+        "legacy_research_sources:15a6aa30433c",
+        "legacy_research_sources:355f6e5e52f0",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:54c09ca62bf2",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:7688ab3c3d77",
+        "legacy_research_sources:b2aa53aedfdc",
+        "legacy_research_sources:bd452ec32ba7"
+      ],
+      "e2": [
         "legacy_research_sources:02178a0e9ad4",
         "legacy_research_sources:0ec6aab6f4c9",
         "legacy_research_sources:15a6aa30433c",
         "legacy_research_sources:355f6e5e52f0",
         "legacy_research_sources:b2aa53aedfdc",
         "legacy_research_sources:bd452ec32ba7"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed tiptronic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 22\""
-        }
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-DE ratio mapping for Audi A8 D4 4.0 TFSI quattro",
-        "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 4.0 TFSI quattro target.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ]
-      },
-      {
-        "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
-        "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-d4-4-0-tfsi-quattro-eu-2011-zf8hp-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "D4",
-    "body_code": "D4",
-    "production_start_year": 2011,
-    "production_end_year": 2017,
-    "model_name": "A8 (D4, 2011-2017)",
-    "variant_name": "4.0 TFSI quattro",
-    "engine_code": "4.0L",
-    "engine_name": "4.0L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:02178a0e9ad4",
-        "legacy_research_sources:0ec6aab6f4c9",
-        "legacy_research_sources:15a6aa30433c",
-        "legacy_research_sources:355f6e5e52f0",
-        "legacy_research_sources:b2aa53aedfdc",
-        "legacy_research_sources:bd452ec32ba7"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed tiptronic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
+  "configurations": [
+    {
+      "id": "audi-d4-3-0-tfsi-quattro-eu-2011-zf8hp-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "D4",
+      "body_code": "D4",
+      "production_start_year": 2011,
+      "production_end_year": 2017,
+      "model_name": "A8 (D4, 2011-2017)",
+      "variant_name": "3.0 TFSI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 Supercharged",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 2.848
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.848
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.848
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 21\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:02178a0e9ad4",
-            "legacy_research_sources:0ec6aab6f4c9",
-            "legacy_research_sources:15a6aa30433c",
-            "legacy_research_sources:355f6e5e52f0",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:54c09ca62bf2",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7688ab3c3d77",
-            "legacy_research_sources:b2aa53aedfdc",
-            "legacy_research_sources:bd452ec32ba7"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 22\""
+          "note_ref": "n3"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-DE ratio mapping for Audi A8 D4 4.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 4.0 TFSI quattro target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
+    {
+      "id": "audi-d4-4-0-tfsi-quattro-eu-2011-zf8hp-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "D4",
+      "body_code": "D4",
+      "production_start_year": 2011,
+      "production_end_year": 2017,
+      "model_name": "A8 (D4, 2011-2017)",
+      "variant_name": "4.0 TFSI quattro",
+      "engine_code": "4.0L",
+      "engine_name": "4.0L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed tiptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.848
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.848
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 21\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 22\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-DE ratio mapping for Audi A8 D4 4.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 4.0 TFSI quattro target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-DE ratio mapping for Audi A8 D4 4.0 TFSI quattro",
-        "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 4.0 TFSI quattro target.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ]
-      },
-      {
-        "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
-        "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:02178a0e9ad4",
-          "legacy_research_sources:0ec6aab6f4c9",
-          "legacy_research_sources:15a6aa30433c",
-          "legacy_research_sources:355f6e5e52f0",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:54c09ca62bf2",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7688ab3c3d77",
-          "legacy_research_sources:b2aa53aedfdc",
-          "legacy_research_sources:bd452ec32ba7"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

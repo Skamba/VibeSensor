@@ -1,1657 +1,1127 @@
-[
-  {
-    "id": "bmw-f30-320i-eu-2012-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "320i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n4": "F30 standard base tyre 225/45 R18.",
+      "n5": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n6": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
+      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n8": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
+      "n9": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed."
     },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 320i MT6 RWD with stored engine code B48. The B48 engine entered F30 production at the LCI changeover in mid-2015 - it was NOT used in the pre-LCI 320i (which used the N20). production_start_year corrected from 2012 to 2015. Transmission is the Getrag/ZF GS6-45BZ 6-speed manual. Per Wikipedia F30 article, 6th-gear 0.812 and final drive 3.231 are the expected values for the GS6-45BZ in 320i applications, but no BMW PressClub spec PDF was directly extracted in this research run; values held at reputable_secondary.",
-      "code": "MT6",
-      "name": "6-speed manual (Getrag GS6-45BZ)",
-      "evidence_refs": [
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:1594dc9b0d47",
+        "legacy_research_sources:1c24f5312261",
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:32e8742ffbf1",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:ec4f691f5393",
+        "legacy_research_sources:f576994a4890"
+      ],
+      "e2": [
         "secondary_technical_sources:bmw-f30-3series-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "Getrag GS6-45BZ 6th-gear ratio per Wikipedia F30 manual transmission listing.",
-        "value": 0.812,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "Final drive 3.231 typical for F30 320i MT6 (GS6-45BZ); held at reputable_secondary - no BMW PressClub spec PDF directly extracted.",
-        "value": 3.231,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18 (option packs: Sport Line 235/40 R19, M Sport 245/35 R20). Cross-checked against Wikipedia F30 article.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '320i'",
-        "reason": "F30 320i MT6 broad 2012-2019 row spans two engine generations: pre-LCI 320i used the N20 (1997 cc) per the 03/2012 launch press kit (T0122586EN) and 03/2012 update PDF (T0124299EN); LCI 320i used the B48 (1998 cc) per 05/2015 specs (T0234765EN). Current row asserts B48 across the entire span; pre-LCI N20 years are unsupported. Driveshaft and wheel-order analysis disabled until row is split."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "320i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 320i 8AT RWD with stored engine code B48 (LCI-only). production_start_year corrected from 2012 to 2015. Transmission is ZF 8HP45 (4-cylinder petrol variant of the 8HP family). LCI-era 8HP45 8th-gear ratio is 0.640 (NOT the legacy 0.667 which was the older first-generation 8HP70 value, inherited as family_default). Final drive 3.077 is consistent with secondary cross-checks for B48 8HP45 RWD; held at reputable_secondary.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP45)",
-      "evidence_refs": [
+      "e3": [
         "secondary_technical_sources:bmw-f30-3series-wikipedia",
         "secondary_technical_sources:zf8hp-bmw-x3-table"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications. The legacy family_default 0.667 reflects the older first-generation 8HP70 - LCI 8HP45/8HP50 use 0.640.",
-        "value": 0.64,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia",
-          "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "Final drive 3.077 consistent with B48 8HP45 in 320i applications; reputable_secondary - no BMW PressClub spec PDF directly extracted.",
-        "value": 3.077,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia",
-          "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '320i'",
-        "reason": "Same pre-LCI N20 vs LCI B48 split across the broad 2012-2019 320i 8-speed Steptronic row. Per BMW PressClub launch press kit and 2015 specs, ratios and final drives change between pre-LCI and LCI states. ZF8HP transmission code is `official_derived` from BMW's 'Eight-speed Steptronic' wording, not the supplier code. Saved artifacts: launch press kit (T0122586EN, March 2012), 03/2012 update (T0124299EN), 05/2015 specs (T0234765EN), F30 LCI brochure mirror, BMW UK 01/2014 price-list mirror."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-330i-eu-2012-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "330i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      ],
+      "e4": [
         "legacy_research_sources:28b59b0b3030",
         "legacy_research_sources:ec4f691f5393"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): The F30 330i nameplate is LCI-only - it was introduced mid-2015 as the replacement for the 328i. production_start_year corrected from 2012 to 2015. Engine B48 (185 kW / 248 hp tune). Transmission Getrag GS6-45BZ 6-speed manual. The pairing 330i + B48 + MT6 + RWD is a real production state for 2015-2019; per-gear and final-drive values not directly extracted from a BMW PressClub spec PDF in this research run, so ratios remain at their stored values but with the configuration year corrected.",
-      "code": "MT6",
-      "name": "6-speed manual (Getrag GS6-45BZ)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia"
       ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "GS6-45BZ 6th gear value 0.812 retained from family_default; Wikipedia F30 confirms GS6-45BZ as the 4-cyl manual but does not publish the 330i-specific ratio. Reputable_secondary pending PressClub PDF extraction.",
-        "value": 0.812,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.231 was a family_default; 330i may use a different FD than the 320i (BMW typically gives higher-output variants slightly different FDs). No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
-        "value": 3.231,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '330i'",
-        "reason": "F30 330i MT6 was introduced with the F30 LCI in mid-2015 (per 05/2015 specs T0234765EN), not at the 2012 launch. Pre-LCI 320i/328i are documented in the 03/2012 launch press kit (T0122586EN); 330i does not appear there. Production start at 2012 is contradicted; the 330i launch state begins in 2015."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "bmw-f30-330i-eu-2012-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "330i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 330i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Transmission ZF 8HP45 (4-cyl petrol). 8th-gear corrected from family_default 0.667 to LCI-era 0.640 (the 0.667 reflected the older first-gen 8HP70). Final drive value 3.077 may differ for the 330i (BMW sometimes uses 2.813 for higher-output 4-cyl autos); held at no_confidence pending direct PressClub PDF extraction.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP45)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications.",
-        "value": 0.64,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia",
-          "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
+  "configurations": [
+    {
+      "id": "bmw-f30-320i-eu-2012-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "320i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.077 was a family_default; 330i 8AT may use a different FD than the 320i 8AT. No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
-        "value": 3.077,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
+      "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
+        "notes": "Sonnet redo (2026-04 v2): F30 320i MT6 RWD with stored engine code B48. The B48 engine entered F30 production at the LCI changeover in mid-2015 - it was NOT used in the pre-LCI 320i (which used the N20). production_start_year corrected from 2012 to 2015. Transmission is the Getrag/ZF GS6-45BZ 6-speed manual. Per Wikipedia F30 article, 6th-gear 0.812 and final drive 3.231 are the expected values for the GS6-45BZ in 320i applications, but no BMW PressClub spec PDF was directly extracted in this research run; values held at reputable_secondary.",
+        "code": "MT6",
+        "name": "6-speed manual (Getrag GS6-45BZ)",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "Getrag GS6-45BZ 6th-gear ratio per Wikipedia F30 manual transmission listing.",
+          "value": 0.812,
+          "evidence_refs_ref": "e2"
         },
-        "default_axle_for_speed": "rear"
+        "final_drive_rear": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "Final drive 3.231 typical for F30 320i MT6 (GS6-45BZ); held at reputable_secondary - no BMW PressClub spec PDF directly extracted.",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        }
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes": "F30 standard base tyre 225/45 R18 (option packs: Sport Line 235/40 R19, M Sport 245/35 R20). Cross-checked against Wikipedia F30 article.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n3"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '330i'",
-        "reason": "Same 2012 vs 2015 contradiction. 330i 8-speed Steptronic appears in the 05/2015 LCI specs (T0234765EN) and F30 LCI brochure mirror; not present in the 03/2012 launch press kit. Production start at 2012 unsupported; ZF8HP code is `official_derived`."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-330i-xdrive-eu-2012-mt6-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "330i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 transfer case with Getrag GS6-45BZ 6-speed manual. Per-gear ratio value retained from family_default; FD values held at no_confidence pending direct PressClub PDF extraction.",
-      "code": "MT6",
-      "name": "6-speed manual (Getrag GS6-45BZ)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "GS6-45BZ 6th-gear 0.812 from family_default; Wikipedia confirms GS6-45BZ for 4-cyl manual.",
-        "value": 0.812,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
-        "value": 3.231,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
-        "value": 3.231,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '320i'",
+          "reason": "F30 320i MT6 broad 2012-2019 row spans two engine generations: pre-LCI 320i used the N20 (1997 cc) per the 03/2012 launch press kit (T0122586EN) and 03/2012 update PDF (T0124299EN); LCI 320i used the B48 (1998 cc) per 05/2015 specs (T0234765EN). Current row asserts B48 across the entire span; pre-LCI N20 years are unsupported. Driveshaft and wheel-order analysis disabled until row is split."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "320i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 320i 8AT RWD with stored engine code B48 (LCI-only). production_start_year corrected from 2012 to 2015. Transmission is ZF 8HP45 (4-cylinder petrol variant of the 8HP family). LCI-era 8HP45 8th-gear ratio is 0.640 (NOT the legacy 0.667 which was the older first-generation 8HP70 value, inherited as family_default). Final drive 3.077 is consistent with secondary cross-checks for B48 8HP45 RWD; held at reputable_secondary.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP45)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications. The legacy family_default 0.667 reflects the older first-generation 8HP70 - LCI 8HP45/8HP50 use 0.640.",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "Final drive 3.077 consistent with B48 8HP45 in 320i applications; reputable_secondary - no BMW PressClub spec PDF directly extracted.",
+          "value": 3.077,
+          "evidence_refs_ref": "e3"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n3"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '330i xDrive'",
-        "reason": "Same LCI introduction issue: 330i xDrive is an LCI-era model. Pre-LCI 328i xDrive existed but the 330i nameplate begins with LCI per the 05/2015 specs and LCI brochure. Production start at 2012 is contradicted."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-330i-xdrive-eu-2012-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "330i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 + ZF 8HP45 (4-cyl). 8th-gear corrected to LCI-era 0.640. FD values held at no_confidence pending direct PressClub PDF extraction.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP45)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48.",
-        "value": 0.64,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia",
-          "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
-        "value": 3.077,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
-        "value": 3.077,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '320i'",
+          "reason": "Same pre-LCI N20 vs LCI B48 split across the broad 2012-2019 320i 8-speed Steptronic row. Per BMW PressClub launch press kit and 2015 specs, ratios and final drives change between pre-LCI and LCI states. ZF8HP transmission code is `official_derived` from BMW's 'Eight-speed Steptronic' wording, not the supplier code. Saved artifacts: launch press kit (T0122586EN, March 2012), 03/2012 update (T0124299EN), 05/2015 specs (T0234765EN), F30 LCI brochure mirror, BMW UK 01/2014 price-list mirror."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f30-330i-eu-2012-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "330i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): The F30 330i nameplate is LCI-only - it was introduced mid-2015 as the replacement for the 328i. production_start_year corrected from 2012 to 2015. Engine B48 (185 kW / 248 hp tune). Transmission Getrag GS6-45BZ 6-speed manual. The pairing 330i + B48 + MT6 + RWD is a real production state for 2015-2019; per-gear and final-drive values not directly extracted from a BMW PressClub spec PDF in this research run, so ratios remain at their stored values but with the configuration year corrected.",
+        "code": "MT6",
+        "name": "6-speed manual (Getrag GS6-45BZ)",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "GS6-45BZ 6th gear value 0.812 retained from family_default; Wikipedia F30 confirms GS6-45BZ as the 4-cyl manual but does not publish the 330i-specific ratio. Reputable_secondary pending PressClub PDF extraction.",
+          "value": 0.812,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes": "Final drive 3.231 was a family_default; 330i may use a different FD than the 320i (BMW typically gives higher-output variants slightly different FDs). No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "note_ref": "n3"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '330i xDrive'",
-        "reason": "Same LCI introduction issue. 330i xDrive 8-speed Steptronic is documented from 05/2015 onward; ZF8HP code is `official_derived` from BMW wording."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-340i-eu-2012-mt6-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "340i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 340i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58 (240 kW). Transmission is Getrag GS6X53DZ 6-speed manual (the 6-cylinder petrol manual gearbox - NOT the GS6-45BZ used for 4-cyl). transmission.name corrected. Stored 6th-gear 0.812 and FD 3.231 are inherited from the 4-cyl GS6-45BZ family default and are NOT applicable to the GS6X53DZ - the 6-cyl manual uses different ratios (typically 6th approximately 0.756, FD approximately 3.154). Held at no_confidence pending direct PressClub PDF extraction.",
-      "code": "MT6",
-      "name": "6-speed manual (Getrag GS6X53DZ)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed.",
-        "value": 0.812,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed.",
-        "value": 3.231,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '330i'",
+          "reason": "F30 330i MT6 was introduced with the F30 LCI in mid-2015 (per 05/2015 specs T0234765EN), not at the 2012 launch. Pre-LCI 320i/328i are documented in the 03/2012 launch press kit (T0122586EN); 330i does not appear there. Production start at 2012 is contradicted; the 330i launch state begins in 2015."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f30-330i-eu-2012-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "330i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 330i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Transmission ZF 8HP45 (4-cyl petrol). 8th-gear corrected from family_default 0.667 to LCI-era 0.640 (the 0.667 reflected the older first-gen 8HP70). Final drive value 3.077 may differ for the 330i (BMW sometimes uses 2.813 for higher-output 4-cyl autos); held at no_confidence pending direct PressClub PDF extraction.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP45)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications.",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes": "Final drive 3.077 was a family_default; 330i 8AT may use a different FD than the 320i 8AT. No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
+          "value": 3.077,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "note_ref": "n3"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '340i'",
-        "reason": "F30 340i was introduced with the LCI in mid-2015 (B58 engine), replacing the pre-LCI 335i (N55). Per 05/2015 specs (T0234765EN) and LCI brochure, 340i begins in 2015. The 2012 launch press kit lists 335i, not 340i. Production start at 2012 is contradicted."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f30-340i-eu-2012-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "production_start_year": 2015,
-    "production_end_year": 2019,
-    "model_name": "3 Series (F30, 2012-2019)",
-    "variant_name": "340i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:28b59b0b3030",
-        "legacy_research_sources:ec4f691f5393"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo (2026-04 v2): F30 340i 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58. Transmission is ZF 8HP50 (the 6-cylinder petrol variant of the 8HP family - NOT the 8HP45 used for 4-cyl). transmission.name corrected. 8th-gear corrected from family_default 0.667 to ZF 8HP50 LCI value 0.640. Stored FD 3.077 is the 4-cyl 8HP45 value; the 6-cyl 8HP50 in F30 typically uses FD 2.813. Held at no_confidence pending direct PressClub PDF extraction.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP50)",
-      "evidence_refs": [
-        "secondary_technical_sources:bmw-f30-3series-wikipedia",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "ZF 8HP50 8th-gear ratio (LCI-era 6-cyl petrol).",
-        "value": 0.64,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia",
-          "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Final drive 3.077 inherited from 4-cyl 8HP45 family_default; the 340i 8HP50 typically uses FD around 2.813. No direct PressClub PDF extraction; held at no_confidence.",
-        "value": 3.077,
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '330i'",
+          "reason": "Same 2012 vs 2015 contradiction. 330i 8-speed Steptronic appears in the 05/2015 LCI specs (T0234765EN) and F30 LCI brochure mirror; not present in the 03/2012 launch press kit. Production start at 2012 unsupported; ZF8HP code is `official_derived`."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ],
-        "notes": "F30 standard base tyre 225/45 R18.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f30-330i-xdrive-eu-2012-mt6-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "330i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 transfer case with Getrag GS6-45BZ 6-speed manual. Per-gear ratio value retained from family_default; FD values held at no_confidence pending direct PressClub PDF extraction.",
+        "code": "MT6",
+        "name": "6-speed manual (Getrag GS6-45BZ)",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "GS6-45BZ 6th-gear 0.812 from family_default; Wikipedia confirms GS6-45BZ for 4-cyl manual.",
+          "value": 0.812,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n6",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n6",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "note_ref": "n3"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1594dc9b0d47",
-            "legacy_research_sources:1c24f5312261",
-            "legacy_research_sources:28b59b0b3030",
-            "legacy_research_sources:32e8742ffbf1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:ec4f691f5393",
-            "legacy_research_sources:f576994a4890"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n7",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '330i xDrive'",
+          "reason": "Same LCI introduction issue: 330i xDrive is an LCI-era model. Pre-LCI 328i xDrive existed but the 330i nameplate begins with LCI per the 05/2015 specs and LCI brochure. Production start at 2012 is contradicted."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
+    {
+      "id": "bmw-f30-330i-xdrive-eu-2012-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "330i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 + ZF 8HP45 (4-cyl). 8th-gear corrected to LCI-era 0.640. FD values held at no_confidence pending direct PressClub PDF extraction.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP45)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48.",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n8",
+          "value": 3.077,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n8",
+          "value": 3.077,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:bmw-f30-3series-wikipedia"
-        ]
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n3"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '330i xDrive'",
+          "reason": "Same LCI introduction issue. 330i xDrive 8-speed Steptronic is documented from 05/2015 onward; ZF8HP code is `official_derived` from BMW wording."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
-        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
+    },
+    {
+      "id": "bmw-f30-340i-eu-2012-mt6-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "340i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 340i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58 (240 kW). Transmission is Getrag GS6X53DZ 6-speed manual (the 6-cylinder petrol manual gearbox - NOT the GS6-45BZ used for 4-cyl). transmission.name corrected. Stored 6th-gear 0.812 and FD 3.231 are inherited from the 4-cyl GS6-45BZ family default and are NOT applicable to the GS6X53DZ - the 6-cyl manual uses different ratios (typically 6th approximately 0.756, FD approximately 3.154). Held at no_confidence pending direct PressClub PDF extraction.",
+        "code": "MT6",
+        "name": "6-speed manual (Getrag GS6X53DZ)",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n9",
+          "value": 0.812,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n9",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
         ]
       },
-      {
-        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
-        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
-        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
-        "evidence_refs": [
-          "legacy_research_sources:1594dc9b0d47",
-          "legacy_research_sources:1c24f5312261",
-          "legacy_research_sources:28b59b0b3030",
-          "legacy_research_sources:32e8742ffbf1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:ec4f691f5393",
-          "legacy_research_sources:f576994a4890"
-        ]
-      },
-      {
-        "item": "F30 broad-row 2012-2019 issues for '340i'",
-        "reason": "Same LCI introduction issue. 340i 8-speed Steptronic is documented from 05/2015; ZF8HP code is `official_derived`. The pre-LCI 335i with N55 is the 2012-launch counterpart and is not represented by this 340i row."
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n3"
+        },
+        {
+          "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '340i'",
+          "reason": "F30 340i was introduced with the LCI in mid-2015 (B58 engine), replacing the pre-LCI 335i (N55). Per 05/2015 specs (T0234765EN) and LCI brochure, 340i begins in 2015. The 2012 launch press kit lists 335i, not 340i. Production start at 2012 is contradicted."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "bmw-f30-340i-eu-2012-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F30",
+      "body_code": "F30",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "model_name": "3 Series (F30, 2012-2019)",
+      "variant_name": "340i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo (2026-04 v2): F30 340i 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58. Transmission is ZF 8HP50 (the 6-cylinder petrol variant of the 8HP family - NOT the 8HP45 used for 4-cyl). transmission.name corrected. 8th-gear corrected from family_default 0.667 to ZF 8HP50 LCI value 0.640. Stored FD 3.077 is the 4-cyl 8HP45 value; the 6-cyl 8HP50 in F30 typically uses FD 2.813. Held at no_confidence pending direct PressClub PDF extraction.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP50)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes": "ZF 8HP50 8th-gear ratio (LCI-era 6-cyl petrol).",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes": "Final drive 3.077 inherited from 4-cyl 8HP45 family_default; the 340i 8HP50 typically uses FD around 2.813. No direct PressClub PDF extraction; held at no_confidence.",
+          "value": 3.077,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n3"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+          "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+          "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+          "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "F30 broad-row 2012-2019 issues for '340i'",
+          "reason": "Same LCI introduction issue. 340i 8-speed Steptronic is documented from 05/2015; ZF8HP code is `official_derived`. The pre-LCI 335i with N55 is the 2012-launch counterpart and is not represented by this 340i row."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}

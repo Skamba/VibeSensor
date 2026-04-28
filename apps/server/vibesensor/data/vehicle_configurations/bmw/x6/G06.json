@@ -1,348 +1,307 @@
-[
-  {
-    "id": "bmw-g06-m50i-eu-2020-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G06",
-    "body_code": "G06",
-    "production_start_year": 2020,
-    "production_end_year": 2020,
-    "model_name": "X6 (G06, 2020)",
-    "variant_name": "M50i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n3": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this narrowed 2020-only row.",
+      "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n5": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this narrowed 2020-only row."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
+      ],
+      "e2": [
         "bmw_pressclub_sources:g06-x6-2019-launch-article",
         "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
       ],
-      "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 M50i state represented by this narrowed 2020-only row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-      ],
-      "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 M50i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 M50i state represented by this narrowed 2020-only row.",
-        "value": 0.64
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-        "value": 3.154
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-        "value": 3.154
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this narrowed 2020-only row.",
-        "front": {
-          "width_mm": 275.0,
-          "aspect_pct": 40.0,
-          "rim_in": 21.0
-        },
-        "rear": {
-          "width_mm": 315.0,
-          "aspect_pct": 35.0,
-          "rim_in": 21.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-          ],
-          "notes": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this narrowed 2020-only row.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 21\""
-        },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:2c16041881ea",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7c0362f09174",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:2c16041881ea",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7c0362f09174",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 22.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
-        }
+      "e3": [
+        "legacy_research_sources:2c16041881ea",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:7c0362f09174",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1"
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW launch article and technical-data PDF establish the exact X6 M50i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.154 final-drive ratio, and staggered 275/40 R21 front plus 315/35 R21 rear baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-launch-article",
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X6 M50i exact optional wheel/tire matrix beyond the narrowed 2020 row",
-        "reason": "The checked official BMW launch technical-data PDF closes the staggered 21-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW X6 M50i separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "bmw-g06-xdrive40i-eu-2020-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G06",
-    "body_code": "G06",
-    "production_start_year": 2020,
-    "production_end_year": 2020,
-    "model_name": "X6 (G06, 2020)",
-    "variant_name": "xDrive40i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g06-x6-2019-launch-article",
-        "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-      ],
-      "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-      ],
-      "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
+  "configurations": [
+    {
+      "id": "bmw-g06-m50i-eu-2020-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G06",
+      "body_code": "G06",
+      "production_start_year": 2020,
+      "production_end_year": 2020,
+      "model_name": "X6 (G06, 2020)",
+      "variant_name": "M50i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
-        "value": 0.64
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 M50i state represented by this narrowed 2020-only row.",
+        "value": "AWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-        "value": 3.385
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 M50i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-        "value": 3.385
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 M50i state represented by this narrowed 2020-only row.",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "value": 3.154
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "value": 3.154
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 315.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 21\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 21\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 22.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW launch article and technical-data PDF establish the exact X6 M50i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.154 final-drive ratio, and staggered 275/40 R21 front plus 315/35 R21 rear baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X6 M50i exact optional wheel/tire matrix beyond the narrowed 2020 row",
+          "reason": "The checked official BMW launch technical-data PDF closes the staggered 21-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X6 M50i separate front/rear final-drive publication",
+          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
+    {
+      "id": "bmw-g06-xdrive40i-eu-2020-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G06",
+      "body_code": "G06",
+      "production_start_year": 2020,
+      "production_end_year": 2020,
+      "model_name": "X6 (G06, 2020)",
+      "variant_name": "xDrive40i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ],
-        "notes": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
-        "front": {
-          "width_mm": 265.0,
-          "aspect_pct": 50.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
+        "value": "AWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-          ],
-          "notes": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4",
+          "value": 3.385
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n5",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 50.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:2c16041881ea",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7c0362f09174",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 50.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 21\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:2c16041881ea",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7c0362f09174",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 22.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW launch article and technical-data PDF establish the exact X6 xDrive40i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.385 final-drive ratio, and 265/50 R19 baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-launch-article",
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X6 xDrive40i exact optional wheel/tire matrix beyond the narrowed 2020 row",
-        "reason": "The checked official BMW launch technical-data PDF closes the 19-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 22.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 22\""
+          }
         ]
       },
-      {
-        "item": "BMW X6 xDrive40i separate front/rear final-drive publication",
-        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
-        ]
+      "verification_notes": [
+        {
+          "note": "The official BMW launch article and technical-data PDF establish the exact X6 xDrive40i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.385 final-drive ratio, and 265/50 R19 baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X6 xDrive40i exact optional wheel/tire matrix beyond the narrowed 2020 row",
+          "reason": "The checked official BMW launch technical-data PDF closes the 19-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X6 xDrive40i separate front/rear final-drive publication",
+          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

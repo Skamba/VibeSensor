@@ -1,182 +1,137 @@
-[
-  {
-    "id": "audi-c8-rs-6-eu-2020-zf8hp-awd",
-    "brand": "Audi",
-    "type": "Wagon",
-    "market": "EU",
-    "model_code": "C8",
-    "body_code": "C8",
-    "production_start_year": 2020,
-    "production_end_year": 2026,
-    "model_name": "RS 6 Avant (C8, 2020-2026)",
-    "variant_name": "RS 6",
-    "engine_code": "4.0L",
-    "engine_name": "4.0L V8 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:07cc5dc911b9",
+        "legacy_research_sources:0a24f01e0a95",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:5e252f7f436b",
         "legacy_research_sources:655c83e80527",
-        "legacy_research_sources:ee23956fe3cd"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed tiptronic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.077
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.077
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
+        "legacy_research_sources:876c20c63603",
+        "legacy_research_sources:b225154c654e",
+        "legacy_research_sources:ee23956fe3cd",
+        "legacy_research_sources:f6365cece15e"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "audi-c8-rs-6-eu-2020-zf8hp-awd",
+      "brand": "Audi",
+      "type": "Wagon",
+      "market": "EU",
+      "model_code": "C8",
+      "body_code": "C8",
+      "production_start_year": 2020,
+      "production_end_year": 2026,
+      "model_name": "RS 6 Avant (C8, 2020-2026)",
+      "variant_name": "RS 6",
+      "engine_code": "4.0L",
+      "engine_name": "4.0L V8 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:0a24f01e0a95",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
           "legacy_research_sources:655c83e80527",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:b225154c654e",
-          "legacy_research_sources:ee23956fe3cd",
-          "legacy_research_sources:f6365cece15e"
+          "legacy_research_sources:ee23956fe3cd"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 285.0,
-          "aspect_pct": 30.0,
-          "rim_in": 21.0
-        },
-        "default_axle_for_speed": "rear"
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed tiptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:0a24f01e0a95",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:655c83e80527",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:b225154c654e",
-            "legacy_research_sources:ee23956fe3cd",
-            "legacy_research_sources:f6365cece15e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.077
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 30.0,
             "rim_in": 21.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 21\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 285.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 21\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 295.0,
+              "aspect_pct": 25.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi Germany technical-data sheets now confirm the exact RS 6 Avant drivetrain mapping, full gear ratios, final drive 3.204, basic 275/35 R21 tires, and optional 285/30 R22 tires for 2023-2025 Germany-market documents. The broad row remains unchanged because this pass did not prove the same mapping across the full 2020-2026 span represented in production data.",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:0a24f01e0a95",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:655c83e80527",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:b225154c654e",
-            "legacy_research_sources:ee23956fe3cd",
-            "legacy_research_sources:f6365cece15e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 295.0,
-            "aspect_pct": 25.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 22\""
+          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi Germany technical-data sheets now confirm the exact RS 6 Avant drivetrain mapping, full gear ratios, final drive 3.204, basic 275/35 R21 tires, and optional 285/30 R22 tires for 2023-2025 Germany-market documents. The broad row remains unchanged because this pass did not prove the same mapping across the full 2020-2026 span represented in production data.",
-        "evidence_refs": [
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:0a24f01e0a95",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:655c83e80527",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:b225154c654e",
-          "legacy_research_sources:ee23956fe3cd",
-          "legacy_research_sources:f6365cece15e"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      ],
+      "unresolved": [
+        {
+          "item": "Audi RS 6 Avant exact production-data applicability across the full 2020-2026 row span",
+          "reason": "This pass found exact Germany-market proof for 2023-2025 documents, but it did not retrieve matching official launch-year and full-span documents that prove one unchanged ratio and tire package across the entire row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi RS 6 Avant public gearbox-family naming beyond '8-speed tiptronic'",
+          "reason": "Official Audi exact sources confirm the transmission as 8-speed tiptronic but do not explicitly name the gearbox family as ZF 8HP.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi RS 6 Avant exact production-data applicability across the full 2020-2026 row span",
-        "reason": "This pass found exact Germany-market proof for 2023-2025 documents, but it did not retrieve matching official launch-year and full-span documents that prove one unchanged ratio and tire package across the entire row.",
-        "evidence_refs": [
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:0a24f01e0a95",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:655c83e80527",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:b225154c654e",
-          "legacy_research_sources:ee23956fe3cd",
-          "legacy_research_sources:f6365cece15e"
-        ]
-      },
-      {
-        "item": "Audi RS 6 Avant public gearbox-family naming beyond '8-speed tiptronic'",
-        "reason": "Official Audi exact sources confirm the transmission as 8-speed tiptronic but do not explicitly name the gearbox family as ZF 8HP.",
-        "evidence_refs": [
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:0a24f01e0a95",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:655c83e80527",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:b225154c654e",
-          "legacy_research_sources:ee23956fe3cd",
-          "legacy_research_sources:f6365cece15e"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

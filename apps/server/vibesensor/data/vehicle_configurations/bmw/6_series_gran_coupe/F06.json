@@ -1,1103 +1,920 @@
-[
-  {
-    "id": "bmw-f06-640d-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640d",
-    "engine_code": "N57",
-    "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+{
+  "definitions": {
+    "notes": {
+      "n1": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
+      "n2": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
+      "n3": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
+      "n4": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
+      "n5": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
+      "n6": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 640d xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+      "n7": "Official BMW PressClub F06 technical-data PDFs publish a single 3.231 final-drive value for the 640i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+      "n8": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 650i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
         "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish 640d separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 640d Gran Coupe.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d Gran Coupe.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d tire package.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Germany standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 640d rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f06-640d-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640d xDrive",
-    "engine_code": "N57",
-    "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e2": [
         "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
         "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640d xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d xDrive Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d xDrive Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 640d xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 640d xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d xDrive Gran Coupe.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d xDrive tire package.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Germany standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 640d xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f06-640i-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640i",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish 640i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 3.231 for the 640i Gran Coupe.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i Gran Coupe.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i tire package.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Germany standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 640i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f06-640i-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640i xDrive",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e3": [
         "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
         "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+      "e4": [
+        "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
         "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i xDrive Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i xDrive Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_front": {
+      "e5": [
+        "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-f06-640d-eu-2013-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "640d",
+      "engine_code": "N57",
+      "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 3.231 final-drive value for the 640i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 3.231
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish 640d separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
+        "value": "RWD"
       },
-      "final_drive_rear": {
+      "transmission": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 3.231 final-drive value for the 640i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i xDrive Gran Coupe.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i xDrive tire package.",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 640d Gran Coupe.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d Gran Coupe.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 55.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d tire package.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Germany standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 640d rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e4"
         },
         {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Germany standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
+          "note_ref": "n4",
+          "evidence_refs_ref": "e4"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 640i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f06-650i-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "650i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish 650i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 650i Gran Coupe.",
-        "value": 2.813
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
       }
     },
-    "tires": {
-      "default": {
+    {
+      "id": "bmw-f06-640d-xdrive-eu-2013-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "640d xDrive",
+      "engine_code": "N57",
+      "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i Gran Coupe.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+        "evidence_refs_ref": "e2",
+        "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640d xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
+        "value": "AWD"
       },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 650i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
-    }
-  },
-  {
-    "id": "bmw-f06-650i-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "650i xDrive",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 650i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-      ],
-      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i xDrive Gran Coupe.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i xDrive Gran Coupe.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 650i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 2.813
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 650i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
-        "value": 2.813
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d xDrive Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d xDrive Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n6",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n6",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d xDrive Gran Coupe.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d xDrive tire package.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Germany standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 640d xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ],
-        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i xDrive Gran Coupe.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f06-640i-eu-2013-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "640i",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish 640i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
+        "value": "RWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i xDrive tire package.",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 3.231 for the 640i Gran Coupe.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i Gran Coupe.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i tire package.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Germany standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 640i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f06-640i-xdrive-eu-2013-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "640i xDrive",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i xDrive Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i xDrive Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n7",
+          "value": 3.231
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n7",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i xDrive Gran Coupe.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i xDrive tire package.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Germany standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 640i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
+    },
+    {
+      "id": "bmw-f06-650i-eu-2013-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "650i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish 650i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 650i Gran Coupe.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i Gran Coupe.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i tire package.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
           },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
           },
-          "name": "Optional staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-          ],
-          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "name": "Optional staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This run consolidated duplicate F06 650i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
         ]
       },
-      {
-        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
-          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
-        ]
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 650i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
       }
-    ],
-    "unresolved": [],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
+    },
+    {
+      "id": "bmw-f06-650i-xdrive-eu-2013-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F06",
+      "body_code": "F06",
+      "production_start_year": 2013,
+      "production_end_year": 2018,
+      "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
+      "variant_name": "650i xDrive",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official BMW PressClub F06 technical-data PDFs identify the 650i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e5",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i xDrive Gran Coupe.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i xDrive Gran Coupe.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n8",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n8",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i xDrive Gran Coupe.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i xDrive tire package.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "name": "Optional staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "name": "Optional staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This run consolidated duplicate F06 650i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": false
+      }
     }
-  }
-]
+  ]
+}

@@ -1,570 +1,405 @@
-[
-  {
-    "id": "audi-c8-40-tfsi-eu-2019-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "C8",
-    "body_code": "C8",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "A6 (C8, 2019-2025)",
-    "variant_name": "40 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
+      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence."
     },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.564
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi Germany-market technical-data sheets now confirm late-C8 exact mappings for the A6 Sedan 45 TFSI quattro and 55 TFSI quattro: quattro ultra AWD, 7-speed S tronic, final drive 4.410, exact forward ratios, and base tires 225/60 R17 (45 TFSI quattro) or 225/55 R18 (55 TFSI quattro). The broad A6 row remains unchanged because checked exact evidence is late-cycle only, the row spans multiple year and output states, and this pass did not prove one shared gearbox and tire package across the full 2019-2026 variant set.",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A6 45 TFSI quattro production-data applicability across the full C8 row span",
-        "reason": "Checked exact 2024 Germany-market evidence resolves the late-cycle 195 kW 45 TFSI quattro ratio and basic-tire mapping, but this pass did not recover an earlier exact 180 kW or launch-era technical-data sheet that proves the same package across the full 2019-2026 span.",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ]
-      },
-      {
-        "item": "Audi A6 55 TFSI quattro production-data applicability across the full C8 row span",
-        "reason": "Checked exact 2024 Germany-market evidence resolves the late-cycle 250 kW 55 TFSI quattro mapping, but a related 2026-era official sedan sheet already changes the upper ratios, so a broad-row overwrite would be unsafe without a proven year split.",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ]
-      },
-      {
-        "item": "Audi A6 exact transmission-code and optional tire-matrix confirmation",
-        "reason": "Official Audi sheets prove the 7-speed S tronic wording, full ratio sets, and basic tires for the checked exact variants, but they do not publish the transmission code or the full optional wheel and tire matrix.",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-c8-45-tfsi-quattro-eu-2019-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "C8",
-    "body_code": "C8",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "A6 (C8, 2019-2025)",
-    "variant_name": "45 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:01c00967f62a",
+        "legacy_research_sources:07cc5dc911b9",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:720a93990098",
+        "legacy_research_sources:876c20c63603",
+        "legacy_research_sources:e4992bd8c221",
+        "legacy_research_sources:edd605c5ca47",
+        "legacy_research_sources:f83cdba50e26"
+      ],
+      "e2": [
         "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf"
       ],
-      "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf"
+      "e3": [
+        "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf"
       ],
-      "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-        "value": 3.564
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-        "value": 3.564
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 21\""
-        }
+      "e4": [
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 45 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 195 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 ratio set, and 225/60 R17 basic tires, but this pass did not recover an earlier exact 180 kW or launch-era sheet proving one unchanged numeric package across the full retimed row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-until-2025-model-page",
-          "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
-          "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A6 45 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
-        "reason": "The checked 2024 technical-data sheet resolves the late-cycle 195 kW 45 TFSI quattro package, but this pass did not recover an earlier exact 180 kW or launch-era A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-until-2025-model-page",
-          "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
-          "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
-        ]
-      },
-      {
-        "item": "Audi A6 45 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
-        "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/60 R17 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-c8-55-tfsi-quattro-eu-2019-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "C8",
-    "body_code": "C8",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "A6 (C8, 2019-2025)",
-    "variant_name": "55 TFSI quattro",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L V6 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf"
-      ],
-      "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf"
-      ],
-      "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-        "value": 0.725
+  "configurations": [
+    {
+      "id": "audi-c8-40-tfsi-eu-2019-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "C8",
+      "body_code": "C8",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "A6 (C8, 2019-2025)",
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "FWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-        "value": 3.564
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-        "value": 3.564
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:01c00967f62a",
-          "legacy_research_sources:07cc5dc911b9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:720a93990098",
-          "legacy_research_sources:876c20c63603",
-          "legacy_research_sources:e4992bd8c221",
-          "legacy_research_sources:edd605c5ca47",
-          "legacy_research_sources:f83cdba50e26"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.564
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:01c00967f62a",
-            "legacy_research_sources:07cc5dc911b9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:720a93990098",
-            "legacy_research_sources:876c20c63603",
-            "legacy_research_sources:e4992bd8c221",
-            "legacy_research_sources:edd605c5ca47",
-            "legacy_research_sources:f83cdba50e26"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 20\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "S line 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 55 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 250 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 ratio set, and 225/55 R18 basic tires, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric package across the full retimed row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-until-2025-model-page",
-          "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf",
-          "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A6 55 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
-        "reason": "The checked 2024 technical-data sheet resolves the late-cycle 250 kW 55 TFSI quattro package, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-until-2025-model-page",
-          "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf",
-          "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 21\""
+          }
         ]
       },
-      {
-        "item": "Audi A6 55 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
-        "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/55 R18 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf"
-        ]
+      "verification_notes": [
+        {
+          "note": "Official Audi Germany-market technical-data sheets now confirm late-C8 exact mappings for the A6 Sedan 45 TFSI quattro and 55 TFSI quattro: quattro ultra AWD, 7-speed S tronic, final drive 4.410, exact forward ratios, and base tires 225/60 R17 (45 TFSI quattro) or 225/55 R18 (55 TFSI quattro). The broad A6 row remains unchanged because checked exact evidence is late-cycle only, the row spans multiple year and output states, and this pass did not prove one shared gearbox and tire package across the full 2019-2026 variant set.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A6 45 TFSI quattro production-data applicability across the full C8 row span",
+          "reason": "Checked exact 2024 Germany-market evidence resolves the late-cycle 195 kW 45 TFSI quattro ratio and basic-tire mapping, but this pass did not recover an earlier exact 180 kW or launch-era technical-data sheet that proves the same package across the full 2019-2026 span.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A6 55 TFSI quattro production-data applicability across the full C8 row span",
+          "reason": "Checked exact 2024 Germany-market evidence resolves the late-cycle 250 kW 55 TFSI quattro mapping, but a related 2026-era official sedan sheet already changes the upper ratios, so a broad-row overwrite would be unsafe without a proven year split.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A6 exact transmission-code and optional tire-matrix confirmation",
+          "reason": "Official Audi sheets prove the 7-speed S tronic wording, full ratio sets, and basic tires for the checked exact variants, but they do not publish the transmission code or the full optional wheel and tire matrix.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "audi-c8-45-tfsi-quattro-eu-2019-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "C8",
+      "body_code": "C8",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "A6 (C8, 2019-2025)",
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.564
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.564
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 45 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 195 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 ratio set, and 225/60 R17 basic tires, but this pass did not recover an earlier exact 180 kW or launch-era sheet proving one unchanged numeric package across the full retimed row.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A6 45 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
+          "reason": "The checked 2024 technical-data sheet resolves the late-cycle 195 kW 45 TFSI quattro package, but this pass did not recover an earlier exact 180 kW or launch-era A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "Audi A6 45 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
+          "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/60 R17 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-c8-55-tfsi-quattro-eu-2019-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "C8",
+      "body_code": "C8",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "A6 (C8, 2019-2025)",
+      "variant_name": "55 TFSI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 3.564
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 3.564
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 55 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 250 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 ratio set, and 225/55 R18 basic tires, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric package across the full retimed row.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A6 55 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
+          "reason": "The checked 2024 technical-data sheet resolves the late-cycle 250 kW 55 TFSI quattro package, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Audi A6 55 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
+          "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/55 R18 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}

@@ -1,1278 +1,929 @@
-[
-  {
-    "id": "bmw-f40-118i-eu-2019-dct7-fwd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "118i",
-    "engine_code": "B38",
-    "engine_name": "B38 1.5L I3 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n3": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+      "n4": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n5": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n6": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n7": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n8": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n9": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n10": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n11": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n12": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n13": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0–62 mph 8.5s manual / 8.9s 'Steptronic'.",
+      "n14": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
+      "n15": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_market_pages:f40-1series-uk-inform-2019",
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      ],
+      "e2": [
         "legacy_research_sources:091077d8a451",
         "legacy_research_sources:16c091e6cfd6",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020",
-        "bmw_market_pages:f40-1series-uk-inform-2019"
+        "legacy_research_sources:18deedec2c15",
+        "legacy_research_sources:82e045fca148",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:eca9fb0d3e74"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0–62 mph 8.5s manual / 8.9s 'Steptronic'.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0–62 mph 8.5s manual / 8.9s 'Steptronic'.",
-      "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-tech-data-2020",
-        "bmw_market_pages:f40-1series-uk-inform-2019"
+      "e3": [
+        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-f40-118i-eu-2019-dct7-fwd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "118i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020",
+          "bmw_market_pages:f40-1series-uk-inform-2019"
+        ],
+        "notes_ref": "n13",
+        "value": "FWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.684
+        "notes_ref": "n13",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch transmission",
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-tech-data-2020",
+          "bmw_market_pages:f40-1series-uk-inform-2019"
+        ]
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.71
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.684
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs_ref": "e3",
+          "notes": "Sonnet redo research (2026-04 v2): BMW UK F40 Jan 2020 technical data publishes 118i SE wheel/tyre as 7Jx16 LM, 205/55 R16 91W. The previous 225/40 R18 default appeared to be the M Sport fitment, retained as an option below.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e3",
+            "notes": "BMW UK F40 Jan 2020 technical data lists 8Jx18 LM 225/40 R18 92Y for M Sport-trim 118i.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
+    {
+      "id": "bmw-f40-118i-eu-2019-zf8hp-fwd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "118i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic Sport transmission",
+        "evidence_refs_ref": "e1"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 0.673,
+          "evidence_refs_ref": "e1"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 3.075,
+          "evidence_refs_ref": "e1"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n11",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n12",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f40-120i-eu-2019-dct7-fwd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "120i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
         "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
           "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW UK F40 Jan 2020 technical data publishes 118i SE wheel/tyre as 7Jx16 LM, 205/55 R16 91W. The previous 225/40 R18 default appeared to be the M Sport fitment, retained as an option below.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
-        },
-        "default_axle_for_speed": "rear"
+        "notes_ref": "n14",
+        "value": "FWD"
       },
-      "options": [
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n14",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch transmission",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.71
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.684
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
         {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f40-120i-eu-2019-zf8hp-fwd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "120i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic Sport transmission",
+        "evidence_refs_ref": "e1"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 0.673,
+          "evidence_refs_ref": "e1"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 3.075,
+          "evidence_refs_ref": "e1"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n5",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n11",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n12",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f40-m135i-xdrive-eu-2019-dct7-awd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "M135i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "bmw_market_pages:f40-1series-uk-m135i-2021",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ],
+        "notes_ref": "n15",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n15",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch transmission",
+        "evidence_refs": [
+          "bmw_market_pages:f40-1series-uk-m135i-2021",
+          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        ]
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.71
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.684
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.684
+        }
+      },
+      "tires": {
+        "default": {
           "confidence": "reputable_secondary_crosschecked",
           "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74",
+            "bmw_market_pages:f40-1series-uk-m135i-2021"
           ],
-          "notes": "BMW UK F40 Jan 2020 technical data lists 8Jx18 LM 225/40 R18 92Y for M Sport-trim 118i.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK Aug 2021 M135i xDrive page confirms 225/40 R18 92Y XL on 8Jx18 alloy.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n4"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f40-118i-eu-2019-zf8hp-fwd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "118i",
-    "engine_code": "B38",
-    "engine_name": "B38 1.5L I3 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 0.673,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 3.075,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f40-120i-eu-2019-dct7-fwd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "120i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
-      "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.684
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-f40-m135i-xdrive-eu-2019-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "F40",
+      "body_code": "F40",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "model_name": "1 Series (F40, 2019-2025)",
+      "variant_name": "M135i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e1",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic Sport transmission",
+        "evidence_refs_ref": "e1"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 0.673,
+          "evidence_refs_ref": "e1"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 3.075,
+          "evidence_refs_ref": "e1"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n1",
+          "value": 3.075,
+          "evidence_refs_ref": "e1"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "note_ref": "n4"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note_ref": "n5",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n11",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n12",
+          "evidence_refs_ref": "e1"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f40-120i-eu-2019-zf8hp-fwd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "120i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 0.673,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 3.075,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "item": "7-speed DCT top_gear_ratio",
+          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
+          "item": "Per-variant transmission mapping for 118i",
+          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+          "evidence_refs_ref": "e2"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f40-m135i-xdrive-eu-2019-dct7-awd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "M135i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:091077d8a451",
-        "legacy_research_sources:16c091e6cfd6",
-        "bmw_market_pages:f40-1series-uk-m135i-2021",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18.",
-      "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-m135i-2021",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.684
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.684
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    },
-    "tires": {
-      "default": {
-        "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74",
-          "bmw_market_pages:f40-1series-uk-m135i-2021"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK Aug 2021 M135i xDrive page confirms 225/40 R18 92Y XL on 8Jx18 alloy.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  },
-  {
-    "id": "bmw-f40-m135i-xdrive-eu-2019-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "F40",
-    "body_code": "F40",
-    "production_start_year": 2019,
-    "production_end_year": 2025,
-    "model_name": "1 Series (F40, 2019-2025)",
-    "variant_name": "M135i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ],
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic Sport transmission",
-      "evidence_refs": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 0.673,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 3.075,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 3.075,
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_market_pages:f40-1series-uk-inform-2019",
-            "bmw_market_pages:f40-1series-uk-tech-data-2020"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-inform-2019",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "7-speed DCT top_gear_ratio",
-        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Per-variant transmission mapping for 118i",
-        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      },
-      {
-        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "legacy_research_sources:18deedec2c15",
-          "legacy_research_sources:82e045fca148",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:eca9fb0d3e74"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  }
-]
+  ]
+}
