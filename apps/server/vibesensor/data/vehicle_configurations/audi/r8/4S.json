@@ -1,9 +1,5 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-    },
     "evidence_ref_sets": {
       "e1": [
         "legacy_research_sources:2eabd1ad6f42",
@@ -39,24 +35,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL800)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.714
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.538
         }
       },
@@ -64,7 +56,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 295.0,
             "aspect_pct": 30.0,
@@ -76,7 +67,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 295.0,
               "aspect_pct": 30.0,
@@ -88,7 +78,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 305.0,
               "aspect_pct": 25.0,
@@ -103,9 +92,6 @@
         {
           "note": "Batch 10 checked an official Audi 01/2023 Germany technical-data PDF for the later R8 Coupé V10 performance RWD. That later source confirms rear-wheel drive, 7-speed S tronic wording, Audi-form transmission ratios ending with 0.653 top gear, final-drive values 4.458 / 3.588, and staggered 245/35 R19 front plus 295/35 R19 rear base tires, but this pass still did not recover an official launch-era document proving one exact RWD mapping across the represented row span.",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -136,29 +122,24 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL800)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.714
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.538
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.538
         }
       },
@@ -166,7 +147,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 295.0,
             "aspect_pct": 30.0,
@@ -178,7 +158,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 295.0,
               "aspect_pct": 30.0,
@@ -190,7 +169,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 305.0,
               "aspect_pct": 25.0,
@@ -205,9 +183,6 @@
         {
           "note": "Official Audi Germany-market material now confirms the exact 2019+ R8 Coupé V10 quattro mapping: quattro AWD, 7-speed S tronic, a standard staggered 245/35 R19 front + 295/35 R19 rear tire setup, and Audi-form transmission data showing ratio values 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343 with final-drive values 1.848 / 1.488. The broad R8 row remains unchanged because the exact V10 quattro badge is only cleanly evidenced from the 2019 facelift onward, accessible pre-facelift AWD documentation is contradictory, and the current schema cannot safely encode the dual final-drive and Audi-form ratio data.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [

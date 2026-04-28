@@ -1,13 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n4": "F30 standard base tyre 225/45 R18.",
-      "n5": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n6": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
-      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n8": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
       "n9": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed."
     },
@@ -54,7 +50,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -94,7 +89,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -106,7 +100,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -118,7 +111,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -133,9 +125,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -176,7 +165,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -216,7 +204,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -228,7 +215,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -240,7 +226,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -255,9 +240,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -298,7 +280,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -338,7 +319,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -350,7 +330,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -362,7 +341,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -377,13 +355,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -424,7 +395,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -464,7 +434,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -476,7 +445,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -488,7 +456,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -503,13 +470,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -550,7 +510,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
@@ -596,7 +555,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -608,7 +566,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -620,7 +577,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -635,17 +591,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -686,7 +631,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
@@ -732,7 +676,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -744,7 +687,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -756,7 +698,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -771,17 +712,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -822,7 +752,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -862,7 +791,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -874,7 +802,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -886,7 +813,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -901,17 +827,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -952,7 +867,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -992,7 +906,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1004,7 +917,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1016,7 +928,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1031,13 +942,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [

@@ -3,7 +3,6 @@
     "notes": {
       "n1": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Convertible M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n2": "The official BMW launch technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Convertible M850i xDrive state represented by this narrowed 2019-only row.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n4": "The official BMW 02/2020 technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Convertible 840i state represented by this retimed 2020-only row."
     },
     "evidence_ref_sets": {
@@ -114,7 +113,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -126,7 +124,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,

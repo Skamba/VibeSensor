@@ -1,13 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
-      "n3": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n4": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n5": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
-      "n6": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n7": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
       "n8": "Value from prior-session Audi UK Q3 TFSI quattro S tronic technical-data PDF (cited file is now a SPA shell). Cross-corroborated by auto-data.net 211 PS variant entry. Confidence reduced from 'official_derived' to 'reputable_secondary' to reflect that the saved evidence file is not auditable.",
       "n9": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL): 1.4 TFSI 150 PS / 6-speed manual is a purchasable EU/UK variant across the entire pre-LCI and post-LCI span. Engine code CZDA. PQ35 platform, transverse FWD-only (no quattro variant of 1.4 TFSI exists). Default tyre per Audi UK SE-spec brochure is 235/55 R17 (NOT the 235/50 R18 family-default - that is the S line option). Gear ratios remain unverified; no official Audi UK technical-data PDF has been recovered for the 1.4 TFSI manual.",
       "n10": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD AUTOMATIC: gearbox CORRECTED from '7-speed S tronic (DQ500)' to '6-speed S tronic (DQ250)'. Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL) explicitly describe this variant as '6-speed S tronic' - NOT 7-speed. The DQ500 (7-speed wet clutch) is reserved for high-torque quattro applications on this platform; the DQ200 (7-speed dry clutch) is an MQB-era unit not available on PQ35-based Q3 8U. The DQ250 (6-speed wet clutch, 0AM/02E family) is the correct unit for FWD 1.4 TFSI Q3 8U. Drivetrain FWD confirmed; PQ35 platform. Default tyre 235/55 R17 per Audi UK SE-spec.",
@@ -15,7 +9,6 @@
       "n12": "Audi Q3 (8U) 2.0 TDI FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 and 2016 ATL): pre-LCI 140 PS and 177 PS variants and post-LCI 150 PS variant all available with 6-speed manual FWD. Gearbox is the 02Q (VW Group 6MT for FWD petrol/diesel). The 2.0 TDI FWD is exclusively manual in both pre-LCI and post-LCI Q3 8U lineups - no automatic FWD TDI variant is offered (see Row 3 phantom). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default).",
       "n13": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "n14": "Audi Q3 (8U) 2.0 TDI quattro 6-speed manual AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS variants) and corroborated by two independent secondary sources (auto-data.net and car-specs.net). 6-speed manual is the 0AJ (quattro version of 02Q). Default tyre 235/55 R17 cross-checked across UK brochure SE-spec and both secondary sources. Gear ratios remain unverified.",
-      "n15": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n16": "Audi Q3 (8U) 2.0 TDI quattro 7-speed S tronic AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS) and 2016 brochure (150/184 PS). Gearbox is DQ500 (Audi 0BH) wet-clutch 7-speed DCT, which integrates the Haldex transfer-case output for the rear axle on PQ35 quattro applications. DCT7 transmission code is correct. DQ500 family designation is correct (DQ250 6-speed has no Haldex-integrated variant for Q3 8U). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default). Gear ratios unverified.",
       "n17": "Audi Q3 (8U) 2.0 TFSI quattro 6-speed manual AWD confirmed by Audi UK Q3 2014 brochure (170 PS variant). Gearbox is 0AJ. Note: previously cited Audi UK technical-data PDF reference (legacy_research_sources) is a 2,450-byte SPA shell from press.audi.co.uk - the value 0.813 for top gear was extracted in a prior session from a real PDF that could not be re-saved due to the SPA barrier. Cross-check: 0AJ 6th gear for quattro TFSI is typically 0.756-0.813 - 0.813 is at the upper end and plausible for this variant. Tyre 215/65 R16 is the technical-minimum (steel wheels) fitment in the technical data PDF; 235/55 R17 is the standard SE-spec alloy fitment per UK brochure.",
       "n18": "The exact Audi UK technical-data PDF and an exact Auto-Data corroboration both point to 215/65 R16 as the checked baseline tire. Applied as official-derived evidence for the EU row while the broader option matrix remains unresolved.",
@@ -135,7 +128,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -147,7 +139,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -159,7 +150,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -174,17 +164,6 @@
         {
           "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift 2.0 TDI quattro 177 PS S tronic sheet, but no exact official FWD diesel technical sheet. This broad 2012-2018 FWD manual row therefore remains an unsupported placeholder and must not inherit the recovered quattro automatic state.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -260,7 +239,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -272,7 +250,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -284,7 +261,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -299,17 +275,6 @@
         {
           "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift 2.0 TDI quattro 177 PS S tronic sheet, but no exact official FWD diesel technical sheet. This broad 2012-2018 FWD automatic row therefore remains an unsupported placeholder and must not inherit the recovered quattro automatic state.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -385,7 +350,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -397,7 +361,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -409,7 +372,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -424,17 +386,6 @@
         {
           "note_ref": "n13",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -510,7 +461,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -522,7 +472,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -534,7 +483,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -549,29 +497,6 @@
         {
           "note_ref": "n13",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -668,7 +593,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -680,7 +604,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -695,21 +618,6 @@
         {
           "note": "Exact secondary Q3 manual pages still support the checked AWD/manual identity and 235/55 R17 baseline tire, but the follow-up official Audi UK diesel sheet recovered in this pass is for the pre-facelift 177 PS quattro S tronic automatic state, not for the manual row. This broad AWD manual placeholder therefore remains unresolved and must not inherit the recovered official automatic configuration.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n7"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n15",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -791,7 +699,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 50.0,
@@ -803,7 +710,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -815,7 +721,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -830,21 +735,6 @@
         {
           "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift Q3 2.0 TDI quattro 177 PS S tronic technical sheet showing AWD, 7-speed S tronic, grouped gearbox/final-drive presentation, and basic 215/65 R16 tires. That official packet hardens the early automatic state, but it does not close full 2012-2018 continuity for this broad row.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n15",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -903,12 +793,10 @@
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -940,7 +828,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -952,7 +839,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -967,9 +853,6 @@
         {
           "note": "The exact Audi UK technical-data PDF now confirms the checked Q3 2.0 TFSI quattro manual state: quattro AWD, 6-speed manual transmission, top gear 0.813, and 215/65 R16 baseline tires. The same sheet presents grouped gearbox/final-drive values that do not map cleanly to the current front/rear final-drive schema, so the broad row remains only partially resolved.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [
@@ -1065,7 +948,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -1077,7 +959,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -1092,9 +973,6 @@
         {
           "note": "The exact Audi UK technical-data PDF now confirms the checked Q3 2.0 TFSI quattro S tronic state: quattro AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 / 3.444, and 235/55 R17 baseline tires. The broader 2012-2018 row still lacks full year-span and option-matrix continuity.",
           "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [

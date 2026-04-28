@@ -2,18 +2,8 @@
   "definitions": {
     "notes": {
       "n1": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
       "n4": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
-      "n5": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n6": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n7": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
-      "n8": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n9": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n10": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n12": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
-      "n13": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n14": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
       "n15": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "n16": "Audi A4 B8 1.8 TFSI 6-speed manual FWD. Auto-Data B8 generation list confirms FWD MT6 1.8 TFSI as real pre-facelift variant. Carfolio 2011 page (URL slug misnamed but content matches) supplies ratios top 0.69 / FD 3.30 and standard tyre 205/60 R16 on 7Jx16 wheel. Repo placeholder 0.84/3.462 and 225/45 R18 contradicted; Sport-trim 18-inch was an option, not catalogue baseline.",
@@ -242,7 +232,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -254,7 +243,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -266,7 +254,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -281,9 +268,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8"
         }
       ],
       "unresolved": [
@@ -356,7 +340,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -368,7 +351,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -380,7 +362,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -397,31 +378,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a 7-speed S tronic/DCT exact row; keep the current DCT7 row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -499,7 +457,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -511,7 +468,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -523,7 +479,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -540,31 +495,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a ZF8HP exact row; keep the current ZF8HP row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -642,7 +574,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -654,7 +585,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -666,7 +596,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -683,19 +612,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Exact secondary pre-facelift manual sources agree on AWD, 6-speed manual transmission, and 225/55 R16 baseline tires, but those sources only cover 2008-2011 and do not safely justify correcting the full 2008-2016 row without a year split.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -773,7 +691,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -785,7 +702,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -797,7 +713,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -814,31 +729,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; keep the current DCT7 row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -916,7 +808,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -928,7 +819,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -940,7 +830,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -957,31 +846,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; keep the current ZF8HP row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1065,7 +931,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1077,7 +942,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1089,7 +953,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1104,9 +967,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12"
         }
       ],
       "unresolved": [
@@ -1179,7 +1039,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1191,7 +1050,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1203,7 +1061,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1220,23 +1077,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Exact secondary facelift S tronic sources agree on AWD and 7-speed S tronic transmission, but Auto-Data reports 225/55 R16 tires while Carfolio reports 225/50 R17 and only Carfolio exposed a numeric top-gear/final-drive pair, so the broad row stays unresolved.",
           "evidence_refs_ref": "e23"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e9"
         }
       ],
       "unresolved": [
@@ -1320,7 +1162,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1332,7 +1173,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1344,7 +1184,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1361,35 +1200,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Saved A4 B8 2.0 TDI quattro evidence supports exact MT6 and facelift S tronic slices, not an 8-speed ZF8HP row; keep the current ZF8HP row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e24"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -1467,7 +1279,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1479,7 +1290,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1491,7 +1301,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1506,17 +1315,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -1589,7 +1387,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1601,7 +1398,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1613,7 +1409,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1630,31 +1425,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; keep the current DCT7 row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -1732,7 +1504,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1744,7 +1515,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1756,7 +1526,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1773,31 +1542,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; keep the current ZF8HP row out of order analysis until an exact official split is built.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1884,7 +1630,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1896,7 +1641,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1908,7 +1652,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1925,23 +1668,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Exact secondary manual sources agree on AWD and a 6-speed manual gearbox, but the pre-facelift Auto-Data row and the 2013 Carfolio row do not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
           "evidence_refs_ref": "e26"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e10"
         }
       ],
       "unresolved": [
@@ -2025,7 +1753,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2037,7 +1764,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2049,7 +1775,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2066,23 +1791,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note_ref": "n29",
           "evidence_refs_ref": "e28"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e8"
         }
       ],
       "unresolved": [
@@ -2166,7 +1876,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2178,7 +1887,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2190,7 +1898,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2207,35 +1914,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Follow-up review found that the exact 2008-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
           "evidence_refs_ref": "e29"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -2330,7 +2010,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2342,7 +2021,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2354,7 +2032,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2369,9 +2046,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12"
         },
         {
           "note": "Exact secondary manual sources agree on AWD and a 6-speed manual gearbox, but the pre-facelift Auto-Data row and the 2012 Carfolio row do not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
@@ -2472,7 +2146,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2484,7 +2157,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2496,7 +2168,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2511,9 +2182,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12"
         },
         {
           "note": "Exact facelift secondary sources agree on AWD and a 7-speed S tronic gearbox, while official Audi MediaCenter clean-diesel material separately supports six-speed tiptronic for the pre-facelift Germany-market automatic family. That automatic-family split means this broad 2008-2016 row cannot be treated as one exact production-safe S tronic configuration.",
@@ -2601,7 +2269,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2613,7 +2280,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2625,7 +2291,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2642,35 +2307,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n12"
-        },
-        {
           "note": "Official Audi MediaCenter clean-diesel material states that the Germany-market 3.0 TDI clean diesel quattro family combines six-speed tiptronic with quattro permanent all-wheel drive, and the exact 2007-2011 Auto-Data sedan row matches that Tiptronic family. That directly contradicts the broad-row 8-speed ZF8HP mapping and leaves the stored automatic code unresolved without a split.",
           "evidence_refs_ref": "e32"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -2754,7 +2392,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2766,7 +2403,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2778,7 +2414,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2793,33 +2428,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e6"
         }
       ],
       "unresolved": [
@@ -2898,7 +2506,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2910,7 +2517,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2922,7 +2528,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2937,9 +2542,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8"
         },
         {
           "note_ref": "n29",
@@ -3027,7 +2629,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -3039,7 +2640,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -3051,7 +2651,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -3068,35 +2667,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note_ref": "n8"
-        },
-        {
           "note": "Follow-up review found that exact 2012-2014 and 2012 secondary A4 3.0 TFSI quattro sedan pages identify the checked configuration as AWD with a 7-speed S tronic gearbox, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps this Tiptronic row unresolved.",
           "evidence_refs_ref": "e35"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [

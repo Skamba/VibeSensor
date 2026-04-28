@@ -336,38 +336,6 @@
         {
           "note": "Batch 19 directly revalidated the official BMW 07/2012 F01 diesel technical-data PDF. That checked official BMW sheet publishes an exact 750d xDrive state, but it does not publish an exact 750d RWD row, so this represented 2012 750d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [

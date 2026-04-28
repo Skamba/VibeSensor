@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
       "n3": "The official BMW 07/2017 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
       "n4": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
       "n5": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
@@ -618,24 +616,20 @@
       "drivetrain": {
         "confidence": "unverified",
         "evidence_refs_ref": "e8",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         }
       },
@@ -643,7 +637,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -655,7 +648,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -667,7 +659,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -679,7 +670,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -818,24 +808,20 @@
       "drivetrain": {
         "confidence": "unverified",
         "evidence_refs_ref": "e8",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.813
         }
       },
@@ -843,7 +829,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -855,7 +840,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -867,7 +851,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -879,7 +862,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -1134,24 +1116,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e8",
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed Steptronic transmission"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.667
         },
         "gear_ratios": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": [
             4.714,
             3.143,
@@ -1165,12 +1143,10 @@
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.231
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.231
         }
       },
@@ -1178,7 +1154,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 55.0,
@@ -1190,7 +1165,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 55.0,
@@ -1205,9 +1179,6 @@
         {
           "note_ref": "n8",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence."
         }
       ],
       "unresolved": [

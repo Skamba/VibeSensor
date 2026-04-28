@@ -1,9 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n4": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
       "n5": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact TT Coupé 40 TFSI S tronic 145 kW state represented by this narrowed 2023-only row.",
       "n6": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state represented by this 2023-only row.",
@@ -99,24 +96,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -124,7 +117,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
@@ -136,7 +128,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -148,7 +139,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -160,7 +150,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -175,9 +164,6 @@
         {
           "note": "Official Audi TT/TTS product-information material shows the facelift-era 40 TFSI only with 7-speed S tronic rather than a manual gearbox, and this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet for a 40 TFSI manual coupe. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
           "evidence_refs_ref": "e10"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -212,24 +198,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n2",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.462
         }
       },
@@ -237,7 +219,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
@@ -249,7 +230,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -261,7 +241,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -273,7 +252,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -322,24 +300,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n2",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "DCT7",
         "name": "7-speed S tronic (DQ381)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 4.769
         }
       },
@@ -347,7 +321,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
@@ -359,7 +332,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -371,7 +343,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -383,7 +354,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -437,29 +407,24 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -467,7 +432,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
@@ -479,7 +443,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -491,7 +454,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -503,7 +465,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -518,9 +479,6 @@
         {
           "note": "Official Audi TT/TTS product-information material and the exact 01/2023 TT Coupe 45 TFSI quattro technical-data PDF support quattro AWD only alongside 7-speed S tronic wording; this run did not recover any accepted official evidence for a manual 45 TFSI quattro coupe row. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -574,17 +532,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.769
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.769
         }
       },
@@ -592,7 +547,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
@@ -604,7 +558,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -616,7 +569,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -628,7 +580,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -643,9 +594,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -751,7 +699,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 30.0,
@@ -763,7 +710,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 25.0,
@@ -778,9 +724,6 @@
         {
           "note": "Official Audi MediaCenter TT Coupé model-page and 01/2023 technical-data PDF evidence now confirm the exact late-cycle TT Coupé 40 TFSI S tronic 145 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. Production JSON narrows the broad row to the supported 2023-only state because this pass did not recover an earlier official exact 40 TFSI ratio sheet.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [

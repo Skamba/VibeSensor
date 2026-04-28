@@ -1,10 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
-      "n3": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete.",
-      "n4": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "n3": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -48,24 +45,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed Steptronic transmission"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.64
         },
         "gear_ratios": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": [
             5.501,
             3.52,
@@ -79,12 +72,10 @@
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.385
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.385
         }
       },
@@ -92,7 +83,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 285.0,
             "aspect_pct": 45.0,
@@ -104,7 +94,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 45.0,
@@ -116,7 +105,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -133,7 +121,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -153,9 +140,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence."
         }
       ],
       "unresolved": [
@@ -187,29 +171,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.154
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.154
         }
       },
@@ -217,7 +196,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 40.0,
@@ -229,7 +207,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -241,7 +218,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 35.0,
@@ -253,7 +229,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 295.0,
               "aspect_pct": 30.0,
@@ -268,9 +243,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -302,24 +274,20 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed Steptronic transmission"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.64
         },
         "gear_ratios": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": [
             5.25,
             3.36,
@@ -333,12 +301,10 @@
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.636
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.636
         }
       },
@@ -346,7 +312,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 50.0,
@@ -358,7 +323,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 50.0,
@@ -370,7 +334,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 285.0,
               "aspect_pct": 45.0,
@@ -382,7 +345,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -399,7 +361,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -419,9 +380,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [

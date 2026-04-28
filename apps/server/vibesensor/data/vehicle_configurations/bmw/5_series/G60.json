@@ -3,7 +3,6 @@
     "notes": {
       "n1": "The official BMW 05/2023 and 03/2025 technical-data sheets list 225/55 R18 as the standard tire package for the exact 520i.",
       "n2": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 front and 275/40 R19 rear as the standard tire package for the exact i5 M60 xDrive.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence.",
       "n4": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 as the standard tire package for the exact i5 eDrive40."
     },
     "evidence_ref_sets": {
@@ -218,7 +217,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -230,7 +228,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e4",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -323,7 +320,6 @@
           {
             "confidence": "official_exact",
             "evidence_refs_ref": "e4",
-            "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,

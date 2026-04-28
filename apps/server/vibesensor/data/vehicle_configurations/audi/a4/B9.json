@@ -1,13 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-      "n5": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-      "n6": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "n7": "Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence."
+      "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -45,24 +39,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n2",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.462
         }
       },
@@ -70,7 +60,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -82,7 +71,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -94,7 +82,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -106,7 +93,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -121,9 +107,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -163,24 +146,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n2",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 4.234
         }
       },
@@ -188,7 +167,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -200,7 +178,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -212,7 +189,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -224,7 +200,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -239,9 +214,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7"
         }
       ],
       "unresolved": [
@@ -281,24 +253,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -306,7 +274,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -318,7 +285,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -330,7 +296,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -342,7 +307,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -357,9 +321,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [
@@ -399,24 +360,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.234
         }
       },
@@ -424,7 +381,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -436,7 +392,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -448,7 +403,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -460,7 +414,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -475,9 +428,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [
@@ -517,24 +467,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.734
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.234
         }
       },
@@ -542,7 +488,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -554,7 +499,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -566,7 +510,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -578,7 +521,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -593,9 +535,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [
@@ -635,24 +574,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n5",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n5",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n5",
           "value": 0.734
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n5",
           "value": 4.234
         }
       },
@@ -660,7 +595,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n5",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -672,7 +606,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -684,7 +617,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -696,7 +628,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -711,9 +642,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence."
         }
       ],
       "unresolved": [
@@ -753,24 +681,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n3",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n3",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 3.462
         }
       },
@@ -778,7 +702,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n3",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -790,7 +713,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -802,7 +724,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -814,7 +735,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -868,24 +788,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n3",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n3",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 4.234
         }
       },
@@ -893,7 +809,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n3",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -905,7 +820,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -917,7 +831,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -929,7 +842,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -997,17 +909,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.734
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.41
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 4.41
         }
       },
@@ -1015,7 +924,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -1027,7 +935,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -1039,7 +946,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -1051,7 +957,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -1066,9 +971,6 @@
         {
           "note_ref": "n4",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6"
         }
       ],
       "unresolved": [

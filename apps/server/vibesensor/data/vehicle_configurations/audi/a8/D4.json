@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered.",
-      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      "n2": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -49,29 +47,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         }
       },
@@ -79,7 +72,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -91,7 +83,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -103,7 +94,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -115,7 +105,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -130,9 +119,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -164,29 +150,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 2.848
         }
       },
@@ -194,7 +175,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 40.0,
@@ -206,7 +186,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -218,7 +197,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,
@@ -230,7 +208,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 30.0,
@@ -245,9 +222,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [

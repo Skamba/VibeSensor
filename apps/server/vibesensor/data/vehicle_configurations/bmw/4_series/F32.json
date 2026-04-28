@@ -1,17 +1,11 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n3": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "n4": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
-      "n5": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 430i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
-      "n6": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo (2026-04 v2): The 440i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article.",
       "n7": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
       "n8": "The official BMW launch-era technical-data PDF publishes a single 3.154 final-drive ratio for the exact F32 420i xDrive automatic configuration represented by the 2014-2015 launch-state row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n9": "The official BMW launch-era technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 420i xDrive automatic configuration represented by the 2014-2015 launch-state row.",
-      "n10": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n12": "Sonnet redo (2026-04 v2): This row carries engine_code B48, but the B48 was introduced at the F32 LCI in 03/2016 (the pre-LCI 420i used the N20). production_start_year corrected from 2014 to 2016. The pre-LCI N20 era of the 420i RWD is a separate configuration that is not represented in this row and remains a coverage gap. transmission/ratio values were not directly extracted from a BMW PressClub spec PDF in this research run.",
       "n13": "The official BMW launch-era and 03/2016 technical-data PDFs agree on a single 3.385 final-drive ratio for the exact F32 420i xDrive manual configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
       "n14": "The official BMW launch-era and 03/2016 technical-data PDFs agree on 225/50 R17 as the baseline tire for the exact F32 420i xDrive manual configuration.",
@@ -22,7 +16,6 @@
       "n19": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe manual row.",
       "n20": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe automatic row.",
       "n21": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
-      "n22": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n23": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this top gear.",
       "n24": "Official BMW 03/2014 F82 M4 technical-data PDF lists final drive 3.462.",
       "n25": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this full forward gear-ratio set.",
@@ -209,7 +202,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -221,7 +213,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -298,7 +289,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -310,7 +300,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -322,7 +311,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -334,7 +322,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -348,14 +335,6 @@
       "verification_notes": [
         {
           "note": "This follow-up removes a copied 430d contradiction note from the F32 418i manual row. No exact official F32 418i technical-data artifact was recovered in the saved packet, so the current engine, ratio, and tyre fields remain inherited placeholders."
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -412,7 +391,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -424,7 +402,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -436,7 +413,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -448,7 +424,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -462,14 +437,6 @@
       "verification_notes": [
         {
           "note": "This follow-up removes a copied 430d contradiction note from the F32 418i automatic row. No exact official F32 418i technical-data artifact was recovered in the saved packet, so the current engine, ratio, and tyre fields remain inherited placeholders."
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -498,7 +465,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e16",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -511,12 +477,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.231
         }
       },
@@ -524,7 +488,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -536,7 +499,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -548,7 +510,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -560,7 +521,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -604,7 +564,6 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e16",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -617,12 +576,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -630,7 +587,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -642,7 +598,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -654,7 +609,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -666,7 +620,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -781,7 +734,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -793,7 +745,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -894,7 +845,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -906,7 +856,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1002,7 +951,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1014,7 +962,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1125,7 +1072,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1137,7 +1083,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1185,12 +1130,10 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e12",
-        "notes_ref": "n5",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n5",
         "code": "MT6",
         "name": "6-speed manual",
         "evidence_refs_ref": "e5"
@@ -1198,12 +1141,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.231
         }
       },
@@ -1211,7 +1152,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -1223,7 +1163,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1235,7 +1174,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1247,7 +1185,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1291,12 +1228,10 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e12",
-        "notes_ref": "n5",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n5",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)",
         "evidence_refs_ref": "e5"
@@ -1304,12 +1239,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -1317,7 +1250,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -1329,7 +1261,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1341,7 +1272,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1353,7 +1283,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1464,7 +1393,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1476,7 +1404,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1581,7 +1508,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1593,7 +1519,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1689,7 +1614,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1701,7 +1625,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1745,12 +1668,10 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e12",
-        "notes_ref": "n6",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n6",
         "code": "MT6",
         "name": "6-speed manual",
         "evidence_refs_ref": "e5"
@@ -1758,12 +1679,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.231
         }
       },
@@ -1771,7 +1690,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -1783,7 +1701,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1795,7 +1712,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1807,7 +1723,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1822,9 +1737,6 @@
         {
           "note_ref": "n21",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n22"
         }
       ],
       "unresolved": [
@@ -1859,12 +1771,10 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e12",
-        "notes_ref": "n6",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n6",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)",
         "evidence_refs_ref": "e5"
@@ -1872,12 +1782,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -1885,7 +1793,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -1897,7 +1804,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1909,7 +1815,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1921,7 +1826,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1936,9 +1840,6 @@
         {
           "note_ref": "n21",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n22"
         }
       ],
       "unresolved": [
@@ -2264,7 +2165,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -2276,7 +2176,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -2383,7 +2282,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -2395,7 +2293,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -2517,7 +2414,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -2529,7 +2425,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -2651,7 +2546,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -2663,7 +2557,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,

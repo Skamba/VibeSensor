@@ -1,10 +1,5 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
-      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence."
-    },
     "evidence_ref_sets": {
       "e1": [
         "legacy_research_sources:01c00967f62a",
@@ -55,24 +50,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.564
         }
       },
@@ -80,7 +71,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -92,7 +82,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -104,7 +93,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -116,7 +104,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -131,9 +118,6 @@
         {
           "note": "Official Audi Germany-market technical-data sheets now confirm late-C8 exact mappings for the A6 Sedan 45 TFSI quattro and 55 TFSI quattro: quattro ultra AWD, 7-speed S tronic, final drive 4.410, exact forward ratios, and base tires 225/60 R17 (45 TFSI quattro) or 225/55 R18 (55 TFSI quattro). The broad A6 row remains unchanged because checked exact evidence is late-cycle only, the row spans multiple year and output states, and this pass did not prove one shared gearbox and tire package across the full 2019-2026 variant set.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
         }
       ],
       "unresolved": [
@@ -183,17 +167,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.564
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.564
         }
       },
@@ -201,7 +182,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -213,7 +193,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -225,7 +204,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -237,7 +215,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -296,17 +273,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 3.564
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n3",
           "value": 3.564
         }
       },
@@ -314,7 +288,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n3",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
@@ -326,7 +299,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -338,7 +310,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -350,7 +321,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n3",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,

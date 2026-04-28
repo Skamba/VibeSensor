@@ -1,19 +1,11 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n3": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
-      "n4": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n5": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "n6": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
       "n7": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
       "n8": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
-      "n9": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n10": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n12": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n13": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n14": "BMW F22 220i 6-speed manual RWD. The row spans two engine eras: pre-LCI 2014-2016 with N20B20 (top 0.830 / FD 3.077 per BMW PressClub T0165234EN/250293) and post-LCI 2016 onwards with B48 (top 0.668 / FD 3.385 per T0260233EN/359752). Repo retains a single row covering the full generation; primary ratio values reflect the LCI B48 era because (a) it covers the larger share of production years and (b) the 220i MT6 with B48 was the variant carried into the 2017+ refresh. MT6 was retired before the 2021 packet (T0327248EN/473311 lists 220i automatic-only), so MT6 production_end is approximately 2019. Default tyre 205/55 R16 per both ACEA packets. Transmission code 'GS6-17BG' (Getrag 285) confirmed via sibling F32 420i tech sheet.",
       "n15": "BMW F22 220i 8-speed Steptronic (ZF GA8HP45Z) RWD. Era-split: pre-LCI 2014-2016 N20 with 8HP old set (top 0.667 / FD 3.077, T0165234EN/250293) and post-LCI 2016-2021 B48 with 8HP new set (top 0.640 / FD 2.813, T0260233EN/359752 + T0327248EN/473311 confirms 2021 still uses new set). Repo single row holds post-LCI primary values; pre-LCI documented in notes. ZF GA8HP45Z is BMW-published as '8-speed Steptronic'; specific ZF code derived. Default tyre 205/55 R16.",
       "n16": "Reverse gear ratio (research note): 3.712",
@@ -134,7 +126,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -146,7 +137,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -158,7 +148,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -173,9 +162,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -273,7 +259,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -285,7 +270,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -297,7 +281,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -312,9 +295,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
         },
         {
           "note_ref": "n16",
@@ -401,7 +381,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -413,7 +392,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -425,7 +403,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -532,7 +509,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -544,7 +520,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -556,7 +531,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -652,7 +626,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -664,7 +637,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -676,7 +648,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -691,9 +662,6 @@
         {
           "note": "Official BMW packet review shows that the F22 230i appears only in the recovered 07/2016 facelift technical-data packet, not in the 03/2014 launch packet, and the recovered 03/2021 packet keeps 230i only as a late automatic state. This broad 2014-2021 manual row therefore mixes a too-early start year with a later manual state that does not span the stored range.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -786,7 +754,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -798,7 +765,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -810,7 +776,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -825,9 +790,6 @@
         {
           "note": "Official BMW packet review shows that the F22 230i appears only in the recovered 07/2016 facelift technical-data packet, not in the 03/2014 launch packet, and the recovered 03/2021 packet keeps 230i as a later automatic-only state. This broad 2014-2021 automatic row therefore remains a mixed-era placeholder rather than one exact production-safe automatic configuration.",
           "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n4"
         },
         {
           "note_ref": "n16",
@@ -909,7 +871,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -921,7 +882,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -933,7 +893,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -948,29 +907,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1053,7 +989,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1065,7 +1000,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1077,7 +1011,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1092,29 +1025,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1197,7 +1107,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1209,7 +1118,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1221,7 +1129,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1236,26 +1143,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -1338,7 +1225,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1350,7 +1236,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1362,7 +1247,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1377,26 +1261,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
