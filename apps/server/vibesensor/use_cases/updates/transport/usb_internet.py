@@ -89,7 +89,8 @@ class UpdateUsbInternetSession:
         return self
 
     async def abort_preparation(self) -> None:
-        pass
+        """No-op: prepare only validates an already-present external uplink."""
+        return None
 
     async def ensure_uplink_ready(self) -> None:
         decision = _classify_usb_internet(await self._status_service.snapshot(activate=True))
@@ -109,10 +110,13 @@ class UpdateUsbInternetSession:
         )
 
     async def complete_success(self) -> None:
+        """No-op: the USB transport does not own the reused uplink on success."""
         return None
 
     async def cleanup_after_update(self) -> None:
-        pass
+        """No-op: there is no transport-local USB state to tear down after updates."""
+        return None
 
     async def recover_interrupted_update(self, _status: UpdateJobStatus) -> None:
-        pass
+        """No-op: interrupted USB updates have no session-owned setup to restore."""
+        return None
