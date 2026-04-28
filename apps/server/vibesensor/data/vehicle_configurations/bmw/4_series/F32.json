@@ -389,13 +389,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f32-418i-eu-2014-mt6-rwd",
@@ -462,11 +456,9 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_driveshaft_order": false
       }
     },
     {
@@ -534,11 +526,9 @@
         }
       ],
       "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_driveshaft_order": false
       }
     },
     {
@@ -602,13 +592,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-420i-eu-2014-zf8hp-rwd",
@@ -671,13 +655,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-420i-xdrive-eu-2014-mt6-awd",
@@ -769,13 +747,7 @@
           "evidence_refs_ref": "e8"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f32-428i-eu-2014-mt6-rwd",
@@ -843,13 +815,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-428i-eu-2014-zf8hp-rwd",
@@ -917,13 +883,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-430d-eu-2014-zf8hp-rwd",
@@ -1010,13 +970,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-430i-eu-2014-mt6-rwd",
@@ -1078,13 +1032,7 @@
           "evidence_refs_ref": "e14"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-430i-eu-2014-zf8hp-rwd",
@@ -1146,13 +1094,7 @@
           "evidence_refs_ref": "e14"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-435d-xdrive-eu-2014-zf8hp-awd",
@@ -1244,13 +1186,7 @@
           "evidence_refs_ref": "e11"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-435i-eu-2014-mt6-rwd",
@@ -1318,13 +1254,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-435i-eu-2014-zf8hp-rwd",
@@ -1392,13 +1322,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-440i-eu-2014-mt6-rwd",
@@ -1465,13 +1389,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-440i-eu-2014-zf8hp-rwd",
@@ -1538,13 +1456,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-m4-eu-2014-mt6-rwd",
@@ -1626,13 +1538,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-m4-eu-2014-dct7-rwd",
@@ -1715,13 +1621,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-440i-xdrive-eu-2016-mt6-awd",
@@ -1800,13 +1700,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-440i-xdrive-eu-2016-zf8hp-awd",
@@ -1885,13 +1779,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-420i-xdrive-eu-2016-zf8hp-awd",
@@ -1985,13 +1873,7 @@
           "evidence_refs_ref": "e4"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f32-430i-xdrive-eu-2016-zf8hp-awd",
@@ -2085,13 +1967,7 @@
           "evidence_refs_ref": "e4"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": true,
-        "requires_manual_confirmation": true
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

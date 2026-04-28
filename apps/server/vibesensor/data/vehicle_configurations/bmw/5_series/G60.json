@@ -155,11 +155,9 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -246,11 +244,9 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     },
     {
@@ -325,11 +321,9 @@
         }
       ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy": {
-        "usable_for_engine_order": true,
-        "usable_for_driveshaft_order": true,
-        "usable_for_wheel_order": false,
-        "requires_manual_confirmation": true
+      "order_analysis_policy_override": {
+        "reason": "preserved-from-pre-derivation-curated-data",
+        "usable_for_wheel_order": false
       }
     }
   ]

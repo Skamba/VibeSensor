@@ -100,6 +100,9 @@ from .vehicle_configuration import (
     VehicleFuelType,
     VehicleOrderAnalysisKind,
     VehicleOrderAnalysisPolicy,
+    VehicleOrderAnalysisPolicyOverride,
+    apply_order_analysis_policy_override,
+    derive_order_analysis_policy,
 )
 from .vibration_origin import VibrationOrigin
 
@@ -136,6 +139,9 @@ __all__ = [
     "VehicleFuelType",
     "VehicleOrderAnalysisKind",
     "VehicleOrderAnalysisPolicy",
+    "VehicleOrderAnalysisPolicyOverride",
+    "apply_order_analysis_policy_override",
+    "derive_order_analysis_policy",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
