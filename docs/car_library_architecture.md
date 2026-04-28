@@ -176,3 +176,39 @@ Canonical validation lives in:
 
 The bundled grouped picker is a projection only. Canonical exact-row shards
 remain the single source of truth.
+
+## Shard JSON Schema
+
+`apps/server/vibesensor/data/schema/vehicle_configuration_shard.schema.json`
+is the canonical JSON Schema (Draft 2020-12) for shard files under
+`apps/server/vibesensor/data/vehicle_configurations/**/*.json`. It validates
+the raw on-disk shape, including the `definitions` / `defaults` /
+`configurations` blocks and the supported ref forms (`notes_ref`, `note_ref`,
+`evidence_refs_ref`, `default_ref`, `setup_ref`).
+
+`apps/server/tests/adapters/persistence/test_vehicle_configuration_shard_schema.py`
+runs the schema against every committed shard and checks representative
+invalid cases. Run it with the rest of the persistence suite:
+
+```bash
+pytest -q apps/server/tests/adapters/persistence/test_vehicle_configuration_shard_schema.py
+```
+
+To get inline validation while editing shards, point your editor at the
+schema file. Example VS Code setting:
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "apps/server/vibesensor/data/vehicle_configurations/**/*.json"
+      ],
+      "url": "./apps/server/vibesensor/data/schema/vehicle_configuration_shard.schema.json"
+    }
+  ]
+}
+```
+
+Schema validation and the backend loader are kept in sync. When the loader
+contract changes, update both at once.
