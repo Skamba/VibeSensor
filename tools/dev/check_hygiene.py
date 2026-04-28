@@ -9,7 +9,7 @@ import shlex
 import subprocess
 import sys
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -185,6 +185,30 @@ class RuntimeSupportMatrixRow:
     notes: str
 
 
+@dataclass(frozen=True)
+class TextRequirement:
+    needle: str
+    error_message: str
+
+
+@dataclass(frozen=True)
+class WorkflowStepRequirement:
+    error_message: str
+    uses: str | None = None
+    uses_prefix: str | None = None
+    run: str | None = None
+    working_directory: str | None = None
+    step_id: str | None = None
+    forbidden: bool = False
+
+
+@dataclass(frozen=True)
+class ListCheckSpec:
+    runner: Callable[[], list[str]]
+    failure_heading: str
+    success_message: str
+
+
 _UI_ALLOWED_RAW_HTML_PREFIX = "apps/ui/src/app/views/"
 _UI_DOM_REGISTRY_PATH = ROOT / "apps" / "ui" / "src" / "app" / "ui_dom_registry.ts"
 _UI_DOM_REGISTRY_TOKENS = ("UiDomRegistry", "ui_dom_registry")
@@ -260,6 +284,71 @@ def _load_ci_manifest_module():
 
 def _read_required_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
+
+
+def _workflow_job_mapping(
+    jobs: Mapping[str, object], job_name: str
+) -> Mapping[str, object] | None:
+    raw_job = jobs.get(job_name)
+    return raw_job if isinstance(raw_job, Mapping) else None
+
+
+def _workflow_job_steps(
+    jobs: Mapping[str, object], job_name: str
+) -> list[object] | None:
+    raw_job = _workflow_job_mapping(jobs, job_name)
+    if raw_job is None:
+        return None
+    steps = raw_job.get("steps")
+    return steps if isinstance(steps, list) else None
+
+
+def _extend_missing_text_requirements(
+    errors: list[str],
+    text: str,
+    requirements: Sequence[TextRequirement],
+) -> None:
+    for requirement in requirements:
+        if requirement.needle not in text:
+            errors.append(requirement.error_message)
+
+
+def _workflow_step_matches(step: object, requirement: WorkflowStepRequirement) -> bool:
+    if not isinstance(step, Mapping):
+        return False
+    if requirement.step_id is not None and step.get("id") != requirement.step_id:
+        return False
+    if requirement.uses is not None and step.get("uses") != requirement.uses:
+        return False
+    if requirement.uses_prefix is not None:
+        raw_uses = step.get("uses")
+        if not isinstance(raw_uses, str) or not raw_uses.startswith(
+            requirement.uses_prefix
+        ):
+            return False
+    if requirement.run is not None and step.get("run") != requirement.run:
+        return False
+    if (
+        requirement.working_directory is not None
+        and step.get("working-directory") != requirement.working_directory
+    ):
+        return False
+    return True
+
+
+def _extend_step_requirement_errors(
+    errors: list[str],
+    steps: Sequence[object],
+    requirements: Sequence[WorkflowStepRequirement],
+) -> None:
+    for requirement in requirements:
+        matched = any(_workflow_step_matches(step, requirement) for step in steps)
+        if requirement.forbidden:
+            if matched:
+                errors.append(requirement.error_message)
+            continue
+        if not matched:
+            errors.append(requirement.error_message)
 
 
 def _line_count(path: Path) -> int:
@@ -1119,103 +1208,117 @@ def check_contract_sync_entrypoint() -> list[str]:
     if not isinstance(jobs, Mapping):
         return errors
 
-    backend_contract_drift = jobs.get("backend-contract-drift")
-    if isinstance(backend_contract_drift, Mapping):
-        steps = backend_contract_drift.get("steps")
-        if isinstance(steps, list):
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("uses") == "actions/setup-node@v6"
-                for step in steps
-            ):
-                errors.append(
-                    "backend-contract-drift must install Node because the authoritative contract sync runs the UI derivative generator."
-                )
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("working-directory") == "apps/ui"
-                and step.get("run") == _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD
-                for step in steps
-            ):
-                errors.append(
-                    "backend-contract-drift must install UI dependencies from apps/ui before running the authoritative contract sync check."
-                )
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("run") == "make sync-contracts CHECK=1"
-                for step in steps
-            ):
-                errors.append(
-                    "backend-contract-drift must run `make sync-contracts CHECK=1` as the authoritative contract sync check."
-                )
+    backend_contract_drift_steps = _workflow_job_steps(jobs, "backend-contract-drift")
+    if backend_contract_drift_steps is not None:
+        _extend_step_requirement_errors(
+            errors,
+            backend_contract_drift_steps,
+            (
+                WorkflowStepRequirement(
+                    uses="actions/setup-node@v6",
+                    error_message=(
+                        "backend-contract-drift must install Node because the authoritative contract sync "
+                        "runs the UI derivative generator."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run=_UI_BOOTSTRAP_HELPER_WORKFLOW_CMD,
+                    error_message=(
+                        "backend-contract-drift must install UI dependencies from apps/ui before running "
+                        "the authoritative contract sync check."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="make sync-contracts CHECK=1",
+                    error_message=(
+                        "backend-contract-drift must run `make sync-contracts CHECK=1` as the "
+                        "authoritative contract sync check."
+                    ),
+                ),
+            ),
+        )
 
-    frontend_typecheck = jobs.get("frontend-typecheck")
-    if isinstance(frontend_typecheck, Mapping):
-        steps = frontend_typecheck.get("steps")
-        if isinstance(steps, list):
-            if any(
-                isinstance(step, Mapping)
-                and step.get("run") == "npm run check:contracts"
-                for step in steps
-            ):
-                errors.append(
-                    "frontend-typecheck must not run npm run check:contracts; the authoritative contract sync check belongs in backend-contract-drift."
-                )
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("working-directory") == "apps/ui"
-                and step.get("run") == "npm run sync:generated-contracts"
-                for step in steps
-            ):
-                errors.append(
-                    "frontend-typecheck must explicitly sync generated UI contract derivatives before running npm run typecheck."
-                )
+    frontend_typecheck_steps = _workflow_job_steps(jobs, "frontend-typecheck")
+    if frontend_typecheck_steps is not None:
+        _extend_step_requirement_errors(
+            errors,
+            frontend_typecheck_steps,
+            (
+                WorkflowStepRequirement(
+                    run="npm run check:contracts",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-typecheck must not run npm run check:contracts; the authoritative "
+                        "contract sync check belongs in backend-contract-drift."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run="npm run sync:generated-contracts",
+                    error_message=(
+                        "frontend-typecheck must explicitly sync generated UI contract derivatives before "
+                        "running npm run typecheck."
+                    ),
+                ),
+            ),
+        )
 
-    ui_build_artifact = jobs.get(_UI_BUILD_ARTIFACT_JOB)
-    if isinstance(ui_build_artifact, Mapping):
-        steps = ui_build_artifact.get("steps")
-        if isinstance(steps, list) and not any(
-            isinstance(step, Mapping)
-            and step.get("run")
-            == '"${{ steps.setup-python.outputs.python-path }}" tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts'
-            for step in steps
-        ):
-            errors.append(
-                "ui-build-artifact must build static assets with tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts."
-            )
+    ui_build_artifact_steps = _workflow_job_steps(jobs, _UI_BUILD_ARTIFACT_JOB)
+    if ui_build_artifact_steps is not None:
+        _extend_step_requirement_errors(
+            errors,
+            ui_build_artifact_steps,
+            (
+                WorkflowStepRequirement(
+                    run='"${{ steps.setup-python.outputs.python-path }}" tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts',
+                    error_message=(
+                        "ui-build-artifact must build static assets with tools/build_ui_static.py "
+                        "--skip-typecheck --assume-prevalidated-contracts."
+                    ),
+                ),
+            ),
+        )
 
-    docs_lint = jobs.get("docs-lint")
-    if isinstance(docs_lint, Mapping):
-        steps = docs_lint.get("steps")
-        if isinstance(steps, list):
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("id") == "setup-python"
-                and step.get("uses") == _LOCAL_PYTHON_SETUP_ACTION
-                for step in steps
-            ):
-                errors.append("docs-lint must use ./.github/actions/setup-python.")
-            if any(
-                isinstance(step, Mapping)
-                and step.get("uses") == _LOCAL_BACKEND_SETUP_ACTION
-                for step in steps
-            ):
-                errors.append("docs-lint must not use ./.github/actions/setup-backend.")
-            if not any(
-                isinstance(step, Mapping)
-                and step.get("run")
-                == '"${{ steps.setup-python.outputs.python-path }}" tools/dev/docs_lint.py'
-                for step in steps
-            ):
-                errors.append(
-                    "docs-lint must invoke tools/dev/docs_lint.py with the configured setup-python interpreter path."
-                )
+    docs_lint_steps = _workflow_job_steps(jobs, "docs-lint")
+    if docs_lint_steps is not None:
+        _extend_step_requirement_errors(
+            errors,
+            docs_lint_steps,
+            (
+                WorkflowStepRequirement(
+                    step_id="setup-python",
+                    uses=_LOCAL_PYTHON_SETUP_ACTION,
+                    error_message="docs-lint must use ./.github/actions/setup-python.",
+                ),
+                WorkflowStepRequirement(
+                    uses=_LOCAL_BACKEND_SETUP_ACTION,
+                    forbidden=True,
+                    error_message="docs-lint must not use ./.github/actions/setup-backend.",
+                ),
+                WorkflowStepRequirement(
+                    run='"${{ steps.setup-python.outputs.python-path }}" tools/dev/docs_lint.py',
+                    error_message=(
+                        "docs-lint must invoke tools/dev/docs_lint.py with the configured setup-python "
+                        "interpreter path."
+                    ),
+                ),
+            ),
+        )
 
     for path in (_UI_README_PATH, _SERVER_README_PATH, _CONTRIBUTING_PATH):
-        if "make sync-contracts" not in path.read_text(encoding="utf-8"):
-            errors.append(
-                f"{path.relative_to(ROOT)} must point readers at `make sync-contracts`."
-            )
+        _extend_missing_text_requirements(
+            errors,
+            path.read_text(encoding="utf-8"),
+            (
+                TextRequirement(
+                    needle="make sync-contracts",
+                    error_message=(
+                        f"{path.relative_to(ROOT)} must point readers at `make sync-contracts`."
+                    ),
+                ),
+            ),
+        )
 
     return errors
 
@@ -1262,9 +1365,13 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             (
                 step
                 for step in python_action_steps
-                if isinstance(step, Mapping)
-                and isinstance(step.get("uses"), str)
-                and step["uses"].startswith("actions/setup-python@")
+                if _workflow_step_matches(
+                    step,
+                    WorkflowStepRequirement(
+                        uses_prefix="actions/setup-python@",
+                        error_message="",
+                    ),
+                )
             ),
             None,
         )
@@ -1307,23 +1414,26 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         )
     else:
         backend_action_steps = _load_action_steps(action_file)
-        if not any(
-            isinstance(step, Mapping) and step.get("uses") == _LOCAL_PYTHON_SETUP_ACTION
-            for step in backend_action_steps
-        ):
-            errors.append(
-                ".github/actions/setup-backend/action.yml must delegate Python setup to "
-                f"{_LOCAL_PYTHON_SETUP_ACTION}."
-            )
-        if any(
-            isinstance(step, Mapping)
-            and isinstance(step.get("uses"), str)
-            and step["uses"].startswith("actions/setup-python@")
-            for step in backend_action_steps
-        ):
-            errors.append(
-                ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
-            )
+        _extend_step_requirement_errors(
+            errors,
+            backend_action_steps,
+            (
+                WorkflowStepRequirement(
+                    uses=_LOCAL_PYTHON_SETUP_ACTION,
+                    error_message=(
+                        ".github/actions/setup-backend/action.yml must delegate Python setup to "
+                        f"{_LOCAL_PYTHON_SETUP_ACTION}."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    uses_prefix="actions/setup-python@",
+                    forbidden=True,
+                    error_message=(
+                        ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
+                    ),
+                ),
+            ),
+        )
 
     if "backend-quality" in jobs:
         errors.append(
@@ -1438,24 +1548,53 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     runtime_support_matrix = (ROOT / "docs" / "runtime_support_matrix.md").read_text(
         encoding="utf-8"
     )
-    if ".github/actions/setup-python/action.yml" not in runtime_support_matrix:
-        errors.append(
-            "docs/runtime_support_matrix.md must point GitHub Actions maintainers to .github/actions/setup-python/action.yml."
-        )
-    if ".github/actions/setup-backend/action.yml" not in runtime_support_matrix:
-        errors.append(
-            "docs/runtime_support_matrix.md must point GitHub Actions maintainers to .github/actions/setup-backend/action.yml."
-        )
-    if "docker-compose.dev.yml" not in runtime_support_matrix:
-        errors.append(
-            "docs/runtime_support_matrix.md must mention docker-compose.dev.yml as a Node policy surface."
-        )
+    _extend_missing_text_requirements(
+        errors,
+        runtime_support_matrix,
+        (
+            TextRequirement(
+                needle=".github/actions/setup-python/action.yml",
+                error_message=(
+                    "docs/runtime_support_matrix.md must point GitHub Actions maintainers to "
+                    ".github/actions/setup-python/action.yml."
+                ),
+            ),
+            TextRequirement(
+                needle=".github/actions/setup-backend/action.yml",
+                error_message=(
+                    "docs/runtime_support_matrix.md must point GitHub Actions maintainers to "
+                    ".github/actions/setup-backend/action.yml."
+                ),
+            ),
+            TextRequirement(
+                needle="docker-compose.dev.yml",
+                error_message=(
+                    "docs/runtime_support_matrix.md must mention docker-compose.dev.yml as a "
+                    "Node policy surface."
+                ),
+            ),
+        ),
+    )
 
     ui_readme = (ROOT / "apps" / "ui" / "README.md").read_text(encoding="utf-8")
-    if "docs/runtime_support_matrix.md" not in ui_readme or ".nvmrc" not in ui_readme:
-        errors.append(
-            "apps/ui/README.md must point UI setup readers to docs/runtime_support_matrix.md and .nvmrc."
-        )
+    _extend_missing_text_requirements(
+        errors,
+        ui_readme,
+        (
+            TextRequirement(
+                needle="docs/runtime_support_matrix.md",
+                error_message=(
+                    "apps/ui/README.md must point UI setup readers to docs/runtime_support_matrix.md and .nvmrc."
+                ),
+            ),
+            TextRequirement(
+                needle=".nvmrc",
+                error_message=(
+                    "apps/ui/README.md must point UI setup readers to docs/runtime_support_matrix.md and .nvmrc."
+                ),
+            ),
+        ),
+    )
 
     ui_smoke = jobs.get("ui-smoke") if isinstance(jobs, Mapping) else None
     steps = ui_smoke.get("steps") if isinstance(ui_smoke, Mapping) else None
@@ -1913,50 +2052,140 @@ def check_runtime_policy_drift() -> list[str]:
         )
 
     contributing_text = _read_required_text(_CONTRIBUTING_PATH)
-    for required, description in (
-        ("make lint", "make lint as the fixing path"),
-        ("runtime policy drift", "runtime policy drift wording"),
-        ("docs/runtime_support_matrix.md", "docs/runtime_support_matrix.md"),
-        (".python-version", ".python-version"),
-        (".nvmrc", ".nvmrc"),
-        ("apps/server/pyproject.toml", "apps/server/pyproject.toml"),
-    ):
-        if required not in contributing_text:
-            errors.append(
-                "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and must mention "
-                f"{description}."
-            )
+    _extend_missing_text_requirements(
+        errors,
+        contributing_text,
+        (
+            TextRequirement(
+                needle="make lint",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention make lint as the fixing path."
+                ),
+            ),
+            TextRequirement(
+                needle="runtime policy drift",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention runtime policy drift wording."
+                ),
+            ),
+            TextRequirement(
+                needle="docs/runtime_support_matrix.md",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention docs/runtime_support_matrix.md."
+                ),
+            ),
+            TextRequirement(
+                needle=".python-version",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention .python-version."
+                ),
+            ),
+            TextRequirement(
+                needle=".nvmrc",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention .nvmrc."
+                ),
+            ),
+            TextRequirement(
+                needle="apps/server/pyproject.toml",
+                error_message=(
+                    "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and "
+                    "must mention apps/server/pyproject.toml."
+                ),
+            ),
+        ),
+    )
 
     install_pi_text = _read_required_text(_INSTALL_PI_PATH)
-    for required, description in (
+    _extend_missing_text_requirements(
+        errors,
+        install_pi_text,
         (
-            'RUNTIME_POLICY_DOC="docs/runtime_support_matrix.md"',
-            "the runtime policy doc path",
+            TextRequirement(
+                needle='RUNTIME_POLICY_DOC="docs/runtime_support_matrix.md"',
+                error_message=(
+                    "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must "
+                    "mention the runtime policy doc path."
+                ),
+            ),
+            TextRequirement(
+                needle='SERVER_PYPROJECT="${PI_DIR}/pyproject.toml"',
+                error_message=(
+                    "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must "
+                    "mention the server pyproject anchor."
+                ),
+            ),
+            TextRequirement(
+                needle="read_supported_python_floor()",
+                error_message=(
+                    "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must "
+                    "mention read_supported_python_floor()."
+                ),
+            ),
+            TextRequirement(
+                needle="validate_supported_python()",
+                error_message=(
+                    "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must "
+                    "mention validate_supported_python()."
+                ),
+            ),
+            TextRequirement(
+                needle="requires python3 >=",
+                error_message=(
+                    "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must "
+                    "mention the supported-floor failure message."
+                ),
+            ),
         ),
-        ('SERVER_PYPROJECT="${PI_DIR}/pyproject.toml"', "the server pyproject anchor"),
-        ("read_supported_python_floor()", "read_supported_python_floor()"),
-        ("validate_supported_python()", "validate_supported_python()"),
-        ("requires python3 >=", "the supported-floor failure message"),
-    ):
-        if required not in install_pi_text:
-            errors.append(
-                "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must mention "
-                f"{description}."
-            )
+    )
 
     image_validation_text = _read_required_text(_IMAGE_VALIDATION_PATH)
-    for required, description in (
-        ("read_supported_python_floor_from_pyproject()", "pyproject floor parsing"),
-        (".vibesensor-python-runtime.env", "the recorded runtime metadata file"),
-        ("VALIDATED_IMAGE_PYTHON_VERSION", "validated image Python version output"),
-        ("VALIDATED_IMAGE_PYTHON_FLOOR", "validated image Python floor output"),
-        ("Validation failed: image runtime Python ", "the runtime mismatch failure"),
-    ):
-        if required not in image_validation_text:
-            errors.append(
-                "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy validation path and must mention "
-                f"{description}."
-            )
+    _extend_missing_text_requirements(
+        errors,
+        image_validation_text,
+        (
+            TextRequirement(
+                needle="read_supported_python_floor_from_pyproject()",
+                error_message=(
+                    "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy "
+                    "validation path and must mention pyproject floor parsing."
+                ),
+            ),
+            TextRequirement(
+                needle=".vibesensor-python-runtime.env",
+                error_message=(
+                    "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy "
+                    "validation path and must mention the recorded runtime metadata file."
+                ),
+            ),
+            TextRequirement(
+                needle="VALIDATED_IMAGE_PYTHON_VERSION",
+                error_message=(
+                    "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy "
+                    "validation path and must mention the validated image Python version output."
+                ),
+            ),
+            TextRequirement(
+                needle="VALIDATED_IMAGE_PYTHON_FLOOR",
+                error_message=(
+                    "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy "
+                    "validation path and must mention the validated image Python floor output."
+                ),
+            ),
+            TextRequirement(
+                needle="Validation failed: image runtime Python ",
+                error_message=(
+                    "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy "
+                    "validation path and must mention the runtime mismatch failure."
+                ),
+            ),
+        ),
+    )
 
     return errors
 
@@ -2072,6 +2301,86 @@ def check_dependency_reproducibility_hygiene() -> list[str]:
     return errors
 
 
+_LIST_CHECK_SPECS = (
+    ListCheckSpec(
+        runner=check_ci_job_sync,
+        failure_heading="CI job sync drift detected:",
+        success_message="CI job names in sync between the workflow manifest and run_ci_parallel.py.",
+    ),
+    ListCheckSpec(
+        runner=check_ci_command_sync,
+        failure_heading="CI command sync drift detected:",
+        success_message="CI commands in sync between the workflow manifest and run_ci_parallel.py.",
+    ),
+    ListCheckSpec(
+        runner=check_ci_lite_job_sync,
+        failure_heading="CI lite job drift detected:",
+        success_message="CI-lite entrypoints match the workflow-backed non-Docker subset.",
+    ),
+    ListCheckSpec(
+        runner=check_contract_sync_entrypoint,
+        failure_heading="Contract sync entrypoint drift detected:",
+        success_message="Contract sync entrypoint checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_docker_ci_dependency_hygiene,
+        failure_heading="Docker/CI dependency hygiene drift detected:",
+        success_message="Docker/CI dependency hygiene checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_python_policy_alignment,
+        failure_heading="Python policy alignment drift detected:",
+        success_message="Python policy alignment checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_runtime_policy_drift,
+        failure_heading="Runtime policy drift detected:",
+        success_message="Runtime policy drift checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_dependency_reproducibility_hygiene,
+        failure_heading="Dependency reproducibility hygiene drift detected:",
+        success_message="Dependency reproducibility hygiene checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_generated_contract_boundaries,
+        failure_heading="Frontend generated-contract boundary drift detected:",
+        success_message="Frontend generated-contract boundaries passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_raw_html_boundaries,
+        failure_heading="Frontend raw HTML boundary drift detected:",
+        success_message="Frontend raw HTML boundaries passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_dom_registry_guardrails,
+        failure_heading="Frontend DOM registry guardrail drift detected:",
+        success_message="Frontend DOM registry guardrails passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_legacy_test_dom_bridge_guardrails,
+        failure_heading="Frontend legacy test-DOM guardrail drift detected:",
+        success_message="Frontend legacy test-DOM guardrails passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_component_use_computed_guardrails,
+        failure_heading="Frontend component useComputed guardrail drift detected:",
+        success_message="Frontend component useComputed guardrails passed.",
+    ),
+)
+
+
+def _run_list_check(spec: ListCheckSpec) -> int:
+    errors = spec.runner()
+    if errors:
+        print(spec.failure_heading)
+        for item in errors:
+            print(f"  - {item}")
+        return 1
+    print(spec.success_message)
+    return 0
+
+
 def main() -> int:
     failures = 0
 
@@ -2098,128 +2407,8 @@ def main() -> int:
     else:
         print("No path-indirection files or sys.path/PYTHONPATH hacks found.")
 
-    ci_sync_errors = check_ci_job_sync()
-    if ci_sync_errors:
-        print("CI job sync drift detected:")
-        for item in ci_sync_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print(
-            "CI job names in sync between the workflow manifest and run_ci_parallel.py."
-        )
-
-    ci_command_sync_errors = check_ci_command_sync()
-    if ci_command_sync_errors:
-        print("CI command sync drift detected:")
-        for item in ci_command_sync_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print(
-            "CI commands in sync between the workflow manifest and run_ci_parallel.py."
-        )
-
-    ci_lite_sync_errors = check_ci_lite_job_sync()
-    if ci_lite_sync_errors:
-        print("CI lite job drift detected:")
-        for item in ci_lite_sync_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("CI-lite entrypoints match the workflow-backed non-Docker subset.")
-
-    contract_sync_errors = check_contract_sync_entrypoint()
-    if contract_sync_errors:
-        print("Contract sync entrypoint drift detected:")
-        for item in contract_sync_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Contract sync entrypoint checks passed.")
-
-    docker_ci_hygiene_errors = check_docker_ci_dependency_hygiene()
-    if docker_ci_hygiene_errors:
-        print("Docker/CI dependency hygiene drift detected:")
-        for item in docker_ci_hygiene_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Docker/CI dependency hygiene checks passed.")
-
-    python_policy_errors = check_python_policy_alignment()
-    if python_policy_errors:
-        print("Python policy alignment drift detected:")
-        for item in python_policy_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Python policy alignment checks passed.")
-
-    runtime_policy_errors = check_runtime_policy_drift()
-    if runtime_policy_errors:
-        print("Runtime policy drift detected:")
-        for item in runtime_policy_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Runtime policy drift checks passed.")
-
-    dependency_repro_errors = check_dependency_reproducibility_hygiene()
-    if dependency_repro_errors:
-        print("Dependency reproducibility hygiene drift detected:")
-        for item in dependency_repro_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Dependency reproducibility hygiene checks passed.")
-
-    frontend_contract_errors = check_frontend_generated_contract_boundaries()
-    if frontend_contract_errors:
-        print("Frontend generated-contract boundary drift detected:")
-        for item in frontend_contract_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Frontend generated-contract boundaries passed.")
-
-    frontend_html_errors = check_frontend_raw_html_boundaries()
-    if frontend_html_errors:
-        print("Frontend raw HTML boundary drift detected:")
-        for item in frontend_html_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Frontend raw HTML boundaries passed.")
-
-    frontend_dom_registry_errors = check_frontend_dom_registry_guardrails()
-    if frontend_dom_registry_errors:
-        print("Frontend DOM registry guardrail drift detected:")
-        for item in frontend_dom_registry_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Frontend DOM registry guardrails passed.")
-
-    frontend_legacy_test_dom_errors = check_frontend_legacy_test_dom_bridge_guardrails()
-    if frontend_legacy_test_dom_errors:
-        print("Frontend legacy test-DOM guardrail drift detected:")
-        for item in frontend_legacy_test_dom_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Frontend legacy test-DOM guardrails passed.")
-
-    frontend_component_use_computed_errors = (
-        check_frontend_component_use_computed_guardrails()
-    )
-    if frontend_component_use_computed_errors:
-        print("Frontend component useComputed guardrail drift detected:")
-        for item in frontend_component_use_computed_errors:
-            print(f"  - {item}")
-        failures += 1
-    else:
-        print("Frontend component useComputed guardrails passed.")
+    for spec in _LIST_CHECK_SPECS:
+        failures += _run_list_check(spec)
 
     oversized_test_errors, oversized_test_report = check_oversized_test_files()
     if oversized_test_errors:
