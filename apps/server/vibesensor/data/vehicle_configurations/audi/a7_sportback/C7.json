@@ -1,21 +1,31 @@
-[
-  {
-    "id": "audi-c7-a7-3-0-tdi-quattro-eu-2011-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "C7",
-    "body_code": "C7",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A7 Sportback (C7, 2011-2018)",
-    "variant_name": "3.0 TDI quattro",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L V6 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Wave 17 adds exact launch-era official evidence for the diesel A7 Sportback 3.0 TDI quattro: Audi SSP 478 confirms the 180 kW / 245 PS launch car used S tronic quattro and that the A7 Sportback launched with 17-inch wheels standard and 18- to 20-inch wheels optional, but this still does not close exact EU-DE final-drive, top-gear, full-ratio, reverse-ratio, or year-split tire mapping for the diesel row. Production JSON remains unchanged because the checked evidence is still market- or year-mixed and does not prove one exact EU-DE ratio package for either the TFSI or TDI target.",
+      "n3": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:3aa04686acb7",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:56f41caeb63b",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:74a18a558949",
+        "legacy_research_sources:7e39fc533470",
+        "legacy_research_sources:824f56c4f3a7",
+        "legacy_research_sources:a1d14382bcee",
+        "legacy_research_sources:bbc34df1e9f3",
+        "legacy_research_sources:bdbd52866d52",
+        "legacy_research_sources:c00f0527a92d",
+        "legacy_research_sources:c143819cabc5",
+        "legacy_research_sources:ccacc2c59e31",
+        "legacy_research_sources:d0ef656899fb",
+        "legacy_research_sources:df617cc28562",
+        "legacy_research_sources:eac349833cc2"
+      ],
+      "e2": [
         "legacy_research_sources:3aa04686acb7",
         "legacy_research_sources:56f41caeb63b",
         "legacy_research_sources:824f56c4f3a7",
@@ -25,634 +35,285 @@
         "legacy_research_sources:ccacc2c59e31",
         "legacy_research_sources:d0ef656899fb",
         "legacy_research_sources:eac349833cc2"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL501)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.68
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.444
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.444
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 22\""
-        }
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Wave 17 adds exact launch-era official evidence for the diesel A7 Sportback 3.0 TDI quattro: Audi SSP 478 confirms the 180 kW / 245 PS launch car used S tronic quattro and that the A7 Sportback launched with 17-inch wheels standard and 18- to 20-inch wheels optional, but this still does not close exact EU-DE final-drive, top-gear, full-ratio, reverse-ratio, or year-split tire mapping for the diesel row. Production JSON remains unchanged because the checked evidence is still market- or year-mixed and does not prove one exact EU-DE ratio package for either the TFSI or TDI target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-DE official transmission mapping for Audi A7 Sportback C7 3.0 TFSI quattro",
-        "reason": "Official Audi OEM service books published via NHTSA show a MY2011 3.0 TFSI 0BK AWD automatic mapping, while reputable secondary EU-style pages describe 7-speed S tronic states, and this pass did not recover an exact Audi Germany-market technical-data or price-list document that resolves the market-specific transmission shape.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Exact EU-DE final drive, top gear, and full ratio confirmation for Audi A7 Sportback C7 3.0 TFSI quattro",
-        "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 3.0 TFSI quattro target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Audi A7 Sportback C7 3.0 TFSI quattro exact tire-baseline and year-split continuity",
-        "reason": "Reputable secondary exact pages point to 255/45 R18 and 235/55 R17 or 255/45 R18 baseline tires for pre-facelift and facelift states, which contradicts the current 255/35 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Exact EU-DE official transmission and ratio mapping for Audi A7 Sportback C7 3.0 TDI quattro",
-        "reason": "Official Audi launch material proves only that the 180 kW / 245 PS diesel launch state used S tronic quattro and 17-inch standard wheels with 18- to 20-inch options, while this pass did not recover an exact Germany-market technical-data or workshop table publishing final drive, top gear, full ratios, or reverse for the diesel target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
-        "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-c7-a7-3-0-tfsi-quattro-eu-2011-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "C7",
-    "body_code": "C7",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A7 Sportback (C7, 2011-2018)",
-    "variant_name": "3.0 TFSI quattro",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L V6 Supercharged",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:3aa04686acb7",
-        "legacy_research_sources:56f41caeb63b",
-        "legacy_research_sources:824f56c4f3a7",
-        "legacy_research_sources:a1d14382bcee",
-        "legacy_research_sources:bbc34df1e9f3",
-        "legacy_research_sources:bdbd52866d52",
-        "legacy_research_sources:ccacc2c59e31",
-        "legacy_research_sources:d0ef656899fb",
-        "legacy_research_sources:eac349833cc2"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL501)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.68
+  "configurations": [
+    {
+      "id": "audi-c7-a7-3-0-tdi-quattro-eu-2011-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "C7",
+      "body_code": "C7",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A7 Sportback (C7, 2011-2018)",
+      "variant_name": "3.0 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.444
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL501)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.444
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.68
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.444
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.444
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 21\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3aa04686acb7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:56f41caeb63b",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:74a18a558949",
-            "legacy_research_sources:7e39fc533470",
-            "legacy_research_sources:824f56c4f3a7",
-            "legacy_research_sources:a1d14382bcee",
-            "legacy_research_sources:bbc34df1e9f3",
-            "legacy_research_sources:bdbd52866d52",
-            "legacy_research_sources:c00f0527a92d",
-            "legacy_research_sources:c143819cabc5",
-            "legacy_research_sources:ccacc2c59e31",
-            "legacy_research_sources:d0ef656899fb",
-            "legacy_research_sources:df617cc28562",
-            "legacy_research_sources:eac349833cc2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 22\""
+          "note_ref": "n3"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-DE official transmission mapping for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "Official Audi OEM service books published via NHTSA show a MY2011 3.0 TFSI 0BK AWD automatic mapping, while reputable secondary EU-style pages describe 7-speed S tronic states, and this pass did not recover an exact Audi Germany-market technical-data or price-list document that resolves the market-specific transmission shape.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact EU-DE final drive, top gear, and full ratio confirmation for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 3.0 TFSI quattro target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A7 Sportback C7 3.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages point to 255/45 R18 and 235/55 R17 or 255/45 R18 baseline tires for pre-facelift and facelift states, which contradicts the current 255/35 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact EU-DE official transmission and ratio mapping for Audi A7 Sportback C7 3.0 TDI quattro",
+          "reason": "Official Audi launch material proves only that the 180 kW / 245 PS diesel launch state used S tronic quattro and 17-inch standard wheels with 18- to 20-inch options, while this pass did not recover an exact Germany-market technical-data or workshop table publishing final drive, top gear, full ratios, or reverse for the diesel target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
+          "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Wave 17 adds exact launch-era official evidence for the diesel A7 Sportback 3.0 TDI quattro: Audi SSP 478 confirms the 180 kW / 245 PS launch car used S tronic quattro and that the A7 Sportback launched with 17-inch wheels standard and 18- to 20-inch wheels optional, but this still does not close exact EU-DE final-drive, top-gear, full-ratio, reverse-ratio, or year-split tire mapping for the diesel row. Production JSON remains unchanged because the checked evidence is still market- or year-mixed and does not prove one exact EU-DE ratio package for either the TFSI or TDI target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
+    {
+      "id": "audi-c7-a7-3-0-tfsi-quattro-eu-2011-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "C7",
+      "body_code": "C7",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A7 Sportback (C7, 2011-2018)",
+      "variant_name": "3.0 TFSI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 Supercharged",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL501)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.68
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.444
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.444
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 21\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 22\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n2",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact EU-DE official transmission mapping for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "Official Audi OEM service books published via NHTSA show a MY2011 3.0 TFSI 0BK AWD automatic mapping, while reputable secondary EU-style pages describe 7-speed S tronic states, and this pass did not recover an exact Audi Germany-market technical-data or price-list document that resolves the market-specific transmission shape.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact EU-DE final drive, top gear, and full ratio confirmation for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 3.0 TFSI quattro target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A7 Sportback C7 3.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages point to 255/45 R18 and 235/55 R17 or 255/45 R18 baseline tires for pre-facelift and facelift states, which contradicts the current 255/35 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Exact EU-DE official transmission and ratio mapping for Audi A7 Sportback C7 3.0 TDI quattro",
+          "reason": "Official Audi launch material proves only that the 180 kW / 245 PS diesel launch state used S tronic quattro and 17-inch standard wheels with 18- to 20-inch options, while this pass did not recover an exact Germany-market technical-data or workshop table publishing final drive, top gear, full ratios, or reverse for the diesel target.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
+          "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact EU-DE official transmission mapping for Audi A7 Sportback C7 3.0 TFSI quattro",
-        "reason": "Official Audi OEM service books published via NHTSA show a MY2011 3.0 TFSI 0BK AWD automatic mapping, while reputable secondary EU-style pages describe 7-speed S tronic states, and this pass did not recover an exact Audi Germany-market technical-data or price-list document that resolves the market-specific transmission shape.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Exact EU-DE final drive, top gear, and full ratio confirmation for Audi A7 Sportback C7 3.0 TFSI quattro",
-        "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 3.0 TFSI quattro target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Audi A7 Sportback C7 3.0 TFSI quattro exact tire-baseline and year-split continuity",
-        "reason": "Reputable secondary exact pages point to 255/45 R18 and 235/55 R17 or 255/45 R18 baseline tires for pre-facelift and facelift states, which contradicts the current 255/35 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Exact EU-DE official transmission and ratio mapping for Audi A7 Sportback C7 3.0 TDI quattro",
-        "reason": "Official Audi launch material proves only that the 180 kW / 245 PS diesel launch state used S tronic quattro and 17-inch standard wheels with 18- to 20-inch options, while this pass did not recover an exact Germany-market technical-data or workshop table publishing final drive, top gear, full ratios, or reverse for the diesel target.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      },
-      {
-        "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
-        "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
-        "evidence_refs": [
-          "legacy_research_sources:3aa04686acb7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:56f41caeb63b",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:74a18a558949",
-          "legacy_research_sources:7e39fc533470",
-          "legacy_research_sources:824f56c4f3a7",
-          "legacy_research_sources:a1d14382bcee",
-          "legacy_research_sources:bbc34df1e9f3",
-          "legacy_research_sources:bdbd52866d52",
-          "legacy_research_sources:c00f0527a92d",
-          "legacy_research_sources:c143819cabc5",
-          "legacy_research_sources:ccacc2c59e31",
-          "legacy_research_sources:d0ef656899fb",
-          "legacy_research_sources:df617cc28562",
-          "legacy_research_sources:eac349833cc2"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

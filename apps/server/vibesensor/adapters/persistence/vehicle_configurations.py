@@ -38,6 +38,14 @@ __all__ = [
 _VEHICLE_CONFIG_DATA_DIR = resolve_static_data_file("vehicle_configurations")
 _STRICT_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 
+_NOTES_REF_KEY = "notes_ref"
+_NOTE_REF_KEY = "note_ref"
+_EVIDENCE_REFS_REF_KEY = "evidence_refs_ref"
+_DEFINITIONS_KEY = "definitions"
+_CONFIGURATIONS_KEY = "configurations"
+_DEFINITIONS_NOTES_KEY = "notes"
+_DEFINITIONS_EVIDENCE_KEY = "evidence_ref_sets"
+
 
 class VehicleFieldMetadataRow(TypedDict):
     confidence: VehicleFieldConfidence
@@ -272,6 +280,98 @@ def _relative_shard_path(shard_path: Path) -> Path:
         return shard_path
 
 
+class _ShardRefError(ValueError):
+    """Raised when a shard contains an unknown or malformed provenance ref."""
+
+
+def _resolve_shard_refs(
+    payload: Any,
+    notes_defs: dict[str, str],
+    evidence_defs: dict[str, list[str]],
+) -> Any:
+    if isinstance(payload, dict):
+        resolved: dict[str, Any] = {}
+        for key, value in payload.items():
+            if key == _NOTES_REF_KEY:
+                if not isinstance(value, str) or value not in notes_defs:
+                    raise _ShardRefError(f"unknown notes_ref {value!r}")
+                if "notes" in payload or "notes" in resolved:
+                    raise _ShardRefError("notes_ref conflicts with inline notes")
+                resolved["notes"] = notes_defs[value]
+            elif key == _NOTE_REF_KEY:
+                if not isinstance(value, str) or value not in notes_defs:
+                    raise _ShardRefError(f"unknown note_ref {value!r}")
+                if "note" in payload or "note" in resolved:
+                    raise _ShardRefError("note_ref conflicts with inline note")
+                resolved["note"] = notes_defs[value]
+            elif key == _EVIDENCE_REFS_REF_KEY:
+                if not isinstance(value, str) or value not in evidence_defs:
+                    raise _ShardRefError(f"unknown evidence_refs_ref {value!r}")
+                if "evidence_refs" in payload or "evidence_refs" in resolved:
+                    raise _ShardRefError("evidence_refs_ref conflicts with inline evidence_refs")
+                resolved["evidence_refs"] = list(evidence_defs[value])
+            else:
+                resolved[key] = _resolve_shard_refs(value, notes_defs, evidence_defs)
+        return resolved
+    if isinstance(payload, list):
+        return [_resolve_shard_refs(item, notes_defs, evidence_defs) for item in payload]
+    return payload
+
+
+def _validate_definitions(raw_definitions: Any) -> tuple[dict[str, str], dict[str, list[str]]]:
+    if not isinstance(raw_definitions, dict):
+        raise _ShardRefError("definitions must be an object")
+    allowed = {_DEFINITIONS_NOTES_KEY, _DEFINITIONS_EVIDENCE_KEY}
+    extra_keys = set(raw_definitions.keys()) - allowed
+    if extra_keys:
+        raise _ShardRefError(f"unsupported definitions keys: {sorted(extra_keys)}")
+
+    raw_notes = raw_definitions.get(_DEFINITIONS_NOTES_KEY, {})
+    if not isinstance(raw_notes, dict):
+        raise _ShardRefError("definitions.notes must be an object")
+    notes_defs: dict[str, str] = {}
+    for key, value in raw_notes.items():
+        if not isinstance(key, str) or not key:
+            raise _ShardRefError(f"invalid notes key {key!r}")
+        if not isinstance(value, str):
+            raise _ShardRefError(f"definitions.notes[{key}] must be a string")
+        notes_defs[key] = value
+
+    raw_evidence = raw_definitions.get(_DEFINITIONS_EVIDENCE_KEY, {})
+    if not isinstance(raw_evidence, dict):
+        raise _ShardRefError("definitions.evidence_ref_sets must be an object")
+    evidence_defs: dict[str, list[str]] = {}
+    for key, value in raw_evidence.items():
+        if not isinstance(key, str) or not key:
+            raise _ShardRefError(f"invalid evidence_ref_sets key {key!r}")
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise _ShardRefError(f"definitions.evidence_ref_sets[{key}] must be a list of strings")
+        evidence_defs[key] = list(value)
+
+    return notes_defs, evidence_defs
+
+
+def _expand_shard_payload(data: Any) -> list[dict[str, Any]]:
+    """Expand a shard payload into a plain list of vehicle configuration row dicts."""
+
+    if not isinstance(data, dict):
+        raise _ShardRefError(
+            "shard root must be an object with 'configurations' (and optional 'definitions')"
+        )
+    extra_keys = set(data.keys()) - {_DEFINITIONS_KEY, _CONFIGURATIONS_KEY}
+    if extra_keys:
+        raise _ShardRefError(f"unsupported shard keys: {sorted(extra_keys)}")
+
+    notes_defs, evidence_defs = _validate_definitions(data.get(_DEFINITIONS_KEY, {}))
+
+    raw_configs = data.get(_CONFIGURATIONS_KEY)
+    if not isinstance(raw_configs, list):
+        raise _ShardRefError("shard 'configurations' must be a list")
+
+    expanded = _resolve_shard_refs(raw_configs, notes_defs, evidence_defs)
+    return cast(list[dict[str, Any]], expanded)
+
+
 def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
     if not _VEHICLE_CONFIG_DATA_DIR.is_dir():
         LOGGER.warning(
@@ -294,15 +394,18 @@ def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
             )
             return []
 
-        if not isinstance(data, list):
+        try:
+            expanded = _expand_shard_payload(data)
+        except _ShardRefError as exc:
             LOGGER.warning(
-                "Exact vehicle configuration shard %s must contain a JSON array",
+                "Exact vehicle configuration shard %s has invalid provenance refs: %s",
                 _relative_shard_path(shard_path),
+                exc,
             )
             return []
 
         try:
-            shard_rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(data)
+            shard_rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(expanded)
         except ValidationError as exc:
             LOGGER.warning(
                 "Exact vehicle configuration shard %s failed validation: %s",

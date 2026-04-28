@@ -1,346 +1,291 @@
-[
-  {
-    "id": "bmw-f90-m5-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F90",
-    "body_code": "F90",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "M5 (F90, 2018-2024)",
-    "variant_name": "M5",
-    "engine_code": "S63",
-    "engine_name": "S63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640.",
+      "n3": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain.",
+      "n4": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox.",
+      "n5": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
     },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640."
-      },
-      "final_drive_front": {
-        "value": 3.154,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain."
-      },
-      "final_drive_rear": {
-        "value": 3.154,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.313,
-          1.0,
-          0.823,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:2fa52b3f8806",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:e4bd02b0cc12"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 275.0,
-          "aspect_pct": 35.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2fa52b3f8806",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:e4bd02b0cc12"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2fa52b3f8806",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:e4bd02b0cc12"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 285.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 21\""
-        }
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:1a749424448c",
+        "legacy_research_sources:20f44bbf0284"
+      ],
+      "e2": [
+        "legacy_research_sources:2fa52b3f8806",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:e4bd02b0cc12"
+      ],
+      "e3": [
+        "legacy_research_sources:1a749424448c",
+        "legacy_research_sources:20f44bbf0284",
+        "legacy_research_sources:2fa52b3f8806",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:e4bd02b0cc12"
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284",
-          "legacy_research_sources:2fa52b3f8806",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:e4bd02b0cc12"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M5 (F90) non-Competition year-span ratio continuity",
-        "reason": "Wave 18 source is an official 06/2020 technical sheet; this pass did not recover a complete pre- and post-facelift matrix for every F90 model-year state.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ]
-      },
-      {
-        "item": "BMW M5 tire baseline for non-EU markets",
-        "reason": "Official checked documents include EU and Germany homologation context; this pass did not map all regional wheel and tire defaults.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "bmw-f90-m5-competition-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "F90",
-    "body_code": "F90",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "M5 (F90, 2018-2024)",
-    "variant_name": "M5 Competition",
-    "engine_code": "S63",
-    "engine_name": "S63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640."
+  "configurations": [
+    {
+      "id": "bmw-f90-m5-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F90",
+      "body_code": "F90",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "M5 (F90, 2018-2024)",
+      "variant_name": "M5",
+      "engine_code": "S63",
+      "engine_name": "S63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "final_drive_front": {
-        "value": 3.154,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain."
-      },
-      "final_drive_rear": {
-        "value": 3.154,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms final drive 3.154 for the represented M5 8-speed drivetrain."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.313,
-          1.0,
-          0.823,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ],
-        "notes": "Official BMW 06/2020 technical data confirms the M5 8-speed ratio table and top-gear value 0.640."
-      }
-    },
-    "tires": {
-      "default": {
+      "transmission": {
         "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:2fa52b3f8806",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:e4bd02b0cc12"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 275.0,
-          "aspect_pct": 35.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2fa52b3f8806",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:e4bd02b0cc12"
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        },
+        "final_drive_front": {
+          "value": 3.154,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3"
+        },
+        "final_drive_rear": {
+          "value": 3.154,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3"
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 285.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e3"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2fa52b3f8806",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:e4bd02b0cc12"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 285.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 21\""
+          "note_ref": "n5"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M5 (F90) non-Competition year-span ratio continuity",
+          "reason": "Wave 18 source is an official 06/2020 technical sheet; this pass did not recover a complete pre- and post-facelift matrix for every F90 model-year state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M5 tire baseline for non-EU markets",
+          "reason": "Official checked documents include EU and Germany homologation context; this pass did not map all regional wheel and tire defaults.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284",
-          "legacy_research_sources:2fa52b3f8806",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:e4bd02b0cc12"
+    {
+      "id": "bmw-f90-m5-competition-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "F90",
+      "body_code": "F90",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "M5 (F90, 2018-2024)",
+      "variant_name": "M5 Competition",
+      "engine_code": "S63",
+      "engine_name": "S63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        },
+        "final_drive_front": {
+          "value": 3.154,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3"
+        },
+        "final_drive_rear": {
+          "value": 3.154,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3"
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 285.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 21\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M5 (F90) non-Competition year-span ratio continuity",
+          "reason": "Wave 18 source is an official 06/2020 technical sheet; this pass did not recover a complete pre- and post-facelift matrix for every F90 model-year state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M5 tire baseline for non-EU markets",
+          "reason": "Official checked documents include EU and Germany homologation context; this pass did not map all regional wheel and tire defaults.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M5 (F90) non-Competition year-span ratio continuity",
-        "reason": "Wave 18 source is an official 06/2020 technical sheet; this pass did not recover a complete pre- and post-facelift matrix for every F90 model-year state.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ]
-      },
-      {
-        "item": "BMW M5 tire baseline for non-EU markets",
-        "reason": "Official checked documents include EU and Germany homologation context; this pass did not map all regional wheel and tire defaults.",
-        "evidence_refs": [
-          "legacy_research_sources:1a749424448c",
-          "legacy_research_sources:20f44bbf0284"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

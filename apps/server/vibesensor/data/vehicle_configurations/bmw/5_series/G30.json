@@ -1,1690 +1,61 @@
-[
-  {
-    "id": "bmw-g30-520i-eu-2017-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2017,
-    "model_name": "5 Series (G30, 2017)",
-    "variant_name": "520i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 07/2017 technical-data PDF confirms RWD for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
-      "value": "RWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
+      "n3": "The official BMW 07/2017 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
+      "n4": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
+      "n5": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
+      "n6": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row.",
+      "n7": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row.",
+      "n8": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. Wave 16 closes the stable exact fields for the rear-wheel-drive 540i in the same way and adds exact official 530i xDrive Germany-market tables proving AWD, 8-Gang Steptronic, top gear 0.640, and a 225/55 R17 baseline tire, but 530i xDrive still stays ledger-only because its final drive and full ratio set split between pre-LCI and LCI documents. Wave 17 adds exact BMW Germany 520i launch and LCI technical-data sheets showing 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but 520i also stays ledger-only because checked 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 documents split the final drive between 2.929 and 2.813 and publish different forward and reverse ratio sets. The row remains low-confidence and unresolved because 520i, 530i, 530i xDrive, and M550i xDrive still lack one safe year-spanning Germany-market mapping."
     },
-    "transmission": {
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 07/2017 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 07/2017 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.314,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 07/2017 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
-      },
-      "final_drive_rear": {
-        "value": 2.929,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 07/2017 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 07/2017 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 07/2017 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW 07/2017 technical-data PDF closes the exact 5 Series Sedan 520i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW 5 Series Sedan 520i exact optional wheel/tire matrix beyond the narrowed 2017 row",
-        "reason": "The checked official BMW 07/2017 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-530i-eu-2017-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2017,
-    "model_name": "5 Series (G30, 2017)",
-    "variant_name": "530i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms RWD for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.314,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
-      },
-      "final_drive_rear": {
-        "value": 2.929,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW 5 Series Sedan 530i exact optional wheel/tire matrix beyond the narrowed 2017 row",
-        "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-530i-xdrive-eu-2017-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2017,
-    "model_name": "5 Series (G30, 2017)",
-    "variant_name": "530i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms AWD for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.314,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row."
-      },
-      "final_drive_front": {
-        "value": 2.929,
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-      },
-      "final_drive_rear": {
-        "value": 2.929,
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW 5 Series Sedan 530i xDrive exact optional wheel/tire matrix beyond the narrowed 2017 row",
-        "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW 5 Series Sedan 530i xDrive separate front/rear final-drive publication",
-        "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-540i-eu-2017-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2017,
-    "model_name": "5 Series (G30, 2017)",
-    "variant_name": "540i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms RWD for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.314,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
-      },
-      "final_drive_rear": {
-        "value": 2.929,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW 5 Series Sedan 540i exact optional wheel/tire matrix beyond the narrowed 2017 row",
-        "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-540i-xdrive-eu-2017-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2017,
-    "model_name": "5 Series (G30, 2017)",
-    "variant_name": "540i xDrive",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms AWD for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)",
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-      ],
-      "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.64,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row."
-      },
-      "gear_ratios": {
-        "value": [
-          5.0,
-          3.2,
-          2.143,
-          1.72,
-          1.314,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row."
-      },
-      "final_drive_front": {
-        "value": 2.929,
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-      },
-      "final_drive_rear": {
-        "value": 2.929,
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2016 technical-data PDF lists 225/55 R17 baseline tires for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW 5 Series Sedan 540i xDrive exact optional wheel/tire matrix beyond the narrowed 2017 row",
-        "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW 5 Series Sedan 540i xDrive separate front/rear final-drive publication",
-        "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-518d-eu-2018-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2018,
-    "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2017-2023)",
-    "variant_name": "518d",
-    "engine_code": "B47D20",
-    "engine_name": "B47D20 2.0L I4 Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
+    "evidence_ref_sets": {
+      "e1": [
         "legacy_research_sources:063169ffdd07",
         "legacy_research_sources:1311432f8826",
         "legacy_research_sources:158e875cffde",
         "legacy_research_sources:344df30613de",
         "legacy_research_sources:4c0796b9f847",
+        "legacy_research_sources:5141df8505c7",
         "legacy_research_sources:55b25acf829a",
         "legacy_research_sources:61b9c053e1b0",
+        "legacy_research_sources:6fb4574da9d1",
         "legacy_research_sources:71623c45be65",
+        "legacy_research_sources:8af93035519b",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:96bea889fe6f",
         "legacy_research_sources:96c5b7290275",
         "legacy_research_sources:9a94972b2802",
+        "legacy_research_sources:9ac0d28dbf13",
+        "legacy_research_sources:b94833fffa01",
         "legacy_research_sources:d15bf307acbd",
         "legacy_research_sources:d2317d3698fe",
+        "legacy_research_sources:f8533e1b6b48",
+        "legacy_research_sources:f89b00916d7f",
         "legacy_research_sources:f9d6f511233d"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW Austria material proves that the exact G30 518d Sedan and Touring first appear from 07/2018 rather than 2017. Official BMW Italy price lists for production 01/2021 and 01/04/2023 both confirm the exact 518d Sedan remains an automatic 110 kW / 150 PS state with `2TE` Eight-speed Steptronic transmission. The same official Italy wheel tables show trim-dependent square and staggered packages rather than one universal wheel baseline, and the checked official technical-data PDFs still do not close the exact ratio or final-drive mapping for the 518d automatic row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
-          "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
-          "bmw_market_pages:g30-5-series-price-list-2023-it"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact G30 518d automatic ratio and final-drive mapping",
-        "reason": "Checked official BMW Austria and Italy launch/price-list material proves the 518d identity and 2018-on timing, but the recovered official technical-data PDFs still omit an exact 518d automatic ratio or final-drive table.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
-          "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
-          "bmw_market_pages:g30-5-series-price-list-2023-it"
-        ]
-      },
-      {
-        "item": "Exact G30 518d automatic family code and wheel/tire matrix",
-        "reason": "The checked official BMW sources confirm 518d launch timing and later automatic continuity, but they do not yet close the literal automatic family-code label or one trim-agnostic 518d-specific wheel/tire package safe enough to replace the inherited defaults. Official BMW Italy price lists instead show trim-dependent square and staggered packages across Business, Luxury, and M Sport states.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
-          "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
-          "bmw_market_pages:g30-5-series-price-list-2023-it"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-520e-eu-2021-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2021,
-    "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2017-2023)",
-    "variant_name": "520e",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo PHEV",
-    "fuel_type": "PHEV",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
+      "e2": [
+        "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf"
       ],
-      "notes": "The official BMW 03/2021 technical-data PDF lists the exact G30 520e Sedan as a rear-wheel-drive plug-in-hybrid state introduced for this model line from 03/2021.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
+      "e3": [
+        "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf"
       ],
-      "notes": "The official BMW 03/2021 technical-data PDF lists Eight-speed Steptronic transmission for the exact G30 520e Sedan. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 03/2021 technical-data PDF lists 0.667 as the top-gear ratio for the exact G30 520e Sedan.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 03/2021 technical-data PDF lists the full forward gear-ratio set for the exact G30 520e Sedan.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 03/2021 technical-data PDF lists 3.231 as the rear final-drive ratio for the exact G30 520e Sedan.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 03/2021 technical-data PDF lists 225/55 R17 101Y XL as the baseline tire for the exact G30 520e Sedan.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      }
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW launch and technical-data material shows the exact G30 520e Sedan first appears from 03/2021 rather than 2017. The corrected 2021-on row uses rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 101Y XL baseline tires.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-launch-article",
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact public gearbox family code for the G30 520e 8-speed Steptronic transmission",
-        "reason": "The checked official BMW launch and technical-data material proves Eight-speed Steptronic wording for the exact 520e Sedan, but it does not explicitly publish the supplier-family code ZF8HP.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-launch-article",
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "Exact optional wheel-and-tire matrix for the G30 520e Sedan",
-        "reason": "The checked official BMW 03/2021 technical-data PDF proves the standard 225/55 R17 101Y XL package for the exact 520e Sedan, but this pass did not recover a matching official option matrix for later wheel packages.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-523d-eu-2017-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2017-2023)",
-    "variant_name": "523d",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "legacy_research_sources:063169ffdd07",
-        "legacy_research_sources:1311432f8826",
-        "legacy_research_sources:158e875cffde",
-        "legacy_research_sources:344df30613de",
-        "legacy_research_sources:4c0796b9f847",
-        "legacy_research_sources:55b25acf829a",
-        "legacy_research_sources:61b9c053e1b0",
-        "legacy_research_sources:71623c45be65",
-        "legacy_research_sources:96c5b7290275",
-        "legacy_research_sources:9a94972b2802",
-        "legacy_research_sources:d15bf307acbd",
-        "legacy_research_sources:d2317d3698fe",
-        "legacy_research_sources:f9d6f511233d"
+      "e4": [
+        "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. Wave 16 closes the stable exact fields for the rear-wheel-drive 540i in the same way and adds exact official 530i xDrive Germany-market tables proving AWD, 8-Gang Steptronic, top gear 0.640, and a 225/55 R17 baseline tire, but 530i xDrive still stays ledger-only because its final drive and full ratio set split between pre-LCI and LCI documents. Wave 17 adds exact BMW Germany 520i launch and LCI technical-data sheets showing 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but 520i also stays ledger-only because checked 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 documents split the final drive between 2.929 and 2.813 and publish different forward and reverse ratio sets. The row remains low-confidence and unresolved because 520i, 530i, 530i xDrive, and M550i xDrive still lack one safe year-spanning Germany-market mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Per-variant final drive ratios for the remaining unresolved BMW 5 Series G30 EU-market variants",
-        "reason": "Wave 15 and Wave 16 close the exact 540i, 540i xDrive, and 545e xDrive targets, but this run still does not prove one safe year-spanning final-drive mapping for 520i, 530i, 530i xDrive, or M550i xDrive.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "Per-variant top gear ratios for the remaining unresolved G30 variants",
-        "reason": "Wave 15 through Wave 17 now prove exact top-gear values for 520i, 540i, 540i xDrive, 545e xDrive, and 530i xDrive, but this run still did not recover authoritative EU G30 technical tables for 530i or M550i xDrive.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 530i official tire baseline and later-year continuity",
-        "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 520i one exact final-drive and full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 technical-data sheets agree on 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but they split the final drive between 2.929 and 2.813, publish different forward and reverse ratio sets, and this pass did not recover a 2022-2023 Germany sheet to close end-of-span continuity.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 530i xDrive one exact final-drive and full-ratio set across the represented row span",
-        "reason": "Official BMW Germany technical-data sheets now prove 530i xDrive AWD, 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but the 11/2016 sheet publishes final drive 2.929 while the 05/2020, 11/2020, and 03/2021 sheets publish 2.813 and different forward-ratio sets.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 540i one exact full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 11/2016, 05/2020, and 11/2020 technical-data sheets agree on 540i RWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 11/2016 and 11/2020 technical-data sheets agree on 540i xDrive AWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 545e xDrive front-axle/transfer-case detail and full option tire matrix",
-        "reason": "Official BMW Germany 11/2020 technical data and the DE price list prove 545e xDrive AWD, 8-Gang Steptronic, the exact forward ratios, final drive 3.231, and a 225/55 R17 baseline tire, but the checked sources do not publish a separate front final drive, transfer-case ratio, or a full 545e-specific optional wheel/tire matrix.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "No official EU G30 523d evidence located in this source pass",
-        "reason": "Official BMW Italy 2023 G30/G31 price list lists 518d, 520d, 530d, 540d and excludes 523d. No saved official BMW EU PressClub or price-list source documents an EU G30 523d. The only saved 523d evidence is a secondary mirror of a BMW Japan 2023 option list documenting `523d xDrive` (AWD), which contradicts this row's RWD/EU framing. Marked no_confidence pending a real BMW Japan archive PDF or any official BMW EU 523d source."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-530e-eu-2017-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2017,
-    "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2017-2023)",
-    "variant_name": "530e",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo PHEV",
-    "fuel_type": "PHEV",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e5": [
         "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
         "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
         "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
       ],
-      "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently place the exact G30 530e Sedan/Limousine on rear-wheel drive while separately listing later 530e xDrive states as different configurations.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-        "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-        "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
+      "e6": [
+        "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
       ],
-      "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 8-Gang/8-speed Steptronic transmission for the exact G30 530e. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G30 530e.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list the full forward gear-ratio set for the exact G30 530e.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 3.231 as the rear final-drive ratio for the exact G30 530e.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 225/55 R17 as the baseline tire size for the exact G30 530e.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 03/2017 technical-data PDF lists this square 18-inch option for the exact G30 530e.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Square 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 18-inch option for the exact G30 530e.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Staggered 18\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 03/2017 technical-data PDF lists this square 19-inch option for the exact G30 530e.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Square 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 19-inch option for the exact G30 530e.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Staggered 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 20-inch option for the exact G30 530e.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Staggered 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data material consistently keeps the exact G30 530e on rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 baseline tires. The checked later documents also separate the 530e xDrive as a different configuration, confirming that the corrected 530e row should stay RWD-only. An official BMW launch article adds PHEV architecture detail for the same exact car: the electric motor is mounted upstream of the transmission so the transmission ratios remain usable in EV mode, the system dispenses with a torque converter, and the high-voltage battery sits under the rear seat.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2016-launch-article-pdf",
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact public gearbox family code for the G30 530e 8-speed Steptronic transmission",
-        "reason": "The checked official BMW 530e technical-data PDFs prove 8-Gang/8-speed Steptronic wording for the exact row, but they do not explicitly publish the supplier-family code ZF8HP.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "Exact late-cycle optional wheel-and-tire matrix for the G30 530e",
-        "reason": "The checked official BMW 03/2017 technical-data PDF proves the launch 18/19/20-inch option packages for the exact 530e, and later technical-data PDFs keep the same 225/55 R17 baseline, but this pass did not recover a fully exhaustive late-cycle option matrix for every later market state.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g30-545e-xdrive-eu-2017-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G30",
-    "body_code": "G30",
-    "production_start_year": 2020,
-    "production_end_year": 2023,
-    "model_name": "5 Series (G30, 2020-2023)",
-    "variant_name": "545e xDrive",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo PHEV",
-    "fuel_type": "PHEV",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e7": [
+        "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf"
+      ],
+      "e8": [
         "legacy_research_sources:063169ffdd07",
         "legacy_research_sources:1311432f8826",
         "legacy_research_sources:158e875cffde",
@@ -1699,387 +70,1242 @@
         "legacy_research_sources:d2317d3698fe",
         "legacy_research_sources:f9d6f511233d"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-        "value": 0.667
+      "e9": [
+        "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
+        "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
+        "bmw_market_pages:g30-5-series-price-list-2023-it"
+      ],
+      "e10": [
+        "bmw_pressclub_sources:g30-520e-2021-launch-article",
+        "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-g30-520i-eu-2017-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2017,
+      "model_name": "5 Series (G30, 2017)",
+      "variant_name": "520i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 07/2017 technical-data PDF confirms RWD for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row.",
+        "value": "RWD"
       },
-      "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
+      "transmission": {
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)",
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 07/2017 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
       },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-        "value": 3.231
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 17.0
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 07/2017 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
         },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:063169ffdd07",
-            "legacy_research_sources:1311432f8826",
-            "legacy_research_sources:158e875cffde",
-            "legacy_research_sources:344df30613de",
-            "legacy_research_sources:4c0796b9f847",
-            "legacy_research_sources:5141df8505c7",
-            "legacy_research_sources:55b25acf829a",
-            "legacy_research_sources:61b9c053e1b0",
-            "legacy_research_sources:6fb4574da9d1",
-            "legacy_research_sources:71623c45be65",
-            "legacy_research_sources:8af93035519b",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:96bea889fe6f",
-            "legacy_research_sources:96c5b7290275",
-            "legacy_research_sources:9a94972b2802",
-            "legacy_research_sources:9ac0d28dbf13",
-            "legacy_research_sources:b94833fffa01",
-            "legacy_research_sources:d15bf307acbd",
-            "legacy_research_sources:d2317d3698fe",
-            "legacy_research_sources:f8533e1b6b48",
-            "legacy_research_sources:f89b00916d7f",
-            "legacy_research_sources:f9d6f511233d"
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 07/2017 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
+        },
+        "final_drive_rear": {
+          "value": 2.929,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 07/2017 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 520i state represented by this narrowed 2017-only row."
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n3",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 55.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 07/2017 technical-data PDF closes the exact 5 Series Sedan 520i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e4"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 5 Series Sedan 520i exact optional wheel/tire matrix beyond the narrowed 2017 row",
+          "reason": "The checked official BMW 07/2017 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. Wave 16 closes the stable exact fields for the rear-wheel-drive 540i in the same way and adds exact official 530i xDrive Germany-market tables proving AWD, 8-Gang Steptronic, top gear 0.640, and a 225/55 R17 baseline tire, but 530i xDrive still stays ledger-only because its final drive and full ratio set split between pre-LCI and LCI documents. Wave 17 adds exact BMW Germany 520i launch and LCI technical-data sheets showing 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but 520i also stays ledger-only because checked 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 documents split the final drive between 2.929 and 2.813 and publish different forward and reverse ratio sets. The row remains low-confidence and unresolved because 520i, 530i, 530i xDrive, and M550i xDrive still lack one safe year-spanning Germany-market mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
+    {
+      "id": "bmw-g30-530i-eu-2017-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2017,
+      "model_name": "5 Series (G30, 2017)",
+      "variant_name": "530i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms RWD for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)",
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
+        },
+        "final_drive_rear": {
+          "value": 2.929,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 530i state represented by this narrowed 2017-only row."
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n4",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n4",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence."
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 5 Series Sedan 530i exact optional wheel/tire matrix beyond the narrowed 2017 row",
+          "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Per-variant final drive ratios for the remaining unresolved BMW 5 Series G30 EU-market variants",
-        "reason": "Wave 15 and Wave 16 close the exact 540i, 540i xDrive, and 545e xDrive targets, but this run still does not prove one safe year-spanning final-drive mapping for 520i, 530i, 530i xDrive, or M550i xDrive.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
+    },
+    {
+      "id": "bmw-g30-530i-xdrive-eu-2017-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2017,
+      "model_name": "5 Series (G30, 2017)",
+      "variant_name": "530i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms AWD for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)",
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row."
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row."
+        },
+        "final_drive_front": {
+          "value": 2.929,
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
+        },
+        "final_drive_rear": {
+          "value": 2.929,
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
         ]
       },
-      {
-        "item": "Per-variant top gear ratios for the remaining unresolved G30 variants",
-        "reason": "Wave 15 through Wave 17 now prove exact top-gear values for 520i, 540i, 540i xDrive, 545e xDrive, and 530i xDrive, but this run still did not recover authoritative EU G30 technical tables for 530i or M550i xDrive.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 530i official tire baseline and later-year continuity",
-        "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 520i one exact final-drive and full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 technical-data sheets agree on 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but they split the final drive between 2.929 and 2.813, publish different forward and reverse ratio sets, and this pass did not recover a 2022-2023 Germany sheet to close end-of-span continuity.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 530i xDrive one exact final-drive and full-ratio set across the represented row span",
-        "reason": "Official BMW Germany technical-data sheets now prove 530i xDrive AWD, 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but the 11/2016 sheet publishes final drive 2.929 while the 05/2020, 11/2020, and 03/2021 sheets publish 2.813 and different forward-ratio sets.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 540i one exact full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 11/2016, 05/2020, and 11/2020 technical-data sheets agree on 540i RWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
-        "reason": "Official BMW Germany 11/2016 and 11/2020 technical-data sheets agree on 540i xDrive AWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "BMW G30 545e xDrive front-axle/transfer-case detail and full option tire matrix",
-        "reason": "Official BMW Germany 11/2020 technical data and the DE price list prove 545e xDrive AWD, 8-Gang Steptronic, the exact forward ratios, final drive 3.231, and a 225/55 R17 baseline tire, but the checked sources do not publish a separate front final drive, transfer-case ratio, or a full 545e-specific optional wheel/tire matrix.",
-        "evidence_refs": [
-          "legacy_research_sources:063169ffdd07",
-          "legacy_research_sources:1311432f8826",
-          "legacy_research_sources:158e875cffde",
-          "legacy_research_sources:344df30613de",
-          "legacy_research_sources:4c0796b9f847",
-          "legacy_research_sources:5141df8505c7",
-          "legacy_research_sources:55b25acf829a",
-          "legacy_research_sources:61b9c053e1b0",
-          "legacy_research_sources:6fb4574da9d1",
-          "legacy_research_sources:71623c45be65",
-          "legacy_research_sources:8af93035519b",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:96bea889fe6f",
-          "legacy_research_sources:96c5b7290275",
-          "legacy_research_sources:9a94972b2802",
-          "legacy_research_sources:9ac0d28dbf13",
-          "legacy_research_sources:b94833fffa01",
-          "legacy_research_sources:d15bf307acbd",
-          "legacy_research_sources:d2317d3698fe",
-          "legacy_research_sources:f8533e1b6b48",
-          "legacy_research_sources:f89b00916d7f",
-          "legacy_research_sources:f9d6f511233d"
-        ]
-      },
-      {
-        "item": "545e xDrive original migration metadata had fuel_type=ICE and 2017-2023 span",
-        "reason": "Official BMW global launch article (T0313447EN) and Germany 11/2020 technical PDF (T0317777DE/461542) document the 545e xDrive as a late-G30 plug-in hybrid xDrive sedan introduced for the 2020/2021 model year, not a 2017 ICE configuration. Engine remains 3.0L I6 turbo paired with an electric motor; fuel_type corrected to PHEV and start year narrowed to 2020. Earlier-year continuity is impossible by definition; later-year continuity through 2023 remains within the published lifecycle of the row."
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 5 Series Sedan 530i xDrive exact optional wheel/tire matrix beyond the narrowed 2017 row",
+          "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "BMW 5 Series Sedan 530i xDrive separate front/rear final-drive publication",
+          "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "bmw-g30-540i-eu-2017-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2017,
+      "model_name": "5 Series (G30, 2017)",
+      "variant_name": "540i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms RWD for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)",
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
+        },
+        "final_drive_rear": {
+          "value": 2.929,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 2.929 as the rear final-drive ratio for the exact 5 Series Sedan 540i state represented by this narrowed 2017-only row."
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n6",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i launch-state mapping: RWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, 2.929 rear final drive, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 5 Series Sedan 540i exact optional wheel/tire matrix beyond the narrowed 2017 row",
+          "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-540i-xdrive-eu-2017-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2017,
+      "model_name": "5 Series (G30, 2017)",
+      "variant_name": "540i xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms AWD for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)",
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 11/2016 technical-data PDF confirms 8-Gang Steptronic wording for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.64,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row."
+        },
+        "gear_ratios": {
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row."
+        },
+        "final_drive_front": {
+          "value": 2.929,
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
+        },
+        "final_drive_rear": {
+          "value": 2.929,
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this narrowed 2017-only row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n7",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires. This row is narrowed to the supported 2017-only state because later exact numeric continuity was not recovered in this pass.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 5 Series Sedan 540i xDrive exact optional wheel/tire matrix beyond the narrowed 2017 row",
+          "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "BMW 5 Series Sedan 540i xDrive separate front/rear final-drive publication",
+          "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-518d-eu-2018-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "model_name": "5 Series (G30, 2017-2023)",
+      "variant_name": "518d",
+      "engine_code": "B47D20",
+      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official BMW Austria material proves that the exact G30 518d Sedan and Touring first appear from 07/2018 rather than 2017. Official BMW Italy price lists for production 01/2021 and 01/04/2023 both confirm the exact 518d Sedan remains an automatic 110 kW / 150 PS state with `2TE` Eight-speed Steptronic transmission. The same official Italy wheel tables show trim-dependent square and staggered packages rather than one universal wheel baseline, and the checked official technical-data PDFs still do not close the exact ratio or final-drive mapping for the 518d automatic row.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact G30 518d automatic ratio and final-drive mapping",
+          "reason": "Checked official BMW Austria and Italy launch/price-list material proves the 518d identity and 2018-on timing, but the recovered official technical-data PDFs still omit an exact 518d automatic ratio or final-drive table.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "Exact G30 518d automatic family code and wheel/tire matrix",
+          "reason": "The checked official BMW sources confirm 518d launch timing and later automatic continuity, but they do not yet close the literal automatic family-code label or one trim-agnostic 518d-specific wheel/tire package safe enough to replace the inherited defaults. Official BMW Italy price lists instead show trim-dependent square and staggered packages across Business, Luxury, and M Sport states.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-520e-eu-2021-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
+      "model_name": "5 Series (G30, 2017-2023)",
+      "variant_name": "520e",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 03/2021 technical-data PDF lists the exact G30 520e Sedan as a rear-wheel-drive plug-in-hybrid state introduced for this model line from 03/2021.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 03/2021 technical-data PDF lists Eight-speed Steptronic transmission for the exact G30 520e Sedan. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 technical-data PDF lists 0.667 as the top-gear ratio for the exact G30 520e Sedan.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 technical-data PDF lists the full forward gear-ratio set for the exact G30 520e Sedan.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 technical-data PDF lists 3.231 as the rear final-drive ratio for the exact G30 520e Sedan.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 technical-data PDF lists 225/55 R17 101Y XL as the baseline tire for the exact G30 520e Sedan.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        }
+      },
+      "verification_notes": [
+        {
+          "note": "Official BMW launch and technical-data material shows the exact G30 520e Sedan first appears from 03/2021 rather than 2017. The corrected 2021-on row uses rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 101Y XL baseline tires.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact public gearbox family code for the G30 520e 8-speed Steptronic transmission",
+          "reason": "The checked official BMW launch and technical-data material proves Eight-speed Steptronic wording for the exact 520e Sedan, but it does not explicitly publish the supplier-family code ZF8HP.",
+          "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "Exact optional wheel-and-tire matrix for the G30 520e Sedan",
+          "reason": "The checked official BMW 03/2021 technical-data PDF proves the standard 225/55 R17 101Y XL package for the exact 520e Sedan, but this pass did not recover a matching official option matrix for later wheel packages.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-523d-eu-2017-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2023,
+      "model_name": "5 Series (G30, 2017-2023)",
+      "variant_name": "523d",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Per-variant final drive ratios for the remaining unresolved BMW 5 Series G30 EU-market variants",
+          "reason": "Wave 15 and Wave 16 close the exact 540i, 540i xDrive, and 545e xDrive targets, but this run still does not prove one safe year-spanning final-drive mapping for 520i, 530i, 530i xDrive, or M550i xDrive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Per-variant top gear ratios for the remaining unresolved G30 variants",
+          "reason": "Wave 15 through Wave 17 now prove exact top-gear values for 520i, 540i, 540i xDrive, 545e xDrive, and 530i xDrive, but this run still did not recover authoritative EU G30 technical tables for 530i or M550i xDrive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 530i official tire baseline and later-year continuity",
+          "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 520i one exact final-drive and full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 technical-data sheets agree on 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but they split the final drive between 2.929 and 2.813, publish different forward and reverse ratio sets, and this pass did not recover a 2022-2023 Germany sheet to close end-of-span continuity.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 530i xDrive one exact final-drive and full-ratio set across the represented row span",
+          "reason": "Official BMW Germany technical-data sheets now prove 530i xDrive AWD, 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but the 11/2016 sheet publishes final drive 2.929 while the 05/2020, 11/2020, and 03/2021 sheets publish 2.813 and different forward-ratio sets.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 540i one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016, 05/2020, and 11/2020 technical-data sheets agree on 540i RWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016 and 11/2020 technical-data sheets agree on 540i xDrive AWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 545e xDrive front-axle/transfer-case detail and full option tire matrix",
+          "reason": "Official BMW Germany 11/2020 technical data and the DE price list prove 545e xDrive AWD, 8-Gang Steptronic, the exact forward ratios, final drive 3.231, and a 225/55 R17 baseline tire, but the checked sources do not publish a separate front final drive, transfer-case ratio, or a full 545e-specific optional wheel/tire matrix.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "No official EU G30 523d evidence located in this source pass",
+          "reason": "Official BMW Italy 2023 G30/G31 price list lists 518d, 520d, 530d, 540d and excludes 523d. No saved official BMW EU PressClub or price-list source documents an EU G30 523d. The only saved 523d evidence is a secondary mirror of a BMW Japan 2023 option list documenting `523d xDrive` (AWD), which contradicts this row's RWD/EU framing. Marked no_confidence pending a real BMW Japan archive PDF or any official BMW EU 523d source."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-530e-eu-2017-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2017,
+      "production_end_year": 2023,
+      "model_name": "5 Series (G30, 2017-2023)",
+      "variant_name": "530e",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently place the exact G30 530e Sedan/Limousine on rear-wheel drive while separately listing later 530e xDrive states as different configurations.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e5",
+        "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 8-Gang/8-speed Steptronic transmission for the exact G30 530e. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G30 530e.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list the full forward gear-ratio set for the exact G30 530e.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 3.231 as the rear final-drive ratio for the exact G30 530e.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data PDFs consistently list 225/55 R17 as the baseline tire size for the exact G30 530e.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official BMW 03/2017 technical-data PDF lists this square 18-inch option for the exact G30 530e.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Square 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 18-inch option for the exact G30 530e.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Staggered 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official BMW 03/2017 technical-data PDF lists this square 19-inch option for the exact G30 530e.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Square 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 19-inch option for the exact G30 530e.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Staggered 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official BMW 03/2017 technical-data PDF lists this staggered 20-inch option for the exact G30 530e.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Staggered 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data material consistently keeps the exact G30 530e on rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 baseline tires. The checked later documents also separate the 530e xDrive as a different configuration, confirming that the corrected 530e row should stay RWD-only. An official BMW launch article adds PHEV architecture detail for the same exact car: the electric motor is mounted upstream of the transmission so the transmission ratios remain usable in EV mode, the system dispenses with a torque converter, and the high-voltage battery sits under the rear seat.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g30-530e-2016-launch-article-pdf",
+            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
+            "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
+            "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact public gearbox family code for the G30 530e 8-speed Steptronic transmission",
+          "reason": "The checked official BMW 530e technical-data PDFs prove 8-Gang/8-speed Steptronic wording for the exact row, but they do not explicitly publish the supplier-family code ZF8HP.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Exact late-cycle optional wheel-and-tire matrix for the G30 530e",
+          "reason": "The checked official BMW 03/2017 technical-data PDF proves the launch 18/19/20-inch option packages for the exact 530e, and later technical-data PDFs keep the same 225/55 R17 baseline, but this pass did not recover a fully exhaustive late-cycle option matrix for every later market state.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g30-545e-xdrive-eu-2017-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G30",
+      "body_code": "G30",
+      "production_start_year": 2020,
+      "production_end_year": 2023,
+      "model_name": "5 Series (G30, 2020-2023)",
+      "variant_name": "545e xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n2",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.231
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price list with High confidence."
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Per-variant final drive ratios for the remaining unresolved BMW 5 Series G30 EU-market variants",
+          "reason": "Wave 15 and Wave 16 close the exact 540i, 540i xDrive, and 545e xDrive targets, but this run still does not prove one safe year-spanning final-drive mapping for 520i, 530i, 530i xDrive, or M550i xDrive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Per-variant top gear ratios for the remaining unresolved G30 variants",
+          "reason": "Wave 15 through Wave 17 now prove exact top-gear values for 520i, 540i, 540i xDrive, 545e xDrive, and 530i xDrive, but this run still did not recover authoritative EU G30 technical tables for 530i or M550i xDrive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 530i official tire baseline and later-year continuity",
+          "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 520i one exact final-drive and full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 07/2017, 09/2018, 05/2020, 11/2020, and 03/2021 technical-data sheets agree on 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but they split the final drive between 2.929 and 2.813, publish different forward and reverse ratio sets, and this pass did not recover a 2022-2023 Germany sheet to close end-of-span continuity.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 530i xDrive one exact final-drive and full-ratio set across the represented row span",
+          "reason": "Official BMW Germany technical-data sheets now prove 530i xDrive AWD, 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but the 11/2016 sheet publishes final drive 2.929 while the 05/2020, 11/2020, and 03/2021 sheets publish 2.813 and different forward-ratio sets.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 540i one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016, 05/2020, and 11/2020 technical-data sheets agree on 540i RWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016 and 11/2020 technical-data sheets agree on 540i xDrive AWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G30 545e xDrive front-axle/transfer-case detail and full option tire matrix",
+          "reason": "Official BMW Germany 11/2020 technical data and the DE price list prove 545e xDrive AWD, 8-Gang Steptronic, the exact forward ratios, final drive 3.231, and a 225/55 R17 baseline tire, but the checked sources do not publish a separate front final drive, transfer-case ratio, or a full 545e-specific optional wheel/tire matrix.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "545e xDrive original migration metadata had fuel_type=ICE and 2017-2023 span",
+          "reason": "Official BMW global launch article (T0313447EN) and Germany 11/2020 technical PDF (T0317777DE/461542) document the 545e xDrive as a late-G30 plug-in hybrid xDrive sedan introduced for the 2020/2021 model year, not a 2017 ICE configuration. Engine remains 3.0L I6 turbo paired with an electric motor; fuel_type corrected to PHEV and start year narrowed to 2020. Earlier-year continuity is impossible by definition; later-year continuity through 2023 remains within the published lifecycle of the row."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}

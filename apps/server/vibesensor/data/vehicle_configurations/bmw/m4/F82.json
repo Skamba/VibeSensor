@@ -1,662 +1,533 @@
-[
-  {
-    "id": "bmw-f82-m4-eu-2014-mt6-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F82",
-    "body_code": "F82",
-    "production_start_year": 2014,
-    "production_end_year": 2020,
-    "model_name": "M4 (F82, 2014-2020)",
-    "variant_name": "M4",
-    "engine_code": "S55",
-    "engine_name": "S55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set.",
+      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n4": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
     },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.846,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms 6-speed manual + 7-speed M-DCT lineup. Repo's gear ratios I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846 are already official_exact via BMW 09/2018 ACEA technical data (legacy_research_sources references). Final drive 3.462 also from BMW 09/2018 ACEA - promoted from family_default to official_exact (same source as the DCT7 row's official_exact FD). MotorTrend 2014 USA spec confirms 3.46 axle ratio (rounded). Production span 2014 - June 2020 per Wikipedia.",
-        "value": 3.462,
-        "evidence_refs": [
-          "secondary_technical_sources:f82-m4-motortrend-2014-specs",
-          "secondary_technical_sources:f82-m4-wikipedia"
-        ]
-      },
-      "gear_ratios": {
-        "value": [
-          4.11,
-          2.315,
-          1.542,
-          1.179,
-          1.0,
-          0.846
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 20\""
-        }
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:13ea013ef134",
+        "legacy_research_sources:accc520c8c58"
+      ],
+      "e2": [
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:7484e69ac570",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:eec306178221"
+      ],
+      "e3": [
+        "legacy_research_sources:13ea013ef134",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:7484e69ac570",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:accc520c8c58",
+        "legacy_research_sources:eec306178221"
+      ],
+      "e4": [
+        "bmw_pressclub_sources:f82-competition-2016-launch-article",
+        "bmw_pressclub_sources:f82-my16-pricing-guide-pdf",
+        "legacy_research_sources:13ea013ef134",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:7484e69ac570",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:accc520c8c58",
+        "legacy_research_sources:eec306178221"
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
-        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      },
-      {
-        "item": "M4 special-edition ratio variance handling",
-        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "bmw-f82-m4-eu-2014-dct7-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F82",
-    "body_code": "F82",
-    "production_start_year": 2014,
-    "production_end_year": 2020,
-    "model_name": "M4 (F82, 2014-2020)",
-    "variant_name": "M4",
-    "engine_code": "S55",
-    "engine_name": "S55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms the 7-speed M-DCT (Getrag GS7D36BG) lineup option. Repo's official_exact gear ratios I 4.806 / II 2.593 / III 1.701 / IV 1.277 / V 1.000 / VI 0.844 / VII 0.671 with final drive 3.462 (BMW 09/2018 ACEA) confirmed correct. Production span 2014 - June 2020.",
-      "code": "DCT7",
-      "name": "7-speed dual-clutch (M-DCT)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.671,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
+  "configurations": [
+    {
+      "id": "bmw-f82-m4-eu-2014-mt6-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F82",
+      "body_code": "F82",
+      "production_start_year": 2014,
+      "production_end_year": 2020,
+      "model_name": "M4 (F82, 2014-2020)",
+      "variant_name": "M4",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "final_drive_rear": {
-        "value": 3.462,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Wave 18 and the follow-up F82 packet confirm the M4 M-DCT final drive as 3.462 across the recovered official BMW MY2016, MY2017, and MY2018 material. The prior 3.154 carryover was later G82 contamination, not an F82 value."
-      },
-      "gear_ratios": {
-        "value": [
-          4.806,
-          2.593,
-          1.701,
-          1.277,
-          1.0,
-          0.844,
-          0.671
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
-      }
-    },
-    "tires": {
-      "default": {
+      "transmission": {
         "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
+        "notes_ref": "n1",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
-      "options": [
-        {
-          "confidence": "family_default",
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.846,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms 6-speed manual + 7-speed M-DCT lineup. Repo's gear ratios I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846 are already official_exact via BMW 09/2018 ACEA technical data (legacy_research_sources references). Final drive 3.462 also from BMW 09/2018 ACEA - promoted from family_default to official_exact (same source as the DCT7 row's official_exact FD). MotorTrend 2014 USA spec confirms 3.46 axle ratio (rounded). Production span 2014 - June 2020 per Wikipedia.",
+          "value": 3.462,
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
+            "secondary_technical_sources:f82-m4-motortrend-2014-specs",
+            "secondary_technical_sources:f82-m4-wikipedia"
+          ]
+        },
+        "gear_ratios": {
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. This follow-up also corrects the DCT final drive from the inherited 3.154 carryover to the recovered official F82 value 3.462, replacing the last obvious G82 contamination in the row.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
-        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      },
-      {
-        "item": "M4 special-edition ratio variance handling",
-        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f82-m4-competition-eu-2016-mt6-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F82",
-    "body_code": "F82",
-    "production_start_year": 2016,
-    "production_end_year": 2020,
-    "model_name": "M4 (F82, 2014-2020)",
-    "variant_name": "M4 Competition",
-    "engine_code": "S55",
-    "engine_name": "S55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.846,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package (2016 launch, S55 power increased to 331 kW / 444 hp) was offered with both the 6-speed manual and the 7-speed M-DCT - confirmed by Wikipedia and BMW PressClub Competition launch reference (already in repo via bmw_pressclub_sources). Manual gearbox ratios are identical to base M4: I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846, final drive 3.462 - Competition Package only changes engine tune and chassis, not gearbox internals. Final drive promoted from family_default to official_exact using the same BMW 09/2018 ACEA evidence as the DCT row.",
-        "value": 3.462,
-        "evidence_refs": [
-          "secondary_technical_sources:f82-m4-wikipedia",
-          "secondary_technical_sources:f82-m4-motortrend-2016-specs"
-        ]
-      },
-      "gear_ratios": {
-        "value": [
-          4.11,
-          2.315,
-          1.542,
-          1.179,
-          1.0,
-          0.846
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "verification_notes": [
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
+          "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+          "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "M4 special-edition ratio variance handling",
+          "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f82-m4-eu-2014-dct7-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F82",
+      "body_code": "F82",
+      "production_start_year": 2014,
+      "production_end_year": 2020,
+      "model_name": "M4 (F82, 2014-2020)",
+      "variant_name": "M4",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms the 7-speed M-DCT (Getrag GS7D36BG) lineup option. Repo's official_exact gear ratios I 4.806 / II 2.593 / III 1.701 / IV 1.277 / V 1.000 / VI 0.844 / VII 0.671 with final drive 3.462 (BMW 09/2018 ACEA) confirmed correct. Production span 2014 - June 2020.",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (M-DCT)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.671,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4"
+        },
+        "final_drive_rear": {
+          "value": 3.462,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Wave 18 and the follow-up F82 packet confirm the M4 M-DCT final drive as 3.462 across the recovered official BMW MY2016, MY2017, and MY2018 material. The prior 3.154 carryover was later G82 contamination, not an F82 value."
+        },
+        "gear_ratios": {
+          "value": [
+            4.806,
+            2.593,
+            1.701,
+            1.277,
+            1.0,
+            0.844,
+            0.671
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "This research wave narrows the F82 M4 Competition manual row to 2016-2020. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, so the prior 2014 start year was overbroad. Wave 18 official BMW technical-data evidence still confirms the manual top gear 0.846 and final drive 3.462 for the later Competition row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f82-competition-2016-launch-article",
-          "bmw_pressclub_sources:f82-my16-pricing-guide-pdf",
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
-        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      },
-      {
-        "item": "M4 special-edition ratio variance handling",
-        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f82-m4-competition-eu-2016-dct7-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F82",
-    "body_code": "F82",
-    "production_start_year": 2016,
-    "production_end_year": 2020,
-    "model_name": "M4 (F82, 2014-2020)",
-    "variant_name": "M4 Competition",
-    "engine_code": "S55",
-    "engine_name": "S55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package with 7-speed M-DCT confirmed by Wikipedia. Repo's official_exact gear ratios and final drive 3.462 (BMW 09/2018 ACEA) confirmed correct.",
-      "code": "DCT7",
-      "name": "7-speed dual-clutch (M-DCT)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "value": 0.671,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
-      },
-      "final_drive_rear": {
-        "value": 3.462,
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Wave 18 and the follow-up F82 packet confirm the Competition M-DCT final drive as 3.462 across the recovered official BMW MY2016, MY2017, and MY2018 material. The prior 3.154 carryover was later G82 contamination, not an F82 value."
-      },
-      "gear_ratios": {
-        "value": [
-          4.806,
-          2.593,
-          1.701,
-          1.277,
-          1.0,
-          0.844,
-          0.671
-        ],
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ],
-        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:eec306178221"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "verification_notes": [
         {
-          "confidence": "family_default",
+          "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. This follow-up also corrects the DCT final drive from the inherited 3.154 carryover to the recovered official F82 value 3.462, replacing the last obvious G82 contamination in the row.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+          "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "M4 special-edition ratio variance handling",
+          "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-f82-m4-competition-eu-2016-mt6-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F82",
+      "body_code": "F82",
+      "production_start_year": 2016,
+      "production_end_year": 2020,
+      "model_name": "M4 (F82, 2014-2020)",
+      "variant_name": "M4 Competition",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.846,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package (2016 launch, S55 power increased to 331 kW / 444 hp) was offered with both the 6-speed manual and the 7-speed M-DCT - confirmed by Wikipedia and BMW PressClub Competition launch reference (already in repo via bmw_pressclub_sources). Manual gearbox ratios are identical to base M4: I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846, final drive 3.462 - Competition Package only changes engine tune and chassis, not gearbox internals. Final drive promoted from family_default to official_exact using the same BMW 09/2018 ACEA evidence as the DCT row.",
+          "value": 3.462,
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
+            "secondary_technical_sources:f82-m4-wikipedia",
+            "secondary_technical_sources:f82-m4-motortrend-2016-specs"
+          ]
+        },
+        "gear_ratios": {
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "This research wave narrows the F82 M4 Competition manual row to 2016-2020. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, so the prior 2014 start year was overbroad. Wave 18 official BMW technical-data evidence still confirms the manual top gear 0.846 and final drive 3.462 for the later Competition row.",
+          "evidence_refs_ref": "e4"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7484e69ac570",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:eec306178221"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Performance 20\""
+          "note_ref": "n3"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+          "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "M4 special-edition ratio variance handling",
+          "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "This research wave narrows the F82 M4 Competition M-DCT row to 2016-2020 and corrects its final drive to 3.462. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, while the recovered official BMW MY2016, MY2017, and MY2018 technical-data material confirms the Competition M-DCT top gear 0.671 and final drive 3.462 rather than the inherited 3.154 carryover.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f82-competition-2016-launch-article",
-          "bmw_pressclub_sources:f82-my16-pricing-guide-pdf",
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7484e69ac570",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:accc520c8c58",
-          "legacy_research_sources:eec306178221"
+    {
+      "id": "bmw-f82-m4-competition-eu-2016-dct7-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "F82",
+      "body_code": "F82",
+      "production_start_year": 2016,
+      "production_end_year": 2020,
+      "model_name": "M4 (F82, 2014-2020)",
+      "variant_name": "M4 Competition",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package with 7-speed M-DCT confirmed by Wikipedia. Repo's official_exact gear ratios and final drive 3.462 (BMW 09/2018 ACEA) confirmed correct.",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (M-DCT)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "value": 0.671,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4"
+        },
+        "final_drive_rear": {
+          "value": 3.462,
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Wave 18 and the follow-up F82 packet confirm the Competition M-DCT final drive as 3.462 across the recovered official BMW MY2016, MY2017, and MY2018 material. The prior 3.154 carryover was later G82 contamination, not an F82 value."
+        },
+        "gear_ratios": {
+          "value": [
+            4.806,
+            2.593,
+            1.701,
+            1.277,
+            1.0,
+            0.844,
+            0.671
+          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n4"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Performance 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "verification_notes": [
+        {
+          "note": "This research wave narrows the F82 M4 Competition M-DCT row to 2016-2020 and corrects its final drive to 3.462. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, while the recovered official BMW MY2016, MY2017, and MY2018 technical-data material confirms the Competition M-DCT top gear 0.671 and final drive 3.462 rather than the inherited 3.154 carryover.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "note_ref": "n3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+          "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "M4 special-edition ratio variance handling",
+          "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
-        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      },
-      {
-        "item": "M4 special-edition ratio variance handling",
-        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:13ea013ef134",
-          "legacy_research_sources:accc520c8c58"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

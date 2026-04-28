@@ -1,477 +1,410 @@
-[
-  {
-    "id": "bmw-u10-ix2-xdrive30-eu-2024-ss1-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "U10",
-    "body_code": "U10",
-    "production_start_year": 2024,
-    "production_end_year": 2026,
-    "model_name": "X2 (U10, 2024-2026)",
-    "variant_name": "iX2 xDrive30",
-    "engine_code": "Electric",
-    "engine_name": "Electric Dual Motor",
-    "fuel_type": "EV",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
+      "n3": "The official BMW technical-data PDF for the exact X2 sDrive20i publishes 225/55 R18 102Y XL on 7.5J x 18 wheels as the launch-standard tire package."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:82cbe3b6f231",
+        "legacy_research_sources:83a17284711a",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1"
+      ],
+      "e2": [
         "bmw_pressclub_sources:u10-ix2-launch-article"
       ],
-      "notes": "The official BMW launch article for the first-ever iX2 xDrive30 states that the exact EV uses two integrated drive units, one at the front axle and one at the rear, which is sufficient to confirm the AWD layout for this row.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
+      "e3": [
         "bmw_market_pages:u10-ix2-technical-data-uk"
       ],
-      "notes": "The official BMW UK iX2 technical-data page for the exact IX25 iX2 xDrive30 page identity lists a 1-speed automatic transmission. The repo normalizes that market-facing EV wording to the canonical SS1 single-speed fixed-gear transmission label.",
-      "code": "SS1",
-      "name": "Single-speed fixed gear (EV)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
+      "e4": [
+        "bmw_pressclub_sources:u10-ix2-launch-article",
+        "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+      ],
+      "e5": [
+        "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+      ],
+      "e6": [
+        "bmw_market_pages:u10-x2-overview-at",
+        "bmw_market_pages:u10-x2-technical-data-at",
+        "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+        "bmw_pressclub_sources:u10-ix2-launch-article"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-u10-ix2-xdrive30-eu-2024-ss1-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "U10",
+      "body_code": "U10",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "model_name": "X2 (U10, 2024-2026)",
+      "variant_name": "iX2 xDrive30",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW launch article for the first-ever iX2 xDrive30 states that the exact EV uses two integrated drive units, one at the front axle and one at the rear, which is sufficient to confirm the AWD layout for this row.",
+        "value": "AWD"
+      },
+      "transmission": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_market_pages:u10-ix2-technical-data-uk"
-        ],
-        "notes": "The official BMW UK iX2 technical-data page lists a 1-speed automatic transmission. The repo's EV ratio model represents that single-speed gearbox with a normalized top-gear value of 1.0 while reducer and final-drive details remain unresolved.",
-        "value": 1.0
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW UK iX2 technical-data page for the exact IX25 iX2 xDrive30 page identity lists a 1-speed automatic transmission. The repo normalizes that market-facing EV wording to the canonical SS1 single-speed fixed-gear transmission label.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
       },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
-        "value": 3.636
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
-        "value": 3.636
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:82cbe3b6f231",
-          "legacy_research_sources:83a17284711a",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW UK iX2 technical-data page lists a 1-speed automatic transmission. The repo's EV ratio model represents that single-speed gearbox with a normalized top-gear value of 1.0 while reducer and final-drive details remain unresolved.",
+          "value": 1.0
         },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+        "final_drive_front": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
+          "notes_ref": "n2",
+          "value": 3.636
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.636
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official BMW's 10/2023 launch article confirms the exact iX2 xDrive30 enters the market in March 2024, uses one electric drive unit at the front axle and one at the rear, and rides on 17-inch light-alloy wheels as standard. The same article restricts the seven-speed dual-clutch wording to the combustion-engine X2 variants, so this EV row could not safely remain on a DCT7 identity.",
+          "evidence_refs_ref": "e2"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / model overview with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note": "The official BMW UK technical-data page for the exact IX25 iX2 xDrive30 page identity lists a 1-speed automatic transmission. This pass therefore normalizes the row to the repo's SS1 single-speed EV transmission while leaving reducer ratios, final drives, and exact tire dimensions unresolved until a fuller technical sheet is recovered.",
+          "evidence_refs_ref": "e3"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW's 10/2023 launch article confirms the exact iX2 xDrive30 enters the market in March 2024, uses one electric drive unit at the front axle and one at the rear, and rides on 17-inch light-alloy wheels as standard. The same article restricts the seven-speed dual-clutch wording to the combustion-engine X2 variants, so this EV row could not safely remain on a DCT7 identity.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-ix2-launch-article"
-        ]
-      },
-      {
-        "note": "The official BMW UK technical-data page for the exact IX25 iX2 xDrive30 page identity lists a 1-speed automatic transmission. This pass therefore normalizes the row to the repo's SS1 single-speed EV transmission while leaving reducer ratios, final drives, and exact tire dimensions unresolved until a fuller technical sheet is recovered.",
-        "evidence_refs": [
-          "bmw_market_pages:u10-ix2-technical-data-uk"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW iX2 xDrive30 exact reducer and final-drive mapping",
-        "reason": "The checked official BMW sources prove the AWD EV identity and 1-speed transmission shape, but this pass did not recover a technical-data sheet with the exact reducer or final-drive values for the U10 iX2 xDrive30 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-ix2-launch-article",
-          "bmw_market_pages:u10-ix2-technical-data-uk"
-        ]
-      },
-      {
-        "item": "BMW iX2 xDrive30 exact 17-inch baseline tire size and full wheel matrix",
-        "reason": "The official BMW launch article proves the exact iX2 xDrive30 rides on 17-inch wheels as standard, which contradicts the inherited 18-inch default stored on the row today, but this pass did not recover an official sheet with the precise baseline tire dimensions or the full optional wheel/tire matrix.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-ix2-launch-article"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-u10-sdrive20i-eu-2024-dct7-fwd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "U10",
-    "body_code": "U10",
-    "production_start_year": 2024,
-    "production_end_year": 2026,
-    "model_name": "X2 (U10, 2024-2026)",
-    "variant_name": "sDrive20i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:u10-ix2-launch-article"
       ],
-      "notes": "The official BMW X2 launch article distinguishes the combustion-engine sDrive20i from the xDrive-only iX2 xDrive30 and X2 M35i xDrive launch entries, which is sufficient to confirm the front-wheel-drive layout for this exact row.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:u10-ix2-launch-article",
-        "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-      ],
-      "notes": "BMW's official launch article and technical-data PDF describe the exact X2 sDrive20i as using a seven-speed Steptronic transmission with double clutch. The repo normalizes that wording to the canonical DCT7 label.",
-      "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.636
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-        ],
-        "notes": "The official BMW technical-data PDF for the exact X2 sDrive20i publishes 225/55 R18 102Y XL on 7.5J x 18 wheels as the launch-standard tire package.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 55.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
-          "confidence": "official_exact",
+          "item": "BMW iX2 xDrive30 exact reducer and final-drive mapping",
+          "reason": "The checked official BMW sources prove the AWD EV identity and 1-speed transmission shape, but this pass did not recover a technical-data sheet with the exact reducer or final-drive values for the U10 iX2 xDrive30 row.",
           "evidence_refs": [
-            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-          ],
-          "notes": "The official BMW technical-data PDF for the exact X2 sDrive20i publishes 225/55 R18 102Y XL on 7.5J x 18 wheels as the launch-standard tire package.",
+            "bmw_pressclub_sources:u10-ix2-launch-article",
+            "bmw_market_pages:u10-ix2-technical-data-uk"
+          ]
+        },
+        {
+          "item": "BMW iX2 xDrive30 exact 17-inch baseline tire size and full wheel matrix",
+          "reason": "The official BMW launch article proves the exact iX2 xDrive30 rides on 17-inch wheels as standard, which contradicts the inherited 18-inch default stored on the row today, but this pass did not recover an official sheet with the precise baseline tire dimensions or the full optional wheel/tire matrix.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-u10-sdrive20i-eu-2024-dct7-fwd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "U10",
+      "body_code": "U10",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "model_name": "X2 (U10, 2024-2026)",
+      "variant_name": "sDrive20i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW X2 launch article distinguishes the combustion-engine sDrive20i from the xDrive-only iX2 xDrive30 and X2 M35i xDrive launch entries, which is sufficient to confirm the front-wheel-drive layout for this exact row.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "BMW's official launch article and technical-data PDF describe the exact X2 sDrive20i as using a seven-speed Steptronic transmission with double clutch. The repo normalizes that wording to the canonical DCT7 label.",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (DKG)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.71
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.636
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n3",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 55.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "19\" package"
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\" package"
           },
-          "default_axle_for_speed": "rear",
-          "name": "20\" package"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "20\" package"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Direct validation of the official BMW X2 launch article and technical-data PDF now confirms the exact U10 sDrive20i launch state for FWD layout, seven-speed dual-clutch transmission wording, and the 225/55 R18 baseline tire package.",
+          "evidence_refs_ref": "e4"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Direct validation of the official BMW X2 launch article and technical-data PDF now confirms the exact U10 sDrive20i launch state for FWD layout, seven-speed dual-clutch transmission wording, and the 225/55 R18 baseline tire package.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-ix2-launch-article",
-          "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact raw gearbox and final-drive split for the U10 X2 sDrive20i DCT row",
-        "reason": "The official BMW technical-data PDF publishes the seven-speed ratio table only as multiplied overall ratios, so this pass does not decompose those numbers into the repo's separate raw top-gear and final-drive fields.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-        ]
-      },
-      {
-        "item": "Current-market U10 X2 sDrive20i optional wheel and tire matrix across the retained 2024-2026 row span",
-        "reason": "This pass directly revalidated the launch-state standard 18-inch tire package, but it did not recover one current BMW market document strong enough to replace the inherited 19-inch and 20-inch option tires.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:u10-ix2-launch-article",
-          "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-u10-xdrive25e-eu-2024-dct7-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "U10",
-    "body_code": "U10",
-    "production_start_year": 2024,
-    "production_end_year": 2026,
-    "model_name": "X2 (U10, 2024-2026)",
-    "variant_name": "xDrive25e",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo PHEV",
-    "fuel_type": "PHEV",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed dual-clutch (DKG)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.71
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.636
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.636
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:82cbe3b6f231",
-          "legacy_research_sources:83a17284711a",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      ],
+      "unresolved": [
         {
+          "item": "Exact raw gearbox and final-drive split for the U10 X2 sDrive20i DCT row",
+          "reason": "The official BMW technical-data PDF publishes the seven-speed ratio table only as multiplied overall ratios, so this pass does not decompose those numbers into the repo's separate raw top-gear and final-drive fields.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Current-market U10 X2 sDrive20i optional wheel and tire matrix across the retained 2024-2026 row span",
+          "reason": "This pass directly revalidated the launch-state standard 18-inch tire package, but it did not recover one current BMW market document strong enough to replace the inherited 19-inch and 20-inch option tires.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-u10-xdrive25e-eu-2024-dct7-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "U10",
+      "body_code": "U10",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "model_name": "X2 (U10, 2024-2026)",
+      "variant_name": "xDrive25e",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (DKG)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.71
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.636
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.636
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 5 strengthens this row from merely unsupported to likely generation conflation. Official BMW Austria U10 overview and technical-data pages identify the current U10 X2 lineup as petrol, diesel, and battery-electric variants and do not surface any X2 xDrive25e row, while the official 10/2023 U10 launch article likewise lists EV, petrol, and diesel variants only. The only checked official xDrive25e evidence belongs to the earlier F39 generation. The current U10 xDrive25e row is therefore retained only as an unsupported advisory reference pending exact official U10-market proof or a row split/removal decision.",
+          "evidence_refs_ref": "e6"
         },
         {
-          "confidence": "family_default",
+          "note": "The official F39 xDrive25e launch article describes a three-cylinder front-axle combustion engine plus rear-axle electric motor hybrid AWD system with 17-inch standard wheels, which further underlines that the current U10 row should not inherit generic DCT7-era U10 assumptions without an exact U10 source. The Austria U10 technical-data page does publish seven-speed dual-clutch wording for several combustion U10 models, but not for any xDrive25e row.",
           "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:82cbe3b6f231",
-            "legacy_research_sources:83a17284711a",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+            "bmw_market_pages:u10-x2-technical-data-at",
+            "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article"
+          ]
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 5 strengthens this row from merely unsupported to likely generation conflation. Official BMW Austria U10 overview and technical-data pages identify the current U10 X2 lineup as petrol, diesel, and battery-electric variants and do not surface any X2 xDrive25e row, while the official 10/2023 U10 launch article likewise lists EV, petrol, and diesel variants only. The only checked official xDrive25e evidence belongs to the earlier F39 generation. The current U10 xDrive25e row is therefore retained only as an unsupported advisory reference pending exact official U10-market proof or a row split/removal decision.",
-        "evidence_refs": [
-          "bmw_market_pages:u10-x2-overview-at",
-          "bmw_market_pages:u10-x2-technical-data-at",
-          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
-          "bmw_pressclub_sources:u10-ix2-launch-article"
-        ]
-      },
-      {
-        "note": "The official F39 xDrive25e launch article describes a three-cylinder front-axle combustion engine plus rear-axle electric motor hybrid AWD system with 17-inch standard wheels, which further underlines that the current U10 row should not inherit generic DCT7-era U10 assumptions without an exact U10 source. The Austria U10 technical-data page does publish seven-speed dual-clutch wording for several combustion U10 models, but not for any xDrive25e row.",
-        "evidence_refs": [
-          "bmw_market_pages:u10-x2-technical-data-at",
-          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article"
-        ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X2 xDrive25e exact U10-market existence and production span",
+          "reason": "The checked official BMW Austria U10 overview/technical-data pages and the official U10 launch material did not recover any xDrive25e plug-in-hybrid variant, while the official xDrive25e source recovered in this pass belongs to the earlier F39 generation.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "BMW X2 xDrive25e row cleanup versus likely F39 carryover or mis-targeted U10 mapping",
+          "reason": "Because the checked official BMW sources tie xDrive25e to F39 and the surfaced U10 Austria lineup contains only EV, petrol, and diesel rows, this row should not receive guessed drivetrain, transmission, ratio, or wheel updates without an exact official U10 source.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X2 xDrive25e exact U10-market existence and production span",
-        "reason": "The checked official BMW Austria U10 overview/technical-data pages and the official U10 launch material did not recover any xDrive25e plug-in-hybrid variant, while the official xDrive25e source recovered in this pass belongs to the earlier F39 generation.",
-        "evidence_refs": [
-          "bmw_market_pages:u10-x2-overview-at",
-          "bmw_market_pages:u10-x2-technical-data-at",
-          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
-          "bmw_pressclub_sources:u10-ix2-launch-article"
-        ]
-      },
-      {
-        "item": "BMW X2 xDrive25e row cleanup versus likely F39 carryover or mis-targeted U10 mapping",
-        "reason": "Because the checked official BMW sources tie xDrive25e to F39 and the surfaced U10 Austria lineup contains only EV, petrol, and diesel rows, this row should not receive guessed drivetrain, transmission, ratio, or wheel updates without an exact official U10 source.",
-        "evidence_refs": [
-          "bmw_market_pages:u10-x2-overview-at",
-          "bmw_market_pages:u10-x2-technical-data-at",
-          "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
-          "bmw_pressclub_sources:u10-ix2-launch-article"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}
