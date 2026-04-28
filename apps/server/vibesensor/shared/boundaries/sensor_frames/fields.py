@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
@@ -30,38 +30,6 @@ __all__ = [
 _VIBRATION_STRENGTH_DB_KEY = "vibration_strength_db"
 _STRENGTH_BUCKET_KEY = "strength_bucket"
 _TOP_PEAKS_KEY = "top_peaks"
-_SENSOR_FRAME_SCALAR_FIELD_NAMES: tuple[str, ...] = (
-    "run_id",
-    "timestamp_utc",
-    "t_s",
-    "analysis_window_start_us",
-    "analysis_window_end_us",
-    "analysis_window_synced",
-    "client_id",
-    "client_name",
-    "location",
-    "sample_rate_hz",
-    "speed_kmh",
-    "gps_speed_kmh",
-    "speed_source",
-    "engine_rpm",
-    "engine_rpm_source",
-    "gear",
-    "final_drive_ratio",
-    "accel_x_g",
-    "accel_y_g",
-    "accel_z_g",
-    "dominant_freq_hz",
-    "dominant_axis",
-    _VIBRATION_STRENGTH_DB_KEY,
-    _STRENGTH_BUCKET_KEY,
-    "strength_peak_amp_g",
-    "strength_floor_amp_g",
-    "frames_dropped_total",
-    "queue_overflow_drops",
-)
-SENSOR_FRAME_FIELD_NAMES: tuple[str, ...] = (*_SENSOR_FRAME_SCALAR_FIELD_NAMES, _TOP_PEAKS_KEY)
-_TOP_PEAKS_COLUMN_INDEX = len(SENSOR_FRAME_FIELD_NAMES) - 1
 _ISFINITE = math.isfinite
 
 
@@ -97,6 +65,189 @@ class SensorFrameScalarValues:
     queue_overflow_drops: int
 
 
+type _MappingScalarDecoder = Callable[[object, bool, str], object]
+type _RowScalarDecoder = Callable[[object, str], object]
+type _RowScalarProjector = Callable[[object], object]
+
+
+@dataclass(frozen=True, slots=True)
+class _SensorFrameScalarFieldSpec:
+    name: str
+    decode_mapping: _MappingScalarDecoder
+    decode_row: _RowScalarDecoder
+    project_row: _RowScalarProjector
+
+
+def _identity_row_projector(value: object) -> object:
+    return value
+
+
+def _float_row_projector(value: object) -> object:
+    return _finite_or_none(cast(float | None, value))
+
+
+def _bool_row_projector(value: object) -> object:
+    return _bool_to_sqlite(cast(bool | None, value))
+
+
+def _decode_mapping_float(
+    value: object,
+    *,
+    strict: bool,
+    source: str,
+    field: str,
+) -> float | None:
+    if strict:
+        return strict_optional_float(value, field=field, source=source)
+    return optional_float(value, field=field, source=source)
+
+
+def _decode_mapping_int(
+    value: object,
+    *,
+    strict: bool,
+    source: str,
+    field: str,
+) -> int | None:
+    if strict:
+        return strict_optional_int(value, field=field, source=source)
+    return optional_int(value, field=field, source=source)
+
+
+def _text_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        del strict, source
+        return _text_value(value)
+
+    def decode_row(value: object, source: str) -> object:
+        del source
+        return _text_value(value)
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_identity_row_projector,
+    )
+
+
+def _float_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        return _decode_mapping_float(value, strict=strict, source=source, field=name)
+
+    def decode_row(value: object, source: str) -> object:
+        return strict_optional_float(value, field=name, source=source)
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_float_row_projector,
+    )
+
+
+def _int_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        return _decode_mapping_int(value, strict=strict, source=source, field=name)
+
+    def decode_row(value: object, source: str) -> object:
+        return strict_optional_int(value, field=name, source=source)
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_identity_row_projector,
+    )
+
+
+def _default_zero_int_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        return _decode_mapping_int(value, strict=strict, source=source, field=name) or 0
+
+    def decode_row(value: object, source: str) -> object:
+        return strict_optional_int(value, field=name, source=source) or 0
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_identity_row_projector,
+    )
+
+
+def _bool_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        return _decode_optional_bool(value, strict=strict, source=source, field=name)
+
+    def decode_row(value: object, source: str) -> object:
+        return _decode_optional_bool(value, strict=True, source=source, field=name)
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_bool_row_projector,
+    )
+
+
+def _strength_bucket_field(name: str) -> _SensorFrameScalarFieldSpec:
+    def decode_mapping(value: object, strict: bool, source: str) -> object:
+        del strict, source
+        return _strength_bucket(value)
+
+    def decode_row(value: object, source: str) -> object:
+        del source
+        return _strength_bucket(value)
+
+    return _SensorFrameScalarFieldSpec(
+        name=name,
+        decode_mapping=decode_mapping,
+        decode_row=decode_row,
+        project_row=_identity_row_projector,
+    )
+
+
+_SENSOR_FRAME_SCALAR_FIELDS: tuple[_SensorFrameScalarFieldSpec, ...] = (
+    _text_field("run_id"),
+    _text_field("timestamp_utc"),
+    _float_field("t_s"),
+    _int_field("analysis_window_start_us"),
+    _int_field("analysis_window_end_us"),
+    _bool_field("analysis_window_synced"),
+    _text_field("client_id"),
+    _text_field("client_name"),
+    _text_field("location"),
+    _int_field("sample_rate_hz"),
+    _float_field("speed_kmh"),
+    _float_field("gps_speed_kmh"),
+    _text_field("speed_source"),
+    _float_field("engine_rpm"),
+    _text_field("engine_rpm_source"),
+    _float_field("gear"),
+    _float_field("final_drive_ratio"),
+    _float_field("accel_x_g"),
+    _float_field("accel_y_g"),
+    _float_field("accel_z_g"),
+    _float_field("dominant_freq_hz"),
+    _text_field("dominant_axis"),
+    _float_field(_VIBRATION_STRENGTH_DB_KEY),
+    _strength_bucket_field(_STRENGTH_BUCKET_KEY),
+    _float_field("strength_peak_amp_g"),
+    _float_field("strength_floor_amp_g"),
+    _default_zero_int_field("frames_dropped_total"),
+    _default_zero_int_field("queue_overflow_drops"),
+)
+SENSOR_FRAME_FIELD_NAMES: tuple[str, ...] = (
+    *(field.name for field in _SENSOR_FRAME_SCALAR_FIELDS),
+    _TOP_PEAKS_KEY,
+)
+_TOP_PEAKS_COLUMN_INDEX = len(_SENSOR_FRAME_SCALAR_FIELDS)
+_SENSOR_FRAME_SCALAR_VALUES_FACTORY: Callable[..., SensorFrameScalarValues] = (
+    SensorFrameScalarValues
+)
+
+
 def sensor_frame_from_mapping_payload(
     record: Mapping[str, object],
     *,
@@ -118,37 +269,12 @@ def sensor_frame_from_mapping_payload(
 
 
 def sensor_frame_to_mapping_payload(frame: SensorFrame) -> JsonObject:
-    return {
-        "run_id": frame.run_id,
-        "timestamp_utc": frame.timestamp_utc,
-        "t_s": frame.t_s,
-        "analysis_window_start_us": frame.analysis_window_start_us,
-        "analysis_window_end_us": frame.analysis_window_end_us,
-        "analysis_window_synced": frame.analysis_window_synced,
-        "client_id": frame.client_id,
-        "client_name": frame.client_name,
-        "location": frame.location,
-        "sample_rate_hz": frame.sample_rate_hz,
-        "speed_kmh": frame.speed_kmh,
-        "gps_speed_kmh": frame.gps_speed_kmh,
-        "speed_source": frame.speed_source,
-        "engine_rpm": frame.engine_rpm,
-        "engine_rpm_source": frame.engine_rpm_source,
-        "gear": frame.gear,
-        "final_drive_ratio": frame.final_drive_ratio,
-        "accel_x_g": frame.accel_x_g,
-        "accel_y_g": frame.accel_y_g,
-        "accel_z_g": frame.accel_z_g,
-        "dominant_freq_hz": frame.dominant_freq_hz,
-        "dominant_axis": frame.dominant_axis,
-        _TOP_PEAKS_KEY: cast(list[JsonValue], strength_peak_payloads(frame.top_peaks)),
-        _VIBRATION_STRENGTH_DB_KEY: frame.vibration_strength_db,
-        _STRENGTH_BUCKET_KEY: frame.strength_bucket,
-        "strength_peak_amp_g": frame.strength_peak_amp_g,
-        "strength_floor_amp_g": frame.strength_floor_amp_g,
-        "frames_dropped_total": frame.frames_dropped_total,
-        "queue_overflow_drops": frame.queue_overflow_drops,
-    }
+    payload = cast(
+        JsonObject,
+        {field.name: getattr(frame, field.name) for field in _SENSOR_FRAME_SCALAR_FIELDS},
+    )
+    payload[_TOP_PEAKS_KEY] = cast(list[JsonValue], strength_peak_payloads(frame.top_peaks))
+    return payload
 
 
 def sensor_frame_from_row_payload(
@@ -173,35 +299,11 @@ def sensor_frame_from_row_payload(
 
 def sensor_frame_to_row_payload(frame: SensorFrame) -> tuple[object, ...]:
     top_peaks_payload = strength_peak_payloads(frame.top_peaks)
+    scalar_row_values = tuple(
+        field.project_row(getattr(frame, field.name)) for field in _SENSOR_FRAME_SCALAR_FIELDS
+    )
     return (
-        frame.run_id,
-        frame.timestamp_utc,
-        _finite_or_none(frame.t_s),
-        frame.analysis_window_start_us,
-        frame.analysis_window_end_us,
-        _bool_to_sqlite(frame.analysis_window_synced),
-        frame.client_id,
-        frame.client_name,
-        frame.location,
-        frame.sample_rate_hz,
-        _finite_or_none(frame.speed_kmh),
-        _finite_or_none(frame.gps_speed_kmh),
-        frame.speed_source,
-        _finite_or_none(frame.engine_rpm),
-        frame.engine_rpm_source,
-        _finite_or_none(frame.gear),
-        _finite_or_none(frame.final_drive_ratio),
-        _finite_or_none(frame.accel_x_g),
-        _finite_or_none(frame.accel_y_g),
-        _finite_or_none(frame.accel_z_g),
-        _finite_or_none(frame.dominant_freq_hz),
-        frame.dominant_axis,
-        _finite_or_none(frame.vibration_strength_db),
-        frame.strength_bucket,
-        _finite_or_none(frame.strength_peak_amp_g),
-        _finite_or_none(frame.strength_floor_amp_g),
-        frame.frames_dropped_total,
-        frame.queue_overflow_drops,
+        *scalar_row_values,
         safe_json_dumps(top_peaks_payload) if top_peaks_payload else None,
     )
 
@@ -246,147 +348,19 @@ def _scalars_from_mapping(
     strict: bool,
     source: str,
 ) -> SensorFrameScalarValues:
-    def decode_float(value: object, *, field: str) -> float | None:
-        if strict:
-            return strict_optional_float(value, field=field, source=source)
-        return optional_float(value, field=field, source=source)
-
-    def decode_int(value: object, *, field: str) -> int | None:
-        if strict:
-            return strict_optional_int(value, field=field, source=source)
-        return optional_int(value, field=field, source=source)
-
-    return SensorFrameScalarValues(
-        run_id=_text_value(record.get("run_id")),
-        timestamp_utc=_text_value(record.get("timestamp_utc")),
-        t_s=decode_float(record.get("t_s"), field="t_s"),
-        analysis_window_start_us=decode_int(
-            record.get("analysis_window_start_us"),
-            field="analysis_window_start_us",
-        ),
-        analysis_window_end_us=decode_int(
-            record.get("analysis_window_end_us"),
-            field="analysis_window_end_us",
-        ),
-        analysis_window_synced=_decode_optional_bool(
-            record.get("analysis_window_synced"),
-            strict=strict,
-            source=source,
-            field="analysis_window_synced",
-        ),
-        client_id=_text_value(record.get("client_id")),
-        client_name=_text_value(record.get("client_name")),
-        location=_text_value(record.get("location")),
-        sample_rate_hz=decode_int(record.get("sample_rate_hz"), field="sample_rate_hz"),
-        speed_kmh=decode_float(record.get("speed_kmh"), field="speed_kmh"),
-        gps_speed_kmh=decode_float(record.get("gps_speed_kmh"), field="gps_speed_kmh"),
-        speed_source=_text_value(record.get("speed_source")),
-        engine_rpm=decode_float(record.get("engine_rpm"), field="engine_rpm"),
-        engine_rpm_source=_text_value(record.get("engine_rpm_source")),
-        gear=decode_float(record.get("gear"), field="gear"),
-        final_drive_ratio=decode_float(
-            record.get("final_drive_ratio"),
-            field="final_drive_ratio",
-        ),
-        accel_x_g=decode_float(record.get("accel_x_g"), field="accel_x_g"),
-        accel_y_g=decode_float(record.get("accel_y_g"), field="accel_y_g"),
-        accel_z_g=decode_float(record.get("accel_z_g"), field="accel_z_g"),
-        dominant_freq_hz=decode_float(record.get("dominant_freq_hz"), field="dominant_freq_hz"),
-        dominant_axis=_text_value(record.get("dominant_axis")),
-        vibration_strength_db=decode_float(
-            record.get(_VIBRATION_STRENGTH_DB_KEY),
-            field=_VIBRATION_STRENGTH_DB_KEY,
-        ),
-        strength_bucket=_strength_bucket(record.get(_STRENGTH_BUCKET_KEY)),
-        strength_peak_amp_g=decode_float(
-            record.get("strength_peak_amp_g"),
-            field="strength_peak_amp_g",
-        ),
-        strength_floor_amp_g=decode_float(
-            record.get("strength_floor_amp_g"),
-            field="strength_floor_amp_g",
-        ),
-        frames_dropped_total=decode_int(
-            record.get("frames_dropped_total"),
-            field="frames_dropped_total",
-        )
-        or 0,
-        queue_overflow_drops=decode_int(
-            record.get("queue_overflow_drops"),
-            field="queue_overflow_drops",
-        )
-        or 0,
-    )
+    decoded_values = {
+        field.name: field.decode_mapping(record.get(field.name), strict, source)
+        for field in _SENSOR_FRAME_SCALAR_FIELDS
+    }
+    return _SENSOR_FRAME_SCALAR_VALUES_FACTORY(**decoded_values)
 
 
 def _scalars_from_row(values: Sequence[object], *, source: str) -> SensorFrameScalarValues:
-    return SensorFrameScalarValues(
-        run_id=_text_value(values[0]),
-        timestamp_utc=_text_value(values[1]),
-        t_s=strict_optional_float(values[2], field="t_s", source=source),
-        analysis_window_start_us=strict_optional_int(
-            values[3],
-            field="analysis_window_start_us",
-            source=source,
-        ),
-        analysis_window_end_us=strict_optional_int(
-            values[4],
-            field="analysis_window_end_us",
-            source=source,
-        ),
-        analysis_window_synced=_decode_optional_bool(
-            values[5],
-            strict=True,
-            source=source,
-            field="analysis_window_synced",
-        ),
-        client_id=_text_value(values[6]),
-        client_name=_text_value(values[7]),
-        location=_text_value(values[8]),
-        sample_rate_hz=strict_optional_int(values[9], field="sample_rate_hz", source=source),
-        speed_kmh=strict_optional_float(values[10], field="speed_kmh", source=source),
-        gps_speed_kmh=strict_optional_float(values[11], field="gps_speed_kmh", source=source),
-        speed_source=_text_value(values[12]),
-        engine_rpm=strict_optional_float(values[13], field="engine_rpm", source=source),
-        engine_rpm_source=_text_value(values[14]),
-        gear=strict_optional_float(values[15], field="gear", source=source),
-        final_drive_ratio=strict_optional_float(
-            values[16],
-            field="final_drive_ratio",
-            source=source,
-        ),
-        accel_x_g=strict_optional_float(values[17], field="accel_x_g", source=source),
-        accel_y_g=strict_optional_float(values[18], field="accel_y_g", source=source),
-        accel_z_g=strict_optional_float(values[19], field="accel_z_g", source=source),
-        dominant_freq_hz=strict_optional_float(
-            values[20],
-            field="dominant_freq_hz",
-            source=source,
-        ),
-        dominant_axis=_text_value(values[21]),
-        vibration_strength_db=strict_optional_float(
-            values[22],
-            field=_VIBRATION_STRENGTH_DB_KEY,
-            source=source,
-        ),
-        strength_bucket=_strength_bucket(values[23]),
-        strength_peak_amp_g=strict_optional_float(
-            values[24],
-            field="strength_peak_amp_g",
-            source=source,
-        ),
-        strength_floor_amp_g=strict_optional_float(
-            values[25],
-            field="strength_floor_amp_g",
-            source=source,
-        ),
-        frames_dropped_total=(
-            strict_optional_int(values[26], field="frames_dropped_total", source=source) or 0
-        ),
-        queue_overflow_drops=(
-            strict_optional_int(values[27], field="queue_overflow_drops", source=source) or 0
-        ),
-    )
+    decoded_values = {
+        field.name: field.decode_row(values[index], source)
+        for index, field in enumerate(_SENSOR_FRAME_SCALAR_FIELDS)
+    }
+    return _SENSOR_FRAME_SCALAR_VALUES_FACTORY(**decoded_values)
 
 
 def _bool_to_sqlite(value: bool | None) -> int | None:
