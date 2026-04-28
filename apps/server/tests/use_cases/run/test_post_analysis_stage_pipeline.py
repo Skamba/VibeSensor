@@ -175,6 +175,15 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback() -> No
         builders=builders,
     )
 
+    assert [stage.stage_name for stage in result.stage_results] == [
+        "BuildWholeRunSpectraStage",
+        "BuildWholeRunContextStage",
+        "BuildOrderTraceStage",
+        "BuildOrderTraceSummaryStage",
+        "BuildOrderFamilySummaryStage",
+        "BuildSpatialSummaryStage",
+        "PersistArtifactsStage",
+    ]
     statuses = {stage.stage_name: stage.status for stage in result.stage_results}
     assert statuses["BuildWholeRunSpectraStage"] == "skipped"
     assert statuses["BuildWholeRunContextStage"] == "degraded"
