@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Never, cast
 
-from opentelemetry.trace import SpanKind
+from opentelemetry.trace import Span, SpanKind
 
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
@@ -21,6 +23,15 @@ from vibesensor.use_cases.history.helpers import (
 )
 
 
+@contextmanager
+def _mark_history_span_errors(span: Span) -> Iterator[None]:
+    try:
+        yield
+    except Exception as exc:
+        mark_span_error(span, exc)
+        raise
+
+
 class HistoryRunService:
     """Run queries and delete operations used by history endpoints."""
 
@@ -31,11 +42,8 @@ class HistoryRunService:
 
     async def list_runs(self) -> list[HistoryRunListEntry]:
         with start_span(__name__, "history.runs.list", kind=SpanKind.INTERNAL) as span:
-            try:
+            with _mark_history_span_errors(span):
                 runs = await self._history_db.alist_runs()
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
             span.set_attribute("vibesensor.run_count", len(runs))
             return runs
 
@@ -46,11 +54,8 @@ class HistoryRunService:
             kind=SpanKind.INTERNAL,
             attributes={"vibesensor.run_id": run_id},
         ) as span:
-            try:
+            with _mark_history_span_errors(span):
                 run = await async_require_run(self._history_db, run_id)
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
             span.set_attribute("vibesensor.run_status", run.status.value)
             return run
 
@@ -69,7 +74,7 @@ class HistoryRunService:
                 "vibesensor.requested_lang": requested_lang or "",
             },
         ) as span:
-            try:
+            with _mark_history_span_errors(span):
                 run = await async_require_run(self._history_db, run_id)
                 if (
                     run.lifecycle is not None
@@ -95,9 +100,6 @@ class HistoryRunService:
                 )
                 analysis["run_id"] = run.run_id or run_id
                 analysis["status"] = RunStatus.COMPLETE.value
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
             span.set_attribute("vibesensor.analysis_ready", True)
             span.set_attribute("vibesensor.response_lang", response_lang)
             return analysis
@@ -109,7 +111,7 @@ class HistoryRunService:
             kind=SpanKind.INTERNAL,
             attributes={"vibesensor.run_id": run_id},
         ) as span:
-            try:
+            with _mark_history_span_errors(span):
                 deleted, reason = await self._history_db.adelete_run_if_safe(run_id)
                 if deleted:
                     span.set_attribute("vibesensor.deleted", True)
@@ -117,9 +119,6 @@ class HistoryRunService:
                 span.set_attribute("vibesensor.deleted", False)
                 span.set_attribute("vibesensor.delete_reason", reason or "")
                 raise_delete_run_error(reason)
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
 
 
 def raise_delete_run_error(reason: str | None) -> Never:
