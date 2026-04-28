@@ -28,6 +28,10 @@ FULL_STACK_TRIGGER_FILES = {
 }
 FULL_STACK_TRIGGER_PREFIXES = (".github/",)
 FIRMWARE_TRIGGER_PREFIXES = ("firmware/", "tools/firmware/")
+FIRMWARE_NATIVE_BACKEND_TRIGGER_FILES = {
+    "apps/server/vibesensor/adapters/udp/protocol.py",
+    "apps/server/vibesensor/adapters/udp/protocol_validator.py",
+}
 PYTHON_TOOL_PREFIX = "tools/"
 DOCS_LINT_TOOL_FILES = {"tools/dev/docs_lint.py"}
 REPO_HYGIENE_TOOL_FILES = {"tools/dev/check_hygiene.py"}
@@ -168,6 +172,10 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         or backend_changed
         or frontend_changed
         or release_tool_changed,
-        firmware_native_tests=full_stack or firmware_changed,
+        firmware_native_tests=full_stack
+        or firmware_changed
+        or any(
+            path in FIRMWARE_NATIVE_BACKEND_TRIGGER_FILES for path in non_docs_paths
+        ),
         e2e=full_stack or backend_changed or frontend_changed or e2e_tool_changed,
     )
