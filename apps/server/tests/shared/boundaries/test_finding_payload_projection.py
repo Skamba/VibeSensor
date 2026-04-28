@@ -151,5 +151,16 @@ def test_projection_keeps_canonical_domain_and_presentation_fields_together() ->
     assert payload["frequency_hz_or_order"] == ""
 
 
+def test_projection_keeps_empty_signatures_list_for_contract_stability() -> None:
+    payload = finding_payload_from_domain(
+        Finding(
+            finding_id="F_NO_SIGS",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+        )
+    )
+
+    assert payload["signatures_observed"] == []
+
+
 def test_boundary_module_exposes_only_the_public_finding_codec_api() -> None:
     assert boundary_finding.__all__ == ["finding_from_payload", "finding_payload_from_domain"]
