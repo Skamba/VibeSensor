@@ -1,8 +1,10 @@
 # ESP32 Firmware
 
-PlatformIO firmware for M5Stack ATOM Lite (ESP32-PICO) that reads an ADXL345
-accelerometer at 800 Hz and streams 100 ms sample frames to the Pi server over
-UDP.
+PlatformIO firmware for the M5Stack ATOM Lite (ESP32-PICO) that reads an
+ADXL345 accelerometer at 800 Hz and streams 100 ms sample frames to the Pi
+server over UDP. The default build target stays on the ATOM Lite, and the repo
+also carries an experimental ESP32-C3 compile-only environment to catch
+board-specific assumptions earlier.
 
 ## Features
 
@@ -78,11 +80,25 @@ firmware/esp/
 
 ## Build and Flash
 
+Default ATOM Lite build and flash path:
+
 ```bash
 cd firmware/esp
-pio run -t upload
+pio run -e m5stack_atom -t upload
 pio device monitor
 ```
+
+Experimental ESP32-C3 compile coverage:
+
+```bash
+cd firmware/esp
+pio run -e esp32-c3-devkitm-1
+```
+
+The ESP32-C3 environment is compile coverage only for now. It keeps the current
+runtime defaults from `src/runtime_config.h`, which still assume the ATOM Lite
+LED and ADXL345 pin mapping. Override those settings before treating a C3 build
+as real hardware support.
 
 ## Configure
 
