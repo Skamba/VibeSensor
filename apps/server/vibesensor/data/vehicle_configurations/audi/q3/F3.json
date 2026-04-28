@@ -26,7 +26,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
         "secondary_technical_sources:q3-f3-wikipedia",
@@ -57,15 +57,6 @@
           "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
           "secondary_technical_sources:q3-f3-wikipedia"
         ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "value": 3.667,
-        "evidence_refs": [
-          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
-          "secondary_technical_sources:q3-f3-wikipedia"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TDI = 150 PS / 340 Nm / FWD / 7-speed S tronic. The 340 Nm output exceeds the DQ200 dry-clutch DCT 250 Nm limit, so the gearbox is the DQ381-7F (longitudinal MQB-A2 wet-clutch 7-speed DCT, FWD variant). Final drive split: existing prior-agent extraction recorded 4.813 / 3.667 for the AWD sibling rows; the same DQ381-7F architecture publishes two final drives (sub-transmission 1 odd-gear shaft = 4.813, sub-transmission 2 even-gear shaft = 3.667) which both drive the same FWD axle. Repo's prior 4.769 family_default replaced with the official sub-transmission 1 ratio 4.813 in final_drive_front, and sub-transmission 2 ratio 3.667 added to final_drive_rear with note that for FWD DCT variants this field encodes the second sub-transmission output ratio, not a physical rear axle. Forward gear ratio array remains unpopulated (PDF was not extracted by prior agent and is currently 404; only top gear 0.561 is published). For FWD DCT variants this field encodes sub-transmission 2 (even gears 2/4/6) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -145,11 +136,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -182,7 +168,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
         "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
@@ -230,15 +216,6 @@
           "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
           "secondary_technical_sources:q3-f3-wikipedia"
         ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "value": 3.9,
-        "evidence_refs": [
-          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
-          "secondary_technical_sources:q3-f3-wikipedia"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TFSI = 150 PS / 250 Nm / FWD / 7-speed S tronic. Gearbox is the DQ381-7F (MQB-A2 longitudinal wet-clutch 7-speed DCT, FWD variant). Sub-transmission split: sub-trans 1 (odd gears 1/3/5/7) final drive 5.200; sub-trans 2 (even gears 2/4/6) final drive 3.900. Both drive the same FWD axle. Repo's 4.769 family_default replaced with the official sub-trans 1 value 5.200 in final_drive_front, sub-trans 2 value 3.900 added to final_drive_rear with same FWD-DCT semantic note. Forward gear ratios array [3.19, 2.75, 1.897, 1.04, 0.793, 0.86, 0.661] kept as official_derived from prior-agent PDF extraction; the apparent 5/6 inversion (0.793 -> 0.860) is a known DCT sub-transmission cross-over artifact: gears 5 (odd) and 6 (even) ride on different sub-transmission shafts with different final drives, so the OVERALL road ratio is monotonic when each gear is multiplied by its sub-transmission FD. Sub-trans 1 internal set {3.19, 1.897, 0.793, 0.661} and sub-trans 2 internal set {2.75, 1.04, 0.86} are each strictly monotonic. For FWD DCT variants this field encodes sub-transmission 2 (even gears) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -368,11 +345,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -403,7 +375,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
         "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
@@ -515,11 +487,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -550,7 +517,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:q3-f3-wikipedia",
         "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
@@ -663,11 +630,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -744,15 +706,6 @@
           "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
           "secondary_technical_sources:q3-f3-wikipedia"
         ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "value": 3.545,
-        "evidence_refs": [
-          "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
-          "secondary_technical_sources:q3-f3-wikipedia"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note. For FWD DCT variants this field encodes sub-transmission 2 (even gears) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -890,11 +843,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

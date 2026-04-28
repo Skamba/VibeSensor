@@ -60,14 +60,6 @@
         ],
         "notes": "Audi A1 GB MQB A0 FWD: single-axle final drive 3.933 (no rear axle).",
         "value": 3.933
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
-        ],
-        "notes": "Audi A1 GB is FWD only; the 'rear axle' field is repurposed to mirror the single-axle final drive 3.933 to match the schema.",
-        "value": 3.933
       }
     },
     "tires": {
@@ -151,6 +143,9 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Transmission marketing correction: Canonical row labeled MT6 was incorrect; eTD confirms 5-speed manual."
       }
     ],
     "unresolved": [
@@ -176,8 +171,7 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "transmission_marketing_correction": "Canonical row labeled MT6 was incorrect; eTD confirms 5-speed manual."
+    }
   },
   {
     "id": "audi-gb-25-tfsi-eu-2019-dct7-fwd",
@@ -242,14 +236,6 @@
         ],
         "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. Note: this is a DCT sub-transmission ratio, NOT a front-axle ratio (the A1 GB is FWD-only, single front axle).",
         "value": 4.438
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
-        ],
-        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.227. The A1 GB has no rear axle; the 'rear' field stores the second sub-transmission final drive in the absence of a dedicated schema field.",
-        "value": 3.227
       }
     },
     "tires": {
@@ -414,14 +400,6 @@
           "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ],
         "notes": "Audi A1 GB MQB A0 FWD: single-axle final drive 4.353 per the late 2026 eTD (different gearing pair from the earlier 2022-12 eTD).",
-        "value": 4.353
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
-        ],
-        "notes": "Audi A1 GB is FWD only; rear-axle field mirrors the single-axle final drive 4.353.",
         "value": 4.353
       }
     },
@@ -604,14 +582,6 @@
         ],
         "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. NOT a front-axle ratio; the A1 GB is FWD-only.",
         "value": 4.438
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
-        ],
-        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.227.",
-        "value": 3.227
       }
     },
     "tires": {
@@ -953,14 +923,6 @@
         ],
         "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.800. NOT a front-axle ratio; the A1 GB is FWD-only.",
         "value": 4.8
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
-        ],
-        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.429.",
-        "value": 3.429
       }
     },
     "tires": {

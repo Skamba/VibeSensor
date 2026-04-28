@@ -23,7 +23,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 320i MT6 RWD with stored engine code B48. The B48 engine entered F30 production at the LCI changeover in mid-2015 - it was NOT used in the pre-LCI 320i (which used the N20). production_start_year corrected from 2012 to 2015. Transmission is the Getrag/ZF GS6-45BZ 6-speed manual. Per Wikipedia F30 article, 6th-gear 0.812 and final drive 3.231 are the expected values for the GS6-45BZ in 320i applications, but no BMW PressClub spec PDF was directly extracted in this research run; values held at reputable_secondary.",
       "code": "MT6",
       "name": "6-speed manual (Getrag GS6-45BZ)",
@@ -33,7 +33,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Getrag GS6-45BZ 6th-gear ratio per Wikipedia F30 manual transmission listing.",
         "value": 0.812,
         "evidence_refs": [
@@ -41,7 +41,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Final drive 3.231 typical for F30 320i MT6 (GS6-45BZ); held at reputable_secondary - no BMW PressClub spec PDF directly extracted.",
         "value": 3.231,
         "evidence_refs": [
@@ -51,7 +51,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -194,11 +194,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -225,7 +220,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 320i 8AT RWD with stored engine code B48 (LCI-only). production_start_year corrected from 2012 to 2015. Transmission is ZF 8HP45 (4-cylinder petrol variant of the 8HP family). LCI-era 8HP45 8th-gear ratio is 0.640 (NOT the legacy 0.667 which was the older first-generation 8HP70 value, inherited as family_default). Final drive 3.077 is consistent with secondary cross-checks for B48 8HP45 RWD; held at reputable_secondary.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic (ZF 8HP45)",
@@ -236,7 +231,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications. The legacy family_default 0.667 reflects the older first-generation 8HP70 - LCI 8HP45/8HP50 use 0.640.",
         "value": 0.64,
         "evidence_refs": [
@@ -245,7 +240,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Final drive 3.077 consistent with B48 8HP45 in 320i applications; reputable_secondary - no BMW PressClub spec PDF directly extracted.",
         "value": 3.077,
         "evidence_refs": [
@@ -256,7 +251,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -399,11 +394,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -430,7 +420,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): The F30 330i nameplate is LCI-only - it was introduced mid-2015 as the replacement for the 328i. production_start_year corrected from 2012 to 2015. Engine B48 (185 kW / 248 hp tune). Transmission Getrag GS6-45BZ 6-speed manual. The pairing 330i + B48 + MT6 + RWD is a real production state for 2015-2019; per-gear and final-drive values not directly extracted from a BMW PressClub spec PDF in this research run, so ratios remain at their stored values but with the configuration year corrected.",
       "code": "MT6",
       "name": "6-speed manual (Getrag GS6-45BZ)",
@@ -440,7 +430,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "GS6-45BZ 6th gear value 0.812 retained from family_default; Wikipedia F30 confirms GS6-45BZ as the 4-cyl manual but does not publish the 330i-specific ratio. Reputable_secondary pending PressClub PDF extraction.",
         "value": 0.812,
         "evidence_refs": [
@@ -448,7 +438,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.231 was a family_default; 330i may use a different FD than the 320i (BMW typically gives higher-output variants slightly different FDs). No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
         "value": 3.231,
         "evidence_refs": [
@@ -458,7 +448,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -548,6 +538,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -601,11 +597,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -632,7 +623,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 330i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Transmission ZF 8HP45 (4-cyl petrol). 8th-gear corrected from family_default 0.667 to LCI-era 0.640 (the 0.667 reflected the older first-gen 8HP70). Final drive value 3.077 may differ for the 330i (BMW sometimes uses 2.813 for higher-output 4-cyl autos); held at no_confidence pending direct PressClub PDF extraction.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic (ZF 8HP45)",
@@ -643,7 +634,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48 applications.",
         "value": 0.64,
         "evidence_refs": [
@@ -652,7 +643,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.077 was a family_default; 330i 8AT may use a different FD than the 320i 8AT. No PressClub PDF directly extracted; held at no_confidence pending direct verification.",
         "value": 3.077,
         "evidence_refs": [
@@ -662,7 +653,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -752,6 +743,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -805,11 +802,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -836,7 +828,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 transfer case with Getrag GS6-45BZ 6-speed manual. Per-gear ratio value retained from family_default; FD values held at no_confidence pending direct PressClub PDF extraction.",
       "code": "MT6",
       "name": "6-speed manual (Getrag GS6-45BZ)",
@@ -846,7 +838,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "GS6-45BZ 6th-gear 0.812 from family_default; Wikipedia confirms GS6-45BZ for 4-cyl manual.",
         "value": 0.812,
         "evidence_refs": [
@@ -854,7 +846,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
         "value": 3.231,
         "evidence_refs": [
@@ -862,7 +854,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.231 was family_default; 330i xDrive specific FD not directly extracted from PressClub PDF in this run.",
         "value": 3.231,
         "evidence_refs": [
@@ -872,7 +864,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -962,6 +954,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1015,11 +1019,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1046,7 +1045,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 330i xDrive 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. AWD via ATC 350 + ZF 8HP45 (4-cyl). 8th-gear corrected to LCI-era 0.640. FD values held at no_confidence pending direct PressClub PDF extraction.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic (ZF 8HP45)",
@@ -1057,7 +1056,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "ZF 8HP45 8th-gear ratio for LCI-era B48.",
         "value": 0.64,
         "evidence_refs": [
@@ -1066,7 +1065,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
         "value": 3.077,
         "evidence_refs": [
@@ -1074,7 +1073,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.077 family_default; 330i xDrive 8AT specific FD not directly extracted.",
         "value": 3.077,
         "evidence_refs": [
@@ -1084,7 +1083,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -1174,6 +1173,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1227,11 +1238,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1258,7 +1264,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 340i is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58 (240 kW). Transmission is Getrag GS6X53DZ 6-speed manual (the 6-cylinder petrol manual gearbox - NOT the GS6-45BZ used for 4-cyl). transmission.name corrected. Stored 6th-gear 0.812 and FD 3.231 are inherited from the 4-cyl GS6-45BZ family default and are NOT applicable to the GS6X53DZ - the 6-cyl manual uses different ratios (typically 6th approximately 0.756, FD approximately 3.154). Held at no_confidence pending direct PressClub PDF extraction.",
       "code": "MT6",
       "name": "6-speed manual (Getrag GS6X53DZ)",
@@ -1268,7 +1274,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed.",
         "value": 0.812,
         "evidence_refs": [
@@ -1276,7 +1282,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Stored value inherited from 4-cyl GS6-45BZ family_default; the 340i uses Getrag GS6X53DZ (different ratios). Direct PressClub PDF extraction needed.",
         "value": 3.231,
         "evidence_refs": [
@@ -1286,7 +1292,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -1376,6 +1382,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1429,11 +1447,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1460,7 +1473,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo (2026-04 v2): F30 340i 8AT is LCI-only (mid-2015+); production_start_year corrected from 2012 to 2015. Engine B58. Transmission is ZF 8HP50 (the 6-cylinder petrol variant of the 8HP family - NOT the 8HP45 used for 4-cyl). transmission.name corrected. 8th-gear corrected from family_default 0.667 to ZF 8HP50 LCI value 0.640. Stored FD 3.077 is the 4-cyl 8HP45 value; the 6-cyl 8HP50 in F30 typically uses FD 2.813. Held at no_confidence pending direct PressClub PDF extraction.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic (ZF 8HP50)",
@@ -1471,7 +1484,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "ZF 8HP50 8th-gear ratio (LCI-era 6-cyl petrol).",
         "value": 0.64,
         "evidence_refs": [
@@ -1480,7 +1493,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.077 inherited from 4-cyl 8HP45 family_default; the 340i 8HP50 typically uses FD around 2.813. No direct PressClub PDF extraction; held at no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -1490,7 +1503,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:bmw-f30-3series-wikipedia"
         ],
@@ -1580,6 +1593,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:bmw-f30-3series-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1632,11 +1651,6 @@
       "usable_for_engine_order": false,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   }

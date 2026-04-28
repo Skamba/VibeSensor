@@ -14,7 +14,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. The Audi A5 (B8/8T/8F) 2.0 TFSI FWD with 7-speed S tronic DCT does not exist in any market. On the MLB platform, all A5 B8 FWD automatics use Multitronic CVT exclusively (engine codes CAEA/CDNB/CAEB at 180/211 hp pre-LCI, plus 225/230 hp post-LCI). The S tronic DCT7 is restricted to quattro (AWD) drivetrain only on the A5 B8 platform - mechanically tied to the integrated transfer-case assembly. Confirmed by Wikipedia Audi A5 transmission table (FWD 2.0 TFSI = multitronic only, no DCT7) and auto-data.net A5 B8 generation index (IDs 4510/4512/19038/19048/22399 - all FWD automatics list multitronic, none list DCT). Same pattern is confirmed for the platform-sister A4 B8.",
       "value": "FWD",
       "evidence_refs": [
@@ -23,7 +23,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. The Audi A5 (B8/8T/8F) 2.0 TFSI FWD with 7-speed S tronic DCT does not exist in any market. On the MLB platform, all A5 B8 FWD automatics use Multitronic CVT exclusively (engine codes CAEA/CDNB/CAEB at 180/211 hp pre-LCI, plus 225/230 hp post-LCI). The S tronic DCT7 is restricted to quattro (AWD) drivetrain only on the A5 B8 platform - mechanically tied to the integrated transfer-case assembly. Confirmed by Wikipedia Audi A5 transmission table (FWD 2.0 TFSI = multitronic only, no DCT7) and auto-data.net A5 B8 generation index (IDs 4510/4512/19038/19048/22399 - all FWD automatics list multitronic, none list DCT). Same pattern is confirmed for the platform-sister A4 B8.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -34,7 +34,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. The Audi A5 (B8/8T/8F) 2.0 TFSI FWD with 7-speed S tronic DCT does not exist in any market. On the MLB platform, all A5 B8 FWD automatics use Multitronic CVT exclusively (engine codes CAEA/CDNB/CAEB at 180/211 hp pre-LCI, plus 225/230 hp post-LCI). The S tronic DCT7 is restricted to quattro (AWD) drivetrain only on the A5 B8 platform - mechanically tied to the integrated transfer-case assembly. Confirmed by Wikipedia Audi A5 transmission table (FWD 2.0 TFSI = multitronic only, no DCT7) and auto-data.net A5 B8 generation index (IDs 4510/4512/19038/19048/22399 - all FWD automatics list multitronic, none list DCT). Same pattern is confirmed for the platform-sister A4 B8.",
         "value": 0.68,
         "evidence_refs": [
@@ -43,7 +43,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. The Audi A5 (B8/8T/8F) 2.0 TFSI FWD with 7-speed S tronic DCT does not exist in any market. On the MLB platform, all A5 B8 FWD automatics use Multitronic CVT exclusively (engine codes CAEA/CDNB/CAEB at 180/211 hp pre-LCI, plus 225/230 hp post-LCI). The S tronic DCT7 is restricted to quattro (AWD) drivetrain only on the A5 B8 platform - mechanically tied to the integrated transfer-case assembly. Confirmed by Wikipedia Audi A5 transmission table (FWD 2.0 TFSI = multitronic only, no DCT7) and auto-data.net A5 B8 generation index (IDs 4510/4512/19038/19048/22399 - all FWD automatics list multitronic, none list DCT). Same pattern is confirmed for the platform-sister A4 B8.",
         "value": 3.444,
         "evidence_refs": [
@@ -54,7 +54,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia",
           "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
@@ -137,6 +137,41 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -176,11 +211,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -198,7 +228,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. ZF 8HP was never used in any Audi A5 B8 (8T/8F) FWD variant. FWD automatic for all A5 B8 configurations (pre-LCI and facelift) is exclusively Multitronic CVT - confirmed by Wikipedia A5 transmission table and auto-data.net generation index. The A5 B8 platform skipped the ZF 8HP entirely - it transitioned directly from ZF 6HP (6-speed tiptronic, used pre-facelift on larger engines with quattro) to S tronic DCT7 (quattro, from 2009 for TFSI / from May 2010 for TDI). FWD automatics remained on Multitronic throughout. The ZF 8HP did appear on A5 B8 in the US/Canada market for 2.0 TFSI quattro (MY2011+, see Wikipedia footnote [35]), but never on FWD and never in EU.",
       "value": "FWD",
       "evidence_refs": [
@@ -207,7 +237,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. ZF 8HP was never used in any Audi A5 B8 (8T/8F) FWD variant. FWD automatic for all A5 B8 configurations (pre-LCI and facelift) is exclusively Multitronic CVT - confirmed by Wikipedia A5 transmission table and auto-data.net generation index. The A5 B8 platform skipped the ZF 8HP entirely - it transitioned directly from ZF 6HP (6-speed tiptronic, used pre-facelift on larger engines with quattro) to S tronic DCT7 (quattro, from 2009 for TFSI / from May 2010 for TDI). FWD automatics remained on Multitronic throughout. The ZF 8HP did appear on A5 B8 in the US/Canada market for 2.0 TFSI quattro (MY2011+, see Wikipedia footnote [35]), but never on FWD and never in EU.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -218,7 +248,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. ZF 8HP was never used in any Audi A5 B8 (8T/8F) FWD variant. FWD automatic for all A5 B8 configurations (pre-LCI and facelift) is exclusively Multitronic CVT - confirmed by Wikipedia A5 transmission table and auto-data.net generation index. The A5 B8 platform skipped the ZF 8HP entirely - it transitioned directly from ZF 6HP (6-speed tiptronic, used pre-facelift on larger engines with quattro) to S tronic DCT7 (quattro, from 2009 for TFSI / from May 2010 for TDI). FWD automatics remained on Multitronic throughout. The ZF 8HP did appear on A5 B8 in the US/Canada market for 2.0 TFSI quattro (MY2011+, see Wikipedia footnote [35]), but never on FWD and never in EU.",
         "value": 0.667,
         "evidence_refs": [
@@ -227,7 +257,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. ZF 8HP was never used in any Audi A5 B8 (8T/8F) FWD variant. FWD automatic for all A5 B8 configurations (pre-LCI and facelift) is exclusively Multitronic CVT - confirmed by Wikipedia A5 transmission table and auto-data.net generation index. The A5 B8 platform skipped the ZF 8HP entirely - it transitioned directly from ZF 6HP (6-speed tiptronic, used pre-facelift on larger engines with quattro) to S tronic DCT7 (quattro, from 2009 for TFSI / from May 2010 for TDI). FWD automatics remained on Multitronic throughout. The ZF 8HP did appear on A5 B8 in the US/Canada market for 2.0 TFSI quattro (MY2011+, see Wikipedia footnote [35]), but never on FWD and never in EU.",
         "value": 3.077,
         "evidence_refs": [
@@ -238,7 +268,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia",
           "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
@@ -321,6 +351,41 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -360,11 +425,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -382,7 +442,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A5 (B8) 2.0 TFSI quattro 7-speed S tronic DCT (DL501 / 0B5) AWD confirmed by Wikipedia A5 transmissions table and auto-data.net A5 Coupe pre-facelift entry (ID 4514, engine code CDNC, 211 hp, production from June 2008). Wikipedia footnote [34]: 'In 2009, Audi introduced the seven speed S-Tronic transmission option for A5 with 2.0 TFSI quattro (155 kW) for the UK market, which replaced the six speed Tiptronic in the United Kingdom and Germany.' production_start_year corrected from 2007 to 2009 - the 2007-2008 EU 2.0 TFSI quattro automatic was the 6-speed ZF 6HP Tiptronic; DCT7 only entered EU market in 2009. Engine codes CDNC/CPMA/CPMB across lifecycle (211 hp pre-LCI, 225/230 hp post-LCI). Default tyre 225/50 R17 per auto-data.net source.",
       "value": "AWD",
       "evidence_refs": [
@@ -390,7 +450,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A5 (B8) 2.0 TFSI quattro 7-speed S tronic DCT (DL501 / 0B5) AWD confirmed by Wikipedia A5 transmissions table and auto-data.net A5 Coupe pre-facelift entry (ID 4514, engine code CDNC, 211 hp, production from June 2008). Wikipedia footnote [34]: 'In 2009, Audi introduced the seven speed S-Tronic transmission option for A5 with 2.0 TFSI quattro (155 kW) for the UK market, which replaced the six speed Tiptronic in the United Kingdom and Germany.' production_start_year corrected from 2007 to 2009 - the 2007-2008 EU 2.0 TFSI quattro automatic was the 6-speed ZF 6HP Tiptronic; DCT7 only entered EU market in 2009. Engine codes CDNC/CPMA/CPMB across lifecycle (211 hp pre-LCI, 225/230 hp post-LCI). Default tyre 225/50 R17 per auto-data.net source.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -400,7 +460,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.68 inherited family-default; not verified from A5 B8 specific Audi tech-data PDF. Note: A6 C7 DL501 (same gearbox family) is documented at 0.519 per Audi 0B5 workshop manual - 0.68 may be incorrect; needs A5 B8 specific verification.",
         "value": 0.68,
         "evidence_refs": [
@@ -408,7 +468,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.444 inherited family-default. A6 C7 DL501 uses split AWD 4.093/4.111 - A5 B8 may differ; needs A5 B8 specific verification.",
         "value": 3.444,
         "evidence_refs": [
@@ -416,7 +476,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive rear 3.444 inherited family-default; unverified for A5 B8.",
         "value": 3.444,
         "evidence_refs": [
@@ -426,7 +486,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia"
         ],
@@ -514,6 +574,24 @@
         "evidence_refs": [
           "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-dct7-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -577,7 +655,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW for EU market. Wikipedia footnote [35] is decisive: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets.' The ZF 8HP + 2.0 TFSI quattro combination is North America (US/CA) only - never EU. The EU path for 2.0 TFSI quattro automatic was ZF 6HP (pre-2009) -> DCT7 (from 2009, see Row 2). Independently corroborated by absence of any ZF 8HP entry in auto-data.net A5 B8 EU variant catalogue (generation indices 1096 and 4152). The combination exists in production but is restricted to USDM/CA - the EU-tagged row is unsupported.",
       "value": "AWD",
       "evidence_refs": [
@@ -585,7 +663,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW for EU market. Wikipedia footnote [35] is decisive: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets.' The ZF 8HP + 2.0 TFSI quattro combination is North America (US/CA) only - never EU. The EU path for 2.0 TFSI quattro automatic was ZF 6HP (pre-2009) -> DCT7 (from 2009, see Row 2). Independently corroborated by absence of any ZF 8HP entry in auto-data.net A5 B8 EU variant catalogue (generation indices 1096 and 4152). The combination exists in production but is restricted to USDM/CA - the EU-tagged row is unsupported.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -595,7 +673,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. Wikipedia footnote [35] is decisive: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets.' The ZF 8HP + 2.0 TFSI quattro combination is North America (US/CA) only - never EU. The EU path for 2.0 TFSI quattro automatic was ZF 6HP (pre-2009) -> DCT7 (from 2009, see Row 2). Independently corroborated by absence of any ZF 8HP entry in auto-data.net A5 B8 EU variant catalogue (generation indices 1096 and 4152). The combination exists in production but is restricted to USDM/CA - the EU-tagged row is unsupported.",
         "value": 0.667,
         "evidence_refs": [
@@ -603,7 +681,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. Wikipedia footnote [35] is decisive: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets.' The ZF 8HP + 2.0 TFSI quattro combination is North America (US/CA) only - never EU. The EU path for 2.0 TFSI quattro automatic was ZF 6HP (pre-2009) -> DCT7 (from 2009, see Row 2). Independently corroborated by absence of any ZF 8HP entry in auto-data.net A5 B8 EU variant catalogue (generation indices 1096 and 4152). The combination exists in production but is restricted to USDM/CA - the EU-tagged row is unsupported.",
         "value": 3.077,
         "evidence_refs": [
@@ -611,7 +689,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. Wikipedia footnote [35] is decisive: 'Beginning with the 2011 model year, the A5 2.0 TFSI Quattro coupe and cabriolet includes 8 speed Tiptronic transmission option, replacing the 6-speed Tiptronic in the U.S. and Canada markets.' The ZF 8HP + 2.0 TFSI quattro combination is North America (US/CA) only - never EU. The EU path for 2.0 TFSI quattro automatic was ZF 6HP (pre-2009) -> DCT7 (from 2009, see Row 2). Independently corroborated by absence of any ZF 8HP entry in auto-data.net A5 B8 EU variant catalogue (generation indices 1096 and 4152). The combination exists in production but is restricted to USDM/CA - the EU-tagged row is unsupported.",
         "value": 3.077,
         "evidence_refs": [
@@ -621,7 +699,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia"
         ],
@@ -715,6 +793,42 @@
         "evidence_refs": [
           "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -761,11 +875,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -783,7 +892,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A5 (B8.5 facelift) 3.0 TDI quattro 7-speed S tronic DCT (DL501 / 0B5) AWD. Confirmed by auto-data.net A5 B8.5 facelift 3.0 TDI 245 hp quattro S tronic (ID 19050, engine codes CDUC/CKVB/CKVC, production 2011-2015) and Wikipedia A5 transmissions table footnote: '7-speed S-Tronic (after May 2010)' for Coupe. production_start_year corrected from 2007 to 2010 - the 2007-2010 pre-facelift 3.0 TDI quattro automatic used the 6-speed ZF 6HP26 Tiptronic (NOT DCT7). DCT7 entered the A5 B8 3.0 TDI lineup at the May 2010 facelift boundary. Engine codes for facelift CDUC/CKVB/CKVC (245 hp). Pre-facelift codes CAPA/CCWA/CCLA used 6-speed Tiptronic and are not represented in this row.",
       "value": "AWD",
       "evidence_refs": [
@@ -792,7 +901,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A5 (B8.5 facelift) 3.0 TDI quattro 7-speed S tronic DCT (DL501 / 0B5) AWD. Confirmed by auto-data.net A5 B8.5 facelift 3.0 TDI 245 hp quattro S tronic (ID 19050, engine codes CDUC/CKVB/CKVC, production 2011-2015) and Wikipedia A5 transmissions table footnote: '7-speed S-Tronic (after May 2010)' for Coupe. production_start_year corrected from 2007 to 2010 - the 2007-2010 pre-facelift 3.0 TDI quattro automatic used the 6-speed ZF 6HP26 Tiptronic (NOT DCT7). DCT7 entered the A5 B8 3.0 TDI lineup at the May 2010 facelift boundary. Engine codes for facelift CDUC/CKVB/CKVC (245 hp). Pre-facelift codes CAPA/CCWA/CCLA used 6-speed Tiptronic and are not represented in this row.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -803,7 +912,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.68 inherited family-default; A6 C7 DL501 documented at 0.519 - 0.68 may be incorrect for A5 B8.5 3.0 TDI quattro DCT7. Needs A5 B8.5 specific verification.",
         "value": 0.68,
         "evidence_refs": [
@@ -812,7 +921,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.444 inherited family-default; A6 C7 DL501 uses split 4.093/4.111 - A5 B8.5 may differ; unverified.",
         "value": 3.444,
         "evidence_refs": [
@@ -821,7 +930,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive rear 3.444 inherited family-default; unverified.",
         "value": 3.444,
         "evidence_refs": [
@@ -832,7 +941,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia",
           "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata"
@@ -915,6 +1024,27 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia",
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -942,7 +1072,7 @@
       },
       {
         "item": "A5 B8 3.0 TDI quattro pre-facelift transmission was 6-speed tiptronic (ZF 6HP), not 7-speed S tronic",
-        "reason": "The Audi A4 3.0 TDI clean diesel quattro press release confirms the pre-facelift V6 TDI quattro family on the MLB platform paired the engine with the six-speed tiptronic (ZF 6HP26). The 7-speed S tronic only became the standard 3.0 TDI quattro automatic from the B8.5 facelift (\u22482011). The current broad row covers 2007 onward; its DCT7 mapping is only valid for the late B8.5 facelift portion of the production span.",
+        "reason": "The Audi A4 3.0 TDI clean diesel quattro press release confirms the pre-facelift V6 TDI quattro family on the MLB platform paired the engine with the six-speed tiptronic (ZF 6HP26). The 7-speed S tronic only became the standard 3.0 TDI quattro automatic from the B8.5 facelift (≈2011). The current broad row covers 2007 onward; its DCT7 mapping is only valid for the late B8.5 facelift portion of the production span.",
         "evidence_refs": [
           "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
         ]
@@ -971,7 +1101,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. ZF 8HP was never used with the Audi A5 (B8/8T/8F) 3.0 TDI quattro in any market. Pre-facelift (2007-2010): 3.0 TDI quattro automatic = 6-speed ZF 6HP26 Tiptronic (auto-data.net ID 4518, 240 hp, engine codes CAPA/CCWA/CCLA) - explicitly 6-speed. Facelift B8.5 (2011-2016): 3.0 TDI quattro automatic = 7-speed S tronic DCT (auto-data.net ID 19050, 245 hp, codes CDUC/CKVB/CKVC). The A5 B8 platform skipped the ZF 8HP entirely on the 3.0 TDI line, transitioning directly from ZF 6HP to DCT7 at the May 2010 facelift. No ZF 8HP variant appears at any production year for A5 B8 3.0 TDI quattro on auto-data.net or Wikipedia.",
       "value": "AWD",
       "evidence_refs": [
@@ -979,7 +1109,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. ZF 8HP was never used with the Audi A5 (B8/8T/8F) 3.0 TDI quattro in any market. Pre-facelift (2007-2010): 3.0 TDI quattro automatic = 6-speed ZF 6HP26 Tiptronic (auto-data.net ID 4518, 240 hp, engine codes CAPA/CCWA/CCLA) - explicitly 6-speed. Facelift B8.5 (2011-2016): 3.0 TDI quattro automatic = 7-speed S tronic DCT (auto-data.net ID 19050, 245 hp, codes CDUC/CKVB/CKVC). The A5 B8 platform skipped the ZF 8HP entirely on the 3.0 TDI line, transitioning directly from ZF 6HP to DCT7 at the May 2010 facelift. No ZF 8HP variant appears at any production year for A5 B8 3.0 TDI quattro on auto-data.net or Wikipedia.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -989,7 +1119,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. ZF 8HP was never used with the Audi A5 (B8/8T/8F) 3.0 TDI quattro in any market. Pre-facelift (2007-2010): 3.0 TDI quattro automatic = 6-speed ZF 6HP26 Tiptronic (auto-data.net ID 4518, 240 hp, engine codes CAPA/CCWA/CCLA) - explicitly 6-speed. Facelift B8.5 (2011-2016): 3.0 TDI quattro automatic = 7-speed S tronic DCT (auto-data.net ID 19050, 245 hp, codes CDUC/CKVB/CKVC). The A5 B8 platform skipped the ZF 8HP entirely on the 3.0 TDI line, transitioning directly from ZF 6HP to DCT7 at the May 2010 facelift. No ZF 8HP variant appears at any production year for A5 B8 3.0 TDI quattro on auto-data.net or Wikipedia.",
         "value": 0.667,
         "evidence_refs": [
@@ -997,7 +1127,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. ZF 8HP was never used with the Audi A5 (B8/8T/8F) 3.0 TDI quattro in any market. Pre-facelift (2007-2010): 3.0 TDI quattro automatic = 6-speed ZF 6HP26 Tiptronic (auto-data.net ID 4518, 240 hp, engine codes CAPA/CCWA/CCLA) - explicitly 6-speed. Facelift B8.5 (2011-2016): 3.0 TDI quattro automatic = 7-speed S tronic DCT (auto-data.net ID 19050, 245 hp, codes CDUC/CKVB/CKVC). The A5 B8 platform skipped the ZF 8HP entirely on the 3.0 TDI line, transitioning directly from ZF 6HP to DCT7 at the May 2010 facelift. No ZF 8HP variant appears at any production year for A5 B8 3.0 TDI quattro on auto-data.net or Wikipedia.",
         "value": 3.077,
         "evidence_refs": [
@@ -1005,7 +1135,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. ZF 8HP was never used with the Audi A5 (B8/8T/8F) 3.0 TDI quattro in any market. Pre-facelift (2007-2010): 3.0 TDI quattro automatic = 6-speed ZF 6HP26 Tiptronic (auto-data.net ID 4518, 240 hp, engine codes CAPA/CCWA/CCLA) - explicitly 6-speed. Facelift B8.5 (2011-2016): 3.0 TDI quattro automatic = 7-speed S tronic DCT (auto-data.net ID 19050, 245 hp, codes CDUC/CKVB/CKVC). The A5 B8 platform skipped the ZF 8HP entirely on the 3.0 TDI line, transitioning directly from ZF 6HP to DCT7 at the May 2010 facelift. No ZF 8HP variant appears at any production year for A5 B8 3.0 TDI quattro on auto-data.net or Wikipedia.",
         "value": 3.077,
         "evidence_refs": [
@@ -1015,7 +1145,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a5-b8-wikipedia"
         ],
@@ -1104,6 +1234,42 @@
           "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-autodata",
           "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-ultimatespecs"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a5-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1148,11 +1314,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

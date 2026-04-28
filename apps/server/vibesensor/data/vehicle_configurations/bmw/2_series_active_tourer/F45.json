@@ -14,7 +14,7 @@
     "engine_name": "B37C15 I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
         "bmw_pressclub_sources:f45-214d-2015-launch-article",
@@ -24,7 +24,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "ZF8HP",
       "name": "8-speed automatic (Aisin)",
@@ -36,7 +36,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.673,
         "evidence_refs": [
@@ -46,7 +46,7 @@
         ]
       },
       "gear_ratios": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": [
           5.25,
@@ -65,7 +65,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 4.398,
         "evidence_refs": [
@@ -77,7 +77,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
           "bmw_pressclub_sources:f45-214d-2015-launch-article",
@@ -170,6 +170,54 @@
           "bmw_pressclub_sources:f45-214d-2015-launch-article",
           "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -199,11 +247,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -221,7 +264,7 @@
     "engine_name": "B37C15 I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-2018-spec-pdf",
         "bmw_pressclub_sources:f45-2020-spec-pdf",
@@ -231,7 +274,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (Aisin)",
@@ -243,7 +286,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.673,
         "evidence_refs": [
@@ -253,7 +296,7 @@
         ]
       },
       "gear_ratios": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
@@ -272,7 +315,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 4.398,
         "evidence_refs": [
@@ -284,7 +327,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf",
@@ -378,6 +421,54 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -407,11 +498,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -429,7 +515,7 @@
     "engine_name": "B38A15U0 I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-2018-spec-pdf",
         "bmw_pressclub_sources:f45-2020-spec-pdf",
@@ -439,7 +525,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (Aisin)",
@@ -451,7 +537,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.673,
         "evidence_refs": [
@@ -461,7 +547,7 @@
         ]
       },
       "gear_ratios": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
@@ -480,7 +566,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 4.398,
         "evidence_refs": [
@@ -492,7 +578,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf",
@@ -586,6 +672,54 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -615,11 +749,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -637,7 +766,7 @@
     "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-2014-spec-pdf",
         "bmw_pressclub_sources:f45-2015-spec-pdf",
@@ -649,7 +778,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (Aisin)",
@@ -663,7 +792,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.673,
         "evidence_refs": [
@@ -675,7 +804,7 @@
         ]
       },
       "gear_ratios": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
@@ -696,7 +825,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 4.398,
         "evidence_refs": [
@@ -710,7 +839,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2014-spec-pdf",
           "bmw_pressclub_sources:f45-2015-spec-pdf",
@@ -810,6 +939,66 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -851,11 +1040,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -930,15 +1114,6 @@
         ],
         "notes": "Aisin AWF8F35 final drive (FWD) per BMW PressClub T0165875EN/312197.",
         "value": 3.075
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.015,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
-          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F35 reverse 4.015 per BMW PressClub spec."
       }
     },
     "tires": {
@@ -954,8 +1129,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -983,6 +1157,13 @@
           "bmw_pressclub_sources:f45-2014-launch-article",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
           "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
+        ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.015",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ]
       }
     ],
@@ -1017,11 +1198,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1039,7 +1215,7 @@
     "engine_name": "B38 1.5L I3 Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-225xe-launch-release",
         "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
@@ -1049,7 +1225,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "BMW 2AT F45 225xe iPerformance plug-in hybrid: B38A15M0 1.5L turbo petrol driving front axle via 6-speed Aisin TF-60SN Steptronic; 65 kW electric motor driving rear axle (through-the-road AWD). Confirmed by BMW PressClub T0299792EN release (225xe drivetrain layout) and T0299792EN/436732 (225xe 2019 spec PDF). Production START year corrected: 2014 -> 2016 (225xe entered production in 03/2016, not at 2014 launch). Wikipedia and BMW PressClub confirm Aisin TF-60SN as the 6AT unit (NOT a ZF gearbox; '6-SPEED-STEP' code retained as shard label). Per-gear ratios and individual final drive not exposed in the BMW PressClub spec PDFs cross-checked in this run and remain at no_confidence pending direct text extraction; transmission identity, drivetrain, and configuration are well-evidenced.",
       "code": "6-SPEED-STEP",
       "name": "6-speed Steptronic (Aisin TF-60SN) + electric rear axle",
@@ -1061,7 +1237,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "225xe per-gear ratios and final drive not extracted from BMW PressClub T0299792EN/436732 in this run; remain unverified pending direct PDF text extraction.",
         "value": 0.672,
         "evidence_refs": [
@@ -1070,7 +1246,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive value 4.398 was a family_default; the 218d-specific FD was not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
         "value": 3.944,
         "evidence_refs": [
@@ -1085,7 +1261,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-225xe-2019-spec-pdf"
         ],
@@ -1187,6 +1363,25 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1249,11 +1444,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1291,7 +1481,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "225xe per-gear ratios and final drive not extracted from BMW PressClub T0299792EN/436732 in this run; remain unverified pending direct PDF text extraction.",
         "value": 0.672,
         "evidence_refs": [
@@ -1300,17 +1490,12 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive value 4.398 was a family_default; the 218d-specific FD was not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
         "value": 3.944,
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.944
       }
     },
     "tires": {
@@ -1325,8 +1510,7 @@
           "aspect_pct": 60.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1397,6 +1581,19 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1424,11 +1621,6 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   },
@@ -1492,20 +1684,12 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 4.398 was a family_default; not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
         "value": 4.398,
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.221,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F35 reverse per BMW PressClub T0277458EN/401747."
       }
     },
     "tires": {
@@ -1520,8 +1704,7 @@
           "aspect_pct": 60.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1592,6 +1775,18 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1619,11 +1814,6 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   },
@@ -1670,7 +1860,7 @@
         "value": 0.698
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.231 was a family_default; not directly extracted from BMW PressClub T0277458EN/401747 in this research run. Auto-data secondary cross-check listed; promotion to official_derived requires direct PDF text extraction.",
         "value": 3.231,
         "evidence_refs": [
@@ -1692,8 +1882,7 @@
           "aspect_pct": 60.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1767,6 +1956,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
+          "secondary_technical_sources:f45-220i-dct-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -1794,11 +1990,6 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   }

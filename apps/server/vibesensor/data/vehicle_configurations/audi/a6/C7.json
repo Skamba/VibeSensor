@@ -14,7 +14,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -22,7 +22,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. Audi A6 (C7/4G) MLB longitudinal platform: the DL501 (Audi code 0B5, 7-speed wet-clutch S tronic) is mechanically incompatible with FWD - it is designed exclusively for quattro architectures with integrated rear-axle output. The A6 C7 FWD range used 6-speed manual (0B2/0B3) for entry power states and Multitronic CVT (0AW) for FWD automatic. The S tronic DCT7 did not appear with the 2.0 TFSI until the very late C7.5 facelift (approximately 2016+ as 2.0 45 TFSI ultra), and only in a specific late-lifecycle configuration - not applicable to a 2011 production-start row. Wikipedia A6 C7 transmission table confirms: 180 PS variant = 6-speed manual (std) / multitronic (opt); 211 PS variant = multitronic (std); 245 PS C7.5 (2017+) = 7-speed S tronic. No DL501 for the 2011-era FWD 2.0 TFSI.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -32,7 +32,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. Audi A6 (C7/4G) MLB longitudinal platform: the DL501 (Audi code 0B5, 7-speed wet-clutch S tronic) is mechanically incompatible with FWD - it is designed exclusively for quattro architectures with integrated rear-axle output. The A6 C7 FWD range used 6-speed manual (0B2/0B3) for entry power states and Multitronic CVT (0AW) for FWD automatic. The S tronic DCT7 did not appear with the 2.0 TFSI until the very late C7.5 facelift (approximately 2016+ as 2.0 45 TFSI ultra), and only in a specific late-lifecycle configuration - not applicable to a 2011 production-start row. Wikipedia A6 C7 transmission table confirms: 180 PS variant = 6-speed manual (std) / multitronic (opt); 211 PS variant = multitronic (std); 245 PS C7.5 (2017+) = 7-speed S tronic. No DL501 for the 2011-era FWD 2.0 TFSI.",
         "value": 0.68,
         "evidence_refs": [
@@ -40,7 +40,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. Audi A6 (C7/4G) MLB longitudinal platform: the DL501 (Audi code 0B5, 7-speed wet-clutch S tronic) is mechanically incompatible with FWD - it is designed exclusively for quattro architectures with integrated rear-axle output. The A6 C7 FWD range used 6-speed manual (0B2/0B3) for entry power states and Multitronic CVT (0AW) for FWD automatic. The S tronic DCT7 did not appear with the 2.0 TFSI until the very late C7.5 facelift (approximately 2016+ as 2.0 45 TFSI ultra), and only in a specific late-lifecycle configuration - not applicable to a 2011 production-start row. Wikipedia A6 C7 transmission table confirms: 180 PS variant = 6-speed manual (std) / multitronic (opt); 211 PS variant = multitronic (std); 245 PS C7.5 (2017+) = 7-speed S tronic. No DL501 for the 2011-era FWD 2.0 TFSI.",
         "value": 3.444,
         "evidence_refs": [
@@ -50,7 +50,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -160,6 +160,36 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -219,7 +249,7 @@
       },
       {
         "item": "DCT7 (7-speed S tronic) is not standard for the EU A6 C7 2.0 TFSI",
-        "reason": "Audi A6 C7 (2011-2018) EU 2.0 TFSI was sold with 6-speed manual or multitronic CVT for the 132 kW and 155 kW states; the 7-speed S tronic only appeared with the late C7.5 facelift 2.0 45 TFSI ultra (\u22482016+). The broad 2011 row does not capture an EU-standard DCT7 2.0 TFSI.",
+        "reason": "Audi A6 C7 (2011-2018) EU 2.0 TFSI was sold with 6-speed manual or multitronic CVT for the 132 kW and 155 kW states; the 7-speed S tronic only appeared with the late C7.5 facelift 2.0 45 TFSI ultra (≈2016+). The broad 2011 row does not capture an EU-standard DCT7 2.0 TFSI.",
         "evidence_refs": [
           "legacy_research_sources:07f701f57e44",
           "legacy_research_sources:3bd8ca8fa320",
@@ -233,11 +263,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -258,7 +283,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -266,7 +291,7 @@
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK / 8HP45) on Audi A6 C7 MLB is paired with quattro drivetrains throughout the EU range; FWD automatic uses Multitronic CVT. The 2.0 TFSI + ZF 8HP + FWD combination in the Wikipedia transmission table represents the China-market A6L (long-wheelbase, FAW-VW) where ZF 8HP replaced Multitronic for the Chinese-domestic model - this is a distinct product from the EU 4G sedan/Avant. No checked official Audi material places the ZF 8HP into the EU FWD 2.0 TFSI A6 C7 lineup.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -276,7 +301,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK / 8HP45) on Audi A6 C7 MLB is paired with quattro drivetrains throughout the EU range; FWD automatic uses Multitronic CVT. The 2.0 TFSI + ZF 8HP + FWD combination in the Wikipedia transmission table represents the China-market A6L (long-wheelbase, FAW-VW) where ZF 8HP replaced Multitronic for the Chinese-domestic model - this is a distinct product from the EU 4G sedan/Avant. No checked official Audi material places the ZF 8HP into the EU FWD 2.0 TFSI A6 C7 lineup.",
         "value": 0.667,
         "evidence_refs": [
@@ -284,7 +309,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK / 8HP45) on Audi A6 C7 MLB is paired with quattro drivetrains throughout the EU range; FWD automatic uses Multitronic CVT. The 2.0 TFSI + ZF 8HP + FWD combination in the Wikipedia transmission table represents the China-market A6L (long-wheelbase, FAW-VW) where ZF 8HP replaced Multitronic for the Chinese-domestic model - this is a distinct product from the EU 4G sedan/Avant. No checked official Audi material places the ZF 8HP into the EU FWD 2.0 TFSI A6 C7 lineup.",
         "value": 3.077,
         "evidence_refs": [
@@ -294,7 +319,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -404,6 +429,36 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -480,11 +535,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -502,7 +552,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -510,7 +560,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A6 (C7) 3.0 TDI quattro single-turbo + DL501 (0B5) 7-speed S tronic is the standard EU production pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic for all standard 3.0 TDI quattro variants throughout C7 lifecycle (2011-2014: 204/245 PS; 2014-2018: 190/218/272 PS). Engine codes CGLD/CFGC/CKVB (single-turbo, 150-176 kW). RATIO CORRECTIONS APPLIED: top gear 0.68 -> 0.519 (DL501 7th gear per Audi workshop manual, also matches shard's own Wave 17 verification_notes); final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material - the DL501 in A6 C7 quattro uses split AWD reductions, not a single FD value, and 3.444 was incorrect for either axle. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -520,7 +570,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 (C7) 3.0 TDI quattro single-turbo + DL501 (0B5) 7-speed S tronic is the standard EU production pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic for all standard 3.0 TDI quattro variants throughout C7 lifecycle (2011-2014: 204/245 PS; 2014-2018: 190/218/272 PS). Engine codes CGLD/CFGC/CKVB (single-turbo, 150-176 kW). RATIO CORRECTIONS APPLIED: top gear 0.68 -> 0.519 (DL501 7th gear per Audi workshop manual, also matches shard's own Wave 17 verification_notes); final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material - the DL501 in A6 C7 quattro uses split AWD reductions, not a single FD value, and 3.444 was incorrect for either axle. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
         "value": 0.519,
         "evidence_refs": [
@@ -528,7 +578,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 (C7) 3.0 TDI quattro single-turbo + DL501 (0B5) 7-speed S tronic is the standard EU production pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic for all standard 3.0 TDI quattro variants throughout C7 lifecycle (2011-2014: 204/245 PS; 2014-2018: 190/218/272 PS). Engine codes CGLD/CFGC/CKVB (single-turbo, 150-176 kW). RATIO CORRECTIONS APPLIED: top gear 0.68 -> 0.519 (DL501 7th gear per Audi workshop manual, also matches shard's own Wave 17 verification_notes); final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material - the DL501 in A6 C7 quattro uses split AWD reductions, not a single FD value, and 3.444 was incorrect for either axle. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
         "value": 4.093,
         "evidence_refs": [
@@ -536,7 +586,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 C7 quattro DL501 (0B5) uses split AWD reductions: 4.093 front / 4.111 rear per Audi 0B5 workshop manual. Replaces incorrect single 3.444 value.",
         "value": 4.111,
         "evidence_refs": [
@@ -546,7 +596,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -749,7 +799,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -757,7 +807,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A6 (C7) 3.0 BiTDI quattro + ZF 8HP (0BK / 8HP50) confirmed by Wikipedia A6 C7 transmissions table: 8-speed Tiptronic exclusively for '3.0 TDI quattro (313 PS, 320 PS, 326 PS)' - the BiTDI product (engine code CDUD, 230 kW). UK-market labelling: '3.0 BiTDI quattro'. SCOPE NOTE: this row's engine_code '3.0L' is ambiguous and conflates single-turbo (CGLD/CFGC/CKVB - paired with DL501 in Row 2) with biturbo (CDUD - paired with ZF 8HP only here); the row should be read as BiTDI sub-variant only. Top gear 0.667 plausible for ZF8HP50 8th gear (standard HP50 ratio set). Final drive 3.077 plausible for ZF 8HP applications on MLB-platform A6/A7/A8 family - both unconfirmed from A6 C7 BiTDI specific official tech data. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -767,7 +817,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.667 plausible for ZF8HP50 8th gear standard HP50 ratio set, but unverified for A6 C7 BiTDI specific application.",
         "value": 0.667,
         "evidence_refs": [
@@ -775,7 +825,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.077 plausible for ZF 8HP on MLB A6/A7/A8 family but unverified for A6 C7 BiTDI specific.",
         "value": 3.077,
         "evidence_refs": [
@@ -783,7 +833,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive rear 3.077 inherited; unverified.",
         "value": 3.077,
         "evidence_refs": [
@@ -793,7 +843,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -903,6 +953,24 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -996,7 +1064,7 @@
     "engine_name": "3.0L V6 Supercharged",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -1004,7 +1072,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A6 (C7) 3.0 TFSI supercharged V6 quattro + DL501 (0B5) 7-speed S tronic is the standard EU pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic as standard for 3.0 TFSI quattro (220 kW and 228 kW) EU/UK market. For the 228 kW saloon, Wikipedia explicitly notes: '7-speed S-Tronic is used in the UK model.' S6 C7 (4.0 TFSI biturbo, 309 kW) also uses DL501, confirming the gearbox family. RATIO CORRECTIONS (identical to Row 2): top gear 0.68 -> 0.519; final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide. Note: post-LCI 245 kW state (CREC/CVWA, 2014+) has high probability of retaining 0B5 but is not independently confirmed in current source pack.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -1014,7 +1082,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 (C7) 3.0 TFSI supercharged V6 quattro + DL501 (0B5) 7-speed S tronic is the standard EU pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic as standard for 3.0 TFSI quattro (220 kW and 228 kW) EU/UK market. For the 228 kW saloon, Wikipedia explicitly notes: '7-speed S-Tronic is used in the UK model.' S6 C7 (4.0 TFSI biturbo, 309 kW) also uses DL501, confirming the gearbox family. RATIO CORRECTIONS (identical to Row 2): top gear 0.68 -> 0.519; final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide. Note: post-LCI 245 kW state (CREC/CVWA, 2014+) has high probability of retaining 0B5 but is not independently confirmed in current source pack.",
         "value": 0.519,
         "evidence_refs": [
@@ -1022,7 +1090,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 (C7) 3.0 TFSI supercharged V6 quattro + DL501 (0B5) 7-speed S tronic is the standard EU pairing. Wikipedia A6 C7 transmissions table confirms 7-speed S tronic as standard for 3.0 TFSI quattro (220 kW and 228 kW) EU/UK market. For the 228 kW saloon, Wikipedia explicitly notes: '7-speed S-Tronic is used in the UK model.' S6 C7 (4.0 TFSI biturbo, 309 kW) also uses DL501, confirming the gearbox family. RATIO CORRECTIONS (identical to Row 2): top gear 0.68 -> 0.519; final drives 3.444 -> 4.093 (front) / 4.111 (rear) per Audi 0B5 workshop-manual material. TIRE CORRECTION: 245/40 R19 -> 225/55 R17 per Audi A6 C7 EU wheel/tyre guide. Note: post-LCI 245 kW state (CREC/CVWA, 2014+) has high probability of retaining 0B5 but is not independently confirmed in current source pack.",
         "value": 4.093,
         "evidence_refs": [
@@ -1030,7 +1098,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Audi A6 C7 quattro DL501 (0B5) split AWD reductions: 4.093 front / 4.111 rear per Audi 0B5 workshop manual.",
         "value": 4.111,
         "evidence_refs": [
@@ -1040,7 +1108,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -1243,7 +1311,7 @@
     "engine_name": "3.0L V6 Supercharged",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "secondary_technical_sources:audi-a6-c7-wikipedia"
       ],
@@ -1251,7 +1319,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK) + 3.0 TFSI quattro combination is a USDM/Canada/South Korea allocation only - the EU/UK A6 C7 3.0 TFSI quattro uses DL501 7-speed S tronic instead (see Row 4). Wikipedia A6 C7 transmissions table: '8-speed Tiptronic is used in the US, Canada models' for the 3.0 TFSI quattro 310 PS saloon - no EU/UK entry. Audi workshop-manual material records the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan as marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The combination exists in production but not for the EU market covered by this shard.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -1261,7 +1329,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK) + 3.0 TFSI quattro combination is a USDM/Canada/South Korea allocation only - the EU/UK A6 C7 3.0 TFSI quattro uses DL501 7-speed S tronic instead (see Row 4). Wikipedia A6 C7 transmissions table: '8-speed Tiptronic is used in the US, Canada models' for the 3.0 TFSI quattro 310 PS saloon - no EU/UK entry. Audi workshop-manual material records the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan as marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The combination exists in production but not for the EU market covered by this shard.",
         "value": 0.667,
         "evidence_refs": [
@@ -1269,7 +1337,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK) + 3.0 TFSI quattro combination is a USDM/Canada/South Korea allocation only - the EU/UK A6 C7 3.0 TFSI quattro uses DL501 7-speed S tronic instead (see Row 4). Wikipedia A6 C7 transmissions table: '8-speed Tiptronic is used in the US, Canada models' for the 3.0 TFSI quattro 310 PS saloon - no EU/UK entry. Audi workshop-manual material records the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan as marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The combination exists in production but not for the EU market covered by this shard.",
         "value": 3.077,
         "evidence_refs": [
@@ -1277,7 +1345,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW for EU market. The ZF 8HP (Audi 0BK) + 3.0 TFSI quattro combination is a USDM/Canada/South Korea allocation only - the EU/UK A6 C7 3.0 TFSI quattro uses DL501 7-speed S tronic instead (see Row 4). Wikipedia A6 C7 transmissions table: '8-speed Tiptronic is used in the US, Canada models' for the 3.0 TFSI quattro 310 PS saloon - no EU/UK entry. Audi workshop-manual material records the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan as marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The combination exists in production but not for the EU market covered by this shard.",
         "value": 3.077,
         "evidence_refs": [
@@ -1287,7 +1355,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-a6-c7-wikipedia"
         ],
@@ -1397,6 +1465,42 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-a6-c7-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1470,11 +1574,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
