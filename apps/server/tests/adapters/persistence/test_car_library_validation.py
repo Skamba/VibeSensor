@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+from vibesensor.adapters.persistence.car_library import load_car_library
 from vibesensor.adapters.persistence.car_library_validation import (
+    load_car_library_validation_allowlist,
     validate_car_library_rows,
     validate_vehicle_configurations,
 )
+from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 from vibesensor.domain import (
     AxleTireSetup,
     TireSpec,
@@ -251,3 +254,17 @@ def test_validate_vehicle_configurations_allowlist_silences_duplicate() -> None:
     issues = validate_vehicle_configurations([a, b], allowlist=allowlist)
 
     assert not [i for i in issues if i.rule == "duplicate_vehicle_configuration"]
+
+
+def test_bundled_allowlist_entries_match_live_validation_issues() -> None:
+    allowlist = load_car_library_validation_allowlist()
+    vehicle_issue_keys = {
+        (issue.rule, issue.entity)
+        for issue in validate_vehicle_configurations(load_vehicle_configurations(), allowlist={})
+    }
+    row_issue_keys = {
+        (issue.rule, issue.entity)
+        for issue in validate_car_library_rows(load_car_library(), allowlist={})
+    }
+
+    assert sorted(set(allowlist) - (vehicle_issue_keys | row_issue_keys)) == []
