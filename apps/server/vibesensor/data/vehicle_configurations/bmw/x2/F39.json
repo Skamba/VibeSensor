@@ -1,17 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n4": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n5": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n6": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n7": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n9": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n10": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n12": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "n13": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
       "n14": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
@@ -202,7 +194,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -214,7 +205,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -226,7 +216,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -245,26 +234,6 @@
         {
           "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact DCT7 automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -336,7 +305,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -348,7 +316,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -360,7 +327,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -379,26 +345,6 @@
         {
           "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact 8-speed automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -470,7 +416,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -482,7 +427,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -494,7 +438,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -513,26 +456,6 @@
         {
           "note": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e16"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e6"
         }
       ],
       "unresolved": [
@@ -639,7 +562,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -651,7 +573,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -767,7 +688,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -779,7 +699,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -865,7 +784,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -877,7 +795,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -889,7 +806,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -906,31 +822,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-        },
-        {
           "note": "Official 2018 and 2021 F39 sDrive18i technical-data sheets show six-speed manual with optional 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e19"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e8"
         }
       ],
       "unresolved": [
@@ -1033,7 +926,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1045,7 +937,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1131,7 +1022,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1143,7 +1033,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1155,7 +1044,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1174,26 +1062,6 @@
         {
           "note": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e19"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e12"
         }
       ],
       "unresolved": [
@@ -1265,7 +1133,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1277,7 +1144,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1289,7 +1155,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1308,26 +1173,6 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1399,7 +1244,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1411,7 +1255,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1423,7 +1266,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1442,26 +1284,6 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -1539,7 +1361,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1551,7 +1372,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1563,7 +1383,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1582,30 +1401,6 @@
         {
           "note": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e9"
         }
       ],
       "unresolved": [
@@ -1715,7 +1510,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1727,7 +1521,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1823,7 +1616,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -1835,7 +1627,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -1847,7 +1638,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -1866,30 +1656,6 @@
         {
           "note": "Official F39 xDrive20i technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e11"
         }
       ],
       "unresolved": [
@@ -1994,7 +1760,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2006,7 +1771,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2102,7 +1866,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2114,7 +1877,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2126,7 +1888,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2144,30 +1905,6 @@
         },
         {
           "note": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
           "evidence_refs_ref": "e3"
         }
       ],
@@ -2261,7 +1998,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2273,7 +2009,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2285,7 +2020,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2385,7 +2119,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2397,7 +2130,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2409,7 +2141,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2428,30 +2159,6 @@
         {
           "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
           "evidence_refs_ref": "e22"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -2529,7 +2236,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2541,7 +2247,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2553,7 +2258,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2572,30 +2276,6 @@
         {
           "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
           "evidence_refs_ref": "e22"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -2673,7 +2353,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2685,7 +2364,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2697,7 +2375,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2716,30 +2393,6 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
@@ -2817,7 +2470,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 45.0,
@@ -2829,7 +2481,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 40.0,
@@ -2841,7 +2492,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 35.0,
@@ -2860,30 +2510,6 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [

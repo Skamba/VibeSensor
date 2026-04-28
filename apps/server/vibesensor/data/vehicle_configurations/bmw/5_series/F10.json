@@ -2,7 +2,6 @@
   "definitions": {
     "notes": {
       "n1": "Official BMW 09/2011 technical-data PDF publishes the complete forward gear-ratio set for this exact launch-state row.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n3": "Official BMW 09/2011 technical-data material publishes Eight-speed automatic with Steptronic wording for this exact launch-state. The repo stores normalized code ZF8HP, but the supplier gearbox-family code is not printed in the checked source.",
       "n4": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the exact 520i manual launch-state.",
       "n5": "Official BMW 09/2011 technical-data PDF confirms the standard 17-inch square tire setup for the automatic 520i launch-state.",
@@ -994,12 +993,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.812
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.231
         }
       },
@@ -1007,7 +1004,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e6",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -1019,7 +1015,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e6",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -1031,7 +1026,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e6",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 40.0,
@@ -1043,7 +1037,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e6",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 35.0,

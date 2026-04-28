@@ -2,20 +2,7 @@
   "definitions": {
     "notes": {
       "n1": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n3": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
-      "n4": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n5": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n6": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n7": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n9": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n10": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n12": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n13": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. Standard SE-trim tire is 205/55 R16 91W (7Jx16) per BMW UK Jan 2020 tech data; 225/40 R18 92Y is the M Sport fitment option. 0–62 mph 8.5s manual / 8.9s 'Steptronic'.",
-      "n14": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. 120i is EU-continental only (UK lineup sold the 128ti instead, per BMW UK Nov 2021 model list). Engine and tire data not retrievable from accessed BMW UK sources.",
-      "n15": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK F40 launch tech-data pages confirm engine and tires but do NOT publish gearbox family. F40 is a transverse FWD/UKL2 platform; the actual gearboxes are widely understood to be the Aisin GA8F22AW (8-speed 'Steptronic' transverse stepped automatic) for non-sport variants and the Getrag GD7F23 7DCT for sport variants. The repo's DCT7 + 'Steptronic' naming is internally inconsistent. Transmission family for this row is not officially confirmed and should be treated as low-confidence pending a BMW PressClub PDF or BMW DE/AT spec sheet. Forward gear ratio and final-drive numbers remain family_default and unverified. BMW UK Aug 2021 M135i xDrive page confirms B48 4-cyl 1998 cc TwinPower Turbo, 225 kW/306 hp @ 5000-6250, 450 Nm @ 1800-4500, 9.5:1 compression, 1600 kg DIN unladen, 0-62 mph 4.8 s, top speed 155 mph (limited), tires 225/40 R18 92Y XL on 8Jx18."
+      "n3": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -60,12 +47,10 @@
           "bmw_market_pages:f40-1series-uk-tech-data-2020",
           "bmw_market_pages:f40-1series-uk-inform-2019"
         ],
-        "notes_ref": "n13",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n13",
         "code": "DCT7",
         "name": "7-speed Steptronic dual-clutch transmission",
         "evidence_refs": [
@@ -76,12 +61,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.71
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.684
         }
       },
@@ -113,7 +96,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -125,7 +107,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -140,9 +121,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -258,41 +236,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -333,12 +276,10 @@
           "legacy_research_sources:16c091e6cfd6",
           "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes_ref": "n14",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n14",
         "code": "DCT7",
         "name": "7-speed Steptronic dual-clutch transmission",
         "evidence_refs_ref": "e3"
@@ -346,12 +287,10 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.71
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.684
         }
       },
@@ -359,7 +298,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -371,7 +309,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -383,7 +320,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -395,7 +331,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -410,9 +345,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -528,41 +460,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -604,12 +501,10 @@
           "bmw_market_pages:f40-1series-uk-m135i-2021",
           "bmw_market_pages:f40-1series-uk-tech-data-2020"
         ],
-        "notes_ref": "n15",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n15",
         "code": "DCT7",
         "name": "7-speed Steptronic dual-clutch transmission",
         "evidence_refs": [
@@ -620,17 +515,14 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.71
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.684
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.684
         }
       },
@@ -646,7 +538,6 @@
             "legacy_research_sources:eca9fb0d3e74",
             "bmw_market_pages:f40-1series-uk-m135i-2021"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence. Sonnet redo research (2026-04 v2): BMW UK Aug 2021 M135i xDrive page confirms 225/40 R18 92Y XL on 8Jx18 alloy.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -658,7 +549,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -670,7 +560,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -682,7 +571,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -697,9 +585,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
         }
       ],
       "unresolved": [
@@ -821,45 +706,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note_ref": "n4"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n11",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n12",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [

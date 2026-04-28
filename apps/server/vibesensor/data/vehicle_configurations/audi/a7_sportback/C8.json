@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n2": "Official Audi 2024 technical-data PDF publishes one populated final-drive value 4.410 for the exact A7 Sportback 55 TFSI quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
       "n3": "Official Audi 2024 technical-data PDF lists 225/55 R18 on 8 J x 18 wheels as the basic package for the exact A7 Sportback 55 TFSI quattro S tronic state, and the official 2025 German price list confirms the same square 18-inch package in the A7 family wheel table."
     },
@@ -211,29 +210,24 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "DCT7",
         "name": "7-speed S tronic (DL382)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.725
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.564
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.564
         }
       },
@@ -241,7 +235,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -253,7 +246,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -265,7 +257,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -277,7 +268,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 25.0,
@@ -292,9 +282,6 @@
         {
           "note": "Official Audi Germany-market technical-data material now confirms late-cycle exact A7 Sportback mappings for both quattro variants: 45 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/55 R18; and 55 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and the same 225/55 R18 basic tire. The broad A7 row remains unchanged because the checked exact evidence does not prove the same mappings across the full 2019-2026 span or across the shared 45/55 TFSI row.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
         }
       ],
       "unresolved": [

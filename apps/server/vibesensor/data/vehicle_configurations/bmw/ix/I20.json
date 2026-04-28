@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
-      "n2": "Official BMW Germany launch-era documentation now confirms the exact iX M60 DE mapping for drivetrain context, single-speed wording, and tire fitment: AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 wheels. The broad iX row remains unchanged because the exact M60 front/rear ratio values and numeric top-gear data were not resolved from exact official sources in this pass.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW technical data with High confidence."
+      "n2": "Official BMW Germany launch-era documentation now confirms the exact iX M60 DE mapping for drivetrain context, single-speed wording, and tire fitment: AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 wheels. The broad iX row remains unchanged because the exact M60 front/rear ratio values and numeric top-gear data were not resolved from exact official sources in this pass."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -43,29 +41,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         }
       },
@@ -73,7 +66,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -85,7 +77,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 45.0,
@@ -97,7 +88,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 40.0,
@@ -112,9 +102,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -146,29 +133,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         }
       },
@@ -176,7 +158,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -188,7 +169,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 45.0,
@@ -200,7 +180,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 40.0,
@@ -215,9 +194,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -249,29 +225,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 1.0
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 9.079
         }
       },
@@ -279,7 +250,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -291,7 +261,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 45.0,
@@ -303,7 +272,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 40.0,
@@ -318,9 +286,6 @@
         {
           "note_ref": "n2",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [

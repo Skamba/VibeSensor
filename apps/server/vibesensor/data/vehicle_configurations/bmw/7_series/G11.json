@@ -1,15 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
       "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
       "n4": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n5": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n6": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n7": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n9": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
       "n10": "Sonnet redo research (2026-04 v2): PHANTOM ROW for EU. The 730Li (B48 2.0L I4 petrol in LWB) is a China and select-Asia market variant; it is not listed in any BMW EU PressClub spec article (T0235242EN, T0289615EN) or EU price list. The repo row is tagged 'eu' market which is incorrect for this badge. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "n11": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 730i variant did exist in the EU BMW G11 lineup but only from the 2019 LCI refresh onward (B48 2.0L I4 petrol). It was explicitly NOT in the 11/2015 launch lineup per BMW PressClub T0235242EN spec article. The current row's production_start_year/end_year of 2016/2016 is therefore wrong (correct era is 2019-2022). Tire family_default 245/40 R20 is also unconfirmed for a base petrol. Drivetrain, transmission, ratios and tires set to no_confidence pending year correction and a 2019-LCI tech-data PDF.",
       "n12": "The official BMW DE launch-era 7 Series brochure technical-data table lists `245/50 R18 Y` as the baseline tire for the shared `740e/Le` column.",
@@ -161,7 +155,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -173,7 +166,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -185,7 +177,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -200,26 +191,6 @@
         {
           "note": "This G11 research wave rechecks the official BMW 11/2015 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Together they show that 2016 EU diesel rows are published as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but no exact 725Ld row appears in either the launch article or the Germany-market technical-data table, so this represented 2016 725Ld RWD configuration remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -294,7 +265,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -306,7 +276,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -318,7 +287,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -333,26 +301,6 @@
         {
           "note": "Batch 16 directly revalidated the official BMW 11/2015 G11 launch specifications article, and batch 10 then rechecked the official BMW DE launch-era 7 Series brochure/catalog technical table. Together they show that 2016 EU diesel rows are published as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but no exact 725d row appears in either the launch article or the Germany-market technical-data table, so this represented 2016 725d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -526,7 +474,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -538,7 +485,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -550,7 +496,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -565,26 +510,6 @@
         {
           "note": "This G11 research wave rechecks the official BMW 11/2015 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Those checked official BMW sources publish exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d/Ld xDrive, 740i, 740Li, 750i, 750Li, and xDrive petrol siblings, but they do not publish any exact 730Li row, so this represented 2016 730Li RWD configuration remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -758,7 +683,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -770,7 +694,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -782,7 +705,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -797,26 +719,6 @@
         {
           "note": "This G11 research wave keeps the row unsupported but improves the official evidence chain. The checked BMW 11/2015 launch specifications article and the official BMW DE launch-era technical-data table still omit any trim-specific 730i row, while reputable secondary exact-trim pages independently confirm that a 2016 BMW 7 Series 730i existed for the European market as a G11/G12 2.0-liter B48B20 I4 petrol state and capture checked 17-inch, 18-inch, and 19-inch fitments. An earlier attempt to use the official BMW Germany brochure column with 1998 cm3 / 190 kW / 400 Nm as exact 730i proof was rejected because that extracted column belongs to 740e/Le iPerformance context rather than a standalone 730i row.",
           "evidence_refs_ref": "e17"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -891,7 +793,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -903,7 +804,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -915,7 +815,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -934,26 +833,6 @@
         {
           "note": "Official G11/G12 sources found in this run support 740Ld as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e14"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -1245,7 +1124,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -1257,7 +1135,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -1269,7 +1146,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -1288,26 +1164,6 @@
         {
           "note": "Official G11/G12 sources found in this run support 740d as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e14"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -1599,7 +1455,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -1611,7 +1466,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -1623,7 +1477,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -1642,26 +1495,6 @@
         {
           "note": "Official Germany catalog and later BMW technical-data evidence found in this run support 750Ld as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -1736,7 +1569,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 40.0,
@@ -1748,7 +1580,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -1760,7 +1591,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -1779,26 +1609,6 @@
         {
           "note": "Official Germany catalog and later BMW technical-data evidence found in this run support 750d as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e4"
         }
       ],
       "unresolved": [
@@ -2211,9 +2021,6 @@
         {
           "note": "The official BMW 01/2019 facelift press kit and paired technical-data PDF close the exact 745e rear-wheel-drive plug-in-hybrid mapping: 2019-on facelift timing, RWD, 8-speed Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.077, and 245/50 R18 baseline tires. This row keeps only the baseline wheel package because the broader optional wheel matrix was not recovered from a direct official source in this pass.",
           "evidence_refs_ref": "e19"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
         }
       ],
       "unresolved": [

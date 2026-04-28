@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "n2": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "n3": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "n4": "DQ200 7-speed S tronic top gear (7th)."
     },
@@ -136,7 +134,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -148,7 +145,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -160,7 +156,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -175,9 +170,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI manual placeholder. The 06/20/2018 launch release supports manual availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI sheet closes a later exact 5-speed manual state with 0.673 top gear, 3.933 final drive, and 185/65 R15 tires. Those late official values contradict the inherited MT6, 0.840, 3.462, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n2"
         },
         {
           "note": "Transmission marketing correction: Canonical row labeled MT6 was incorrect; eTD confirms 5-speed manual."
@@ -267,7 +259,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -279,7 +270,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -291,7 +281,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -306,9 +295,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -386,7 +372,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -398,7 +383,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -410,7 +394,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -425,9 +408,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI manual placeholder. The 06/20/2018 launch release supports manual availability for non-top engines at Europe launch, and the checked 02/03/2026 Germany-program 30 TFSI sheet closes a later exact 6-speed manual state with 0.554 top gear, 4.353 final drive, and 185/65 R15 tires. Those late official values contradict the inherited 0.840, 3.462, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e11"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -519,7 +499,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -531,7 +510,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -543,7 +521,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -558,9 +535,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 30 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -597,24 +571,20 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.84
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.462
         }
       },
@@ -622,7 +592,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
@@ -634,7 +603,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -646,7 +614,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -658,7 +625,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -673,9 +639,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI manual placeholder. The 06/20/2018 launch release says non-top engines could launch with manual or 7-speed S tronic transmissions, but the current Audi MediaCenter A1 Sportback model page and the checked 02/03/2026 exact technical-data set expose only a 35 TFSI S tronic late-program sheet. No checked official source closes a 35 TFSI manual ratio or tire package, so the inherited MT6, 0.840, 3.462, and 215/45 R17 carryover values remain unsupported and production JSON stays unchanged.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [
@@ -767,7 +730,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 215.0,
               "aspect_pct": 45.0,
@@ -779,7 +741,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -791,7 +752,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -806,9 +766,6 @@
         {
           "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, while the current Audi MediaCenter model page and the checked 02/03/2026 35 TFSI S tronic sheet close a later exact state with 0.653 top gear, split final drives 4.800 / 3.429, and 195/55 R16 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n2"
         }
       ],
       "unresolved": [

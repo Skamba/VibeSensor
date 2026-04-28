@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
       "n3": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete."
     },
     "evidence_ref_sets": {
@@ -53,29 +51,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes_ref": "n1",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n1",
           "value": 3.077
         }
       },
@@ -83,7 +76,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 40.0,
@@ -95,7 +87,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -107,7 +98,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -124,7 +114,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -144,9 +133,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
         }
       ],
       "unresolved": [
@@ -183,29 +169,24 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes_ref": "n2",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n2",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 0.667
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",
-          "notes_ref": "n2",
           "value": 3.077
         }
       },
@@ -213,7 +194,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 40.0,
@@ -225,7 +205,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -237,7 +216,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 40.0,
@@ -254,7 +232,6 @@
           {
             "confidence": "reputable_secondary_crosschecked",
             "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
             "front": {
               "width_mm": 275.0,
               "aspect_pct": 35.0,
@@ -274,9 +251,6 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence."
         }
       ],
       "unresolved": [
@@ -400,9 +374,6 @@
             "legacy_research_sources:97624cf593b1",
             "legacy_research_sources:f1e673d6713e"
           ]
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence."
         }
       ],
       "unresolved": [

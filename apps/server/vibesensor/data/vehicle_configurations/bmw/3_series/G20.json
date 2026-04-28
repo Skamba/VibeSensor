@@ -3,15 +3,6 @@
     "notes": {
       "n1": "Sonnet redo research (2026-04 v2): 320Ld/320Li/325Li/330Li are exclusively China/India/Thailand G28 LWB Gran Limousine variants — they are NOT EU G20 SWB configurations. BMW India tech-data PDF (T0407338EN/572044), BMW Thailand 2024 brochure, and BMW China 2024 specsheet all place these on the G28 platform with 8-Speed Steptronic Sport (no MT6 anywhere). BMW Germany 2024 price list confirms none of these variants exist in the EU G20 market. Marked no_confidence as a phantom EU configuration; row should be considered for removal or relocation to a G28 China/India shard.",
       "n2": "Sonnet redo research (2026-04 v2): G20 320e and 330e are PHEVs using a PHEV-integrated 8-speed Steptronic transmission with electric motor between engine and gearbox. No MT6 variant exists or was ever offered. BMW PressClub T0298940EN (08/2019 330e launch) and T0325531EN (03/2021 includes 320e and 330e) both list 8-speed Steptronic only. Marked no_confidence as a phantom configuration.",
-      "n3": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n4": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n5": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n6": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n7": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n8": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n9": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n10": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-      "n11": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
       "n12": "Sonnet redo research (2026-04 v2): No official BMW ACEA tech-data PDF includes a 316d MT6 variant. The G20 316d existed only 2021-2022 in MHEV form with 8-speed Steptronic (per Auto-Data and UltimateSpecs secondary sources); 316d was discontinued at the 07/2022 LCI per BMW PressClub T0388273EN. Repo's production_start_year of 2019 is also wrong. Marked no_confidence as a phantom configuration.",
       "n13": "Sonnet redo research (2026-04 v2): The 318i was added to the G20 lineup in 01/2020. BMW PressClub T0304990EN (the 01/2020 318i tech-data PDF) lists Eight-speed Steptronic only — no MT6 was ever offered for the 318i G20. T0325531EN (03/2021) and T0442333EN (2024) likewise show 318i as automatic-only. Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "n14": "Sonnet redo research (2026-04 v2): All official BMW ACEA tech-data PDFs (T0299451EN 03/2019, T0325531EN 03/2021, T0442333EN 2024) list 320i with Eight-speed Steptronic only — no MT6 was ever offered for the 320i G20. Marked no_confidence as a phantom configuration.",
@@ -29,8 +20,6 @@
       "n26": "Sonnet redo research (2026-04 v2): BMW PressClub T0298940EN/470771 (08/2019 330e launch), T0325531EN/471537 (03/2021), and T0442333EN/620072 (2024) ACEA tech-data PDFs all confirm G20 330e PHEV ratios I 4.714 / II 3.143 / III 2.106 / IV 1.667 / V 1.285 / VI 1.000 / VII 0.839 / VIII 0.667, R 3.317, final drive 3.231. Standard tire 225/50 R17 98Y XL at 2019 launch / 03/2021; changed to 225/45 R18 95Y XL from 07/2022 LCI.",
       "n27": "Sonnet redo research (2026-04 v2): BMW PressClub T0299451EN/437354 (03/2019) and T0325531EN/471537 (03/2021) ACEA tech-data PDFs confirm G20 330i RWD ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 2.813. Standard tire 225/50 R17 98Y XL. The plain RWD 330i was removed from the EU lineup by 2024 (absent from BMW DE 07/2024 price list and from T0442333EN 2024 ACEA PDF) — production_end_year should be ~2022.",
       "n28": "Sonnet redo research (2026-04 v2): BMW PressClub T0299451EN/437354 (03/2019), T0325531EN/471537 (03/2021), and T0442333EN/620072 (2024) ACEA tech-data PDFs all confirm G20 330i xDrive ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, published final drive 2.813 (BMW lists a single FD value identical to the RWD variant). Standard tire 225/50 R17 98Y XL.",
-      "n29": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
-      "n30": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (03/2021, 07/2022) with High confidence.",
       "n31": "Reverse gear ratio (research note): 3.727",
       "n32": "Reverse gear ratio (research note): 3.317"
     },
@@ -281,38 +270,6 @@
         {
           "note": "Checked official BMW G20 diesel technical-data PDFs do not surface a 316d manual Sedan row; secondary evidence found by this run supports automatic only.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
@@ -411,7 +368,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -423,7 +379,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -531,7 +486,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -543,7 +497,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -555,7 +508,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -655,7 +607,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -667,7 +618,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -679,7 +629,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -807,38 +756,6 @@
         {
           "note": "Official BMW 2020, 2021, and 2024 G20 318i technical-data PDFs found in this run show the 318i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
           "evidence_refs_ref": "e29"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e6"
         }
       ],
       "unresolved": [
@@ -1067,38 +984,6 @@
         {
           "note": "Official BMW India press material places the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family and supports only an 8-speed Steptronic Sport automatic state. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
           "evidence_refs_ref": "e22"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -1222,38 +1107,6 @@
         {
           "note": "Official BMW India sources place the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family, not the EU-market G20 shard. The automatic transmission is real only on that non-EU G28 row, which also carries a mixed 18-inch tyre package rather than the inherited G20 square default.",
           "evidence_refs_ref": "e22"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -1359,38 +1212,6 @@
         {
           "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope, not the EU-market G20 shard, and no saved official manual evidence was recovered. This G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
           "evidence_refs_ref": "e23"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -1496,38 +1317,6 @@
         {
           "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope rather than the EU-market G20 shard. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
           "evidence_refs_ref": "e23"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -1607,7 +1396,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1619,7 +1407,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1631,7 +1418,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1746,7 +1532,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -1758,7 +1543,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -1770,7 +1554,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n11",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -1913,38 +1696,6 @@
         {
           "note": "Official BMW 2021 G20 320e technical-data PDF shows the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
           "evidence_refs_ref": "e18"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -2159,38 +1910,6 @@
         {
           "note": "Official BMW 2019 and 2021 G20 320i technical-data PDFs found in this run show the 320i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
           "evidence_refs_ref": "e19"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
@@ -2401,38 +2120,6 @@
         {
           "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. No saved official manual evidence was recovered, so this G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
           "evidence_refs_ref": "e24"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -2538,38 +2225,6 @@
         {
           "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
           "evidence_refs_ref": "e24"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -2675,38 +2330,6 @@
         {
           "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family and supports an 8-speed automatic state rather than a manual one. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
           "evidence_refs_ref": "e25"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -2812,38 +2435,6 @@
         {
           "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family rather than the EU-market G20 shard. The saved India technical-data PDF also shows a mixed 18-inch tyre package, so this G20 EU automatic row should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
           "evidence_refs_ref": "e25"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
@@ -2951,43 +2542,8 @@
           "evidence_refs_ref": "e2"
         },
         {
-          "note_ref": "n29"
-        },
-        {
           "note": "Official BMW 2019 and 2024 G20 330e technical-data PDFs show the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
           "evidence_refs_ref": "e26"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -3122,9 +2678,6 @@
           "evidence_refs_ref": "e27"
         },
         {
-          "note_ref": "n29"
-        },
-        {
           "note_ref": "n32",
           "evidence_refs_ref": "e15"
         }
@@ -3239,43 +2792,8 @@
           "evidence_refs_ref": "e2"
         },
         {
-          "note_ref": "n29"
-        },
-        {
           "note": "Official BMW 2019 and 2021 G20 330i technical-data PDFs show the 330i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
           "evidence_refs_ref": "e20"
-        },
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n5",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n7",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n8",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n9",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e8"
         }
       ],
       "unresolved": [
@@ -3394,9 +2912,6 @@
           "evidence_refs_ref": "e2"
         },
         {
-          "note_ref": "n29"
-        },
-        {
           "note_ref": "n16",
           "evidence_refs_ref": "e16"
         }
@@ -3474,7 +2989,6 @@
         },
         "final_drive_front": {
           "confidence": "family_default",
-          "notes_ref": "n30",
           "value": 2.813
         },
         "final_drive_rear": {
@@ -3500,7 +3014,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n30",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 40.0,
@@ -3512,7 +3025,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n30",
             "front": {
               "width_mm": 235.0,
               "aspect_pct": 35.0,
@@ -3524,7 +3036,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n30",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 30.0,
@@ -3539,9 +3050,6 @@
         {
           "note_ref": "n18",
           "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (03/2021, 07/2022) with High confidence."
         },
         {
           "note_ref": "n16",

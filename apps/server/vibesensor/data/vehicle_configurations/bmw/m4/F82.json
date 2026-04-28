@@ -1,9 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n2": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set.",
-      "n3": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
       "n4": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
     },
     "evidence_ref_sets": {
@@ -59,12 +57,10 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
@@ -102,7 +98,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -114,7 +109,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -126,7 +120,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -141,9 +134,6 @@
         {
           "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -175,7 +165,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -216,7 +205,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -228,7 +216,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -240,7 +227,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -255,9 +241,6 @@
         {
           "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. This follow-up also corrects the DCT final drive from the inherited 3.154 carryover to the recovered official F82 value 3.462, replacing the last obvious G82 contamination in the row.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -289,12 +272,10 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "family_default",
-        "notes_ref": "n1",
         "code": "MT6",
         "name": "6-speed manual"
       },
@@ -332,7 +313,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -344,7 +324,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -356,7 +335,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -371,9 +349,6 @@
         {
           "note": "This research wave narrows the F82 M4 Competition manual row to 2016-2020. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, so the prior 2014 start year was overbroad. Wave 18 official BMW technical-data evidence still confirms the manual top gear 0.846 and final drive 3.462 for the later Competition row.",
           "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
@@ -405,7 +380,6 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n1",
         "value": "RWD"
       },
       "transmission": {
@@ -446,7 +420,6 @@
         "default": {
           "confidence": "family_default",
           "evidence_refs_ref": "e2",
-          "notes_ref": "n1",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
@@ -458,7 +431,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 255.0,
               "aspect_pct": 35.0,
@@ -470,7 +442,6 @@
           {
             "confidence": "family_default",
             "evidence_refs_ref": "e2",
-            "notes_ref": "n1",
             "front": {
               "width_mm": 265.0,
               "aspect_pct": 30.0,
@@ -485,9 +456,6 @@
         {
           "note": "This research wave narrows the F82 M4 Competition M-DCT row to 2016-2020 and corrects its final drive to 3.462. Official BMW Competition Package launch material and the MY2016 pricing guide show the Competition package first becomes available from spring 2016 / effective March 11, 2016, while the recovered official BMW MY2016, MY2017, and MY2018 technical-data material confirms the Competition M-DCT top gear 0.671 and final drive 3.462 rather than the inherited 3.154 carryover.",
           "evidence_refs_ref": "e4"
-        },
-        {
-          "note_ref": "n3"
         }
       ],
       "unresolved": [
