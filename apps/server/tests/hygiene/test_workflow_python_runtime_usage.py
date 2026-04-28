@@ -39,7 +39,7 @@ def test_setup_actions_expose_configured_python_path() -> None:
     backend_outputs = setup_backend["outputs"]
     assert isinstance(backend_outputs, dict)
     assert backend_outputs["python-path"]["value"] == (
-        "${{ steps.setup-python.outputs.python-path }}"
+        "${{ steps.backend-python.outputs.python-path }}"
     )
     backend_steps = setup_backend["runs"]["steps"]
     assert backend_steps[0]["id"] == "setup-python"
