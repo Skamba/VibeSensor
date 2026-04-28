@@ -272,7 +272,11 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if ! find "${venv_data_dir}/vehicle_configurations" -type f -name "*.json" | grep -q .; then
+  local first_vehicle_shard=""
+  first_vehicle_shard="$(
+    find "${venv_data_dir}/vehicle_configurations" -type f -name "*.json" -print -quit
+  )"
+  if [ -z "${first_vehicle_shard}" ]; then
     echo "Validation failed: no vehicle configuration shards found under ${venv_data_dir}/vehicle_configurations"
     exit 1
   fi
@@ -282,7 +286,11 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if ! find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" | grep -q .; then
+  local first_car_source=""
+  first_car_source="$(
+    find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" -print -quit
+  )"
+  if [ -z "${first_car_source}" ]; then
     echo "Validation failed: no car source packs found under ${venv_data_dir}/car_sources"
     exit 1
   fi
