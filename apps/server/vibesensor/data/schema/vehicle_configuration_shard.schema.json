@@ -1,0 +1,384 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibesensor.io/schema/vehicle-configuration-shard.schema.json",
+  "title": "VibeSensor vehicle configuration shard",
+  "description": "Canonical on-disk shape of a vehicle configuration shard. See docs/car_library_architecture.md for the full contract. The loader applies shard-level defaults and resolves notes_ref / note_ref / evidence_refs_ref / default_ref / setup_ref before validating the post-expansion row payload; this schema validates the raw on-disk form including those refs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["configurations"],
+  "properties": {
+    "definitions": { "$ref": "#/$defs/definitions" },
+    "defaults": { "$ref": "#/$defs/defaults" },
+    "configurations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/configuration_row" }
+    }
+  },
+  "$defs": {
+    "field_confidence": {
+      "type": "string",
+      "enum": [
+        "official_exact",
+        "official_derived",
+        "reputable_secondary_crosschecked",
+        "family_default",
+        "unverified",
+        "user_confirmed"
+      ]
+    },
+    "row_confidence": {
+      "type": "string",
+      "enum": [
+        "high_confidence",
+        "medium_confidence",
+        "low_confidence",
+        "no_confidence",
+        "not_applicable"
+      ]
+    },
+    "fuel_type": { "type": "string", "enum": ["ICE", "PHEV", "EV"] },
+    "drivetrain": { "type": "string", "enum": ["FWD", "RWD", "AWD"] },
+    "evidence_refs_inline": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "evidence_refs_ref": { "type": "string", "minLength": 1 },
+    "notes_inline": { "type": "string", "minLength": 1 },
+    "notes_ref": { "type": "string", "minLength": 1 },
+    "field_metadata_props": {
+      "type": "object",
+      "properties": {
+        "confidence": { "$ref": "#/$defs/field_confidence" },
+        "evidence_refs": { "$ref": "#/$defs/evidence_refs_inline" },
+        "evidence_refs_ref": { "$ref": "#/$defs/evidence_refs_ref" },
+        "verified_at": { "type": "string" },
+        "notes": { "$ref": "#/$defs/notes_inline" },
+        "notes_ref": { "$ref": "#/$defs/notes_ref" },
+        "note_ref": { "$ref": "#/$defs/notes_ref" }
+      },
+      "required": ["confidence"]
+    },
+    "drivetrain_field": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": { "$ref": "#/$defs/drivetrain" },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "transmission_field": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "code": { "type": "string", "minLength": 1 },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "numeric_field": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": { "type": "number" },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "numeric_sequence_field": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 1
+            },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "tire_dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_mm", "aspect_pct", "rim_in"],
+      "properties": {
+        "width_mm": { "type": "number", "exclusiveMinimum": 0 },
+        "aspect_pct": { "type": "number", "exclusiveMinimum": 0 },
+        "rim_in": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "tire_setup_inline": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["front"],
+          "properties": {
+            "front": { "$ref": "#/$defs/tire_dimensions" },
+            "rear": { "$ref": "#/$defs/tire_dimensions" },
+            "default_axle_for_speed": {
+              "type": "string",
+              "enum": ["front", "rear", "average"]
+            },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "tire_setup_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["setup_ref"],
+      "properties": { "setup_ref": { "type": "string", "minLength": 1 } }
+    },
+    "tire_setup_or_ref": {
+      "oneOf": [
+        { "$ref": "#/$defs/tire_setup_inline" },
+        { "$ref": "#/$defs/tire_setup_ref" }
+      ]
+    },
+    "tire_option_inline": {
+      "allOf": [
+        { "$ref": "#/$defs/field_metadata_props" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "front"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "front": { "$ref": "#/$defs/tire_dimensions" },
+            "rear": { "$ref": "#/$defs/tire_dimensions" },
+            "default_axle_for_speed": {
+              "type": "string",
+              "enum": ["front", "rear", "average"]
+            },
+            "confidence": true,
+            "evidence_refs": true,
+            "evidence_refs_ref": true,
+            "verified_at": true,
+            "notes": true,
+            "notes_ref": true,
+            "note_ref": true
+          }
+        }
+      ]
+    },
+    "tire_option_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "setup_ref"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "setup_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tire_option": {
+      "oneOf": [
+        { "$ref": "#/$defs/tire_option_inline" },
+        { "$ref": "#/$defs/tire_option_ref" }
+      ]
+    },
+    "tires": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["default"], "properties": { "default_ref": false } },
+        { "required": ["default_ref"], "properties": { "default": false } }
+      ],
+      "properties": {
+        "default": { "$ref": "#/$defs/tire_setup_inline" },
+        "default_ref": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tire_option" }
+        }
+      }
+    },
+    "ratios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_gear_ratio"],
+      "properties": {
+        "top_gear_ratio": { "$ref": "#/$defs/numeric_field" },
+        "gear_ratios": { "$ref": "#/$defs/numeric_sequence_field" },
+        "final_drive_front": { "$ref": "#/$defs/numeric_field" },
+        "final_drive_rear": { "$ref": "#/$defs/numeric_field" },
+        "transfer_case_ratio": { "$ref": "#/$defs/numeric_field" }
+      }
+    },
+    "verification_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["note"], "not": { "required": ["note_ref"] } },
+        { "required": ["note_ref"], "not": { "required": ["note"] } }
+      ],
+      "properties": {
+        "note": { "type": "string", "minLength": 1 },
+        "note_ref": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "$ref": "#/$defs/evidence_refs_inline" },
+        "evidence_refs_ref": { "$ref": "#/$defs/evidence_refs_ref" }
+      }
+    },
+    "unresolved_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item", "reason"],
+      "properties": {
+        "item": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "$ref": "#/$defs/evidence_refs_inline" },
+        "evidence_refs_ref": { "$ref": "#/$defs/evidence_refs_ref" }
+      }
+    },
+    "order_analysis_policy_override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "minProperties": 2,
+      "properties": {
+        "reason": { "type": "string", "minLength": 1 },
+        "usable_for_engine_order": { "type": "boolean" },
+        "usable_for_driveshaft_order": { "type": "boolean" },
+        "usable_for_wheel_order": { "type": "boolean" },
+        "requires_manual_confirmation": { "type": "boolean" }
+      }
+    },
+    "configuration_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "variant_name",
+        "fuel_type",
+        "drivetrain",
+        "transmission",
+        "ratios",
+        "tires",
+        "configuration_confidence"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "brand": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "model_name": { "type": "string", "minLength": 1 },
+        "variant_name": { "type": "string", "minLength": 1 },
+        "market": { "type": "string", "minLength": 1 },
+        "model_code": { "type": "string", "minLength": 1 },
+        "body_code": { "type": "string", "minLength": 1 },
+        "production_start_year": { "type": "integer" },
+        "production_end_year": { "type": "integer" },
+        "engine_code": { "type": "string", "minLength": 1 },
+        "engine_name": { "type": "string", "minLength": 1 },
+        "fuel_type": { "$ref": "#/$defs/fuel_type" },
+        "drivetrain": { "$ref": "#/$defs/drivetrain_field" },
+        "transmission": { "$ref": "#/$defs/transmission_field" },
+        "ratios": { "$ref": "#/$defs/ratios" },
+        "tires": { "$ref": "#/$defs/tires" },
+        "configuration_confidence": { "$ref": "#/$defs/row_confidence" },
+        "verification_notes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/verification_note" }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/unresolved_item" }
+        },
+        "order_analysis_policy_override": {
+          "$ref": "#/$defs/order_analysis_policy_override"
+        }
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "notes": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "evidence_ref_sets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1
+          }
+        },
+        "tire_setups": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/tire_setup_inline" }
+        }
+      }
+    },
+    "defaults": {
+      "description": "Shard-level fields shallow-merged into each row before validation. Keys must be a subset of configuration_row properties.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "brand": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "market": { "type": "string", "minLength": 1 },
+        "model_name": { "type": "string", "minLength": 1 },
+        "model_code": { "type": "string", "minLength": 1 },
+        "body_code": { "type": "string", "minLength": 1 },
+        "production_start_year": { "type": "integer" },
+        "production_end_year": { "type": "integer" }
+      }
+    }
+  }
+}
