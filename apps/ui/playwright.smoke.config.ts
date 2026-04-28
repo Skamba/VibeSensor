@@ -9,6 +9,7 @@ export default defineConfig({
   testDir: "tests",
   // Smoke selection lives here so package.json and CI stay on one contract.
   testMatch: ["smoke*.spec.ts"],
+  outputDir: "test-results/playwright-smoke",
   timeout: 15_000,
   workers:
     Number.isFinite(configuredSmokeWorkers) && configuredSmokeWorkers > 0
@@ -16,6 +17,9 @@ export default defineConfig({
       : 1,
   use: {
     baseURL: "http://127.0.0.1:4173",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 4173 --strictPort",
