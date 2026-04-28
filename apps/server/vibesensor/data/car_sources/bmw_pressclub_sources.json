@@ -457,6 +457,48 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0126409EN/188305",
+      "title": "BMW PressClub F06 640i/650i 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the launch 640i and 650i Gran Coupe states, showing eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231 for 640i and 2.813 for 650i, 225/55 R17 baseline tires for 640i, 245/45 R18 baseline tires for 650i, and official staggered 19- and 20-inch tire options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0126409EN/188306",
+      "title": "BMW PressClub F06 640d 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the launch 640d Gran Coupe state, showing eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, 225/55 R17 baseline tires, and official staggered 19- and 20-inch tire options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0126409EN/188307",
+      "title": "BMW PressClub F06 650i xDrive 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the launch 650i xDrive Gran Coupe state, showing xDrive/four-wheel-drive context, eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, 245/45 R18 baseline tires, and official staggered 19- and 20-inch tire options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0136371EN/207739",
+      "title": "BMW PressClub F06 640i xDrive 2013 technical data PDF",
+      "note": "Official BMW 03/2013 technical-data PDF for the 640i xDrive Gran Coupe state, showing xDrive/four-wheel-drive context, eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, 225/55 R17 baseline tires, and official staggered 19- and 20-inch tire options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0136371EN/207740",
+      "title": "BMW PressClub F06 640d xDrive 2013 technical data PDF",
+      "note": "Official BMW 03/2013 technical-data PDF for the 640d xDrive Gran Coupe state, showing xDrive/four-wheel-drive context, eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, 225/55 R17 baseline tires, and official staggered 19- and 20-inch tire options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f06-lci-2014-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0197450EN/301332",
+      "title": "BMW PressClub F06 6 Series model range 2014 technical data PDF",
+      "note": "Official BMW 12/2014 LCI technical-data PDF for the F06 6 Series Gran Coupe range, cross-checking the same 640i/640i xDrive 3.231 final-drive group and 640d/640d xDrive/650i/650i xDrive 2.813 final-drive group with matching eight-speed Steptronic sport-transmission ratios and tire packages.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286569EN/419611",
       "title": "BMW PressClub G32 6 Series Gran Turismo 2018 technical data PDF",
@@ -940,6 +982,20 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g11-740e-2016-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0261925EN/the-new-bmw-740e-iperformance-the-new-bmw-740le-iperformance-the-new-bmw-740le-xdrive-iperformance",
+      "title": "BMW PressClub G11 740e/740Le iPerformance 2016 launch article",
+      "note": "Official BMW 06/2016 launch article for the G11/G12 740e iPerformance, 740Le iPerformance, and 740Le xDrive iPerformance, used to confirm rear-wheel-drive 740e/740Le scope, the distinct xDrive sibling, and the electric motor integrated into the eight-speed Steptronic transmission.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-740e-2016-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0261925EN/384198",
+      "title": "BMW PressClub G11 740e/740Le iPerformance 2016 technical data PDF",
+      "note": "Official BMW 06/2016 technical-data PDF for the exact G11 740e and G12 740Le rear-wheel-drive plug-in-hybrid states, showing full hybrid drive to the rear wheels, eight-speed Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.077, and the 225/60 R17 standard tire plus optional wheel packages in the ACEA source.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g11-7-series-2019-press-kit",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0289615EN/the-new-bmw-7-series",
       "title": "BMW PressClub G11 7 Series 2019 press kit",
@@ -1203,6 +1259,202 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0169768EN/252711",
       "title": "BMW PressClub F26 X4 xDrive20i/xDrive28i/xDrive35i 2014 technical data PDF",
       "note": "Official BMW 03/2014 technical-data PDF for the exact F26 X4 xDrive20i, xDrive28i, and xDrive35i launch states, valid from July 2014, showing AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, single 3.385 final-drive ratio, and baseline tires 225/60 R17 for xDrive20i/xDrive28i plus 245/50 R18 for xDrive35i.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289704EN/442417",
+      "title": "BMW PressClub Specifications of the BMW Z4 valid from 09/2018 (T0289704EN)",
+      "note": "Official BMW Group ACEA technical-data PDF for Z4 G29 launch (09/2018) \u2014 covers sDrive20i, sDrive30i, M40i (ZF8HP only). Confirms ZF 8HP gear ratios I 5.250 ... VIII 0.640, R 3.712, FD 3.154; tires 225/50 R17 98Y XL / 255/45 R17 98Y (sDrive) and 255/40 ZR18 95Y / 275/40 ZR18 99Y (M40i).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329593EN/476180",
+      "title": "BMW PressClub Specifications of the BMW Z4 valid from 03/2021 (T0329593EN)",
+      "note": "Official BMW Group ACEA technical-data PDF for Z4 G29 03/2021 \u2014 covers sDrive20i (MT6 + ZF8HP), sDrive30i (ZF8HP only), M40i (ZF8HP only). Confirms sDrive20i MT6 ratios I 4.110 ... VI 0.601, R 3.727, FD 3.636; ZF 8HP unchanged; tires 225/50 R17 94W / 255/45 R17 98W (sDrive) and 255/40 ZR18 95Y / 275/40 ZR18 99Y (M40i).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0439268EN/the-bmw-z4-pure-impulse-edition",
+      "title": "BMW PressClub Z4 Pure Impulse edition (T0439268EN, January 2024)",
+      "note": "Official BMW Group press article confirming the BMW Z4 M40i 6-speed manual transmission added for 2024 model year via Pure Impulse edition. Article HTML quote: 'a six-speed manual gearbox will also be available for the range-topping version for the first time.' Attached PDFs are image-based; gear ratios not text-extractable.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g29-z4-bmw-de-tech-data",
+      "url": "https://www.bmw.de/de/neufahrzeuge/z4/z4-roadster/bmw-z4-technische-daten.html",
+      "title": "BMW Germany Z4 G29 technical data page",
+      "note": "Official BMW Germany consumer technical-data page for the Z4 G29. Confirms sDrive20i offers MT6 + Steptronic, sDrive30i is Steptronic-only (no MT6), M40i offers MT6 + Steptronic. Used as authoritative configuration-availability source; does not publish individual gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-730i-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207820",
+      "title": "BMW PressClub F01/F02 730i & 730Li tech-data PDF (T0131447EN attachment 207820)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 7/2012; 730i (SWB F01) ZF 8HP, ratios I 4.714 / II 3.143 / III 2.208 / IV 1.667 / V 1.285 / VI 1.000 / VII 0.839 / VIII 0.667, R 3.295, FD 3.462; 245/55 R17 102W.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-740i-750i-760i-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207815",
+      "title": "BMW PressClub F01 740i / 750i / 760i tech-data PDF (T0131447EN attachment 207815)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 7/2012; 740i FD 3.077, 750i FD 2.813, 760i FD 2.813 (all SWB F01 wheelbase 3070 mm); ratios I 4.714 ... VIII 0.667; tires 245/50 R18 100Y RSC.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207816",
+      "title": "BMW PressClub F01 730d/740d/750d xDrive diesel tech-data PDF (T0131447EN attachment 207816)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 7/2012 \u2014 covers ALL F01 SWB diesel variants and shows that every diesel is xDrive-only. Negative evidence: no RWD 750d exists. 750d xDrive: N57S tri-turbo 280 kW/381 hp; FD 2.813.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207819",
+      "title": "BMW PressClub F01 750i xDrive / 750Li xDrive tech-data PDF (T0131447EN attachment 207819)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 7/2012; 750i xDrive ratios I 4.714 ... VIII 0.667, R 3.317, FD 2.813 (exact, not derived); tires 245/50 R18 100Y RSC.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299451EN/437354",
+      "title": "BMW PressClub G20 3 Series Sedan launch tech-data PDF (T0299451EN attachment 437354)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 03/2019 launch \u2014 covers 320i, 320i xDrive, 330i, 330i xDrive, M340i xDrive, 318d (MT6 main + ZF8HP brackets), 320d (MT6 main + ZF8HP brackets), 320d xDrive. ZF 8HP ratios I 5.250 ... VIII 0.640, R 3.712, FD 2.813. MT6 ratios I 4.110 ... VI 0.601, R 3.727, FD 3.154.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2020-318i-techdata",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0304990EN/445465",
+      "title": "BMW PressClub G20 318i tech-data PDF (T0304990EN attachment 445465)",
+      "note": "Official BMW Group ACEA tech-data PDF for the G20 318i added 01/2020 \u2014 Eight-speed Steptronic only (no MT6 ever offered for 318i G20). ZF 8HP ratios I 5.250 ... VIII 0.640, R 3.712, FD 2.813; tires 205/60 R16 96W XL.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2021-techdata",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+      "title": "BMW PressClub G20/G21 3 Series tech-data PDF (T0325531EN attachment 471537)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 03/2021 \u2014 covers 318i, 320i, 320i xDrive, 330i, 330i xDrive, M340i xDrive, 320e, 330e, 330e xDrive (PHEV ratios I 4.714 ... VIII 0.667, R 3.317, FD 3.231), 318d (MT6 + ZF8HP), 320d (ZF8HP only \u2014 MT6 dropped by 03/2021), 320d xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2019-330e-techdata",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0298940EN/470771",
+      "title": "BMW PressClub G20 330e PHEV launch tech-data PDF (T0298940EN attachment 470771)",
+      "note": "Official BMW Group ACEA tech-data PDF valid from 08/2019 for 330e and 330e xDrive PHEV launch \u2014 confirms PHEV-specific 8-speed Steptronic ratios I 4.714 ... VIII 0.667, R 3.317, FD 3.231; standard tire 225/50 R17 98Y XL.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2022-lci-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0388273EN/specifications-of-the-new-bmw-3-series-sedan-and-bmw-3-series-touring-valid-from-02-2022",
+      "title": "BMW PressClub G20/G21 LCI 2022 facelift tech-data article (T0388273EN)",
+      "note": "Official BMW Group press article for the 07/2022 G20/G21 LCI \u2014 explicitly states 'all variants of the new BMW 3 Series now come as standard with an eight-speed Steptronic transmission' and 'All the engines for the new BMW 3 Series link up with an eight-speed Steptronic transmission as standard'. Documents the LCI-era abolition of MT6 for ALL G20 variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-2024-techdata",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0442333EN/620072",
+      "title": "BMW PressClub G20/G21 3 Series tech-data PDF (T0442333EN attachment 620072, 2024)",
+      "note": "Official BMW Group ACEA tech-data PDF for the 2024 model year G20/G21 \u2014 330e (225/45 R18 95Y XL), 330e xDrive, 318i (225/50 R17 98Y XL post-LCI), 320i, 320i xDrive, 330i xDrive (no plain RWD 330i in 2024 lineup), M340i xDrive, 318d, 320d, 320d xDrive, 330d xDrive, M340d xDrive. ZF 8HP ratios unchanged across years.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g28-india-2023-320ld-330li-techdata",
+      "url": "https://www.press.bmwgroup.com/india/article/attachment/T0407338EN/572044",
+      "title": "BMW India G28 Gran Limousine 320Ld / 330Li tech-data PDF (T0407338EN attachment 572044)",
+      "note": "Official BMW India press tech-data PDF for the G28 LWB Gran Limousine \u2014 confirms 320Ld and 330Li are sold in India only on G28 LWB platform, 8-Speed Steptronic Sport, RWD, staggered 225/45 R18 / 255/40 R18. Used as negative evidence: these variants do NOT exist on the EU G20 platform.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-3series-de-2024-pricelist",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
+      "title": "BMW Germany 3 Series Sedan 07/2024 price list",
+      "note": "Official BMW Germany 3 Series Sedan 07/2024 price list \u2014 confirms current EU petrol/diesel lineup is 318i, 320i, 320i xDrive, 330i xDrive, 318d, 320d, 320d xDrive, 330d xDrive, all '8-Gang Steptronic' (no MT6, no 316d, no plain 330i RWD).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-740d-xdrive-acea-en-2022",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0404080EN/609753",
+      "title": "BMW PressClub G70 740d xDrive ACEA tech-data PDF (T0404080EN attachment 609753)",
+      "note": "Official BMW Group ACEA tech-data PDF (English, 11/2022) for the G70 740d xDrive \u2014 publishes Eight-speed Steptronic gear ratios I 5.501 / II 3.520 / III 2.200 / IV 1.720 / V 1.301 / VI 1.000 / VII 0.833 / VIII 0.640, R 4.543, final drive 2.647 (single published ratio for AWD xDrive).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-740d-xdrive-acea-de-2022",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0404080DE/609750",
+      "title": "BMW PressClub G70 740d xDrive ACEA tech-data PDF (T0404080DE attachment 609750, German)",
+      "note": "Official BMW Group ACEA tech-data PDF (German, 11/2022) for the G70 740d xDrive \u2014 same ratio table as the EN spec, comma-decimal notation, used as cross-language corroboration.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-i7-m70-xdrive-acea-ch-2023",
+      "url": "https://www.press.bmwgroup.com/switzerland/article/attachment/T0413529DE/579757",
+      "title": "BMW PressClub G70 i7 M70 xDrive ACEA tech-data PDF (Swiss/DE, T0413529DE attachment 579757, 04/2023)",
+      "note": "Official BMW Group Swiss PressClub ACEA tech-data PDF (German, 04/2023) for the G70 i7 M70 xDrive \u2014 confirms dual single-speed Elektromotoren with front Getriebe\u00fcbersetzung 8,774 and rear Getriebe\u00fcbersetzung 8,765.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-additional-variants-article-2022",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0404080EN",
+      "title": "BMW PressClub G70 'additional drive variants' article (T0404080EN, 11/2022)",
+      "note": "Official BMW Group press article roster \u2014 only attachments 609752 (image press book) and 609753 (740d spec) are linked. Used as negative evidence: no 750e or M760e ACEA spec PDF was published with this article.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-de-preisliste-2023-11",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0438543DE/609591",
+      "title": "BMW Germany G70 7 Series Preisliste 11/2023 (T0438543DE attachment 609591)",
+      "note": "Official BMW Germany 7 Series price list \u2014 confirms transmission marketing names: i7 eDrive50 = '1-Gang, automatisch'; 750e xDrive and M760e xDrive = '8-Gang Steptronic Sport'. No numeric gear ratios published.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-de-preisliste-2026-03",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322774DE/643421",
+      "title": "BMW Germany G70 7 Series Preisliste 03/2026 (T0322774DE attachment 643421)",
+      "note": "Official BMW Germany 7 Series price list (03/2026) \u2014 740d xDrive now also marketed as '8-Gang Steptronic Sport' alongside 750e and M760e, supporting common ZF 8HP gearbox family across all three; no numeric gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-launch-press-book-2022",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0380173EN/568613",
+      "title": "BMW PressClub G70 launch press book (T0380173EN attachment 568613, 04/2022)",
+      "note": "Official BMW Group full G70 launch press book \u2014 confirms PHEV variants 750e and M760e 'available from spring 2023' (separate launch publication event from the 11/2022 740d additional-variants article). Used as negative evidence explaining absence of November 2022 PHEV spec PDFs.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g70-i7-xdrive60-acea-2022",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0380173EN/568614",
+      "title": "BMW PressClub G70 i7 xDrive60 ACEA tech-data PDF (T0380173EN attachment 568614, 04/2022)",
+      "note": "Official BMW Group ACEA tech-data PDF for the i7 xDrive60 reference variant (front motor ratio 13.1, rear 12.3). Used as comparative reference only \u2014 i7 eDrive50 has a different (335 kW) rear motor, so xDrive60 ratios cannot be assumed.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0179544EN/267610",
+      "title": "BMW PressClub: F22 228i tech-data PDF (T0179544EN/267610, 07/2014 ACEA)",
+      "note": "07/2014 BMW F22 228i Coupe ACEA technical-data PDF. Confirms 228i engine N20B20B (180 kW / 245 hp / 350 Nm), RWD, 6-speed manual top gear 0.701 / final drive 3.909, 8-speed Steptronic (ZF GA8HP45Z) top 0.667 / FD 3.077, standard tyre 205/50 R17. 228i was a narrow EU market (UK + select ACEA) variant, discontinued at the 07/2016 LCI.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f87-m2-2016-launch-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0238042EN/368917",
+      "title": "BMW PressClub: F87 M2 2016 launch tech-data PDF (T0238042EN/368917)",
+      "note": "F87 M2 (2016 launch) technical-data PDF. Confirms F87 chassis code (NOT F22), N55B30T0 inline-six engine, MT6 standard (Getrag GS6-45BZ) and M-DCT 7 (Getrag GS7D36BG / 7DCI600) optional, RWD, staggered 245/35 ZR19 front + 265/35 ZR19 rear default tyres, FD 3.462. Contradicts the F22 shard's M2 rows which incorrectly placed M2 in F22 with ZF8HP and B58 engine.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0279885EN/415275",
+      "title": "BMW PressClub: F87 M2 Competition 2018 launch tech-data PDF (T0279885EN/415275)",
+      "note": "F87 M2 Competition (2018 launch) technical-data PDF. Confirms F87 chassis code (NOT F22), S55B30T0 inline-six engine (carried over from F80 M3 / F82 M4 architecture), MT6 standard (Getrag GS6-45BZ) and M-DCT 7 (Getrag GS7D36BG / 7DCI600) optional, RWD, staggered 245/35 ZR19 front + 265/35 ZR19 rear default tyres. M2 Competition has no 8-speed Steptronic / ZF8HP option.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286557EN/419617",
+      "title": "BMW PressClub: F39 X2 multi-variant tech-data (T0286557EN/419617, 09/2018)",
+      "note": "09/2018 BMW F39 X2 multi-variant ACEA technical-data PDF. Confirmed variants: sDrive18i (DCT7 Getrag 7DCI300), sDrive20i (DCT7), sDrive18d (Aisin AWF8F35 8AT), xDrive18d (6-speed manual GS6-17BG, gear ratios 3.539/1.923/1.219/0.881/0.810/0.674, reverse 3.831, FD 4.059), xDrive20d (Aisin AWF8F45 8AT, FD 2.851). All variants standard tyre 225/55 R17 97W. F39 platform is transverse UKL2; 'ZF8HP' code in repo is a misnomer - actual gearbox is Aisin AWF8F35 (FWD) or AWF8F45 (AWD).",
       "confidence": "high"
     }
   ]

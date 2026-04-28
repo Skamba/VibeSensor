@@ -14,297 +14,173 @@
     "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish 640d separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ],
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-640d-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640d",
-    "engine_code": "N57",
-    "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 640d Gran Coupe.",
         "value": 2.813
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d Gran Coupe.",
         "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d tire package.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Germany standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 640d rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -322,307 +198,182 @@
     "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640d xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ],
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640d xDrive Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640d xDrive Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 640d xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 2.813
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 640d xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 2.813
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640d xDrive Gran Coupe.",
         "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640d xDrive tire package.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Germany standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-640d-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640d xDrive",
-    "engine_code": "N57",
-    "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 640d xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640d-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -640,303 +391,173 @@
     "engine_name": "N55 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish 640i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ],
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 3.231 for the 640i Gran Coupe.",
         "value": 3.231
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i Gran Coupe.",
         "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i tire package.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Germany standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-640i-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640i",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 640i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -956,311 +577,180 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 640i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-640i-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "640i xDrive",
-    "engine_code": "N55",
-    "engine_name": "N55 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 640i xDrive Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 640i xDrive Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 3.231 final-drive value for the 640i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 3.231
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 3.231 final-drive value for the 640i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 3.231
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 640i xDrive Gran Coupe.",
         "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 640i xDrive tire package.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs note 245/45 R18 as the Germany-standard six-cylinder F06 tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Germany standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 640i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-xdrive-2013-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1278,303 +768,158 @@
     "engine_name": "N63 4.4L V8 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish 650i separately from the xDrive rows; the repo represents that non-xDrive state as RWD.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ],
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-650i-eu-2013-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "650i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list rear final drive 2.813 for the 650i Gran Coupe.",
         "value": 2.813
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i Gran Coupe.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 650i rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-640i-650i-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1592,307 +937,167 @@
     "engine_name": "N63 4.4L V8 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
+        "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Official BMW PressClub F06 technical-data PDFs identify the 650i xDrive Gran Coupe as an xDrive/four-wheel-drive configuration.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+        "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+      ],
+      "notes": "Official BMW PressClub F06 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs list 0.667 as eighth gear for the 650i xDrive Gran Coupe.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs directly publish this full forward ratio set for the 650i xDrive Gran Coupe.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 650i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 2.813
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+        ],
+        "notes": "Official BMW PressClub F06 technical-data PDFs publish a single 2.813 final-drive value for the 650i xDrive xDrive Gran Coupe; the repo mirrors it into canonical AWD axle fields.",
+        "value": 2.813
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official BMW PressClub F06 technical-data PDFs list this as the baseline tire for the 650i xDrive Gran Coupe.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs publish this F06 650i xDrive tire package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
+          ],
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 19-inch F06 tire package.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f06-650i-xdrive-eu-2013-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F06",
-    "body_code": "F06",
-    "production_start_year": 2013,
-    "production_end_year": 2018,
-    "model_name": "6 Series Gran Coupe (F06, 2013-2018)",
-    "variant_name": "650i xDrive",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "legacy_research_sources:874dcd3d22ad"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "name": "Optional staggered 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
+            "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+            "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW PressClub technical-data PDFs list the optional staggered 20-inch F06 tire package.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 245.0,
             "aspect_pct": 35.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:5153ab0b45c4",
-            "legacy_research_sources:874dcd3d22ad",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:a2d58b9d1ac9",
-            "legacy_research_sources:c279a8e6c8b8",
-            "legacy_research_sources:c4511d075c89"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
+          "rear": {
+            "width_mm": 275.0,
             "aspect_pct": 30.0,
-            "rim_in": 21.0
+            "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "name": "Optional staggered 20\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
+        "note": "This run consolidated duplicate F06 650i xDrive rows to the single official final-drive group, replaced the unsupported 245/40 R19 default with BMW-published baseline tires, and retained official staggered 19- and 20-inch options.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
-      }
-    ],
-    "unresolved": [
+      },
       {
-        "item": "Model-year coverage for 2013-2014 within the combined '2013-2018' entry",
-        "reason": "The ratio values were verified from an official BMW technical document dated 12/2014; this output cannot fully prove there were no ratio changes in earlier pre-LCI months without additional year-specific homologation/tech sheets.",
+        "note": "Official 2012/2013 launch and xDrive technical sheets and the 12/2014 LCI model-range technical sheet agree on the F06 ratio/final-drive grouping, closing the previous pre-LCI coverage concern.",
         "evidence_refs": [
-          "legacy_research_sources:5153ab0b45c4",
-          "legacy_research_sources:874dcd3d22ad",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:a2d58b9d1ac9",
-          "legacy_research_sources:c279a8e6c8b8",
-          "legacy_research_sources:c4511d075c89"
+          "bmw_pressclub_sources:f06-650i-xdrive-2012-spec-pdf",
+          "bmw_pressclub_sources:f06-lci-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   }
 ]

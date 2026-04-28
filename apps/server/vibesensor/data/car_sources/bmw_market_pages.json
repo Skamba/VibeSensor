@@ -156,6 +156,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_market_pages:f48-x1-price-list-2021-de",
+      "url": "https://www.rhein-bmw.de/fileadmin/user_upload/preislisten_2021/preisliste_f48_iii_04_06.pdf.asset.1632237105016.pdf",
+      "title": "BMW Germany F48 X1 2021 price list",
+      "note": "Official BMW Germany dealer-hosted 04/2021 F48 X1 price list used to cross-check the late F48 Germany-market wheel and tire matrix, including 225/55 R17 baseline, 225/50 R18, and 225/45 R19 options; applied cautiously as official-derived option evidence outside the exact 2021 Germany row.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_market_pages:u11-x1-overview-de",
       "url": "https://www.bmw.de/de/neufahrzeuge/x/x1/bmw-x1.html",
       "title": "BMW Germany U11 X1 overview page",
@@ -174,6 +181,27 @@
       "url": "https://www.bmw.co.uk/en/all-models/x-models/x1/bmw-x1-technical-data.html",
       "title": "BMW UK U11 X1 technical data page",
       "note": "Official BMW UK technical-data page whose embedded product block currently surfaces the exact BMW X1 xDrive23i xLine within the U11 range and marks productionYear 2022 with petrol fuel metadata while the rendered spec tables remain JS-heavy.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:f40-1series-uk-tech-data-2020",
+      "url": "https://web.archive.org/web/20200101/https://www.bmw.co.uk/en/all-models/1-series/5-door/2019/technical-data.html",
+      "title": "BMW UK F40 1 Series technical data (Wayback Jan 2020)",
+      "note": "Official BMW UK F40 launch technical data page \u2014 confirms 118i SE 205/55 R16, M135i xDrive 225/40 R18, FWD platform.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:f40-1series-uk-m135i-2021",
+      "url": "https://web.archive.org/web/20210825183148/https://www.bmw.co.uk/en/all-models/1-series/5-door/2019/technical-data.BMW-M135i-xDrive.html",
+      "title": "BMW UK F40 M135i xDrive technical data (Wayback Aug 2021)",
+      "note": "Official BMW UK F40 M135i xDrive dedicated spec page \u2014 225kW/306hp B48, 225/40 R18 92Y XL, 1600 kg DIN, AWD xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:f40-1series-uk-inform-2019",
+      "url": "https://web.archive.org/web/20191010/https://www.bmw.co.uk/en/all-models/1-series/5-door/2019/inform.html",
+      "title": "BMW UK F40 1 Series inform page (Wayback Oct 2019)",
+      "note": "Official BMW UK F40 launch inform page \u2014 explicitly confirms F40 transverse-engine FWD platform; ZF 8HP architecturally incompatible.",
       "confidence": "high"
     }
   ]

@@ -261,6 +261,55 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/elegant-efficient-evolutionarythe-new-audi-a3-sedan-2020-12759",
+      "title": "Audi MediaCenter 2020 A3 Sedan launch release",
+      "note": "Official Audi MediaCenter launch release for the 8Y A3 Sedan, used to bound the initial European sedan lineup: 35 TFSI manual/S tronic, 35 TDI S tronic, and an entry-level gasoline engine to follow.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
+      "url": "https://www.audi-mediacenter.com/system/production/car_motorizations/750/file_en/8d21c8e15619a58d65f4be514444102e4f926bdb/eTD-Audi-A3-Sedan-30-TFSI-81kW_230919.pdf?1698933745",
+      "title": "Audi MediaCenter A3 Sedan 30 TFSI 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact A3 Sedan 30 TFSI 81 kW manual state showing front-wheel drive, 6-speed manual transmission, forward ratios 3.769 / 1.947 / 1.281 / 0.973 / 0.778 / 0.642, final drive 4.353, and basic 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/276/file_en/bd46610b9594c570478124efddf2315f43230e65/eTD-Audi-A3-Sedan-30-TDI-85kW_230919.pdf?1698933695",
+      "title": "Audi MediaCenter A3 Sedan 30 TDI 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact A3 Sedan 30 TDI 85 kW manual state showing front-wheel drive, 6-speed manual transmission, forward ratios 3.750 / 1.952 / 1.200 / 0.878 / 0.711 / 0.604, equal 3.238 final-drive values, and basic 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1023/file_de/a22048f880937d71ab725f0335eec0dfd9a2381d/TD-Audi-A3-Limousine-TFSI-110kW_260203.pdf?1770636723",
+      "title": "Audi MediaCenter A3 Limousine TFSI 110 kW manual 2026 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A3 Limousine 110 kW TFSI manual state showing front-wheel drive, 6-speed manual transmission, forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, equal 4.235 final-drive values, and basic 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1024/file_de/129200424e04a321f44f3b626ef24be02c1396f0/TD-Audi-A3-Limousine-TFSI-S_tronic-110kW-MHEV_260420.pdf?1776765556",
+      "title": "Audi MediaCenter A3 Limousine TFSI S tronic 110 kW MHEV 2026 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A3 Limousine 110 kW TFSI S tronic MHEV state showing front-wheel drive, 7-speed S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, split final-drive values 4.800 / 3.429, and basic 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1022/file_de/523cb3a37d000ddb8e1151e28d377fb6b8206fa7/TD-Audi-A3-Limousine-35-TDI-S_tronic-110kW_240402.pdf?1712048742&disposition=attachment",
+      "title": "Audi MediaCenter A3 Limousine 35 TDI S tronic 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A3 Limousine 35 TDI S tronic 110 kW state showing front-wheel drive, 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, split final-drive values 4.167 / 3.125, and basic 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf",
+      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a3-s3-sportback-audi-a3-sportback-tfsi-e-audi-a3-s3-limousine-audi-a3-allstreet-audi-a3-allstreet-tfsi-e-modelljahr-2026-886/download",
+      "title": "Audi Germany A3 model-year 2026 price list",
+      "note": "Official Audi Germany MY2026 price list used to confirm late A3 Limousine lineup availability and the 16/17/18/19-inch trim-linked tire ladder; not used as exact gear-ratio or final-drive evidence.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1284/file_en/0600431e526c4b6b18c4758edbf597325f59329b/eTD-Audi-A3-Sedan-40-TFSI-quattro-S_tronic-140kW_230919.pdf?1698933960",
       "title": "Audi MediaCenter A3 Sedan 40 TFSI quattro 2023 technical-data PDF",
@@ -517,6 +566,13 @@
       "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-q5-e-hybrid-all-rounder-with-great-electric-range-16685",
       "title": "Audi MediaCenter 2025 Q5 e-hybrid launch release",
       "note": "Official Audi launch release for the successor Q5 SUV e-hybrid quattro and Q5 Sportback e-hybrid quattro models, used to document the mid-2025 product-cycle handover away from FY 55 TFSI e quattro naming.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-coupe-40-tfsi-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/421/file_en/bedd9abf6b9d0dbf986fe96870c1806bdc1b85b9/eTD_Audi_TT_Coupe_40_TFSI_S_tronic_145kW_230113.pdf?1698933712&disposition=attachment",
+      "title": "Audi MediaCenter TT Coupe 40 TFSI 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TT Coupe 40 TFSI S tronic 145 kW state showing front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
       "confidence": "high"
     },
     {

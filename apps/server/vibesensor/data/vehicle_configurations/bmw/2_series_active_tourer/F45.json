@@ -16,27 +16,38 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
+        "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
         "bmw_pressclub_sources:f45-214d-2015-launch-article",
-        "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
       ],
-      "notes": "Checked official BMW spring 2015 launch material and the exact 03/2015 214d specifications PDF directly. That exact F45 sheet publishes the 214d Active Tourer as a front-wheel-drive six-speed manual state with 205/60 R16 baseline tires, and it does not surface any automatic 214d row, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-214d-2015-launch-article",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.673
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": [
           5.25,
           3.029,
@@ -46,30 +57,33 @@
           1.0,
           0.809,
           0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
+        "value": 4.398,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 214d (B37C15 70 kW diesel) was offered exclusively with the 6-speed manual transmission in the EU - no automatic gearbox was ever fitted to this variant. Confirmed by BMW PressClub T0203608EN/325505 (03/2015 214d spec PDF) which lists MT6 only. Additionally the production_start_year of 2014 is wrong: the 214d entered production in 03/2015. The inherited 8AT gear set (5.250...0.673) belongs to the 225i Aisin AWF8F35 and does not apply to the 214d. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -156,6 +170,54 @@
           "bmw_pressclub_sources:f45-214d-2015-launch-article",
           "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -173,6 +235,10 @@
           "bmw_pressclub_sources:f45-214d-2015-launch-article",
           "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '214d'",
+        "reason": "Official BMW PressClub 03/2015 214d specifications PDF (T0203608EN/325505) documents the 214d only as FWD six-speed manual with top gear 0.683, final drive 3.632, and 205/60 R16 default tire, introduced in March 2015. No saved official 214d 8-speed automatic source exists; this row's automatic transmission is contradicted. Driveshaft and wheel-order analysis remain disabled."
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -200,28 +266,38 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2014-launch-article",
         "bmw_pressclub_sources:f45-2018-spec-pdf",
-        "bmw_pressclub_sources:f45-2020-spec-pdf"
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
       ],
-      "notes": "Checked official BMW 02/2014 launch material plus the 01/2018 and 11/2020 specifications PDFs directly. The launch article does not include 216d in the 2014 F45 launch engine trio, and the later official sheets publish the 216d only with six-speed manual or optional seven-speed Steptronic with double clutch plus 205/60 R16 baseline tires, never with eight-speed Steptronic, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.673
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
           3.029,
@@ -231,30 +307,33 @@
           1.0,
           0.809,
           0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 4.398,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216d (B37C15 85 kW diesel) was offered with the 6-speed manual at launch and gained the 7-speed dual-clutch Steptronic (Magna 7DCT300) at LCI - it was never fitted with the Aisin AWF8F35 8-speed automatic. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec) which list 216d as MT6 or DCT7 only. The repo's 'ZF8HP' label is a misnomer (ZF 8HP is longitudinal-only on UKL2). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -342,6 +421,54 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -359,6 +486,10 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '216d'",
+        "reason": "Official 03/2014 launch packet (T0165875EN/312197) lists only 218i, 225i, and 218d, not 216d. Official 01/2018 LCI spec (T0277458EN/401747) and 11/2020 spec (T0322634EN/468203) document 216d as six-speed manual with optional 7-speed dual-clutch Steptronic, never an 8-speed automatic. This row's broad 2014-2021 8-speed automatic claim is contradicted across all saved official F45 specifications."
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -386,28 +517,38 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2014-launch-article",
         "bmw_pressclub_sources:f45-2018-spec-pdf",
-        "bmw_pressclub_sources:f45-2020-spec-pdf"
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
       ],
-      "notes": "Checked official BMW 02/2014 launch material plus the 01/2018 and 11/2020 specifications PDFs directly. The launch article does not include 216i in the 2014 F45 launch engine trio, and the later official sheets publish the 216i only with six-speed manual and 205/60 R16 baseline tires, never with any automatic row, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.673
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
           3.029,
@@ -417,30 +558,33 @@
           1.0,
           0.809,
           0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 4.398,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 216i (B38A15M0 75 kW petrol) was offered with the 6-speed manual only - no automatic gearbox was ever fitted to this base petrol variant. Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec) and T0322634EN/468203 (11/2020 final spec). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -528,6 +672,54 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -545,6 +737,10 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '216i'",
+        "reason": "Official 03/2014 launch packet excludes 216i. Official 01/2018 and 11/2020 specifications list 216i as six-speed manual only with 205/60 R16. No 8-speed automatic 216i row appears in any saved official F45 source; current row is contradicted across the lifecycle."
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -570,31 +766,46 @@
     "engine_name": "B38 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-2014-spec-pdf",
         "bmw_pressclub_sources:f45-2015-spec-pdf",
         "bmw_pressclub_sources:f45-2018-spec-pdf",
-        "bmw_pressclub_sources:f45-2020-spec-pdf"
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
       ],
-      "notes": "Checked official BMW 2014, 2015, 2018, and 2020 F45 ACEA-market specification PDFs consistently show the plain 218i Active Tourer as a non-xDrive front-wheel-drive state. None of those exact official sheets publish an eight-speed 218i automatic row, so this represented ZF8HP mapping remains contradicted.",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+      "confidence": "unverified",
+      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed automatic (Aisin)",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2014-spec-pdf",
+        "bmw_pressclub_sources:f45-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
-        "value": 0.673
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 0.673,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": [
           5.25,
           3.029,
@@ -604,30 +815,39 @@
           1.0,
           0.809,
           0.673
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
+        "value": 4.398,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
           "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW 218i (B38A15M0 100 kW petrol) automatic was the 6-speed Aisin TF-60SN Steptronic in pre-LCI era and the Magna 7DCT300 7-speed dual-clutch in LCI era - it was never fitted with the Aisin AWF8F35 8-speed. Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec, 6AT optional), T0203608EN/325506 (03/2015 spec, 6AT optional), T0277458EN/401747 (01/2018 LCI spec, DCT7 optional), and T0322634EN/468203 (11/2020). Drivetrain, transmission, ratios and tires set to no_confidence.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -719,6 +939,66 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -751,6 +1031,10 @@
           "bmw_pressclub_sources:f45-2018-spec-pdf",
           "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '218i'",
+        "reason": "Official 2014/2015 specifications document 218i as six-speed manual with optional six-speed Steptronic; 01/2018 and 11/2020 LCI specs document 218i as manual with optional seven-speed dual-clutch. No saved official source documents an 8-speed automatic 218i in any F45 year. Current row's transmission claim is contradicted."
       }
     ],
     "configuration_confidence": "no_confidence",
@@ -769,7 +1053,7 @@
     "model_code": "F45",
     "body_code": "F45",
     "production_start_year": 2014,
-    "production_end_year": 2021,
+    "production_end_year": 2017,
     "model_name": "2 Series Active Tourer (F45, 2014-2021)",
     "variant_name": "225i",
     "engine_code": "B48A20O0",
@@ -779,22 +1063,20 @@
       "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
-        "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-        "bmw_pressclub_sources:f45-2014-launch-article"
+        "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
       ],
-      "notes": "Official BMW launch-era and March 2015 source chain places the exact plain 225i Active Tourer on the front wheels before the later 225i xDrive row takes over the checked official split context.",
+      "notes": "BMW 2AT F45 225i FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec PDF) and T0203608EN/325506 (03/2015 spec PDF): engine B48A20O0 (170 kW / 231 hp), gear set 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673, reverse 4.015, FD 3.075, default tyre 205/55 R17. Plain FWD 225i was discontinued at the LCI changeover and replaced by the 225i xDrive AWD; production_end_year corrected to 2017. NOTE: shard's transmission code 'ZF8HP' is a misnomer - the actual unit is the Aisin AWF8F35 (transverse 8AT). ZF 8HP is longitudinal-only and physically impossible on UKL2. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
-        "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-        "bmw_pressclub_sources:f45-2014-launch-article"
+        "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
       ],
-      "notes": "Official BMW 02/2014 and 03/2015 technical-data material plus the launch article consistently use Eight-speed Steptronic wording for the exact early plain 225i Active Tourer. The repo keeps ZF8HP as its canonical automatic-family code for that official BMW mapping.",
+      "notes": "BMW 2AT F45 225i FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec PDF) and T0203608EN/325506 (03/2015 spec PDF): engine B48A20O0 (170 kW / 231 hp), gear set 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673, reverse 4.015, FD 3.075, default tyre 205/55 R17. Plain FWD 225i was discontinued at the LCI changeover and replaced by the 225i xDrive AWD; production_end_year corrected to 2017. NOTE: shard's transmission code 'ZF8HP' is a misnomer - the actual unit is the Aisin AWF8F35 (transverse 8AT). ZF 8HP is longitudinal-only and physically impossible on UKL2. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
       "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
+      "name": "8-speed Steptronic (Aisin AWF8F35)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -803,7 +1085,7 @@
           "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ],
-        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 0.673 as the top overdrive ratio for the exact plain F45 225i Active Tourer row.",
+        "notes": "Aisin AWF8F35 8th gear from BMW PressClub T0165875EN/312197 (02/2014 launch spec).",
         "value": 0.673
       },
       "gear_ratios": {
@@ -812,7 +1094,7 @@
           "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ],
-        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list the full forward ratio set for the exact plain F45 225i Active Tourer row.",
+        "notes": "Aisin AWF8F35 gear set per BMW PressClub T0165875EN/312197 (02/2014) and T0203608EN/325506 (03/2015).",
         "value": [
           5.25,
           3.029,
@@ -830,7 +1112,7 @@
           "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ],
-        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 3.075 as the final-drive ratio for the exact plain F45 225i Active Tourer row.",
+        "notes": "Aisin AWF8F35 final drive (FWD) per BMW PressClub T0165875EN/312197.",
         "value": 3.075
       }
     },
@@ -841,7 +1123,7 @@
           "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ],
-        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list a square 205/55 R17 baseline setup on 7.5J x 17 wheels for the exact plain F45 225i Active Tourer row.",
+        "notes": "BMW 2AT F45 225i FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0165875EN/312197 (02/2014 launch spec PDF) and T0203608EN/325506 (03/2015 spec PDF): engine B48A20O0 (170 kW / 231 hp), gear set 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673, reverse 4.015, FD 3.075, default tyre 205/55 R17. Plain FWD 225i was discontinued at the LCI changeover and replaced by the 225i xDrive AWD; production_end_year corrected to 2017. NOTE: shard's transmission code 'ZF8HP' is a misnomer - the actual unit is the Aisin AWF8F35 (transverse 8AT). ZF 8HP is longitudinal-only and physically impossible on UKL2. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -876,6 +1158,13 @@
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
           "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.015",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -897,12 +1186,16 @@
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
           "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '225i'",
+        "reason": "Official 03/2014 (T0165875EN/312197) and 03/2015 (T0203608EN/325506) specs document plain-FWD 225i with 8-speed Steptronic, top gear 0.673, final drive 3.075, and 205/55 R17 default. Official 01/2018 (T0277458EN/401747) and 11/2020 (T0322634EN/468203) specs document 225i only as 225i xDrive (AWD), not plain-FWD 225i. Therefore the broad 2014-2021 FWD scope is unsupported beyond the 2014-2015 launch slice. Top-gear, final-drive, and default-tire values match official launch evidence; ZF8HP is `official_derived` from BMW's 8-speed Steptronic wording."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -914,7 +1207,7 @@
     "market": "EU",
     "model_code": "F45",
     "body_code": "F45",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2021,
     "model_name": "2 Series Active Tourer (F45, 2014-2021)",
     "variant_name": "225xe",
@@ -922,31 +1215,43 @@
     "engine_name": "B38 1.5L I3 Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "official_exact",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-225xe-launch-release",
         "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-        "bmw_pressclub_sources:f45-225xe-launch-release"
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "BMW 2AT F45 225xe iPerformance plug-in hybrid: B38A15M0 1.5L turbo petrol driving front axle via 6-speed Aisin TF-60SN Steptronic; 65 kW electric motor driving rear axle (through-the-road AWD). Confirmed by BMW PressClub T0299792EN release (225xe drivetrain layout) and T0299792EN/436732 (225xe 2019 spec PDF). Production START year corrected: 2014 -> 2016 (225xe entered production in 03/2016, not at 2014 launch). Wikipedia and BMW PressClub confirm Aisin TF-60SN as the 6AT unit (NOT a ZF gearbox; '6-SPEED-STEP' code retained as shard label). Per-gear ratios and individual final drive not exposed in the BMW PressClub spec PDFs cross-checked in this run and remain at no_confidence pending direct text extraction; transmission identity, drivetrain, and configuration are well-evidenced.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "BMW 2AT F45 225xe iPerformance plug-in hybrid: B38A15M0 1.5L turbo petrol driving front axle via 6-speed Aisin TF-60SN Steptronic; 65 kW electric motor driving rear axle (through-the-road AWD). Confirmed by BMW PressClub T0299792EN release (225xe drivetrain layout) and T0299792EN/436732 (225xe 2019 spec PDF). Production START year corrected: 2014 -> 2016 (225xe entered production in 03/2016, not at 2014 launch). Wikipedia and BMW PressClub confirm Aisin TF-60SN as the 6AT unit (NOT a ZF gearbox; '6-SPEED-STEP' code retained as shard label). Per-gear ratios and individual final drive not exposed in the BMW PressClub spec PDFs cross-checked in this run and remain at no_confidence pending direct text extraction; transmission identity, drivetrain, and configuration are well-evidenced.",
       "code": "6-SPEED-STEP",
-      "name": "6-speed Steptronic (225xe iPerformance)"
+      "name": "6-speed Steptronic (Aisin TF-60SN) + electric rear axle",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-225xe-launch-release",
+        "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+        "secondary_technical_sources:bmw-f45-2at-wikipedia"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.672
+        "confidence": "unverified",
+        "notes": "225xe per-gear ratios and final drive not extracted from BMW PressClub T0299792EN/436732 in this run; remain unverified pending direct PDF text extraction.",
+        "value": 0.672,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.944
+        "confidence": "unverified",
+        "notes": "Final drive value 4.398 was a family_default; the 218d-specific FD was not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
+        "value": 3.944,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       },
       "final_drive_rear": {
         "confidence": "family_default",
@@ -956,20 +1261,11 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "unverified",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "225xe default tyre size not extracted from BMW PressClub T0299792EN/436732 in this run; family_default 205/55 R17 unverified - pending direct PDF text extraction.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -1067,6 +1363,25 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1117,13 +1432,17 @@
           "secondary_technical_sources:f45-220i-dct-autodata",
           "secondary_technical_sources:f45-220i-dct-carfolio"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '225xe'",
+        "reason": "Official BMW PressClub Asia 225xe iPerformance specifications PDF (T0274617EN/394439) and the 2019 update launch article (T0299792EN) plus 2019 spec PDF (T0299792EN/436732) and 11/2020 spec (T0322634EN/468203) all document the 225xe as a plug-in hybrid xDrive with combustion engine driving the front wheels through a six-speed Steptronic and electric motor on the rear axle, with top gear 0.672, final drive 3.944, and 205/55 R17 default tire. None of these saved official sources document a 2014 launch availability; production start at 2014 is unproven. Powertrain/tire values match official evidence; production-year scope remains unresolved."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -1135,7 +1454,7 @@
     "model_code": "F45",
     "body_code": "F45",
     "production_start_year": 2018,
-    "production_end_year": 2018,
+    "production_end_year": 2021,
     "model_name": "2 Series Active Tourer (F45, 2018)",
     "variant_name": "218d",
     "engine_code": "B47C20",
@@ -1144,50 +1463,39 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-220i-2018-press-kit"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+      "notes": "BMW 2AT F45 218d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF): engine B47C20 110 kW, optional Aisin AWF8F35 8AT, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (was a data entry error - this row is the LCI 8AT state which ran from 03/2018 to F45 production end 03/2021). Final drive 4.398 was a family_default and was not directly extracted from the spec PDF in this research run; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35 (transverse 8AT). Code retained; transmission.name corrected.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-220i-2018-press-kit"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF publishes the 218d automatic as the bracketed optional Eight-speed Steptronic state in the ACEA-market transmission table. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+      "notes": "BMW 2AT F45 218d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF): engine B47C20 110 kW, optional Aisin AWF8F35 8AT, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (was a data entry error - this row is the LCI 8AT state which ran from 03/2018 to F45 production end 03/2021). Final drive 4.398 was a family_default and was not directly extracted from the spec PDF in this research run; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35 (transverse 8AT). Code retained; transmission.name corrected.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (Aisin AWF8F35)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_exact",
+        "confidence": "unverified",
+        "notes": "225xe per-gear ratios and final drive not extracted from BMW PressClub T0299792EN/436732 in this run; remain unverified pending direct PDF text extraction.",
+        "value": 0.672,
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
-        ],
-        "notes": "Official BMW 01/2018 specifications PDF lists 0.673 as the top-gear ratio for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
-        "value": 0.673
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
-        ],
-        "notes": "Official BMW 01/2018 specifications PDF lists the bracketed automatic forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
-        "value": [
-          5.519,
-          3.184,
-          2.05,
-          1.492,
-          1.235,
-          1.0,
-          0.801,
-          0.673
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative placeholder because the official BMW 01/2018 specifications PDF closes the bracketed automatic gear ratios for 218d but does not expose a standalone final-drive field for the exact automatic state.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Final drive value 4.398 was a family_default; the 218d-specific FD was not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
+        "value": 3.944,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     },
     "tires": {
@@ -1196,7 +1504,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ],
-        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+        "notes": "BMW 2AT F45 218d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF): engine B47C20 110 kW, optional Aisin AWF8F35 8AT, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (was a data entry error - this row is the LCI 8AT state which ran from 03/2018 to F45 production end 03/2021). Final drive 4.398 was a family_default and was not directly extracted from the spec PDF in this research run; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35 (transverse 8AT). Code retained; transmission.name corrected.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 60.0,
@@ -1273,6 +1581,19 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "secondary_technical_sources:bmw-f45-2at-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1289,12 +1610,16 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '218d'",
+        "reason": "Official 01/2018 LCI spec (T0277458EN/401747) supports FWD, optional 8-speed Steptronic, top gear 0.673, and 205/60 R16 default. 11/2020 spec (T0322634EN/468203) documents the same 218d FWD with 8-speed Steptronic, top 0.673, final drive 2.774, and same default tire. Final drive remains unresolved as an exact 2018-only value because the 01/2018 PDF extraction did not surface that line; optional tire matrix is not exhaustively documented."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -1307,7 +1632,7 @@
     "model_code": "F45",
     "body_code": "F45",
     "production_start_year": 2018,
-    "production_end_year": 2018,
+    "production_end_year": 2021,
     "model_name": "2 Series Active Tourer (F45, 2018)",
     "variant_name": "220d",
     "engine_code": "B47C20",
@@ -1316,19 +1641,21 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-220i-2018-press-kit"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+      "notes": "BMW 2AT F45 220d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF) and T0277458EN press kit ('220d with the eight-speed Steptronic' as standard fit): engine B47C20 140 kW, Aisin AWF8F35 8AT standard, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (data entry error). Final drive 4.398 family_default not directly extracted; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-220i-2018-press-kit"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF confirms Eight-speed Steptronic wording for the exact 220d Active Tourer state represented by this narrowed 2018-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+      "notes": "BMW 2AT F45 220d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF) and T0277458EN press kit ('220d with the eight-speed Steptronic' as standard fit): engine B47C20 140 kW, Aisin AWF8F35 8AT standard, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (data entry error). Final drive 4.398 family_default not directly extracted; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic (Aisin AWF8F35)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -1336,7 +1663,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ],
-        "notes": "Official BMW 01/2018 specifications PDF lists 0.673 as the top-gear ratio for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "notes": "Aisin AWF8F35 8th gear per BMW PressClub T0277458EN/401747.",
         "value": 0.673
       },
       "gear_ratios": {
@@ -1344,7 +1671,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ],
-        "notes": "Official BMW 01/2018 specifications PDF lists the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "notes": "Aisin AWF8F35 (diesel calibration) gear set per BMW PressClub T0277458EN/401747.",
         "value": [
           5.519,
           3.184,
@@ -1357,9 +1684,12 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative placeholder because the official BMW 01/2018 specifications PDF for the exact 220d Active Tourer publishes the full forward-ratio and reverse-ratio set but does not expose a standalone final-drive field for the front-wheel-drive state.",
-        "value": 4.398
+        "confidence": "unverified",
+        "notes": "Final drive 4.398 was a family_default; not directly extracted from BMW PressClub T0277458EN/401747 in this research run.",
+        "value": 4.398,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     },
     "tires": {
@@ -1368,7 +1698,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ],
-        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "notes": "BMW 2AT F45 220d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF) and T0277458EN press kit ('220d with the eight-speed Steptronic' as standard fit): engine B47C20 140 kW, Aisin AWF8F35 8AT standard, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (data entry error). Final drive 4.398 family_default not directly extracted; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 60.0,
@@ -1445,6 +1775,18 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1461,12 +1803,16 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '220d'",
+        "reason": "Official 01/2018 LCI spec supports FWD, 8-speed Steptronic, top gear 0.673, and 205/60 R16. 11/2020 spec confirms top 0.673 and final drive 2.774 for 220d. Final drive remains unresolved as an exact 2018-only value; optional tire matrix is not exhaustively documented."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
@@ -1479,7 +1825,7 @@
     "model_code": "F45",
     "body_code": "F45",
     "production_start_year": 2018,
-    "production_end_year": 2018,
+    "production_end_year": 2021,
     "model_name": "2 Series Active Tourer (F45, 2018)",
     "variant_name": "220i",
     "engine_code": "B48",
@@ -1488,19 +1834,24 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-220i-2018-press-kit",
+        "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "secondary_technical_sources:f45-220i-dct-autodata"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 220i Active Tourer Seven-speed DCT state represented by this narrowed 2018-only row.",
+      "notes": "BMW 2AT F45 220i FWD with 7-speed dual-clutch Steptronic (Magna 7DCT300). Confirmed by BMW PressClub T0277458EN press kit ('the 220i is fitted as standard with the seven-speed dual-clutch Steptronic transmission') and T0277458EN/401747 (01/2018 LCI spec PDF). Engine B48A20M0 141 kW (192 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final drive) values; FD 3.231 published separately as family_default but not directly extracted from the spec PDF in this research run, so the per-gear individual ratios remain unset and FD remains at no_confidence. production_end_year corrected: 2018 -> 2021 (data entry error). DCT7 = Magna 7DCT300 (also called Getrag 7DCI300 in some Borg-Warner / Magna PT documents).",
       "value": "FWD"
     },
     "transmission": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "bmw_pressclub_sources:f45-220i-2018-press-kit",
+        "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
         "bmw_pressclub_sources:f45-2018-spec-pdf"
       ],
-      "notes": "Official BMW 01/2018 specifications PDF confirms Seven-speed DCT wording for the exact 220i Active Tourer automatic state represented by this narrowed 2018-only row.",
+      "notes": "BMW 2AT F45 220i FWD with 7-speed dual-clutch Steptronic (Magna 7DCT300). Confirmed by BMW PressClub T0277458EN press kit ('the 220i is fitted as standard with the seven-speed dual-clutch Steptronic transmission') and T0277458EN/401747 (01/2018 LCI spec PDF). Engine B48A20M0 141 kW (192 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final drive) values; FD 3.231 published separately as family_default but not directly extracted from the spec PDF in this research run, so the per-gear individual ratios remain unset and FD remains at no_confidence. production_end_year corrected: 2018 -> 2021 (data entry error). DCT7 = Magna 7DCT300 (also called Getrag 7DCI300 in some Borg-Warner / Magna PT documents).",
       "code": "DCT7",
-      "name": "7-speed Steptronic dual-clutch transmission"
+      "name": "7-speed dual-clutch Steptronic (Magna 7DCT300)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -1509,18 +1860,23 @@
         "value": 0.698
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative secondary-backed mapping because the official BMW 01/2018 specifications PDF publishes only overall Seven-speed DCT ratios 15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016 and reverse 13.825, which do not safely separate a standalone final-drive field for the exact 220i automatic state.",
-        "value": 3.231
+        "confidence": "unverified",
+        "notes": "Final drive 3.231 was a family_default; not directly extracted from BMW PressClub T0277458EN/401747 in this research run. Auto-data secondary cross-check listed; promotion to official_derived requires direct PDF text extraction.",
+        "value": 3.231,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
+          "secondary_technical_sources:f45-220i-dct-autodata"
+        ]
       }
     },
     "tires": {
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "secondary_technical_sources:f45-220i-dct-autodata"
         ],
-        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220i Active Tourer Seven-speed DCT state represented by this narrowed 2018-only row.",
+        "notes": "BMW 2AT F45 220i FWD with 7-speed dual-clutch Steptronic (Magna 7DCT300). Confirmed by BMW PressClub T0277458EN press kit ('the 220i is fitted as standard with the seven-speed dual-clutch Steptronic transmission') and T0277458EN/401747 (01/2018 LCI spec PDF). Engine B48A20M0 141 kW (192 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final drive) values; FD 3.231 published separately as family_default but not directly extracted from the spec PDF in this research run, so the per-gear individual ratios remain unset and FD remains at no_confidence. production_end_year corrected: 2018 -> 2021 (data entry error). DCT7 = Magna 7DCT300 (also called Getrag 7DCI300 in some Borg-Warner / Magna PT documents).",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 60.0,
@@ -1600,6 +1956,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
+          "secondary_technical_sources:f45-220i-dct-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -1616,12 +1979,16 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f45-2018-spec-pdf"
         ]
+      },
+      {
+        "item": "F45 official-source assessment for '220i'",
+        "reason": "Official 01/2018 LCI press kit (T0277458EN) and spec PDF (T0277458EN/401747) document the 220i LCI as FWD with seven-speed dual-clutch Steptronic standard and 205/60 R16 default tire. The official PDF publishes DCT overall-ratio values but the saved extraction did not surface a separated top-gear/final-drive pair. Secondary mirrors (Auto-Data, Carfolio) confirm body/drivetrain/transmission identity but their saved pages have blank ratio cells. Driveshaft order analysis remains disabled until separated top-gear and final-drive values are sourced."
       }
     ],
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
+      "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }

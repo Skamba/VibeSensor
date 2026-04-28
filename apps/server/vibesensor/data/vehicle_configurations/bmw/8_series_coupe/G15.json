@@ -114,6 +114,13 @@
           "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
           "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.993",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m850i-lci"
+        ]
       }
     ],
     "unresolved": [
@@ -189,6 +196,24 @@
         ],
         "notes": "The official BMW launch technical-data PDF publishes a single 2.929 final-drive ratio for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
         "value": 2.929
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ],
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf",
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): ZF GA8HP76X (xDrive variant of 8HP75/76 family) used in 840i xDrive. Same forward gear set as the RWD 840i sibling row whose ratios are confirmed official_exact from the BMW press PDF. Confidence official_derived because the xDrive-specific spec sheet was not separately located."
       }
     },
     "tires": {
@@ -285,6 +310,13 @@
           "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
           "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.993",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m850i-lci"
+        ]
       }
     ],
     "unresolved": [
@@ -342,38 +374,75 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "value": 0.64,
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci",
+          "secondary_technical_sources:motortrend-2020-m8"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
+        ]
       },
       "final_drive_front": {
-        "value": 3.077,
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked."
+        "value": 3.154,
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "evidence_refs": [
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "reputable_secondary_crosschecked",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci",
+          "secondary_technical_sources:motortrend-2020-m8"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:53c036dd5c01",
-          "legacy_research_sources:72e9c147f482",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "secondary_technical_sources:bmw-m8-pressclub-usa-t0296777",
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): BMW USA M8 press release T0296777EN_US explicitly publishes 275/35R20 front and 285/35R20 rear (non-runflat, wheels 9.5x20 front / 10.5x20 rear). MotorTrend 2020 M8 and Car and Driver 2020 M8 confirm same staggered fitment. Prior repo value 245/35R20 front (no rear) was a wrong family_default likely pulled from the M850i front-tire spec.",
         "front": {
-          "width_mm": 245.0,
+          "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 20.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -455,6 +524,13 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:b3655e5aa9ee",
           "legacy_research_sources:f3fe62f03e97"
+        ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.456",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
         ]
       }
     ],
@@ -519,38 +595,75 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 Competition (G15/F93) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "value": 0.64,
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci",
+          "secondary_technical_sources:motortrend-2020-m8"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 Competition (G15/F93) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "value": 3.154,
+        "evidence_refs": [
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
+        ]
       },
       "final_drive_front": {
-        "value": 3.077,
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked."
+        "value": 3.154,
+        "confidence": "reputable_secondary_crosschecked",
+        "notes": "Sonnet redo research (2026-04 v2): M8 Competition (G15/F93) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
+        "evidence_refs": [
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
+        ]
+      },
+      "gear_ratios": {
+        "confidence": "reputable_secondary_crosschecked",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci",
+          "secondary_technical_sources:motortrend-2020-m8"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): M8 Competition (G15/F93) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:53c036dd5c01",
-          "legacy_research_sources:72e9c147f482",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "secondary_technical_sources:bmw-m8-pressclub-usa-t0296777",
+          "secondary_technical_sources:motortrend-2020-m8",
+          "secondary_technical_sources:caranddriver-2020-m8"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Sonnet redo research (2026-04 v2): same 275/35R20 front / 285/35R20 rear staggered fitment as M8 standard, only forged wheel design differs.",
         "front": {
-          "width_mm": 245.0,
+          "width_mm": 275.0,
           "aspect_pct": 35.0,
           "rim_in": 20.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "rear",
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        }
       },
       "options": [
         {
@@ -632,6 +745,13 @@
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:b3655e5aa9ee",
           "legacy_research_sources:f3fe62f03e97"
+        ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.456",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m8-lci"
         ]
       }
     ],
@@ -717,27 +837,32 @@
           0.823,
           0.64
         ],
-        "confidence": "official_exact",
+        "confidence": "unverified",
         "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
           "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
         ],
-        "notes": "The official BMW launch technical-data PDF lists the full forward gear-ratio set for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row."
+        "notes": "Sonnet redo research (2026-04 v2): existing repo array [5.5, 3.52, 2.2, 1.72, 1.317, 1.0, 0.823, 0.64] does not match any documented ZF 8HP75/76 ratio set. The N63B44T3 engine in BMW X7 xDrive50i / 750i (same gearbox family GA8HP76X) publishes [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640] in BMW press kits. The 5.5/3.52/2.2 first-three values appear to be a transcription artifact rather than a valid ratio set. Confidence downgraded to no_confidence pending direct verification against an original BMW G15 launch ACEA tech-data PDF (T0292069EN currently 404 globally and not captured by Wayback). Best-estimate replacement value if corroborated: [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640]."
       },
       "final_drive_front": {
         "value": 2.813,
         "confidence": "official_derived",
         "evidence_refs": [
+          "secondary_technical_sources:motortrend-2019-m850i",
+          "secondary_technical_sources:ultimatespecs-g15-m850i-lci",
           "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
         ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation."
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation. Sonnet redo research (2026-04 v2): EU 2.813 retained per BMW xDrive single-FD convention; US-market spec 3.40 noted as separate market variant."
       },
       "final_drive_rear": {
         "value": 2.813,
         "confidence": "official_derived",
         "evidence_refs": [
+          "secondary_technical_sources:motortrend-2019-m850i",
+          "secondary_technical_sources:ultimatespecs-g15-m850i-lci",
           "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
         ],
-        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation."
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation. Sonnet redo research (2026-04 v2): EU press value 2.813 retained; US consumer sources (MotorTrend 2019, Car and Driver 2019) cite 3.40 axle ratio for the US-spec M850i, suggesting an EU/US market FD difference. UltimateSpecs G15 LCI M850i xDrive confirms 2.81 (rounded EU value)."
       }
     },
     "tires": {
@@ -786,6 +911,20 @@
         "note": "The official BMW launch article and technical-data PDF close the exact 8 Series Coupe M850i xDrive launch-state mapping: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio duplicated across the front and rear axle fields, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires. This row is narrowed to the supported 2019-only state because later exact numeric continuity was not recovered in this pass.",
         "evidence_refs": [
           "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.993",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
+          "secondary_technical_sources:ultimatespecs-g15-m850i-lci"
+        ]
+      },
+      {
+        "note": "ratios.gear_ratios: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:zf-8hp-m-steptronic-spec",
           "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
         ]
       }

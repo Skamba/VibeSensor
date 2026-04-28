@@ -93,7 +93,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -190,7 +190,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -216,11 +216,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the 116d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -287,7 +287,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -384,7 +384,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -481,7 +481,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -507,11 +507,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the 116i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -578,7 +578,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -675,7 +675,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -701,11 +701,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the 118d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -772,7 +772,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -869,7 +869,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -895,11 +895,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the 125d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -966,7 +966,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1063,7 +1063,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1089,11 +1089,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the 125i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -1160,7 +1160,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1267,7 +1267,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   },
   {
@@ -1293,11 +1293,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_exact",
+      "confidence": "official_derived",
       "evidence_refs": [
         "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
       ],
-      "notes": "The official BMW 07/2012 technical-data PDF publishes the M135i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "notes": "Official BMW F21 technical-data PDFs publish eight-speed automatic/Steptronic wording and exact automatic ratios; the repo keeps ZF8HP as the normalized gearbox-family code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -1374,7 +1374,7 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+      "requires_manual_confirmation": false
     }
   }
 ]
