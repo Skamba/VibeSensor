@@ -92,6 +92,27 @@ Configuration-level confidence values:
 - `no_confidence`
 - `not_applicable`
 
+## Coverage classifications
+
+`VehicleConfiguration` exposes two distinct coverage signals so callers can
+ask the right question:
+
+- `research_completeness` reflects broad row research quality across all
+  documented fields, including non-math labels such as `transmission_name`
+  and `drivetrain`. It is what the row looks like to a maintainer reviewing
+  research progress.
+- `order_reference_trust` (and `order_reference_trust_for(kind)`) reflects
+  trust in the actual runtime math inputs only:
+
+  - `wheel_order`  → tire dimensions
+  - `driveshaft_order`  → tire dimensions + selected final-drive ratio
+  - `engine_order`  → tire dimensions + selected final-drive ratio + top-gear
+    ratio
+
+Order-analysis consumers should use `order_reference_trust` so weak
+documentation on non-math fields does not artificially demote a row whose
+math inputs are evidence-backed.
+
 ## Validation
 
 Canonical validation lives in:

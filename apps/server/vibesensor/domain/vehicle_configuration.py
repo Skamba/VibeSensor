@@ -20,6 +20,7 @@ __all__ = [
     "VehicleFieldConfidence",
     "VehicleFieldMetadata",
     "VehicleFuelType",
+    "VehicleOrderAnalysisKind",
     "VehicleOrderAnalysisPolicy",
 ]
 
@@ -51,6 +52,19 @@ VehicleConfigurationField = Literal[
     "transmission_name",
 ]
 VehicleCoverageClassification = Literal["trusted", "approximate", "backlog_unverified"]
+VehicleOrderAnalysisKind = Literal["wheel_order", "driveshaft_order", "engine_order"]
+
+
+def _classify_confidences(
+    confidences: tuple[VehicleFieldConfidence, ...],
+) -> VehicleCoverageClassification:
+    """Map a tuple of field confidences onto a single coverage classification."""
+
+    if any(confidence == "unverified" for confidence in confidences):
+        return "backlog_unverified"
+    if any(confidence == "family_default" for confidence in confidences):
+        return "approximate"
+    return "trusted"
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,7 +221,14 @@ class VehicleConfiguration:
 
     @property
     def coverage_policy_fields(self) -> tuple[VehicleConfigurationField, ...]:
-        """Return the minimum field set required to trust this config for order analysis."""
+        """Return the broad row research-completeness field set.
+
+        These fields drive :py:attr:`research_completeness`. They include
+        non-math fields (``transmission_name``, ``drivetrain``) that document
+        the row but are *not* required for order-reference math. For the
+        narrower order-analysis trust signal, use
+        :py:meth:`order_reference_trust_for` / :py:attr:`order_reference_trust`.
+        """
 
         fields: list[VehicleConfigurationField] = [
             "drivetrain",
@@ -238,18 +259,96 @@ class VehicleConfiguration:
         return entry.confidence if entry is not None else "unverified"
 
     @property
-    def coverage_policy_classification(self) -> VehicleCoverageClassification:
-        """Classify whether this config is trusted, approximate, or backlog-grade."""
+    def research_completeness(self) -> VehicleCoverageClassification:
+        """Classify broad row research completeness across all documented fields.
+
+        This signal reflects whether the row is broadly research-complete,
+        including non-math labels (e.g. ``transmission_name``). Use
+        :py:attr:`order_reference_trust` when the question is whether the
+        order-analysis math inputs are trustworthy.
+        """
 
         confidences = tuple(
             self.coverage_policy_confidence(field_name)
             for field_name in self.coverage_policy_fields
         )
-        if any(confidence == "unverified" for confidence in confidences):
+        return _classify_confidences(confidences)
+
+    def _order_reference_trust_fields(
+        self, kind: VehicleOrderAnalysisKind
+    ) -> tuple[VehicleConfigurationField, ...]:
+        """Return the order-math input fields that drive trust for *kind*."""
+
+        fields: list[VehicleConfigurationField] = ["tire_dimensions"]
+        if kind in ("driveshaft_order", "engine_order"):
+            if self.drivetrain == "FWD":
+                if self.final_drive_front is not None:
+                    fields.append("final_drive_front")
+            elif self.drivetrain == "RWD":
+                if self.final_drive_rear is not None:
+                    fields.append("final_drive_rear")
+            else:
+                if self.final_drive_rear is not None:
+                    fields.append("final_drive_rear")
+                elif self.final_drive_front is not None:
+                    fields.append("final_drive_front")
+        if kind == "engine_order":
+            fields.append("top_gear_ratio")
+        return tuple(fields)
+
+    def _order_reference_kind_feasible(self, kind: VehicleOrderAnalysisKind) -> bool:
+        if kind == "wheel_order":
+            return True
+        if self.driven_final_drive_ratio is None:
+            return False
+        if kind == "engine_order":
+            return self.top_gear_ratio is not None
+        return True
+
+    def order_reference_trust_for(
+        self, kind: VehicleOrderAnalysisKind
+    ) -> VehicleCoverageClassification:
+        """Classify trust in the math inputs for one order-analysis kind.
+
+        Trust is computed strictly from the runtime math inputs:
+
+        - ``wheel_order``  → tire dimensions
+        - ``driveshaft_order``  → tire dimensions + selected final-drive ratio
+        - ``engine_order``  → tire dimensions + selected final-drive ratio +
+          top-gear ratio
+
+        Non-math metadata such as ``transmission_name`` does not influence the
+        trust signal. When the row is not feasible for *kind* (e.g. EV with no
+        gear ratio for engine order), the classifier returns
+        ``"backlog_unverified"`` because no reliable math output is possible.
+        """
+
+        if not self._order_reference_kind_feasible(kind):
             return "backlog_unverified"
-        if any(confidence == "family_default" for confidence in confidences):
-            return "approximate"
-        return "trusted"
+        confidences: list[VehicleFieldConfidence] = []
+        for field_name in self._order_reference_trust_fields(kind):
+            entry = self.metadata_for(field_name)
+            confidences.append(entry.confidence if entry is not None else "unverified")
+        return _classify_confidences(tuple(confidences))
+
+    @property
+    def order_reference_trust(self) -> VehicleCoverageClassification:
+        """Return the worst trust classification across feasible analysis kinds."""
+
+        all_kinds: tuple[VehicleOrderAnalysisKind, ...] = (
+            "wheel_order",
+            "driveshaft_order",
+            "engine_order",
+        )
+        feasible = [kind for kind in all_kinds if self._order_reference_kind_feasible(kind)]
+        if not feasible:
+            return "backlog_unverified"
+        ranks = {"trusted": 0, "approximate": 1, "backlog_unverified": 2}
+        worst = max(
+            (self.order_reference_trust_for(kind) for kind in feasible),
+            key=lambda c: ranks[c],
+        )
+        return worst
 
     @property
     def requires_manual_drivetrain_confirmation(self) -> bool:

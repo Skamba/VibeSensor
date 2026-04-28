@@ -52,7 +52,7 @@ def _make_exact_configuration(
     )
 
 
-def test_exact_row_with_source_backed_critical_fields_is_trusted() -> None:
+def test_exact_row_with_source_backed_critical_fields_is_research_complete() -> None:
     config = _make_exact_configuration(top_gear_confidence="reputable_secondary_crosschecked")
 
     assert config.coverage_policy_fields == (
@@ -62,16 +62,52 @@ def test_exact_row_with_source_backed_critical_fields_is_trusted() -> None:
         "top_gear_ratio",
         "final_drive_rear",
     )
-    assert config.coverage_policy_classification == "trusted"
+    assert config.research_completeness == "trusted"
+    assert config.order_reference_trust == "trusted"
+    assert config.order_reference_trust_for("wheel_order") == "trusted"
+    assert config.order_reference_trust_for("driveshaft_order") == "trusted"
+    assert config.order_reference_trust_for("engine_order") == "trusted"
 
 
 def test_family_default_critical_field_marks_exact_row_approximate() -> None:
     config = _make_exact_configuration(top_gear_confidence="family_default")
 
-    assert config.coverage_policy_classification == "approximate"
+    # research_completeness still includes top_gear_ratio
+    assert config.research_completeness == "approximate"
+    # engine_order trust depends on top_gear_ratio so it is approximate too
+    assert config.order_reference_trust_for("engine_order") == "approximate"
+    # wheel/driveshaft trust ignores top_gear_ratio
+    assert config.order_reference_trust_for("wheel_order") == "trusted"
+    assert config.order_reference_trust_for("driveshaft_order") == "trusted"
 
 
 def test_unverified_critical_field_marks_exact_row_backlog_unverified() -> None:
     config = _make_exact_configuration(final_drive_confidence="unverified")
 
-    assert config.coverage_policy_classification == "backlog_unverified"
+    assert config.research_completeness == "backlog_unverified"
+    assert config.order_reference_trust_for("driveshaft_order") == "backlog_unverified"
+    assert config.order_reference_trust_for("engine_order") == "backlog_unverified"
+    # wheel order does not depend on the final drive
+    assert config.order_reference_trust_for("wheel_order") == "trusted"
+
+
+def test_weak_transmission_metadata_does_not_drop_order_reference_trust() -> None:
+    """Issue #3272: non-math transmission_name must not block order-reference trust."""
+
+    config = _make_exact_configuration(transmission_confidence="unverified")
+
+    assert config.research_completeness == "backlog_unverified"
+    # Math inputs are still strong, so trust stays "trusted"
+    assert config.order_reference_trust == "trusted"
+    assert config.order_reference_trust_for("engine_order") == "trusted"
+    assert config.order_reference_trust_for("driveshaft_order") == "trusted"
+    assert config.order_reference_trust_for("wheel_order") == "trusted"
+
+
+def test_weak_drivetrain_label_does_not_drop_order_reference_trust() -> None:
+    """drivetrain field is non-math metadata for trust purposes."""
+
+    config = _make_exact_configuration(drivetrain_confidence="family_default")
+
+    assert config.research_completeness == "approximate"
+    assert config.order_reference_trust == "trusted"
