@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal, NoReturn, Protocol
 
@@ -277,6 +277,17 @@ class WholeRunPipelineStageOutput:
 
 
 @dataclass(frozen=True, slots=True)
+class WholeRunStageExecution[ResultT]:
+    """Stage runner payload before conversion into a public stage result."""
+
+    result: ResultT
+    status: PostAnalysisStageStatus
+    artifact_manifest: WholeRunArtifactManifest | None = None
+    warnings: tuple[str, ...] = ()
+    diagnostic_context: JsonObject = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
 class ResolvedWholeRunBuilders:
     """Resolved builder callables used by the explicit whole-run pipeline stages."""
 
@@ -334,6 +345,80 @@ def _warning_codes(warnings: tuple[object, ...]) -> tuple[str, ...]:
         if isinstance(code, str) and code:
             codes.append(code)
     return tuple(codes)
+
+
+def _bundle_artifact_manifest(
+    bundle: object | None,
+) -> WholeRunArtifactManifest | None:
+    manifest = getattr(bundle, "manifest", None)
+    return manifest if isinstance(manifest, WholeRunArtifactManifest) else None
+
+
+def _stage_execution[ResultT](
+    result: ResultT | None,
+    *,
+    artifact_manifest: WholeRunArtifactManifest | None = None,
+    status_when_present: PostAnalysisStageStatus = "ok",
+    status_when_none: PostAnalysisStageStatus = "skipped",
+    warnings: tuple[str, ...] = (),
+    present_diagnostic_context: JsonObject | None = None,
+    none_reason: str = "builder_returned_none",
+    none_diagnostic_context: JsonObject | None = None,
+) -> WholeRunStageExecution[ResultT | None]:
+    if result is None:
+        diagnostic_context: JsonObject = {"reason": none_reason}
+        if none_diagnostic_context is not None:
+            diagnostic_context = {**none_diagnostic_context, **diagnostic_context}
+        return WholeRunStageExecution(
+            result=None,
+            status=status_when_none,
+            warnings=warnings,
+            diagnostic_context=diagnostic_context,
+        )
+    return WholeRunStageExecution(
+        result=result,
+        status=status_when_present,
+        artifact_manifest=artifact_manifest,
+        warnings=warnings,
+        diagnostic_context=(
+            {} if present_diagnostic_context is None else present_diagnostic_context
+        ),
+    )
+
+
+def _run_whole_run_stage[ResultT](
+    *,
+    stage_name: str,
+    run_id: str,
+    prerequisites_met: bool,
+    prerequisite_reason: str,
+    runner: Callable[[], WholeRunStageExecution[ResultT]],
+) -> tuple[ResultT | None, PostAnalysisStageResult]:
+    stage_start = time.monotonic()
+    if not prerequisites_met:
+        return None, _make_stage_result(
+            stage_name=stage_name,
+            status="skipped",
+            stage_start=stage_start,
+            diagnostic_context={"reason": prerequisite_reason},
+        )
+    try:
+        execution = runner()
+    except (aiosqlite.Error, OSError, MemoryError) as exc:
+        _raise_stage_failure(
+            stage_name=stage_name,
+            stage_start=stage_start,
+            exc=exc,
+            diagnostic_context={"run_id": run_id},
+        )
+    return execution.result, _make_stage_result(
+        stage_name=stage_name,
+        status=execution.status,
+        stage_start=stage_start,
+        artifacts_created=_artifact_keys(execution.artifact_manifest),
+        warnings=execution.warnings,
+        diagnostic_context=execution.diagnostic_context,
+    )
 
 
 def _log_stage_result(run_id: str, stage_result: PostAnalysisStageResult) -> None:
@@ -579,251 +664,173 @@ def run_whole_run_pipeline_stages(
     spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
     stored_artifact_manifest: WholeRunArtifactManifest | None = None
 
-    spectral_stage_start = time.monotonic()
-    if loaded.raw_capture is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildWholeRunSpectraStage",
-                status="skipped",
-                stage_start=spectral_stage_start,
-                diagnostic_context={"reason": "raw_capture_missing"},
-            )
+    def record_stage[ResultT](
+        *,
+        stage_name: str,
+        prerequisites_met: bool,
+        prerequisite_reason: str,
+        runner: Callable[[], WholeRunStageExecution[ResultT | None]],
+    ) -> ResultT | None:
+        result, stage_result = _run_whole_run_stage(
+            stage_name=stage_name,
+            run_id=loaded.run_id,
+            prerequisites_met=prerequisites_met,
+            prerequisite_reason=prerequisite_reason,
+            runner=runner,
         )
-    else:
-        try:
-            spectral_result = builders.artifact_builder(
-                run_id=loaded.run_id,
-                metadata=loaded.metadata,
-                raw_capture=loaded.raw_capture,
+        stage_results.append(stage_result)
+        return result
+
+    def run_optional_bundle_stage[BundleT](
+        *,
+        stage_name: str,
+        prerequisites_met: bool,
+        runner: Callable[[], BundleT | None],
+    ) -> BundleT | None:
+        def execute() -> WholeRunStageExecution[BundleT | None]:
+            bundle = runner()
+            return _stage_execution(
+                bundle,
+                artifact_manifest=_bundle_artifact_manifest(bundle),
             )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildWholeRunSpectraStage",
-                stage_start=spectral_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        spectral_bundle = spectral_result.bundle
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildWholeRunSpectraStage",
-                status="ok",
-                stage_start=spectral_stage_start,
-                artifacts_created=_artifact_keys(
-                    spectral_bundle.manifest if spectral_bundle is not None else None
-                ),
-                warnings=_warning_codes(tuple(spectral_result.coverage_summary.warnings)),
-                diagnostic_context={
-                    "bundle_available": spectral_bundle is not None,
-                    "coverage_confidence": spectral_result.coverage_summary.coverage_confidence,
-                },
-            )
+
+        return record_stage(
+            stage_name=stage_name,
+            prerequisites_met=prerequisites_met,
+            prerequisite_reason="missing_prerequisites",
+            runner=execute,
         )
 
-    context_stage_start = time.monotonic()
-    context_status: PostAnalysisStageStatus = "skipped"
-    context_diagnostic: JsonObject = {"reason": "raw_capture_manifest_missing"}
-    if loaded.raw_capture_manifest is not None:
-        try:
-            if spectral_result is not None and spectral_result.window_plan is not None:
-                context_bundle = builders.context_builder(
-                    run=run_input,
-                    window_plan=spectral_result.window_plan,
-                )
-                context_status = "ok"
-                context_diagnostic = {"build_mode": "window_plan"}
-            else:
-                context_bundle = builders.context_builder(
-                    run=run_input,
-                    total_sample_count=whole_run_total_sample_count(loaded.raw_capture_manifest),
-                )
-                context_status = "degraded"
-                context_diagnostic = {"build_mode": "total_sample_count_fallback"}
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildWholeRunContextStage",
-                stage_start=context_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        if context_bundle is None:
-            context_status = "skipped"
-            context_diagnostic = {**context_diagnostic, "reason": "builder_returned_none"}
-    stage_results.append(
-        _make_stage_result(
-            stage_name="BuildWholeRunContextStage",
-            status=context_status,
-            stage_start=context_stage_start,
-            artifacts_created=_artifact_keys(
-                context_bundle.manifest if context_bundle is not None else None
-            ),
-            diagnostic_context=context_diagnostic,
+    def build_spectral_stage() -> WholeRunStageExecution[WholeRunSpectralBuildResult | None]:
+        raw_capture = loaded.raw_capture
+        assert raw_capture is not None
+        result = builders.artifact_builder(
+            run_id=loaded.run_id,
+            metadata=loaded.metadata,
+            raw_capture=raw_capture,
         )
+        spectral_manifest = result.bundle.manifest if result.bundle is not None else None
+        return _stage_execution(
+            result,
+            artifact_manifest=spectral_manifest,
+            warnings=_warning_codes(tuple(result.coverage_summary.warnings)),
+            present_diagnostic_context={
+                "bundle_available": result.bundle is not None,
+                "coverage_confidence": result.coverage_summary.coverage_confidence,
+            },
+        )
+
+    def build_context_stage() -> WholeRunStageExecution[WholeRunContextArtifactBundle | None]:
+        raw_capture_manifest = loaded.raw_capture_manifest
+        assert raw_capture_manifest is not None
+        if spectral_result is not None and spectral_result.window_plan is not None:
+            bundle = builders.context_builder(
+                run=run_input,
+                window_plan=spectral_result.window_plan,
+            )
+            return _stage_execution(
+                bundle,
+                artifact_manifest=_bundle_artifact_manifest(bundle),
+                present_diagnostic_context={"build_mode": "window_plan"},
+                none_diagnostic_context={"build_mode": "window_plan"},
+            )
+        bundle = builders.context_builder(
+            run=run_input,
+            total_sample_count=whole_run_total_sample_count(raw_capture_manifest),
+        )
+        return _stage_execution(
+            bundle,
+            artifact_manifest=_bundle_artifact_manifest(bundle),
+            status_when_present="degraded",
+            present_diagnostic_context={"build_mode": "total_sample_count_fallback"},
+            none_diagnostic_context={"build_mode": "total_sample_count_fallback"},
+        )
+
+    spectral_result = record_stage(
+        stage_name="BuildWholeRunSpectraStage",
+        prerequisites_met=loaded.raw_capture is not None,
+        prerequisite_reason="raw_capture_missing",
+        runner=build_spectral_stage,
+    )
+    spectral_bundle = spectral_result.bundle if spectral_result is not None else None
+
+    context_bundle = record_stage(
+        stage_name="BuildWholeRunContextStage",
+        prerequisites_met=loaded.raw_capture_manifest is not None,
+        prerequisite_reason="raw_capture_manifest_missing",
+        runner=build_context_stage,
     )
 
-    order_trace_stage_start = time.monotonic()
-    if spectral_bundle is None or context_bundle is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderTraceStage",
-                status="skipped",
-                stage_start=order_trace_stage_start,
-                diagnostic_context={"reason": "missing_prerequisites"},
-            )
-        )
-    else:
-        try:
-            order_trace_bundle = builders.order_trace_builder(
-                run=run_input,
-                spectral_bundle=spectral_bundle,
-                context_bundle=context_bundle,
-            )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildOrderTraceStage",
-                stage_start=order_trace_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderTraceStage",
-                status="ok" if order_trace_bundle is not None else "skipped",
-                stage_start=order_trace_stage_start,
-                artifacts_created=_artifact_keys(
-                    order_trace_bundle.manifest if order_trace_bundle is not None else None
-                ),
-                diagnostic_context=(
-                    {"reason": "builder_returned_none"} if order_trace_bundle is None else {}
-                ),
-            )
+    def build_order_trace_stage() -> WholeRunOrderTraceArtifactBundle | None:
+        assert spectral_bundle is not None
+        assert context_bundle is not None
+        return builders.order_trace_builder(
+            run=run_input,
+            spectral_bundle=spectral_bundle,
+            context_bundle=context_bundle,
         )
 
-    order_trace_summary_stage_start = time.monotonic()
-    if order_trace_bundle is None or context_bundle is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderTraceSummaryStage",
-                status="skipped",
-                stage_start=order_trace_summary_stage_start,
-                diagnostic_context={"reason": "missing_prerequisites"},
-            )
-        )
-    else:
-        try:
-            order_trace_summary_bundle = builders.order_trace_summary_builder(
-                order_trace_bundle=order_trace_bundle,
-                context_bundle=context_bundle,
-            )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildOrderTraceSummaryStage",
-                stage_start=order_trace_summary_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderTraceSummaryStage",
-                status="ok" if order_trace_summary_bundle is not None else "skipped",
-                stage_start=order_trace_summary_stage_start,
-                artifacts_created=_artifact_keys(
-                    order_trace_summary_bundle.manifest
-                    if order_trace_summary_bundle is not None
-                    else None
-                ),
-                diagnostic_context=(
-                    {"reason": "builder_returned_none"}
-                    if order_trace_summary_bundle is None
-                    else {}
-                ),
-            )
+    order_trace_bundle = run_optional_bundle_stage(
+        stage_name="BuildOrderTraceStage",
+        prerequisites_met=spectral_bundle is not None and context_bundle is not None,
+        runner=build_order_trace_stage,
+    )
+
+    def build_order_trace_summary_stage() -> WholeRunOrderTraceSummaryArtifactBundle | None:
+        assert order_trace_bundle is not None
+        assert context_bundle is not None
+        return builders.order_trace_summary_builder(
+            order_trace_bundle=order_trace_bundle,
+            context_bundle=context_bundle,
         )
 
-    order_family_stage_start = time.monotonic()
-    if order_trace_bundle is None or order_trace_summary_bundle is None or context_bundle is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderFamilySummaryStage",
-                status="skipped",
-                stage_start=order_family_stage_start,
-                diagnostic_context={"reason": "missing_prerequisites"},
-            )
-        )
-    else:
-        try:
-            order_family_summary_bundle = builders.order_family_summary_builder(
-                order_trace_bundle=order_trace_bundle,
-                order_trace_summary_bundle=order_trace_summary_bundle,
-                context_bundle=context_bundle,
-            )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildOrderFamilySummaryStage",
-                stage_start=order_family_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildOrderFamilySummaryStage",
-                status="ok" if order_family_summary_bundle is not None else "skipped",
-                stage_start=order_family_stage_start,
-                artifacts_created=_artifact_keys(
-                    order_family_summary_bundle.manifest
-                    if order_family_summary_bundle is not None
-                    else None
-                ),
-                diagnostic_context=(
-                    {"reason": "builder_returned_none"}
-                    if order_family_summary_bundle is None
-                    else {}
-                ),
-            )
+    order_trace_summary_bundle = run_optional_bundle_stage(
+        stage_name="BuildOrderTraceSummaryStage",
+        prerequisites_met=order_trace_bundle is not None and context_bundle is not None,
+        runner=build_order_trace_summary_stage,
+    )
+
+    def build_order_family_stage() -> WholeRunOrderFamilySummaryArtifactBundle | None:
+        assert order_trace_bundle is not None
+        assert order_trace_summary_bundle is not None
+        assert context_bundle is not None
+        return builders.order_family_summary_builder(
+            order_trace_bundle=order_trace_bundle,
+            order_trace_summary_bundle=order_trace_summary_bundle,
+            context_bundle=context_bundle,
         )
 
-    spatial_stage_start = time.monotonic()
-    if spectral_bundle is None or context_bundle is None or order_trace_bundle is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildSpatialSummaryStage",
-                status="skipped",
-                stage_start=spatial_stage_start,
-                diagnostic_context={"reason": "missing_prerequisites"},
-            )
-        )
-    else:
-        try:
-            spatial_coherence_bundle = builders.spatial_coherence_builder(
-                run=run_input,
-                spectral_bundle=spectral_bundle,
-                context_bundle=context_bundle,
-                order_trace_bundle=order_trace_bundle,
-            )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="BuildSpatialSummaryStage",
-                stage_start=spatial_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        stage_results.append(
-            _make_stage_result(
-                stage_name="BuildSpatialSummaryStage",
-                status="ok" if spatial_coherence_bundle is not None else "skipped",
-                stage_start=spatial_stage_start,
-                artifacts_created=_artifact_keys(
-                    spatial_coherence_bundle.manifest
-                    if spatial_coherence_bundle is not None
-                    else None
-                ),
-                diagnostic_context=(
-                    {"reason": "builder_returned_none"} if spatial_coherence_bundle is None else {}
-                ),
-            )
+    order_family_summary_bundle = run_optional_bundle_stage(
+        stage_name="BuildOrderFamilySummaryStage",
+        prerequisites_met=(
+            order_trace_bundle is not None
+            and order_trace_summary_bundle is not None
+            and context_bundle is not None
+        ),
+        runner=build_order_family_stage,
+    )
+
+    def build_spatial_stage() -> WholeRunSpatialCoherenceArtifactBundle | None:
+        assert spectral_bundle is not None
+        assert context_bundle is not None
+        assert order_trace_bundle is not None
+        return builders.spatial_coherence_builder(
+            run=run_input,
+            spectral_bundle=spectral_bundle,
+            context_bundle=context_bundle,
+            order_trace_bundle=order_trace_bundle,
         )
 
-    persist_artifacts_stage_start = time.monotonic()
+    spatial_coherence_bundle = run_optional_bundle_stage(
+        stage_name="BuildSpatialSummaryStage",
+        prerequisites_met=(
+            spectral_bundle is not None
+            and context_bundle is not None
+            and order_trace_bundle is not None
+        ),
+        runner=build_spatial_stage,
+    )
+
     merged_bundle = merge_whole_run_artifact_bundles(
         spectral_bundle,
         context_bundle,
@@ -832,47 +839,30 @@ def run_whole_run_pipeline_stages(
         order_family_summary_bundle,
         spatial_coherence_bundle,
     )
-    if merged_bundle is None:
-        stage_results.append(
-            _make_stage_result(
-                stage_name="PersistArtifactsStage",
-                status="skipped",
-                stage_start=persist_artifacts_stage_start,
-                diagnostic_context={"reason": "no_artifacts_to_persist"},
-            )
+
+    def persist_artifacts_stage() -> WholeRunStageExecution[WholeRunArtifactManifest | None]:
+        assert merged_bundle is not None
+        stored_manifest = _sync_call(
+            db,
+            "astore_whole_run_artifacts",
+            loaded.run_id,
+            merged_bundle.manifest,
+            artifact_contents=merged_bundle.artifact_contents,
         )
-    else:
-        try:
-            stored_artifact_manifest = _sync_call(
-                db,
-                "astore_whole_run_artifacts",
-                loaded.run_id,
-                merged_bundle.manifest,
-                artifact_contents=merged_bundle.artifact_contents,
-            )
-        except (aiosqlite.Error, OSError, MemoryError) as exc:
-            _raise_stage_failure(
-                stage_name="PersistArtifactsStage",
-                stage_start=persist_artifacts_stage_start,
-                exc=exc,
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        if stored_artifact_manifest is None:
-            _raise_stage_failure(
-                stage_name="PersistArtifactsStage",
-                stage_start=persist_artifacts_stage_start,
-                exc=OSError(f"Failed to persist whole-run artifacts for run {loaded.run_id}"),
-                diagnostic_context={"run_id": loaded.run_id},
-            )
-        stage_results.append(
-            _make_stage_result(
-                stage_name="PersistArtifactsStage",
-                status="ok",
-                stage_start=persist_artifacts_stage_start,
-                artifacts_created=_artifact_keys(stored_artifact_manifest),
-                diagnostic_context={"artifact_count": len(stored_artifact_manifest.artifacts)},
-            )
+        if stored_manifest is None:
+            raise OSError(f"Failed to persist whole-run artifacts for run {loaded.run_id}")
+        return _stage_execution(
+            stored_manifest,
+            artifact_manifest=stored_manifest,
+            present_diagnostic_context={"artifact_count": len(stored_manifest.artifacts)},
         )
+
+    stored_artifact_manifest = record_stage(
+        stage_name="PersistArtifactsStage",
+        prerequisites_met=merged_bundle is not None,
+        prerequisite_reason="no_artifacts_to_persist",
+        runner=persist_artifacts_stage,
+    )
 
     return WholeRunPipelineStageOutput(
         stage_results=tuple(stage_results),
