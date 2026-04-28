@@ -13,6 +13,18 @@
         "legacy_research_sources:ee23956fe3cd",
         "legacy_research_sources:f6365cece15e"
       ]
+    },
+    "tire_setups": {
+      "setup_285_21": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 21.0,
+          "width_mm": 285.0
+        }
+      }
     }
   },
   "defaults": {
@@ -60,26 +72,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e1",
-          "front": {
-            "width_mm": 285.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 285.0,
-              "aspect_pct": 30.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_285_21",
             "name": "Standard 21\""
           },
           {
@@ -93,7 +88,8 @@
             "default_axle_for_speed": "rear",
             "name": "Performance 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_285_21"
       },
       "verification_notes": [
         {

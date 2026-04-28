@@ -279,3 +279,111 @@ def test_load_vehicle_configurations_rejects_unknown_top_level_key(tmp_path: Pat
         tmp_path,
     ):
         assert load_vehicle_configurations() == []
+
+
+def test_load_vehicle_configurations_expands_default_tire_setup_ref(tmp_path: Path) -> None:
+    """Loader must expand ``tires.default_ref`` from ``definitions.tire_setups``."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    target_row = rows[0]
+    tires = cast(dict[str, object], target_row["tires"])
+    inline_default = cast(dict[str, object], tires.pop("default", None))
+    assert inline_default is not None or "default_ref" in tires
+    if inline_default is None:
+        # Already a ref via prior migration; rebuild an inline default from the ref.
+        defs = cast(dict[str, object], fixture.get("definitions", {}))
+        ts = cast(dict[str, dict[str, object]], defs.get("tire_setups", {}))
+        ref_key = cast(str, tires.pop("default_ref"))
+        inline_default = copy.deepcopy(ts[ref_key])
+
+    definitions = cast(dict[str, object], fixture.setdefault("definitions", {}))
+    tire_setups = cast(dict[str, dict[str, object]], definitions.setdefault("tire_setups", {}))
+    tire_setups["test_default_setup"] = inline_default
+    tires["default_ref"] = "test_default_setup"
+
+    _write_shard(tmp_path, relative_path, fixture)
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+
+    target = next(config for config in loaded if config.id == target_row["id"])
+    assert target.default_tire.width_mm == float(
+        cast(dict[str, object], inline_default["front"])["width_mm"]  # type: ignore[arg-type]
+    )
+
+
+def test_load_vehicle_configurations_expands_option_setup_ref(tmp_path: Path) -> None:
+    """Loader must expand ``setup_ref`` inside a tire option entry."""
+
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    target_row = rows[0]
+    tires = cast(dict[str, object], target_row["tires"])
+
+    setup_block: dict[str, object] = {
+        "confidence": "official_exact",
+        "front": {"width_mm": 245.0, "aspect_pct": 35.0, "rim_in": 19.0},
+        "rear": {"width_mm": 275.0, "aspect_pct": 30.0, "rim_in": 19.0},
+        "default_axle_for_speed": "rear",
+        "evidence_refs": ["secondary_technical_sources:carfolio-audi-a3-saloon-8v"],
+    }
+    definitions = cast(dict[str, object], fixture.setdefault("definitions", {}))
+    tire_setups = cast(dict[str, dict[str, object]], definitions.setdefault("tire_setups", {}))
+    tire_setups["test_option_setup"] = setup_block
+
+    options = cast(list[dict[str, object]], tires.setdefault("options", []))
+    options.append({"name": "Test Option 19", "setup_ref": "test_option_setup"})
+
+    _write_shard(tmp_path, relative_path, fixture)
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        loaded = load_vehicle_configurations()
+
+    target = next(config for config in loaded if config.id == target_row["id"])
+    matched = [opt for opt in target.tire_options if opt.name == "Test Option 19"]
+    assert len(matched) == 1
+    assert matched[0].tire_setup.front.width_mm == 245.0
+    assert matched[0].tire_setup.rear.rim_in == 19.0
+
+
+def test_load_vehicle_configurations_fails_closed_for_unknown_default_ref(
+    tmp_path: Path,
+) -> None:
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    tires = cast(dict[str, object], rows[0]["tires"])
+    tires.pop("default", None)
+    tires["default_ref"] = "does_not_exist"
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        assert load_vehicle_configurations() == []
+
+
+def test_load_vehicle_configurations_fails_closed_for_unknown_setup_ref(
+    tmp_path: Path,
+) -> None:
+    relative_path, shard = _load_sample_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    rows = cast(list[dict[str, object]], fixture["configurations"])
+    tires = cast(dict[str, object], rows[0]["tires"])
+    options = cast(list[dict[str, object]], tires.setdefault("options", []))
+    options.append({"name": "Bad Option", "setup_ref": "does_not_exist"})
+    _write_shard(tmp_path, relative_path, fixture)
+
+    with patch(
+        "vibesensor.adapters.persistence.vehicle_configurations._VEHICLE_CONFIG_DATA_DIR",
+        tmp_path,
+    ):
+        assert load_vehicle_configurations() == []
