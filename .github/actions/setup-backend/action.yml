@@ -9,8 +9,8 @@ inputs:
 
 outputs:
   python-path:
-    description: Configured Python interpreter path.
-    value: ${{ steps.setup-python.outputs.python-path }}
+    description: Configured backend virtualenv interpreter path.
+    value: ${{ steps.backend-python.outputs.python-path }}
 
 runs:
   using: composite
@@ -18,7 +18,32 @@ runs:
     - id: setup-python
       uses: ./.github/actions/setup-python
 
+    - name: Restore backend virtualenv cache
+      id: backend-venv-cache
+      uses: actions/cache@v5
+      with:
+        path: .venv
+        key: >-
+          ${{ runner.os }}-${{ runner.arch }}-backend-venv-${{
+          hashFiles(
+            '.python-version',
+            'apps/server/pyproject.toml',
+            '.github/actions/setup-python/action.yml',
+            '.github/actions/setup-backend/action.yml'
+          ) }}
+
+    - name: Report backend virtualenv cache hit
+      if: ${{ steps.backend-venv-cache.outputs.cache-hit == 'true' }}
+      shell: bash
+      run: 'echo "Backend virtualenv cache hit: reusing .venv."'
+
+    - name: Report backend virtualenv cache miss
+      if: ${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: 'echo "Backend virtualenv cache miss: rebuilding .venv."'
+
     - name: Install dependencies
+      if: ${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}
       shell: bash
       run: |
         set -euo pipefail
@@ -45,9 +70,28 @@ runs:
           done
         }
 
-        retry_command 3 python -m pip install --upgrade pip
+        rm -rf .venv
+        retry_command 3 "${{ steps.setup-python.outputs.python-path }}" -m venv .venv
+        retry_command 3 .venv/bin/python -m pip install --upgrade pip
         # Reuse the backend dev extra so CI matches the local editable setup.
-        retry_command 3 python -m pip install -e "./apps/server[dev]"
+        retry_command 3 .venv/bin/python -m pip install -e "./apps/server[dev]"
+
+    - name: Configure backend virtualenv
+      id: backend-python
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        backend_python="${GITHUB_WORKSPACE}/.venv/bin/python"
+        if [[ ! -x "${backend_python}" ]]; then
+          echo "Expected backend virtualenv interpreter at ${backend_python}" >&2
+          exit 1
+        fi
+
+        echo "${GITHUB_WORKSPACE}/.venv/bin" >> "${GITHUB_PATH}"
+        echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "${GITHUB_ENV}"
+        echo "python-path=${backend_python}" >> "${GITHUB_OUTPUT}"
+        "${backend_python}" --version
 
     - name: Install PlatformIO dependencies
       # Keep firmware tooling opt-in so non-firmware jobs reuse the shared backend setup.
@@ -78,4 +122,4 @@ runs:
           done
         }
 
-        retry_command 3 python -m pip install "platformio>=6,<7"
+        retry_command 3 "${{ steps.backend-python.outputs.python-path }}" -m pip install "platformio>=6,<7"
