@@ -65,3 +65,7 @@ def test_check_hygiene_entrypoints_pass(
 ) -> None:
     check = getattr(hygiene_module, check_name)
     assert check() == []
+
+
+def test_check_hygiene_main_passes(hygiene_module: ModuleType) -> None:
+    assert hygiene_module.main() == 0
