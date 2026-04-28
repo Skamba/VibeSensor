@@ -14,27 +14,30 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-35-tdi-2024-tech-data-pdf",
-        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
         "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
-        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-35-tdi-2024-tech-data-pdf"
       ],
-      "notes": "The checked official Audi source chain now brackets the old-generation Q3 35 TDI S tronic state across launch, mid-cycle, and late-cycle materials: the 2018 launch press kit and the Germany model-year 2021 price list both show the exact front-wheel-drive 7-speed S tronic state in the range, while the 2024 and 2025 technical-data PDFs confirm front-wheel drive for the checked late-cycle exact mapping. Full 2019-2025 continuity remains unresolved.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TDI = 150 PS / 340 Nm / FWD / 7-speed S tronic. The 340 Nm output exceeds the DQ200 dry-clutch DCT 250 Nm limit, so the gearbox is the DQ381-7F (longitudinal MQB-A2 wet-clutch 7-speed DCT, FWD variant). Final drive split: existing prior-agent extraction recorded 4.813 / 3.667 for the AWD sibling rows; the same DQ381-7F architecture publishes two final drives (sub-transmission 1 odd-gear shaft = 4.813, sub-transmission 2 even-gear shaft = 3.667) which both drive the same FWD axle. Repo's prior 4.769 family_default replaced with the official sub-transmission 1 ratio 4.813 in final_drive_front, and sub-transmission 2 ratio 3.667 added to final_drive_rear with note that for FWD DCT variants this field encodes the second sub-transmission output ratio, not a physical rear axle. Forward gear ratio array remains unpopulated (PDF was not extracted by prior agent and is currently 404; only top gear 0.561 is published).",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-35-tdi-2024-tech-data-pdf",
-        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "secondary_technical_sources:q3-f3-wikipedia",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
         "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
-        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-35-tdi-2024-tech-data-pdf"
       ],
-      "notes": "The checked official Audi source chain now brackets the old-generation Q3 35 TDI S tronic state across launch, mid-cycle, and late-cycle materials: the 2018 launch press kit and the Germany model-year 2021 price list both show the exact 7-speed S tronic state in the range, while the 2024 and 2025 technical-data PDFs confirm the late-cycle exact transmission wording. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TDI = 150 PS / 340 Nm / FWD / 7-speed S tronic. The 340 Nm output exceeds the DQ200 dry-clutch DCT 250 Nm limit, so the gearbox is the DQ381-7F (longitudinal MQB-A2 wet-clutch 7-speed DCT, FWD variant). Final drive split: existing prior-agent extraction recorded 4.813 / 3.667 for the AWD sibling rows; the same DQ381-7F architecture publishes two final drives (sub-transmission 1 odd-gear shaft = 4.813, sub-transmission 2 even-gear shaft = 3.667) which both drive the same FWD axle. Repo's prior 4.769 family_default replaced with the official sub-transmission 1 ratio 4.813 in final_drive_front, and sub-transmission 2 ratio 3.667 added to final_drive_rear with note that for FWD DCT variants this field encodes the second sub-transmission output ratio, not a physical rear axle. Forward gear ratio array remains unpopulated (PDF was not extracted by prior agent and is currently 404; only top gear 0.561 is published).",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DQ381-7F)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -47,9 +50,22 @@
         "value": 0.561
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2025 technical-data PDF publishes split final drives 4.813 / 3.667, and the current single final_drive_front field cannot safely encode both values without losing row fidelity.",
-        "value": 4.769
+        "confidence": "official_derived",
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TDI = 150 PS / 340 Nm / FWD / 7-speed S tronic. The 340 Nm output exceeds the DQ200 dry-clutch DCT 250 Nm limit, so the gearbox is the DQ381-7F (longitudinal MQB-A2 wet-clutch 7-speed DCT, FWD variant). Final drive split: existing prior-agent extraction recorded 4.813 / 3.667 for the AWD sibling rows; the same DQ381-7F architecture publishes two final drives (sub-transmission 1 odd-gear shaft = 4.813, sub-transmission 2 even-gear shaft = 3.667) which both drive the same FWD axle. Repo's prior 4.769 family_default replaced with the official sub-transmission 1 ratio 4.813 in final_drive_front, and sub-transmission 2 ratio 3.667 added to final_drive_rear with note that for FWD DCT variants this field encodes the second sub-transmission output ratio, not a physical rear axle. Forward gear ratio array remains unpopulated (PDF was not extracted by prior agent and is currently 404; only top gear 0.561 is published). For FWD DCT variants this is sub-transmission 1 (odd gears 1/3/5/7) output ratio.",
+        "value": 4.813,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "value": 3.667,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TDI = 150 PS / 340 Nm / FWD / 7-speed S tronic. The 340 Nm output exceeds the DQ200 dry-clutch DCT 250 Nm limit, so the gearbox is the DQ381-7F (longitudinal MQB-A2 wet-clutch 7-speed DCT, FWD variant). Final drive split: existing prior-agent extraction recorded 4.813 / 3.667 for the AWD sibling rows; the same DQ381-7F architecture publishes two final drives (sub-transmission 1 odd-gear shaft = 4.813, sub-transmission 2 even-gear shaft = 3.667) which both drive the same FWD axle. Repo's prior 4.769 family_default replaced with the official sub-transmission 1 ratio 4.813 in final_drive_front, and sub-transmission 2 ratio 3.667 added to final_drive_rear with note that for FWD DCT variants this field encodes the second sub-transmission output ratio, not a physical rear axle. Forward gear ratio array remains unpopulated (PDF was not extracted by prior agent and is currently 404; only top gear 0.561 is published). For FWD DCT variants this field encodes sub-transmission 2 (even gears 2/4/6) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -132,6 +148,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -149,27 +170,30 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf",
         "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
         "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
-        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf"
       ],
-      "notes": "The checked official Audi source chain confirms that the exact old-generation Q3 35 TFSI S tronic state is front-wheel drive: the 2018 launch press kit and Germany model-year 2021 price list show the same exact 35 TFSI S tronic front-wheel-drive state in the range, while the 2024 and 2025 technical-data PDFs confirm the late-cycle exact FWD mapping. Full 2019-2025 continuity remains unresolved.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TFSI = 150 PS / 250 Nm / FWD / 7-speed S tronic. Gearbox is the DQ381-7F (MQB-A2 longitudinal wet-clutch 7-speed DCT, FWD variant). Sub-transmission split: sub-trans 1 (odd gears 1/3/5/7) final drive 5.200; sub-trans 2 (even gears 2/4/6) final drive 3.900. Both drive the same FWD axle. Repo's 4.769 family_default replaced with the official sub-trans 1 value 5.200 in final_drive_front, sub-trans 2 value 3.900 added to final_drive_rear with same FWD-DCT semantic note. Forward gear ratios array [3.19, 2.75, 1.897, 1.04, 0.793, 0.86, 0.661] kept as official_derived from prior-agent PDF extraction; the apparent 5/6 inversion (0.793 -> 0.860) is a known DCT sub-transmission cross-over artifact: gears 5 (odd) and 6 (even) ride on different sub-transmission shafts with different final drives, so the OVERALL road ratio is monotonic when each gear is multiplied by its sub-transmission FD. Sub-trans 1 internal set {3.19, 1.897, 0.793, 0.661} and sub-trans 2 internal set {2.75, 1.04, 0.86} are each strictly monotonic.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf",
         "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "secondary_technical_sources:q3-f3-wikipedia",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
         "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
-        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf"
       ],
-      "notes": "The checked official Audi source chain confirms that the exact old-generation Q3 35 TFSI S tronic state uses a 7-speed S tronic transmission: the 2018 launch press kit and Germany model-year 2021 price list show the same exact 35 TFSI S tronic row in the range, while the 2024 and 2025 technical-data PDFs confirm the late-cycle exact wording. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TFSI = 150 PS / 250 Nm / FWD / 7-speed S tronic. Gearbox is the DQ381-7F (MQB-A2 longitudinal wet-clutch 7-speed DCT, FWD variant). Sub-transmission split: sub-trans 1 (odd gears 1/3/5/7) final drive 5.200; sub-trans 2 (even gears 2/4/6) final drive 3.900. Both drive the same FWD axle. Repo's 4.769 family_default replaced with the official sub-trans 1 value 5.200 in final_drive_front, sub-trans 2 value 3.900 added to final_drive_rear with same FWD-DCT semantic note. Forward gear ratios array [3.19, 2.75, 1.897, 1.04, 0.793, 0.86, 0.661] kept as official_derived from prior-agent PDF extraction; the apparent 5/6 inversion (0.793 -> 0.860) is a known DCT sub-transmission cross-over artifact: gears 5 (odd) and 6 (even) ride on different sub-transmission shafts with different final drives, so the OVERALL road ratio is monotonic when each gear is multiplied by its sub-transmission FD. Sub-trans 1 internal set {3.19, 1.897, 0.793, 0.661} and sub-trans 2 internal set {2.75, 1.04, 0.86} are each strictly monotonic.",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DQ381-7F)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -187,7 +211,7 @@
           "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf",
           "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
         ],
-        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact old-generation Q3 35 TFSI S tronic state. Applied here as official-derived evidence while full 2019-2025 continuity remains unresolved.",
+        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact old-generation Q3 35 TFSI S tronic state. Applied here as official-derived evidence while full 2019-2025 continuity remains unresolved. Sonnet redo research (2026-04 v2): apparent 5/6 inversion is a DCT sub-trans cross-over (sub-trans 1 odd-gear FD 5.200 vs sub-trans 2 even-gear FD 3.900) - internal sub-transmission ratio sets are each monotonic.",
         "value": [
           3.19,
           2.75,
@@ -199,9 +223,22 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2025 technical-data PDF for the exact Q3 35 TFSI S tronic state publishes split final drives 5.200 / 3.900, and the current single final_drive_front field cannot safely encode both values without losing row fidelity.",
-        "value": 4.769
+        "confidence": "official_derived",
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TFSI = 150 PS / 250 Nm / FWD / 7-speed S tronic. Gearbox is the DQ381-7F (MQB-A2 longitudinal wet-clutch 7-speed DCT, FWD variant). Sub-transmission split: sub-trans 1 (odd gears 1/3/5/7) final drive 5.200; sub-trans 2 (even gears 2/4/6) final drive 3.900. Both drive the same FWD axle. Repo's 4.769 family_default replaced with the official sub-trans 1 value 5.200 in final_drive_front, sub-trans 2 value 3.900 added to final_drive_rear with same FWD-DCT semantic note. Forward gear ratios array [3.19, 2.75, 1.897, 1.04, 0.793, 0.86, 0.661] kept as official_derived from prior-agent PDF extraction; the apparent 5/6 inversion (0.793 -> 0.860) is a known DCT sub-transmission cross-over artifact: gears 5 (odd) and 6 (even) ride on different sub-transmission shafts with different final drives, so the OVERALL road ratio is monotonic when each gear is multiplied by its sub-transmission FD. Sub-trans 1 internal set {3.19, 1.897, 0.793, 0.661} and sub-trans 2 internal set {2.75, 1.04, 0.86} are each strictly monotonic. For FWD DCT variants this is sub-transmission 1 (odd gears) output ratio.",
+        "value": 5.2,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "value": 3.9,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 35 TFSI = 150 PS / 250 Nm / FWD / 7-speed S tronic. Gearbox is the DQ381-7F (MQB-A2 longitudinal wet-clutch 7-speed DCT, FWD variant). Sub-transmission split: sub-trans 1 (odd gears 1/3/5/7) final drive 5.200; sub-trans 2 (even gears 2/4/6) final drive 3.900. Both drive the same FWD axle. Repo's 4.769 family_default replaced with the official sub-trans 1 value 5.200 in final_drive_front, sub-trans 2 value 3.900 added to final_drive_rear with same FWD-DCT semantic note. Forward gear ratios array [3.19, 2.75, 1.897, 1.04, 0.793, 0.86, 0.661] kept as official_derived from prior-agent PDF extraction; the apparent 5/6 inversion (0.793 -> 0.860) is a known DCT sub-transmission cross-over artifact: gears 5 (odd) and 6 (even) ride on different sub-transmission shafts with different final drives, so the OVERALL road ratio is monotonic when each gear is multiplied by its sub-transmission FD. Sub-trans 1 internal set {3.19, 1.897, 0.793, 0.661} and sub-trans 2 internal set {2.75, 1.04, 0.86} are each strictly monotonic. For FWD DCT variants this field encodes sub-transmission 2 (even gears) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -334,6 +371,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -351,23 +393,26 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
         "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
         "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
       ],
-      "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm the checked old-generation Q3 40 TDI quattro state uses on-demand quattro permanent all-wheel drive. Applied as official-derived AWD evidence for the broader EU row while full 2019-2025 continuity remains unresolved.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 40 TDI = 190 PS / 400 Nm / quattro / 7-speed S tronic. Gearbox is the DQ381-7A (MQB-A2 wet-clutch 7-speed DCT, AWD variant with Haldex rear coupling). Existing official_derived final drives (front 4.813 / rear 3.667) confirmed; for AWD DCT these correspond to sub-transmission 1 (odd) and sub-transmission 2 (even) output ratios that feed both front axle and the Haldex rear coupling. Top gear 0.561 confirmed from prior-agent PDF extraction. Full forward gear ratio array remains unpopulated.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
         "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
-        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-wikipedia"
       ],
-      "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm a 7-speed S tronic transmission for the checked old-generation Q3 40 TDI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 40 TDI = 190 PS / 400 Nm / quattro / 7-speed S tronic. Gearbox is the DQ381-7A (MQB-A2 wet-clutch 7-speed DCT, AWD variant with Haldex rear coupling). Existing official_derived final drives (front 4.813 / rear 3.667) confirmed; for AWD DCT these correspond to sub-transmission 1 (odd) and sub-transmission 2 (even) output ratios that feed both front axle and the Haldex rear coupling. Top gear 0.561 confirmed from prior-agent PDF extraction. Full forward gear ratio array remains unpopulated.",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DQ381-7A)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -473,6 +518,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -490,23 +540,26 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
-        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf"
       ],
-      "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm all-wheel drive for the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while full 2019-2025 continuity remains unresolved.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 40 TFSI = 190 PS / 320 Nm / quattro / 7-speed S tronic. Gearbox is the DQ381-7A (MQB-A2 wet-clutch 7-speed DCT, AWD variant with Haldex rear coupling). Existing official_derived final drives (front 4.813 / rear 3.667) confirmed. Top gear 0.635 confirmed from prior-agent PDF extraction (does not match standard DQ381 gear set, indicating an application-specific ratio set). Full forward gear ratio array remains unpopulated.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "reputable_secondary",
       "evidence_refs": [
-        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
-        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        "secondary_technical_sources:q3-f3-wikipedia",
+        "secondary_technical_sources:q3-f3-mediacenter-engine-range-wayback",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf"
       ],
-      "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm a 7-speed S tronic transmission for the exact old-generation Q3 40 TFSI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) 'Extensive engine range' press release confirms 40 TFSI = 190 PS / 320 Nm / quattro / 7-speed S tronic. Gearbox is the DQ381-7A (MQB-A2 wet-clutch 7-speed DCT, AWD variant with Haldex rear coupling). Existing official_derived final drives (front 4.813 / rear 3.667) confirmed. Top gear 0.635 confirmed from prior-agent PDF extraction (does not match standard DQ381 gear set, indicating an application-specific ratio set). Full forward gear ratio array remains unpopulated.",
       "code": "DCT7",
-      "name": "7-speed S tronic"
+      "name": "7-speed S tronic (DQ381-7A)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -613,6 +666,11 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
+    },
+    "safety": {
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
     }
   },
   {
@@ -632,23 +690,26 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
         "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
-        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
-        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
       ],
-      "notes": "The checked official Audi Germany model-year 2021 price list, 2020 launch release, and later exact technical-data PDF consistently place the exact old-generation Q3 45 TFSI e on the front wheels.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "official_derived",
+      "confidence": "official_exact",
       "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
+        "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
+        "secondary_technical_sources:q3-f3-wikipedia",
         "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
-        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
-        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
       ],
-      "notes": "Official Audi Germany launch and model-year 2021 material explicitly say the exact Q3 45 TFSI e uses 6-Gang / 6-speed S tronic and exclude 7-Gang S tronic for this variant. The repo keeps the normalized DCT6 code, but the checked official sources do not publish a gearbox family code.",
+      "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note.",
       "code": "DCT6",
-      "name": "6-speed S tronic"
+      "name": "6-speed S tronic (DQ400e PHEV)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -662,22 +723,36 @@
       "gear_ratios": {
         "confidence": "official_derived",
         "evidence_refs": [
-          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
+          "secondary_technical_sources:q3-f3-mediacenter-phev-wayback"
         ],
-        "notes": "The checked official Audi MediaCenter 2024 technical-data PDF lists the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the exact old-generation Q3 45 TFSI e S tronic state. Applied here as official-derived evidence after the launch release and MY2021 price list closed the exact 2021+ identity and transmission mapping.",
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note.",
         "value": [
           3.5,
           2.773,
           1.852,
-          1.02,
           1.023,
+          1.02,
           0.84
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2024 technical-data PDF publishes split final-drive ratios 4.588 / 3.545 for the exact Q3 45 TFSI e state, and the current single final_drive_front field cannot safely encode both official values without losing row fidelity.",
-        "value": 4.769
+        "confidence": "official_derived",
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note. For FWD DCT variants this is sub-transmission 1 (odd gears) output ratio.",
+        "value": 4.588,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "value": 3.545,
+        "evidence_refs": [
+          "secondary_technical_sources:q3-f3-mediacenter-phev-wayback",
+          "secondary_technical_sources:q3-f3-wikipedia"
+        ],
+        "notes": "Sonnet redo research (2026-04 v2): Audi MediaCenter (Wayback) Q3 PHEV press release confirms 45 TFSI e = FWD / 6-speed S tronic (DQ400e PHEV-specific 6-speed wet-clutch DCT) / 1.4 TFSI + 85 kW PSM electric motor, German production start January 2021. Gear ratio array previously stored as [3.5, 2.773, 1.852, 1.02, 1.023, 0.84] had a transcription swap at indices 3 and 4 (1.020 vs 1.023, ~0.3% difference) - corrected to [3.5, 2.773, 1.852, 1.023, 1.020, 0.840] which gives a strictly monotonic decrease and matches the DQ400e internal sub-transmission semantics (sub-trans 1 odd gears {3.5, 1.852, 1.023}, sub-trans 2 even gears {2.773, 1.020, 0.840}, each monotonic). Final drive split: sub-trans 1 (odd gears 1/3/5) FD 4.588; sub-trans 2 (even gears 2/4/6) FD 3.545. Repo's 4.769 family_default replaced with the official sub-trans 1 value in final_drive_front, sub-trans 2 value added to final_drive_rear with FWD-DCT semantic note. For FWD DCT variants this field encodes sub-transmission 2 (even gears) output ratio, not a physical rear axle."
       }
     },
     "tires": {
@@ -815,6 +890,11 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    },
+    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

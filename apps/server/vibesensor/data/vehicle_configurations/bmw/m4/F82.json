@@ -35,9 +35,13 @@
         "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms 6-speed manual + 7-speed M-DCT lineup. Repo's gear ratios I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846 are already official_exact via BMW 09/2018 ACEA technical data (legacy_research_sources references). Final drive 3.462 also from BMW 09/2018 ACEA - promoted from family_default to official_exact (same source as the DCT7 row's official_exact FD). MotorTrend 2014 USA spec confirms 3.46 axle ratio (rounded). Production span 2014 - June 2020 per Wikipedia.",
+        "value": 3.462,
+        "evidence_refs": [
+          "secondary_technical_sources:f82-m4-motortrend-2014-specs",
+          "secondary_technical_sources:f82-m4-wikipedia"
+        ]
       },
       "gear_ratios": {
         "value": [
@@ -177,7 +181,7 @@
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): Wikipedia F82 M4 confirms the 7-speed M-DCT (Getrag GS7D36BG) lineup option. Repo's official_exact gear ratios I 4.806 / II 2.593 / III 1.701 / IV 1.277 / V 1.000 / VI 0.844 / VII 0.671 with final drive 3.462 (BMW 09/2018 ACEA) confirmed correct. Production span 2014 - June 2020.",
       "code": "DCT7",
       "name": "7-speed dual-clutch (M-DCT)"
     },
@@ -359,9 +363,13 @@
         "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package (2016 launch, S55 power increased to 331 kW / 444 hp) was offered with both the 6-speed manual and the 7-speed M-DCT - confirmed by Wikipedia and BMW PressClub Competition launch reference (already in repo via bmw_pressclub_sources). Manual gearbox ratios are identical to base M4: I 4.110 / II 2.315 / III 1.542 / IV 1.179 / V 1.000 / VI 0.846, final drive 3.462 - Competition Package only changes engine tune and chassis, not gearbox internals. Final drive promoted from family_default to official_exact using the same BMW 09/2018 ACEA evidence as the DCT row.",
+        "value": 3.462,
+        "evidence_refs": [
+          "secondary_technical_sources:f82-m4-wikipedia",
+          "secondary_technical_sources:f82-m4-motortrend-2016-specs"
+        ]
       },
       "gear_ratios": {
         "value": [
@@ -503,7 +511,7 @@
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "notes": "Sonnet redo research (2026-04 v2): F82 M4 Competition Package with 7-speed M-DCT confirmed by Wikipedia. Repo's official_exact gear ratios and final drive 3.462 (BMW 09/2018 ACEA) confirmed correct.",
       "code": "DCT7",
       "name": "7-speed dual-clutch (M-DCT)"
     },

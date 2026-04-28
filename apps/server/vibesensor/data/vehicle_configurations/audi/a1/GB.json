@@ -14,45 +14,75 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "notes": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 25 TFSI manual: 5-speed manual gearbox (NOT 6-speed). Forward gear ratios 3.769/1.955/1.281/0.881/0.673; reverse 3.182; final drive 3.933.",
+      "code": "MT5",
+      "name": "5-speed manual"
     },
     "ratios": {
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "Audi eTD 25 TFSI manual forward gear ratios.",
+        "value": [
+          3.769,
+          1.955,
+          1.281,
+          0.881,
+          0.673
+        ]
+      },
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.84
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "5-speed manual top gear (5th).",
+        "value": 0.673
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "Audi A1 GB MQB A0 FWD: single-axle final drive 3.933 (no rear axle).",
+        "value": 3.933
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "Audi A1 GB is FWD only; the 'rear axle' field is repurposed to mirror the single-axle final drive 3.933 to match the schema.",
+        "value": 3.933
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Audi A1 GB 25 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
         "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 185.0,
+          "aspect_pct": 65.0,
+          "rim_in": 15.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "front"
       },
       "options": [
         {
@@ -140,13 +170,14 @@
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    }
+    },
+    "transmission_marketing_correction": "Canonical row labeled MT6 was incorrect; eTD confirms 5-speed manual."
   },
   {
     "id": "audi-gb-25-tfsi-eu-2019-dct7-fwd",
@@ -155,7 +186,7 @@
     "market": "EU",
     "model_code": "GB",
     "body_code": "GB",
-    "production_start_year": 2019,
+    "production_start_year": 2021,
     "production_end_year": 2024,
     "model_name": "A1 (GB, 2019-2024)",
     "variant_name": "25 TFSI",
@@ -163,45 +194,77 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 25 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; DQ200 sub-transmission final drives 4.438 (odd gears 1/3/5/7) and 3.227 (even gears 2/4/6).",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)"
     },
     "ratios": {
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Audi eTD 25 TFSI S tronic forward gear ratios.",
+        "value": [
+          3.765,
+          2.273,
+          1.531,
+          1.133,
+          1.176,
+          0.956,
+          0.795
+        ]
+      },
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.68
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 7-speed S tronic top gear (7th).",
+        "value": 0.795
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.786
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. Note: this is a DCT sub-transmission ratio, NOT a front-axle ratio (the A1 GB is FWD-only, single front axle).",
+        "value": 4.438
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.227. The A1 GB has no rear axle; the 'rear' field stores the second sub-transmission final drive in the absence of a dedicated schema field.",
+        "value": 3.227
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Audi A1 GB 25 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
         "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 185.0,
+          "aspect_pct": 65.0,
+          "rim_in": 15.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "front"
       },
       "options": [
         {
@@ -287,13 +350,21 @@
         "evidence_refs": [
           "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
         ]
+      },
+      {
+        "item": "A1 25 TFSI S tronic was added in MY2021; pre-2021 production span is unsupported",
+        "reason": "Audi MediaCenter A1 Sportback model-page snapshots from March 2019 and June 2020 do not list the 25 TFSI S tronic motorization (1077). The variant first appears in the October 2021 archived snapshot, indicating a MY2021 introduction. The repo's 2019 production_start_year was therefore wrong and has been corrected to 2021.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -312,45 +383,61 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "notes": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 30 TFSI manual: 6-speed manual gearbox.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.84
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "6-speed manual top gear (6th) per the late Germany-program 2026 eTD.",
+        "value": 0.554
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "Audi A1 GB MQB A0 FWD: single-axle final drive 4.353 per the late 2026 eTD (different gearing pair from the earlier 2022-12 eTD).",
+        "value": 4.353
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
+        ],
+        "notes": "Audi A1 GB is FWD only; rear-axle field mirrors the single-axle final drive 4.353.",
+        "value": 4.353
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Audi A1 GB 30 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
         "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 185.0,
+          "aspect_pct": 65.0,
+          "rim_in": 15.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "front"
       },
       "options": [
         {
@@ -436,13 +523,21 @@
         "evidence_refs": [
           "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ]
+      },
+      {
+        "item": "30 TFSI MT6 mid-life ratio refresh and 85→81 kW power re-rating",
+        "reason": "An earlier 2022-12 Audi MediaCenter eTD for the same motorization (443) listed forward gear ratios 3.769/1.947/1.281/0.973/0.778/0.642, top gear 0.642, and final drive 4.056. The late 2026 eTD currently cited records top gear 0.554 and final drive 4.353, indicating a mid-life gearbox/final-drive refresh. The launch (Jan 2019) press kit also rated the 30 TFSI at 85 kW (116 PS) before the 2021+ 81 kW (110 PS) WLTP re-rating. The broad 2019-2024 row collapses both states into one mapping.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -461,45 +556,77 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 30 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; DQ200 sub-transmission final drives 4.438 (odd gears) / 3.227 (even gears) — same DQ200 calibration as the 25 TFSI S tronic.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)"
     },
     "ratios": {
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Audi eTD 30 TFSI S tronic forward gear ratios; identical to 25 TFSI S tronic (shared DQ200 tune).",
+        "value": [
+          3.765,
+          2.273,
+          1.531,
+          1.133,
+          1.176,
+          0.956,
+          0.795
+        ]
+      },
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.68
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 7-speed S tronic top gear (7th).",
+        "value": 0.795
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.786
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. NOT a front-axle ratio; the A1 GB is FWD-only.",
+        "value": 4.438
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.227.",
+        "value": 3.227
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Audi A1 GB 30 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
         "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 185.0,
+          "aspect_pct": 65.0,
+          "rim_in": 15.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "front"
       },
       "options": [
         {
@@ -585,13 +712,21 @@
         "evidence_refs": [
           "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
         ]
+      },
+      {
+        "item": "30 TFSI launch power 85 kW re-rated to 81 kW from MY2021",
+        "reason": "The Jan 2019 Audi A1 Sportback press kit rated the 30 TFSI at 85 kW (116 PS); the 2021+ Audi MediaCenter eTDs rate the same engine at 81 kW (110 PS). The broad 2019-2024 row covers both states.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -737,13 +872,21 @@
           "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
           "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
+      },
+      {
+        "item": "A1 GB 35 TFSI 6-speed manual is a phantom configuration; never offered for sale",
+        "reason": "Audi MediaCenter A1 Sportback model-page snapshots from March 2019, June 2020, October 2021, and October 2022 list 35 TFSI only as a 7-speed S tronic motorization (810); no 35 TFSI manual motorization was ever published. Only the pre-launch Jan 2019 press kit (with 'subject to change without notice' caveat) mentioned a manual variant for the 35 TFSI. The Audi MediaCenter 'until 2026' model hub also lists the 35 TFSI only as S tronic.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -762,45 +905,77 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": " Audi A1 GB (second-generation MQB A0 platform) is FWD only; no quattro variant exists.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+      ],
+      "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 35 TFSI S tronic (110 kW 1.5 TFSI COD). Forward gear ratios 3.500/2.087/1.343/0.933/0.974/0.788/0.653; reverse 3.722; DQ200 sub-transmission final drives 4.800 (odd) / 3.429 (even) — different gearing pair from the 1.0 TFSI S tronic variants.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)"
     },
     "ratios": {
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Audi eTD 35 TFSI S tronic forward gear ratios; tuned for the 1.5 TFSI COD engine and distinct from the 1.0 TFSI S tronic ratios.",
+        "value": [
+          3.5,
+          2.087,
+          1.343,
+          0.933,
+          0.974,
+          0.788,
+          0.653
+        ]
+      },
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.68
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 7-speed S tronic top gear (7th) for the 35 TFSI.",
+        "value": 0.653
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.786
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.800. NOT a front-axle ratio; the A1 GB is FWD-only.",
+        "value": 4.8
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
+        ],
+        "notes": "Repurposed for the DQ200 second sub-transmission final drive (even gears 2/4/6) of 3.429.",
+        "value": 3.429
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Audi MediaCenter Germany-program eTD lists basic tire/wheel for the 35 TFSI as 195/55 R16 on 6.5 J × 16 cast aluminum (different basic tire from the 1.0 TFSI variants).",
         "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear"
+        "default_axle_for_speed": "front"
       },
       "options": [
         {
@@ -889,11 +1064,11 @@
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }
