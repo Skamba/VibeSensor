@@ -40,6 +40,83 @@ def _python_files(root: Path) -> list[Path]:
     )
 
 
+def _paths_from_roots(*roots: Path) -> list[Path]:
+    files: list[Path] = []
+    for root in roots:
+        files.extend(_python_files(root))
+    return files
+
+
+def _path_absence_check(path: Path, message: str) -> Callable[[], list[str]]:
+    def check() -> list[str]:
+        return [message] if path.exists() else []
+
+    return check
+
+
+def _import_prefix_check(
+    *,
+    paths_provider: Callable[[], list[Path]],
+    prefixes: tuple[str, ...],
+    failure_template: str,
+) -> Callable[[], list[str]]:
+    def check() -> list[str]:
+        failures: list[str] = []
+        for path in paths_provider():
+            violations = _imports_from_prefixes(path, prefixes)
+            if violations:
+                failures.append(
+                    failure_template.format(
+                        path=path.relative_to(REPO_ROOT),
+                        violations="\n".join(violations),
+                    )
+                )
+        return failures
+
+    return check
+
+
+def _legacy_module_import_check(
+    *,
+    legacy_path: Path,
+    legacy_path_message: str,
+    scan_roots: tuple[Path, ...],
+    direct_module: str,
+    direct_module_message: str,
+    reexport_module: str | None = None,
+    reexport_name: str | None = None,
+    reexport_message: str | None = None,
+) -> Callable[[], list[str]]:
+    def check() -> list[str]:
+        violations: list[str] = []
+        if legacy_path.exists():
+            violations.append(legacy_path_message)
+        for root in scan_roots:
+            for path in _python_files(root):
+                if path == legacy_path:
+                    continue
+                for lineno, module, names, level in _scan_imports(path):
+                    if level > 0:
+                        continue
+                    if module == direct_module:
+                        violations.append(
+                            f"{path.relative_to(REPO_ROOT)}:{lineno}: {direct_module_message}"
+                        )
+                    if (
+                        reexport_module is not None
+                        and reexport_name is not None
+                        and reexport_message is not None
+                        and module == reexport_module
+                        and reexport_name in names
+                    ):
+                        violations.append(
+                            f"{path.relative_to(REPO_ROOT)}:{lineno}: {reexport_message}"
+                        )
+        return violations
+
+    return check
+
+
 def _has_log10_call(path: Path) -> bool:
     tree = _parse_python(path)
     if tree is None:
@@ -295,13 +372,10 @@ def _check_fft_analysis_is_centralized() -> list[str]:
     return failures
 
 
-def _check_server_has_no_local_vibration_strength_module() -> list[str]:
-    path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "vibration_strength.py"
-    if path.exists():
-        return [
-            f"{path.relative_to(REPO_ROOT)} should not exist; use vibesensor/vibration_strength.py"
-        ]
-    return []
+_CHECK_SERVER_HAS_NO_LOCAL_VIBRATION_STRENGTH_MODULE = _path_absence_check(
+    VIBESENSOR_DIR / "use_cases" / "diagnostics" / "vibration_strength.py",
+    "apps/server/vibesensor/use_cases/diagnostics/vibration_strength.py should not exist; use vibesensor/vibration_strength.py",
+)
 
 
 _REPORT_MAPPING_MODULE = VIBESENSOR_DIR / "adapters" / "pdf" / "mapping.py"
@@ -511,34 +585,29 @@ def _imports_from_prefixes(path: Path, prefixes: tuple[str, ...]) -> list[str]:
     return violations
 
 
-def _check_use_cases_do_not_import_adapters_directly() -> list[str]:
-    failures: list[str] = []
-    for path in _python_files(VIBESENSOR_DIR / "use_cases"):
-        violations = _imports_from_prefixes(path, ("vibesensor.adapters",))
-        if violations:
-            failures.append(
-                f"{path.relative_to(REPO_ROOT)} must stay on shared/infra ports or adapter-local seams instead of importing adapters directly:\n"
-                + "\n".join(violations)
-            )
-    return failures
+_CHECK_USE_CASES_DO_NOT_IMPORT_ADAPTERS_DIRECTLY = _import_prefix_check(
+    paths_provider=lambda: _python_files(VIBESENSOR_DIR / "use_cases"),
+    prefixes=("vibesensor.adapters",),
+    failure_template=(
+        "{path} must stay on shared/infra ports or adapter-local seams instead of "
+        "importing adapters directly:\n{violations}"
+    ),
+)
 
 
-def _check_analysis_and_history_core_do_not_import_pdf_adapter() -> list[str]:
-    roots = [
+_CHECK_ANALYSIS_AND_HISTORY_CORE_DO_NOT_IMPORT_PDF_ADAPTER = _import_prefix_check(
+    paths_provider=lambda: _paths_from_roots(
         VIBESENSOR_DIR / "use_cases" / "diagnostics",
         VIBESENSOR_DIR / "use_cases" / "history",
         VIBESENSOR_DIR / "shared" / "boundaries" / "reporting",
-    ]
-    failures: list[str] = []
-    for root in roots:
-        for path in _python_files(root):
-            violations = _imports_from_prefixes(path, ("vibesensor.adapters.pdf",))
-            if violations:
-                failures.append(
-                    f"{path.relative_to(REPO_ROOT)} must not import the PDF adapter directly; keep report/analysis core on report-boundary seams such as PreparedReportInput or ReportDocument:\n"
-                    + "\n".join(violations)
-                )
-    return failures
+    ),
+    prefixes=("vibesensor.adapters.pdf",),
+    failure_template=(
+        "{path} must not import the PDF adapter directly; keep report/analysis "
+        "core on report-boundary seams such as PreparedReportInput or "
+        "ReportDocument:\n{violations}"
+    ),
+)
 
 
 def _live_telemetry_surface_files() -> list[Path]:
@@ -553,22 +622,19 @@ def _live_telemetry_surface_files() -> list[Path]:
     return sorted(dict.fromkeys(files))
 
 
-def _check_live_surfaces_do_not_import_post_run_conclusions() -> list[str]:
-    forbidden_prefixes = (
+_CHECK_LIVE_SURFACES_DO_NOT_IMPORT_POST_RUN_CONCLUSIONS = _import_prefix_check(
+    paths_provider=_live_telemetry_surface_files,
+    prefixes=(
         "vibesensor.use_cases.diagnostics",
         "vibesensor.use_cases.history",
         "vibesensor.shared.boundaries.reporting",
         "vibesensor.adapters.pdf",
-    )
-    failures: list[str] = []
-    for path in _live_telemetry_surface_files():
-        violations = _imports_from_prefixes(path, forbidden_prefixes)
-        if violations:
-            failures.append(
-                f"{path.relative_to(REPO_ROOT)} must keep live telemetry on runtime/transport seams instead of importing post-run diagnosis/report conclusion modules:\n"
-                + "\n".join(violations)
-            )
-    return failures
+    ),
+    failure_template=(
+        "{path} must keep live telemetry on runtime/transport seams instead of "
+        "importing post-run diagnosis/report conclusion modules:\n{violations}"
+    ),
+)
 
 
 def _check_history_services_do_not_import_httpexception() -> list[str]:
@@ -842,23 +908,24 @@ def _check_clients_http_adapter_uses_protocol_dependencies() -> list[str]:
     return failures
 
 
-def _check_route_facing_http_modules_avoid_infra_imports() -> list[str]:
+def _route_facing_http_paths() -> list[Path]:
     http_dir = VIBESENSOR_DIR / "adapters" / "http"
-    target_paths = [
+    return [
         http_dir / "clients.py",
         http_dir / "router.py",
         http_dir / "route_bundles.py",
         *sorted((http_dir / "settings").glob("*.py")),
     ]
-    failures: list[str] = []
-    for path in target_paths:
-        for lineno, module, _names, level in _scan_imports(path):
-            if level or not module or not module.startswith("vibesensor.infra"):
-                continue
-            failures.append(
-                f"{path.relative_to(REPO_ROOT)}:{lineno}: route-facing HTTP modules must depend on adapter/shared ports instead of importing infra collaborators directly ({module})"
-            )
-    return failures
+
+
+_CHECK_ROUTE_FACING_HTTP_MODULES_AVOID_INFRA_IMPORTS = _import_prefix_check(
+    paths_provider=_route_facing_http_paths,
+    prefixes=("vibesensor.infra",),
+    failure_template=(
+        "{path} must depend on adapter/shared ports instead of importing infra "
+        "collaborators directly:\n{violations}"
+    ),
+)
 
 
 def _check_http_route_modules_stay_split_and_focused() -> list[str]:
@@ -1173,21 +1240,11 @@ _FORBIDDEN_DOMAIN_IMPORTS = (
 )
 
 
-def _collect_domain_import_violations() -> list[str]:
-    violations: list[str] = []
-    domain_dir = VIBESENSOR_DIR / "domain"
-    for path in _python_files(domain_dir):
-        for lineno, module, names, _level in _scan_imports(path):
-            if any(module.startswith(prefix) for prefix in _FORBIDDEN_DOMAIN_IMPORTS):
-                violations.append(
-                    f"{path.relative_to(REPO_ROOT)}:{lineno}: from {module} import ..."
-                )
-            for name in names:
-                if any(name.startswith(prefix) for prefix in _FORBIDDEN_DOMAIN_IMPORTS):
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{lineno}: import {name}"
-                    )
-    return violations
+_CHECK_DOMAIN_IMPORTS_STAY_INNER = _import_prefix_check(
+    paths_provider=lambda: _python_files(VIBESENSOR_DIR / "domain"),
+    prefixes=_FORBIDDEN_DOMAIN_IMPORTS,
+    failure_template="{path} imports outer packages directly:\n{violations}",
+)
 
 
 def _check_new_domain_modules_keep_import_isolation() -> list[str]:
@@ -1216,24 +1273,17 @@ def _shared_type_module_files() -> list[Path]:
     ]
 
 
-def _check_backend_types_module_removed() -> list[str]:
-    path = VIBESENSOR_DIR / "shared" / "types" / "backend_types.py"
-    if path.exists():
-        return [
-            f"{path.relative_to(REPO_ROOT)} must not be reintroduced; use focused shared type owners instead"
-        ]
-    return []
+_CHECK_BACKEND_TYPES_MODULE_REMOVED = _path_absence_check(
+    VIBESENSOR_DIR / "shared" / "types" / "backend_types.py",
+    "apps/server/vibesensor/shared/types/backend_types.py must not be reintroduced; use focused shared type owners instead",
+)
 
 
-def _check_shared_types_do_not_import_from_infra() -> list[str]:
-    violations: list[str] = []
-    for path in _shared_type_module_files():
-        for lineno, module, _names, _level in _scan_imports(path):
-            if module.startswith("vibesensor.infra"):
-                violations.append(
-                    f"{path.relative_to(REPO_ROOT)}:{lineno}: from {module} import ..."
-                )
-    return violations
+_CHECK_SHARED_TYPES_DO_NOT_IMPORT_FROM_INFRA = _import_prefix_check(
+    paths_provider=_shared_type_module_files,
+    prefixes=("vibesensor.infra",),
+    failure_template="{path} must not import infra collaborators directly:\n{violations}",
+)
 
 
 def _check_shared_types_no_domain_factory_methods() -> list[str]:
@@ -1852,24 +1902,15 @@ def _check_signature_confinement() -> list[str]:
     return violations
 
 
-def _check_domain_import_direction() -> list[str]:
-    forbidden_prefixes = (
+_CHECK_DOMAIN_IMPORT_DIRECTION = _import_prefix_check(
+    paths_provider=lambda: sorted((VIBESENSOR_DIR / "domain").glob("*.py")),
+    prefixes=(
         "vibesensor.shared.boundaries",
         "vibesensor.adapters",
         "vibesensor.infra",
-    )
-    violations: list[str] = []
-    for path in (VIBESENSOR_DIR / "domain").glob("*.py"):
-        tree = _parse_python(path)
-        if tree is None:
-            continue
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                if any(node.module.startswith(prefix) for prefix in forbidden_prefixes):
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{node.lineno}: imports from {node.module}"
-                    )
-    return violations
+    ),
+    failure_template="{path} imports inward-forbidden layers:\n{violations}",
+)
 
 
 def _check_domain_code_does_not_access_raw_tire_fields() -> list[str]:
@@ -2062,60 +2103,44 @@ def _check_run_lifecycle_only() -> list[str]:
     return violations
 
 
-def _check_process_settings_shim_removed() -> list[str]:
-    legacy_path = VIBESENSOR_DIR / "app" / "process_settings.py"
-    violations: list[str] = []
-    if legacy_path.exists():
-        violations.append(
-            f"{legacy_path.relative_to(REPO_ROOT)} should stay removed; use "
-            "vibesensor.shared.process_settings directly"
-        )
-
-    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
-        for path in _python_files(root):
-            for lineno, module, names, level in _scan_imports(path):
-                if level > 0:
-                    continue
-                if module == "vibesensor.app.process_settings":
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports from "
-                        "vibesensor.app.process_settings; use "
-                        "vibesensor.shared.process_settings directly"
-                    )
-                if module == "vibesensor.app" and "process_settings" in names:
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports "
-                        "process_settings from vibesensor.app; use "
-                        "vibesensor.shared.process_settings directly"
-                    )
-    return violations
+_CHECK_PROCESS_SETTINGS_SHIM_REMOVED = _legacy_module_import_check(
+    legacy_path=VIBESENSOR_DIR / "app" / "process_settings.py",
+    legacy_path_message=(
+        "apps/server/vibesensor/app/process_settings.py should stay removed; use "
+        "vibesensor.shared.process_settings directly"
+    ),
+    scan_roots=(SERVER_ROOT, REPO_ROOT / "tools"),
+    direct_module="vibesensor.app.process_settings",
+    direct_module_message=(
+        "imports from vibesensor.app.process_settings; use "
+        "vibesensor.shared.process_settings directly"
+    ),
+    reexport_module="vibesensor.app",
+    reexport_name="process_settings",
+    reexport_message=(
+        "imports process_settings from vibesensor.app; use "
+        "vibesensor.shared.process_settings directly"
+    ),
+)
 
 
-def _check_settings_facade_removed() -> list[str]:
-    legacy_path = VIBESENSOR_DIR / "app" / "settings.py"
-    violations: list[str] = []
-    if legacy_path.exists():
-        violations.append(
-            f"{legacy_path.relative_to(REPO_ROOT)} should stay removed; import "
-            "config owners directly"
-        )
-
-    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
-        for path in _python_files(root):
-            for lineno, module, names, level in _scan_imports(path):
-                if level > 0:
-                    continue
-                if module == "vibesensor.app.settings":
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports from "
-                        "vibesensor.app.settings; import config owners directly"
-                    )
-                if module == "vibesensor.app" and "settings" in names:
-                    violations.append(
-                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports settings "
-                        "from vibesensor.app; import config owners directly"
-                    )
-    return violations
+_CHECK_SETTINGS_FACADE_REMOVED = _legacy_module_import_check(
+    legacy_path=VIBESENSOR_DIR / "app" / "settings.py",
+    legacy_path_message=(
+        "apps/server/vibesensor/app/settings.py should stay removed; import "
+        "config owners directly"
+    ),
+    scan_roots=(SERVER_ROOT, REPO_ROOT / "tools"),
+    direct_module="vibesensor.app.settings",
+    direct_module_message=(
+        "imports from vibesensor.app.settings; import config owners directly"
+    ),
+    reexport_module="vibesensor.app",
+    reexport_name="settings",
+    reexport_message=(
+        "imports settings from vibesensor.app; import config owners directly"
+    ),
+)
 
 
 def _check_history_db_facade_removed() -> list[str]:
@@ -2314,7 +2339,7 @@ CHECKS: tuple[Check, ...] = (
     ("FFT analysis stays centralized", _check_fft_analysis_is_centralized),
     (
         "No local diagnostics vibration_strength module exists",
-        _check_server_has_no_local_vibration_strength_module,
+        _CHECK_SERVER_HAS_NO_LOCAL_VIBRATION_STRENGTH_MODULE,
     ),
     (
         "External modules use the diagnostics public API",
@@ -2326,15 +2351,15 @@ CHECKS: tuple[Check, ...] = (
     ),
     (
         "Use cases avoid importing adapters directly",
-        _check_use_cases_do_not_import_adapters_directly,
+        _CHECK_USE_CASES_DO_NOT_IMPORT_ADAPTERS_DIRECTLY,
     ),
     (
         "Analysis/history core avoids direct PDF adapter imports",
-        _check_analysis_and_history_core_do_not_import_pdf_adapter,
+        _CHECK_ANALYSIS_AND_HISTORY_CORE_DO_NOT_IMPORT_PDF_ADAPTER,
     ),
     (
         "Live telemetry avoids post-run conclusion modules",
-        _check_live_surfaces_do_not_import_post_run_conclusions,
+        _CHECK_LIVE_SURFACES_DO_NOT_IMPORT_POST_RUN_CONCLUSIONS,
     ),
     ("Canonical dataflow doc stays complete", _check_canonical_dataflow_doc),
     (
@@ -2387,7 +2412,7 @@ CHECKS: tuple[Check, ...] = (
     ),
     (
         "Route-facing HTTP modules avoid infra imports",
-        _check_route_facing_http_modules_avoid_infra_imports,
+        _CHECK_ROUTE_FACING_HTTP_MODULES_AVOID_INFRA_IMPORTS,
     ),
     (
         "HTTP route modules stay split and focused",
@@ -2413,18 +2438,18 @@ CHECKS: tuple[Check, ...] = (
         "Raw capture flow stays in post-analysis boundaries",
         _check_raw_capture_flow_stays_post_analysis_only,
     ),
-    ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
+    ("Domain modules avoid outer-layer imports", _CHECK_DOMAIN_IMPORTS_STAY_INNER),
     (
         "New domain modules keep import isolation",
         _check_new_domain_modules_keep_import_isolation,
     ),
     (
         "backend_types catch-all module stays removed",
-        _check_backend_types_module_removed,
+        _CHECK_BACKEND_TYPES_MODULE_REMOVED,
     ),
     (
         "Shared backend types avoid infra imports",
-        _check_shared_types_do_not_import_from_infra,
+        _CHECK_SHARED_TYPES_DO_NOT_IMPORT_FROM_INFRA,
     ),
     (
         "Shared types avoid domain factory methods",
@@ -2507,7 +2532,7 @@ CHECKS: tuple[Check, ...] = (
         _check_boundaries_do_not_import_analysis,
     ),
     ("Signature stays out of adapter layers", _check_signature_confinement),
-    ("Domain import direction stays inward", _check_domain_import_direction),
+    ("Domain import direction stays inward", _CHECK_DOMAIN_IMPORT_DIRECTION),
     (
         "Domain code avoids raw tire field access",
         _check_domain_code_does_not_access_raw_tire_fields,
@@ -2535,11 +2560,11 @@ CHECKS: tuple[Check, ...] = (
     ),
     (
         "Process settings shim stays removed",
-        _check_process_settings_shim_removed,
+        _CHECK_PROCESS_SETTINGS_SHIM_REMOVED,
     ),
     (
         "Settings facade stays removed",
-        _check_settings_facade_removed,
+        _CHECK_SETTINGS_FACADE_REMOVED,
     ),
     (
         "HistoryDB facade stays removed",
