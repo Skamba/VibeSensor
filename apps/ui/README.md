@@ -25,6 +25,7 @@ running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nv
 ```bash
 cd apps/ui
 npm ci
+npm run setup:generated-contracts  # One-time clean-checkout setup for missing UI contract derivatives
 npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run lint:deps    # dependency-cruiser boundary checks over src/
 npm run lint:unused  # knip dead-file/dependency checks
@@ -72,6 +73,8 @@ It then regenerates the UI-only derivative artifacts:
 - `src/constants.ts`
 
 Those derivative outputs are materialized locally from the tracked inputs and are no longer a committed source-of-truth surface. Explicit owner flows such as `test:smoke`, `dev:docker`, `make ui-typecheck`, and release/UI-build helpers call `npm run sync:generated-contracts` when they need the files on disk.
+
+Fresh checkouts can materialize only the missing derivative files with `npm run setup:generated-contracts`. That setup command is safe to rerun, reuses the shared UI bootstrap helper, and intentionally leaves the authoritative `make sync-contracts` / `npm run sync:generated-contracts` refresh flow unchanged for stale-derivative updates.
 
 `npm run build` and `npm run typecheck` no longer regenerate those files automatically. They run `npm run check:contracts` first and fail fast with guidance to `make sync-contracts` if the local derivative copy is missing or stale. CI contract drift and human-facing regeneration should still use `make sync-contracts`.
 

@@ -12,6 +12,12 @@ from pathlib import Path
 from tests._paths import REPO_ROOT
 
 _UI_BOOTSTRAP_HELPER = REPO_ROOT / "tools" / "ui" / "ensure_ui_bootstrap.mjs"
+_GENERATED_DERIVATIVE_RELATIVE_PATHS = (
+    "src/generated/http_api_contracts.ts",
+    "src/contracts/ws_payload_types.ts",
+    "src/contracts/ws_payload_schema.generated.ts",
+    "src/constants.ts",
+)
 
 
 def _write_fake_npm(bin_dir: Path) -> Path:
@@ -44,6 +50,19 @@ def _prepare_ui_dir(tmp_path: Path) -> Path:
     ui_dir.mkdir()
     (ui_dir / "package-lock.json").write_text('{"lockfileVersion": 3}\n', encoding="utf-8")
     return ui_dir
+
+
+def _mark_npm_ci_current(ui_dir: Path) -> None:
+    (ui_dir / "node_modules").mkdir()
+    lock_hash = hashlib.sha256((ui_dir / "package-lock.json").read_bytes()).hexdigest()
+    (ui_dir / ".npm-ci-lock.sha256").write_text(f"{lock_hash}\n", encoding="utf-8")
+
+
+def _write_generated_derivatives(ui_dir: Path) -> None:
+    for rel_path in _GENERATED_DERIVATIVE_RELATIVE_PATHS:
+        file_path = ui_dir / rel_path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("// generated\n", encoding="utf-8")
 
 
 def test_ui_bootstrap_helper_runs_npm_ci_and_marks_lock_hash(tmp_path: Path) -> None:
@@ -118,3 +137,58 @@ def test_ui_bootstrap_helper_check_mode_reports_npm_ci_need(tmp_path: Path) -> N
         "current_lock_hash": "",
         "node_modules_exists": False,
     }
+
+
+def test_ui_bootstrap_helper_materializes_missing_generated_contracts_when_requested(
+    tmp_path: Path,
+) -> None:
+    ui_dir = _prepare_ui_dir(tmp_path)
+    _mark_npm_ci_current(ui_dir)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_fake_npm(bin_dir)
+    log_path = tmp_path / "npm.log"
+
+    result = subprocess.run(
+        ["node", str(_UI_BOOTSTRAP_HELPER), "--ensure-generated-contracts"],
+        cwd=ui_dir,
+        env={
+            **os.environ,
+            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "FAKE_NPM_LOG": str(log_path),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert log_path.read_text(encoding="utf-8").splitlines() == ["run sync:generated-contracts"]
+
+
+def test_ui_bootstrap_helper_skips_generated_contract_sync_when_derivatives_exist(
+    tmp_path: Path,
+) -> None:
+    ui_dir = _prepare_ui_dir(tmp_path)
+    _mark_npm_ci_current(ui_dir)
+    _write_generated_derivatives(ui_dir)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _write_fake_npm(bin_dir)
+    log_path = tmp_path / "npm.log"
+
+    result = subprocess.run(
+        ["node", str(_UI_BOOTSTRAP_HELPER), "--ensure-generated-contracts"],
+        cwd=ui_dir,
+        env={
+            **os.environ,
+            "PATH": f"{bin_dir}:{os.environ['PATH']}",
+            "FAKE_NPM_LOG": str(log_path),
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert not log_path.exists()
