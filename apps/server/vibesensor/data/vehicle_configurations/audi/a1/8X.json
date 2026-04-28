@@ -1,811 +1,640 @@
-[
-  {
-    "id": "audi-8x-1-0-tfsi-eu-2011-5-speed-manu-fwd",
-    "brand": "Audi",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "8X",
-    "body_code": "8X",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A1 (8X, 2011-2018)",
-    "variant_name": "1.0 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-      "value": "FWD",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
+      "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
+      "n4": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n5": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429.",
+      "n6": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n8": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n9": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n10": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+    },
+    "evidence_ref_sets": {
+      "e1": [
         "legacy_research_sources:0cd20821c4bc",
         "secondary_technical_sources:a1-8x-wikipedia",
         "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-      ]
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-      "code": "5-SPEED-MANU",
-      "name": "5-speed manual",
-      "evidence_refs": [
-        "legacy_research_sources:0cd20821c4bc",
-        "secondary_technical_sources:a1-8x-wikipedia",
-        "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "value": 0.854,
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "value": 3.652,
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
-          "legacy_research_sources:0cd20821c4bc"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Checked exact official Audi launch and facelift sources. Official Audi material places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 5-speed manual FWD state and a lower 15-inch baseline wheel package. This represented 2011 manual row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
-          "legacy_research_sources:0cd20821c4bc"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A1 1.0 TFSI facelift-era exact ratio and final-drive capture",
-        "reason": "The recovered official facelift sources close the 1.0 TFSI manual existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact manual state.",
-        "evidence_refs": [
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      },
-      {
-        "item": "Audi A1 1.0 TFSI placeholder replacement for the contradicted 2011 row",
-        "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ manual rows.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8x-1-0-tfsi-eu-2011-dct7-fwd",
-    "brand": "Audi",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "8X",
-    "body_code": "8X",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A1 (8X, 2011-2018)",
-    "variant_name": "1.0 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-      "value": "FWD",
-      "evidence_refs": [
-        "legacy_research_sources:0cd20821c4bc",
-        "secondary_technical_sources:a1-8x-wikipedia",
-        "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-      ]
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ200)",
-      "evidence_refs": [
-        "legacy_research_sources:0cd20821c4bc",
-        "secondary_technical_sources:a1-8x-wikipedia",
-        "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "value": 0.68,
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "value": 3.786,
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
-          "legacy_research_sources:0cd20821c4bc"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Checked exact official Audi launch and facelift sources. Official Audi material again places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 7-speed S tronic FWD state and a lower 15-inch baseline wheel package. This represented 2011 S tronic row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
-          "legacy_research_sources:0cd20821c4bc"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A1 1.0 TFSI S tronic facelift-era exact ratio and final-drive capture",
-        "reason": "The recovered official facelift sources close the 1.0 TFSI S tronic existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact S tronic state.",
-        "evidence_refs": [
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      },
-      {
-        "item": "Audi A1 1.0 TFSI S tronic placeholder replacement for the contradicted 2011 row",
-        "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ S tronic rows.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:cfd6a6b47886",
-          "legacy_research_sources:092a3f271f19"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8x-1-4-tfsi-eu-2011-5-speed-manu-fwd",
-    "brand": "Audi",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "8X",
-    "body_code": "8X",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A1 (8X, 2011-2018)",
-    "variant_name": "1.4 TFSI",
-    "engine_code": "1.4L",
-    "engine_name": "1.4L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-      "value": "FWD",
-      "evidence_refs": [
+      ],
+      "e2": [
+        "legacy_research_sources:1497d4e055e8",
+        "legacy_research_sources:493533bb041f",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:5e252f7f436b"
+      ],
+      "e3": [
         "legacy_research_sources:d3ced68412f8",
         "secondary_technical_sources:a1-8x-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-      "code": "5-SPEED-MANU",
-      "name": "5-speed manual",
-      "evidence_refs": [
+      ],
+      "e4": [
+        "secondary_technical_sources:a1-8x-wikipedia",
+        "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
+        "legacy_research_sources:0cd20821c4bc"
+      ],
+      "e5": [
+        "legacy_research_sources:0cd20821c4bc",
+        "legacy_research_sources:cfd6a6b47886",
+        "legacy_research_sources:092a3f271f19"
+      ],
+      "e6": [
+        "legacy_research_sources:d36a12aece1e"
+      ],
+      "e7": [
+        "legacy_research_sources:cfd6a6b47886",
+        "legacy_research_sources:092a3f271f19"
+      ],
+      "e8": [
+        "secondary_technical_sources:a1-8x-wikipedia",
+        "legacy_research_sources:d3ced68412f8"
+      ],
+      "e9": [
+        "legacy_research_sources:0cd20821c4bc",
         "legacy_research_sources:d3ced68412f8",
+        "legacy_research_sources:cfd6a6b47886"
+      ],
+      "e10": [
+        "legacy_research_sources:d36a12aece1e",
         "secondary_technical_sources:a1-8x-wikipedia"
+      ],
+      "e11": [
+        "legacy_research_sources:d36a12aece1e",
+        "legacy_research_sources:5709c957ea25",
+        "legacy_research_sources:cfd6a6b47886"
       ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-        "value": 0.854,
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-        "value": 3.652,
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "legacy_research_sources:d3ced68412f8"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Checked exact official Audi launch and facelift sources. Official Audi launch-era 1.4 TFSI 122 PS technical data and later facelift brochures both show a 6-speed manual rather than a 5-speed, so this represented 2011 5-speed row remains a contradicted advisory placeholder rather than a validated exact state.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:d3ced68412f8",
-          "legacy_research_sources:cfd6a6b47886"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "secondary_technical_sources:a1-8x-wikipedia",
-          "legacy_research_sources:d3ced68412f8"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8",
-          "secondary_technical_sources:a1-8x-wikipedia"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A1 1.4 TFSI exact 6-speed-manual row split by power and era",
-        "reason": "Official Audi launch and facelift sources both point to a 6-speed manual, but the stored broad 1.4 TFSI manual placeholder still collapses launch 122 PS and later facelift states into one non-exact row.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:d3ced68412f8",
-          "legacy_research_sources:cfd6a6b47886"
-        ]
-      },
-      {
-        "item": "Audi A1 1.4 TFSI manual exact ratio and final-drive capture",
-        "reason": "The recovered official launch technical-sheet URL is strong gearbox-family evidence, but this pass did not safely capture a directly quotable ratio/final-drive table for repo upgrade.",
-        "evidence_refs": [
-          "legacy_research_sources:d3ced68412f8"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-8x-1-4-tfsi-eu-2011-dct7-fwd",
-    "brand": "Audi",
-    "type": "Hatchback",
-    "market": "EU",
-    "model_code": "8X",
-    "body_code": "8X",
-    "production_start_year": 2011,
-    "production_end_year": 2018,
-    "model_name": "A1 (8X, 2011-2018)",
-    "variant_name": "1.4 TFSI",
-    "engine_code": "1.4L",
-    "engine_name": "1.4L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429.",
-      "value": "FWD",
-      "evidence_refs": [
-        "legacy_research_sources:d36a12aece1e",
-        "secondary_technical_sources:a1-8x-wikipedia"
-      ]
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ200)",
-      "evidence_refs": [
-        "legacy_research_sources:d36a12aece1e",
-        "secondary_technical_sources:a1-8x-wikipedia"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429.",
-        "value": 0.653,
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ]
+  "configurations": [
+    {
+      "id": "audi-8x-1-0-tfsi-eu-2011-5-speed-manu-fwd",
+      "brand": "Audi",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "8X",
+      "body_code": "8X",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A1 (8X, 2011-2018)",
+      "variant_name": "1.0 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "value": "FWD",
+        "evidence_refs_ref": "e1"
       },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429. Encodes DQ200 sub-trans 1 (gears 1-4 + reverse 4.500) output ratio.",
-        "value": 4.8,
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ]
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "code": "5-SPEED-MANU",
+        "name": "5-speed manual",
+        "evidence_refs_ref": "e1"
       },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "value": [
-          3.5,
-          2.087,
-          1.343,
-          0.933,
-          0.974,
-          0.778,
-          0.653
-        ],
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 215.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 0.854,
+          "evidence_refs_ref": "e1"
         },
-        "default_axle_for_speed": "rear"
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 3.652,
+          "evidence_refs_ref": "e1"
+        }
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n2",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Checked exact official Audi launch and facelift sources. Official Audi material places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 5-speed manual FWD state and a lower 15-inch baseline wheel package. This represented 2011 manual row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
+          "evidence_refs_ref": "e5"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 18\""
+          "note_ref": "n4"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:1497d4e055e8",
-            "legacy_research_sources:493533bb041f",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 19\""
+          "note_ref": "n6",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e1"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A1 1.0 TFSI facelift-era exact ratio and final-drive capture",
+          "reason": "The recovered official facelift sources close the 1.0 TFSI manual existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact manual state.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Audi A1 1.0 TFSI placeholder replacement for the contradicted 2011 row",
+          "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ manual rows.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Checked official Audi launch and facelift sources. Official launch-period 1.4 TFSI technical sheets already show separate 122 PS S tronic and 185 PS S tronic states, and later facelift brochures add further 1.4 TFSI S tronic variants. This single represented 2011 DCT row therefore remains a mixed-power, mixed-era advisory placeholder rather than one exact production-safe configuration.",
-        "evidence_refs": [
-          "legacy_research_sources:0cd20821c4bc",
-          "legacy_research_sources:d36a12aece1e",
-          "legacy_research_sources:5709c957ea25",
-          "legacy_research_sources:cfd6a6b47886"
+    {
+      "id": "audi-8x-1-0-tfsi-eu-2011-dct7-fwd",
+      "brand": "Audi",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "8X",
+      "body_code": "8X",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A1 (8X, 2011-2018)",
+      "variant_name": "1.0 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "value": "FWD",
+        "evidence_refs_ref": "e1"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ200)",
+        "evidence_refs_ref": "e1"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 0.68,
+          "evidence_refs_ref": "e1"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 3.786,
+          "evidence_refs_ref": "e1"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "Reverse gear ratio (research note): 3.988",
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ]
+      "verification_notes": [
+        {
+          "note": "Checked exact official Audi launch and facelift sources. Official Audi material again places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 7-speed S tronic FWD state and a lower 15-inch baseline wheel package. This represented 2011 S tronic row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n6",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A1 1.0 TFSI S tronic facelift-era exact ratio and final-drive capture",
+          "reason": "The recovered official facelift sources close the 1.0 TFSI S tronic existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact S tronic state.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Audi A1 1.0 TFSI S tronic placeholder replacement for the contradicted 2011 row",
+          "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ S tronic rows.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A1 1.4 TFSI S tronic exact power-era split",
-        "reason": "Official Audi launch material already shows separate 122 PS and 185 PS S tronic states, and later facelift material adds more 1.4 TFSI S tronic variants, so this single broad row still merges multiple exact configurations.",
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e",
-          "legacy_research_sources:5709c957ea25",
-          "legacy_research_sources:cfd6a6b47886"
+    },
+    {
+      "id": "audi-8x-1-4-tfsi-eu-2011-5-speed-manu-fwd",
+      "brand": "Audi",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "8X",
+      "body_code": "8X",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A1 (8X, 2011-2018)",
+      "variant_name": "1.4 TFSI",
+      "engine_code": "1.4L",
+      "engine_name": "1.4L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n3",
+        "value": "FWD",
+        "evidence_refs_ref": "e3"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n3",
+        "code": "5-SPEED-MANU",
+        "name": "5-speed manual",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n3",
+          "value": 0.854,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n3",
+          "value": 3.652,
+          "evidence_refs_ref": "e3"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
         ]
       },
-      {
-        "item": "Audi A1 1.4 TFSI S tronic exact ratio and final-drive capture",
-        "reason": "The recovered official launch and facelift sources close gearbox-family existence, but they do not support a single production-safe ratio/final-drive mapping for this mixed-power placeholder row.",
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e",
-          "legacy_research_sources:5709c957ea25",
-          "legacy_research_sources:cfd6a6b47886"
-        ]
+      "verification_notes": [
+        {
+          "note": "Checked exact official Audi launch and facelift sources. Official Audi launch-era 1.4 TFSI 122 PS technical data and later facelift brochures both show a 6-speed manual rather than a 5-speed, so this represented 2011 5-speed row remains a contradicted advisory placeholder rather than a validated exact state.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n6",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e8"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A1 1.4 TFSI exact 6-speed-manual row split by power and era",
+          "reason": "Official Audi launch and facelift sources both point to a 6-speed manual, but the stored broad 1.4 TFSI manual placeholder still collapses launch 122 PS and later facelift states into one non-exact row.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "Audi A1 1.4 TFSI manual exact ratio and final-drive capture",
+          "reason": "The recovered official launch technical-sheet URL is strong gearbox-family evidence, but this pass did not safely capture a directly quotable ratio/final-drive table for repo upgrade.",
+          "evidence_refs": [
+            "legacy_research_sources:d3ced68412f8"
+          ]
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "audi-8x-1-4-tfsi-eu-2011-dct7-fwd",
+      "brand": "Audi",
+      "type": "Hatchback",
+      "market": "EU",
+      "model_code": "8X",
+      "body_code": "8X",
+      "production_start_year": 2011,
+      "production_end_year": 2018,
+      "model_name": "A1 (8X, 2011-2018)",
+      "variant_name": "1.4 TFSI",
+      "engine_code": "1.4L",
+      "engine_name": "1.4L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "notes_ref": "n5",
+        "value": "FWD",
+        "evidence_refs_ref": "e10"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "notes_ref": "n5",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ200)",
+        "evidence_refs_ref": "e10"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "notes_ref": "n5",
+          "value": 0.653,
+          "evidence_refs_ref": "e6"
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429. Encodes DQ200 sub-trans 1 (gears 1-4 + reverse 4.500) output ratio.",
+          "value": 4.8,
+          "evidence_refs_ref": "e6"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "value": [
+            3.5,
+            2.087,
+            1.343,
+            0.933,
+            0.974,
+            0.778,
+            0.653
+          ],
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n5"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Checked official Audi launch and facelift sources. Official launch-period 1.4 TFSI technical sheets already show separate 122 PS S tronic and 185 PS S tronic states, and later facelift brochures add further 1.4 TFSI S tronic variants. This single represented 2011 DCT row therefore remains a mixed-power, mixed-era advisory placeholder rather than one exact production-safe configuration.",
+          "evidence_refs": [
+            "legacy_research_sources:0cd20821c4bc",
+            "legacy_research_sources:d36a12aece1e",
+            "legacy_research_sources:5709c957ea25",
+            "legacy_research_sources:cfd6a6b47886"
+          ]
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note": "Reverse gear ratio (research note): 3.988",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A1 1.4 TFSI S tronic exact power-era split",
+          "reason": "Official Audi launch material already shows separate 122 PS and 185 PS S tronic states, and later facelift material adds more 1.4 TFSI S tronic variants, so this single broad row still merges multiple exact configurations.",
+          "evidence_refs_ref": "e11"
+        },
+        {
+          "item": "Audi A1 1.4 TFSI S tronic exact ratio and final-drive capture",
+          "reason": "The recovered official launch and facelift sources close gearbox-family existence, but they do not support a single production-safe ratio/final-drive mapping for this mixed-power placeholder row.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}

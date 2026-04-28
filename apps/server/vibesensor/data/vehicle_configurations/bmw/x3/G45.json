@@ -1,106 +1,118 @@
-[
-  {
-    "id": "bmw-g45-m50-xdrive-eu-2024-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G45",
-    "body_code": "G45",
-    "production_start_year": 2024,
-    "production_end_year": 2026,
-    "model_name": "X3 (G45, 2024-2026)",
-    "variant_name": "M50 xDrive",
-    "engine_code": "S58",
-    "engine_name": "S58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 M50 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+      "n3": "Official BMW 06/2024 specification PDF lists the exact standard staggered 20-inch tire package for the G45 X3 M50 xDrive row: 255/45 R20 front and 285/40 R20 rear on 9J x 20 / 10.5J x 20 wheels.",
+      "n4": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 20 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
+      ],
+      "e2": [
+        "legacy_research_sources:314d8a95d8e2",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:3a6f114b8ee2",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1"
+      ],
+      "e3": [
         "bmw_pressclub_sources:g45-x3-global-launch-article",
         "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
       ],
-      "notes": "Official BMW launch-article and specification-PDF material confirm that the exact X3 M50 xDrive row is an xDrive all-wheel-drive state in the Europe launch lineup.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g45-x3-global-launch-article",
-        "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
+      "e4": [
+        "bmw_pressclub_sources:g45-x3-long-version-pdf",
+        "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
+        "bmw_market_pages:g45-x3-price-list-de-2026"
       ],
-      "notes": "The official BMW launch article uses Eight-speed Steptronic Sport wording for the exact X3 M50 xDrive, while the official specification PDF prints Eight-speed Steptronic transmission for the same row. The repo normalizes those market-facing BMW labels to the canonical ZF8HP automatic family mapping because the checked official sources do not publish a subtype code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
+      "e5": [
+        "bmw_pressclub_sources:g45-x3-2024-spec-pdf"
+      ],
+      "e6": [
+        "bmw_market_pages:g45-x3-price-list-de-2026"
+      ],
+      "e7": [
+        "bmw_pressclub_sources:g45-x3-global-launch-article",
+        "bmw_market_pages:g45-x3-price-list-de-2026",
+        "bmw_market_pages:g45-x3-price-list-at-2026"
+      ],
+      "e8": [
+        "bmw_market_pages:g45-x3-model-page-de",
+        "bmw_pressclub_sources:g45-x3-long-version-pdf",
+        "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
+        "bmw_market_pages:g45-x3-price-list-de-2026"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-g45-m50-xdrive-eu-2024-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G45",
+      "body_code": "G45",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "model_name": "X3 (G45, 2024-2026)",
+      "variant_name": "M50 xDrive",
+      "engine_code": "S58",
+      "engine_name": "S58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF lists 0.640 as the 8th-gear ratio for the exact G45 X3 M50 xDrive row.",
-        "value": 0.64
+        "evidence_refs_ref": "e3",
+        "notes": "Official BMW launch-article and specification-PDF material confirm that the exact X3 M50 xDrive row is an xDrive all-wheel-drive state in the Europe launch lineup.",
+        "value": "AWD"
       },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact G45 X3 M50 xDrive row.",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ]
-      },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 M50 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
-        "value": 3.385
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW launch article uses Eight-speed Steptronic Sport wording for the exact X3 M50 xDrive, while the official specification PDF prints Eight-speed Steptronic transmission for the same row. The repo normalizes those market-facing BMW labels to the canonical ZF8HP automatic family mapping because the checked official sources do not publish a subtype code.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 M50 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
-        "value": 3.385
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF lists the exact standard staggered 20-inch tire package for the G45 X3 M50 xDrive row: 255/45 R20 front and 285/40 R20 rear on 9J x 20 / 10.5J x 20 wheels.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 45.0,
-          "rim_in": 20.0
-        },
-        "rear": {
-          "width_mm": 285.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-          ],
-          "notes": "Official BMW 06/2024 specification PDF lists the exact standard staggered 20-inch tire package for the G45 X3 M50 xDrive row: 255/45 R20 front and 285/40 R20 rear on 9J x 20 / 10.5J x 20 wheels.",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 06/2024 specification PDF lists 0.640 as the 8th-gear ratio for the exact G45 X3 M50 xDrive row.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 06/2024 specification PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact G45 X3 M50 xDrive row.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "value": 3.385
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 45.0,
@@ -111,445 +123,366 @@
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard staggered 20\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:314d8a95d8e2",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3a6f114b8ee2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 45.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 285.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard staggered 20\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:314d8a95d8e2",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3a6f114b8ee2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 4 validation closes the exact launch-state numeric mapping for the G45 X3 M50 xDrive row. The official BMW 06/2024 launch article confirms Europe launch from Q4 2024 with xDrive AWD and Eight-speed Steptronic Sport wording, while the official specification PDF for the exact ACEA-market X3 M50 xDrive row proves forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, a single published final-drive value 3.385, top speed 250 km/h, and the standard staggered 255/45 R20 front plus 285/40 R20 rear tire package. The row now promotes that exact launch-state package while keeping explicit gearbox-subtype naming and hard 2026 end-of-production proof unresolved.",
+          "evidence_refs_ref": "e3"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 4 validation closes the exact launch-state numeric mapping for the G45 X3 M50 xDrive row. The official BMW 06/2024 launch article confirms Europe launch from Q4 2024 with xDrive AWD and Eight-speed Steptronic Sport wording, while the official specification PDF for the exact ACEA-market X3 M50 xDrive row proves forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, a single published final-drive value 3.385, top speed 250 km/h, and the standard staggered 255/45 R20 front plus 285/40 R20 rear tire package. The row now promotes that exact launch-state package while keeping explicit gearbox-subtype naming and hard 2026 end-of-production proof unresolved.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 M50 xDrive production-data applicability across the full 2024-2026 row span",
-        "reason": "The checked official BMW 06/2024 launch article and specification PDF prove the exact launch-state M50 xDrive package and Europe Q4 2024 introduction, but this pass did not recover a later official document proving that same package remained unchanged across the full represented 2024-2026 span.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW X3 M50 xDrive exact public gearbox subtype and broader wheel-option matrix",
-        "reason": "The checked official BMW sources prove Eight-speed Steptronic / Steptronic Sport wording, the exact launch-state ratio package, and the standard staggered 20-inch setup, but they do not publish a gearbox subtype code such as ZF8HP or the full official optional wheel/tire matrix for the exact row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_pressclub_sources:g45-x3-m50-2024-spec-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g45-xdrive20-eu-2024-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G45",
-    "body_code": "G45",
-    "production_start_year": 2024,
-    "production_end_year": 2026,
-    "model_name": "X3 (G45, 2024-2026)",
-    "variant_name": "xDrive20",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g45-x3-long-version-pdf",
-        "bmw_market_pages:g45-x3-price-list-de-2026"
       ],
-      "notes": "Official BMW launch-book and Germany price-list material confirm that the exact X3 20 xDrive row is an all-wheel-drive state with BMW xDrive / Allradantrieb wording.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g45-x3-long-version-pdf",
-        "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
-        "bmw_market_pages:g45-x3-price-list-de-2026"
+      "unresolved": [
+        {
+          "item": "BMW X3 M50 xDrive production-data applicability across the full 2024-2026 row span",
+          "reason": "The checked official BMW 06/2024 launch article and specification PDF prove the exact launch-state M50 xDrive package and Europe Q4 2024 introduction, but this pass did not recover a later official document proving that same package remained unchanged across the full represented 2024-2026 span.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "BMW X3 M50 xDrive exact public gearbox subtype and broader wheel-option matrix",
+          "reason": "The checked official BMW sources prove Eight-speed Steptronic / Steptronic Sport wording, the exact launch-state ratio package, and the standard staggered 20-inch setup, but they do not publish a gearbox subtype code such as ZF8HP or the full official optional wheel/tire matrix for the exact row.",
+          "evidence_refs_ref": "e3"
+        }
       ],
-      "notes": "Official BMW launch-book, specification-PDF, and Germany price-list material use Eight-speed Steptronic / 8-Gang Steptronic wording for the exact X3 20 xDrive row. The repo normalizes those market-facing BMW labels to the canonical ZF8HP automatic family mapping because the checked official sources do not publish a subtype code.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF lists 0.640 as the 8th-gear ratio for the exact G45 X3 20 xDrive row.",
-        "value": 0.64
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact G45 X3 20 xDrive row.",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 20 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
-        "value": 3.385
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf"
-        ],
-        "notes": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 20 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
-        "value": 3.385
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
+    {
+      "id": "bmw-g45-xdrive20-eu-2024-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G45",
+      "body_code": "G45",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "model_name": "X3 (G45, 2024-2026)",
+      "variant_name": "xDrive20",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs": [
           "bmw_pressclub_sources:g45-x3-long-version-pdf",
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
           "bmw_market_pages:g45-x3-price-list-de-2026"
         ],
-        "notes": "The strongest official BMW source chain for the exact X3 20 xDrive row converges on square 225/60 R18 tires on 8J x 18 wheels: the 06/2024 specification PDF prints 225/60 R18 directly, the 06/2024 launch-book says 18-inch wheels are standard on the X3 20 xDrive, and the April 2026 Germany price list repeats 225/60 R18 in the xDrive20 wheel matrix. A single selected-equipment text block in the same 2026 price list prints 225/60 R19, but that line conflicts with the other official BMW sources and is treated as an internal brochure inconsistency rather than the exact baseline fitment.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 60.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+        "notes": "Official BMW launch-book and Germany price-list material confirm that the exact X3 20 xDrive row is an all-wheel-drive state with BMW xDrive / Allradantrieb wording.",
+        "value": "AWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW launch-book, specification-PDF, and Germany price-list material use Eight-speed Steptronic / 8-Gang Steptronic wording for the exact X3 20 xDrive row. The repo normalizes those market-facing BMW labels to the canonical ZF8HP automatic family mapping because the checked official sources do not publish a subtype code.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g45-x3-long-version-pdf",
-            "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
-            "bmw_market_pages:g45-x3-price-list-de-2026"
-          ],
-          "notes": "The strongest official BMW source chain for the exact X3 20 xDrive row converges on square 225/60 R18 tires on 8J x 18 wheels as the standard package.",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 06/2024 specification PDF lists 0.640 as the 8th-gear ratio for the exact G45 X3 20 xDrive row.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Official BMW 06/2024 specification PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact G45 X3 20 xDrive row.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n4",
+          "value": 3.385
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n4",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The strongest official BMW source chain for the exact X3 20 xDrive row converges on square 225/60 R18 tires on 8J x 18 wheels: the 06/2024 specification PDF prints 225/60 R18 directly, the 06/2024 launch-book says 18-inch wheels are standard on the X3 20 xDrive, and the April 2026 Germany price list repeats 225/60 R18 in the xDrive20 wheel matrix. A single selected-equipment text block in the same 2026 price list prints 225/60 R19, but that line conflicts with the other official BMW sources and is treated as an internal brochure inconsistency rather than the exact baseline fitment.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard square 18\""
+          "default_axle_for_speed": "rear"
         },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The strongest official BMW source chain for the exact X3 20 xDrive row converges on square 225/60 R18 tires on 8J x 18 wheels as the standard package.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard square 18\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional square 245/50 R19 package on 8.5J x 19 wheels.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Optional square 19\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional staggered 20-inch package with 255/45 R20 front and 285/40 R20 rear tires.",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 45.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 285.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Optional staggered 20\""
+          },
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional staggered 21-inch package with 255/40 R21 front and 285/35 R21 rear tires.",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 285.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Optional staggered 21\""
+          }
+        ]
+      },
+      "verification_notes": [
         {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_market_pages:g45-x3-price-list-de-2026"
-          ],
-          "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional square 245/50 R19 package on 8.5J x 19 wheels.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 50.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Optional square 19\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_market_pages:g45-x3-price-list-de-2026"
-          ],
-          "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional staggered 20-inch package with 255/45 R20 front and 285/40 R20 rear tires.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 45.0,
-            "rim_in": 20.0
-          },
-          "rear": {
-            "width_mm": 285.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Optional staggered 20\""
-        },
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_market_pages:g45-x3-price-list-de-2026"
-          ],
-          "notes": "Official BMW Germany April 2026 price list maps the exact X3 20 xDrive column to an optional staggered 21-inch package with 255/40 R21 front and 285/35 R21 rear tires.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "rear": {
-            "width_mm": 285.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Optional staggered 21\""
+          "note": "Batch 5 validation closes the exact launch-state numeric mapping for the G45 X3 20 xDrive row. Official BMW Germany model-page metadata surfaces the exact BMW X3 20 xDrive with model-range G45 and productionYear 2024, the 06/2024 launch-book places Europe launch in Q4 2024 and states that 18-inch wheels are standard on the X3 20 xDrive, the 06/2024 specification PDF proves Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, top speed 215 km/h, and standard 225/60 R18 tires, and the April 2026 BMW Germany price list confirms continued sale of the exact X3 20 xDrive plus the current square 19-inch and staggered 20-inch and 21-inch wheel packages. One selected-equipment text block in that same 2026 price list prints 225/60 R19, but the direct specification PDF, launch-book 18-inch statement, and wheel-matrix pages all support 225/60 R18 instead, so production data now follows that stronger three-source convergence.",
+          "evidence_refs_ref": "e8"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 5 validation closes the exact launch-state numeric mapping for the G45 X3 20 xDrive row. Official BMW Germany model-page metadata surfaces the exact BMW X3 20 xDrive with model-range G45 and productionYear 2024, the 06/2024 launch-book places Europe launch in Q4 2024 and states that 18-inch wheels are standard on the X3 20 xDrive, the 06/2024 specification PDF proves Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, top speed 215 km/h, and standard 225/60 R18 tires, and the April 2026 BMW Germany price list confirms continued sale of the exact X3 20 xDrive plus the current square 19-inch and staggered 20-inch and 21-inch wheel packages. One selected-equipment text block in that same 2026 price list prints 225/60 R19, but the direct specification PDF, launch-book 18-inch statement, and wheel-matrix pages all support 225/60 R18 instead, so production data now follows that stronger three-source convergence.",
-        "evidence_refs": [
-          "bmw_market_pages:g45-x3-model-page-de",
-          "bmw_pressclub_sources:g45-x3-long-version-pdf",
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
-          "bmw_market_pages:g45-x3-price-list-de-2026"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 20 xDrive production-data applicability across the full 2024-2026 row span",
-        "reason": "The checked official BMW launch-book, specification-PDF, Germany model page, and April 2026 Germany price list prove the exact X3 20 xDrive launch-state package and 2026 continuity, but this pass did not recover a later official ratio table proving that the exact 2024 launch-state gearing and final-drive package remained unchanged across the full represented row span.",
-        "evidence_refs": [
-          "bmw_market_pages:g45-x3-model-page-de",
-          "bmw_pressclub_sources:g45-x3-long-version-pdf",
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
-          "bmw_market_pages:g45-x3-price-list-de-2026"
-        ]
-      },
-      {
-        "item": "BMW X3 20 xDrive exact public gearbox subtype naming",
-        "reason": "The checked official BMW sources prove Eight-speed Steptronic / 8-Gang Steptronic wording, the exact ratio package, and the wheel matrix, but they do not publish a gearbox subtype code such as ZF8HP.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-long-version-pdf",
-          "bmw_pressclub_sources:g45-x3-2024-spec-pdf",
-          "bmw_market_pages:g45-x3-price-list-de-2026"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g45-xdrive30-eu-2025-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G45",
-    "body_code": "G45",
-    "production_start_year": 2025,
-    "production_end_year": 2026,
-    "model_name": "X3 (G45, 2025-2026)",
-    "variant_name": "xDrive30",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.64
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:314d8a95d8e2",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3a6f114b8ee2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      ],
+      "unresolved": [
         {
+          "item": "BMW X3 20 xDrive production-data applicability across the full 2024-2026 row span",
+          "reason": "The checked official BMW launch-book, specification-PDF, Germany model page, and April 2026 Germany price list prove the exact X3 20 xDrive launch-state package and 2026 continuity, but this pass did not recover a later official ratio table proving that the exact 2024 launch-state gearing and final-drive package remained unchanged across the full represented row span.",
+          "evidence_refs_ref": "e8"
+        },
+        {
+          "item": "BMW X3 20 xDrive exact public gearbox subtype naming",
+          "reason": "The checked official BMW sources prove Eight-speed Steptronic / 8-Gang Steptronic wording, the exact ratio package, and the wheel matrix, but they do not publish a gearbox subtype code such as ZF8HP.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g45-xdrive30-eu-2025-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G45",
+      "body_code": "G45",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "model_name": "X3 (G45, 2025-2026)",
+      "variant_name": "xDrive30",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:314d8a95d8e2",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3a6f114b8ee2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 5 strengthens this row from merely suspect to lifecycle-wide contradicted. Official BMW 06/2024 G45 launch material names the Europe-launch lineup as X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, and X3 M50 xDrive, and current official BMW Germany and Austria price lists continue to name X3 30e xDrive, X3 20 xDrive, X3 20d xDrive, X3 40d xDrive, and X3 M50 xDrive without any non-PHEV X3 xDrive30 row. The current EU xDrive30 row is therefore retained only as an unsupported advisory reference pending exact market-proof or a row split/removal decision.",
+          "evidence_refs_ref": "e7"
         },
         {
-          "confidence": "family_default",
+          "note": "The official BMW UK G45 technical-data page confirms a live 2024 G45 UK technical-data surface, but the retrieved page identity defaulted to the supported X3 20 xDrive context rather than proving the existence of an EU-market xDrive30 trim.",
           "evidence_refs": [
-            "legacy_research_sources:314d8a95d8e2",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3a6f114b8ee2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:314d8a95d8e2",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3a6f114b8ee2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+            "bmw_market_pages:g45-x3-technical-data-uk"
+          ]
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 5 strengthens this row from merely suspect to lifecycle-wide contradicted. Official BMW 06/2024 G45 launch material names the Europe-launch lineup as X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, and X3 M50 xDrive, and current official BMW Germany and Austria price lists continue to name X3 30e xDrive, X3 20 xDrive, X3 20d xDrive, X3 40d xDrive, and X3 M50 xDrive without any non-PHEV X3 xDrive30 row. The current EU xDrive30 row is therefore retained only as an unsupported advisory reference pending exact market-proof or a row split/removal decision.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_market_pages:g45-x3-price-list-de-2026",
-          "bmw_market_pages:g45-x3-price-list-at-2026"
-        ]
-      },
-      {
-        "note": "The official BMW UK G45 technical-data page confirms a live 2024 G45 UK technical-data surface, but the retrieved page identity defaulted to the supported X3 20 xDrive context rather than proving the existence of an EU-market xDrive30 trim.",
-        "evidence_refs": [
-          "bmw_market_pages:g45-x3-technical-data-uk"
-        ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X3 xDrive30 exact EU-market existence and production span",
+          "reason": "The checked official BMW G45 launch material for Europe supports X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, and X3 M50 xDrive, and current official BMW Germany and Austria price lists continue that naming pattern without any exact X3 xDrive30 row.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "BMW X3 xDrive30 row cleanup versus likely non-EU or mis-targeted trim leakage",
+          "reason": "Because the checked official BMW Europe-facing G45 sources consistently surface 30e xDrive instead of xDrive30, this row may reflect a non-EU market mapping or a mislabeled exact row and should not receive guessed timing, drivetrain, ratio, or wheel updates without an exact official source.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X3 xDrive30 exact EU-market existence and production span",
-        "reason": "The checked official BMW G45 launch material for Europe supports X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, and X3 M50 xDrive, and current official BMW Germany and Austria price lists continue that naming pattern without any exact X3 xDrive30 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_market_pages:g45-x3-price-list-de-2026",
-          "bmw_market_pages:g45-x3-price-list-at-2026"
-        ]
-      },
-      {
-        "item": "BMW X3 xDrive30 row cleanup versus likely non-EU or mis-targeted trim leakage",
-        "reason": "Because the checked official BMW Europe-facing G45 sources consistently surface 30e xDrive instead of xDrive30, this row may reflect a non-EU market mapping or a mislabeled exact row and should not receive guessed timing, drivetrain, ratio, or wheel updates without an exact official source.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g45-x3-global-launch-article",
-          "bmw_market_pages:g45-x3-price-list-de-2026",
-          "bmw_market_pages:g45-x3-price-list-at-2026"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

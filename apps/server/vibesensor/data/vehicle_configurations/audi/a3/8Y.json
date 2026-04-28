@@ -1,1747 +1,1427 @@
-[
-  {
-    "id": "audi-8y-30-tdi-eu-2021-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "30 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
+      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
+      "n4": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
+      "n5": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
+      "n6": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
+      "n7": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
+      "n8": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
+      "n9": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
+      "n10": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
+      "n11": "Official Audi technical-data material publishes 6-speed manual wording for the checked state. The repo stores normalized code MT6; no supplier gearbox-family code is published.",
+      "n12": "Official Audi technical-data material publishes a single/equal final-drive value for the checked front-wheel-drive state, which the canonical schema stores in final_drive_front.",
+      "n13": "Official Audi technical-data material publishes 7-speed S tronic wording for the checked state. The repo stores normalized code DCT7; no supplier gearbox-family code is published."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e2": [
+        "legacy_research_sources:0763518f2893",
+        "legacy_research_sources:22498f3a74f1",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:544adad583d5",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:7ad6a45bf70a",
+        "legacy_research_sources:7be816632b85",
+        "legacy_research_sources:e26c1ff07b3a",
+        "legacy_research_sources:e6d59d64ee25"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
+      ],
+      "e4": [
         "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
+      "e5": [
+        "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
       ],
-      "notes": "Official Audi technical-data material publishes 6-speed manual wording for the checked state. The repo stores normalized code MT6; no supplier gearbox-family code is published.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.604 as the top forward gear ratio for the checked exact state.",
-        "value": 0.604
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.75,
-          1.952,
-          1.2,
-          0.878,
-          0.711,
-          0.604
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material publishes a single/equal final-drive value for the checked front-wheel-drive state, which the canonical schema stores in final_drive_front.",
-        "value": 3.238
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 16\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi 2023 A3 Sedan 30 TDI technical-data material replaces the inherited family defaults for the checked manual state: FWD, 6-speed manual, 0.604 top gear, equal 3.238 final-drive values, and 205/55 R16 basic tires. The MY2026 price list confirms a later TDI 85 kW manual Limousine state, but unchanged 2021-2026 continuity remains unproven.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 30 TDI manual continuity across 2021-2026",
-        "reason": "The exact official PDF proves a 2023 state and the MY2026 price list confirms later manual availability, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 30 TDI trim-linked tire matrix",
-        "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-30-tdi-eu-2021-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "30 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ381)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 4.769
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0763518f2893",
-          "legacy_research_sources:22498f3a74f1",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:544adad583d5",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7ad6a45bf70a",
-          "legacy_research_sources:7be816632b85",
-          "legacy_research_sources:e26c1ff07b3a",
-          "legacy_research_sources:e6d59d64ee25"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "No checked official source supports the represented A3 8Y 30 TDI S tronic sedan row. The official 2023 30 TDI technical-data PDF is manual-only, and the MY2026 price list pairs TDI 85 kW with 6-speed manual while reserving S tronic for the higher-output TDI 110 kW state.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact Audi A3 8Y 30 TDI S tronic sedan evidence",
-        "reason": "The checked official source chain supports 30 TDI manual and 35 TDI/TDI 110 kW S tronic states, not a 30 TDI DCT7/S tronic sedan state.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tdi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Replacement strategy for the represented 30 TDI automatic row",
-        "reason": "The current broad row may need deletion, re-keying to a higher-output 35 TDI/TDI 110 kW state, or an exact market/year split if future official evidence proves a 30 TDI S tronic variant.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-30-tfsi-eu-2021-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "30 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e6": [
         "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
+      "e7": [
+        "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material publishes 6-speed manual wording for the checked state. The repo stores normalized code MT6; no supplier gearbox-family code is published.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
+      "e8": [
+        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
+        "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
+        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
+        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:8y-a3-2022-price-list-pdf",
+        "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ],
+      "e17": [
+        "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "audi-8y-30-tdi-eu-2021-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.642 as the top forward gear ratio for the checked exact state.",
-        "value": 0.642
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n10",
+        "value": "FWD"
       },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.769,
-          1.947,
-          1.281,
-          0.973,
-          0.778,
-          0.642
-        ]
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n11",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material publishes a single/equal final-drive value for the checked front-wheel-drive state, which the canonical schema stores in final_drive_front.",
-        "value": 4.353
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official Audi technical-data material lists 0.604 as the top forward gear ratio for the checked exact state.",
+          "value": 0.604
         },
-        "default_axle_for_speed": "rear"
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n4",
+          "value": [
+            3.75,
+            1.952,
+            1.2,
+            0.878,
+            0.711,
+            0.604
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n12",
+          "value": 3.238
+        }
       },
-      "options": [
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n5",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
             "rim_in": 16.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 16\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi 2023 A3 Sedan 30 TDI technical-data material replaces the inherited family defaults for the checked manual state: FWD, 6-speed manual, 0.604 top gear, equal 3.238 final-drive values, and 205/55 R16 basic tires. The MY2026 price list confirms a later TDI 85 kW manual Limousine state, but unchanged 2021-2026 continuity remains unproven.",
+          "evidence_refs_ref": "e5"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi 2023 A3 Sedan 30 TFSI technical-data material replaces the inherited family defaults for the checked 1.0-liter manual state: FWD, 6-speed manual, 0.642 top gear, 4.353 final drive, and 205/55 R16 basic tires. The MY2026 price list shows the later 85 kW TFSI Limousine as a 1.5-liter program, so the row remains over-broad.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 30 TFSI engine/program continuity across 2021-2026",
-        "reason": "The exact official PDF proves a 2023 999 cc / 81 kW state, while the MY2026 price list lists TFSI 85 kW with 1.5-liter displacement; this pass did not recover the exact split point for the broad row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 30 TFSI trim-linked tire matrix",
-        "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-30-tfsi-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-30-tfsi-eu-2021-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "30 TFSI",
-    "engine_code": "1.0L",
-    "engine_name": "1.0L I3 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ381)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 4.769
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0763518f2893",
-          "legacy_research_sources:22498f3a74f1",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:544adad583d5",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7ad6a45bf70a",
-          "legacy_research_sources:7be816632b85",
-          "legacy_research_sources:e26c1ff07b3a",
-          "legacy_research_sources:e6d59d64ee25"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "No exact official A3 Sedan 30 TFSI S tronic technical-data PDF was recovered. Audi launch material says an entry-level gasoline engine would follow, and the MY2026 price list confirms a later TFSI 85 kW S tronic Limousine state, but it is a 1.5-liter later program rather than clean support for the current 1.0-liter 2021-2026 row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact Audi A3 8Y 30 TFSI S tronic ratios and final drive",
-        "reason": "This pass did not recover an official exact 30 TFSI S tronic technical-data PDF; inherited DCT7 family ratios and final drive remain unsupported.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 30 TFSI S tronic engine/program continuity",
-        "reason": "The captured official sources point from an early entry gasoline context to a later 1.5-liter TFSI 85 kW S tronic program, but the current row stores one 1.0-liter 2021-2026 state.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-35-tdi-eu-2021-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "35 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0763518f2893",
-          "legacy_research_sources:22498f3a74f1",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:544adad583d5",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7ad6a45bf70a",
-          "legacy_research_sources:7be816632b85",
-          "legacy_research_sources:e26c1ff07b3a",
-          "legacy_research_sources:e6d59d64ee25"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter 2024 Germany technical data / MY2026 price list with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Checked official A3 8Y Sedan/Limousine sources do not support a 35 TDI manual sedan row. The 2020 launch release, 2024 technical-data PDF, 2024 facelift release, and MY2026 price list consistently support the 110 kW diesel sedan as a 7-speed S tronic state.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact Audi A3 8Y 35 TDI manual sedan evidence",
-        "reason": "Official sedan/limousine sources checked in this run support 35 TDI/TDI 110 kW with S tronic, while the only manual lead found by the source packet was Sportback-only secondary evidence.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Replacement strategy for the represented 35 TDI manual row",
-        "reason": "The current broad row may need deletion or body/market splitting if future official evidence proves a manual sedan state; current official sedan evidence contradicts it.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-35-tdi-eu-2021-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "35 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
+      "unresolved": [
+        {
+          "item": "Audi A3 8Y 30 TDI manual continuity across 2021-2026",
+          "reason": "The exact official PDF proves a 2023 state and the MY2026 price list confirms later manual availability, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Audi A3 8Y 30 TDI trim-linked tire matrix",
+          "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
+          "evidence_refs_ref": "e5"
+        }
       ],
-      "notes": "Official Audi technical-data material publishes 7-speed S tronic wording for the checked state. The repo stores normalized code DCT7; no supplier gearbox-family code is published.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.561 as the top forward gear ratio for the checked exact state.",
-        "value": 0.561
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.579,
-          2.75,
-          1.677,
-          0.889,
-          0.677,
-          0.722,
-          0.561
-        ]
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "audi-8y-30-tdi-eu-2021-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "value": "FWD"
       },
-      "options": [
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ381)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 4.769
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
         {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-            "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
+          "note": "No checked official source supports the represented A3 8Y 30 TDI S tronic sedan row. The official 2023 30 TDI technical-data PDF is manual-only, and the MY2026 price list pairs TDI 85 kW with 6-speed manual while reserving S tronic for the higher-output TDI 110 kW state.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact Audi A3 8Y 30 TDI S tronic sedan evidence",
+          "reason": "The checked official source chain supports 30 TDI manual and 35 TDI/TDI 110 kW S tronic states, not a 30 TDI DCT7/S tronic sedan state.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Replacement strategy for the represented 30 TDI automatic row",
+          "reason": "The current broad row may need deletion, re-keying to a higher-output 35 TDI/TDI 110 kW state, or an exact market/year split if future official evidence proves a 30 TDI S tronic variant.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-30-tfsi-eu-2021-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes_ref": "n10",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e6",
+        "notes_ref": "n11",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Official Audi technical-data material lists 0.642 as the top forward gear ratio for the checked exact state.",
+          "value": 0.642
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n4",
+          "value": [
+            3.769,
+            1.947,
+            1.281,
+            0.973,
+            0.778,
+            0.642
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n12",
+          "value": 4.353
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n5",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
             "rim_in": 16.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 16\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e11",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi 2023 A3 Sedan 30 TFSI technical-data material replaces the inherited family defaults for the checked 1.0-liter manual state: FWD, 6-speed manual, 0.642 top gear, 4.353 final drive, and 205/55 R16 basic tires. The MY2026 price list shows the later 85 kW TFSI Limousine as a 1.5-liter program, so the row remains over-broad.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A3 8Y 30 TFSI engine/program continuity across 2021-2026",
+          "reason": "The exact official PDF proves a 2023 999 cc / 81 kW state, while the MY2026 price list lists TFSI 85 kW with 1.5-liter displacement; this pass did not recover the exact split point for the broad row.",
+          "evidence_refs_ref": "e11"
         },
         {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
+          "item": "Audi A3 8Y 30 TFSI trim-linked tire matrix",
+          "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-30-tfsi-eu-2021-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DQ381)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.769
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi 2024 A3 Limousine 35 TDI technical-data material replaces the inherited family defaults for the checked S tronic state: FWD, 7-speed S tronic, complete forward ratios ending in 0.561, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 35 TDI S tronic continuity across 2021-2026",
-        "reason": "The exact official PDF proves a 2024 state and the MY2026 price list confirms later 110 kW S tronic availability, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "35 TDI split final-drive representation",
-        "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
         ]
       },
-      {
-        "item": "Audi A3 8Y 35 TDI gearbox-family code",
-        "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-35-tfsi-eu-2021-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "35 TFSI",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-      ],
-      "notes": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-      ],
-      "notes": "Official Audi technical-data material publishes 6-speed manual wording for the checked state. The repo stores normalized code MT6; no supplier gearbox-family code is published.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.510 as the top forward gear ratio for the checked exact state.",
-        "value": 0.51
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.75,
-          2.1,
-          1.276,
-          0.878,
-          0.674,
-          0.51
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material publishes a single/equal final-drive value for the checked front-wheel-drive state, which the canonical schema stores in final_drive_front.",
-        "value": 4.235
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "verification_notes": [
         {
-          "confidence": "official_derived",
+          "note": "No exact official A3 Sedan 30 TFSI S tronic technical-data PDF was recovered. Audi launch material says an entry-level gasoline engine would follow, and the MY2026 price list confirms a later TFSI 85 kW S tronic Limousine state, but it is a 1.5-liter later program rather than clean support for the current 1.0-liter 2021-2026 row.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact Audi A3 8Y 30 TFSI S tronic ratios and final drive",
+          "reason": "This pass did not recover an official exact 30 TFSI S tronic technical-data PDF; inherited DCT7 family ratios and final drive remain unsupported.",
+          "evidence_refs_ref": "e12"
+        },
+        {
+          "item": "Audi A3 8Y 30 TFSI S tronic engine/program continuity",
+          "reason": "The captured official sources point from an early entry gasoline context to a later 1.5-liter TFSI 85 kW S tronic program, but the current row stores one 1.0-liter 2021-2026 state.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-35-tdi-eu-2021-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n3",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n3",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Checked official A3 8Y Sedan/Limousine sources do not support a 35 TDI manual sedan row. The 2020 launch release, 2024 technical-data PDF, 2024 facelift release, and MY2026 price list consistently support the 110 kW diesel sedan as a 7-speed S tronic state.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact Audi A3 8Y 35 TDI manual sedan evidence",
+          "reason": "Official sedan/limousine sources checked in this run support 35 TDI/TDI 110 kW with S tronic, while the only manual lead found by the source packet was Sportback-only secondary evidence.",
+          "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "Replacement strategy for the represented 35 TDI manual row",
+          "reason": "The current broad row may need deletion or body/market splitting if future official evidence proves a manual sedan state; current official sedan evidence contradicts it.",
+          "evidence_refs_ref": "e17"
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-35-tdi-eu-2021-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes_ref": "n10",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e7",
+        "notes_ref": "n13",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Official Audi technical-data material lists 0.561 as the top forward gear ratio for the checked exact state.",
+          "value": 0.561
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes_ref": "n4",
+          "value": [
+            3.579,
+            2.75,
+            1.677,
+            0.889,
+            0.677,
+            0.722,
+            0.561
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e10",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi 2024 A3 Limousine 35 TDI technical-data material replaces the inherited family defaults for the checked S tronic state: FWD, 7-speed S tronic, complete forward ratios ending in 0.561, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A3 8Y 35 TDI S tronic continuity across 2021-2026",
+          "reason": "The exact official PDF proves a 2024 state and the MY2026 price list confirms later 110 kW S tronic availability, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
+          "evidence_refs_ref": "e17"
+        },
+        {
+          "item": "35 TDI split final-drive representation",
+          "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
+          "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "Audi A3 8Y 35 TDI gearbox-family code",
+          "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-35-tfsi-eu-2021-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n10",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n11",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Official Audi technical-data material lists 0.510 as the top forward gear ratio for the checked exact state.",
+          "value": 0.51
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "n4",
+          "value": [
+            3.75,
+            2.1,
+            1.276,
+            0.878,
+            0.674,
+            0.51
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "n12",
+          "value": 4.235
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e13",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi launch material supports the 35 TFSI manual sedan at launch, and the 2026 A3 Limousine TFSI 110 kW technical-data PDF replaces inherited family defaults for the checked manual state: FWD, 6-speed manual, 0.510 top gear, equal 4.235 final-drive values, and 205/55 R16 basic tires.",
+          "evidence_refs_ref": "e13"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A3 8Y 35 TFSI manual continuity across 2021-2026",
+          "reason": "Official sources prove launch presence and a 2026 exact technical state, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
+          "evidence_refs_ref": "e13"
+        },
+        {
+          "item": "Audi A3 8Y 35 TFSI trim-linked tire matrix",
+          "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
           "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
             "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
             "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
+          ]
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-8y-35-tfsi-eu-2021-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes_ref": "n10",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e9",
+        "notes_ref": "n13",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Official Audi technical-data material lists 0.653 as the top forward gear ratio for the checked exact state.",
+          "value": 0.653
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes_ref": "n4",
+          "value": [
+            3.5,
+            2.087,
+            1.343,
+            0.94,
+            0.974,
+            0.78,
+            0.653
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes_ref": "n5",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
             "rim_in": 16.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 16\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e14",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi launch material supports the 35 TFSI S tronic MHEV sedan, and the 2026 A3 Limousine TFSI S tronic 110 kW MHEV technical-data PDF replaces inherited family defaults for the checked S tronic state: FWD, complete forward ratios ending in 0.653, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
+          "evidence_refs_ref": "e14"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi launch material supports the 35 TFSI manual sedan at launch, and the 2026 A3 Limousine TFSI 110 kW technical-data PDF replaces inherited family defaults for the checked manual state: FWD, 6-speed manual, 0.510 top gear, equal 4.235 final-drive values, and 205/55 R16 basic tires.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 35 TFSI manual continuity across 2021-2026",
-        "reason": "Official sources prove launch presence and a 2026 exact technical state, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 35 TFSI trim-linked tire matrix",
-        "reason": "The official technical PDF proves the 205/55 R16 basic tire, while MY2026 price-list tire packages are trim-linked equipment rather than a universal default for every represented year.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-manual-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-35-tfsi-eu-2021-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "35 TFSI",
-    "engine_code": "1.5L",
-    "engine_name": "1.5L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material directly supports FWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
-      ],
-      "notes": "Official Audi technical-data material publishes 7-speed S tronic wording for the checked state. The repo stores normalized code DCT7; no supplier gearbox-family code is published.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.653 as the top forward gear ratio for the checked exact state.",
-        "value": 0.653
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.5,
-          2.087,
-          1.343,
-          0.94,
-          0.974,
-          0.78,
-          0.653
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 205.0,
-          "aspect_pct": 55.0,
-          "rim_in": 16.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
-          "confidence": "official_derived",
+          "item": "Audi A3 8Y 35 TFSI S tronic continuity across 2021-2026",
+          "reason": "Official sources prove launch presence and a 2026 exact technical state, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
           "evidence_refs": [
             "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
             "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
             "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 16\""
+          ]
         },
         {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
+          "item": "35 TFSI split final-drive representation",
+          "reason": "Official Audi publishes split final-drive values 4.800 / 3.429; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
+          "evidence_refs_ref": "e14"
         },
         {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
-        },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
+          "item": "Audi A3 8Y 35 TFSI gearbox-family code",
+          "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
+          "evidence_refs_ref": "e9"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi launch material supports the 35 TFSI S tronic MHEV sedan, and the 2026 A3 Limousine TFSI S tronic 110 kW MHEV technical-data PDF replaces inherited family defaults for the checked S tronic state: FWD, complete forward ratios ending in 0.653, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 35 TFSI S tronic continuity across 2021-2026",
-        "reason": "Official sources prove launch presence and a 2026 exact technical state, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "35 TFSI split final-drive representation",
-        "reason": "Official Audi publishes split final-drive values 4.800 / 3.429; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-2020-launch-release",
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-2024-upgrade-release",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 35 TFSI gearbox-family code",
-        "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-40-tfsi-quattro-eu-2021-mt6-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "40 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0763518f2893",
-          "legacy_research_sources:22498f3a74f1",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:544adad583d5",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:7ad6a45bf70a",
-          "legacy_research_sources:7be816632b85",
-          "legacy_research_sources:e26c1ff07b3a",
-          "legacy_research_sources:e6d59d64ee25"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0763518f2893",
-            "legacy_research_sources:22498f3a74f1",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:544adad583d5",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:7ad6a45bf70a",
-            "legacy_research_sources:7be816632b85",
-            "legacy_research_sources:e26c1ff07b3a",
-            "legacy_research_sources:e6d59d64ee25"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "No checked official source supports a manual A3 8Y 40 TFSI quattro sedan row. Official 2023 and 2025 technical-data PDFs plus the MY2026 price list support quattro/AWD sedan states only with 7-speed S tronic.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Exact Audi A3 8Y 40 TFSI quattro manual sedan evidence",
-        "reason": "The checked official source chain supports AWD S tronic states and does not prove a manual AWD sedan mapping for the represented row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Replacement strategy for the represented 40 TFSI quattro manual row",
-        "reason": "The current broad manual AWD row may need deletion or replacement with exact S tronic states; current official evidence contradicts it.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-        ]
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8y-40-tfsi-quattro-eu-2021-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "8Y",
-    "body_code": "8Y",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "A3 (8Y, 2021-2026)",
-    "variant_name": "40 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-        "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
       ],
-      "notes": "Official Audi technical-data material directly supports AWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-        "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-      ],
-      "notes": "Official Audi technical-data material publishes 7-speed S tronic wording for the checked state. The repo stores normalized code DCT7; no supplier gearbox-family code is published.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists 0.635 as the top forward gear ratio for the checked exact state.",
-        "value": 0.635
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists the complete forward-ratio set for the checked exact state.",
-        "value": [
-          3.4,
-          2.75,
-          1.767,
-          0.925,
-          0.705,
-          0.755,
-          0.635
-        ]
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-        ],
-        "notes": "Official Audi technical-data material lists this as the basic tire package for the checked exact state. The broad row span remains manually gated.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "audi-8y-40-tfsi-quattro-eu-2021-mt6-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "options": [
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-2022-price-list-pdf",
-            "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi technical-data material gives the basic tire and the MY2026 price list documents the A3 Limousine trim-linked wheel/tire ladder. Broad year-to-year continuity remains manually gated.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Basic 17\""
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.84
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 17-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 17\""
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.462
         },
-        {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 18-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "No checked official source supports a manual A3 8Y 40 TFSI quattro sedan row. Official 2023 and 2025 technical-data PDFs plus the MY2026 price list support quattro/AWD sedan states only with 7-speed S tronic.",
+          "evidence_refs_ref": "e15"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact Audi A3 8Y 40 TFSI quattro manual sedan evidence",
+          "reason": "The checked official source chain supports AWD S tronic states and does not prove a manual AWD sedan mapping for the represented row.",
+          "evidence_refs_ref": "e15"
         },
         {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-          ],
-          "notes": "Official Audi MY2026 price-list equipment pages document this 19-inch A3 Limousine wheel/tire package as trim-linked equipment, not as a universal default.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Trim-linked 19\""
+          "item": "Replacement strategy for the represented 40 TFSI quattro manual row",
+          "reason": "The current broad manual AWD row may need deletion or replacement with exact S tronic states; current official evidence contradicts it.",
+          "evidence_refs_ref": "e3"
         }
-      ]
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Official Audi 2023 and 2025 A3 Sedan/Limousine AWD technical-data PDFs support the checked S tronic quattro mechanical package, including AWD, 7-speed S tronic, complete forward ratios ending in 0.635, and 225/45 R17 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields, and the 2025 source shows a later 150 kW badging/output transition.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-2022-price-list-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Audi A3 8Y 40 TFSI quattro badging/output continuity across 2021-2026",
-        "reason": "The 2023 source proves a 140 kW 40 TFSI quattro state, while the 2025 source and MY2026 price list show a later TFSI quattro 150 kW state; this pass did not recover the exact split point for the broad row.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
+    {
+      "id": "audi-8y-40-tfsi-quattro-eu-2021-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "8Y",
+      "body_code": "8Y",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "A3 (8Y, 2021-2026)",
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official Audi technical-data material directly supports AWD for the checked exact A3 8Y Sedan/Limousine state. The broad row span remains manually gated.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes_ref": "n13",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Official Audi technical-data material lists 0.635 as the top forward gear ratio for the checked exact state.",
+          "value": 0.635
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n4",
+          "value": [
+            3.4,
+            2.75,
+            1.767,
+            0.925,
+            0.705,
+            0.755,
+            0.635
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e16",
+            "notes_ref": "n6",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n7",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 17\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n8",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 18\""
+          },
+          {
+            "confidence": "official_derived",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n9",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Trim-linked 19\""
+          }
         ]
       },
-      {
-        "item": "40 TFSI quattro split final-drive representation",
-        "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-2022-price-list-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Audi A3 8Y 40 TFSI quattro gearbox-family code",
-        "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:8y-a3-sedan-40-tfsi-quattro-2023-tech-data-pdf",
-          "audi_mediacenter_sources:8y-a3-sedan-tfsi-quattro-2025-tech-data-pdf"
-        ]
+      "verification_notes": [
+        {
+          "note": "Official Audi 2023 and 2025 A3 Sedan/Limousine AWD technical-data PDFs support the checked S tronic quattro mechanical package, including AWD, 7-speed S tronic, complete forward ratios ending in 0.635, and 225/45 R17 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields, and the 2025 source shows a later 150 kW badging/output transition.",
+          "evidence_refs_ref": "e16"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Audi A3 8Y 40 TFSI quattro badging/output continuity across 2021-2026",
+          "reason": "The 2023 source proves a 140 kW 40 TFSI quattro state, while the 2025 source and MY2026 price list show a later TFSI quattro 150 kW state; this pass did not recover the exact split point for the broad row.",
+          "evidence_refs_ref": "e15"
+        },
+        {
+          "item": "40 TFSI quattro split final-drive representation",
+          "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
+          "evidence_refs_ref": "e16"
+        },
+        {
+          "item": "Audi A3 8Y 40 TFSI quattro gearbox-family code",
+          "reason": "Official Audi material publishes 7-speed S tronic wording but not a supplier gearbox-family code such as DQ381.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

@@ -1,1424 +1,935 @@
-[
-  {
-    "id": "bmw-g29-m40i-eu-2019-mt6-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "M40i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
+      "n3": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
+      "n4": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n5": "Sonnet redo research (2026-04 v2): BMW PressClub T0329593EN (03/2021) ACEA tech-data PDF publishes sDrive20i 6-speed manual ratios I 4.110 / II 2.248 / III 1.403 / IV 1.000 / V 0.786 / VI 0.601, R 3.727, final drive 3.636. The MT6 was not offered at 2018 launch and appeared by 03/2021. Top gear and final drive previously inherited family defaults are wrong.",
+      "n6": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive20i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154.",
+      "n7": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive30i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154. sDrive30i is Steptronic-only in all market years.",
+      "n8": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission.",
+      "n9": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n10": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n11": "BMW PressClub T0289704EN (09/2018: 225/50 R17 98Y XL / 255/45 R17 98Y) and T0329593EN (03/2021: 225/50 R17 94W / 255/45 R17 98W). Size identical; speed rating revised Y to W between 2018 and 2021."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:04b8c186810a",
+        "legacy_research_sources:1911b8fd62eb",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:aeed8033e9c3",
+        "legacy_research_sources:cb241bb66e51",
+        "legacy_research_sources:f0f319a0cc78",
+        "legacy_research_sources:f215d565d740"
+      ],
+      "e2": [
+        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+        "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+        "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+      ],
+      "e3": [
+        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
+      ],
+      "e4": [
         "legacy_research_sources:1911b8fd62eb",
         "legacy_research_sources:f215d565d740"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "reputable_secondary_crosschecked",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024.",
-      "code": "MT6",
-      "name": "6-speed manual",
-      "evidence_refs": [
+      "e5": [
         "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
         "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+      ],
+      "e6": [
+        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
       ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Top gear ratio not officially published; family-default value retained pending dedicated 01/2024 ACEA PDF.",
-        "value": 0.812,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-g29-m40i-eu-2019-mt6-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "M40i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
       },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Final drive ratio not officially published.",
-        "value": 3.231,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
+      "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-pure-impulse-2024"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): No M40i MT6-specific tire spec found. BMW PressClub T0289704EN/T0329593EN consistently list M40i (ZF8HP) at 255/40 ZR18 95Y / 275/40 ZR18 99Y on 9Jx18/10Jx18; M40i MT6 (Pure Impulse, MY2024) likely uses same chassis/fitment but unconfirmed.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear",
-        "rear": {
-          "width_mm": 275.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        }
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024.",
+        "code": "MT6",
+        "name": "6-speed manual",
+        "evidence_refs_ref": "e5"
       },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g29-m40i-eu-2019-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "M40i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:1911b8fd62eb",
-        "legacy_research_sources:f215d565d740"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP)",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission.",
-        "value": 0.64,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission.",
-        "value": 3.154,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission. Forward gear ratios from VIII to I."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) M40i sections: 255/40 ZR18 95Y front (9Jx18) / 275/40 ZR18 99Y rear (10Jx18).",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear",
-        "rear": {
-          "width_mm": 275.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        }
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g29-sdrive20i-eu-2019-mt6-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "sDrive20i",
-    "engine_code": "B38",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:1911b8fd62eb",
-        "legacy_research_sources:f215d565d740"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0329593EN (03/2021) ACEA tech-data PDF publishes sDrive20i 6-speed manual ratios I 4.110 / II 2.248 / III 1.403 / IV 1.000 / V 0.786 / VI 0.601, R 3.727, final drive 3.636. The MT6 was not offered at 2018 launch and appeared by 03/2021. Top gear and final drive previously inherited family defaults are wrong.",
-      "code": "MT6",
-      "name": "6-speed manual",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0329593EN (03/2021) ACEA tech-data PDF publishes sDrive20i 6-speed manual ratios I 4.110 / II 2.248 / III 1.403 / IV 1.000 / V 0.786 / VI 0.601, R 3.727, final drive 3.636. The MT6 was not offered at 2018 launch and appeared by 03/2021. Top gear and final drive previously inherited family defaults are wrong.",
-        "value": 0.601,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0329593EN (03/2021) ACEA tech-data PDF publishes sDrive20i 6-speed manual ratios I 4.110 / II 2.248 / III 1.403 / IV 1.000 / V 0.786 / VI 0.601, R 3.727, final drive 3.636. The MT6 was not offered at 2018 launch and appeared by 03/2021. Top gear and final drive previously inherited family defaults are wrong.",
-        "value": 3.636,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "value": [
-          4.11,
-          2.248,
-          1.403,
-          1.0,
-          0.786,
-          0.601
-        ],
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0329593EN (03/2021) ACEA tech-data PDF publishes sDrive20i 6-speed manual ratios I 4.110 / II 2.248 / III 1.403 / IV 1.000 / V 0.786 / VI 0.601, R 3.727, final drive 3.636. The MT6 was not offered at 2018 launch and appeared by 03/2021. Top gear and final drive previously inherited family defaults are wrong."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "BMW PressClub T0329593EN (03/2021) sDrive20i: 225/50 R17 94W front / 255/45 R17 98W rear (same fitment as ZF8HP variant).",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear",
-        "rear": {
-          "width_mm": 255.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        }
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g29-sdrive20i-eu-2019-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "sDrive20i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:1911b8fd62eb",
-        "legacy_research_sources:f215d565d740"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive20i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP)",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive20i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154.",
-        "value": 0.64,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive20i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154.",
-        "value": 3.154,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive20i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154."
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "BMW PressClub T0289704EN (09/2018: 225/50 R17 98Y XL / 255/45 R17 98Y) and T0329593EN (03/2021: 225/50 R17 94W / 255/45 R17 98W). Size identical; speed rating revised Y to W between 2018 and 2021.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear",
-        "rear": {
-          "width_mm": 255.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
-        }
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g29-sdrive30i-eu-2019-mt6-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "sDrive30i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-        "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-      ],
-      "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "unverified",
-      "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "code": "MT6",
-      "name": "6-speed manual",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-        "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 0.812,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "value": 3.231,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-        "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 35.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "unverified",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Top gear ratio not officially published; family-default value retained pending dedicated 01/2024 ACEA PDF.",
+          "value": 0.812,
+          "evidence_refs_ref": "e5"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Final drive ratio not officially published.",
+          "value": 3.231,
+          "evidence_refs_ref": "e5"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "reputable_secondary_crosschecked",
           "evidence_refs": [
             "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
             "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-            "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+            "bmw_pressclub_sources:g29-z4-pure-impulse-2024"
           ],
-          "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
+          "notes": "Sonnet redo research (2026-04 v2): No M40i MT6-specific tire spec found. BMW PressClub T0289704EN/T0329593EN consistently list M40i (ZF8HP) at 255/40 ZR18 95Y / 275/40 ZR18 99Y on 9Jx18/10Jx18; M40i MT6 (Pure Impulse, MY2024) likely uses same chassis/fitment but unconfirmed.",
           "front": {
             "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-            "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-            "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "unverified",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-            "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-            "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-          ],
-          "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
-          "front": {
+          "rear": {
             "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          }
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n9",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e5"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      },
-      {
-        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      },
-      {
-        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
-          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g29-sdrive30i-eu-2019-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Convertible",
-    "market": "EU",
-    "model_code": "G29",
-    "body_code": "G29",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "Z4 (G29, 2019-2026)",
-    "variant_name": "sDrive30i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:1911b8fd62eb",
-        "legacy_research_sources:f215d565d740"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive30i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154. sDrive30i is Steptronic-only in all market years.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic (ZF 8HP)",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-        "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-      ]
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive30i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154. sDrive30i is Steptronic-only in all market years.",
-        "value": 0.64,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive30i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154. sDrive30i is Steptronic-only in all market years.",
-        "value": 3.154,
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ]
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ],
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) confirm sDrive30i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, FD 3.154. sDrive30i is Steptronic-only in all market years."
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
+    {
+      "id": "bmw-g29-m40i-eu-2019-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "M40i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
-          "bmw_pressclub_sources:g29-z4-specs-2021-pdf"
-        ],
-        "notes": "BMW PressClub T0289704EN (09/2018: 225/50 R17 98Y XL / 255/45 R17 98Y) and T0329593EN (03/2021: 225/50 R17 94W / 255/45 R17 98W). Size identical; speed rating revised Y to W between 2018 and 2021.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 50.0,
-          "rim_in": 17.0
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "notes_ref": "n8",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "notes_ref": "n8",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
         },
-        "default_axle_for_speed": "rear",
-        "rear": {
-          "width_mm": 255.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes_ref": "n8",
+          "value": 3.154,
+          "evidence_refs_ref": "e3"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "evidence_refs_ref": "e3",
+          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) ACEA tech-data PDFs both publish identical M40i ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, final drive 3.154; Eight-speed Steptronic transmission. Forward gear ratios from VIII to I."
         }
       },
-      "options": [
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) M40i sections: 255/40 ZR18 95Y front (9Jx18) / 275/40 ZR18 99Y rear (10Jx18).",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          }
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g29-sdrive20i-eu-2019-mt6-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "sDrive20i",
+      "engine_code": "B38",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "notes_ref": "n5",
+        "code": "MT6",
+        "name": "6-speed manual",
+        "evidence_refs_ref": "e6"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "notes_ref": "n5",
+          "value": 0.601,
+          "evidence_refs_ref": "e6"
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes_ref": "n5",
+          "value": 3.636,
+          "evidence_refs_ref": "e6"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "value": [
+            4.11,
+            2.248,
+            1.403,
+            1.0,
+            0.786,
+            0.601
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "evidence_refs_ref": "e6",
+          "notes_ref": "n5"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "BMW PressClub T0329593EN (03/2021) sDrive20i: 225/50 R17 94W front / 255/45 R17 98W rear (same fitment as ZF8HP variant).",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          }
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g29-sdrive20i-eu-2019-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "sDrive20i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "notes_ref": "n6",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "notes_ref": "n6",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes_ref": "n6",
+          "value": 3.154,
+          "evidence_refs_ref": "e3"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n6"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n11",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          }
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g29-sdrive30i-eu-2019-mt6-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "sDrive30i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n2",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "code": "MT6",
+        "name": "6-speed manual",
+        "evidence_refs_ref": "e2"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 0.812,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 3.231,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n2",
           "front": {
             "width_mm": 255.0,
             "aspect_pct": 35.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "unverified",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
+          "note_ref": "n4"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:04b8c186810a",
-            "legacy_research_sources:1911b8fd62eb",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:aeed8033e9c3",
-            "legacy_research_sources:cb241bb66e51",
-            "legacy_research_sources:f0f319a0cc78",
-            "legacy_research_sources:f215d565d740"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 25.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          "note_ref": "n9",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note_ref": "n10",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+          "evidence_refs_ref": "e2"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
+    {
+      "id": "bmw-g29-sdrive30i-eu-2019-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Convertible",
+      "market": "EU",
+      "model_code": "G29",
+      "body_code": "G29",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "Z4 (G29, 2019-2026)",
+      "variant_name": "sDrive30i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n1",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "notes_ref": "n7",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)",
+        "evidence_refs_ref": "e3"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "notes_ref": "n7",
+          "value": 0.64,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "notes_ref": "n7",
+          "value": 3.154,
+          "evidence_refs_ref": "e3"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ],
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n7"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n11",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          }
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 25.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
+          "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
-        "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
-        "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      },
-      {
-        "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
-        "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage.",
-        "evidence_refs": [
-          "legacy_research_sources:04b8c186810a",
-          "legacy_research_sources:1911b8fd62eb",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:aeed8033e9c3",
-          "legacy_research_sources:cb241bb66e51",
-          "legacy_research_sources:f0f319a0cc78",
-          "legacy_research_sources:f215d565d740"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

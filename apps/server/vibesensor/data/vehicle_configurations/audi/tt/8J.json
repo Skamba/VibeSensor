@@ -1,707 +1,580 @@
-[
-  {
-    "id": "audi-8j-2-0-tfsi-eu-2011-dct6-fwd",
-    "brand": "Audi",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "8J",
-    "body_code": "8J",
-    "production_start_year": 2011,
-    "production_end_year": 2014,
-    "model_name": "TT (8J, 2011-2014)",
-    "variant_name": "2.0 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n2": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
+      "n3": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
+      "n4": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "n5": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
+      "n6": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded.",
+      "n7": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+      "n8": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:3b8a9657b4b7",
+        "legacy_research_sources:4b4b833b364a",
+        "legacy_research_sources:4b8ab423f879",
+        "legacy_research_sources:5e252f7f436b",
+        "legacy_research_sources:bc25c256657b"
+      ],
+      "e2": [
+        "legacy_research_sources:fa2ecfeb2ce9"
+      ],
+      "e3": [
+        "legacy_research_sources:efeaede27b61"
+      ],
+      "e4": [
         "secondary_technical_sources:tt-8j-wikipedia",
         "legacy_research_sources:efeaede27b61",
         "legacy_research_sources:fa2ecfeb2ce9"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
-        "legacy_research_sources:efeaede27b61",
-        "legacy_research_sources:fa2ecfeb2ce9"
+      "e5": [
+        "legacy_research_sources:fa2ecfeb2ce9",
+        "legacy_research_sources:ac68dd8bebb2",
+        "legacy_research_sources:b3806add936a"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
-      "code": "DCT6",
-      "name": "6-speed S tronic (DQ250)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
-        "value": 0.921,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921. Encodes sub-trans 1 (odd gears 1/3/5) output ratio.",
-        "value": 4.059,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3b8a9657b4b7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:bc25c256657b"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed S tronic mapping for this row. The indexed official technical-sheet extract also reports top gear 0.921 with split final drives 4.059 / 3.136, which contradicts the inherited 0.742 and single 3.444 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:efeaede27b61"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI S tronic split final-drive values",
-        "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.921 and split final drives 4.059 / 3.136 for the exact FWD S tronic slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      },
-      {
-        "item": "Audi TT 2.0 TFSI generic EU Coupé baseline tire mapping",
-        "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:ac68dd8bebb2",
-          "legacy_research_sources:b3806add936a"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8j-2-0-tfsi-eu-2011-mt6-fwd",
-    "brand": "Audi",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "8J",
-    "body_code": "8J",
-    "production_start_year": 2011,
-    "production_end_year": 2014,
-    "model_name": "TT (8J, 2011-2014)",
-    "variant_name": "2.0 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
-        "legacy_research_sources:efeaede27b61",
-        "legacy_research_sources:fa2ecfeb2ce9"
+      "e6": [
+        "legacy_research_sources:ac68dd8bebb2"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
-        "legacy_research_sources:efeaede27b61",
-        "legacy_research_sources:fa2ecfeb2ce9"
+      "e7": [
+        "legacy_research_sources:fa2ecfeb2ce9",
+        "legacy_research_sources:efeaede27b61"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded.",
-      "code": "MT6",
-      "name": "6-speed manual (MQ250 / GQQ)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded.",
-        "value": 0.975,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded. Encodes first MQ250 output FD ratio.",
-        "value": 3.944,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3b8a9657b4b7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:bc25c256657b"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed manual mapping for this row. The indexed official technical-sheet extract also reports top gear 0.975 with split final drives 3.944 / 3.087, which contradicts the inherited 0.84 and single 3.462 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:efeaede27b61"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI manual split final-drive values",
-        "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.975 and split final drives 3.944 / 3.087 for the exact FWD manual slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9"
-        ]
-      },
-      {
-        "item": "Audi TT 2.0 TFSI generic EU Coupé baseline tire mapping",
-        "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:ac68dd8bebb2",
-          "legacy_research_sources:b3806add936a"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-8j-2-0-tfsi-quattro-eu-2011-dct6-awd",
-    "brand": "Audi",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "8J",
-    "body_code": "8J",
-    "production_start_year": 2011,
-    "production_end_year": 2014,
-    "model_name": "TT (8J, 2011-2014)",
-    "variant_name": "2.0 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
+      "e8": [
         "secondary_technical_sources:tt-8j-wikipedia",
         "legacy_research_sources:efeaede27b61",
         "legacy_research_sources:ac68dd8bebb2"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
+      "e9": [
         "legacy_research_sources:efeaede27b61",
         "legacy_research_sources:ac68dd8bebb2"
       ],
-      "notes": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "code": "DCT6",
-      "name": "6-speed S tronic (DQ250) with Haldex"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 0.921,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:ac68dd8bebb2",
-          "secondary_technical_sources:tt-8j-wikipedia"
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 3.444,
-        "evidence_refs": [
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 3.444,
-        "evidence_refs": [
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3b8a9657b4b7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:bc25c256657b"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
+      "e10": [
+        "secondary_technical_sources:tt-8j-wikipedia",
+        "legacy_research_sources:efeaede27b61"
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed S tronic availability for this row. A nearby official TT Roadster quattro technical-sheet extract gives close AWD S tronic powertrain evidence with top gear 0.686 and split final drives 3.264 / 4.769, but because that numeric sheet is Roadster-based rather than exact Coupé proof, the inherited AWD S tronic numeric fields remain advisory placeholders in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61",
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Direct official Audi TT Coupé 2.0 TFSI quattro S tronic ratio and final-drive capture",
-        "reason": "The checked official pricing/specification guide proves Coupé quattro S tronic availability, but the best recovered AWD ratio and split final-drive evidence is still from an official Roadster quattro technical-sheet URL rather than a direct Coupé technical-data artifact.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61",
-          "legacy_research_sources:ac68dd8bebb2"
-        ]
-      },
-      {
-        "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
-        "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:ac68dd8bebb2",
-          "legacy_research_sources:b3806add936a"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "audi-8j-2-0-tfsi-quattro-eu-2011-mt6-awd",
-    "brand": "Audi",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "8J",
-    "body_code": "8J",
-    "production_start_year": 2011,
-    "production_end_year": 2014,
-    "model_name": "TT (8J, 2011-2014)",
-    "variant_name": "2.0 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
-        "legacy_research_sources:efeaede27b61"
-      ],
-      "notes": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "secondary_technical_sources:tt-8j-wikipedia",
-        "legacy_research_sources:efeaede27b61"
-      ],
-      "notes": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "code": "MT6",
-      "name": "6-speed manual (MQ250 / GQQ) with Haldex"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "reputable_secondary_crosschecked",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 0.975,
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "secondary_technical_sources:tt-8j-wikipedia"
-        ]
+  "configurations": [
+    {
+      "id": "audi-8j-2-0-tfsi-eu-2011-dct6-fwd",
+      "brand": "Audi",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "8J",
+      "body_code": "8J",
+      "production_start_year": 2011,
+      "production_end_year": 2014,
+      "model_name": "TT (8J, 2011-2014)",
+      "variant_name": "2.0 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n5",
+        "value": "FWD"
       },
-      "final_drive_front": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 3.462,
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
-        ]
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n5",
+        "code": "DCT6",
+        "name": "6-speed S tronic (DQ250)"
       },
-      "final_drive_rear": {
-        "confidence": "unverified",
-        "notes": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-        "value": 3.462,
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
-        ]
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:3b8a9657b4b7",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:bc25c256657b"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "notes_ref": "n5",
+          "value": 0.921,
+          "evidence_refs_ref": "e2"
         },
-        "default_axle_for_speed": "rear"
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921. Encodes sub-trans 1 (odd gears 1/3/5) output ratio.",
+          "value": 4.059,
+          "evidence_refs_ref": "e2"
+        }
       },
-      "options": [
-        {
+      "tires": {
+        "default": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed S tronic mapping for this row. The indexed official technical-sheet extract also reports top gear 0.921 with split final drives 4.059 / 3.136, which contradicts the inherited 0.742 and single 3.444 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
+          "evidence_refs_ref": "e7"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:3b8a9657b4b7",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:bc25c256657b"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
+          "note_ref": "n4"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI S tronic split final-drive values",
+          "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.921 and split final drives 4.059 / 3.136 for the exact FWD S tronic slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Audi TT 2.0 TFSI generic EU Coupé baseline tire mapping",
+          "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed manual availability for this row, but no direct official manual-quattro technical sheet was recovered. The inherited AWD manual numeric and tire fields therefore remain advisory placeholders in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
+    {
+      "id": "audi-8j-2-0-tfsi-eu-2011-mt6-fwd",
+      "brand": "Audi",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "8J",
+      "body_code": "8J",
+      "production_start_year": 2011,
+      "production_end_year": 2014,
+      "model_name": "TT (8J, 2011-2014)",
+      "variant_name": "2.0 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n6",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes_ref": "n6",
+        "code": "MT6",
+        "name": "6-speed manual (MQ250 / GQQ)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "notes_ref": "n6",
+          "value": 0.975,
+          "evidence_refs_ref": "e2"
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded. Encodes first MQ250 output FD ratio.",
+          "value": 3.944,
+          "evidence_refs_ref": "e2"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
-      },
-      {
-        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
-        ]
-      },
-      {
-        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
-        ]
+      "verification_notes": [
+        {
+          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed manual mapping for this row. The indexed official technical-sheet extract also reports top gear 0.975 with split final drives 3.944 / 3.087, which contradicts the inherited 0.84 and single 3.462 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "note_ref": "n4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI manual split final-drive values",
+          "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.975 and split final drives 3.944 / 3.087 for the exact FWD manual slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Audi TT 2.0 TFSI generic EU Coupé baseline tire mapping",
+          "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Direct official Audi TT Coupé 2.0 TFSI quattro manual ratio and final-drive capture",
-        "reason": "The checked official pricing/specification guide proves Coupé quattro manual availability, but this pass did not recover a direct official manual-quattro technical sheet or homologation source with ratios and final drives.",
-        "evidence_refs": [
-          "legacy_research_sources:efeaede27b61"
+    },
+    {
+      "id": "audi-8j-2-0-tfsi-quattro-eu-2011-dct6-awd",
+      "brand": "Audi",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "8J",
+      "body_code": "8J",
+      "production_start_year": 2011,
+      "production_end_year": 2014,
+      "model_name": "TT (8J, 2011-2014)",
+      "variant_name": "2.0 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n2",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e8",
+        "notes_ref": "n2",
+        "code": "DCT6",
+        "name": "6-speed S tronic (DQ250) with Haldex"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes_ref": "n2",
+          "value": 0.921,
+          "evidence_refs": [
+            "legacy_research_sources:fa2ecfeb2ce9",
+            "legacy_research_sources:ac68dd8bebb2",
+            "secondary_technical_sources:tt-8j-wikipedia"
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 3.444,
+          "evidence_refs_ref": "e6"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n2",
+          "value": 3.444,
+          "evidence_refs_ref": "e6"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
         ]
       },
-      {
-        "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
-        "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
-        "evidence_refs": [
-          "legacy_research_sources:fa2ecfeb2ce9",
-          "legacy_research_sources:ac68dd8bebb2",
-          "legacy_research_sources:b3806add936a"
-        ]
+      "verification_notes": [
+        {
+          "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed S tronic availability for this row. A nearby official TT Roadster quattro technical-sheet extract gives close AWD S tronic powertrain evidence with top gear 0.686 and split final drives 3.264 / 4.769, but because that numeric sheet is Roadster-based rather than exact Coupé proof, the inherited AWD S tronic numeric fields remain advisory placeholders in this pass.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Direct official Audi TT Coupé 2.0 TFSI quattro S tronic ratio and final-drive capture",
+          "reason": "The checked official pricing/specification guide proves Coupé quattro S tronic availability, but the best recovered AWD ratio and split final-drive evidence is still from an official Roadster quattro technical-sheet URL rather than a direct Coupé technical-data artifact.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
+          "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "audi-8j-2-0-tfsi-quattro-eu-2011-mt6-awd",
+      "brand": "Audi",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "8J",
+      "body_code": "8J",
+      "production_start_year": 2011,
+      "production_end_year": 2014,
+      "model_name": "TT (8J, 2011-2014)",
+      "variant_name": "2.0 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e10",
+        "notes_ref": "n3",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e10",
+        "notes_ref": "n3",
+        "code": "MT6",
+        "name": "6-speed manual (MQ250 / GQQ) with Haldex"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "reputable_secondary_crosschecked",
+          "notes_ref": "n3",
+          "value": 0.975,
+          "evidence_refs": [
+            "legacy_research_sources:fa2ecfeb2ce9",
+            "secondary_technical_sources:tt-8j-wikipedia"
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "unverified",
+          "notes_ref": "n3",
+          "value": 3.462,
+          "evidence_refs_ref": "e3"
+        },
+        "final_drive_rear": {
+          "confidence": "unverified",
+          "notes_ref": "n3",
+          "value": 3.462,
+          "evidence_refs_ref": "e3"
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed manual availability for this row, but no direct official manual-quattro technical sheet was recovered. The inherited AWD manual numeric and tire fields therefore remain advisory placeholders in this pass.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n4"
+        },
+        {
+          "note_ref": "n7",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note_ref": "n8",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Direct official Audi TT Coupé 2.0 TFSI quattro manual ratio and final-drive capture",
+          "reason": "The checked official pricing/specification guide proves Coupé quattro manual availability, but this pass did not recover a direct official manual-quattro technical sheet or homologation source with ratios and final drives.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
+          "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}
