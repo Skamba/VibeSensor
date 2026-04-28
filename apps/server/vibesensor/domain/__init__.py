@@ -98,6 +98,7 @@ from .vehicle_configuration import (
     VehicleFieldConfidence,
     VehicleFieldMetadata,
     VehicleFuelType,
+    VehicleOrderAnalysisKind,
     VehicleOrderAnalysisPolicy,
 )
 from .vibration_origin import VibrationOrigin
@@ -133,6 +134,7 @@ __all__ = [
     "VehicleFieldConfidence",
     "VehicleFieldMetadata",
     "VehicleFuelType",
+    "VehicleOrderAnalysisKind",
     "VehicleOrderAnalysisPolicy",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
