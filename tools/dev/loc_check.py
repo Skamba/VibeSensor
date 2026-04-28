@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 TOP_N = 25
 
@@ -33,20 +34,40 @@ EXCLUDE_DIRS = {
     "artifacts",
     ".venv",
     ".git",
+    ".pytest_cache",
+    ".ruff_cache",
 }
 
 # Data files that are intentionally large (JSON extracted from code)
 EXCLUDE_FILES: set[str] = set()
 
 
-def _tracked_files() -> list[str]:
-    result = subprocess.run(
-        ["git", "ls-files", "--cached"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return result.stdout.splitlines()
+def _walk_files(repo_root: Path) -> list[str]:
+    files: list[str] = []
+    for path in repo_root.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(repo_root)
+        if any(part in EXCLUDE_DIRS for part in rel.parts):
+            continue
+        files.append(rel.as_posix())
+    return files
+
+
+def _tracked_files(repo_root: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "ls-files", "--cached"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        tracked = [line for line in result.stdout.splitlines() if line]
+        if tracked:
+            return tracked
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return _walk_files(repo_root)
 
 
 def _should_check(path: str) -> bool:
@@ -63,12 +84,13 @@ def _should_check(path: str) -> bool:
 
 
 def main() -> int:
-    files = [f for f in _tracked_files() if _should_check(f)]
+    repo_root = Path(__file__).resolve().parents[2]
+    files = [f for f in _tracked_files(repo_root) if _should_check(f)]
     measured: list[tuple[str, int]] = []
 
     for path in files:
         try:
-            with open(path) as fh:
+            with open(repo_root / path) as fh:
                 loc = sum(1 for _ in fh)
         except (OSError, UnicodeDecodeError):
             continue
@@ -80,7 +102,7 @@ def main() -> int:
         "ℹ️  File-length advisory: keep files short where practical, "
         "without hurting human maintainability."
     )
-    print(f"Showing top {min(TOP_N, len(measured))} longest tracked source files:")
+    print(f"Showing top {min(TOP_N, len(measured))} longest source files:")
     for path, loc in measured[:TOP_N]:
         print(f"   {loc:5d}  {path}")
 
