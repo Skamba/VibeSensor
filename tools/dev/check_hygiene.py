@@ -93,6 +93,8 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
 
 _BACKEND_TEST_MATRIX_JOB = "backend-tests"
 _CI_SCOPE_JOB = "ci-scope"
+_FRONTEND_QUALITY_JOB = "frontend-quality"
+_FRONTEND_TYPECHECK_JOB = "frontend-typecheck"
 _UI_BUILD_ARTIFACT_JOB = "ui-build-artifact"
 _BACKEND_QUALITY_JOBS = (
     "backend-lint",
@@ -107,11 +109,12 @@ _RELEASE_SMOKE_QUALITY_NEEDS = (
     _CI_SCOPE_JOB,
     *_BACKEND_QUALITY_JOBS,
     "backend-typecheck",
-    "frontend-typecheck",
+    _FRONTEND_QUALITY_JOB,
+    _FRONTEND_TYPECHECK_JOB,
     _UI_BUILD_ARTIFACT_JOB,
 )
-_UI_SMOKE_NEEDS = (_CI_SCOPE_JOB, "frontend-typecheck")
-_UI_BUILD_ARTIFACT_NEEDS = (_CI_SCOPE_JOB, "frontend-typecheck")
+_UI_SMOKE_NEEDS = (_CI_SCOPE_JOB, _FRONTEND_TYPECHECK_JOB)
+_UI_BUILD_ARTIFACT_NEEDS = (_CI_SCOPE_JOB, _FRONTEND_TYPECHECK_JOB)
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -1249,7 +1252,42 @@ def check_contract_sync_entrypoint() -> list[str]:
             ),
         )
 
-    frontend_typecheck_steps = _workflow_job_steps(jobs, "frontend-typecheck")
+    frontend_quality_steps = _workflow_job_steps(jobs, _FRONTEND_QUALITY_JOB)
+    if frontend_quality_steps is not None:
+        _extend_step_requirement_errors(
+            errors,
+            frontend_quality_steps,
+            (
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run="npm run lint",
+                    error_message=("frontend-quality must run UI lint in apps/ui."),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run="npm run lint:deps",
+                    error_message=(
+                        "frontend-quality must run UI dependency boundary checks in apps/ui."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run="npm run lint:unused",
+                    error_message=(
+                        "frontend-quality must run UI dead-code checks in apps/ui."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="npm run typecheck",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-quality must not run npm run typecheck; that gate belongs in frontend-typecheck."
+                    ),
+                ),
+            ),
+        )
+
+    frontend_typecheck_steps = _workflow_job_steps(jobs, _FRONTEND_TYPECHECK_JOB)
     if frontend_typecheck_steps is not None:
         _extend_step_requirement_errors(
             errors,
@@ -1269,6 +1307,27 @@ def check_contract_sync_entrypoint() -> list[str]:
                     error_message=(
                         "frontend-typecheck must explicitly sync generated UI contract derivatives before "
                         "running npm run typecheck."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="npm run lint",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-typecheck must not run npm run lint; that gate belongs in frontend-quality."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="npm run lint:deps",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-typecheck must not run npm run lint:deps; that gate belongs in frontend-quality."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="npm run lint:unused",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-typecheck must not run npm run lint:unused; that gate belongs in frontend-quality."
                     ),
                 ),
             ),
@@ -1571,7 +1630,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         and _workflow_job_needs(release_smoke) != _RELEASE_SMOKE_QUALITY_NEEDS
     ):
         errors.append(
-            "release-smoke must depend on ci-scope, the split quality jobs, backend-typecheck, frontend-typecheck, and ui-build-artifact."
+            "release-smoke must depend on ci-scope, the split quality jobs, backend-typecheck, frontend-quality, frontend-typecheck, and ui-build-artifact."
         )
     ui_build_artifact = jobs.get(_UI_BUILD_ARTIFACT_JOB)
     if (
@@ -1596,7 +1655,12 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     ):
         errors.append("ui-smoke must depend on ci-scope and frontend-typecheck.")
 
-    for job_name in (*_BACKEND_QUALITY_JOBS, "backend-typecheck", "frontend-typecheck"):
+    for job_name in (
+        *_BACKEND_QUALITY_JOBS,
+        "backend-typecheck",
+        _FRONTEND_QUALITY_JOB,
+        _FRONTEND_TYPECHECK_JOB,
+    ):
         raw_job = jobs.get(job_name)
         if (
             isinstance(raw_job, Mapping)

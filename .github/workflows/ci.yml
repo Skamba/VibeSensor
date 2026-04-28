@@ -214,8 +214,8 @@ jobs:
           MYPYPATH: .
         run: python -m mypy --config-file pyproject.toml
 
-  frontend-typecheck:
-    name: Frontend type check
+  frontend-quality:
+    name: Frontend quality
     needs:
       - ci-scope
     if: ${{ needs.ci-scope.outputs.run_frontend_typecheck == 'true' }}
@@ -241,10 +241,6 @@ jobs:
         working-directory: apps/ui
         run: npm run lint
 
-      - name: Sync generated UI contract derivatives
-        working-directory: apps/ui
-        run: npm run sync:generated-contracts
-
       - name: UI dependency boundary checks
         working-directory: apps/ui
         run: npm run lint:deps
@@ -252,6 +248,33 @@ jobs:
       - name: UI dead code checks
         working-directory: apps/ui
         run: npm run lint:unused
+
+  frontend-typecheck:
+    name: Frontend type check
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_frontend_typecheck == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
+
+      - name: Install UI dependencies
+        working-directory: apps/ui
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
+
+      - name: Sync generated UI contract derivatives
+        working-directory: apps/ui
+        run: npm run sync:generated-contracts
 
       - name: UI typecheck
         working-directory: apps/ui
@@ -408,6 +431,7 @@ jobs:
       - docs-lint
       - backend-contract-drift
       - backend-typecheck
+      - frontend-quality
       - frontend-typecheck
       - ui-build-artifact
     if: >-
@@ -421,6 +445,7 @@ jobs:
         needs.docs-lint.result != 'failure' &&
         needs.backend-contract-drift.result != 'failure' &&
         needs.backend-typecheck.result != 'failure' &&
+        needs.frontend-quality.result != 'failure' &&
         needs.frontend-typecheck.result != 'failure' &&
         needs.ui-build-artifact.result == 'success'
       }}
