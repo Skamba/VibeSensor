@@ -1,4 +1,5 @@
 import type { UiStartupFeaturePorts } from "./ui_startup_feature_ports";
+import { uiLogger } from "../../ui_logger";
 
 type StartupShell = {
   start(defaultViewId: string): void;
@@ -49,7 +50,7 @@ export class UiStartupCoordinator {
     this.features = deps.features;
     this.defaultViewId = deps.defaultViewId;
     this.isDemoMode = new URLSearchParams(window.location.search).has("demo");
-    this.warn = deps.warn ?? ((message, error) => console.warn(message, error));
+    this.warn = deps.warn ?? uiLogger.warn;
   }
 
   start(): void {

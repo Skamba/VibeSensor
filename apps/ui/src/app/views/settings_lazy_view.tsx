@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 
+import { uiLogger } from "../../ui_logger";
 import type { AnalysisPanelView } from "./analysis_panel";
 import type { CarsPanelView } from "./cars_panel";
 import type { EspFlashPanelView } from "./esp_flash_panel";
@@ -69,7 +70,7 @@ export default function SettingsLazyView(props: SettingsLazyViewProps) {
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("[VibeSensor] Failed to load settings view.", error);
+          uiLogger.error("[VibeSensor] Failed to load settings view.", error);
         }
       });
     return () => {

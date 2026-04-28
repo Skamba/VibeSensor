@@ -6,6 +6,7 @@ import {
   setSettingsLanguage,
   setSettingsSpeedUnit,
 } from "../../api/settings";
+import { uiLogger } from "../../ui_logger";
 import { serverStateQueryKeys } from "../features/server_state_query_keys";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import type { ShellState } from "../ui_app_state";
@@ -109,7 +110,7 @@ export function createUiShellPreferencesModule(
       ) {
         await applyLanguageValue(languageResult.value.language);
       } else if (languageResult.status === "rejected") {
-        console.warn(
+        uiLogger.warn(
           "Failed to load persisted language",
           languageResult.reason,
         );
@@ -120,7 +121,7 @@ export function createUiShellPreferencesModule(
       ) {
         applySpeedUnitValue(speedUnitResult.value.speed_unit);
       } else if (speedUnitResult.status === "rejected") {
-        console.warn(
+        uiLogger.warn(
           "Failed to load persisted speed unit",
           speedUnitResult.reason,
         );

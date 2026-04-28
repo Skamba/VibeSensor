@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 
+import { uiLogger } from "../../ui_logger";
 import type { RealtimeLiveOverviewBridge } from "./realtime_live_overview";
 
 export interface RealtimeLiveOverviewLazyProps {
@@ -42,7 +43,7 @@ export default function RealtimeLiveOverviewLazy(
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("[VibeSensor] Failed to load live overview panel.", error);
+          uiLogger.error("[VibeSensor] Failed to load live overview panel.", error);
         }
       });
     return () => {
