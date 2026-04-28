@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 
+import { uiLogger } from "../../ui_logger";
 import type { HistoryPanelView } from "./history_table_view";
 
 export interface HistoryLazyViewProps {
@@ -41,7 +42,7 @@ export default function HistoryLazyView(props: HistoryLazyViewProps) {
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("[VibeSensor] Failed to load history view.", error);
+          uiLogger.error("[VibeSensor] Failed to load history view.", error);
         }
       });
     return () => {

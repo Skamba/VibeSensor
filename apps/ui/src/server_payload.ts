@@ -8,6 +8,7 @@ import type {
   SpectrumClientData,
   SpectrumFrameData,
 } from "./transport/live_models";
+import { uiLogger } from "./ui_logger";
 import { validateLiveWsPayload } from "./ws_payload_validator";
 
 function hasCompleteSpectrumData(
@@ -52,7 +53,7 @@ let schemaWarningLogged = false;
 function warnOnUnknownSchemaVersion(schemaVersion: string): void {
   if (schemaVersion !== EXPECTED_SCHEMA_VERSION && !schemaWarningLogged) {
     schemaWarningLogged = true;
-    console.error(
+    uiLogger.error(
       `[VibeSensor] Unknown WS payload schema_version "${schemaVersion}" ` +
       `(expected "${EXPECTED_SCHEMA_VERSION}"). The dashboard may not display correctly. ` +
       "Update the UI to match the server version.",

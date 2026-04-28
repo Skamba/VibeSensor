@@ -19,6 +19,7 @@ import { preloadRealtimeLiveOverviewPanel } from "./views/realtime_live_overview
 import { preloadRealtimeLoggingPanel } from "./views/realtime_logging_panel_lazy";
 import { preloadSpectrumPanelHost } from "./views/spectrum_panel_host_lazy";
 import { setUiLanguage } from "./ui_i18n";
+import { uiLogger } from "../ui_logger";
 
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
@@ -121,7 +122,7 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
           resolvedBootRuntime?.start();
         })
         .catch((error) => {
-          console.error("[VibeSensor] Failed to start UI boot runtime.", error);
+          uiLogger.error("[VibeSensor] Failed to start UI boot runtime.", error);
         });
     },
   };
