@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.domain import (
@@ -44,6 +45,331 @@ __all__ = ["finding_from_payload", "finding_payload_from_domain"]
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
 
+type _FindingProjector = Callable[[Finding], object]
+type _PayloadDecoder = Callable[[Mapping[str, object]], object]
+type _IncludePredicate = Callable[[object], bool]
+
+
+def _always_include(_value: object) -> bool:
+    return True
+
+
+def _include_if_not_none(value: object) -> bool:
+    return value is not None
+
+
+def _include_if_text(value: object) -> bool:
+    return value is not None and bool(str(value).strip())
+
+
+def _include_if_truthy(value: object) -> bool:
+    return bool(value)
+
+
+@dataclass(frozen=True, slots=True)
+class _FindingDomainFieldSpec:
+    payload_key: str
+    state_field: str
+    project: _FindingProjector
+    decode: _PayloadDecoder
+    include: _IncludePredicate = _always_include
+
+
+@dataclass(frozen=True, slots=True)
+class _FindingPayloadFieldSpec:
+    payload_key: str
+    project: _FindingProjector
+    include: _IncludePredicate = _always_include
+
+
+type _FindingPayloadSpec = _FindingDomainFieldSpec | _FindingPayloadFieldSpec
+
+
+@dataclass(frozen=True, slots=True)
+class _DirectFindingPayloadState:
+    finding_id: str
+    finding_key: str
+    confidence: float | None
+    frequency_hz: float | None
+    severity: str
+    order: str
+    strongest_location: str | None
+    strongest_speed_band: str | None
+    dominant_phase: str | None
+    dominance_ratio: float | None
+    weak_spatial_separation: bool
+    diffuse_excitation: bool
+    ranking_score: float
+    peak_classification: str
+
+
+def _project_finding_attribute(attr_name: str) -> _FindingProjector:
+    def project(finding: Finding) -> object:
+        return getattr(finding, attr_name)
+
+    return project
+
+
+def _finding_domain_field(
+    payload_key: str,
+    *,
+    decode: _PayloadDecoder,
+    state_field: str | None = None,
+    attr_name: str | None = None,
+    include: _IncludePredicate = _always_include,
+) -> _FindingDomainFieldSpec:
+    resolved_state_field = state_field or payload_key
+    resolved_attr_name = attr_name or resolved_state_field
+    return _FindingDomainFieldSpec(
+        payload_key=payload_key,
+        state_field=resolved_state_field,
+        project=_project_finding_attribute(resolved_attr_name),
+        decode=decode,
+        include=include,
+    )
+
+
+def _payload_text_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        return _text(payload.get(payload_key))
+
+    return decode
+
+
+def _payload_optional_text_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        return _text(payload.get(payload_key)) or None
+
+    return decode
+
+
+def _payload_float_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        return _as_float(payload.get(payload_key))
+
+    return decode
+
+
+def _payload_float_or_zero_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        return _as_float(payload.get(payload_key)) or 0.0
+
+    return decode
+
+
+def _payload_bool_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        return bool(payload.get(payload_key, False))
+
+    return decode
+
+
+def _project_dominant_phase(finding: Finding) -> object:
+    if finding.origin is not None and finding.origin.dominant_phase is not None:
+        return finding.origin.dominant_phase
+    return finding.dominant_phase
+
+
+def _project_peak_classification(finding: Finding) -> object:
+    return finding.peaks.classification
+
+
+def _project_suspected_source(finding: Finding) -> object:
+    return str(finding.suspected_source)
+
+
+def _project_finding_kind(finding: Finding) -> object:
+    if finding.kind is None:
+        return None
+    return str(finding.kind)
+
+
+def _project_signatures_observed(finding: Finding) -> object:
+    return list(finding.signature_labels)
+
+
+def _project_evidence_summary(finding: Finding) -> object:
+    if finding.origin is None:
+        return ""
+    return finding.origin.reason
+
+
+def _project_frequency_hz_or_order(finding: Finding) -> object:
+    if finding.frequency_hz is not None:
+        return finding.frequency_hz
+    return finding.order or ""
+
+
+def _project_confidence_assessment_field(attr_name: str) -> _FindingProjector:
+    def project(finding: Finding) -> object:
+        if finding.confidence_assessment is None:
+            return None
+        return getattr(finding.confidence_assessment, attr_name)
+
+    return project
+
+
+def _amplitude_metric_payload(finding: Finding) -> AmplitudeMetric:
+    """Project the canonical presentation-only amplitude summary for a finding."""
+
+    return {
+        "name": "vibration_strength_db",
+        "value": finding.vibration_strength_db,
+        "units": "dB",
+        "definition": payload_value_from_json(i18n_ref("METRIC_VIBRATION_STRENGTH_DB")),
+    }
+
+
+_DIRECT_FINDING_FIELD_SPECS: tuple[_FindingDomainFieldSpec, ...] = (
+    _finding_domain_field("finding_id", decode=_payload_text_decoder("finding_id")),
+    _finding_domain_field("finding_key", decode=_payload_text_decoder("finding_key")),
+    _finding_domain_field("confidence", decode=_payload_float_decoder("confidence")),
+    _finding_domain_field(
+        "frequency_hz",
+        decode=_payload_float_decoder("frequency_hz"),
+        include=_include_if_not_none,
+    ),
+    _finding_domain_field(
+        "severity",
+        decode=_payload_text_decoder("severity"),
+        include=_include_if_text,
+    ),
+    _finding_domain_field(
+        "order",
+        decode=_payload_text_decoder("order"),
+        include=_include_if_text,
+    ),
+    _finding_domain_field(
+        "strongest_location",
+        decode=_payload_optional_text_decoder("strongest_location"),
+    ),
+    _finding_domain_field(
+        "strongest_speed_band",
+        decode=_payload_optional_text_decoder("strongest_speed_band"),
+    ),
+    _FindingDomainFieldSpec(
+        payload_key="dominant_phase",
+        state_field="dominant_phase",
+        project=_project_dominant_phase,
+        decode=_payload_optional_text_decoder("dominant_phase"),
+        include=_include_if_text,
+    ),
+    _finding_domain_field("dominance_ratio", decode=_payload_float_decoder("dominance_ratio")),
+    _finding_domain_field(
+        "weak_spatial_separation",
+        decode=_payload_bool_decoder("weak_spatial_separation"),
+    ),
+    _finding_domain_field(
+        "diffuse_excitation",
+        decode=_payload_bool_decoder("diffuse_excitation"),
+    ),
+    _finding_domain_field(
+        "ranking_score",
+        decode=_payload_float_or_zero_decoder("ranking_score"),
+    ),
+    _FindingDomainFieldSpec(
+        payload_key="peak_classification",
+        state_field="peak_classification",
+        project=_project_peak_classification,
+        decode=_payload_text_decoder("peak_classification"),
+    ),
+)
+_CORE_ENCODE_ONLY_FIELD_SPECS: tuple[_FindingPayloadFieldSpec, ...] = (
+    _FindingPayloadFieldSpec("suspected_source", _project_suspected_source),
+    _FindingPayloadFieldSpec(
+        "finding_kind",
+        _project_finding_kind,
+        include=_include_if_not_none,
+    ),
+    _FindingPayloadFieldSpec(
+        "signatures_observed",
+        _project_signatures_observed,
+        include=_include_if_truthy,
+    ),
+)
+_PRESENTATION_FIELD_SPECS: tuple[_FindingPayloadFieldSpec, ...] = (
+    _FindingPayloadFieldSpec("evidence_summary", _project_evidence_summary),
+    _FindingPayloadFieldSpec("frequency_hz_or_order", _project_frequency_hz_or_order),
+    _FindingPayloadFieldSpec("amplitude_metric", _amplitude_metric_payload),
+    _FindingPayloadFieldSpec(
+        "confidence_label_key",
+        _project_confidence_assessment_field("label_key"),
+        include=_include_if_not_none,
+    ),
+    _FindingPayloadFieldSpec(
+        "confidence_reason",
+        _project_confidence_assessment_field("reason"),
+        include=_include_if_not_none,
+    ),
+    _FindingPayloadFieldSpec(
+        "confidence_tone",
+        _project_confidence_assessment_field("tone"),
+        include=_include_if_not_none,
+    ),
+    _FindingPayloadFieldSpec(
+        "confidence_pct",
+        _project_confidence_assessment_field("pct_text"),
+        include=_include_if_not_none,
+    ),
+)
+_DIRECT_FINDING_STATE_FACTORY: Callable[..., _DirectFindingPayloadState] = (
+    _DirectFindingPayloadState
+)
+
+
+def _project_payload_fields(
+    finding: Finding,
+    specs: tuple[_FindingPayloadSpec, ...],
+) -> dict[str, object]:
+    payload: dict[str, object] = {}
+    for spec in specs:
+        value = spec.project(finding)
+        if spec.include(value):
+            payload[spec.payload_key] = value
+    return payload
+
+
+def _direct_finding_state_from_payload(
+    payload: Mapping[str, object],
+) -> _DirectFindingPayloadState:
+    decoded_values = {
+        spec.state_field: spec.decode(payload) for spec in _DIRECT_FINDING_FIELD_SPECS
+    }
+    return _DIRECT_FINDING_STATE_FACTORY(**decoded_values)
+
+
+def _matched_points_payload(finding: Finding) -> list[MatchedPoint] | None:
+    if not finding.matched_points:
+        return None
+    return [matched_point_from_observation(point) for point in finding.matched_points]
+
+
+def _phase_evidence_payload(finding: Finding) -> PhaseEvidence | None:
+    if finding.cruise_fraction <= 0.0 and not finding.phases_detected:
+        return None
+    phase_evidence: PhaseEvidence = {"cruise_fraction": finding.cruise_fraction}
+    if finding.phases_detected:
+        phase_evidence["phases_detected"] = list(finding.phases_detected)
+    return phase_evidence
+
+
+def _location_hotspot_payload(finding: Finding) -> LocationHotspotPayload | None:
+    if finding.location is None:
+        return None
+    loc = finding.location
+    hotspot: LocationHotspotPayload = {
+        "top_location": loc.strongest_location,
+        "dominance_ratio": loc.dominance_ratio,
+        "localization_confidence": loc.localization_confidence,
+        "weak_spatial_separation": loc.weak_spatial_separation,
+        "ambiguous_location": loc.ambiguous,
+    }
+    if loc.alternative_locations:
+        hotspot["ambiguous_locations"] = list(loc.alternative_locations)
+    if loc.location_count is not None:
+        hotspot["location_count"] = loc.location_count
+    return hotspot
+
 
 def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:
     """Serialize a domain ``OrderMatchObservation`` to a boundary ``MatchedPoint`` dict."""
@@ -60,76 +386,32 @@ def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:
     )
 
 
-def _amplitude_metric_payload(finding: Finding) -> AmplitudeMetric:
-    """Project the canonical presentation-only amplitude summary for a finding."""
-
-    return {
-        "name": "vibration_strength_db",
-        "value": finding.vibration_strength_db,
-        "units": "dB",
-        "definition": payload_value_from_json(i18n_ref("METRIC_VIBRATION_STRENGTH_DB")),
-    }
-
-
 def _finding_core_payload_from_domain(finding: Finding) -> FindingCorePayload:
     """Project only the domain-owned finding fields."""
 
-    payload: FindingCorePayload = {
-        "finding_id": finding.finding_id,
-        "finding_key": finding.finding_key,
-        "suspected_source": str(finding.suspected_source),
-        "confidence": finding.confidence,
-        "strongest_location": finding.strongest_location,
-        "strongest_speed_band": finding.strongest_speed_band,
-        "weak_spatial_separation": finding.weak_spatial_separation,
-        "dominance_ratio": finding.dominance_ratio,
-        "diffuse_excitation": finding.diffuse_excitation,
-        "ranking_score": finding.ranking_score,
-        "peak_classification": finding.peaks.classification,
-        "signatures_observed": list(finding.signature_labels),
-    }
-    if finding.severity:
-        payload["severity"] = finding.severity
-    if finding.kind is not None:
-        payload["finding_kind"] = str(finding.kind)
-    if finding.frequency_hz is not None:
-        payload["frequency_hz"] = finding.frequency_hz
-    if finding.order:
-        payload["order"] = finding.order
-    if finding.dominant_phase:
-        payload["dominant_phase"] = finding.dominant_phase
-    if finding.matched_points:
-        payload["matched_points"] = [
-            matched_point_from_observation(point) for point in finding.matched_points
-        ]
+    payload = cast(
+        FindingCorePayload,
+        _project_payload_fields(
+            finding,
+            _DIRECT_FINDING_FIELD_SPECS + _CORE_ENCODE_ONLY_FIELD_SPECS,
+        ),
+    )
+
+    matched_points = _matched_points_payload(finding)
+    if matched_points is not None:
+        payload["matched_points"] = matched_points
 
     evidence_metrics = build_evidence_metrics(finding)
     if evidence_metrics is not None:
         payload["evidence_metrics"] = evidence_metrics
 
-    if finding.cruise_fraction > 0.0 or finding.phases_detected:
-        phase_evidence: PhaseEvidence = {"cruise_fraction": finding.cruise_fraction}
-        if finding.phases_detected:
-            phase_evidence["phases_detected"] = list(finding.phases_detected)
+    phase_evidence = _phase_evidence_payload(finding)
+    if phase_evidence is not None:
         payload["phase_evidence"] = phase_evidence
 
-    if finding.location is not None:
-        loc = finding.location
-        hotspot: LocationHotspotPayload = {
-            "top_location": loc.strongest_location,
-            "dominance_ratio": loc.dominance_ratio,
-            "localization_confidence": loc.localization_confidence,
-            "weak_spatial_separation": loc.weak_spatial_separation,
-            "ambiguous_location": loc.ambiguous,
-        }
-        if loc.alternative_locations:
-            hotspot["ambiguous_locations"] = list(loc.alternative_locations)
-        if loc.location_count is not None:
-            hotspot["location_count"] = loc.location_count
+    hotspot = _location_hotspot_payload(finding)
+    if hotspot is not None:
         payload["location_hotspot"] = hotspot
-
-    if finding.origin is not None and finding.origin.dominant_phase is not None:
-        payload["dominant_phase"] = finding.origin.dominant_phase
 
     return payload
 
@@ -139,22 +421,10 @@ def _finding_presentation_payload_from_domain(
 ) -> FindingPresentationPayload:
     """Project rendering- and report-oriented finding metadata."""
 
-    payload: FindingPresentationPayload = {
-        "evidence_summary": "",
-        "frequency_hz_or_order": (
-            finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
-        ),
-        "amplitude_metric": _amplitude_metric_payload(finding),
-    }
-    if finding.confidence_assessment is not None:
-        ca = finding.confidence_assessment
-        payload["confidence_label_key"] = ca.label_key
-        payload["confidence_reason"] = ca.reason
-        payload["confidence_tone"] = ca.tone
-        payload["confidence_pct"] = ca.pct_text
-    if finding.origin is not None:
-        payload["evidence_summary"] = finding.origin.reason
-    return payload
+    return cast(
+        FindingPresentationPayload,
+        _project_payload_fields(finding, _PRESENTATION_FIELD_SPECS),
+    )
 
 
 def finding_payload_from_domain(
@@ -228,10 +498,7 @@ def _signatures_from_payload(
 def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     """Create a domain Finding from the canonical finding payload shape."""
 
-    confidence = _as_float(payload.get("confidence"))
-    ranking_score = _as_float(payload.get("ranking_score")) or 0.0
-    dominance_ratio = _as_float(payload.get("dominance_ratio"))
-    weak_spatial_separation = bool(payload.get("weak_spatial_separation", False))
+    direct_fields = _direct_finding_state_from_payload(payload)
     cruise_fraction, phases_detected = _phase_evidence(payload)
 
     evidence_raw = payload.get("evidence_metrics")
@@ -251,41 +518,38 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, Mapping) else None
     )
 
-    strongest_speed_band = _text(payload.get("strongest_speed_band")) or None
     origin = vibration_origin_from_payload(
         payload,
         hotspot=location,
-        dominance_ratio=dominance_ratio,
-        speed_band=strongest_speed_band,
+        dominance_ratio=direct_fields.dominance_ratio,
+        speed_band=direct_fields.strongest_speed_band,
     )
     source = origin.suspected_source
 
-    finding_id = _text(payload.get("finding_id"))
-    severity = _text(payload.get("severity"))
     explicit_kind = payload.get("finding_kind")
     kind = Finding.derive_kind_from_fields(
-        finding_id,
-        severity,
+        direct_fields.finding_id,
+        direct_fields.severity,
         explicit_kind=str(explicit_kind) if isinstance(explicit_kind, str) else None,
     )
 
     return Finding(
-        finding_id=finding_id,
-        finding_key=_text(payload.get("finding_key")),
+        finding_id=direct_fields.finding_id,
+        finding_key=direct_fields.finding_key,
         suspected_source=source,
-        confidence=confidence,
-        frequency_hz=_as_float(payload.get("frequency_hz")),
-        order=_text(payload.get("order")),
-        severity=severity,
-        strongest_location=_text(payload.get("strongest_location")) or None,
-        strongest_speed_band=strongest_speed_band,
-        peak_classification=_text(payload.get("peak_classification")),
+        confidence=direct_fields.confidence,
+        frequency_hz=direct_fields.frequency_hz,
+        order=direct_fields.order,
+        severity=direct_fields.severity,
+        strongest_location=direct_fields.strongest_location,
+        strongest_speed_band=direct_fields.strongest_speed_band,
+        peak_classification=direct_fields.peak_classification,
         kind=kind,
-        dominant_phase=_text(payload.get("dominant_phase")) or None,
-        ranking_score=ranking_score,
-        dominance_ratio=dominance_ratio,
-        diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
-        weak_spatial_separation=weak_spatial_separation,
+        dominant_phase=direct_fields.dominant_phase,
+        ranking_score=direct_fields.ranking_score,
+        dominance_ratio=direct_fields.dominance_ratio,
+        diffuse_excitation=direct_fields.diffuse_excitation,
+        weak_spatial_separation=direct_fields.weak_spatial_separation,
         vibration_strength_db=(evidence.vibration_strength_db if evidence is not None else None),
         cruise_fraction=cruise_fraction,
         phases_detected=phases_detected,
@@ -294,13 +558,13 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         location=location,
         confidence_assessment=_confidence_assessment_from_payload(
             payload,
-            confidence=confidence,
-            weak_spatial_separation=weak_spatial_separation,
+            confidence=direct_fields.confidence,
+            weak_spatial_separation=direct_fields.weak_spatial_separation,
         ),
         origin=origin,
         signatures=_signatures_from_payload(
             payload,
-            support_score=confidence or 0.0,
+            support_score=direct_fields.confidence or 0.0,
             source=source,
         ),
     )
