@@ -186,6 +186,10 @@ jobs:
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
+      - name: Materialize missing UI generated contract derivatives
+        working-directory: apps/ui
+        run: npm run setup:generated-contracts
+
       - name: Authoritative contract sync check
         run: make sync-contracts CHECK=1
 
