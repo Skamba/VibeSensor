@@ -23,8 +23,8 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
-      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early \u2014 manual added MY2024.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024.",
       "code": "MT6",
       "name": "6-speed manual",
       "evidence_refs": [
@@ -34,8 +34,8 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early \u2014 manual added MY2024. Top gear ratio not officially published; family-default value retained pending dedicated 01/2024 ACEA PDF.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Top gear ratio not officially published; family-default value retained pending dedicated 01/2024 ACEA PDF.",
         "value": 0.812,
         "evidence_refs": [
           "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
@@ -43,8 +43,8 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early \u2014 manual added MY2024. Final drive ratio not officially published.",
+        "confidence": "unverified",
+        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0439268EN (Pure Impulse edition, January 2024) and BMW Germany Z4 technical-data page confirm a 6-speed manual gearbox is offered for the M40i from the 2024 model year ('a six-speed manual gearbox will also be available for the range-topping version for the first time'). Pure Impulse PDFs are image-based; individual gear ratios for the M40i MT6 are NOT text-extractable from any accessible BMW PressClub source. Top gear and final drive remain unverified; previous family_default values 0.812 / 3.231 are unsupported. Likely Getrag GS6-45BZ (same 6MT as G20 M340i / G22 M240i) but unconfirmed in this run. Production_start_year of 2019 is too early — manual added MY2024. Final drive ratio not officially published.",
         "value": 3.231,
         "evidence_refs": [
           "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
@@ -54,7 +54,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
           "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -159,6 +159,20 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-pure-impulse-2024",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
       }
     ],
     "unresolved": [
@@ -211,11 +225,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -453,11 +462,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -685,11 +689,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -924,11 +923,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -946,7 +940,7 @@
     "engine_name": "B48 2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
         "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -956,7 +950,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -968,7 +962,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
         "value": 0.812,
         "evidence_refs": [
@@ -978,7 +972,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): No official BMW source confirms a Z4 G29 sDrive30i with 6-speed manual transmission in any market year. BMW PressClub T0289704EN (09/2018) and T0329593EN (03/2021) both list sDrive30i with ZF 8HP only; the BMW Germany consumer technical-data page (HF31) lists only Steptronic Sport Getriebe for sDrive30i. The MT6 was added only on sDrive20i (MY2021) and on M40i (MY2024 Pure Impulse). Marked no_confidence as a phantom configuration; row should be considered for removal.",
         "value": 3.231,
         "evidence_refs": [
@@ -990,7 +984,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
           "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -1006,7 +1000,7 @@
       },
       "options": [
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
             "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -1022,7 +1016,7 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
             "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -1038,7 +1032,7 @@
           "name": "Sport Line 20\""
         },
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
             "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
@@ -1072,6 +1066,70 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g29-z4-specs-2018-pdf",
+          "bmw_pressclub_sources:g29-z4-specs-2021-pdf",
+          "bmw_pressclub_sources:g29-z4-bmw-de-tech-data"
+        ]
       }
     ],
     "unresolved": [
@@ -1124,11 +1182,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -1366,11 +1419,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   }
 ]

@@ -14,7 +14,7 @@
     "engine_name": "1.8L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 1.8 TFSI 6-speed manual FWD. Auto-Data B8 generation list confirms FWD MT6 1.8 TFSI as real pre-facelift variant. Carfolio 2011 page (URL slug misnamed but content matches) supplies ratios top 0.69 / FD 3.30 and standard tyre 205/60 R16 on 7Jx16 wheel. Repo placeholder 0.84/3.462 and 225/45 R18 contradicted; Sport-trim 18-inch was an option, not catalogue baseline.",
       "value": "FWD",
       "evidence_refs": [
@@ -23,7 +23,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 1.8 TFSI 6-speed manual FWD. Auto-Data B8 generation list confirms FWD MT6 1.8 TFSI as real pre-facelift variant. Carfolio 2011 page (URL slug misnamed but content matches) supplies ratios top 0.69 / FD 3.30 and standard tyre 205/60 R16 on 7Jx16 wheel. Repo placeholder 0.84/3.462 and 225/45 R18 contradicted; Sport-trim 18-inch was an option, not catalogue baseline.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -34,7 +34,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 0.69,
         "evidence_refs": [
@@ -42,7 +42,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 3.3,
         "evidence_refs": [
@@ -52,7 +52,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-18tfsi-fwd-mt6-carfolio",
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
@@ -63,8 +63,7 @@
           "aspect_pct": 60.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -168,11 +167,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -190,7 +184,7 @@
     "engine_name": "1.8L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "FWD",
       "evidence_refs": [
@@ -200,7 +194,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -212,7 +206,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.68,
         "evidence_refs": [
@@ -222,7 +216,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.444,
         "evidence_refs": [
@@ -234,7 +228,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -324,6 +318,46 @@
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-1-8-tfsi-multitronic-carfolio"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -363,11 +397,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -385,7 +414,7 @@
     "engine_name": "1.8L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "FWD",
       "evidence_refs": [
@@ -394,7 +423,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -405,7 +434,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -414,7 +443,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -425,7 +454,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia"
@@ -514,6 +543,41 @@
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-1-8-tfsi-multitronic-carfolio"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -553,11 +617,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -575,7 +634,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TDI (143 PS) 6-speed manual FWD. Auto-Data B8 generation list confirms 2007/2008 production start. No exact ratio source for FWD MT6 recovered; ratios remain no_confidence. Tyre default corrected to 205/55 R16 (Carfolio FWD 2.0 TDI auto pages baseline range 205/60 R16 to 225/55 R16).",
       "value": "FWD",
       "evidence_refs": [
@@ -583,7 +642,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TDI (143 PS) 6-speed manual FWD. Auto-Data B8 generation list confirms 2007/2008 production start. No exact ratio source for FWD MT6 recovered; ratios remain no_confidence. Tyre default corrected to 205/55 R16 (Carfolio FWD 2.0 TDI auto pages baseline range 205/60 R16 to 225/55 R16).",
       "code": "MT6",
       "name": "6-speed manual",
@@ -593,7 +652,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact FWD 2.0 TDI MT6 ratio source recovered. Repo placeholder 0.84 was a family_default carryover.",
         "value": 0.84,
         "evidence_refs": [
@@ -601,7 +660,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source. Repo placeholder 3.462 was a family_default carryover.",
         "value": 3.462,
         "evidence_refs": [
@@ -611,7 +670,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
         ],
@@ -621,8 +680,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -701,6 +759,18 @@
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
+        ]
       }
     ],
     "unresolved": [
@@ -738,11 +808,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -763,7 +828,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "FWD",
       "evidence_refs": [
@@ -773,7 +838,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -785,7 +850,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.68,
         "evidence_refs": [
@@ -795,7 +860,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.444,
         "evidence_refs": [
@@ -807,7 +872,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -898,6 +963,46 @@
           "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2007",
           "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2011"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -938,11 +1043,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -960,7 +1060,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "FWD",
       "evidence_refs": [
@@ -969,7 +1069,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -980,7 +1080,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -989,7 +1089,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -1000,7 +1100,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia"
@@ -1090,6 +1190,41 @@
           "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2007",
           "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2011"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -1130,11 +1265,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1152,7 +1282,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TDI quattro 6-speed manual AWD. Carfolio 2008 page + Auto-Data B8 listing confirm. Carfolio reputable_secondary ratios: top 0.63 / single combined final drive 4.49 (front/rear split not published in secondary). Standard tyre 225/55 R16. Repo placeholder values contradicted.",
       "value": "AWD",
       "evidence_refs": [
@@ -1162,7 +1292,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TDI quattro 6-speed manual AWD. Carfolio 2008 page + Auto-Data B8 listing confirm. Carfolio reputable_secondary ratios: top 0.63 / single combined final drive 4.49 (front/rear split not published in secondary). Standard tyre 225/55 R16. Repo placeholder values contradicted.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1174,7 +1304,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 0.63,
         "evidence_refs": [
@@ -1182,7 +1312,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio publishes a single combined final drive value; front/rear axle split is not exposed in secondary sources for the longitudinal quattro driveline.",
         "value": 4.49,
         "evidence_refs": [
@@ -1190,7 +1320,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive; explicit rear axle ratio not published in secondary sources.",
         "value": 4.49,
         "evidence_refs": [
@@ -1200,7 +1330,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
@@ -1211,8 +1341,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1316,11 +1445,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1338,7 +1462,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata",
         "secondary_technical_sources:dl501-stronic-wikipedia",
@@ -1348,7 +1472,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata",
         "secondary_technical_sources:dl501-stronic-wikipedia",
@@ -1360,7 +1484,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact 2.0 TDI quattro DL501 ratio recovered. Repo placeholder 0.68 was a family_default carryover. Carfolio S7 (id ending -435050) was found to mismatch B8 dimensions and likely covers the B9 - not used.",
         "value": 0.68,
         "evidence_refs": [
@@ -1368,17 +1492,9 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source. Repo placeholder 3.444 was a family_default carryover.",
         "value": 3.444,
-        "evidence_refs": [
-          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "no_confidence",
-        "notes": "Sonnet redo: rear axle ratio not in secondary sources.",
-        "value": null,
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
         ]
@@ -1386,7 +1502,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
         ],
@@ -1396,8 +1512,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1476,6 +1591,24 @@
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -1513,11 +1646,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -1538,7 +1666,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "AWD",
       "evidence_refs": [
@@ -1548,7 +1676,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -1560,7 +1688,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -1570,7 +1698,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -1580,7 +1708,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -1592,7 +1720,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -1684,6 +1812,54 @@
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata",
           "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
       }
     ],
     "unresolved": [
@@ -1725,11 +1901,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1747,7 +1918,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TFSI (180/211 PS) 6-speed manual FWD. Auto-Data B8 generation list confirms Aug 2008 start. No exact FWD MT6 ratio source recovered; ratios remain no_confidence. Standard tyre 225/55 R16 per FWD 2.0 TFSI Carfolio reference (S8) and Auto-Data baseline.",
       "value": "FWD",
       "evidence_refs": [
@@ -1755,7 +1926,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TFSI (180/211 PS) 6-speed manual FWD. Auto-Data B8 generation list confirms Aug 2008 start. No exact FWD MT6 ratio source recovered; ratios remain no_confidence. Standard tyre 225/55 R16 per FWD 2.0 TFSI Carfolio reference (S8) and Auto-Data baseline.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1765,7 +1936,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact FWD 2.0 TFSI MT6 ratio source. Repo placeholder 0.84 was a family_default carryover.",
         "value": 0.84,
         "evidence_refs": [
@@ -1773,7 +1944,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source. Repo placeholder 3.462 was a family_default carryover.",
         "value": 3.462,
         "evidence_refs": [
@@ -1783,7 +1954,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
         ],
@@ -1793,8 +1964,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1866,6 +2036,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
+        ]
       }
     ],
     "unresolved": [
@@ -1895,11 +2077,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -1920,7 +2097,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "FWD",
       "evidence_refs": [
@@ -1930,7 +2107,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -1942,7 +2119,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.68,
         "evidence_refs": [
@@ -1952,7 +2129,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.444,
         "evidence_refs": [
@@ -1964,7 +2141,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -2055,6 +2232,46 @@
           "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2011",
           "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2013"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:dl501-stronic-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2095,11 +2312,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -2117,7 +2329,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "FWD",
       "evidence_refs": [
@@ -2126,7 +2338,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -2137,7 +2349,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -2146,7 +2358,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -2157,7 +2369,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia"
@@ -2247,6 +2459,41 @@
           "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2011",
           "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2013"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2287,11 +2534,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -2309,7 +2551,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TFSI quattro 6-speed manual AWD. Auto-Data B8 listing + Carfolio 2013 page confirm Aug 2008 start. Carfolio ratio cells were blank for this exact variant; no ratio source recovered. Standard tyre 225/55 R16 (with 225/50 R17 option) per Auto-Data.",
       "value": "AWD",
       "evidence_refs": [
@@ -2319,7 +2561,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 2.0 TFSI quattro 6-speed manual AWD. Auto-Data B8 listing + Carfolio 2013 page confirm Aug 2008 start. Carfolio ratio cells were blank for this exact variant; no ratio source recovered. Standard tyre 225/55 R16 (with 225/50 R17 option) per Auto-Data.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -2331,7 +2573,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: Carfolio ratio cells blank for 2.0 TFSI quattro MT6. Repo placeholder 0.84 was a family_default carryover.",
         "value": 0.84,
         "evidence_refs": [
@@ -2339,7 +2581,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source. Repo placeholder 3.462 was a family_default carryover.",
         "value": 3.462,
         "evidence_refs": [
@@ -2347,7 +2589,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source for quattro rear axle ratio.",
         "value": 3.462,
         "evidence_refs": [
@@ -2357,7 +2599,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata",
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio"
@@ -2368,8 +2610,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2448,6 +2689,24 @@
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -2485,11 +2744,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -2510,7 +2764,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 2.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data B8.5 facelift Jan 2012-2015). transmission.name -> '7-speed S tronic (DL501)'. No exact ratio source recovered (Carfolio cells blank). Standard tyre 225/55 R16 per Auto-Data.",
       "value": "AWD",
       "evidence_refs": [
@@ -2520,7 +2774,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 2.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data B8.5 facelift Jan 2012-2015). transmission.name -> '7-speed S tronic (DL501)'. No exact ratio source recovered (Carfolio cells blank). Standard tyre 225/55 R16 per Auto-Data.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -2532,7 +2786,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: Carfolio ratio cells blank. Repo placeholder 0.68 was a family_default carryover.",
         "value": 0.68,
         "evidence_refs": [
@@ -2540,7 +2794,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source. Repo placeholder 3.444 was a family_default carryover.",
         "value": 3.444,
         "evidence_refs": [
@@ -2548,7 +2802,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact source.",
         "value": 3.444,
         "evidence_refs": [
@@ -2558,7 +2812,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
         ],
@@ -2568,8 +2822,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2648,6 +2901,24 @@
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -2685,11 +2956,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -2710,7 +2976,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "AWD",
       "evidence_refs": [
@@ -2719,7 +2985,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -2730,7 +2996,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -2739,7 +3005,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -2748,7 +3014,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -2759,7 +3025,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia"
@@ -2848,6 +3114,48 @@
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2887,11 +3195,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -2909,7 +3212,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 3.0 TDI quattro 6-speed manual AWD. Auto-Data + Carfolio + Audi MediaCenter 3.0 TDI clean diesel quattro press release confirm. Carfolio: top 0.54 / combined final drive 3.68. Standard tyre 225/50 R17 (with 245/40 R18 S line option) per Auto-Data B8 listing.",
       "value": "AWD",
       "evidence_refs": [
@@ -2920,7 +3223,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8 3.0 TDI quattro 6-speed manual AWD. Auto-Data + Carfolio + Audi MediaCenter 3.0 TDI clean diesel quattro press release confirm. Carfolio: top 0.54 / combined final drive 3.68. Standard tyre 225/50 R17 (with 245/40 R18 S line option) per Auto-Data B8 listing.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -2932,7 +3235,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 0.54,
         "evidence_refs": [
@@ -2940,7 +3243,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio; front/rear split not exposed.",
         "value": 3.68,
         "evidence_refs": [
@@ -2948,7 +3251,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive.",
         "value": 3.68,
         "evidence_refs": [
@@ -2958,7 +3261,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
         ],
@@ -2968,8 +3271,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -3088,11 +3390,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -3110,7 +3407,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 3.0 TDI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2011 (Auto-Data B8.5 facelift Nov 2011-2015). Audi MediaCenter pre-facelift 3.0 TDI press release confirms pre-facelift was six-speed Tiptronic, not S tronic; S tronic appears only with facelift. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.46 / combined FD 3.88. Standard tyre 225/50 R17 per Auto-Data B8.5.",
       "value": "AWD",
       "evidence_refs": [
@@ -3122,7 +3419,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 3.0 TDI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2011 (Auto-Data B8.5 facelift Nov 2011-2015). Audi MediaCenter pre-facelift 3.0 TDI press release confirms pre-facelift was six-speed Tiptronic, not S tronic; S tronic appears only with facelift. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.46 / combined FD 3.88. Standard tyre 225/50 R17 per Auto-Data B8.5.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -3135,7 +3432,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 0.46,
         "evidence_refs": [
@@ -3143,7 +3440,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio.",
         "value": 3.88,
         "evidence_refs": [
@@ -3151,7 +3448,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive.",
         "value": 3.88,
         "evidence_refs": [
@@ -3161,7 +3458,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
         ],
@@ -3171,8 +3468,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -3293,11 +3589,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -3315,7 +3606,7 @@
     "engine_name": "3.0L V6 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "AWD",
       "evidence_refs": [
@@ -3325,7 +3616,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -3337,7 +3628,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -3347,7 +3638,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -3357,7 +3648,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -3369,7 +3660,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -3460,6 +3751,54 @@
           "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release"
+        ]
       }
     ],
     "unresolved": [
@@ -3500,11 +3839,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -3522,7 +3856,7 @@
     "engine_name": "3.0L V6 Supercharged",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "AWD",
       "evidence_refs": [
@@ -3532,7 +3866,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -3544,7 +3878,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.84,
         "evidence_refs": [
@@ -3554,7 +3888,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.462,
         "evidence_refs": [
@@ -3564,7 +3898,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.462,
         "evidence_refs": [
@@ -3576,7 +3910,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -3660,6 +3994,54 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
       }
     ],
     "unresolved": [
@@ -3689,11 +4071,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -3714,7 +4091,7 @@
     "engine_name": "3.0L V6 Supercharged",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 3.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data Feb 2012-2014). The 3.0 TFSI A4 (272 PS, A4-only - distinct from S4) is facelift-only and DL501-only. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.52 / combined FD 3.88. Standard tyre 245/40 R18 on 8.5Jx18 wheel per Carfolio (S line baseline for the engine spec); Auto-Data lists 225/50 R17 as alternate.",
       "value": "AWD",
       "evidence_refs": [
@@ -3725,7 +4102,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A4 B8.5 facelift 3.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data Feb 2012-2014). The 3.0 TFSI A4 (272 PS, A4-only - distinct from S4) is facelift-only and DL501-only. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.52 / combined FD 3.88. Standard tyre 245/40 R18 on 8.5Jx18 wheel per Carfolio (S line baseline for the engine spec); Auto-Data lists 225/50 R17 as alternate.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
@@ -3738,7 +4115,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
         "value": 0.52,
         "evidence_refs": [
@@ -3746,7 +4123,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio.",
         "value": 3.88,
         "evidence_refs": [
@@ -3754,7 +4131,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive.",
         "value": 3.88,
         "evidence_refs": [
@@ -3764,7 +4141,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
         ],
@@ -3774,8 +4151,7 @@
           "aspect_pct": 40.0,
           "rim_in": 18.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -3894,11 +4270,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -3916,7 +4287,7 @@
     "engine_name": "3.0L V6 Supercharged",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "value": "AWD",
       "evidence_refs": [
@@ -3926,7 +4297,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)",
@@ -3938,7 +4309,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -3948,7 +4319,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -3958,7 +4329,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
         "value": 3.077,
         "evidence_refs": [
@@ -3970,7 +4341,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
           "secondary_technical_sources:a4-b8-wikipedia",
@@ -4061,6 +4432,54 @@
           "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
           "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
+          "secondary_technical_sources:a4-b8-wikipedia",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -4098,11 +4517,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

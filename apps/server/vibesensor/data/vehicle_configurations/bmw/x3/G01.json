@@ -74,14 +74,6 @@
           "secondary_technical_sources:zf8hp-bmw-x3-table"
         ],
         "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE M40i ACEA 04/2020 tech sheet (legacy_research_sources:8e51d741ecbd) confirms ZF GA8HP51Z (B58) with full gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, final drive 3.385 (both axles via xDrive single-FD convention), and standard staggered tires 245/45 R20 front + 275/40 R20 rear. Prior repo placeholder values 0.667 / 3.077 / 245/45 R19 were legacy family_default inheritance from earlier 8HP70 generation and are superseded."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.712,
-        "evidence_refs": [
-          "legacy_research_sources:8e51d741ecbd"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE M40i ACEA 04/2020 tech sheet (legacy_research_sources:8e51d741ecbd) confirms ZF GA8HP51Z (B58) with full gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, final drive 3.385 (both axles via xDrive single-FD convention), and standard staggered tires 245/45 R20 front + 275/40 R20 rear. Prior repo placeholder values 0.667 / 3.077 / 245/45 R19 were legacy family_default inheritance from earlier 8HP70 generation and are superseded."
       }
     },
     "tires": {
@@ -181,6 +173,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.712",
+        "evidence_refs": [
+          "legacy_research_sources:8e51d741ecbd"
+        ]
       }
     ],
     "unresolved": [
@@ -256,11 +254,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -286,7 +279,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo research (2026-04 v2): G01 sDrive20i was introduced globally July 2018 (Wikipedia G01) and the F25 predecessor's sDrive20i was sold in Germany, supporting EU availability. However no BMW PressClub DE technical-data PDF specifically for sDrive20i G01 was located in this run, so EU-specific official confirmation of final drive and tires is missing. Drivetrain confidence held at official_exact per the row's existing 'BMW press release' legacy classification (RWD layout is unambiguous). Top gear ratio corrected from placeholder 0.667 to 0.640 by analogy with xDrive20i (same B48 + 8HP50 pre-LCI / 8HP51 post-LCI; 8th gear ratio is 0.640 in both variants). Final drive and tires marked no_confidence pending BMW DE sDrive20i tech sheet recovery.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic (ZF GA8HP50Z / GA8HP51Z post-LCI)",
@@ -297,7 +290,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): G01 sDrive20i was introduced globally July 2018 (Wikipedia G01) and the F25 predecessor's sDrive20i was sold in Germany, supporting EU availability. However no BMW PressClub DE technical-data PDF specifically for sDrive20i G01 was located in this run, so EU-specific official confirmation of final drive and tires is missing. Drivetrain confidence held at official_exact per the row's existing 'BMW press release' legacy classification (RWD layout is unambiguous). Top gear ratio corrected from placeholder 0.667 to 0.640 by analogy with xDrive20i (same B48 + 8HP50 pre-LCI / 8HP51 post-LCI; 8th gear ratio is 0.640 in both variants). Final drive and tires marked no_confidence pending BMW DE sDrive20i tech sheet recovery.",
         "value": 0.64,
         "evidence_refs": [
@@ -306,7 +299,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): G01 sDrive20i was introduced globally July 2018 (Wikipedia G01) and the F25 predecessor's sDrive20i was sold in Germany, supporting EU availability. However no BMW PressClub DE technical-data PDF specifically for sDrive20i G01 was located in this run, so EU-specific official confirmation of final drive and tires is missing. Drivetrain confidence held at official_exact per the row's existing 'BMW press release' legacy classification (RWD layout is unambiguous). Top gear ratio corrected from placeholder 0.667 to 0.640 by analogy with xDrive20i (same B48 + 8HP50 pre-LCI / 8HP51 post-LCI; 8th gear ratio is 0.640 in both variants). Final drive and tires marked no_confidence pending BMW DE sDrive20i tech sheet recovery.",
         "value": 3.077,
         "evidence_refs": [
@@ -316,7 +309,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:g01-x3-wikipedia"
         ],
@@ -406,6 +399,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g01-x3-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g01-x3-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -478,11 +483,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -567,14 +567,6 @@
           "secondary_technical_sources:zf8hp-bmw-x3-table"
         ],
         "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE xDrive20i ACEA 09/2018 tech sheet (legacy_research_sources:38a04165d331) and 06/2021 LCI tech sheet (legacy_research_sources:9cb10e268364) both confirm final drive 3.385 (both axles via xDrive single-FD convention) and 8th gear 0.640. Pre-LCI 2018-2021 uses ZF GA8HP50Z (B48) with gear set [5.000, 3.200, 2.143, 1.720, 1.314, 1.000, 0.822, 0.640] and reverse 3.456. Post-LCI 2021-2024 uses ZF GA8HP51Z with gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640] and reverse 3.712. Encoded pre-LCI gear set as the row's primary value because the production_start_year is 2018; LCI ratio change is documented in the gear_ratios notes. Standard tire 225/60 R18 confirmed by 09/2018 ACEA sheet."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.456,
-        "evidence_refs": [
-          "legacy_research_sources:38a04165d331"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE xDrive20i ACEA 09/2018 tech sheet (legacy_research_sources:38a04165d331) and 06/2021 LCI tech sheet (legacy_research_sources:9cb10e268364) both confirm final drive 3.385 (both axles via xDrive single-FD convention) and 8th gear 0.640. Pre-LCI 2018-2021 uses ZF GA8HP50Z (B48) with gear set [5.000, 3.200, 2.143, 1.720, 1.314, 1.000, 0.822, 0.640] and reverse 3.456. Post-LCI 2021-2024 uses ZF GA8HP51Z with gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640] and reverse 3.712. Encoded pre-LCI gear set as the row's primary value because the production_start_year is 2018; LCI ratio change is documented in the gear_ratios notes. Standard tire 225/60 R18 confirmed by 09/2018 ACEA sheet. Reverse 3.456 is the pre-LCI 8HP50 value; post-LCI 8HP51 reverse is 3.712."
       }
     },
     "tires": {
@@ -629,6 +621,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.456",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331"
+        ]
       }
     ],
     "unresolved": [
@@ -786,15 +784,6 @@
           "secondary_technical_sources:zf8hp-bmw-x3-table"
         ],
         "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE Germany price list 08/2022 (legacy_research_sources:9942185c701e) confirms G01 xDrive30i sale in Germany. xDrive30i shares the B48 + ZF 8HP50 (pre-LCI) / 8HP51 (post-LCI) drivetrain with xDrive20i, so gear ratios and final drive follow the same pattern. No xDrive30i-specific ACEA tech sheet was located, so gear_ratios and reverse are official_derived rather than official_exact; final drive 3.385 is strongly supported by both xDrive20i (S_XD20) and M40i (S_M40) confirmations. Top gear 0.640 confirmed across the family. Standard tire 225/60 R18 inherited from xDrive20i baseline."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_derived",
-        "value": 3.456,
-        "evidence_refs": [
-          "legacy_research_sources:38a04165d331",
-          "legacy_research_sources:9942185c701e"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE Germany price list 08/2022 (legacy_research_sources:9942185c701e) confirms G01 xDrive30i sale in Germany. xDrive30i shares the B48 + ZF 8HP50 (pre-LCI) / 8HP51 (post-LCI) drivetrain with xDrive20i, so gear ratios and final drive follow the same pattern. No xDrive30i-specific ACEA tech sheet was located, so gear_ratios and reverse are official_derived rather than official_exact; final drive 3.385 is strongly supported by both xDrive20i (S_XD20) and M40i (S_M40) confirmations. Top gear 0.640 confirmed across the family. Standard tire 225/60 R18 inherited from xDrive20i baseline. Reverse 3.456 is the pre-LCI 8HP50 value."
       }
     },
     "tires": {
@@ -920,6 +909,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.456",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:9942185c701e"
+        ]
       }
     ],
     "unresolved": [

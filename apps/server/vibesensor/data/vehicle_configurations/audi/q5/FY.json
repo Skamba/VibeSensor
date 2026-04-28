@@ -14,7 +14,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
       "value": "FWD",
       "evidence_refs": [
@@ -24,7 +24,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)",
@@ -36,7 +36,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
         "value": 0.725,
         "evidence_refs": [
@@ -46,7 +46,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): ADAC Autokatalog confirms NO FWD TFSI Q5 FY exists in the EU/DE market - all TFSI variants are quattro-only across both pre-facelift (-07/2020) and facelift (09/2020-11/2024) catalogs. The only FWD Q5 FY in DE is the 35 TDI (diesel). Additionally, the '40 TFSI' commercial designation only appears at the 12/2021 facelift (as quattro), so the row's production_start_year of 2017 is also wrong. This FWD + TFSI + 2017 combination does not exist - marked no_confidence as a phantom configuration.",
         "value": 5.302,
         "evidence_refs": [
@@ -58,7 +58,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:q5-fy-adac-prefacelift",
           "secondary_technical_sources:q5-fy-adac-facelift",
@@ -74,7 +74,7 @@
       },
       "options": [
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "secondary_technical_sources:q5-fy-adac-prefacelift",
             "secondary_technical_sources:q5-fy-adac-facelift",
@@ -90,7 +90,7 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "secondary_technical_sources:q5-fy-adac-prefacelift",
             "secondary_technical_sources:q5-fy-adac-facelift",
@@ -106,7 +106,7 @@
           "name": "Sport 20\""
         },
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "secondary_technical_sources:q5-fy-adac-prefacelift",
             "secondary_technical_sources:q5-fy-adac-facelift",
@@ -144,6 +144,70 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.options[2]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:q5-fy-adac-prefacelift",
+          "secondary_technical_sources:q5-fy-adac-facelift",
+          "secondary_technical_sources:q5-fy-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -284,11 +348,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -440,11 +499,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -599,11 +653,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -817,11 +866,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -976,11 +1020,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

@@ -14,7 +14,7 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
       "value": "FWD",
       "evidence_refs": [
@@ -24,7 +24,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
       "code": "5-SPEED-MANU",
       "name": "5-speed manual",
@@ -36,7 +36,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
         "value": 0.854,
         "evidence_refs": [
@@ -46,7 +46,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
         "value": 3.652,
         "evidence_refs": [
@@ -58,7 +58,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a1-8x-wikipedia",
           "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
@@ -140,6 +140,46 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
+          "legacy_research_sources:0cd20821c4bc"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
       }
     ],
     "unresolved": [
@@ -164,11 +204,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -189,7 +224,7 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
       "value": "FWD",
       "evidence_refs": [
@@ -199,7 +234,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)",
@@ -211,7 +246,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
         "value": 0.68,
         "evidence_refs": [
@@ -221,7 +256,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
         "value": 3.786,
         "evidence_refs": [
@@ -233,7 +268,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a1-8x-wikipedia",
           "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
@@ -315,6 +350,46 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
+          "legacy_research_sources:0cd20821c4bc"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:0cd20821c4bc",
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014"
+        ]
       }
     ],
     "unresolved": [
@@ -339,11 +414,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -364,7 +434,7 @@
     "engine_name": "1.4L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
       "value": "FWD",
       "evidence_refs": [
@@ -373,7 +443,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
       "code": "5-SPEED-MANU",
       "name": "5-speed manual",
@@ -384,7 +454,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
         "value": 0.854,
         "evidence_refs": [
@@ -393,7 +463,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
         "value": 3.652,
         "evidence_refs": [
@@ -404,7 +474,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a1-8x-wikipedia",
           "legacy_research_sources:d3ced68412f8"
@@ -485,6 +555,41 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:d3ced68412f8",
+          "secondary_technical_sources:a1-8x-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:d3ced68412f8",
+          "secondary_technical_sources:a1-8x-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a1-8x-wikipedia",
+          "legacy_research_sources:d3ced68412f8"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:d3ced68412f8",
+          "secondary_technical_sources:a1-8x-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "legacy_research_sources:d3ced68412f8",
+          "secondary_technical_sources:a1-8x-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -508,11 +613,6 @@
     "configuration_confidence": "low_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -583,22 +683,6 @@
           "legacy_research_sources:d36a12aece1e"
         ],
         "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.988,
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429."
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "value": 3.429,
-        "evidence_refs": [
-          "legacy_research_sources:d36a12aece1e"
-        ],
-        "notes": "Sonnet redo research (2026-04 v2): Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, Status Sep 2011) confirms 7-speed S tronic DQ200 with full gear set [3.500, 2.087, 1.343, 0.933, 0.974, 0.778, 0.653], reverse 3.988, and DQ200's characteristic split final drive: 4.800 for sub-trans 1 (gears 1-4 + reverse 4.500) and 3.429 for sub-trans 2 (gears 5-7). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd / low-gear) ratio, final_drive_rear encodes sub-trans 2 (high-gear) ratio (NOT a physical rear axle on FWD). Production start 2010 (UK Q4 2010 launch); the repo's 2011 reflects MY2011 convention. Top gear was wrongly recorded as 0.680 (placeholder) - corrected to 0.653 (7th gear). FD 3.786 placeholder superseded by split 4.800/3.429. Encodes DQ200 sub-trans 2 (gears 5-7) output ratio - not a physical rear axle on FWD."
       }
     },
     "tires": {
@@ -688,6 +772,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.988",
+        "evidence_refs": [
+          "legacy_research_sources:d36a12aece1e"
+        ]
       }
     ],
     "unresolved": [
@@ -716,11 +806,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   }
 ]

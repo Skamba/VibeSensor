@@ -14,7 +14,7 @@
     "engine_name": "B47D20 2.0L I4 Turbo Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -23,7 +23,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -34,7 +34,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
         "value": 0.667,
         "evidence_refs": [
@@ -43,7 +43,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
         "value": 2.813,
         "evidence_refs": [
@@ -54,7 +54,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -131,6 +131,41 @@
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
       }
     ],
     "unresolved": [
@@ -157,11 +192,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -179,7 +209,7 @@
     "engine_name": "B47D20 2.0L I4 Turbo Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -188,7 +218,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -199,7 +229,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
         "value": 0.667,
         "evidence_refs": [
@@ -208,7 +238,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 725d / 725Ld variants (B47D20 2.0L I4 diesel) are not present in the BMW PressClub G11 launch lineup (T0235242EN, 11/2015), the 2016 model year tech-data PDFs, or the 2019 LCI press kit (T0289615EN). No BMW PressClub spec PDF confirms this badge for the EU market. The family_default tire 245/40 R20 is implausible for a base diesel - the entry-level confirmed 730d carries 225/60 R17 baseline. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation pending an authoritative source.",
         "value": 2.813,
         "evidence_refs": [
@@ -219,7 +249,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -296,6 +326,41 @@
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
       }
     ],
     "unresolved": [
@@ -319,11 +384,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -466,7 +526,7 @@
     "engine_name": "2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -475,7 +535,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW for EU. The 730Li (B48 2.0L I4 petrol in LWB) is a China and select-Asia market variant; it is not listed in any BMW EU PressClub spec article (T0235242EN, T0289615EN) or EU price list. The repo row is tagged 'eu' market which is incorrect for this badge. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -486,7 +546,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW for EU. The 730Li (B48 2.0L I4 petrol in LWB) is a China and select-Asia market variant; it is not listed in any BMW EU PressClub spec article (T0235242EN, T0289615EN) or EU price list. The repo row is tagged 'eu' market which is incorrect for this badge. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -495,7 +555,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW for EU. The 730Li (B48 2.0L I4 petrol in LWB) is a China and select-Asia market variant; it is not listed in any BMW EU PressClub spec article (T0235242EN, T0289615EN) or EU price list. The repo row is tagged 'eu' market which is incorrect for this badge. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 2.813,
         "evidence_refs": [
@@ -506,7 +566,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -583,6 +643,41 @@
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
       }
     ],
     "unresolved": [
@@ -606,11 +701,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -753,7 +843,7 @@
     "engine_name": "2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -762,7 +852,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 730i variant did exist in the EU BMW G11 lineup but only from the 2019 LCI refresh onward (B48 2.0L I4 petrol). It was explicitly NOT in the 11/2015 launch lineup per BMW PressClub T0235242EN spec article. The current row's production_start_year/end_year of 2016/2016 is therefore wrong (correct era is 2019-2022). Tire family_default 245/40 R20 is also unconfirmed for a base petrol. Drivetrain, transmission, ratios and tires set to no_confidence pending year correction and a 2019-LCI tech-data PDF.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -773,7 +863,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 730i variant did exist in the EU BMW G11 lineup but only from the 2019 LCI refresh onward (B48 2.0L I4 petrol). It was explicitly NOT in the 11/2015 launch lineup per BMW PressClub T0235242EN spec article. The current row's production_start_year/end_year of 2016/2016 is therefore wrong (correct era is 2019-2022). Tire family_default 245/40 R20 is also unconfirmed for a base petrol. Drivetrain, transmission, ratios and tires set to no_confidence pending year correction and a 2019-LCI tech-data PDF.",
         "value": 0.667,
         "evidence_refs": [
@@ -782,7 +872,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 730i variant did exist in the EU BMW G11 lineup but only from the 2019 LCI refresh onward (B48 2.0L I4 petrol). It was explicitly NOT in the 11/2015 launch lineup per BMW PressClub T0235242EN spec article. The current row's production_start_year/end_year of 2016/2016 is therefore wrong (correct era is 2019-2022). Tire family_default 245/40 R20 is also unconfirmed for a base petrol. Drivetrain, transmission, ratios and tires set to no_confidence pending year correction and a 2019-LCI tech-data PDF.",
         "value": 2.813,
         "evidence_refs": [
@@ -793,7 +883,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-7-series-2019-press-kit"
@@ -872,6 +962,41 @@
           "secondary_technical_sources:g11-730i-2016-tirewheelguide",
           "secondary_technical_sources:g11-730i-2016-wheel-size"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+        ]
       }
     ],
     "unresolved": [
@@ -902,11 +1027,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -924,7 +1044,7 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
@@ -933,7 +1053,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -944,7 +1064,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
         "value": 0.667,
         "evidence_refs": [
@@ -953,7 +1073,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
         "value": 2.813,
         "evidence_refs": [
@@ -964,7 +1084,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
@@ -1049,6 +1169,41 @@
           "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1082,11 +1237,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -1375,7 +1525,7 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
         "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
@@ -1384,7 +1534,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -1395,7 +1545,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
         "value": 0.667,
         "evidence_refs": [
@@ -1404,7 +1554,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 740d / 740Ld variants in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article and the dedicated g11-740d-xdrive-2015-spec-pdf (T0235242EN/336673), which lists 740d xDrive AWD only. The repo's existing notes on this row already document this conflict. Drivetrain set to no_confidence (the canonical RWD designation is incorrect); transmission, ratios and tires also set to no_confidence as no source supports a RWD ratio set for this badge in the EU market.",
         "value": 2.813,
         "evidence_refs": [
@@ -1415,7 +1565,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
           "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
@@ -1500,6 +1650,41 @@
           "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1533,11 +1718,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -1826,7 +2006,7 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article"
       ],
@@ -1834,7 +2014,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -1844,7 +2024,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -1852,7 +2032,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 2.813,
         "evidence_refs": [
@@ -1862,7 +2042,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article"
         ],
@@ -1944,6 +2124,36 @@
         "evidence_refs": [
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
       }
     ],
     "unresolved": [
@@ -1969,11 +2179,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1991,7 +2196,7 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article"
       ],
@@ -1999,7 +2204,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -2009,7 +2214,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.667,
         "evidence_refs": [
@@ -2017,7 +2222,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 750d / 750Ld variants (B57S quad-turbo 3.0L diesel, 294 kW) in the EU market are xDrive-only - no RWD configuration was offered. Confirmed by BMW PressClub T0235242EN launch spec article (which lists 750d/Ld in the xDrive columns only) and BMW DE brochure. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 2.813,
         "evidence_refs": [
@@ -2027,7 +2232,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article"
         ],
@@ -2109,6 +2314,36 @@
         "evidence_refs": [
           "legacy_research_sources:387f07d4c6ab"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        ]
       }
     ],
     "unresolved": [
@@ -2131,11 +2366,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

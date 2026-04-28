@@ -14,7 +14,7 @@
     "engine_name": "1.6L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 1.6 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia 8V powertrain section confirm FWD MQ350 6MT for 1.6 TDI. Production_start_year 2013 retained per Audi MediaCenter 1.6 TDI ultra press release (Sedan availability mid-2014; first deliveries entering MY2013 model designation). Carfolio reputable_secondary ratios: top 0.59 / FD 3.39 / tire baseline 205/55 R16. Repo placeholder 0.84/3.462/225/45-17 contradicted by every saved exact page.",
       "value": "FWD",
       "evidence_refs": [
@@ -23,7 +23,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 1.6 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia 8V powertrain section confirm FWD MQ350 6MT for 1.6 TDI. Production_start_year 2013 retained per Audi MediaCenter 1.6 TDI ultra press release (Sedan availability mid-2014; first deliveries entering MY2013 model designation). Carfolio reputable_secondary ratios: top 0.59 / FD 3.39 / tire baseline 205/55 R16. Repo placeholder 0.84/3.462/225/45-17 contradicted by every saved exact page.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -34,7 +34,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.59,
         "evidence_refs": [
@@ -43,7 +43,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 3.39,
         "evidence_refs": [
@@ -54,7 +54,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -65,8 +65,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -165,11 +164,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -187,7 +181,7 @@
     "engine_name": "1.6L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 1.6 TDI 7-speed S tronic FWD. CRITICAL CORRECTION: transmission name was '7-speed S tronic (DQ381)' which is wrong. 1.6 TDI peak torque (~250 Nm at 110 PS) sits at the DQ200 limit, not the DQ381 wet-clutch range. ADAC catalogue lists this entry as 'S tronic (7-Gang)' = DQ200; Wikipedia A3 8V section explicitly lists DQ200 for 1.6 TDI. Corrected to DQ200. Ratios from Carfolio reputable_secondary: top 0.64 / FD 3.43; tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -196,7 +190,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 1.6 TDI 7-speed S tronic FWD. CRITICAL CORRECTION: transmission name was '7-speed S tronic (DQ381)' which is wrong. 1.6 TDI peak torque (~250 Nm at 110 PS) sits at the DQ200 limit, not the DQ381 wet-clutch range. ADAC catalogue lists this entry as 'S tronic (7-Gang)' = DQ200; Wikipedia A3 8V section explicitly lists DQ200 for 1.6 TDI. Corrected to DQ200. Ratios from Carfolio reputable_secondary: top 0.64 / FD 3.43; tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)",
@@ -208,7 +202,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.64,
         "evidence_refs": [
@@ -217,7 +211,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 3.43,
         "evidence_refs": [
@@ -228,7 +222,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -239,8 +233,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -339,11 +332,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -361,7 +349,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia confirm FWD MQ350 6MT for 2.0 TDI 150 PS variant. No exact Saloon ratio page recovered for the 2.0 TDI manual; ratios remain no_confidence pending official 8V technical-data PDF. Tire baseline 205/55 R16 from auto-data exact secondary; 225/45 R17 was UK Sport-trim option, not universal default.",
       "value": "FWD",
       "evidence_refs": [
@@ -370,7 +358,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia confirm FWD MQ350 6MT for 2.0 TDI 150 PS variant. No exact Saloon ratio page recovered for the 2.0 TDI manual; ratios remain no_confidence pending official 8V technical-data PDF. Tire baseline 205/55 R16 from auto-data exact secondary; 225/45 R17 was UK Sport-trim option, not universal default.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -381,7 +369,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact Saloon source for 2.0 TDI MT6 ratio. Repo placeholder 0.84 was a family_default carryover.",
         "value": 0.84,
         "evidence_refs": [
@@ -389,7 +377,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo: no exact Saloon source for 2.0 TDI MT6 final drive. Repo placeholder 3.462 was a family_default carryover.",
         "value": 3.462,
         "evidence_refs": [
@@ -399,7 +387,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -410,8 +398,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -478,6 +465,18 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue"
+        ]
       }
     ],
     "unresolved": [
@@ -515,11 +514,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -537,7 +531,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI S tronic FWD. CRITICAL: transmission was labeled DQ381 uniformly, but for 2013-2016 production this engine used the 6-speed DQ250 (FWD-6F variant), with DQ381 (7-speed wet) introduced from MY2017 European market per Wikipedia S_tronic article and ADAC catalogue (no '7-Gang' label on pre-facelift 2.0 TDI S tronic entries). Repo holds the broad 2013-2020 row; transmission code retained as DCT7 family with name 'S tronic (DQ250 6-speed pre-2017, DQ381 7-speed from 2017)' to capture the era-split. Carfolio exact 2016 Sedan page shows 6-speed automatic top 0.62 / FD 3.33 - applied as reputable_secondary (representative of the dominant pre-2017 production span). Tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -546,7 +540,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI S tronic FWD. CRITICAL: transmission was labeled DQ381 uniformly, but for 2013-2016 production this engine used the 6-speed DQ250 (FWD-6F variant), with DQ381 (7-speed wet) introduced from MY2017 European market per Wikipedia S_tronic article and ADAC catalogue (no '7-Gang' label on pre-facelift 2.0 TDI S tronic entries). Repo holds the broad 2013-2020 row; transmission code retained as DCT7 family with name 'S tronic (DQ250 6-speed pre-2017, DQ381 7-speed from 2017)' to capture the era-split. Carfolio exact 2016 Sedan page shows 6-speed automatic top 0.62 / FD 3.33 - applied as reputable_secondary (representative of the dominant pre-2017 production span). Tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "S tronic (DQ250 6-speed 2013-2016 / DQ381 7-speed 2017-2020)",
@@ -559,7 +553,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250 6-speed pre-2017 ratio.",
         "value": 0.62,
         "evidence_refs": [
@@ -568,7 +562,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250 6-speed pre-2017 ratio.",
         "value": 3.33,
         "evidence_refs": [
@@ -579,7 +573,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -590,8 +584,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -695,11 +688,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -717,7 +705,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI quattro 6-speed manual AWD. Auto-data exact secondary supports a 2.0 TDI 150 PS quattro 6-speed manual variant for 2016-2018 (likely Sportback/Saloon). UK MY2018 price list lists the 2.0 TDI quattro only with S tronic, suggesting this manual variant was a non-UK market configuration. Carfolio adjacent (non-Saloon) page: top 0.72 / FD 3.10 - applied as reputable_secondary but flagged as adjacent-only. Tire baseline 205/55 R16.",
       "value": "AWD",
       "evidence_refs": [
@@ -726,7 +714,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI quattro 6-speed manual AWD. Auto-data exact secondary supports a 2.0 TDI 150 PS quattro 6-speed manual variant for 2016-2018 (likely Sportback/Saloon). UK MY2018 price list lists the 2.0 TDI quattro only with S tronic, suggesting this manual variant was a non-UK market configuration. Carfolio adjacent (non-Saloon) page: top 0.72 / FD 3.10 - applied as reputable_secondary but flagged as adjacent-only. Tire baseline 205/55 R16.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -737,7 +725,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent (non-Saloon) Carfolio 2.0 TDI quattro page; Saloon-exact value not found.",
         "value": 0.72,
         "evidence_refs": [
@@ -745,7 +733,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent (non-Saloon) Carfolio page; Saloon-exact value not found.",
         "value": 3.1,
         "evidence_refs": [
@@ -753,7 +741,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): Haldex AWD - rear axle drive ratio mirrors front in published consumer specs. Reputable_secondary via Carfolio adjacent page.",
         "value": 3.1,
         "evidence_refs": [
@@ -763,7 +751,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -774,8 +762,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -879,11 +866,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -901,7 +883,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI quattro S tronic AWD. CRITICAL: era-split transmission. 2013-2016 used DQ250-6A (6-speed wet AWD); 2017-2020 used DQ381-7A (7-speed wet AWD with Haldex). UK MY2018 price list naming '7-speed S tronic' is consistent with the post-2017 DQ381-7A. Carfolio exact 2016 Saloon page: 6-speed top 0.62 / FD 3.33 - representative of pre-2017 dominant span. Tire baseline 205/55 R16.",
       "value": "AWD",
       "evidence_refs": [
@@ -910,7 +892,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 2.0 TDI quattro S tronic AWD. CRITICAL: era-split transmission. 2013-2016 used DQ250-6A (6-speed wet AWD); 2017-2020 used DQ381-7A (7-speed wet AWD with Haldex). UK MY2018 price list naming '7-speed S tronic' is consistent with the post-2017 DQ381-7A. Carfolio exact 2016 Saloon page: 6-speed top 0.62 / FD 3.33 - representative of pre-2017 dominant span. Tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "S tronic (DQ250-6A 2013-2016 / DQ381-7A 2017-2020)",
@@ -923,7 +905,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio.",
         "value": 0.62,
         "evidence_refs": [
@@ -932,7 +914,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio.",
         "value": 3.33,
         "evidence_refs": [
@@ -941,7 +923,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): Haldex AWD rear ratio mirrors front in published specs.",
         "value": 3.33,
         "evidence_refs": [
@@ -952,7 +934,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -963,8 +945,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1068,11 +1049,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1090,7 +1066,7 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 30 TFSI (1.0 TFSI 116 PS, 3-cyl) 6-speed manual FWD. CRITICAL DATE FIX: the 1.0 TFSI engine and the 30 TFSI badge were introduced with the November 2016 8V facelift, NOT at 2013 launch (no 1.0 TFSI appears in pre-facelift ADAC catalogue entries; Wikipedia A3 8V powertrain section lists 1.0 TFSI as a facelift addition). production_start_year corrected 2013 -> 2016. Transmission: MQ200 6-speed manual (within MQ200 torque range). Carfolio exact Saloon page: top 0.64 / FD 4.06; tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -1099,7 +1075,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 30 TFSI (1.0 TFSI 116 PS, 3-cyl) 6-speed manual FWD. CRITICAL DATE FIX: the 1.0 TFSI engine and the 30 TFSI badge were introduced with the November 2016 8V facelift, NOT at 2013 launch (no 1.0 TFSI appears in pre-facelift ADAC catalogue entries; Wikipedia A3 8V powertrain section lists 1.0 TFSI as a facelift addition). production_start_year corrected 2013 -> 2016. Transmission: MQ200 6-speed manual (within MQ200 torque range). Carfolio exact Saloon page: top 0.64 / FD 4.06; tire baseline 205/55 R16.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1110,7 +1086,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.64,
         "evidence_refs": [
@@ -1119,7 +1095,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 4.06,
         "evidence_refs": [
@@ -1130,7 +1106,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -1141,8 +1117,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1250,11 +1225,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1272,7 +1242,7 @@
     "engine_name": "1.0L I3 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 30 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2016 (1.0 TFSI / 30 TFSI badge introduced with 8V facelift). Transmission code corrected from DQ381 -> DQ200: 1.0 TFSI 116 PS peak torque ~200 Nm sits well within DQ200 250 Nm dry-clutch limit; ADAC catalogue lists the entry as 'S tronic (7-Gang)' = DQ200; Wikipedia confirms. Carfolio exact Saloon page: top 0.80 / FD 4.44 (DQ200 typical low-gear sub-trans 1 ratio); tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -1281,7 +1251,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 30 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2016 (1.0 TFSI / 30 TFSI badge introduced with 8V facelift). Transmission code corrected from DQ381 -> DQ200: 1.0 TFSI 116 PS peak torque ~200 Nm sits well within DQ200 250 Nm dry-clutch limit; ADAC catalogue lists the entry as 'S tronic (7-Gang)' = DQ200; Wikipedia confirms. Carfolio exact Saloon page: top 0.80 / FD 4.44 (DQ200 typical low-gear sub-trans 1 ratio); tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)",
@@ -1293,7 +1263,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.8,
         "evidence_refs": [
@@ -1302,7 +1272,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. DQ200 sub-trans 1 final drive (gears 1-4 + reverse).",
         "value": 4.44,
         "evidence_refs": [
@@ -1313,7 +1283,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -1324,8 +1294,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1433,11 +1402,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1455,7 +1419,7 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 35 TFSI (1.5 TFSI evo 150 PS) 6-speed manual FWD. CRITICAL DATE FIX: the 1.5 TFSI evo engine and 35 TFSI badge appeared in the 8V lineup from 2017 (Wikipedia A3 8V section: 1.5 TFSI introduced as facelift evolution; ADAC catalogue has no pre-2017 1.5 TFSI entry). 2013 start was wrong; corrected to 2017. Transmission: MQ250 6-speed manual. Carfolio exact Saloon page: top 0.73 / FD 3.65; tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -1464,7 +1428,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 35 TFSI (1.5 TFSI evo 150 PS) 6-speed manual FWD. CRITICAL DATE FIX: the 1.5 TFSI evo engine and 35 TFSI badge appeared in the 8V lineup from 2017 (Wikipedia A3 8V section: 1.5 TFSI introduced as facelift evolution; ADAC catalogue has no pre-2017 1.5 TFSI entry). 2013 start was wrong; corrected to 2017. Transmission: MQ250 6-speed manual. Carfolio exact Saloon page: top 0.73 / FD 3.65; tire baseline 205/55 R16.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1475,7 +1439,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.73,
         "evidence_refs": [
@@ -1484,7 +1448,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 3.65,
         "evidence_refs": [
@@ -1495,7 +1459,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -1506,8 +1470,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1619,11 +1582,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1641,7 +1599,7 @@
     "engine_name": "1.5L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 35 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2017. Transmission code corrected from DQ381 -> DQ200: 1.5 TFSI evo peak torque 250 Nm sits at the DQ200 dry-clutch ceiling (multiple VW-group 1.5 TFSI applications use DQ200 in this exact configuration). ADAC '7-Gang' label and Wikipedia A3 8V powertrain entry corroborate. Carfolio exact Saloon page: top 0.65 / FD 4.80 (DQ200 sub-trans 1 ratio); tire baseline 205/55 R16.",
       "value": "FWD",
       "evidence_refs": [
@@ -1650,7 +1608,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 35 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2017. Transmission code corrected from DQ381 -> DQ200: 1.5 TFSI evo peak torque 250 Nm sits at the DQ200 dry-clutch ceiling (multiple VW-group 1.5 TFSI applications use DQ200 in this exact configuration). ADAC '7-Gang' label and Wikipedia A3 8V powertrain entry corroborate. Carfolio exact Saloon page: top 0.65 / FD 4.80 (DQ200 sub-trans 1 ratio); tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)",
@@ -1662,7 +1620,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
         "value": 0.65,
         "evidence_refs": [
@@ -1671,7 +1629,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. DQ200 sub-trans 1 final drive.",
         "value": 4.8,
         "evidence_refs": [
@@ -1682,7 +1640,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -1693,8 +1651,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1806,11 +1763,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1828,7 +1780,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "AWD",
       "evidence_refs": [
@@ -1838,7 +1790,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1850,7 +1802,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.84,
         "evidence_refs": [
@@ -1860,7 +1812,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.462,
         "evidence_refs": [
@@ -1870,7 +1822,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.462,
         "evidence_refs": [
@@ -1882,7 +1834,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:a3-8v-adac-catalogue",
           "secondary_technical_sources:audi-a3-8v-wikipedia",
@@ -1965,6 +1917,54 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:a3-8v-adac-catalogue",
+          "secondary_technical_sources:audi-a3-8v-wikipedia",
+          "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
+        ]
       }
     ],
     "unresolved": [
@@ -2014,11 +2014,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -2036,7 +2031,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 40 TFSI quattro (2.0 TFSI 190 PS) S tronic AWD. CRITICAL: this row merges two production eras. 2013-2016: 1.8 TFSI quattro 180 PS with DQ250-6A 6-speed wet AWD (auto-data 2013 page). 2016-2018: 2.0 TFSI quattro 190 PS / 40 TFSI badge with same DQ250-6A then DQ381-7A from 2017. UK MY2018 price list lists the 2.0 TFSI quattro only with S tronic. Carfolio adjacent 2.0 TFSI quattro S tronic page (non-Saloon labeled but same powertrain): top 0.64 / FD 3.13 - applied as reputable_secondary representative of the 2.0 TFSI quattro DQ381-7A 7-speed era. Tire baseline 205/55 R16.",
       "value": "AWD",
       "evidence_refs": [
@@ -2045,7 +2040,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi A3 8V Saloon 40 TFSI quattro (2.0 TFSI 190 PS) S tronic AWD. CRITICAL: this row merges two production eras. 2013-2016: 1.8 TFSI quattro 180 PS with DQ250-6A 6-speed wet AWD (auto-data 2013 page). 2016-2018: 2.0 TFSI quattro 190 PS / 40 TFSI badge with same DQ250-6A then DQ381-7A from 2017. UK MY2018 price list lists the 2.0 TFSI quattro only with S tronic. Carfolio adjacent 2.0 TFSI quattro S tronic page (non-Saloon labeled but same powertrain): top 0.64 / FD 3.13 - applied as reputable_secondary representative of the 2.0 TFSI quattro DQ381-7A 7-speed era. Tire baseline 205/55 R16.",
       "code": "DCT7",
       "name": "S tronic (DQ250-6A 2013-2016 / DQ381-7A 2017-2020)",
@@ -2058,7 +2053,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent 2.0 TFSI quattro S tronic page; covers DQ381-7A era.",
         "value": 0.64,
         "evidence_refs": [
@@ -2067,7 +2062,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent 2.0 TFSI quattro S tronic page.",
         "value": 3.13,
         "evidence_refs": [
@@ -2076,7 +2071,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo (2026-04 v2): Haldex AWD rear ratio mirrors front in published specs.",
         "value": 3.13,
         "evidence_refs": [
@@ -2087,7 +2082,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
           "secondary_technical_sources:a3-8v-adac-catalogue"
@@ -2098,8 +2093,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2219,11 +2213,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   }
 ]

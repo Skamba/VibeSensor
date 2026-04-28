@@ -63,8 +63,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -183,11 +182,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -261,15 +255,6 @@
           "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ],
         "notes": "Post-LCI ZF GA8HP45Z new ratio set per F22 2016 ACEA packet, cross-confirmed via sibling F32 2016 packet. Pre-LCI old set was [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667]."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.712,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
-          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
-        ],
-        "notes": "Post-LCI ZF GA8HP45Z reverse; pre-LCI was 3.295."
       }
     },
     "tires": {
@@ -285,8 +270,7 @@
           "aspect_pct": 55.0,
           "rim_in": 16.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -358,6 +342,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.712",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -405,11 +396,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -473,8 +459,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -573,11 +558,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -648,15 +628,6 @@
           "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ],
         "notes": "ZF GA8HP45Z old (pre-2016 facelift) ratio set per F22 228i ACEA packet T0179544EN/267610 cross-confirmed via F32 428i 2013 launch packet."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.295,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
-          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
-        ],
-        "notes": "ZF GA8HP45Z old reverse."
       }
     },
     "tires": {
@@ -671,8 +642,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -739,6 +709,13 @@
           "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
           "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.295",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -771,11 +748,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -840,8 +812,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -941,11 +912,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1017,15 +983,6 @@
           "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ],
         "notes": "ZF GA8HP45Z new (post-2016) ratio set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.712,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
-          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
-        ],
-        "notes": "ZF GA8HP45Z new reverse."
       }
     },
     "tires": {
@@ -1041,8 +998,7 @@
           "aspect_pct": 50.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1112,6 +1068,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.712",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1142,11 +1105,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1164,7 +1122,7 @@
     "engine_name": "B58B30O0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "RWD",
       "evidence_refs": [
@@ -1172,7 +1130,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1182,7 +1140,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.812,
         "evidence_refs": [
@@ -1190,7 +1148,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch). The BMW M2 is chassis F87, NOT F22. Per BMW PressClub T0238042EN/368917 (M2 2016 launch tech-data PDF), the M2 launched in 2016 (not 2014) with engine N55B30T0 (NOT B58 as the repo row claims). Default tyres are staggered 245/35 ZR19 front + 265/35 ZR19 rear. This row's chassis placement, engine code, and start year are all wrong. The variant should be re-homed to a dedicated F87 shard. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.231,
         "evidence_refs": [
@@ -1200,7 +1158,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
         ],
@@ -1282,6 +1240,36 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1329,11 +1317,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1351,7 +1334,7 @@
     "engine_name": "B58B30O0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
       "value": "RWD",
       "evidence_refs": [
@@ -1359,7 +1342,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -1369,7 +1352,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
         "value": 0.667,
         "evidence_refs": [
@@ -1377,7 +1360,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (triple-mismatch). The BMW M2 is chassis F87 not F22; launched 2016 not 2014; engine N55B30T0 not B58. Furthermore the M2 automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0238042EN/368917. Row should be re-homed to F87 shard with corrected gearbox.",
         "value": 3.077,
         "evidence_refs": [
@@ -1387,7 +1370,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
         ],
@@ -1469,6 +1452,36 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1516,11 +1529,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1538,7 +1546,7 @@
     "engine_name": "S55B30T0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
       "value": "RWD",
       "evidence_refs": [
@@ -1546,7 +1554,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -1556,7 +1564,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
         "value": 0.812,
         "evidence_refs": [
@@ -1564,7 +1572,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW (chassis-mismatch + year-error). The BMW M2 Competition is chassis F87 not F22; launched 2018 not 2014. Engine S55B30T0 (carried over from F80 M3 / F82 M4) is correct, but chassis placement and start year are wrong. Per BMW PressClub T0279885EN/415275. Default tyres staggered 245/35 ZR19 front + 265/35 ZR19 rear. Row should be re-homed to F87 shard.",
         "value": 3.231,
         "evidence_refs": [
@@ -1574,7 +1582,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
         ],
@@ -1652,6 +1660,36 @@
           "legacy_research_sources:60f36b6f8878",
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
         ]
       }
     ],
@@ -1700,11 +1738,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -1722,7 +1755,7 @@
     "engine_name": "S55B30T0 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
       ],
@@ -1730,7 +1763,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
       ],
@@ -1740,7 +1773,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
         "value": 0.667,
         "evidence_refs": [
@@ -1748,7 +1781,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): PHANTOM ROW. M2 Competition is F87 not F22; launched 2018 not 2014. The automatic option is M-DCT 7 (Getrag GS7D36BG / 7DCI600), NOT ZF GA8HP45Z. ZF8HP was never offered in M2/M2C. Per BMW PressClub T0279885EN/415275.",
         "value": 3.077,
         "evidence_refs": [
@@ -1758,7 +1791,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
         ],
@@ -1837,6 +1870,36 @@
           "legacy_research_sources:7e0213853a41",
           "legacy_research_sources:95b9bf2bf0cf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1881,11 +1944,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true

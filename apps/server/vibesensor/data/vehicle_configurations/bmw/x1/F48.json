@@ -71,14 +71,6 @@
           "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F45 (diesel calibration) gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.221,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F45 reverse."
       }
     },
     "tires": {
@@ -93,8 +85,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -150,6 +141,12 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -174,11 +171,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -259,15 +251,6 @@
           "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F45 (petrol calibration) gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.015,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
-          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F45 reverse 4.015."
       }
     },
     "tires": {
@@ -282,8 +265,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -343,6 +325,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.015",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -369,11 +358,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -454,15 +438,6 @@
           "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F45 (petrol calibration) gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.015,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
-          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F45 reverse."
       }
     },
     "tires": {
@@ -477,8 +452,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -538,6 +512,13 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.015",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -566,11 +547,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -635,14 +611,6 @@
           "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ],
         "notes": "GS6-17BG gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.538,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
-        ],
-        "notes": "GS6-17BG reverse."
       }
     },
     "tires": {
@@ -657,8 +625,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -718,6 +685,12 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.538",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -743,11 +716,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -765,7 +733,7 @@
     "engine_name": "B37 1.5L I3 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive16d (B37 1.5L diesel) was offered exclusively with the 6-speed manual transmission - no automatic was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0232406 (11/2015 sDrive16d tech-data PDF, manual-only column), T0286555 (09/2018 multi-variant spec, no sDrive16d automatic), and T0327516 (03/2021 final spec, sDrive16d not present). The 'ZF8HP' code in the row ID is also a misnomer (UKL2 transverse cannot mount ZF 8HP). Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "value": "FWD",
       "evidence_refs": [
@@ -776,7 +744,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive16d (B37 1.5L diesel) was offered exclusively with the 6-speed manual transmission - no automatic was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0232406 (11/2015 sDrive16d tech-data PDF, manual-only column), T0286555 (09/2018 multi-variant spec, no sDrive16d automatic), and T0327516 (03/2021 final spec, sDrive16d not present). The 'ZF8HP' code in the row ID is also a misnomer (UKL2 transverse cannot mount ZF 8HP). Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "code": "ZF8HP",
       "name": "8-speed automatic (Aisin)",
@@ -789,7 +757,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive16d (B37 1.5L diesel) was offered exclusively with the 6-speed manual transmission - no automatic was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0232406 (11/2015 sDrive16d tech-data PDF, manual-only column), T0286555 (09/2018 multi-variant spec, no sDrive16d automatic), and T0327516 (03/2021 final spec, sDrive16d not present). The 'ZF8HP' code in the row ID is also a misnomer (UKL2 transverse cannot mount ZF 8HP). Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 0.674,
         "evidence_refs": [
@@ -800,7 +768,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive16d (B37 1.5L diesel) was offered exclusively with the 6-speed manual transmission - no automatic was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0232406 (11/2015 sDrive16d tech-data PDF, manual-only column), T0286555 (09/2018 multi-variant spec, no sDrive16d automatic), and T0327516 (03/2021 final spec, sDrive16d not present). The 'ZF8HP' code in the row ID is also a misnomer (UKL2 transverse cannot mount ZF 8HP). Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
         "value": 3.294,
         "evidence_refs": [
@@ -813,7 +781,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
@@ -890,6 +858,51 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -912,11 +925,6 @@
     "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -990,14 +998,6 @@
           "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
         ],
         "notes": "GS6-17BG gear set (launch-era values)."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.538,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
-        ],
-        "notes": "GS6-17BG reverse."
       }
     },
     "tires": {
@@ -1013,8 +1013,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1082,6 +1081,12 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.538",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1119,11 +1124,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1198,14 +1198,6 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F35 (diesel calibration) gear set, stable across all production years."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.221,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F35 reverse 4.221."
       }
     },
     "tires": {
@@ -1221,8 +1213,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1290,6 +1281,12 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1327,11 +1324,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1404,14 +1396,6 @@
           "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf"
         ],
         "notes": "GS6-17BG gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.538,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf"
-        ],
-        "notes": "GS6-17BG reverse."
       }
     },
     "tires": {
@@ -1426,8 +1410,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1493,6 +1476,12 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.538",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1511,11 +1500,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1543,7 +1527,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "BMW X1 F48 sDrive18i automatic FWD - this row spans TWO different gearboxes in production: (a) Aisin 6-speed Steptronic (AT6) for launch-era 2015-2017 per BMW PressClub T0232406/325736 (11/2015): gear set 4.459/2.508/1.556/1.142/0.851/0.672, reverse 3.185, FD 4.103. (b) Magna/Getrag 7DCT300 7-speed dual-clutch for LCI era 2018-2022 per T0286555/419620 (09/2018) and T0327516/473615 (03/2021): FD 4.176, with overall gear ratios published. Engine B38A15M0 across both eras. The 'ZF8HP' code in the row ID is a misnomer in BOTH eras (neither is a ZF 8HP). Drivetrain and configuration well-evidenced; per-gear values held at no_confidence because the row cannot represent both eras simultaneously and a row split is out of scope for this research pass. Default tyre 225/55 R17 97W (stable).",
       "code": "ZF8HP",
       "name": "Aisin 6AT (2015-2017) / Magna 7DCT300 (2018-2022)",
@@ -1556,7 +1540,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Row spans two different gearboxes (Aisin 6AT 2015-2017 vs Magna 7DCT300 2018-2022) with different gear sets and final drives. Values held at no_confidence; row split (out of scope) needed to represent each era cleanly.",
         "value": 0.674,
         "evidence_refs": [
@@ -1566,7 +1550,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Row spans two different gearboxes (Aisin 6AT 2015-2017 vs Magna 7DCT300 2018-2022) with different gear sets and final drives. Values held at no_confidence; row split (out of scope) needed to represent each era cleanly.",
         "value": 3.294,
         "evidence_refs": [
@@ -1589,8 +1573,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1660,6 +1643,22 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1687,11 +1686,6 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   },
@@ -1757,14 +1751,6 @@
           "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
         ],
         "notes": "GS6-17BG gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.538,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
-        ],
-        "notes": "GS6-17BG reverse."
       }
     },
     "tires": {
@@ -1779,8 +1765,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -1843,6 +1828,12 @@
           "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.538",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -1871,11 +1862,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -1945,14 +1931,6 @@
           "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F35 gear set per BMW PressClub T0260622/360424 - note: per source, sDrive20d 8AT uses the petrol-calibration gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.015,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F35 reverse 4.015."
       }
     },
     "tires": {
@@ -1967,8 +1945,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2032,6 +2009,12 @@
           "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.015",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2066,11 +2049,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -2088,7 +2066,7 @@
     "engine_name": "1.5L",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive20i (B48 2.0L petrol) was offered with automatic transmission only - no manual was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0223367 (07/2015, sDrive20i = 8-speed Steptronic only), T0286555 (09/2018, sDrive20i = 7-speed Steptronic with double clutch only), and T0327516 (03/2021, sDrive20i = 7DCT only). Three official BMW EU/ACEA tech sheets across launch through post-LCI all show automatic-only. Additionally engine_code '1.5L' in this row is wrong: official BMW spec confirms sDrive20i uses the B48 2.0L (1998 cm3, 4-cyl) - the 1.5L (B38) is the sDrive18i engine. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "value": "FWD",
       "evidence_refs": [
@@ -2099,7 +2077,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive20i (B48 2.0L petrol) was offered with automatic transmission only - no manual was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0223367 (07/2015, sDrive20i = 8-speed Steptronic only), T0286555 (09/2018, sDrive20i = 7-speed Steptronic with double clutch only), and T0327516 (03/2021, sDrive20i = 7DCT only). Three official BMW EU/ACEA tech sheets across launch through post-LCI all show automatic-only. Additionally engine_code '1.5L' in this row is wrong: official BMW spec confirms sDrive20i uses the B48 2.0L (1998 cm3, 4-cyl) - the 1.5L (B38) is the sDrive18i engine. Drivetrain, transmission, ratios and tires set to no_confidence.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -2112,7 +2090,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive20i (B48 2.0L petrol) was offered with automatic transmission only - no manual was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0223367 (07/2015, sDrive20i = 8-speed Steptronic only), T0286555 (09/2018, sDrive20i = 7-speed Steptronic with double clutch only), and T0327516 (03/2021, sDrive20i = 7DCT only). Three official BMW EU/ACEA tech sheets across launch through post-LCI all show automatic-only. Additionally engine_code '1.5L' in this row is wrong: official BMW spec confirms sDrive20i uses the B48 2.0L (1998 cm3, 4-cyl) - the 1.5L (B38) is the sDrive18i engine. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 0.812,
         "evidence_refs": [
@@ -2123,7 +2101,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo (2026-04 v2): PHANTOM ROW. The BMW X1 F48 sDrive20i (B48 2.0L petrol) was offered with automatic transmission only - no manual was ever fitted to this variant in the EU. Confirmed by BMW PressClub T0223367 (07/2015, sDrive20i = 8-speed Steptronic only), T0286555 (09/2018, sDrive20i = 7-speed Steptronic with double clutch only), and T0327516 (03/2021, sDrive20i = 7DCT only). Three official BMW EU/ACEA tech sheets across launch through post-LCI all show automatic-only. Additionally engine_code '1.5L' in this row is wrong: official BMW spec confirms sDrive20i uses the B48 2.0L (1998 cm3, 4-cyl) - the 1.5L (B38) is the sDrive18i engine. Drivetrain, transmission, ratios and tires set to no_confidence.",
         "value": 3.385,
         "evidence_refs": [
@@ -2136,7 +2114,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
@@ -2219,6 +2197,51 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
+          "secondary_technical_sources:bmw-x1-f48-wikipedia"
+        ]
       }
     ],
     "unresolved": [
@@ -2259,11 +2282,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -2291,7 +2309,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "BMW X1 F48 sDrive20i automatic FWD - this row spans TWO different gearboxes in production: (a) Aisin AWF8F35 8-speed Steptronic for launch-era 2015-2017 per BMW PressClub T0223367/316338 (07/2015): gear set 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673, reverse 4.015, FD 3.200. (b) Magna/Getrag 7DCT300 7-speed dual-clutch for LCI era 2018-2022 per T0286555/419620 (09/2018) and T0327516/473615 (03/2021): FD 3.789. Engine corrected from 1.5L to B48 2.0L (1998 cm3 4-cyl per BMW PressClub - the 1.5L is the B38 used in sDrive18i). 'ZF8HP' is a misnomer in BOTH eras. Per-gear values held at no_confidence because row spans two incompatible gearboxes; row split out of scope. Default tyre 225/55 R17 97W.",
       "code": "ZF8HP",
       "name": "Aisin AWF8F35 8AT (2015-2017) / Magna 7DCT300 (2018-2022)",
@@ -2304,7 +2322,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Row spans two different gearboxes (Aisin AWF8F35 8AT 2015-2017 vs Magna 7DCT300 2018-2022) with different gear sets and final drives. Values held at no_confidence; row split (out of scope) needed.",
         "value": 0.674,
         "evidence_refs": [
@@ -2314,7 +2332,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Row spans two different gearboxes (Aisin AWF8F35 8AT 2015-2017 vs Magna 7DCT300 2018-2022) with different gear sets and final drives. Values held at no_confidence; row split (out of scope) needed.",
         "value": 3.294,
         "evidence_refs": [
@@ -2337,8 +2355,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2408,6 +2425,22 @@
           "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2444,11 +2477,6 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   },
@@ -2522,14 +2550,6 @@
           "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
         ],
         "notes": "Aisin AT6 gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.185,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
-        ],
-        "notes": "Aisin AT6 reverse."
       }
     },
     "tires": {
@@ -2544,8 +2564,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2601,6 +2620,12 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.185",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2622,11 +2647,6 @@
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
@@ -2704,14 +2724,6 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
         "notes": "Aisin AWF8F45 (diesel calibration) gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 4.221,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
-        ],
-        "notes": "Aisin AWF8F45 reverse 4.221."
       }
     },
     "tires": {
@@ -2726,8 +2738,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2781,6 +2792,12 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 4.221",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2805,11 +2822,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   },
   {
@@ -2882,14 +2894,6 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
         "notes": "Aisin AT6 gear set."
-      },
-      "reverse_gear_ratio": {
-        "confidence": "official_exact",
-        "value": 3.185,
-        "evidence_refs": [
-          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
-        ],
-        "notes": "Aisin AT6 reverse."
       }
     },
     "tires": {
@@ -2904,8 +2908,7 @@
           "aspect_pct": 55.0,
           "rim_in": 17.0
         },
-        "default_axle_for_speed": "rear",
-        "rear": null
+        "default_axle_for_speed": "rear"
       },
       "options": [
         {
@@ -2959,6 +2962,12 @@
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
           "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
+      },
+      {
+        "note": "Reverse gear ratio (research note): 3.185",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
       }
     ],
     "unresolved": [
@@ -2980,11 +2989,6 @@
     "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true

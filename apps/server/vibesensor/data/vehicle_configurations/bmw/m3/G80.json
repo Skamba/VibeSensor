@@ -23,7 +23,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
       "code": "MT6",
       "name": "6-speed manual (GS6-53BZ)",
@@ -37,7 +37,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec). Top gear value 0.812 sourced from C&D/MotorTrend secondary specs; ZF S6-53 article cites 0.872 - discrepancy noted.",
         "value": 0.812,
         "evidence_refs": [
@@ -48,7 +48,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 (citing BMW press kit), MotorTrend 2021/2022 specs, and C&D specs all confirm base G80 M3 = 6-speed manual GS6-53BZ (or BMW-branded variant) RWD-only. Final drive 3.46 (3 independent secondary sources, 2021-2022 MY consistent); repo's prior 3.846 was a stale family_default inheritance from older BMW M models, now corrected. 6th gear 0.812 inherited from G82 M4 prior research (C&D/MotorTrend); ZF S6-53 Wikipedia article suggests an alternate value 0.872 for GS6-53BZ - discrepancy unresolved without primary BMW ACEA PDF. EU OE tires staggered 275/35 ZR19 front + 285/30 ZR20 rear (same as G82 M4 base manual EU spec).",
         "value": 3.46,
         "evidence_refs": [
@@ -60,7 +60,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:g80-m3-wikipedia",
           "secondary_technical_sources:g82-m4-bmwusa-tech-highlights"
@@ -179,11 +179,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -204,7 +199,7 @@
     "engine_name": "S58 3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "evidence_refs": [
         "secondary_technical_sources:g80-m3-wikipedia",
         "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
@@ -214,7 +209,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)",
@@ -226,7 +221,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
         "value": 0.667,
         "evidence_refs": [
@@ -236,7 +231,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia BMW M3 G80 article (citing BMW press kit, footnote 167) explicitly states 'A manual gearbox is available only with rear wheel drive, and is the only transmission available on the standard M3 model.' Wikipedia spec table lists the base M3 saloon (52AY) only with the 6-speed manual; the ZF 8HP M-Steptronic is reserved for Competition variants. The base + 8AT RWD combination does not exist in any market - directly parallels the G82 M4 base 8AT phantom finding. Marked no_confidence as a phantom configuration.",
         "value": 3.154,
         "evidence_refs": [
@@ -248,7 +243,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:g80-m3-wikipedia",
           "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
@@ -264,7 +259,7 @@
       },
       "options": [
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "secondary_technical_sources:g80-m3-wikipedia",
             "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
@@ -280,7 +275,7 @@
           "name": "Standard 19\""
         },
         {
-          "confidence": "no_confidence",
+          "confidence": "unverified",
           "evidence_refs": [
             "secondary_technical_sources:g80-m3-wikipedia",
             "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
@@ -314,6 +309,62 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[0]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "tires.options[1]: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:g80-m3-wikipedia",
+          "secondary_technical_sources:g82-m4-bmwusa-tech-highlights",
+          "secondary_technical_sources:g82-m4-motortrend-overview"
+        ]
       }
     ],
     "unresolved": [
@@ -351,11 +402,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -384,7 +430,7 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
       "code": "ZF8HP",
       "name": "8-speed M-Steptronic Sport (ZF 8HP)",
@@ -394,7 +440,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
         "value": 0.64,
         "evidence_refs": [
@@ -402,7 +448,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "notes": "Sonnet redo research (2026-04 v2): Wikipedia G80 M3 spec table (citing BMW press kit) confirms M3 Competition saloon (32AY) 375 kW with 8-speed M Steptronic Sport with Drivelogic, RWD. Same ZF 8HP M-Steptronic as the Competition xDrive (Row 3, official_exact in repo) - same hardware therefore same internal ratios I 5.000 / II 3.200 / III 2.143 / IV 1.720 / V 1.313 / VI 1.000 / VII 0.823 / VIII 0.640 and final drive 3.154. Repo's prior top_gear 0.667 was inconsistent with the same physical gearbox/diff used on the xDrive row and was a stale family_default. Corrected to 0.640 to match the Competition xDrive row. EU OE tires 275/35 ZR19 front + 285/30 ZR20 rear (same architecture as base M3 and G82 M4).",
         "value": 3.154,
         "evidence_refs": [
@@ -410,7 +456,7 @@
         ]
       },
       "gear_ratios": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "value": [
           5.0,
           3.2,
@@ -429,7 +475,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:g80-m3-wikipedia",
           "secondary_technical_sources:g82-m4-bmwusa-tech-highlights"
@@ -548,11 +594,6 @@
     "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    },
-    "safety": {
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
@@ -733,11 +774,6 @@
       "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": false
     }
   }
 ]

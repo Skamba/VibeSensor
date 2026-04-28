@@ -14,7 +14,7 @@
     "engine_name": "1.4L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL): 1.4 TFSI 150 PS / 6-speed manual is a purchasable EU/UK variant across the entire pre-LCI and post-LCI span. Engine code CZDA. PQ35 platform, transverse FWD-only (no quattro variant of 1.4 TFSI exists). Default tyre per Audi UK SE-spec brochure is 235/55 R17 (NOT the 235/50 R18 family-default - that is the S line option). Gear ratios remain unverified; no official Audi UK technical-data PDF has been recovered for the 1.4 TFSI manual.",
       "value": "FWD",
       "evidence_refs": [
@@ -23,7 +23,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL): 1.4 TFSI 150 PS / 6-speed manual is a purchasable EU/UK variant across the entire pre-LCI and post-LCI span. Engine code CZDA. PQ35 platform, transverse FWD-only (no quattro variant of 1.4 TFSI exists). Default tyre per Audi UK SE-spec brochure is 235/55 R17 (NOT the 235/50 R18 family-default - that is the S line option). Gear ratios remain unverified; no official Audi UK technical-data PDF has been recovered for the 1.4 TFSI manual.",
       "code": "MT6",
       "name": "6-speed manual",
@@ -34,7 +34,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.84 is plausible for VW Group 6-speed manual MQ200/MQ250-class but unverified - no official Audi tech-data PDF recovered for Q3 8U 1.4 TFSI manual. Downgraded from family_default to no_confidence pending source.",
         "value": 0.84,
         "evidence_refs": [
@@ -43,7 +43,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.462 is family-default inherited; not verified from Q3 8U 1.4 TFSI specific tech data.",
         "value": 3.462,
         "evidence_refs": [
@@ -54,7 +54,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
@@ -133,6 +133,20 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
       }
     ],
     "unresolved": [
@@ -178,7 +192,7 @@
     "engine_name": "1.4L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD AUTOMATIC: gearbox CORRECTED from '7-speed S tronic (DQ500)' to '6-speed S tronic (DQ250)'. Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL) explicitly describe this variant as '6-speed S tronic' - NOT 7-speed. The DQ500 (7-speed wet clutch) is reserved for high-torque quattro applications on this platform; the DQ200 (7-speed dry clutch) is an MQB-era unit not available on PQ35-based Q3 8U. The DQ250 (6-speed wet clutch, 0AM/02E family) is the correct unit for FWD 1.4 TFSI Q3 8U. Drivetrain FWD confirmed; PQ35 platform. Default tyre 235/55 R17 per Audi UK SE-spec.",
       "value": "FWD",
       "evidence_refs": [
@@ -187,7 +201,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD AUTOMATIC: gearbox CORRECTED from '7-speed S tronic (DQ500)' to '6-speed S tronic (DQ250)'. Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL) explicitly describe this variant as '6-speed S tronic' - NOT 7-speed. The DQ500 (7-speed wet clutch) is reserved for high-torque quattro applications on this platform; the DQ200 (7-speed dry clutch) is an MQB-era unit not available on PQ35-based Q3 8U. The DQ250 (6-speed wet clutch, 0AM/02E family) is the correct unit for FWD 1.4 TFSI Q3 8U. Drivetrain FWD confirmed; PQ35 platform. Default tyre 235/55 R17 per Audi UK SE-spec.",
       "code": "DCT6",
       "name": "6-speed S tronic (DQ250)",
@@ -198,7 +212,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Stored top gear 0.725 was associated with DQ500 7-speed gear sets; for the corrected DQ250 6-speed gearbox, the value is plausible-but-unverified (DQ250 6th typically 0.650-0.750). Downgraded to no_confidence pending official Audi DQ250 spec.",
         "value": 0.725,
         "evidence_refs": [
@@ -207,7 +221,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 4.077 is family-default inherited; DQ250 final drives for PQ35 FWD 1.4 TFSI applications are typically 3.9-4.1 - value plausible but unverified for this exact variant.",
         "value": 4.077,
         "evidence_refs": [
@@ -218,7 +232,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
@@ -297,6 +311,20 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
       }
     ],
     "unresolved": [
@@ -342,7 +370,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 2.0 TDI FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 and 2016 ATL): pre-LCI 140 PS and 177 PS variants and post-LCI 150 PS variant all available with 6-speed manual FWD. Gearbox is the 02Q (VW Group 6MT for FWD petrol/diesel). The 2.0 TDI FWD is exclusively manual in both pre-LCI and post-LCI Q3 8U lineups - no automatic FWD TDI variant is offered (see Row 3 phantom). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default).",
       "value": "FWD",
       "evidence_refs": [
@@ -351,7 +379,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 2.0 TDI FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 and 2016 ATL): pre-LCI 140 PS and 177 PS variants and post-LCI 150 PS variant all available with 6-speed manual FWD. Gearbox is the 02Q (VW Group 6MT for FWD petrol/diesel). The 2.0 TDI FWD is exclusively manual in both pre-LCI and post-LCI Q3 8U lineups - no automatic FWD TDI variant is offered (see Row 3 phantom). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default).",
       "code": "MT6",
       "name": "6-speed manual",
@@ -362,7 +390,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.84 plausible for 02Q (range 0.775-0.84) but unverified for this specific Q3 8U 2.0 TDI application.",
         "value": 0.84,
         "evidence_refs": [
@@ -371,7 +399,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.462 inherited family-default; within typical Q3 TDI FWD range but unverified for this variant.",
         "value": 3.462,
         "evidence_refs": [
@@ -382,7 +410,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
@@ -465,6 +493,20 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
       }
     ],
     "unresolved": [
@@ -518,7 +560,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
       "value": "FWD",
       "evidence_refs": [
@@ -527,7 +569,7 @@
       ]
     },
     "transmission": {
-      "confidence": "no_confidence",
+      "confidence": "unverified",
       "notes": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ500)",
@@ -538,7 +580,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
         "value": 0.725,
         "evidence_refs": [
@@ -547,7 +589,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
         "value": 4.077,
         "evidence_refs": [
@@ -558,7 +600,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
@@ -641,6 +683,41 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "tires.default: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "drivetrain: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "transmission: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
       }
     ],
     "unresolved": [
@@ -677,11 +754,6 @@
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
-    },
-    "safety": {
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
   },
   {
@@ -699,7 +771,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
@@ -709,7 +781,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
@@ -721,7 +793,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.84 plausible for 0AJ (range 0.756-0.840) but unverified for this Q3 8U 2.0 TDI quattro variant.",
         "value": 0.84,
         "evidence_refs": [
@@ -730,7 +802,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 3.462 plausible for 0AJ in this torque application but unverified.",
         "value": 3.462,
         "evidence_refs": [
@@ -739,7 +811,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive rear 3.462 inherited; unverified.",
         "value": 3.462,
         "evidence_refs": [
@@ -750,7 +822,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
@@ -829,6 +901,27 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -878,7 +971,7 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 2.0 TDI quattro 7-speed S tronic AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS) and 2016 brochure (150/184 PS). Gearbox is DQ500 (Audi 0BH) wet-clutch 7-speed DCT, which integrates the Haldex transfer-case output for the rear axle on PQ35 quattro applications. DCT7 transmission code is correct. DQ500 family designation is correct (DQ250 6-speed has no Haldex-integrated variant for Q3 8U). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default). Gear ratios unverified.",
       "value": "AWD",
       "evidence_refs": [
@@ -887,7 +980,7 @@
       ]
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "notes": "Audi Q3 (8U) 2.0 TDI quattro 7-speed S tronic AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS) and 2016 brochure (150/184 PS). Gearbox is DQ500 (Audi 0BH) wet-clutch 7-speed DCT, which integrates the Haldex transfer-case output for the rear axle on PQ35 quattro applications. DCT7 transmission code is correct. DQ500 family designation is correct (DQ250 6-speed has no Haldex-integrated variant for Q3 8U). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default). Gear ratios unverified.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ500)",
@@ -898,7 +991,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Top gear 0.725 plausible for DQ500 7th gear but unverified for this specific Q3 8U variant.",
         "value": 0.725,
         "evidence_refs": [
@@ -907,7 +1000,7 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive 4.077 plausible but unverified for Q3 8U 2.0 TDI quattro DCT7.",
         "value": 4.077,
         "evidence_refs": [
@@ -916,7 +1009,7 @@
         ]
       },
       "final_drive_rear": {
-        "confidence": "no_confidence",
+        "confidence": "unverified",
         "notes": "Final drive rear 4.077 inherited; unverified.",
         "value": 4.077,
         "evidence_refs": [
@@ -927,7 +1020,7 @@
     },
     "tires": {
       "default": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
           "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
@@ -1006,6 +1099,27 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "ratios.top_gear_ratio: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_front: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
+      },
+      {
+        "note": "ratios.final_drive_rear: confidence was 'no_confidence' (manual confirmation required); remapped to 'unverified' for schema compliance.",
+        "evidence_refs": [
+          "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
+          "secondary_technical_sources:audi-q3-8u-2016-uk-brochure"
+        ]
       }
     ],
     "unresolved": [
@@ -1051,7 +1165,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
@@ -1060,7 +1174,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
@@ -1071,7 +1185,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "legacy_research_sources:6c2ebf019f9d",
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
@@ -1216,7 +1330,7 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:audi-q3-8u-2016-uk-brochure",
@@ -1226,7 +1340,7 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "reputable_secondary",
+      "confidence": "reputable_secondary_crosschecked",
       "evidence_refs": [
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:audi-q3-8u-2016-uk-brochure",
@@ -1238,7 +1352,7 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "legacy_research_sources:9d7fc9f138f2",
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
@@ -1248,7 +1362,7 @@
         "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "legacy_research_sources:9d7fc9f138f2",
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
@@ -1258,7 +1372,7 @@
         "value": 4.769
       },
       "final_drive_rear": {
-        "confidence": "reputable_secondary",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
           "legacy_research_sources:9d7fc9f138f2",
           "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
