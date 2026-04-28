@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 
+import { uiLogger } from "../../ui_logger";
 import type { CreatedSpectrumPanel } from "./spectrum_panel";
 
 export interface SpectrumPanelHostLazyProps {
@@ -40,7 +41,7 @@ export default function SpectrumPanelHostLazy(props: SpectrumPanelHostLazyProps)
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("[VibeSensor] Failed to load spectrum panel host.", error);
+          uiLogger.error("[VibeSensor] Failed to load spectrum panel host.", error);
         }
       });
     return () => {

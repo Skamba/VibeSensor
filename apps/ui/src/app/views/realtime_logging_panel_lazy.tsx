@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 
+import { uiLogger } from "../../ui_logger";
 import type { RealtimeLoggingPanelBridge } from "./realtime_logging_panel";
 
 export interface RealtimeLoggingPanelLazyProps {
@@ -42,7 +43,7 @@ export default function RealtimeLoggingPanelLazy(
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("[VibeSensor] Failed to load realtime logging panel.", error);
+          uiLogger.error("[VibeSensor] Failed to load realtime logging panel.", error);
         }
       });
     return () => {

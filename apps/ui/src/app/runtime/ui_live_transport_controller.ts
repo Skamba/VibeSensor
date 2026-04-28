@@ -1,4 +1,5 @@
 import type { AdaptedPayload } from "../../transport/live_models";
+import { uiLogger } from "../../ui_logger";
 import {
   applyLivePayloadUpdate,
   type AppState,
@@ -84,10 +85,10 @@ export class UiLiveTransportController {
     this.disposeWsStateSync = disposers.wsStateSync;
     this.disposeSelectionSync = disposers.selectionSync;
     void loadLiveTransportRuntime().catch((error) => {
-      console.error("[VibeSensor] Failed to preload websocket transport runtime.", error);
+      uiLogger.error("[VibeSensor] Failed to preload websocket transport runtime.", error);
     });
     void this.preloadPayloadAdapter().catch((error) => {
-      console.error("[VibeSensor] Failed to preload live payload adapter.", error);
+      uiLogger.error("[VibeSensor] Failed to preload live payload adapter.", error);
     });
   }
 
@@ -189,16 +190,16 @@ export class UiLiveTransportController {
     }
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     void this.preloadPayloadAdapter().catch((error) => {
-      console.error("[VibeSensor] Failed to preload live payload adapter.", error);
+      uiLogger.error("[VibeSensor] Failed to preload live payload adapter.", error);
     });
     if (isDemoMode) {
       void this.startDemoMode().catch((error) => {
-        console.error("[VibeSensor] Failed to start demo transport mode.", error);
+        uiLogger.error("[VibeSensor] Failed to start demo transport mode.", error);
       });
       return;
     }
     void this.connectWs().catch((error) => {
-      console.error("[VibeSensor] Failed to load websocket transport runtime.", error);
+      uiLogger.error("[VibeSensor] Failed to load websocket transport runtime.", error);
     });
   }
 
