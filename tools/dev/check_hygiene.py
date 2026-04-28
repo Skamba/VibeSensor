@@ -17,6 +17,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD = "node ../../tools/ui/ensure_ui_bootstrap.mjs"
+_UI_DERIVATIVE_SETUP_WORKFLOW_CMD = "npm run setup:generated-contracts"
 
 TEXT_EXTS = {
     ".py",
@@ -1165,6 +1166,7 @@ def check_contract_sync_entrypoint() -> list[str]:
     expected_scripts = {
         "sync:contracts": "node ../../tools/config/sync_contract_artifacts.mjs",
         "sync:generated-contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs",
+        "setup:generated-contracts": "node ../../tools/ui/ensure_ui_bootstrap.mjs --ensure-generated-contracts",
         "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
         "build": "npm run check:contracts && vite build",
         "build:prevalidated-contracts": "vite build",
@@ -1227,6 +1229,14 @@ def check_contract_sync_entrypoint() -> list[str]:
                     error_message=(
                         "backend-contract-drift must install UI dependencies from apps/ui before running "
                         "the authoritative contract sync check."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run=_UI_DERIVATIVE_SETUP_WORKFLOW_CMD,
+                    error_message=(
+                        "backend-contract-drift must materialize missing UI contract derivatives on "
+                        "fresh checkouts before running the authoritative contract sync check."
                     ),
                 ),
                 WorkflowStepRequirement(

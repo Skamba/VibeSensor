@@ -5,12 +5,17 @@ import { spawnSync } from 'node:child_process';
 
 function parseArgs(argv) {
 	let checkMode = false;
+	let ensureGeneratedContracts = false;
 	let skipNpmCi = false;
 	let logPrefix = '[ui:bootstrap]';
 	for (let index = 2; index < argv.length; index += 1) {
 		const arg = argv[index];
 		if (arg === '--check') {
 			checkMode = true;
+			continue;
+		}
+		if (arg === '--ensure-generated-contracts') {
+			ensureGeneratedContracts = true;
 			continue;
 		}
 		if (arg === '--skip-npm-ci') {
@@ -28,8 +33,15 @@ function parseArgs(argv) {
 		}
 		throw new Error(`Unknown argument: ${arg}`);
 	}
-	return { checkMode, skipNpmCi, logPrefix };
+	return { checkMode, ensureGeneratedContracts, skipNpmCi, logPrefix };
 }
+
+const GENERATED_CONTRACT_DERIVATIVES = [
+	'src/generated/http_api_contracts.ts',
+	'src/contracts/ws_payload_types.ts',
+	'src/contracts/ws_payload_schema.generated.ts',
+	'src/constants.ts',
+];
 
 function sha256File(filePath) {
 	return createHash('sha256').update(readFileSync(filePath)).digest('hex');
@@ -74,8 +86,35 @@ function ensureUiBootstrap(uiDir, status, logPrefix) {
 	writeFileSync(status.lockHashFile, `${status.lockHash}\n`, 'utf8');
 }
 
+function missingGeneratedContracts(uiDir) {
+	return GENERATED_CONTRACT_DERIVATIVES.filter(
+		(relPath) => !existsSync(resolve(uiDir, relPath)),
+	);
+}
+
+function ensureGeneratedContractsPresent(uiDir, logPrefix) {
+	if (missingGeneratedContracts(uiDir).length === 0) {
+		return;
+	}
+	console.log(
+		`${logPrefix} Running npm run sync:generated-contracts because generated UI contract derivatives are missing.`,
+	);
+	const result = spawnSync('npm', ['run', 'sync:generated-contracts'], {
+		cwd: uiDir,
+		stdio: 'inherit',
+	});
+	if (result.error) {
+		throw result.error;
+	}
+	if (result.status !== 0) {
+		throw new Error(
+			`npm run sync:generated-contracts failed with exit code ${result.status ?? 1}`,
+		);
+	}
+}
+
 function main() {
-	const { checkMode, skipNpmCi, logPrefix } = parseArgs(process.argv);
+	const { checkMode, ensureGeneratedContracts, skipNpmCi, logPrefix } = parseArgs(process.argv);
 	const uiDir = process.cwd();
 	const status = uiBootstrapStatus(uiDir, skipNpmCi);
 	if (checkMode) {
@@ -90,6 +129,9 @@ function main() {
 		return;
 	}
 	ensureUiBootstrap(uiDir, status, logPrefix);
+	if (ensureGeneratedContracts) {
+		ensureGeneratedContractsPresent(uiDir, logPrefix);
+	}
 }
 
 try {
