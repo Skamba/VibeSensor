@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import cast
 
@@ -307,6 +307,443 @@ class NormalizedReportSummary:
     whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class _FieldDecoder:
+    name: str
+    read: Callable[[Mapping[str, object]], object]
+
+
+@dataclass(frozen=True, slots=True)
+class _RowDecoder[RowModelT]:
+    factory: Callable[..., RowModelT]
+    fields: tuple[_FieldDecoder, ...]
+    required_fields: frozenset[str] = frozenset()
+
+
+def _field(name: str, read: Callable[[Mapping[str, object]], object]) -> _FieldDecoder:
+    return _FieldDecoder(name=name, read=read)
+
+
+def _payload_field(name: str, read: Callable[[object], object]) -> _FieldDecoder:
+    def read_field(row: Mapping[str, object]) -> object:
+        return read(row.get(name))
+
+    return _field(name, read_field)
+
+
+def _text_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, text_or_none)
+
+
+def _float_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, optional_float)
+
+
+def _float_or_field(name: str, default: float = 0.0) -> _FieldDecoder:
+    def read_float_or(raw: object) -> object:
+        return optional_float(raw) or default
+
+    return _payload_field(name, read_float_or)
+
+
+def _count_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, coerce_count)
+
+
+def _optional_count(raw_value: object) -> int | None:
+    if raw_value is None or isinstance(raw_value, bool):
+        return None
+    try:
+        return coerce_count(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_count_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, _optional_count)
+
+
+def _bool_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, bool)
+
+
+def _text_tuple(raw_values: object) -> tuple[str, ...]:
+    if not isinstance(raw_values, list):
+        return ()
+    return tuple(
+        value
+        for value in (text_or_none(raw_value) for raw_value in raw_values)
+        if value is not None
+    )
+
+
+def _text_tuple_field(name: str) -> _FieldDecoder:
+    return _payload_field(name, _text_tuple)
+
+
+def _literal_text_or_none[LiteralTextT: str](
+    raw_value: object,
+    allowed: frozenset[LiteralTextT],
+) -> LiteralTextT | None:
+    value = text_or_none(raw_value)
+    if value is None or value not in allowed:
+        return None
+    return value
+
+
+def _enum_field[LiteralTextT: str](
+    name: str,
+    allowed: frozenset[LiteralTextT],
+) -> _FieldDecoder:
+    def read_enum(raw: object) -> object:
+        return _literal_text_or_none(raw, allowed)
+
+    return _payload_field(name, read_enum)
+
+
+def _decode_row[RowModelT](
+    raw: object,
+    decoder: _RowDecoder[RowModelT],
+) -> RowModelT | None:
+    if not isinstance(raw, Mapping):
+        return None
+    values = {field.name: field.read(raw) for field in decoder.fields}
+    if any(values[name] is None for name in decoder.required_fields):
+        return None
+    return decoder.factory(**values)
+
+
+def _decode_rows[RowModelT](
+    raw_rows: object,
+    decoder: _RowDecoder[RowModelT],
+) -> tuple[RowModelT, ...]:
+    if not isinstance(raw_rows, list):
+        return ()
+    return tuple(decoded for row in raw_rows if (decoded := _decode_row(row, decoder)) is not None)
+
+
+def _rows_field[RowModelT](
+    name: str,
+    decoder: _RowDecoder[RowModelT],
+) -> _FieldDecoder:
+    def read_rows(raw: object) -> object:
+        return _decode_rows(raw, decoder)
+
+    return _payload_field(name, read_rows)
+
+
+_PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
+    {
+        "whole_run_summary",
+        "supporting_windows_raw_backed",
+        "supporting_windows_summary_only",
+    }
+)
+_DIAGNOSIS_EXEMPLAR_KIND_VALUES: frozenset[DiagnosisExemplarKind] = frozenset(
+    {
+        "order_support_interval",
+        "whole_run_context_interval",
+        "spatial_location",
+    }
+)
+_DIAGNOSIS_DATA_BASIS_VALUES: frozenset[WholeRunDiagnosisDataBasis] = frozenset(
+    {"raw_backed", "partial_raw_backed", "summary_only"}
+)
+_DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
+    {
+        "raw_backed",
+        "repeated_support",
+        "sustained_support",
+        "stable_frequency",
+        "tight_order_lock",
+        "localized_support",
+        "clean_signal",
+        "summary_only",
+        "raw_replay_incomplete",
+        "legacy_context",
+        "speed_context_gaps",
+        "rpm_context_gaps",
+        "sparse_support",
+        "brief_support",
+        "drifting_frequency",
+        "loose_order_lock",
+        "mixed_support_locations",
+        "noisy_signal",
+        "weak_spatial",
+        "close_alternative",
+        "incomplete_reference",
+    }
+)
+_DIAGNOSIS_FACTOR_POLARITY_VALUES: frozenset[DiagnosisFactorPolarity] = frozenset(
+    {"support", "counterevidence"}
+)
+_DIAGNOSIS_FACTOR_SEVERITY_VALUES: frozenset[DiagnosisFactorSeverity] = frozenset(
+    {"low", "medium", "high"}
+)
+
+_TIMELINE_INTERVAL_DECODER = _RowDecoder(
+    factory=ReportTimelineInterval,
+    fields=(
+        _text_field("phase"),
+        _float_field("start_t_s"),
+        _float_field("end_t_s"),
+        _float_field("speed_min_kmh"),
+        _float_field("speed_max_kmh"),
+        _bool_field("has_fault_evidence"),
+    ),
+    required_fields=frozenset({"phase"}),
+)
+_WHOLE_RUN_CONTEXT_INTERVAL_DECODER = _RowDecoder(
+    factory=ReportWholeRunContextInterval,
+    fields=(
+        _count_field("segment_index"),
+        _text_field("phase"),
+        _text_field("load_state"),
+        _count_field("start_window_index"),
+        _count_field("end_window_index"),
+        _float_field("start_t_s"),
+        _float_field("end_t_s"),
+        _float_field("speed_min_kmh"),
+        _float_field("speed_max_kmh"),
+        _text_field("speed_band"),
+        _count_field("full_context_window_count"),
+        _count_field("partial_context_window_count"),
+        _count_field("missing_context_window_count"),
+    ),
+    required_fields=frozenset({"phase", "load_state"}),
+)
+_ORDER_SUPPORT_INTERVAL_DECODER = _RowDecoder(
+    factory=ReportOrderTraceSupportInterval,
+    fields=(
+        _count_field("interval_index"),
+        _count_field("start_window_index"),
+        _count_field("end_window_index"),
+        _count_field("matched_window_count"),
+        _float_or_field("support_ratio"),
+        _float_field("start_t_s"),
+        _float_field("end_t_s"),
+        _text_field("phase"),
+        _text_field("load_state"),
+        _text_field("speed_band"),
+        _float_field("mean_relative_error"),
+    ),
+)
+_ORDER_PHASE_SUPPORT_DECODER = _RowDecoder(
+    factory=ReportOrderTracePhaseSupport,
+    fields=(
+        _text_field("phase"),
+        _count_field("eligible_window_count"),
+        _count_field("matched_window_count"),
+        _float_or_field("support_ratio"),
+    ),
+    required_fields=frozenset({"phase"}),
+)
+_ORDER_HARMONIC_SUMMARY_DECODER = _RowDecoder(
+    factory=ReportOrderHarmonicEvidenceSummary,
+    fields=(
+        _count_field("harmonic"),
+        _text_field("order_label"),
+        _count_field("eligible_window_count"),
+        _count_field("matched_window_count"),
+        _float_or_field("support_ratio"),
+        _float_or_field("reference_coverage_ratio"),
+        _float_or_field("contiguous_support_ratio"),
+        _float_or_field("lock_score"),
+        _float_field("mean_relative_error"),
+        _float_field("relative_error_stddev"),
+        _float_or_field("drift_score"),
+        _float_field("peak_intensity_db"),
+        _float_field("mean_vibration_strength_db"),
+    ),
+    required_fields=frozenset({"order_label"}),
+)
+_SPATIAL_LOCATION_SUMMARY_DECODER = _RowDecoder(
+    factory=ReportSpatialLocationSummary,
+    fields=(
+        _text_field("location"),
+        _text_tuple_field("sensor_ids"),
+        _count_field("supporting_window_count"),
+        _float_or_field("support_ratio"),
+        _count_field("coherent_window_count"),
+        _float_field("coherence_ratio"),
+        _float_field("peak_intensity_db"),
+        _float_field("mean_vibration_strength_db"),
+    ),
+    required_fields=frozenset({"location"}),
+)
+_DIAGNOSIS_EXEMPLAR_REFERENCE_DECODER = _RowDecoder(
+    factory=ReportDiagnosisExemplarReference,
+    fields=(
+        _enum_field("kind", _DIAGNOSIS_EXEMPLAR_KIND_VALUES),
+        _text_field("order_hypothesis_key"),
+        _optional_count_field("support_interval_index"),
+        _text_field("spatial_candidate_key"),
+        _optional_count_field("context_segment_index"),
+        _text_field("location"),
+        _text_field("phase"),
+        _text_field("speed_band"),
+    ),
+    required_fields=frozenset({"kind"}),
+)
+_DIAGNOSIS_FACTOR_DETAILS_DECODER = _RowDecoder(
+    factory=ReportDiagnosisFactorDetails,
+    fields=(
+        _optional_count_field("raw_backed_sample_count"),
+        _optional_count_field("supporting_window_count"),
+        _float_field("supporting_duration_s"),
+        _float_field("stable_frequency_min_hz"),
+        _float_field("stable_frequency_max_hz"),
+        _float_field("frequency_span_hz"),
+        _optional_count_field("supporting_location_count"),
+        _text_field("top_support_location"),
+        _float_field("top_support_share"),
+        _float_field("mean_relative_error"),
+        _float_field("snr_db"),
+        _text_field("alternative_source"),
+        _optional_count_field("speed_gap_window_count"),
+        _optional_count_field("rpm_gap_window_count"),
+        _text_field("fallback_reason"),
+        _text_field("car_data_reference_scope"),
+        _text_field("car_data_confidence"),
+    ),
+)
+_EMPTY_DIAGNOSIS_FACTOR_DETAILS = ReportDiagnosisFactorDetails(
+    raw_backed_sample_count=None,
+    supporting_window_count=None,
+    supporting_duration_s=None,
+    stable_frequency_min_hz=None,
+    stable_frequency_max_hz=None,
+    frequency_span_hz=None,
+    supporting_location_count=None,
+    top_support_location=None,
+    top_support_share=None,
+    mean_relative_error=None,
+    snr_db=None,
+    alternative_source=None,
+    speed_gap_window_count=None,
+    rpm_gap_window_count=None,
+    fallback_reason=None,
+    car_data_reference_scope=None,
+    car_data_confidence=None,
+)
+
+
+def _diagnosis_factor_details_from_mapping(raw_details: object) -> ReportDiagnosisFactorDetails:
+    details = _decode_row(
+        raw_details if isinstance(raw_details, Mapping) else {},
+        _DIAGNOSIS_FACTOR_DETAILS_DECODER,
+    )
+    return details if details is not None else _EMPTY_DIAGNOSIS_FACTOR_DETAILS
+
+
+_DIAGNOSIS_FACTOR_DECODER = _RowDecoder(
+    factory=ReportDiagnosisFactor,
+    fields=(
+        _enum_field("factor_key", _DIAGNOSIS_FACTOR_KEY_VALUES),
+        _enum_field("polarity", _DIAGNOSIS_FACTOR_POLARITY_VALUES),
+        _enum_field("severity", _DIAGNOSIS_FACTOR_SEVERITY_VALUES),
+        _float_or_field("weight"),
+        _payload_field("details", _diagnosis_factor_details_from_mapping),
+    ),
+    required_fields=frozenset({"factor_key", "polarity", "severity"}),
+)
+_WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
+    factory=ReportWholeRunOrderSummary,
+    fields=(
+        _text_field("hypothesis_key"),
+        _text_field("suspected_source"),
+        _text_field("order_family"),
+        _text_field("order_label"),
+        _count_field("total_window_count"),
+        _count_field("eligible_window_count"),
+        _count_field("matched_window_count"),
+        _float_or_field("support_ratio"),
+        _float_or_field("reference_coverage_ratio"),
+        _count_field("longest_contiguous_support_window_count"),
+        _float_or_field("contiguous_support_ratio"),
+        _rows_field("support_intervals", _ORDER_SUPPORT_INTERVAL_DECODER),
+        _rows_field("phase_support", _ORDER_PHASE_SUPPORT_DECODER),
+        _rows_field("harmonic_summaries", _ORDER_HARMONIC_SUMMARY_DECODER),
+        _float_field("stable_frequency_min_hz"),
+        _float_field("stable_frequency_max_hz"),
+        _optional_count_field("exemplar_interval_index"),
+        _text_field("dominant_phase"),
+        _text_field("dominant_speed_band"),
+        _text_field("strongest_location"),
+        _float_field("mean_relative_error"),
+        _float_field("relative_error_stddev"),
+        _float_or_field("drift_score"),
+        _float_or_field("lock_score"),
+        _float_field("peak_intensity_db"),
+        _float_field("mean_vibration_strength_db"),
+        _text_tuple_field("ref_sources"),
+    ),
+    required_fields=frozenset(
+        {"hypothesis_key", "suspected_source", "order_family", "order_label"}
+    ),
+)
+_WHOLE_RUN_SPATIAL_SUMMARY_DECODER = _RowDecoder(
+    factory=ReportWholeRunSpatialSummary,
+    fields=(
+        _text_field("candidate_key"),
+        _text_field("suspected_source"),
+        _enum_field("proof_basis", _PROOF_BASIS_VALUES),
+        _count_field("total_window_count"),
+        _count_field("supporting_window_count"),
+        _count_field("supporting_sensor_count"),
+        _count_field("coherent_window_count"),
+        _float_field("coherence_ratio"),
+        _text_field("dominant_location"),
+        _text_field("runner_up_location"),
+        _float_field("location_separation_db"),
+        _float_field("dominance_ratio"),
+        _bool_field("ambiguous_location"),
+        _bool_field("weak_spatial_separation"),
+        _rows_field("location_summaries", _SPATIAL_LOCATION_SUMMARY_DECODER),
+    ),
+    required_fields=frozenset({"candidate_key", "suspected_source", "proof_basis"}),
+)
+_WHOLE_RUN_DIAGNOSIS_SUMMARY_DECODER = _RowDecoder(
+    factory=ReportWholeRunDiagnosisSummary,
+    fields=(
+        _text_field("diagnosis_key"),
+        _text_field("suspected_source"),
+        _count_field("rank"),
+        _enum_field("data_basis", _DIAGNOSIS_DATA_BASIS_VALUES),
+        _float_field("support_score"),
+        _float_field("counterevidence_score"),
+        _float_field("total_score"),
+        _text_field("order_hypothesis_key"),
+        _text_field("spatial_candidate_key"),
+        _enum_field("location_proof_basis", _PROOF_BASIS_VALUES),
+        _optional_count_field("supporting_window_count"),
+        _float_field("supporting_duration_s"),
+        _optional_count_field("supporting_sensor_count"),
+        _float_field("stable_frequency_min_hz"),
+        _float_field("stable_frequency_max_hz"),
+        _text_field("dominant_location"),
+        _text_field("runner_up_location"),
+        _text_field("dominant_phase"),
+        _text_field("dominant_speed_band"),
+        _float_field("location_separation_db"),
+        _float_field("dominance_ratio"),
+        _text_field("alternative_source"),
+        _float_field("confidence_gap_to_alternative"),
+        _bool_field("ambiguous_diagnosis"),
+        _bool_field("ambiguous_location"),
+        _bool_field("suspicious"),
+        _bool_field("weak_spatial_separation"),
+        _bool_field("has_reference_gap"),
+        _bool_field("uses_summary_fallback"),
+        _text_field("fallback_reason"),
+        _rows_field("exemplar_references", _DIAGNOSIS_EXEMPLAR_REFERENCE_DECODER),
+        _rows_field("support_factors", _DIAGNOSIS_FACTOR_DECODER),
+        _rows_field("counterevidence_factors", _DIAGNOSIS_FACTOR_DECODER),
+    ),
+    required_fields=frozenset({"diagnosis_key", "suspected_source", "data_basis"}),
+)
+
+
 class ReportSummaryNormalizer:
     """Normalize one summary payload into the canonical report-side typed shape."""
 
@@ -330,11 +767,26 @@ class ReportSummaryNormalizer:
             active_sensor_locations=self._active_sensor_locations(),
             sensor_intensity_rows=self._sensor_intensity_rows(),
             peak_table_rows=self._peak_table_rows(),
-            timeline_intervals=self._timeline_intervals(),
-            whole_run_context_intervals=self._whole_run_context_intervals(),
-            whole_run_order_summaries=self._whole_run_order_summaries(),
-            whole_run_spatial_summaries=self._whole_run_spatial_summaries(),
-            whole_run_diagnosis_summaries=self._whole_run_diagnosis_summaries(),
+            timeline_intervals=_decode_rows(
+                self._payload.get("phase_timeline"),
+                _TIMELINE_INTERVAL_DECODER,
+            ),
+            whole_run_context_intervals=_decode_rows(
+                self._payload.get("whole_run_context_intervals"),
+                _WHOLE_RUN_CONTEXT_INTERVAL_DECODER,
+            ),
+            whole_run_order_summaries=_decode_rows(
+                self._payload.get("whole_run_order_summaries"),
+                _WHOLE_RUN_ORDER_SUMMARY_DECODER,
+            ),
+            whole_run_spatial_summaries=_decode_rows(
+                self._payload.get("whole_run_spatial_summaries"),
+                _WHOLE_RUN_SPATIAL_SUMMARY_DECODER,
+            ),
+            whole_run_diagnosis_summaries=_decode_rows(
+                self._payload.get("whole_run_diagnosis_summaries"),
+                _WHOLE_RUN_DIAGNOSIS_SUMMARY_DECODER,
+            ),
         )
 
     def _summary_run_metadata(self) -> RunMetadata | None:
@@ -382,522 +834,6 @@ class ReportSummaryNormalizer:
         if not isinstance(raw_rows, list):
             return ()
         return tuple(cast(PeakTableRow, row) for row in raw_rows if isinstance(row, Mapping))
-
-    def _timeline_intervals(self) -> tuple[ReportTimelineInterval, ...]:
-        raw_timeline = self._payload.get("phase_timeline")
-        if not isinstance(raw_timeline, list):
-            return ()
-        intervals: list[ReportTimelineInterval] = []
-        for row in raw_timeline:
-            if not isinstance(row, Mapping):
-                continue
-            phase = text_or_none(row.get("phase"))
-            if phase is None:
-                continue
-            intervals.append(
-                ReportTimelineInterval(
-                    phase=phase,
-                    start_t_s=optional_float(row.get("start_t_s")),
-                    end_t_s=optional_float(row.get("end_t_s")),
-                    speed_min_kmh=optional_float(row.get("speed_min_kmh")),
-                    speed_max_kmh=optional_float(row.get("speed_max_kmh")),
-                    has_fault_evidence=bool(row.get("has_fault_evidence")),
-                )
-            )
-        return tuple(intervals)
-
-    def _whole_run_context_intervals(self) -> tuple[ReportWholeRunContextInterval, ...]:
-        raw_intervals = self._payload.get("whole_run_context_intervals")
-        if not isinstance(raw_intervals, list):
-            return ()
-        intervals: list[ReportWholeRunContextInterval] = []
-        for row in raw_intervals:
-            if not isinstance(row, Mapping):
-                continue
-            phase = text_or_none(row.get("phase"))
-            load_state = text_or_none(row.get("load_state"))
-            if phase is None or load_state is None:
-                continue
-            intervals.append(
-                ReportWholeRunContextInterval(
-                    segment_index=coerce_count(row.get("segment_index")),
-                    phase=phase,
-                    load_state=load_state,
-                    start_window_index=coerce_count(row.get("start_window_index")),
-                    end_window_index=coerce_count(row.get("end_window_index")),
-                    start_t_s=optional_float(row.get("start_t_s")),
-                    end_t_s=optional_float(row.get("end_t_s")),
-                    speed_min_kmh=optional_float(row.get("speed_min_kmh")),
-                    speed_max_kmh=optional_float(row.get("speed_max_kmh")),
-                    speed_band=text_or_none(row.get("speed_band")),
-                    full_context_window_count=coerce_count(row.get("full_context_window_count")),
-                    partial_context_window_count=coerce_count(
-                        row.get("partial_context_window_count")
-                    ),
-                    missing_context_window_count=coerce_count(
-                        row.get("missing_context_window_count")
-                    ),
-                )
-            )
-        return tuple(intervals)
-
-    def _whole_run_order_summaries(self) -> tuple[ReportWholeRunOrderSummary, ...]:
-        raw_summaries = self._payload.get("whole_run_order_summaries")
-        if not isinstance(raw_summaries, list):
-            return ()
-        summaries: list[ReportWholeRunOrderSummary] = []
-        for row in raw_summaries:
-            if not isinstance(row, Mapping):
-                continue
-            hypothesis_key = text_or_none(row.get("hypothesis_key"))
-            suspected_source = text_or_none(row.get("suspected_source"))
-            order_family = text_or_none(row.get("order_family"))
-            order_label = text_or_none(row.get("order_label"))
-            if (
-                hypothesis_key is None
-                or suspected_source is None
-                or order_family is None
-                or order_label is None
-            ):
-                continue
-            summaries.append(
-                ReportWholeRunOrderSummary(
-                    hypothesis_key=hypothesis_key,
-                    suspected_source=suspected_source,
-                    order_family=order_family,
-                    order_label=order_label,
-                    total_window_count=coerce_count(row.get("total_window_count")),
-                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
-                    matched_window_count=coerce_count(row.get("matched_window_count")),
-                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
-                    reference_coverage_ratio=optional_float(row.get("reference_coverage_ratio"))
-                    or 0.0,
-                    longest_contiguous_support_window_count=coerce_count(
-                        row.get("longest_contiguous_support_window_count")
-                    ),
-                    contiguous_support_ratio=optional_float(row.get("contiguous_support_ratio"))
-                    or 0.0,
-                    support_intervals=self._order_support_intervals(row.get("support_intervals")),
-                    phase_support=self._order_phase_support_rows(row.get("phase_support")),
-                    harmonic_summaries=self._order_harmonic_summaries(
-                        row.get("harmonic_summaries")
-                    ),
-                    stable_frequency_min_hz=optional_float(row.get("stable_frequency_min_hz")),
-                    stable_frequency_max_hz=optional_float(row.get("stable_frequency_max_hz")),
-                    exemplar_interval_index=self._optional_count(
-                        row.get("exemplar_interval_index")
-                    ),
-                    dominant_phase=text_or_none(row.get("dominant_phase")),
-                    dominant_speed_band=text_or_none(row.get("dominant_speed_band")),
-                    strongest_location=text_or_none(row.get("strongest_location")),
-                    mean_relative_error=optional_float(row.get("mean_relative_error")),
-                    relative_error_stddev=optional_float(row.get("relative_error_stddev")),
-                    drift_score=optional_float(row.get("drift_score")) or 0.0,
-                    lock_score=optional_float(row.get("lock_score")) or 0.0,
-                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
-                    mean_vibration_strength_db=optional_float(
-                        row.get("mean_vibration_strength_db")
-                    ),
-                    ref_sources=self._order_ref_sources(row.get("ref_sources")),
-                )
-            )
-        return tuple(summaries)
-
-    def _whole_run_spatial_summaries(self) -> tuple[ReportWholeRunSpatialSummary, ...]:
-        raw_summaries = self._payload.get("whole_run_spatial_summaries")
-        if not isinstance(raw_summaries, list):
-            return ()
-        summaries: list[ReportWholeRunSpatialSummary] = []
-        for row in raw_summaries:
-            if not isinstance(row, Mapping):
-                continue
-            candidate_key = text_or_none(row.get("candidate_key"))
-            suspected_source = text_or_none(row.get("suspected_source"))
-            proof_basis = self._proof_basis(row.get("proof_basis"))
-            if candidate_key is None or suspected_source is None or proof_basis is None:
-                continue
-            summaries.append(
-                ReportWholeRunSpatialSummary(
-                    candidate_key=candidate_key,
-                    suspected_source=suspected_source,
-                    proof_basis=proof_basis,
-                    total_window_count=coerce_count(row.get("total_window_count")),
-                    supporting_window_count=coerce_count(row.get("supporting_window_count")),
-                    supporting_sensor_count=coerce_count(row.get("supporting_sensor_count")),
-                    coherent_window_count=coerce_count(row.get("coherent_window_count")),
-                    coherence_ratio=optional_float(row.get("coherence_ratio")),
-                    dominant_location=text_or_none(row.get("dominant_location")),
-                    runner_up_location=text_or_none(row.get("runner_up_location")),
-                    location_separation_db=optional_float(row.get("location_separation_db")),
-                    dominance_ratio=optional_float(row.get("dominance_ratio")),
-                    ambiguous_location=bool(row.get("ambiguous_location")),
-                    weak_spatial_separation=bool(row.get("weak_spatial_separation")),
-                    location_summaries=self._spatial_location_summaries(
-                        row.get("location_summaries")
-                    ),
-                )
-            )
-        return tuple(summaries)
-
-    def _whole_run_diagnosis_summaries(self) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
-        raw_summaries = self._payload.get("whole_run_diagnosis_summaries")
-        if not isinstance(raw_summaries, list):
-            return ()
-        summaries: list[ReportWholeRunDiagnosisSummary] = []
-        for row in raw_summaries:
-            if not isinstance(row, Mapping):
-                continue
-            diagnosis_key = text_or_none(row.get("diagnosis_key"))
-            suspected_source = text_or_none(row.get("suspected_source"))
-            data_basis = self._diagnosis_data_basis(row.get("data_basis"))
-            if diagnosis_key is None or suspected_source is None or data_basis is None:
-                continue
-            summaries.append(
-                ReportWholeRunDiagnosisSummary(
-                    diagnosis_key=diagnosis_key,
-                    suspected_source=suspected_source,
-                    rank=coerce_count(row.get("rank")),
-                    data_basis=data_basis,
-                    support_score=optional_float(row.get("support_score")),
-                    counterevidence_score=optional_float(row.get("counterevidence_score")),
-                    total_score=optional_float(row.get("total_score")),
-                    order_hypothesis_key=text_or_none(row.get("order_hypothesis_key")),
-                    spatial_candidate_key=text_or_none(row.get("spatial_candidate_key")),
-                    location_proof_basis=self._proof_basis(row.get("location_proof_basis")),
-                    supporting_window_count=self._optional_count(
-                        row.get("supporting_window_count")
-                    ),
-                    supporting_duration_s=optional_float(row.get("supporting_duration_s")),
-                    supporting_sensor_count=self._optional_count(
-                        row.get("supporting_sensor_count")
-                    ),
-                    stable_frequency_min_hz=optional_float(row.get("stable_frequency_min_hz")),
-                    stable_frequency_max_hz=optional_float(row.get("stable_frequency_max_hz")),
-                    dominant_location=text_or_none(row.get("dominant_location")),
-                    runner_up_location=text_or_none(row.get("runner_up_location")),
-                    dominant_phase=text_or_none(row.get("dominant_phase")),
-                    dominant_speed_band=text_or_none(row.get("dominant_speed_band")),
-                    location_separation_db=optional_float(row.get("location_separation_db")),
-                    dominance_ratio=optional_float(row.get("dominance_ratio")),
-                    alternative_source=text_or_none(row.get("alternative_source")),
-                    confidence_gap_to_alternative=optional_float(
-                        row.get("confidence_gap_to_alternative")
-                    ),
-                    ambiguous_diagnosis=bool(row.get("ambiguous_diagnosis")),
-                    ambiguous_location=bool(row.get("ambiguous_location")),
-                    suspicious=bool(row.get("suspicious")),
-                    weak_spatial_separation=bool(row.get("weak_spatial_separation")),
-                    has_reference_gap=bool(row.get("has_reference_gap")),
-                    uses_summary_fallback=bool(row.get("uses_summary_fallback")),
-                    fallback_reason=text_or_none(row.get("fallback_reason")),
-                    exemplar_references=self._diagnosis_exemplar_references(
-                        row.get("exemplar_references")
-                    ),
-                    support_factors=self._diagnosis_factors(row.get("support_factors")),
-                    counterevidence_factors=self._diagnosis_factors(
-                        row.get("counterevidence_factors")
-                    ),
-                )
-            )
-        return tuple(summaries)
-
-    def _order_support_intervals(
-        self,
-        raw_intervals: object,
-    ) -> tuple[ReportOrderTraceSupportInterval, ...]:
-        if not isinstance(raw_intervals, list):
-            return ()
-        intervals: list[ReportOrderTraceSupportInterval] = []
-        for row in raw_intervals:
-            if not isinstance(row, Mapping):
-                continue
-            intervals.append(
-                ReportOrderTraceSupportInterval(
-                    interval_index=coerce_count(row.get("interval_index")),
-                    start_window_index=coerce_count(row.get("start_window_index")),
-                    end_window_index=coerce_count(row.get("end_window_index")),
-                    matched_window_count=coerce_count(row.get("matched_window_count")),
-                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
-                    start_t_s=optional_float(row.get("start_t_s")),
-                    end_t_s=optional_float(row.get("end_t_s")),
-                    phase=text_or_none(row.get("phase")),
-                    load_state=text_or_none(row.get("load_state")),
-                    speed_band=text_or_none(row.get("speed_band")),
-                    mean_relative_error=optional_float(row.get("mean_relative_error")),
-                )
-            )
-        return tuple(intervals)
-
-    def _order_phase_support_rows(
-        self,
-        raw_phase_rows: object,
-    ) -> tuple[ReportOrderTracePhaseSupport, ...]:
-        if not isinstance(raw_phase_rows, list):
-            return ()
-        rows: list[ReportOrderTracePhaseSupport] = []
-        for row in raw_phase_rows:
-            if not isinstance(row, Mapping):
-                continue
-            phase = text_or_none(row.get("phase"))
-            if phase is None:
-                continue
-            rows.append(
-                ReportOrderTracePhaseSupport(
-                    phase=phase,
-                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
-                    matched_window_count=coerce_count(row.get("matched_window_count")),
-                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
-                )
-            )
-        return tuple(rows)
-
-    def _order_harmonic_summaries(
-        self,
-        raw_summaries: object,
-    ) -> tuple[ReportOrderHarmonicEvidenceSummary, ...]:
-        if not isinstance(raw_summaries, list):
-            return ()
-        summaries: list[ReportOrderHarmonicEvidenceSummary] = []
-        for row in raw_summaries:
-            if not isinstance(row, Mapping):
-                continue
-            order_label = text_or_none(row.get("order_label"))
-            if order_label is None:
-                continue
-            summaries.append(
-                ReportOrderHarmonicEvidenceSummary(
-                    harmonic=coerce_count(row.get("harmonic")),
-                    order_label=order_label,
-                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
-                    matched_window_count=coerce_count(row.get("matched_window_count")),
-                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
-                    reference_coverage_ratio=optional_float(row.get("reference_coverage_ratio"))
-                    or 0.0,
-                    contiguous_support_ratio=optional_float(row.get("contiguous_support_ratio"))
-                    or 0.0,
-                    lock_score=optional_float(row.get("lock_score")) or 0.0,
-                    mean_relative_error=optional_float(row.get("mean_relative_error")),
-                    relative_error_stddev=optional_float(row.get("relative_error_stddev")),
-                    drift_score=optional_float(row.get("drift_score")) or 0.0,
-                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
-                    mean_vibration_strength_db=optional_float(
-                        row.get("mean_vibration_strength_db")
-                    ),
-                )
-            )
-        return tuple(summaries)
-
-    def _order_ref_sources(self, raw_sources: object) -> tuple[str, ...]:
-        if not isinstance(raw_sources, list):
-            return ()
-        return tuple(
-            source
-            for source in (text_or_none(raw_source) for raw_source in raw_sources)
-            if source is not None
-        )
-
-    def _optional_count(self, raw_value: object) -> int | None:
-        if raw_value is None or isinstance(raw_value, bool):
-            return None
-        try:
-            return coerce_count(raw_value)
-        except (TypeError, ValueError):
-            return None
-
-    def _spatial_location_summaries(
-        self,
-        raw_summaries: object,
-    ) -> tuple[ReportSpatialLocationSummary, ...]:
-        if not isinstance(raw_summaries, list):
-            return ()
-        summaries: list[ReportSpatialLocationSummary] = []
-        for row in raw_summaries:
-            if not isinstance(row, Mapping):
-                continue
-            location = text_or_none(row.get("location"))
-            if location is None:
-                continue
-            summaries.append(
-                ReportSpatialLocationSummary(
-                    location=location,
-                    sensor_ids=self._text_tuple(row.get("sensor_ids")),
-                    supporting_window_count=coerce_count(row.get("supporting_window_count")),
-                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
-                    coherent_window_count=coerce_count(row.get("coherent_window_count")),
-                    coherence_ratio=optional_float(row.get("coherence_ratio")),
-                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
-                    mean_vibration_strength_db=optional_float(
-                        row.get("mean_vibration_strength_db")
-                    ),
-                )
-            )
-        return tuple(summaries)
-
-    def _diagnosis_exemplar_references(
-        self,
-        raw_exemplars: object,
-    ) -> tuple[ReportDiagnosisExemplarReference, ...]:
-        if not isinstance(raw_exemplars, list):
-            return ()
-        exemplars: list[ReportDiagnosisExemplarReference] = []
-        for row in raw_exemplars:
-            if not isinstance(row, Mapping):
-                continue
-            kind = self._diagnosis_exemplar_kind(row.get("kind"))
-            if kind is None:
-                continue
-            exemplars.append(
-                ReportDiagnosisExemplarReference(
-                    kind=kind,
-                    order_hypothesis_key=text_or_none(row.get("order_hypothesis_key")),
-                    support_interval_index=self._optional_count(row.get("support_interval_index")),
-                    spatial_candidate_key=text_or_none(row.get("spatial_candidate_key")),
-                    context_segment_index=self._optional_count(row.get("context_segment_index")),
-                    location=text_or_none(row.get("location")),
-                    phase=text_or_none(row.get("phase")),
-                    speed_band=text_or_none(row.get("speed_band")),
-                )
-            )
-        return tuple(exemplars)
-
-    def _diagnosis_factors(
-        self,
-        raw_factors: object,
-    ) -> tuple[ReportDiagnosisFactor, ...]:
-        if not isinstance(raw_factors, list):
-            return ()
-        factors: list[ReportDiagnosisFactor] = []
-        for row in raw_factors:
-            if not isinstance(row, Mapping):
-                continue
-            factor_key = self._diagnosis_factor_key(row.get("factor_key"))
-            polarity = self._diagnosis_factor_polarity(row.get("polarity"))
-            severity = self._diagnosis_factor_severity(row.get("severity"))
-            if factor_key is None or polarity is None or severity is None:
-                continue
-            raw_details = row.get("details")
-            details_row = raw_details if isinstance(raw_details, Mapping) else {}
-            factors.append(
-                ReportDiagnosisFactor(
-                    factor_key=factor_key,
-                    polarity=polarity,
-                    severity=severity,
-                    weight=optional_float(row.get("weight")) or 0.0,
-                    details=ReportDiagnosisFactorDetails(
-                        raw_backed_sample_count=self._optional_count(
-                            details_row.get("raw_backed_sample_count")
-                        ),
-                        supporting_window_count=self._optional_count(
-                            details_row.get("supporting_window_count")
-                        ),
-                        supporting_duration_s=optional_float(
-                            details_row.get("supporting_duration_s")
-                        ),
-                        stable_frequency_min_hz=optional_float(
-                            details_row.get("stable_frequency_min_hz")
-                        ),
-                        stable_frequency_max_hz=optional_float(
-                            details_row.get("stable_frequency_max_hz")
-                        ),
-                        frequency_span_hz=optional_float(details_row.get("frequency_span_hz")),
-                        supporting_location_count=self._optional_count(
-                            details_row.get("supporting_location_count")
-                        ),
-                        top_support_location=text_or_none(details_row.get("top_support_location")),
-                        top_support_share=optional_float(details_row.get("top_support_share")),
-                        mean_relative_error=optional_float(details_row.get("mean_relative_error")),
-                        snr_db=optional_float(details_row.get("snr_db")),
-                        alternative_source=text_or_none(details_row.get("alternative_source")),
-                        speed_gap_window_count=self._optional_count(
-                            details_row.get("speed_gap_window_count")
-                        ),
-                        rpm_gap_window_count=self._optional_count(
-                            details_row.get("rpm_gap_window_count")
-                        ),
-                        fallback_reason=text_or_none(details_row.get("fallback_reason")),
-                        car_data_reference_scope=text_or_none(
-                            details_row.get("car_data_reference_scope")
-                        ),
-                        car_data_confidence=text_or_none(details_row.get("car_data_confidence")),
-                    ),
-                )
-            )
-        return tuple(factors)
-
-    def _text_tuple(self, raw_values: object) -> tuple[str, ...]:
-        if not isinstance(raw_values, list):
-            return ()
-        return tuple(
-            value
-            for value in (text_or_none(raw_value) for raw_value in raw_values)
-            if value is not None
-        )
-
-    def _proof_basis(self, raw_value: object) -> LocationProofBasis | None:
-        value = text_or_none(raw_value)
-        if value not in {
-            "whole_run_summary",
-            "supporting_windows_raw_backed",
-            "supporting_windows_summary_only",
-        }:
-            return None
-        return cast(LocationProofBasis, value)
-
-    def _diagnosis_exemplar_kind(self, raw_value: object) -> DiagnosisExemplarKind | None:
-        value = text_or_none(raw_value)
-        if value not in {
-            "order_support_interval",
-            "whole_run_context_interval",
-            "spatial_location",
-        }:
-            return None
-        return cast(DiagnosisExemplarKind, value)
-
-    def _diagnosis_data_basis(self, raw_value: object) -> WholeRunDiagnosisDataBasis | None:
-        value = text_or_none(raw_value)
-        if value not in {"raw_backed", "partial_raw_backed", "summary_only"}:
-            return None
-        return cast(WholeRunDiagnosisDataBasis, value)
-
-    def _diagnosis_factor_key(self, raw_value: object) -> DiagnosisFactorKey | None:
-        value = text_or_none(raw_value)
-        if value not in {
-            "raw_backed",
-            "repeated_support",
-            "sustained_support",
-            "stable_frequency",
-            "tight_order_lock",
-            "localized_support",
-            "clean_signal",
-            "summary_only",
-            "raw_replay_incomplete",
-            "legacy_context",
-            "speed_context_gaps",
-            "rpm_context_gaps",
-            "sparse_support",
-            "brief_support",
-            "drifting_frequency",
-            "loose_order_lock",
-            "mixed_support_locations",
-            "noisy_signal",
-            "weak_spatial",
-            "close_alternative",
-            "incomplete_reference",
-        }:
-            return None
-        return cast(DiagnosisFactorKey, value)
-
-    def _diagnosis_factor_polarity(self, raw_value: object) -> DiagnosisFactorPolarity | None:
-        value = text_or_none(raw_value)
-        if value not in {"support", "counterevidence"}:
-            return None
-        return cast(DiagnosisFactorPolarity, value)
-
-    def _diagnosis_factor_severity(self, raw_value: object) -> DiagnosisFactorSeverity | None:
-        value = text_or_none(raw_value)
-        if value not in {"low", "medium", "high"}:
-            return None
-        return cast(DiagnosisFactorSeverity, value)
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
