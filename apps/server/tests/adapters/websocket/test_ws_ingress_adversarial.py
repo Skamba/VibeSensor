@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import anyio
 import pytest
 from test_support.ws_hub import make_websocket as _make_ws
+from test_support.ws_hub import sent_json_sequence as _sent_json_sequence
 
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
@@ -30,12 +31,10 @@ async def test_broadcast_evicts_slow_consumer_without_blocking_fast_clients() ->
 
     await hub.broadcast(lambda _selected: {"ok": True})
 
-    fast_ws.send_text.assert_awaited_once()
-    slow_ws.send_text.assert_awaited_once()
+    assert _sent_json_sequence(fast_ws) == [{"ok": True}]
+    assert _sent_json_sequence(slow_ws) == [{"ok": True}]
     slow_ws.close.assert_awaited_once()
-    remaining = await hub._snapshot()
-    assert len(remaining) == 1
-    assert remaining[0].websocket is fast_ws
+    assert hub.connection_count() == 1
 
 
 @pytest.mark.asyncio
@@ -54,8 +53,8 @@ async def test_broadcast_pressure_builds_one_payload_per_unique_selection() -> N
     await hub.broadcast(payload_builder)
 
     assert payload_builder.call_count == len(selections)
-    for ws in websockets:
-        ws.send_text.assert_awaited_once()
+    for index, ws in enumerate(websockets):
+        assert _sent_json_sequence(ws) == [{"selected": selections[index % len(selections)]}]
 
 
 @pytest.mark.asyncio
