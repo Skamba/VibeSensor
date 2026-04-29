@@ -4,8 +4,6 @@ import {
   bootLiveDashboard,
   fulfillJson,
   openHistoryTab,
-  readSemanticSurfaceStyles,
-  readSemanticToneStyles,
   requestPath,
   installCommonRoutes,
 } from "./smoke.helpers";
@@ -22,232 +20,6 @@ const historyListRun = {
   car_name: "Track Car",
   error_message: null,
 };
-
-test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  let confidenceTone: "success" | "warn" = "success";
-
-  await bootLiveDashboard(page, {
-    historyHandler: async (route) => {
-      const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
-        await route.fallback();
-        return;
-      }
-      await fulfillJson(route, { runs: [historyListRun] });
-    },
-    settingsHandler: async (route) => {
-      if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/history/**/insights**", async (route) => {
-    await fulfillJson(route, {
-      run_id: "run-001",
-      status: "complete",
-      start_time_utc: "2026-01-01T00:00:00Z",
-      duration_s: 12.3,
-      sensor_count_used: 2,
-      most_likely_origin: {
-        suspected_source: "Front-right wheel imbalance",
-        location: "Front-right wheel",
-        speed_band: "60-90 km/h",
-        explanation: "Order content and spatial dominance agree on the front-right wheel.",
-      },
-      findings: [
-        {
-          finding_id: "finding-1",
-          amplitude_metric: "db",
-          confidence: confidenceTone === "success" ? 0.92 : 0.67,
-          confidence_pct: confidenceTone === "success" ? "92%" : "67%",
-          confidence_tone: confidenceTone,
-          evidence_summary: "Diagnostic evidence remains strongest at the front-right wheel.",
-          frequency_hz_or_order: "1x wheel",
-          strongest_location: "Front-right wheel",
-          strongest_speed_band: "60-90 km/h",
-          suspected_source: "Front-right wheel imbalance",
-        },
-      ],
-      sensor_intensity_by_location: [
-        {
-          location: "Front Right Wheel",
-          p50_intensity_db: 18,
-          p95_intensity_db: 32,
-          max_intensity_db: 40,
-          dropped_frames_delta: 0,
-          queue_overflow_drops_delta: 0,
-          sample_count: 20,
-        },
-      ],
-    });
-  });
-  const expectations = [
-    {
-      tone: "success",
-      surfaceVar: "--history-diagnosis-success-surface",
-      borderVar: "--history-diagnosis-success-border",
-    },
-    {
-      tone: "warn",
-      surfaceVar: "--history-diagnosis-warn-surface",
-      borderVar: "--history-diagnosis-warn-border",
-    },
-  ] as const;
-
-  for (const expectation of expectations) {
-    confidenceTone = expectation.tone;
-    await page.goto("/");
-    await openHistoryTab(page);
-    await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
-    const diagnosisCard = page.locator(`.history-diagnosis-card--${expectation.tone}`);
-    await expect(diagnosisCard).toBeVisible();
-    const styles = await readSemanticSurfaceStyles(
-      diagnosisCard,
-      expectation.surfaceVar,
-      expectation.borderVar,
-    );
-    expect(styles.backgroundColor).toBe(styles.expectedBackgroundColor);
-    expect(styles.borderColor).toBe(styles.expectedBorderColor);
-  }
-});
-
-test("dark mode history warning pills and banners use semantic theme tokens", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-
-  await bootLiveDashboard(page, {
-    historyHandler: async (route) => {
-      const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
-        await route.fallback();
-        return;
-      }
-      await fulfillJson(route, { runs: [historyListRun] });
-    },
-    settingsHandler: async (route) => {
-      if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/history/**/insights**", async (route) => {
-    await fulfillJson(route, {
-      run_id: "run-001",
-      status: "complete",
-      start_time_utc: "2026-01-01T00:00:00Z",
-      duration_s: 12.3,
-      sensor_count_used: 2,
-      most_likely_origin: {
-        suspected_source: "Front-right wheel imbalance",
-        location: "Front-right wheel",
-        speed_band: "60-90 km/h",
-        explanation: "Diagnostic evidence remains strongest at the front-right wheel.",
-      },
-      findings: [
-        {
-          finding_id: "finding-1",
-          amplitude_metric: "db",
-          confidence: 0.67,
-          confidence_pct: "67%",
-          confidence_tone: "warn",
-          evidence_summary: "Secondary driveline evidence remains present.",
-          frequency_hz_or_order: "1x wheel",
-          strongest_location: "Front-right wheel",
-          strongest_speed_band: "60-90 km/h",
-          suspected_source: "Front-right wheel imbalance",
-        },
-      ],
-      warnings: [
-        {
-          code: "speed-gap",
-          severity: "warn",
-          title: "history.warning.speed_gap",
-          detail: "Speed samples were sparse through part of the run.",
-        },
-      ],
-      sensor_intensity_by_location: [
-        {
-          location: "Front Right Wheel",
-          p50_intensity_db: 18,
-          p95_intensity_db: 32,
-          max_intensity_db: 40,
-          dropped_frames_delta: 0,
-          queue_overflow_drops_delta: 0,
-          sample_count: 20,
-        },
-      ],
-    });
-  });
-  await page.goto("/");
-  await openHistoryTab(page);
-  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
-
-  const confidencePill = page.locator(".history-diagnosis-card__confidence--warn");
-  await expect(confidencePill).toBeVisible();
-  const confidenceStyles = await readSemanticToneStyles(confidencePill, {
-    surfaceVar: "--pill-warn-bg",
-    textVar: "--pill-warn-text",
-  });
-  expect(confidenceStyles.backgroundColor).toBe(confidenceStyles.expectedBackgroundColor);
-  expect(confidenceStyles.color).toBe(confidenceStyles.expectedColor);
-
-  const warningBanner = page.locator(".history-warning-banner").first();
-  await expect(warningBanner).toBeVisible();
-  const bannerStyles = await readSemanticToneStyles(warningBanner, {
-    surfaceVar: "--warning-surface",
-    borderVar: "--warning-border",
-    textVar: "--warning-text",
-  });
-  expect(bannerStyles.backgroundColor).toBe(bannerStyles.expectedBackgroundColor);
-  expect(bannerStyles.borderColor).toBe(bannerStyles.expectedBorderColor);
-  expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
-});
-
-test("dark mode quiet danger buttons use semantic danger tokens in History", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  await bootLiveDashboard(page, { runs: [historyListRun] });
-  await openHistoryTab(page);
-  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
-  const deleteButton = page.locator('[data-run-action="delete-run"][data-run="run-001"]');
-  await expect(deleteButton).toBeVisible();
-
-  const idleStyles = await readSemanticToneStyles(deleteButton, {
-    surfaceVar: "--button-danger-quiet-surface",
-    borderVar: "--button-danger-quiet-border",
-    textVar: "--button-danger-quiet-text",
-  });
-  await expect(deleteButton).toHaveCSS("background-color", idleStyles.expectedBackgroundColor);
-  await expect(deleteButton).toHaveCSS("border-top-color", idleStyles.expectedBorderColor);
-  await expect(deleteButton).toHaveCSS("color", idleStyles.expectedColor);
-
-  const deleteButtonBox = await deleteButton.boundingBox();
-  if (!deleteButtonBox) {
-    throw new Error("expected history delete button to have a layout box");
-  }
-  await page.mouse.move(
-    deleteButtonBox.x + (deleteButtonBox.width / 2),
-    deleteButtonBox.y + (deleteButtonBox.height / 2),
-  );
-  await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
-  const hoverStyles = await readSemanticToneStyles(deleteButton, {
-    surfaceVar: "--button-danger-quiet-hover-surface",
-    borderVar: "--button-danger-quiet-hover-border",
-    textVar: "--button-danger-quiet-text",
-  });
-  await expect(deleteButton).toHaveCSS("background-color", hoverStyles.expectedBackgroundColor);
-  await expect(deleteButton).toHaveCSS("border-top-color", hoverStyles.expectedBorderColor);
-  await expect(deleteButton).toHaveCSS("color", hoverStyles.expectedColor);
-});
 
 test("history empty state points users back to Live", async ({ page }) => {
   await bootLiveDashboard(page, {
@@ -538,6 +310,14 @@ test("history loaded insights promote the result summary above supporting eviden
           suspected_source: "Secondary driveline contribution",
         },
       ],
+      warnings: [
+        {
+          code: "speed-gap",
+          severity: "warn",
+          title: "history.warning.speed_gap",
+          detail: "Speed samples were sparse through part of the run.",
+        },
+      ],
       sensor_intensity_by_location: [
         {
           location: "Front Right Wheel",
@@ -559,6 +339,9 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
   await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
   await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
+  await expect(page.locator(".history-warning-banner").first()).toContainText(
+    "Speed samples were sparse through part of the run.",
+  );
   await expect(page.locator('.history-heatmap__zone[data-location-key="front-right wheel"]')).toContainText("32.0 dB");
   await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
   await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);

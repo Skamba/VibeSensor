@@ -25,7 +25,7 @@ function parseElapsedSeconds(value: string): number {
   return (minutes * 60) + seconds;
 }
 
-test("dark mode readiness cards use semantic theme surfaces", async ({ page }) => {
+test("dark mode theme smoke keeps shared readiness and warning surfaces wired", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   let captureReadiness = buildCaptureReadiness({
     isReady: true,
@@ -143,25 +143,6 @@ test("dark mode readiness cards use semantic theme surfaces", async ({ page }) =
     expect(styles.backgroundColor).toBe(styles.expectedBackgroundColor);
     expect(styles.borderColor).toBe(styles.expectedBorderColor);
   }
-});
-
-test("dark mode shell warning banner uses semantic theme tokens", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
   const banner = page.locator(".app-error-banner");
   await banner.evaluate((element) => {
     if (!(element instanceof HTMLElement)) {
