@@ -7,7 +7,7 @@ import logging
 from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime
-from typing import TypeVar, cast
+from typing import Protocol, TypeVar, cast
 
 import aiosqlite
 
@@ -49,15 +49,13 @@ LOGGER = logging.getLogger(__name__)
 _T = TypeVar("_T")
 
 
-class _HistoryDBQueryMixin:
+class _HistoryDBQueryMixin(Protocol):
     _raw_capture_store: HistoryRawCaptureStore
     _whole_run_artifact_store: HistoryWholeRunArtifactStore
 
-    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
-        raise NotImplementedError
+    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]: ...
 
-    def _run_sync(self, coro: Awaitable[_T]) -> _T:
-        raise NotImplementedError
+    def _run_sync(self, coro: Awaitable[_T]) -> _T: ...
 
     @staticmethod
     def _artifact_availability_state(

@@ -7,7 +7,7 @@ import logging
 from collections.abc import Awaitable, Mapping
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime, timedelta
-from typing import TypeVar, cast
+from typing import Protocol, TypeVar, cast
 
 import aiosqlite
 
@@ -44,18 +44,15 @@ _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "
 _T = TypeVar("_T")
 
 
-class _HistoryDBRunLifecycleMixin:
+class _HistoryDBRunLifecycleMixin(Protocol):
     _raw_capture_store: HistoryRawCaptureStore
     _whole_run_artifact_store: HistoryWholeRunArtifactStore
 
-    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
-        raise NotImplementedError
+    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]: ...
 
-    def write_transaction_cursor(self) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
-        raise NotImplementedError
+    def write_transaction_cursor(self) -> AbstractAsyncContextManager[aiosqlite.Cursor]: ...
 
-    def _run_sync(self, coro: Awaitable[_T]) -> _T:
-        raise NotImplementedError
+    def _run_sync(self, coro: Awaitable[_T]) -> _T: ...
 
     @staticmethod
     async def _run_status(cur: aiosqlite.Cursor, run_id: str) -> str | None:
