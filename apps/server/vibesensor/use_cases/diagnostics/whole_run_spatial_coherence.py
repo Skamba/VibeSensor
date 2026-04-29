@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from statistics import mean as _mean
 
 from vibesensor.domain import LocationHotspot
 from vibesensor.shared.time_utils import utc_now_iso
@@ -24,6 +23,11 @@ from vibesensor.use_cases.diagnostics._ranking_utils import sortable_optional_me
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.location_scoring import (
     NEAR_TIE_DOMINANCE_THRESHOLD,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _max_or_none,
+    _mean_or_none,
+    _ratio_or_zero,
 )
 from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
     order_hypothesis_path_compliance_by_key,
@@ -211,10 +215,9 @@ def summarize_whole_run_spatial_coherence(
                     {row.sensor_id for row in candidate_rows if row.supporting}
                 ),
                 coherent_window_count=coherent_window_count,
-                coherence_ratio=(
-                    coherent_window_count / supporting_window_count
-                    if supporting_window_count > 0
-                    else 0.0
+                coherence_ratio=_ratio_or_zero(
+                    coherent_window_count,
+                    supporting_window_count,
                 ),
                 dominant_location=dominant_location,
                 runner_up_location=runner_up_location,
@@ -394,13 +397,11 @@ def _build_location_summary(
         location=location,
         sensor_ids=tuple(sorted({row.sensor_id for row in rows})),
         supporting_window_count=len(support_windows),
-        support_ratio=(
-            len(support_windows) / supporting_window_count if supporting_window_count > 0 else 0.0
-        ),
+        support_ratio=_ratio_or_zero(len(support_windows), supporting_window_count),
         coherent_window_count=len(coherent_windows),
-        coherence_ratio=(len(coherent_windows) / len(support_windows) if support_windows else 0.0),
-        peak_intensity_db=max(peak_intensities) if peak_intensities else None,
-        mean_vibration_strength_db=(_mean(vibration_strengths) if vibration_strengths else None),
+        coherence_ratio=_ratio_or_zero(len(coherent_windows), len(support_windows)),
+        peak_intensity_db=_max_or_none(peak_intensities),
+        mean_vibration_strength_db=_mean_or_none(vibration_strengths),
     )
 
 
