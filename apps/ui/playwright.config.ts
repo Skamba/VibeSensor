@@ -45,7 +45,7 @@ export const visualAuditProjects = [
 export const visualBaseConfig = {
   testDir: "tests",
   testMatch: ["visual.spec.ts"],
-  outputDir: "tests/test-results",
+  outputDir: "test-results/playwright-visual",
   snapshotDir: "tests/snapshots",
   snapshotPathTemplate: "{snapshotDir}/{testFilePath}/{arg}-{projectName}{ext}",
   timeout: 45_000,
