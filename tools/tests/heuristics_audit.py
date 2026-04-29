@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -169,14 +168,6 @@ def main() -> int:
         for msg in msgs:
             print(f"  - {msg}")
         all_ok &= ok
-    (ROOT / "artifacts" / "ai").mkdir(parents=True, exist_ok=True)
-    (ROOT / "artifacts" / "ai" / "heuristics_audit.json").write_text(
-        json.dumps(
-            {k: {"ok": v[0], "messages": v[1]} for k, v in checks.items()}, indent=2
-        ),
-        encoding="utf-8",
-    )
-    print("wrote artifacts/ai/heuristics_audit.json")
     return 0 if all_ok else 1
 
 
