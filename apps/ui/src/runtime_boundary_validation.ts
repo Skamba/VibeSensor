@@ -22,13 +22,16 @@ export function parseRuntimeBoundary<T>(options: {
   payload: unknown;
   schema: v.GenericSchema<T>;
 }): T {
-  const result = v.safeParse(options.schema, options.payload);
-  if (!result.success) {
-    const issue = result.issues[0];
-    throw new Error(
-      `Invalid ${options.boundary}: ${formatIssuePath(issue?.path)} ${issue?.message ?? "is invalid"}`,
-    );
+  if (v.is(options.schema, options.payload)) {
+    // These boundary schemas assert shape only; keep original object identity for hot paths.
+    return options.payload as T;
   }
-  // These boundary schemas assert shape only; keep original object identity for hot paths.
-  return options.payload as T;
+  const result = v.safeParse(options.schema, options.payload);
+  if (result.success) {
+    return options.payload as T;
+  }
+  const issue = result.issues[0];
+  throw new Error(
+    `Invalid ${options.boundary}: ${formatIssuePath(issue?.path)} ${issue?.message ?? "is invalid"}`,
+  );
 }
