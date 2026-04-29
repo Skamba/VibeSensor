@@ -15,6 +15,25 @@ from vibesensor.use_cases.run.sample_speed_context import (
 )
 
 
+def _analysis_settings_snapshot(
+    *,
+    tire_width_mm: float = 205,
+    tire_aspect_pct: float = 55,
+    rim_in: float = 16,
+    final_drive_ratio: float = 3.73,
+    current_gear_ratio: float | None = 1.0,
+) -> AnalysisSettingsSnapshot:
+    payload: dict[str, float] = {
+        "tire_width_mm": tire_width_mm,
+        "tire_aspect_pct": tire_aspect_pct,
+        "rim_in": rim_in,
+        "final_drive_ratio": final_drive_ratio,
+    }
+    if current_gear_ratio is not None:
+        payload["current_gear_ratio"] = current_gear_ratio
+    return AnalysisSettingsSnapshot(**payload)
+
+
 def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     gps_mock = MagicMock()
     gps_mock.speed_mps = None
@@ -26,13 +45,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     registry.active_client_ids.return_value = []
 
     settings_mock = MagicMock()
-    settings_mock.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
-        tire_width_mm=205,
-        tire_aspect_pct=55,
-        rim_in=16,
-        final_drive_ratio=3.73,
-        current_gear_ratio=1.0,
-    )
+    settings_mock.analysis_settings_snapshot.return_value = _analysis_settings_snapshot()
 
     logger = RunRecorder(
         RunRecorderConfig(
@@ -56,18 +69,23 @@ class TestResolveSpeedContext:
     @staticmethod
     def _resolve_from_logger(
         logger,
+        *,
+        analysis_settings_snapshot: AnalysisSettingsSnapshot | None = None,
     ) -> tuple[float | None, float | None, str, float | None, str]:
         resolution = logger.gps_monitor.resolve_speed()
         return resolve_speed_context(
             gps_speed_mps=logger.gps_monitor.speed_mps,
             resolved_speed_mps=resolution.speed_mps,
             resolved_speed_source=resolution.source,
-            analysis_settings_snapshot=logger._analysis_settings_snapshot(),
+            analysis_settings_snapshot=analysis_settings_snapshot or _analysis_settings_snapshot(),
         )
 
     def test_no_speed_available(self) -> None:
         logger, _ = _make_run_recorder()
-        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(logger)
+        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+        )
         assert speed_kmh is None
         assert gps_speed is None
         assert source == "none"
@@ -78,7 +96,10 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_run_recorder()
         gps_mock.speed_mps = 10.0
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(logger)
+        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+        )
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
         assert source == "gps"
@@ -89,7 +110,10 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_run_recorder()
         gps_mock.override_speed_mps = 20.0
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
-        speed_kmh, _, source, _, _ = self._resolve_from_logger(logger)
+        speed_kmh, _, source, _, _ = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+        )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
 
@@ -97,21 +121,22 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_run_recorder()
         gps_mock.override_speed_mps = 20.0
         gps_mock.resolve_speed.return_value = MagicMock(source="fallback_manual", speed_mps=20.0)
-        speed_kmh, _, source, _, _ = self._resolve_from_logger(logger)
+        speed_kmh, _, source, _, _ = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+        )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "fallback_manual"
 
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
-        settings_mock = logger._settings_reader
-        settings_mock.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
-            tire_width_mm=205,
-            tire_aspect_pct=55,
-            rim_in=16,
-            final_drive_ratio=3.73,
+        _, _, _, rpm, rpm_source = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(
+                current_gear_ratio=None,
+            ),
         )
-        _, _, _, rpm, rpm_source = self._resolve_from_logger(logger)
         assert rpm is None
         assert rpm_source == "missing"
 
@@ -131,7 +156,10 @@ class TestResolveSpeedContext:
         gps_mock.speed_mps = 10.0
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
 
-        speed, _, _, rpm, rpm_source = self._resolve_from_logger(logger)
+        speed, _, _, rpm, rpm_source = self._resolve_from_logger(
+            logger,
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+        )
 
         assert speed == pytest.approx(36.0, rel=0.01)
         assert rpm == 1234.5
