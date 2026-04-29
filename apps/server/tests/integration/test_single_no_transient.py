@@ -1,8 +1,8 @@
-"""Level B – Single sensor, no transient (≥50 direct-injection cases).
+"""Single-sensor synthetic scenarios that stay distinct after matrix consolidation.
 
-Tests the analysis pipeline with exactly ONE sensor and NO transient
-spikes.  Covers: four corners, three speed bands, no-fault baselines,
-diffuse noise, phased onset, ambiguous vs clean separation.
+Representative corner/speed, no-fault baseline, and phased-onset coverage now
+lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
+single-sensor-specific behavior axes that still earn their own tests.
 """
 
 from __future__ import annotations
@@ -20,23 +20,18 @@ from test_support import (
     SPEED_VERY_HIGH,
     assert_confidence_between,
     assert_confidence_label_valid,
-    assert_has_warnings,
-    assert_no_wheel_fault,
     assert_pairwise_monotonic,
     assert_strict_no_fault,
     assert_tolerant_no_fault,
     extract_top,
     make_diffuse_samples,
     make_idle_samples,
-    make_noise_samples,
     make_profile_fault_samples,
     make_profile_speed_sweep_fault_samples,
     make_ramp_samples,
     profile_metadata,
     run_analysis,
 )
-
-# B.1 – Fault at each corner × speed band (4 corners × 3 speeds = 12 cases)
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
@@ -83,35 +78,6 @@ def _run_single_fault(
     samples = make_profile_fault_samples(**kwargs)
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     return summary, extract_top(summary)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_single_sensor_fault_corner_speed(
-    corner: str,
-    speed: float,
-    profile: dict[str, Any],
-) -> None:
-    """Wheel fault on single sensor at each corner × speed band."""
-    summary, top = _run_single_fault(profile, corner, speed_kmh=speed)
-    assert top is not None, f"No finding for {corner}@{speed}"
-    assert_confidence_between(summary, 0.45, 1.0, msg=f"{corner}@{speed}")
-    assert_confidence_label_valid(summary, msg=f"{corner}@{speed}")
-    assert_has_warnings(summary, msg=f"{corner}@{speed}")
-
-
-# B.2 – No-fault baseline at each speed (3 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_single_sensor_no_fault_baseline(speed: float, profile: dict[str, Any]) -> None:
-    """Pure road noise on one sensor → no wheel fault diagnosed."""
-    samples = make_noise_samples(sensors=[SENSOR_FL], speed_kmh=speed, n_samples=40)
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg=f"speed={speed}")
-    assert_has_warnings(summary, msg=f"no-fault@{speed}")
 
 
 # B.3 – Varying fault amplitude (low/med/high) × 2 corners = 6 cases
@@ -176,43 +142,6 @@ def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[st
         labels=labels,
         msg=f"single-sensor amplitude scaling at {corner} ({profile['name']})",
     )
-
-
-# B.4 – Phased onset: idle → ramp → fault (4 corners = 4 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-def test_single_sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
-    """Idle → ramp → steady fault at one corner."""
-    sensor = CORNER_SENSORS[corner]
-    samples: list[dict[str, Any]] = []
-    samples.extend(make_idle_samples(sensors=[sensor], n_samples=10, start_t_s=0))
-    samples.extend(
-        make_ramp_samples(
-            sensors=[sensor],
-            speed_start=20,
-            speed_end=80,
-            n_samples=15,
-            start_t_s=10,
-        ),
-    )
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=80.0,
-            n_samples=35,
-            start_t_s=25,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for phased {corner}"
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"phased {corner}")
 
 
 # B.5 – Diffuse noise on single sensor (should NOT produce wheel fault) (3 cases)
