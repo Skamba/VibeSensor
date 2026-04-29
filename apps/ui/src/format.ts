@@ -22,13 +22,7 @@ export function formatEpochTimestamp(epoch: number | null | undefined): string {
   return formatDateTime(new Date(epoch * 1000), "—");
 }
 
-const _defaultNumberFormat = new Intl.NumberFormat();
 const _localeFormatCache = new Map<string, Intl.NumberFormat>();
-
-function formatInt(value: number): string {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "--";
-  return _defaultNumberFormat.format(Math.round(value));
-}
 
 /** Like formatInt but respects the given BCP 47 locale tag (e.g. "nl", "en"). */
 export function formatIntLocale(value: number, lang: string): string {
