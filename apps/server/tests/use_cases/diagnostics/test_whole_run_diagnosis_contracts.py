@@ -168,6 +168,60 @@ def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
     ]
 
 
+def test_diagnosis_exemplar_reference_rejects_unsupported_kind() -> None:
+    with pytest.raises(ValueError, match="supported diagnosis exemplar kind"):
+        DiagnosisExemplarReference.from_mapping({"kind": "bad-kind"})
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("factor_key", "bad-factor", "supported diagnosis factor key"),
+        ("polarity", "neutral", "supported diagnosis factor polarity"),
+        ("severity", "urgent", "supported diagnosis factor severity"),
+    ],
+)
+def test_diagnosis_factor_rejects_unsupported_literal_values(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    payload = DiagnosisFactor(
+        factor_key="raw_backed",
+        polarity="support",
+        severity="high",
+        weight=0.10,
+    ).to_json_object()
+    payload[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        DiagnosisFactor.from_mapping(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("data_basis", "derived_only", "supported whole-run diagnosis data basis"),
+        ("location_proof_basis", "sensor_vote", "supported location proof basis"),
+    ],
+)
+def test_whole_run_diagnosis_summary_rejects_unsupported_literal_values(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    payload = WholeRunDiagnosisSummary(
+        diagnosis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        rank=1,
+        data_basis="raw_backed",
+    ).to_json_object()
+    payload[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        WholeRunDiagnosisSummary.from_mapping(payload)
+
+
 def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> None:
     assert set(DiagnosisExemplarReferenceResponse.__annotations__) == {
         "kind",

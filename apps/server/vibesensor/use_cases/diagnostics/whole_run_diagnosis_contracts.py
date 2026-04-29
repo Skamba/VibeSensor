@@ -9,9 +9,14 @@ support/counterevidence factor vocabulary.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
 
 from vibesensor.shared.types.history_analysis_contracts import (
+    DIAGNOSIS_EXEMPLAR_KIND_VALUES,
+    DIAGNOSIS_FACTOR_KEY_VALUES,
+    DIAGNOSIS_FACTOR_POLARITY_VALUES,
+    DIAGNOSIS_FACTOR_SEVERITY_VALUES,
+    LOCATION_PROOF_BASIS_VALUES,
+    WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES,
     DiagnosisExemplarKind,
     DiagnosisFactorKey,
     DiagnosisFactorPolarity,
@@ -411,13 +416,9 @@ def _required_numeric(data: JsonObject, field_name: str) -> float:
 
 
 def _required_exemplar_kind(value: object) -> DiagnosisExemplarKind:
-    if value not in {
-        "order_support_interval",
-        "whole_run_context_interval",
-        "spatial_location",
-    }:
+    if value not in DIAGNOSIS_EXEMPLAR_KIND_VALUES:
         raise ValueError("kind must be a supported diagnosis exemplar kind")
-    return cast(DiagnosisExemplarKind, value)
+    return value
 
 
 def _require_factor_key(value: DiagnosisFactorKey) -> None:
@@ -425,36 +426,9 @@ def _require_factor_key(value: DiagnosisFactorKey) -> None:
 
 
 def _required_factor_key(value: object) -> DiagnosisFactorKey:
-    if value not in {
-        "raw_backed",
-        "partial_raw_backed",
-        "repeated_support",
-        "sustained_support",
-        "stable_frequency",
-        "tight_order_lock",
-        "localized_support",
-        "clean_signal",
-        "user_confirmed_vehicle_data",
-        "summary_only",
-        "raw_replay_incomplete",
-        "legacy_context",
-        "speed_context_gaps",
-        "rpm_context_gaps",
-        "sparse_support",
-        "brief_support",
-        "drifting_frequency",
-        "loose_order_lock",
-        "mixed_support_locations",
-        "noisy_signal",
-        "weak_spatial",
-        "close_alternative",
-        "incomplete_reference",
-        "secondary_vehicle_data",
-        "approximate_vehicle_data",
-        "unverified_vehicle_data",
-    }:
+    if value not in DIAGNOSIS_FACTOR_KEY_VALUES:
         raise ValueError("factor_key must be a supported diagnosis factor key")
-    return cast(DiagnosisFactorKey, value)
+    return value
 
 
 def _require_factor_polarity(value: DiagnosisFactorPolarity) -> None:
@@ -462,9 +436,9 @@ def _require_factor_polarity(value: DiagnosisFactorPolarity) -> None:
 
 
 def _required_factor_polarity(value: object) -> DiagnosisFactorPolarity:
-    if value not in {"support", "counterevidence"}:
+    if value not in DIAGNOSIS_FACTOR_POLARITY_VALUES:
         raise ValueError("polarity must be a supported diagnosis factor polarity")
-    return cast(DiagnosisFactorPolarity, value)
+    return value
 
 
 def _require_factor_severity(value: DiagnosisFactorSeverity) -> None:
@@ -472,27 +446,23 @@ def _require_factor_severity(value: DiagnosisFactorSeverity) -> None:
 
 
 def _required_factor_severity(value: object) -> DiagnosisFactorSeverity:
-    if value not in {"low", "medium", "high"}:
+    if value not in DIAGNOSIS_FACTOR_SEVERITY_VALUES:
         raise ValueError("severity must be a supported diagnosis factor severity")
-    return cast(DiagnosisFactorSeverity, value)
+    return value
 
 
 def _required_data_basis(value: object) -> WholeRunDiagnosisDataBasis:
-    if value not in {"raw_backed", "partial_raw_backed", "summary_only"}:
+    if value not in WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES:
         raise ValueError("data_basis must be a supported whole-run diagnosis data basis")
-    return cast(WholeRunDiagnosisDataBasis, value)
+    return value
 
 
 def _optional_proof_basis(value: object) -> LocationProofBasis | None:
     if value is None:
         return None
-    if value not in {
-        "whole_run_summary",
-        "supporting_windows_raw_backed",
-        "supporting_windows_summary_only",
-    }:
+    if value not in LOCATION_PROOF_BASIS_VALUES:
         raise ValueError("location_proof_basis must be a supported location proof basis")
-    return cast(LocationProofBasis, value)
+    return value
 
 
 def _optional_float(value: object) -> float | None:

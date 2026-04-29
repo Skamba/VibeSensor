@@ -43,6 +43,7 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 
 __all__ = [
     "OrderHarmonicEvidenceSummary",
+    "ORDER_TRACE_FAMILY_VALUES",
     "OrderTraceFamily",
     "OrderTracePhaseSupport",
     "OrderTracePoint",
@@ -51,6 +52,10 @@ __all__ = [
 ]
 
 type OrderTraceFamily = Literal["wheel", "driveshaft", "engine"]
+
+ORDER_TRACE_FAMILY_VALUES: frozenset[OrderTraceFamily] = frozenset(
+    {"wheel", "driveshaft", "engine"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -462,7 +467,7 @@ def _optional_float(value: object) -> float | None:
 
 def _order_family(value: object) -> OrderTraceFamily:
     family = _optional_text(value)
-    if family not in {"wheel", "driveshaft", "engine"}:
+    if family not in ORDER_TRACE_FAMILY_VALUES:
         raise ValueError(f"Unsupported order_family {value!r}")
     return cast(OrderTraceFamily, family)
 

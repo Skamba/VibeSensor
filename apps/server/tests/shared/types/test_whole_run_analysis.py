@@ -223,6 +223,24 @@ def test_context_interval_from_mapping_defaults_invalid_numeric_fields() -> None
     assert interval.missing_context_window_count == 0
 
 
+def test_context_window_label_from_mapping_defaults_invalid_literal_states() -> None:
+    label = WholeRunContextWindowLabel.from_mapping(
+        {
+            "window_index": 3,
+            "phase": "cruise",
+            "context_coverage": "bad",
+            "speed_validity": "sensor_fusion",
+            "rpm_validity": "derived",
+            "load_state": "pulling",
+        }
+    )
+
+    assert label.context_coverage == "missing"
+    assert label.speed_validity == "missing"
+    assert label.rpm_validity == "missing"
+    assert label.load_state == "unknown"
+
+
 def test_context_interval_rejects_inverted_window_ranges() -> None:
     with pytest.raises(ValueError, match="end_window_index >= start_window_index"):
         WholeRunContextInterval(
