@@ -1,4 +1,4 @@
-import { fmt, fmtTs } from "../format";
+import { fmt, fmtTs, formatIntLocale } from "../format";
 import {
   createAppFeatureBundle,
   type AppFeatureBundle,
@@ -27,6 +27,7 @@ import type {
 
 function createUiAppSharedDeps(
   shell: UiShellController,
+  state: AppState,
 ): Pick<AppFeatureBundleSharedDeps, "formatting" | "services"> {
   return {
     services: {
@@ -37,7 +38,7 @@ function createUiAppSharedDeps(
     formatting: {
       fmt,
       fmtTs,
-      formatInt: (value) => shell.localFormatInt(value),
+      formatInt: (value) => formatIntLocale(value, state.shell.lang.value),
     },
   };
 }
@@ -104,7 +105,7 @@ export function createUiAppBootRuntime(deps: {
   featurePorts = createAppFeatureBundle({
     state: deps.state,
     shared: {
-      ...createUiAppSharedDeps(shell),
+      ...createUiAppSharedDeps(shell, deps.state),
       serverState: {
         queryClient,
       },
