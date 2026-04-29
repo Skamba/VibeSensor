@@ -97,18 +97,16 @@ def test_post_analysis_summary_has_no_g_unit_strings(_summary: dict[str, Any]) -
 
 
 def test_analysis_modules_use_canonical_db_helper() -> None:
-    """Analysis modules must import vibration_strength_db_scalar as canonical_vibration_db
-    and call it via the alias, not directly as vibration_strength_db_scalar().
-    """
+    """Analysis modules must use the canonical vibration_strength_db_scalar helper."""
     analysis_root = SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics"
 
-    direct_users = [
+    alias_users = [
         str(py_file.relative_to(analysis_root))
         for py_file in sorted(analysis_root.rglob("*.py"))
-        if "vibration_strength_db_scalar(" in py_file.read_text(encoding="utf-8")
+        if "as canonical_vibration_db" in py_file.read_text(encoding="utf-8")
     ]
 
-    assert not direct_users, (
-        "Analysis modules must use canonical_vibration_db() (aliased import); "
-        "direct vibration_strength_db_scalar() calls found in: " + ", ".join(direct_users)
+    assert not alias_users, (
+        "Analysis modules must import vibration_strength_db_scalar directly; "
+        "aliased imports found in: " + ", ".join(alias_users)
     )
