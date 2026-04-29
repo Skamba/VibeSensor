@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.whole_run_context import (
@@ -59,3 +61,11 @@ def test_build_whole_run_context_artifact_bundle_round_trips_labels_and_interval
 
 def test_whole_run_context_labels_from_jsonl_bytes_handles_empty_payload() -> None:
     assert whole_run_context_labels_from_jsonl_bytes(b"") == ()
+
+
+def test_whole_run_context_labels_from_jsonl_bytes_rejects_non_object_rows() -> None:
+    with pytest.raises(
+        ValueError,
+        match="whole-run context label line must decode to a JSON object",
+    ):
+        whole_run_context_labels_from_jsonl_bytes(b"[]\n")

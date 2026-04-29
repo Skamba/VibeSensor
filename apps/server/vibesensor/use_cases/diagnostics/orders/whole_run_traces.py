@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -14,6 +13,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
 )
+from vibesensor.use_cases.diagnostics._jsonl_sidecars import jsonl_bytes_from_objects
 from vibesensor.use_cases.diagnostics._reference_resolution import _tire_reference_from_context
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     client_locations_by_sensor,
@@ -144,10 +144,7 @@ def build_whole_run_order_trace_artifact_bundle(
 def order_trace_points_to_jsonl_bytes(points: Sequence[OrderTracePoint]) -> bytes:
     """Serialize dense whole-run order traces into sidecar JSONL bytes."""
 
-    if not points:
-        return b""
-    lines = [safe_json_dumps(point.to_json_object()).encode("utf-8") for point in points]
-    return b"\n".join(lines) + b"\n"
+    return jsonl_bytes_from_objects(points)
 
 
 def _hypothesis_trace_points(
