@@ -33,7 +33,6 @@ from .car_library_validation import ensure_valid_vehicle_configurations
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
-    "_VEHICLE_CONFIG_DATA_DIR",
     "load_vehicle_configurations",
 ]
 
@@ -300,9 +299,9 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
     )
 
 
-def _relative_shard_path(shard_path: Path) -> Path:
+def _relative_shard_path(shard_path: Path, *, data_dir: Path) -> Path:
     try:
-        return shard_path.relative_to(_VEHICLE_CONFIG_DATA_DIR)
+        return shard_path.relative_to(data_dir)
     except ValueError:
         return shard_path
 
@@ -471,24 +470,24 @@ def _expand_shard_payload(data: Any) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], expanded)
 
 
-def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
-    if not _VEHICLE_CONFIG_DATA_DIR.is_dir():
+def _load_vehicle_configuration_rows(*, data_dir: Path) -> list[VehicleConfigurationRow]:
+    if not data_dir.is_dir():
         LOGGER.warning(
             "Could not load exact vehicle configurations: missing data dir %s",
-            _VEHICLE_CONFIG_DATA_DIR,
+            data_dir,
         )
         return []
 
     rows: list[VehicleConfigurationRow] = []
     seen_ids: dict[str, Path] = {}
-    for shard_path in sorted(_VEHICLE_CONFIG_DATA_DIR.rglob("*.json")):
+    for shard_path in sorted(data_dir.rglob("*.json")):
         try:
             with shard_path.open(encoding="utf-8") as fh:
                 data = json.load(fh)
         except (json.JSONDecodeError, PermissionError, OSError) as exc:
             LOGGER.warning(
                 "Could not read exact vehicle configuration shard %s: %s",
-                _relative_shard_path(shard_path),
+                _relative_shard_path(shard_path, data_dir=data_dir),
                 exc,
             )
             return []
@@ -498,7 +497,7 @@ def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
         except _ShardRefError as exc:
             LOGGER.warning(
                 "Exact vehicle configuration shard %s has invalid provenance refs: %s",
-                _relative_shard_path(shard_path),
+                _relative_shard_path(shard_path, data_dir=data_dir),
                 exc,
             )
             return []
@@ -508,7 +507,7 @@ def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
         except ValidationError as exc:
             LOGGER.warning(
                 "Exact vehicle configuration shard %s failed validation: %s",
-                _relative_shard_path(shard_path),
+                _relative_shard_path(shard_path, data_dir=data_dir),
                 exc,
             )
             return []
@@ -520,8 +519,8 @@ def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
                 LOGGER.warning(
                     "Exact vehicle configuration id %s appears in multiple shards: %s and %s",
                     row_id,
-                    _relative_shard_path(previous_shard),
-                    _relative_shard_path(shard_path),
+                    _relative_shard_path(previous_shard, data_dir=data_dir),
+                    _relative_shard_path(shard_path, data_dir=data_dir),
                 )
                 return []
             seen_ids.setdefault(row_id, shard_path)
@@ -530,9 +529,9 @@ def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
     return rows
 
 
-def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
-    rows = _load_vehicle_configuration_rows()
-    if not rows and not _VEHICLE_CONFIG_DATA_DIR.is_dir():
+def _load_vehicle_configurations_snapshot(*, data_dir: Path) -> list[VehicleConfiguration]:
+    rows = _load_vehicle_configuration_rows(data_dir=data_dir)
+    if not rows and not data_dir.is_dir():
         return []
 
     try:
@@ -543,13 +542,14 @@ def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
     except ValueError as exc:
         LOGGER.warning(
             "Could not validate exact vehicle configurations from %s: %s",
-            _VEHICLE_CONFIG_DATA_DIR,
+            data_dir,
             exc,
         )
         return []
 
 
-def load_vehicle_configurations() -> list[VehicleConfiguration]:
-    """Load and return a fresh validated canonical configuration snapshot."""
+def load_vehicle_configurations(*, data_dir: Path | None = None) -> list[VehicleConfiguration]:
+    """Load and return a fresh validated vehicle-configuration snapshot."""
 
-    return _load_vehicle_configurations_snapshot()
+    resolved_data_dir = _VEHICLE_CONFIG_DATA_DIR if data_dir is None else data_dir
+    return _load_vehicle_configurations_snapshot(data_dir=resolved_data_dir)
