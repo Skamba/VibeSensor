@@ -22,9 +22,7 @@ from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence,
     compute_phase_stats,
 )
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 @dataclass(frozen=True)
@@ -148,7 +146,7 @@ def score_order_finding(
     snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / SNR_LOG_DIVISOR)
     if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
         snr_score = min(snr_score, 0.40)
-    absolute_strength_db = canonical_vibration_db(
+    absolute_strength_db = vibration_strength_db_scalar(
         peak_band_rms_amp_g=mean_amp,
         floor_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
     )

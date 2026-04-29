@@ -22,9 +22,7 @@ from vibesensor.use_cases.diagnostics.orders.scoring import (
 from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_matched_speed_phase_evidence,
 )
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 def assemble_order_finding(
@@ -78,7 +76,7 @@ def assemble_order_finding(
             global_match_rate=context.match_rate,
             focused_speed_band=context.focused_speed_band,
             mean_relative_error=score.mean_relative_error,
-            mean_noise_floor_db=canonical_vibration_db(
+            mean_noise_floor_db=vibration_strength_db_scalar(
                 peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, score.mean_floor),
                 floor_amp_g=MEMS_NOISE_FLOOR_G,
             ),
