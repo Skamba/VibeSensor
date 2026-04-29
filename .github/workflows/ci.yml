@@ -59,8 +59,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -80,8 +78,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -98,8 +94,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -119,8 +113,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -150,8 +142,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - id: setup-python
         uses: ./.github/actions/setup-python
@@ -171,8 +161,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -203,8 +191,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
 
@@ -224,8 +210,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:
@@ -259,8 +243,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:
@@ -295,8 +277,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:
@@ -336,8 +316,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:
@@ -393,8 +371,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-node@v6
         with:
@@ -458,8 +434,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - name: Set up configured Python runtime
         id: setup-python
@@ -508,8 +482,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
         with:
@@ -567,8 +539,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - name: Set up configured backend Python runtime
         id: setup-backend
@@ -614,8 +584,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
 
       - name: Set up configured backend Python runtime
         id: setup-backend
