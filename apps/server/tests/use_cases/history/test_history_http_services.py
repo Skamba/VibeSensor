@@ -19,6 +19,7 @@ from vibesensor.adapters.history import (
     ProjectedHistoryRunService,
     build_projected_run_details_json,
     project_history_insights,
+    project_history_run_record,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
@@ -484,6 +485,55 @@ def test_build_run_details_json_projects_canonical_nested_run_context() -> None:
     assert float(metadata["analysis_settings_snapshot"]["tire_width_mm"]) == pytest.approx(255.0)
     assert "reference_context" not in metadata
     assert "tire_circumference_m" not in metadata
+
+
+def test_run_record_and_export_details_share_projected_metadata_and_analysis() -> None:
+    run = _stored_run(
+        {
+            "run_id": "run-1",
+            "metadata": {
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 255.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 19.0,
+                    "final_drive_ratio": 3.15,
+                    "current_gear_ratio": 0.81,
+                },
+                "active_car_snapshot": {
+                    "id": "car-1",
+                    "name": "Primary",
+                    "type": "sedan",
+                },
+            },
+            "analysis": {
+                "findings": [
+                    {
+                        "finding_id": "F001",
+                        "suspected_source": "wheel/tire",
+                        "strongest_location": "front-left",
+                        "confidence": 0.71,
+                    },
+                ],
+                "top_causes": [],
+                "most_likely_origin": {},
+                "test_plan": [],
+                "run_suitability": [],
+                "_internal": {"secret": True},
+            },
+        }
+    )
+
+    run_record = project_history_run_record(run)
+    exported_payload = json.loads(
+        build_projected_run_details_json(
+            run,
+            sample_count=5,
+            run_id="run-1",
+        )
+    )
+
+    assert run_record["metadata"] == exported_payload["metadata"]
+    assert run_record["analysis"] == exported_payload["analysis"]
 
 
 def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None:
