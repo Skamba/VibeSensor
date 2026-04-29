@@ -6,7 +6,6 @@ import math
 
 from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
 from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
-from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.use_cases.run.capture_readiness_observation import (
     CaptureReadinessObservation,
@@ -16,6 +15,7 @@ from vibesensor.use_cases.run.capture_readiness_state import (
     CaptureReadinessStateSnapshot,
     IntegrityState,
     SpeedObservation,
+    _is_finite_number,
 )
 
 __all__ = ["evaluate_capture_readiness"]
@@ -401,7 +401,3 @@ def _stddev(values: tuple[float, ...]) -> float:
     mean_value = sum(values) / len(values)
     variance = sum((value - mean_value) ** 2 for value in values) / len(values)
     return math.sqrt(variance)
-
-
-def _is_finite_number(value: object) -> bool:
-    return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool) and math.isfinite(value)
