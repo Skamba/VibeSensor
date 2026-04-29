@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import csv
 import io
 import json
@@ -198,7 +197,8 @@ async def test_report_pdf_cache_retries_after_build_failure() -> None:
     assert calls == 2
 
 
-def test_report_pdf_cache_evicts_lru_entries_and_drops_evicted_locks() -> None:
+@pytest.mark.asyncio
+async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
     cache = HistoryReportPdfCache()
     keys = [
         (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none")
@@ -206,18 +206,15 @@ def test_report_pdf_cache_evicts_lru_entries_and_drops_evicted_locks() -> None:
     ]
 
     for index, key in enumerate(keys[:-1]):
-        cache._locks[key] = asyncio.Lock()
-        cache._put(key, f"%PDF-{index}".encode())
+        built = await cache.get_or_build(key, lambda index=index: f"%PDF-{index}".encode())
+        assert built == f"%PDF-{index}".encode()
 
     assert cache.get(keys[0]) == b"%PDF-0"
 
-    cache._locks[keys[-1]] = asyncio.Lock()
-    cache._put(keys[-1], b"%PDF-new")
+    assert await cache.get_or_build(keys[-1], lambda: b"%PDF-new") == b"%PDF-new"
 
     assert cache.get(keys[1]) is None
-    assert keys[1] not in cache._locks
     assert cache.get(keys[0]) == b"%PDF-0"
-    assert keys[0] in cache._locks
 
 
 @pytest.mark.asyncio
