@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from vibesensor.shared.json_utils import (
+    deep_merge,
     json_text_dumps,
     payload_object_from_json,
     payload_objects_from_json,
@@ -18,6 +19,42 @@ from vibesensor.shared.json_utils import (
     sanitize_for_json,
     sanitize_value,
 )
+
+
+class TestDeepMerge:
+    """Tests for the shared ``deep_merge`` helper."""
+
+    @pytest.mark.parametrize(
+        ("base", "override", "expected"),
+        [
+            pytest.param({"a": 1, "b": 2}, {"a": 10}, {"a": 10, "b": 2}, id="scalar"),
+            pytest.param(
+                {"top": {"a": 1, "b": 2}},
+                {"top": {"b": 3}},
+                {"top": {"a": 1, "b": 3}},
+                id="nested-object",
+            ),
+            pytest.param({"a": 1}, {"b": 2}, {"a": 1, "b": 2}, id="new-key"),
+            pytest.param({"items": [1, 2]}, {"items": [3]}, {"items": [3]}, id="list-replace"),
+        ],
+    )
+    def test_merges_nested_objects_and_replaces_scalars(
+        self,
+        base: dict[str, object],
+        override: dict[str, object],
+        expected: dict[str, object],
+    ) -> None:
+        assert deep_merge(base, override) == expected
+
+    def test_null_dict_section_keeps_existing_section_and_logs_warning(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        result = deep_merge({"ap": {"self_heal": {"enabled": True}}}, {"ap": None})
+
+        assert result == {"ap": {"self_heal": {"enabled": True}}}
+        assert "keeping default section" in caplog.text
+
 
 # ── sanitize_for_json ────────────────────────────────────────────────────────
 
