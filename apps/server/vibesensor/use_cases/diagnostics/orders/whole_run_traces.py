@@ -9,9 +9,9 @@ from typing import cast
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.shared.types.whole_run_analysis import (
-    WholeRunArtifactFile,
-    WholeRunArtifactManifest,
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics._artifact_bundles import (
+    build_single_artifact_bundle_parts,
 )
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import jsonl_bytes_from_objects
 from vibesensor.use_cases.diagnostics._reference_resolution import _tire_reference_from_context
@@ -116,27 +116,19 @@ def build_whole_run_order_trace_artifact_bundle(
         if any(point.eligible for point in hypothesis_points):
             points.extend(hypothesis_points)
     point_rows = tuple(points)
-    artifact = WholeRunArtifactFile(
+    parts = build_single_artifact_bundle_parts(
         artifact_key=WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
         relative_path=_WHOLE_RUN_ORDER_TRACE_ARTIFACT_PATH,
         file_format="jsonl",
         record_count=len(point_rows),
-    )
-    manifest = WholeRunArtifactManifest(
+        source_manifest=spectral_manifest,
         run_id=run_id,
-        relative_dir=spectral_manifest.relative_dir,
-        window_policy=spectral_manifest.window_policy,
-        total_window_count=spectral_manifest.total_window_count,
-        artifacts=(artifact,),
         created_at=created_at or spectral_manifest.created_at or utc_now_iso(),
-        schema_version=spectral_manifest.schema_version,
-        storage_type=spectral_manifest.storage_type,
+        content_bytes=order_trace_points_to_jsonl_bytes(point_rows),
     )
     return WholeRunOrderTraceArtifactBundle(
-        manifest=manifest,
-        artifact_contents={
-            WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: order_trace_points_to_jsonl_bytes(point_rows)
-        },
+        manifest=parts.manifest,
+        artifact_contents=parts.artifact_contents,
         points=point_rows,
     )
 
