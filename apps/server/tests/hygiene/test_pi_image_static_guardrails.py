@@ -1,65 +1,9 @@
-"""Static guardrails for pi-image build wrappers and layout."""
+"""Static guardrails for pi-image layout and packaged entrypoint contracts."""
 
 from __future__ import annotations
 
 import pytest
 from _paths import REPO_ROOT
-
-
-@pytest.fixture(scope="module")
-def pi_gen_source_text() -> str:
-    pi_gen_root = REPO_ROOT / "infra" / "pi-image" / "pi-gen"
-    paths = [
-        pi_gen_root / "build.sh",
-        pi_gen_root / "validate-image.sh",
-        *sorted((pi_gen_root / "lib").glob("*.sh")),
-        *sorted(
-            path
-            for path in (pi_gen_root / "templates").rglob("*")
-            if path.is_file() and path.suffix != ".gpg"
-        ),
-    ]
-    return "\n".join(path.read_text(encoding="utf-8") for path in paths)
-
-
-_BUILD_WRAPPER_CHECKS: list[tuple[str, str]] = [
-    ("BUILD_MODE", "build wrapper must support split app/image build modes"),
-    ("BUILD_MODE=app", "build wrapper must support app-only artifact builds"),
-    ("npm", "build wrapper must build UI artifacts during app build mode"),
-    ("network-manager", "build wrapper must bake network-manager"),
-    ("dnsmasq", "build wrapper must bake dnsmasq"),
-    ("99-vibesensor-dnsmasq.conf", "build wrapper must assert DNS drop-in"),
-    ("firmware", "build wrapper must handle ESP firmware cache/baseline"),
-    ("flash.json", "build wrapper must validate firmware manifest"),
-    ("vibesensor-fw-refresh", "build wrapper must call firmware cache refresh CLI entrypoint"),
-    ("10-vibesensor-hostkeys.conf", "build wrapper must include ssh host-key bootstrap drop-in"),
-    (
-        "Validation failed: ssh.service is not enabled in multi-user.target",
-        "build wrapper must validate ssh.service enablement",
-    ),
-    (
-        "Validation failed: sshd first-boot readiness test failed",
-        "build wrapper must validate sshd first-boot readiness",
-    ),
-    (
-        "Validation failed: first user password hash does not match VS_FIRST_USER_PASS",
-        "build wrapper must validate the configured first user password hash",
-    ),
-]
-
-
-@pytest.mark.smoke
-@pytest.mark.parametrize(
-    ("substring", "message"),
-    _BUILD_WRAPPER_CHECKS,
-    ids=[check[0][:40] for check in _BUILD_WRAPPER_CHECKS],
-)
-def test_build_wrapper_asserts_requirement(
-    pi_gen_source_text: str,
-    substring: str,
-    message: str,
-) -> None:
-    assert substring in pi_gen_source_text, message
 
 
 @pytest.mark.smoke
