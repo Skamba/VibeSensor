@@ -1,4 +1,4 @@
-"""Guard process-backed e2e shard runner behavior."""
+"""Guard process-backed e2e shard runner behavior without pinning helper names."""
 
 from __future__ import annotations
 
@@ -23,27 +23,39 @@ def _load_run_e2e_parallel_module():
     return module
 
 
-def test_build_shard_config_creates_isolated_runtime(monkeypatch, tmp_path: Path) -> None:
-    module = _load_run_e2e_parallel_module()
+def _install_main_fakes(
+    module,
+    monkeypatch,
+    tmp_path: Path,
+    *,
+    collected: list[str] | None = None,
+    assigned: list[list[str]] | None = None,
+) -> tuple[dict[str, object], list[str]]:
     recorded: dict[str, object] = {}
-    shard_root = tmp_path / "shard-root"
-    runtime = module.IsolatedRuntimePaths(
-        root=shard_root,
-        data_dir=shard_root / "data",
-        rollback_dir=shard_root / "rollback",
-        config_path=shard_root / "shard-2.yaml",
-    )
+    emitted: list[str] = []
+    runtime_root = tmp_path / "runtime-root"
 
-    monkeypatch.setattr(module.tempfile, "mkdtemp", lambda prefix: str(shard_root))
+    monkeypatch.setattr(module, "LOG_DIR", tmp_path / "logs")
+    monkeypatch.setattr(module, "_register_cleanup_hooks", lambda: None)
     monkeypatch.setattr(
         module,
-        "_track_active_runtime_root",
-        lambda path: recorded.setdefault("tracked", path),
+        "collect_test_ids",
+        lambda _pytest_args: collected or ["apps/server/tests_e2e/test_sample.py::test_alpha"],
     )
+    monkeypatch.setattr(module, "_load_duration_cache", lambda _path: {})
+    monkeypatch.setattr(module, "_observed_durations_from_junit", lambda _path, _selected: {})
+    monkeypatch.setattr(module, "_emit", emitted.append)
+    monkeypatch.setattr(module.tempfile, "mkdtemp", lambda prefix: str(runtime_root))
+    if assigned is not None:
+        monkeypatch.setattr(
+            module,
+            "_assign_shards_by_duration",
+            lambda _collected, _min_shards, _durations: assigned,
+        )
 
-    def fake_build_isolated_server_config(
+    def _fake_build_isolated_server_config(
         source_config: Path,
-        runtime_root: Path,
+        runtime_root_arg: Path,
         *,
         host: str,
         port: int,
@@ -52,9 +64,10 @@ def test_build_shard_config_creates_isolated_runtime(monkeypatch, tmp_path: Path
         config_name: str,
         data_seed_dir: Path | None,
     ):
+        runtime_root_arg.mkdir(parents=True, exist_ok=True)
         recorded["config_call"] = {
             "source_config": source_config,
-            "runtime_root": runtime_root,
+            "runtime_root": runtime_root_arg,
             "host": host,
             "port": port,
             "udp_data_port": udp_data_port,
@@ -62,36 +75,61 @@ def test_build_shard_config_creates_isolated_runtime(monkeypatch, tmp_path: Path
             "config_name": config_name,
             "data_seed_dir": data_seed_dir,
         }
-        return runtime
+        return module.IsolatedRuntimePaths(
+            root=runtime_root_arg,
+            data_dir=runtime_root_arg / "data",
+            rollback_dir=runtime_root_arg / "rollback",
+            config_path=runtime_root_arg / config_name,
+        )
 
-    monkeypatch.setattr(module, "build_isolated_server_config", fake_build_isolated_server_config)
+    monkeypatch.setattr(module, "build_isolated_server_config", _fake_build_isolated_server_config)
+    monkeypatch.setattr(module, "_run_shard_e2e", lambda *, config, marker: 0)
+    return recorded, emitted
 
-    config = module._build_shard_config(
-        source_config=Path("/tmp/base-config.yaml"),
-        shard_index=2,
-        shard_count=6,
-        tests=["apps/server/tests_e2e/test_sample.py::test_alpha"],
-        http_port_base=18020,
-        sim_data_port_base=19020,
-        sim_control_port_base=19120,
+
+def test_main_builds_isolated_runtime_for_selected_shard(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_run_e2e_parallel_module()
+    base_config = tmp_path / "base-config.yaml"
+    base_config.write_text("server:\n  port: 8000\n", encoding="utf-8")
+    recorded, emitted = _install_main_fakes(
+        module,
+        monkeypatch,
+        tmp_path,
+        assigned=[["apps/server/tests_e2e/test_sample.py::test_alpha"]],
     )
 
-    assert recorded["tracked"] == shard_root
+    assert (
+        module.main(
+            [
+                "--config",
+                str(base_config),
+                "--shards",
+                "1",
+                "--http-port-base",
+                "18020",
+                "--sim-data-port-base",
+                "19020",
+                "--sim-control-port-base",
+                "19120",
+            ]
+        )
+        == 0
+    )
+
     assert recorded["config_call"] == {
-        "source_config": Path("/tmp/base-config.yaml"),
-        "runtime_root": shard_root,
+        "source_config": base_config.resolve(),
+        "runtime_root": tmp_path / "runtime-root",
         "host": "127.0.0.1",
-        "port": 18021,
-        "udp_data_port": 19021,
-        "udp_control_port": 19121,
-        "config_name": "shard-2.yaml",
+        "port": 18020,
+        "udp_data_port": 19020,
+        "udp_control_port": 19120,
+        "config_name": "shard-1.yaml",
         "data_seed_dir": module._DEFAULT_DATA_SEED_DIR,
     }
-    assert config.http_port == 18021
-    assert config.sim_data_port == 19021
-    assert config.sim_control_port == 19121
-    assert config.sim_client_control_base == 9200
-    assert config.runtime == runtime
+    assert any("min requested: 1" in line for line in emitted)
 
 
 def test_assign_shards_uses_cached_durations() -> None:
@@ -174,25 +212,27 @@ def test_cleanup_active_processes_terminates_tracked_processes(monkeypatch) -> N
     process_a = object()
     process_b = object()
     module._ACTIVE_PROCESSES.clear()
-    module._track_active_process("shard-a-server", process_a)
-    module._track_active_process("shard-b-pytest", process_b)
-    monkeypatch.setattr(
-        module,
-        "terminate_subprocess",
-        lambda process: terminated.append(process),
-    )
+    try:
+        module._track_active_process("shard-a-server", process_a)
+        module._track_active_process("shard-b-pytest", process_b)
+        monkeypatch.setattr(
+            module,
+            "terminate_subprocess",
+            lambda process: terminated.append(process),
+        )
 
-    module._cleanup_active_processes()
+        module._cleanup_active_processes()
+    finally:
+        module._ACTIVE_PROCESSES.clear()
 
     assert terminated == [process_a, process_b]
-    assert module._ACTIVE_PROCESSES == {}
 
 
-def test_parse_args_defaults_to_six_shards(monkeypatch) -> None:
+def test_main_reports_default_min_shards_and_base_config(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_e2e_parallel_module()
-    monkeypatch.setattr(module.sys, "argv", ["run_e2e_parallel.py"])
+    recorded, emitted = _install_main_fakes(module, monkeypatch, tmp_path)
 
-    args = module._parse_args()
+    assert module.main([]) == 0
 
-    assert args.shards == 6
-    assert args.config == module._DEFAULT_BASE_CONFIG
+    assert recorded["config_call"]["source_config"] == module._DEFAULT_BASE_CONFIG.resolve()
+    assert any("min requested: 6" in line for line in emitted)

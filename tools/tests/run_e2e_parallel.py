@@ -608,7 +608,7 @@ def _shard_worker(
             )
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run process-backed e2e tests in isolated parallel shards."
     )
@@ -652,14 +652,14 @@ def _parse_args() -> argparse.Namespace:
         default=19120,
         help="Base host simulator UDP control port; shard N uses base + (N-1).",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
     return args
 
 
-def main() -> int:
-    args = _parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     _register_cleanup_hooks()
 

@@ -286,7 +286,7 @@ def _run_bootstrap(steps: list[Step]) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Run local CI-equivalent checks with the same command groups as .github/workflows/ci.yml, "
@@ -314,7 +314,7 @@ def main() -> int:
         action="store_true",
         help="Skip npm ci bootstrap even when node_modules is missing.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.job and args.ci_lite:
         parser.error("--ci-lite cannot be combined with --job")
 
