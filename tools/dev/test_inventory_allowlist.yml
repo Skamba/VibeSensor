@@ -1,0 +1,3 @@
+allowlist:
+  tools/tests/benchmark_pipeline.py: Standalone throughput harness; the collected regression benchmark lives in apps/server/tests/infra/workers/benchmark_compute_all.py.
+  tools/tests/benchmark_update_status_codec.py: Standalone single-shot codec timing harness; the collected regression benchmark lives in apps/server/tests/use_cases/updates/benchmark_update_status_codec.py.
