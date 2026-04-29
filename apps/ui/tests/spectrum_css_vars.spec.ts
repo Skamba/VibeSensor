@@ -37,11 +37,9 @@ describe("spectrum_css_vars", () => {
     })) as typeof matchMedia;
 
     try {
-      const { getSpectrumCssVars, refreshSpectrumCssVars } = await import(
-        "../src/spectrum_css_vars"
-      );
+      const { getSpectrumCssVars } = await import("../src/spectrum_css_vars");
 
-      const first = refreshSpectrumCssVars();
+      const first = getSpectrumCssVars();
       expect(first).toEqual({
         surface: "#101820",
         muted: "#556677",
@@ -51,7 +49,11 @@ describe("spectrum_css_vars", () => {
       });
       expect(readCount).toBe(1);
 
-      const unchangedRefresh = refreshSpectrumCssVars();
+      themeChangeHandler?.({
+        matches: true,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent);
+      const unchangedRefresh = getSpectrumCssVars();
       expect(unchangedRefresh).toBe(first);
       expect(readCount).toBe(2);
 
@@ -60,7 +62,11 @@ describe("spectrum_css_vars", () => {
       expect(getSpectrumCssVars().surface).toBe("#101820");
       expect(readCount).toBe(2);
 
-      const refreshed = refreshSpectrumCssVars();
+      themeChangeHandler?.({
+        matches: true,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent);
+      const refreshed = getSpectrumCssVars();
       expect(refreshed.surface).toBe("#222222");
       expect(refreshed).not.toBe(first);
       expect(getSpectrumCssVars()).toBe(refreshed);
