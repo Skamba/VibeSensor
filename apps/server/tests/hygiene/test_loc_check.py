@@ -77,7 +77,7 @@ def test_main_falls_back_to_repo_walk_outside_git_checkout(
 
     monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
 
-    assert module.main() == 0
+    assert module.main([]) == 0
 
     stdout = capsys.readouterr().out
     assert "src/main.py" in stdout
