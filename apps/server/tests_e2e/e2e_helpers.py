@@ -102,6 +102,10 @@ def api_bytes(
     )
 
 
+def recording_status(base_url: str) -> dict:
+    return api_json(base_url, "/api/recording/status")
+
+
 def pdf_text(pdf_bytes: bytes) -> str:
     reader = PdfReader(io.BytesIO(pdf_bytes))
     return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
@@ -178,6 +182,7 @@ def wait_for(
     timeout_s: float,
     interval_s: float = 0.5,
     message: str,
+    state: Callable[[], object] | None = None,
 ):
     deadline = time.monotonic() + timeout_s
     last = None
@@ -185,6 +190,36 @@ def wait_for(
         last = predicate()
         if last:
             return last
+        if state is not None:
+            last = state()
+        time.sleep(interval_s)
+    raise AssertionError(f"{message}; last={last!r}")
+
+
+def wait_for_stable(
+    predicate,
+    *,
+    timeout_s: float,
+    stable_for_s: float,
+    interval_s: float = 0.5,
+    message: str,
+    state: Callable[[], object] | None = None,
+):
+    deadline = time.monotonic() + timeout_s
+    stable_since: float | None = None
+    last = None
+    while time.monotonic() < deadline:
+        last = predicate()
+        if last:
+            now = time.monotonic()
+            if stable_since is None:
+                stable_since = now
+            elif (now - stable_since) >= stable_for_s:
+                return last
+        else:
+            stable_since = None
+        if state is not None:
+            last = state()
         time.sleep(interval_s)
     raise AssertionError(f"{message}; last={last!r}")
 
@@ -206,11 +241,93 @@ def wait_run_status(
         timeout_s=timeout_s,
         interval_s=0.5,
         message=f"Run {run_id} did not reach statuses {statuses}",
+        state=lambda: api_json(base_url, f"/api/history/{run_id}", expected_status=(200, 404)),
     )
 
 
 def history_run_ids(base_url: str) -> set[str]:
     return {str(item["run_id"]) for item in api_json(base_url, "/api/history").get("runs", [])}
+
+
+def _artifact_wait_state(
+    base_url: str,
+    run_id: str,
+    *,
+    last_response: ApiResponse | None,
+) -> dict[str, object]:
+    run = api_json(base_url, f"/api/history/{run_id}", expected_status=(200, 404))
+    state = {
+        "run_id": run_id,
+        "history_status": run.get("status"),
+        "error_message": run.get("error_message"),
+        "sample_count": run.get("sample_count"),
+    }
+    if last_response is not None:
+        state["artifact_status"] = last_response.status
+        state["artifact_body_preview"] = last_response.body[:160].decode(
+            "utf-8",
+            errors="replace",
+        )
+    return state
+
+
+def wait_export_ready(base_url: str, run_id: str, *, timeout_s: float = 30.0) -> ApiResponse:
+    last_response: ApiResponse | None = None
+
+    def _check() -> ApiResponse | None:
+        nonlocal last_response
+        last_response = api_bytes(
+            base_url,
+            f"/api/history/{run_id}/export",
+            expected_status=(200, 404, 422),
+        )
+        return last_response if last_response.status == 200 else None
+
+    return wait_for(
+        _check,
+        timeout_s=timeout_s,
+        interval_s=0.5,
+        message=f"Export for run {run_id} did not become available",
+        state=lambda: _artifact_wait_state(
+            base_url,
+            run_id,
+            last_response=last_response,
+        ),
+    )
+
+
+def wait_report_pdf_ready(
+    base_url: str,
+    run_id: str,
+    *,
+    lang: str | None = None,
+    timeout_s: float = 30.0,
+) -> ApiResponse:
+    path = f"/api/history/{run_id}/report.pdf"
+    if lang:
+        path = f"{path}?lang={lang}"
+    last_response: ApiResponse | None = None
+
+    def _check() -> ApiResponse | None:
+        nonlocal last_response
+        last_response = api_bytes(
+            base_url,
+            path,
+            expected_status=(200, 404, 422),
+        )
+        return last_response if last_response.status == 200 else None
+
+    return wait_for(
+        _check,
+        timeout_s=timeout_s,
+        interval_s=0.5,
+        message=f"Report PDF for run {run_id} did not become available",
+        state=lambda: _artifact_wait_state(
+            base_url,
+            run_id,
+            last_response=last_response,
+        ),
+    )
 
 
 def parse_export_zip(raw: bytes) -> tuple[dict, list[dict[str, str]], set[str]]:

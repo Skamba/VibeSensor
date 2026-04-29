@@ -12,9 +12,9 @@ from tests_e2e._docker_edge_helpers import (
     _wait_complete,
 )
 from tests_e2e.e2e_helpers import (
-    api_bytes,
     api_json,
     parse_export_zip,
+    wait_export_ready,
 )
 
 pytestmark = pytest.mark.e2e
@@ -30,7 +30,7 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
         summary_rows = api_json(base, "/api/history")["runs"]
         summary = next(item for item in summary_rows if str(item["run_id"]) == run_id)
 
-        export_resp = api_bytes(base, f"/api/history/{run_id}/export")
+        export_resp = wait_export_ready(base, run_id)
         assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
         assert f"{run_id}.zip" in str(export_resp.headers.get("content-disposition", ""))
 
