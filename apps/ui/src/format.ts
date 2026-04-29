@@ -1,3 +1,5 @@
+import { getDefaultNumberFormat } from "./number_format";
+
 export function fmt(n: number, digits = 2): string {
   if (typeof n !== "number" || !Number.isFinite(n)) return "--";
   return n.toFixed(digits);
@@ -22,15 +24,8 @@ export function formatEpochTimestamp(epoch: number | null | undefined): string {
   return formatDateTime(new Date(epoch * 1000), "—");
 }
 
-const _localeFormatCache = new Map<string, Intl.NumberFormat>();
-
 /** Like formatInt but respects the given BCP 47 locale tag (e.g. "nl", "en"). */
 export function formatIntLocale(value: number, lang: string): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "--";
-  let fmt = _localeFormatCache.get(lang);
-  if (!fmt) {
-    fmt = new Intl.NumberFormat(lang);
-    _localeFormatCache.set(lang, fmt);
-  }
-  return fmt.format(Math.round(value));
+  return getDefaultNumberFormat(lang).format(Math.round(value));
 }
