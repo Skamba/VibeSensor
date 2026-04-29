@@ -31,6 +31,9 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 from vibesensor.shared.types.whole_run_json_helpers import (
     set_optional_value as _set_optional,
 )
+from vibesensor.shared.types.whole_run_json_helpers import (
+    tuple_from_mapping_list_field as _tuple_from_mapping_list_field,
+)
 
 __all__ = [
     "LocationProofBasis",
@@ -206,16 +209,6 @@ class SpatialEvidenceSummary:
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> SpatialEvidenceSummary:
-        raw_location_summaries = data.get("location_summaries")
-        location_summaries = (
-            tuple(
-                SpatialLocationSummary.from_mapping(row)
-                for row in raw_location_summaries
-                if isinstance(row, dict)
-            )
-            if isinstance(raw_location_summaries, list)
-            else ()
-        )
         return cls(
             candidate_key=_required_text(data, "candidate_key"),
             suspected_source=_required_text(data, "suspected_source"),
@@ -231,7 +224,11 @@ class SpatialEvidenceSummary:
             dominance_ratio=_optional_float(data.get("dominance_ratio")),
             ambiguous_location=_required_bool(data, "ambiguous_location"),
             weak_spatial_separation=_required_bool(data, "weak_spatial_separation"),
-            location_summaries=location_summaries,
+            location_summaries=_tuple_from_mapping_list_field(
+                data,
+                "location_summaries",
+                SpatialLocationSummary.from_mapping,
+            ),
         )
 
 

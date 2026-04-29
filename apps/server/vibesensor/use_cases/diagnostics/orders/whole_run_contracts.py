@@ -37,6 +37,9 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 from vibesensor.shared.types.whole_run_json_helpers import (
     set_optional_value as _set_optional,
 )
+from vibesensor.shared.types.whole_run_json_helpers import (
+    tuple_from_mapping_list_field as _tuple_from_mapping_list_field,
+)
 
 __all__ = [
     "OrderHarmonicEvidenceSummary",
@@ -376,9 +379,21 @@ class OrderTraceSummary:
                 "longest_contiguous_support_window_count",
             ),
             contiguous_support_ratio=_required_float(data, "contiguous_support_ratio"),
-            support_intervals=_support_intervals(data.get("support_intervals")),
-            phase_support=_phase_support_rows(data.get("phase_support")),
-            harmonic_summaries=_harmonic_summaries(data.get("harmonic_summaries")),
+            support_intervals=_tuple_from_mapping_list_field(
+                data,
+                "support_intervals",
+                OrderTraceSupportInterval.from_mapping,
+            ),
+            phase_support=_tuple_from_mapping_list_field(
+                data,
+                "phase_support",
+                OrderTracePhaseSupport.from_mapping,
+            ),
+            harmonic_summaries=_tuple_from_mapping_list_field(
+                data,
+                "harmonic_summaries",
+                OrderHarmonicEvidenceSummary.from_mapping,
+            ),
             stable_frequency_min_hz=_optional_float(data.get("stable_frequency_min_hz")),
             stable_frequency_max_hz=_optional_float(data.get("stable_frequency_max_hz")),
             exemplar_interval_index=_optional_int(data.get("exemplar_interval_index")),
@@ -393,30 +408,6 @@ class OrderTraceSummary:
             mean_vibration_strength_db=_optional_float(data.get("mean_vibration_strength_db")),
             ref_sources=_text_tuple(data.get("ref_sources")),
         )
-
-
-def _support_intervals(value: object) -> tuple[OrderTraceSupportInterval, ...]:
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        OrderTraceSupportInterval.from_mapping(item) for item in value if isinstance(item, dict)
-    )
-
-
-def _phase_support_rows(value: object) -> tuple[OrderTracePhaseSupport, ...]:
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        OrderTracePhaseSupport.from_mapping(item) for item in value if isinstance(item, dict)
-    )
-
-
-def _harmonic_summaries(value: object) -> tuple[OrderHarmonicEvidenceSummary, ...]:
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        OrderHarmonicEvidenceSummary.from_mapping(item) for item in value if isinstance(item, dict)
-    )
 
 
 def _text_tuple(value: object) -> tuple[str, ...]:
