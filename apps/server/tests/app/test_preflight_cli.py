@@ -1,4 +1,4 @@
-"""CLI coverage for config preflight defaults, argument errors, and JSON output."""
+"""CLI coverage for config preflight defaults, argument errors, and validation outcomes."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.app.config_loader import load_config
 from vibesensor.cli import preflight
 
 
@@ -25,22 +24,28 @@ def test_preflight_cli_dump_defaults(monkeypatch, capsys) -> None:
     assert payload["processing"]["sample_rate_hz"] == 800
 
 
-def test_preflight_cli_requires_config_without_dump_defaults(monkeypatch) -> None:
+def test_preflight_cli_requires_config_without_dump_defaults(monkeypatch, capsys) -> None:
     monkeypatch.setattr(sys, "argv", ["vibesensor-config-preflight"])
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as excinfo:
         preflight.main()
 
+    assert excinfo.value.code == 2
+    assert "config is required unless --dump-defaults is set" in capsys.readouterr().err
 
-def test_preflight_cli_rejects_dump_defaults_with_config(monkeypatch) -> None:
+
+def test_preflight_cli_rejects_dump_defaults_with_config(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         sys,
         "argv",
         ["vibesensor-config-preflight", "--dump-defaults", "apps/server/config.dev.yaml"],
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as excinfo:
         preflight.main()
+
+    assert excinfo.value.code == 2
+    assert "--dump-defaults and config are mutually exclusive" in capsys.readouterr().err
 
 
 def test_preflight_cli_prints_resolved_config(monkeypatch, capsys, tmp_path: Path) -> None:
@@ -65,40 +70,7 @@ def test_preflight_cli_prints_resolved_config(monkeypatch, capsys, tmp_path: Pat
     assert payload["process_settings"]["github_token_configured"] is True
 
 
-def test_writable_path_checks_include_active_runtime_targets(
-    monkeypatch,
-    tmp_path: Path,
-) -> None:
-    config_path = tmp_path / "config.yaml"
-    config_path.write_text(
-        "\n".join(
-            (
-                "tracing:",
-                "  enabled: true",
-                "  output_path: traces/export.jsonl",
-                "update:",
-                f"  rollback_dir: {tmp_path / 'rollback'}",
-            )
-        ),
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("VIBESENSOR_UPDATE_STATE_PATH", str(tmp_path / "update" / "state.json"))
-    monkeypatch.setenv("VIBESENSOR_FIRMWARE_CACHE_DIR", str(tmp_path / "firmware"))
-
-    cfg = load_config(config_path)
-
-    assert [check.label for check in preflight._writable_path_checks(cfg)] == [
-        "logging.history_db_path",
-        "logging.app_log_path",
-        "ap.self_heal.state_file",
-        "tracing.output_path",
-        "update.rollback_dir",
-        "process_settings.update_state_path",
-        "process_settings.firmware_cache_dir",
-    ]
-
-
-def test_preflight_cli_reports_unwritable_runtime_path(
+def test_preflight_cli_reports_unwritable_history_db_path(
     monkeypatch,
     capsys,
     tmp_path: Path,
@@ -138,22 +110,31 @@ def test_preflight_cli_reports_unwritable_runtime_path(
     assert str(blocked_dir) in captured.err
 
 
-def test_missing_parent_path_does_not_probe_higher_ancestors(
+def test_preflight_cli_reports_unwritable_update_state_path(
     monkeypatch,
+    capsys,
     tmp_path: Path,
 ) -> None:
+    blocked_dir = tmp_path / "blocked"
+    blocked_dir.mkdir()
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("server:\n  port: 8000\n", encoding="utf-8")
+    monkeypatch.setenv("VIBESENSOR_UPDATE_STATE_PATH", str(blocked_dir / "state.json"))
+    monkeypatch.setenv("VIBESENSOR_FIRMWARE_CACHE_DIR", str(tmp_path / "firmware"))
+
     real_access = os.access
 
     def _mock_access(path: str | os.PathLike[str], mode: int) -> bool:
-        if Path(path) == tmp_path:
+        if Path(path) == blocked_dir:
             return False
         return real_access(path, mode)
 
     monkeypatch.setattr(preflight.os, "access", _mock_access)
+    monkeypatch.setattr(sys, "argv", ["vibesensor-config-preflight", str(config_path)])
 
-    preflight._validate_writable_path(
-        preflight._WritablePathCheck(
-            "logging.history_db_path",
-            tmp_path / "missing" / "history.db",
-        )
-    )
+    assert preflight.main() == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "process_settings.update_state_path is not writable" in captured.err
+    assert str(blocked_dir) in captured.err
