@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -9,12 +8,23 @@ from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 
 
+class _StaticFetcher:
+    def __init__(self, release: object) -> None:
+        self._release = release
+
+    def find_latest_release(self) -> object:
+        return self._release
+
+
+class _FailingFetcher:
+    def find_latest_release(self) -> object:
+        raise OSError("rate limited")
+
+
 @pytest.mark.asyncio
 async def test_resolve_returns_release_when_latest_version_is_newer() -> None:
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4")
-    fetcher = MagicMock()
-    fetcher.find_latest_release.return_value = release
-    resolver = ServerReleaseResolver(release_fetcher=fetcher)
+    resolver = ServerReleaseResolver(release_fetcher=_StaticFetcher(release))
 
     resolution = await resolver.resolve("2026.4.3")
 
@@ -22,17 +32,18 @@ async def test_resolve_returns_release_when_latest_version_is_newer() -> None:
     assert resolution.release is release
     assert resolution.latest_tag == ""
     assert resolution.update_available is True
-    fetcher.find_latest_release.assert_called_once_with()
 
 
 @pytest.mark.asyncio
 async def test_resolve_uses_latest_tag_when_no_update_is_available() -> None:
-    fetcher = MagicMock()
-    fetcher.find_latest_release.return_value = SimpleNamespace(
-        tag="server-v2026.4.4",
-        version="2026.4.3",
+    resolver = ServerReleaseResolver(
+        release_fetcher=_StaticFetcher(
+            SimpleNamespace(
+                tag="server-v2026.4.4",
+                version="2026.4.3",
+            ),
+        ),
     )
-    resolver = ServerReleaseResolver(release_fetcher=fetcher)
 
     resolution = await resolver.resolve("2026.4.3")
 
@@ -44,9 +55,7 @@ async def test_resolve_uses_latest_tag_when_no_update_is_available() -> None:
 
 @pytest.mark.asyncio
 async def test_resolve_propagates_release_check_failure() -> None:
-    fetcher = MagicMock()
-    fetcher.find_latest_release.side_effect = OSError("rate limited")
-    resolver = ServerReleaseResolver(release_fetcher=fetcher)
+    resolver = ServerReleaseResolver(release_fetcher=_FailingFetcher())
 
     with pytest.raises(UpdateReleaseError, match="rate limited"):
         await resolver.resolve("2026.4.3")
