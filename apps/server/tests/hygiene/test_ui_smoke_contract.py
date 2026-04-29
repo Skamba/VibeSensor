@@ -76,9 +76,7 @@ def _playwright_configs_from_package_scripts() -> set[str]:
         if tokens[:3] != ["npx", "playwright", "test"]:
             continue
         explicit_configs = {
-            token.removeprefix("--config=")
-            for token in tokens
-            if token.startswith("--config=")
+            token.removeprefix("--config=") for token in tokens if token.startswith("--config=")
         }
         configs.update(explicit_configs or {"playwright.config.ts"})
     return configs
