@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -96,9 +96,6 @@ benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/ser
 sync-contracts: ## Regenerate or check the authoritative contract sync pipeline
 	@$(RESOLVE_PYTHON) \
 	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts $(if $(CHECK),-- --check,)
-
-regen-contracts: ## Backward-compatible alias for the authoritative contract sync
-regen-contracts: sync-contracts
 
 coverage: ## Run backend coverage with optional COV_OPTS overrides
 	@$(RESOLVE_PYTHON) \
