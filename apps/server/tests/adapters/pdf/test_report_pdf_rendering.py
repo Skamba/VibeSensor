@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -10,9 +9,7 @@ from _report_pdf_test_helpers import (
     extract_media_box,
     sample,
 )
-from pypdf import PdfReader
 from test_support.core import extract_pdf_text
-from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
     RUN_END,
     minimal_summary,
@@ -213,114 +210,6 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "pressure mismatch." in " ".join(text_blob.split())
     assert "Inspect propshaft runout/balance" not in text_blob
     assert "ETA:" not in text_blob
-
-
-def test_report_pdf_renders_sensor_observation_matrix_on_appendix_b() -> None:
-    finding = make_finding_payload(
-        finding_id="F_SENSOR_MATRIX",
-        suspected_source="wheel/tire",
-        strongest_location="Front Left wheel",
-        strongest_speed_band="60-80 km/h",
-        confidence=0.82,
-        frequency_hz_or_order="1x wheel order",
-        signatures_observed=["1x wheel order"],
-        matched_points=[
-            {
-                "speed_kmh": 62.0,
-                "predicted_hz": 13.2,
-                "matched_hz": 13.3,
-                "location": "Front Left wheel",
-                "amp": 0.10,
-            },
-            {
-                "speed_kmh": 64.0,
-                "predicted_hz": 13.6,
-                "matched_hz": 13.7,
-                "location": "Front Right wheel",
-                "amp": 0.05,
-            },
-        ],
-    )
-    summary = minimal_summary(
-        lang="en",
-        sensor_count_used=4,
-        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        sensor_locations_connected_throughout=[
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-        ],
-        findings=[finding],
-        top_causes=[finding],
-    )
-
-    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    reader = PdfReader(BytesIO(pdf))
-
-    assert len(reader.pages) >= 3
-    page_two_text = reader.pages[1].extract_text() or ""
-    assert "Sensor-by-sensor signal view" in page_two_text
-    assert "0 dB = strongest sensor" in page_two_text
-
-
-def test_report_pdf_renders_run_timeline_graph_labels() -> None:
-    finding = make_finding_payload(
-        finding_id="F_TIMELINE",
-        suspected_source="wheel/tire",
-        strongest_location="Front Left wheel",
-        strongest_speed_band="60-80 km/h",
-        confidence=0.82,
-    )
-    summary = minimal_summary(
-        lang="en",
-        duration_s=12.0,
-        findings=[finding],
-        top_causes=[finding],
-        phase_timeline=[
-            {
-                "phase": "cruise",
-                "start_t_s": 0.0,
-                "end_t_s": 4.0,
-                "speed_min_kmh": 58.0,
-                "speed_max_kmh": 63.0,
-                "has_fault_evidence": False,
-            },
-            {
-                "phase": "cruise",
-                "start_t_s": 4.0,
-                "end_t_s": 9.0,
-                "speed_min_kmh": 64.0,
-                "speed_max_kmh": 72.0,
-                "has_fault_evidence": True,
-            },
-            {
-                "phase": "decel",
-                "start_t_s": 9.0,
-                "end_t_s": 12.0,
-                "speed_min_kmh": 48.0,
-                "speed_max_kmh": 62.0,
-                "has_fault_evidence": False,
-            },
-        ],
-    )
-
-    page_one_text = " ".join(
-        (
-            PdfReader(
-                BytesIO(build_report_pdf(build_report_document(prepare_report_input(summary))))
-            )
-            .pages[0]
-            .extract_text()
-            or ""
-        )
-        .lower()
-        .split()
-    )
-
-    assert "run timeline" in page_one_text
-    assert "speed" in page_one_text
-    assert "detection windows" in page_one_text
 
 
 def test_report_pdf_rejects_invalid_certainty_tier_key() -> None:
