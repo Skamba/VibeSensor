@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator, Awaitable, Iterator
 from contextlib import AbstractAsyncContextManager
-from typing import TypeVar
+from typing import Protocol, TypeVar
 
 import aiosqlite
 
@@ -22,12 +22,10 @@ LOGGER = logging.getLogger(__name__)
 _T = TypeVar("_T")
 
 
-class _HistoryDBSampleIOMixin:
-    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
-        raise NotImplementedError
+class _HistoryDBSampleIOMixin(Protocol):
+    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]: ...
 
-    def _run_sync(self, coro: Awaitable[_T]) -> _T:
-        raise NotImplementedError
+    def _run_sync(self, coro: Awaitable[_T]) -> _T: ...
 
     def get_run_samples(self, run_id: str) -> list[SensorFrame]:
         return self._run_sync(self.aget_run_samples(run_id))
