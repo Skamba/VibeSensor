@@ -233,7 +233,7 @@ def _write_empty_junit(path: Path) -> None:
     ET.ElementTree(testsuite).write(path, encoding="utf-8", xml_declaration=True)
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run a duration-balanced shard of apps/server/tests."
     )
@@ -263,7 +263,7 @@ def _parse_args() -> argparse.Namespace:
             f"{_XDIST_WORKERS_ENV} or {_DEFAULT_XDIST_WORKERS}."
         ),
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
     if not 1 <= args.shard_index <= args.shards:
@@ -273,8 +273,8 @@ def _parse_args() -> argparse.Namespace:
     return args
 
 
-def main() -> int:
-    args = _parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     collected = collect_test_ids(["apps/server/tests"])
