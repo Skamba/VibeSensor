@@ -63,9 +63,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: buildPlugins(mode),
     build: {
-      // Align with tsconfig.json "target": "ES2020" so vite and tsc target the
+      // Align with tsconfig.json "target": "ES2022" so vite and tsc target the
       // same language level and avoid duplicate down-transpilation.
-      target: "es2020",
+      target: "es2022",
       rollupOptions: {
         output: {
           manualChunks: resolveManualChunk,
