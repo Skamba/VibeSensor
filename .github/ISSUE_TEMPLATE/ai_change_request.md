@@ -22,10 +22,11 @@ assignees: []
 ```bash
 # example
 make lint
-pytest -q apps/server/tests/config/test_config.py -k my_case
+make typecheck-backend
+pytest -q apps/server/tests/app/test_config.py -k my_case
 make test-all
 # (optional faster CI-parity subset)
-python3 tools/tests/run_ci_parallel.py --job preflight --job tests
+python3 tools/tests/run_ci_parallel.py --job backend-preflight --job backend-tests-1
 ```
 
 ## Acceptance Criteria
