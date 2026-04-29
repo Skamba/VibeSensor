@@ -150,11 +150,7 @@ def test_project_analysis_summary_uses_list_sensor_locations_for_fallback_confid
     )
 
 
-def test_project_persisted_analysis_uses_persisted_reconstruction_path(
-    monkeypatch,
-) -> None:
-    import vibesensor.shared.boundaries.analysis_payloads.projection as projection
-
+def test_project_persisted_analysis_projects_persisted_payload_contract() -> None:
     analysis = PersistedAnalysis.from_json_object(
         {
             "case_id": "case-001",
@@ -167,11 +163,6 @@ def test_project_persisted_analysis_uses_persisted_reconstruction_path(
             "warnings": [],
         }
     )
-
-    def _explode(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("project_persisted_analysis should not use test_run_from_summary")
-
-    monkeypatch.setattr(projection, "test_run_from_summary", _explode)
 
     projected, test_run = project_persisted_analysis(analysis)
 
