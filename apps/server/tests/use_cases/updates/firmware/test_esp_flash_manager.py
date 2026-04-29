@@ -310,6 +310,8 @@ async def test_flash_job_uses_cached_bundle_manifest(tmp_path: Path) -> None:
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "success"
+    assert mgr.status.phase == "done"
+    assert mgr.status.last_success_at == mgr.status.finished_at
     assert any("erase_flash" in call for call in runner.calls)
     assert any("write_flash" in call for call in runner.calls)
     assert mgr.history()[0]["state"] == "success"
@@ -378,6 +380,9 @@ async def test_single_job_lock_and_cancel(tmp_path: Path) -> None:
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "cancelled"
+    assert mgr.status.phase == "cancelled"
+    assert mgr.history()[0]["state"] == "cancelled"
+    assert mgr.history()[0]["error"] == "Flash cancelled by user"
 
 
 @pytest.mark.asyncio
@@ -488,7 +493,11 @@ async def test_flash_fails_when_esptool_erase_step_fails(tmp_path: Path) -> None
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "failed"
+    assert mgr.status.phase == "failed"
     assert mgr.status.error == "Flash erase step failed"
+    assert mgr.status.to_dict()["phase"] == "failed"
+    assert mgr.history()[0]["state"] == "failed"
+    assert mgr.history()[0]["error"] == "Flash erase step failed"
     assert any("erase_flash" in " ".join(call) for call in runner.calls)
     assert not any("write_flash" in " ".join(call) for call in runner.calls)
 
