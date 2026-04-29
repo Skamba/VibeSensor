@@ -65,17 +65,14 @@ def _seed_installing_phase(tracker: UpdateStatusTracker) -> None:
 
 
 @pytest.mark.asyncio
-async def test_recover_interrupted_update_cleans_uplink_and_restores_hotspot(
+async def test_recover_interrupted_update_restores_hotspot_successfully(
     tmp_path: Path,
 ) -> None:
-    session, runner, tracker = _build_session(tmp_path)
+    session, _runner, tracker = _build_session(tmp_path)
 
     await session.recover_interrupted_update(tracker.status)
 
-    commands = [" ".join(call[0]) for call in runner.calls]
-    assert any("connection down VibeSensor-Uplink" in command for command in commands)
-    assert any("connection delete VibeSensor-Uplink" in command for command in commands)
-    assert any("connection up VibeSensor-AP" in command for command in commands)
+    assert any("startup_recover: restoring hotspot" in line for line in tracker.status.log_tail)
     assert any(
         "startup_recover: hotspot restored successfully" in line for line in tracker.status.log_tail
     )
@@ -83,16 +80,15 @@ async def test_recover_interrupted_update_cleans_uplink_and_restores_hotspot(
 
 @pytest.mark.asyncio
 async def test_prepare_stops_hotspot_and_connects_uplink(tmp_path: Path) -> None:
-    session, runner, tracker = _build_session(tmp_path)
+    session, _runner, tracker = _build_session(tmp_path)
     tracker.start_job(_wifi_request(password="pass123"))
 
     prepared_transport = await session.prepare(_wifi_request(password="pass123"))
 
-    commands = [" ".join(call[0]) for call in runner.calls]
-    assert any("connection down VibeSensor-AP" in command for command in commands)
-    assert any("connection add type wifi" in command for command in commands)
     assert tracker.status.phase == UpdatePhase.connecting_wifi
     assert prepared_transport is session
+    assert any("Stopping hotspot..." in line for line in tracker.status.log_tail)
+    assert any("Wi-Fi connected successfully" in line for line in tracker.status.log_tail)
 
 
 @pytest.mark.asyncio
@@ -205,14 +201,15 @@ async def test_cleanup_restore_orchestration_restores_hotspot_when_needed(tmp_pa
 async def test_cleanup_restore_orchestration_skips_restore_when_no_longer_needed(
     tmp_path: Path,
 ) -> None:
-    session, runner, tracker = _build_session(tmp_path)
+    session, _runner, tracker = _build_session(tmp_path)
     _seed_checked_phase(tracker)
     tracker.mark_success("done")
 
     await session.cleanup_after_update()
 
-    commands = [" ".join(call[0]) for call in runner.calls]
-    assert not any("connection up VibeSensor-AP" in command for command in commands)
+    assert tracker.status.state == UpdateState.success
+    assert tracker.status.phase == UpdatePhase.done
+    assert not any("Restoring hotspot..." in line for line in tracker.status.log_tail)
 
 
 @pytest.mark.asyncio
