@@ -32,7 +32,6 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
-    from vibesensor.adapters.pdf.diagram_layout import LabelRenderPlan, MarkerRenderPlan
     from vibesensor.domain import LocationHotspotRow
 
 __all__ = ["car_location_diagram"]
@@ -45,27 +44,6 @@ _DIAGRAM_HIGHLIGHT_COLORS = {
     "unknown": REPORT_COLORS["brand"],
     "unknown_resonance": REPORT_COLORS["brand"],
 }
-
-
-def _build_sensor_render_plan(
-    *,
-    location_points: dict[str, tuple[float, float]],
-    drawing_width: float,
-    drawing_height: float,
-    connected_locations: set[str],
-    amp_by_location: dict[str, float],
-    highlight: dict[str, str],
-) -> tuple[list[MarkerRenderPlan], list[LabelRenderPlan], bool]:
-    """Thin wrapper forwarding to ``diagram_layout.build_sensor_render_plan``."""
-    return build_sensor_render_plan(
-        location_points=location_points,
-        drawing_width=drawing_width,
-        drawing_height=drawing_height,
-        connected_locations=connected_locations,
-        amp_by_location=amp_by_location,
-        highlight=highlight,
-        colors=REPORT_COLORS,
-    )
 
 
 def _fit_vehicle_shell_rect(
@@ -463,13 +441,14 @@ def car_location_diagram(
         as_float=_as_float,
     )
     highlight = highlight_map(top_findings, source_colors=_DIAGRAM_HIGHLIGHT_COLORS)
-    markers, labels, _single_sensor = _build_sensor_render_plan(
+    markers, labels, _single_sensor = build_sensor_render_plan(
         location_points=loc_points,
         drawing_width=drawing_w,
         drawing_height=drawing_h,
         connected_locations=connected_locations,
         amp_by_location=amp_by_location,
         highlight=highlight,
+        colors=REPORT_COLORS,
     )
     _draw_markers_and_labels(drawing, markers=markers, labels=labels, hex_color=hex_color)
 
