@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -69,6 +69,23 @@ def mock_which(name: str) -> str | None:
     return None
 
 
+@contextmanager
+def patch_validation_environment(
+    *,
+    tool_lookup: Callable[[str], str | None] = mock_which,
+    effective_uid: int = 1000,
+) -> Iterator[None]:
+    """Patch updater validation to a deterministic non-root test environment."""
+
+    sudo_prefix = [] if effective_uid == 0 else ["sudo", "-n"]
+    with (
+        patch("shutil.which", tool_lookup),
+        patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=effective_uid),
+        patch("vibesensor.use_cases.updates.privilege._sudo_prefix", return_value=sudo_prefix),
+    ):
+        yield
+
+
 def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True) -> None:
     (repo / "apps" / "ui" / "src").mkdir(parents=True, exist_ok=True)
     (repo / "apps" / "server" / "vibesensor" / "static").mkdir(parents=True, exist_ok=True)
@@ -117,20 +134,23 @@ async def run_update(
     *,
     transport: UpdateTransport = UpdateTransport.wifi,
     timeout: float = 10,
+    tool_lookup: Callable[[str], str | None] = mock_which,
+    effective_uid: int = 1000,
 ) -> None:
-    if transport == UpdateTransport.usb_internet:
-        mgr.start(transport=transport)
-    else:
-        mgr.start(ssid, password, transport=transport)
-    task = mgr.job_task
-    assert task is not None
-    await asyncio.wait_for(task, timeout=timeout)
+    with patch_validation_environment(tool_lookup=tool_lookup, effective_uid=effective_uid):
+        if transport == UpdateTransport.usb_internet:
+            mgr.start(transport=transport)
+        else:
+            mgr.start(ssid, password, transport=transport)
+        task = mgr.job_task
+        assert task is not None
+        await asyncio.wait_for(task, timeout=timeout)
 
 
 @contextmanager
 def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicMock]:
     with (
-        patch("shutil.which", mock_which),
+        patch_validation_environment(),
         patch("vibesensor.__version__", current_version),
     ):
         mock_fetcher = MagicMock()
