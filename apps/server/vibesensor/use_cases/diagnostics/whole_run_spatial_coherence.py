@@ -24,12 +24,15 @@ from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.location_scoring import (
     NEAR_TIE_DOMINANCE_THRESHOLD,
 )
+from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
+    order_hypothesis_path_compliance_by_key,
+    ordered_order_hypothesis_keys,
+)
 from vibesensor.use_cases.diagnostics.orders.matching import (
     best_order_peak_match,
     filtered_peak_pairs,
     order_peak_tolerance_hz,
 )
-from vibesensor.use_cases.diagnostics.orders.physics import _order_hypotheses
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
@@ -127,15 +130,13 @@ def build_whole_run_spatial_evidence_windows(
     """Join order candidates against aligned sensor windows into dense spatial rows."""
 
     windows_by_index = {window.window_index: window for window in alignment_matrix.windows}
-    path_compliance_by_key = {
-        hypothesis.key: hypothesis.path_compliance for hypothesis in _order_hypotheses()
-    }
+    path_compliance_by_key = order_hypothesis_path_compliance_by_key()
     points_by_candidate: dict[str, list[OrderTracePoint]] = defaultdict(list)
     for point in order_points:
         if point.eligible and point.predicted_hz is not None and point.predicted_hz > 0:
             points_by_candidate[point.hypothesis_key].append(point)
     candidate_rows: list[SpatialEvidenceWindow] = []
-    for candidate_key in _ordered_candidate_keys(points_by_candidate):
+    for candidate_key in ordered_order_hypothesis_keys(points_by_candidate):
         candidate_points = sorted(
             points_by_candidate[candidate_key],
             key=lambda point: point.window_index,
@@ -169,7 +170,7 @@ def summarize_whole_run_spatial_coherence(
         rows_by_candidate[row.candidate_key].append(row)
         source_by_candidate.setdefault(row.candidate_key, row.suspected_source)
     summaries: list[SpatialEvidenceSummary] = []
-    for candidate_key in _ordered_candidate_keys(rows_by_candidate):
+    for candidate_key in ordered_order_hypothesis_keys(rows_by_candidate):
         candidate_rows = sorted(
             rows_by_candidate[candidate_key],
             key=lambda row: (row.window_index, row.sensor_id),
@@ -337,19 +338,6 @@ def _window_coherence_score(
     coverage_ratio = len(supporting_matches) / max(1, full_sensor_count)
     spread_score = max(0.0, 1.0 - (spread_hz / max(1e-9, tolerance_hz)))
     return max(0.0, min(1.0, coverage_ratio * spread_score))
-
-
-def _ordered_candidate_keys(rows_by_candidate: Mapping[str, object]) -> tuple[str, ...]:
-    catalog_order = {hypothesis.key: index for index, hypothesis in enumerate(_order_hypotheses())}
-    return tuple(
-        sorted(
-            rows_by_candidate,
-            key=lambda candidate_key: (
-                catalog_order.get(candidate_key, len(catalog_order)),
-                candidate_key,
-            ),
-        )
-    )
 
 
 def _peak_intensity_db(peak: Mapping[str, object]) -> float | None:
