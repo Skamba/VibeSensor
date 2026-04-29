@@ -32,7 +32,12 @@ def fake_transport() -> FakeTransport:
 
 @pytest.fixture
 def drain_queue() -> Callable[[DataDatagramProtocol], Awaitable[None]]:
-    """Return an async callable that drains a DataDatagramProtocol queue."""
+    """Return an async callable that drains queued work via the public consumer loop.
+
+    The protocol exposes ``process_queue()`` but no public "drained" signal, so
+    tests use ``Queue.join()`` only as scheduling coordination while asserting on
+    observable ingest/ack/diagnostic effects instead of queue internals.
+    """
 
     async def _drain(proto: DataDatagramProtocol, *, timeout: float = 2.0) -> None:
         consumer = asyncio.create_task(proto.process_queue())

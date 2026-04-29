@@ -18,6 +18,10 @@ def sent_json(ws: AsyncMock) -> dict[str, object]:
     return json.loads(ws.send_text.call_args[0][0])
 
 
+def sent_json_sequence(ws: AsyncMock) -> list[dict[str, object]]:
+    return [json.loads(call.args[0]) for call in ws.send_text.call_args_list]
+
+
 async def build_hub(*selected_client_ids: str | None) -> tuple[WebSocketHub, list[AsyncMock]]:
     hub = WebSocketHub()
     websockets: list[AsyncMock] = []

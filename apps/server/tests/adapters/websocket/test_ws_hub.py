@@ -17,27 +17,29 @@ from test_support.ws_hub import (
 from test_support.ws_hub import (
     sent_json as _sent_json,
 )
+from test_support.ws_hub import (
+    sent_json_sequence as _sent_json_sequence,
+)
 
-from vibesensor.adapters.websocket.hub import WebSocketHub, WSConnection
+from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.shared.json_utils import sanitize_for_json
 
 
 @pytest.mark.asyncio
 async def test_add_remove() -> None:
     hub, [ws] = await build_hub(None)
-    conns = await hub._snapshot()
-    assert len(conns) == 1
-    assert conns[0].websocket is ws
+    assert hub.connection_count() == 1
     await hub.remove(ws)
-    assert await hub._snapshot() == []
+    assert hub.connection_count() == 0
 
 
 @pytest.mark.asyncio
 async def test_update_selected_client() -> None:
     hub, [ws] = await build_hub(None)
     await hub.update_selected_client(ws, "abc123")
-    conns = await hub._snapshot()
-    assert conns[0].selected_client_id == "abc123"
+    await hub.broadcast(lambda selected: {"selected": selected})
+    assert hub.connection_count() == 1
+    assert _sent_json_sequence(ws) == [{"selected": "abc123"}]
 
 
 @pytest.mark.asyncio
@@ -46,9 +48,7 @@ async def test_update_selected_client_missing_ws() -> None:
     ws = _make_ws()
     # Should not raise even though ws was never added
     await hub.update_selected_client(ws, "abc123")
-    # Verify no connections were created as a side effect
-    conns = await hub._snapshot()
-    assert len(conns) == 0
+    assert hub.connection_count() == 0
 
 
 @pytest.mark.asyncio
@@ -57,8 +57,7 @@ async def test_broadcast_calls_send_json() -> None:
     payload_builder = MagicMock(return_value={"data": "test"})
     await hub.broadcast(payload_builder)
     payload_builder.assert_called_once_with("client_a")
-    ws.send_text.assert_awaited_once()
-    assert _sent_json(ws) == {"data": "test"}
+    assert _sent_json_sequence(ws) == [{"data": "test"}]
 
 
 @pytest.mark.asyncio
@@ -77,12 +76,10 @@ async def test_broadcast_removes_dead_connections() -> None:
     bad_ws.send_text.side_effect = ConnectionError("gone")
     await hub.add(good_ws, None)
     await hub.add(bad_ws, None)
-    assert len(await hub._snapshot()) == 2
+    assert hub.connection_count() == 2
     await hub.broadcast(lambda _: {"ok": True})
-    # bad_ws should have been removed
-    conns = await hub._snapshot()
-    assert len(conns) == 1
-    assert conns[0].websocket is good_ws
+    assert hub.connection_count() == 1
+    assert _sent_json_sequence(good_ws) == [{"ok": True}]
 
 
 @pytest.mark.asyncio
@@ -91,17 +88,7 @@ async def test_remove_nonexistent_is_noop() -> None:
     ws = _make_ws()
     # Should not raise
     await hub.remove(ws)
-    # Verify hub is still empty
-    conns = await hub._snapshot()
-    assert len(conns) == 0
-
-
-@pytest.mark.asyncio
-async def test_ws_connection_dataclass() -> None:
-    ws = _make_ws()
-    conn = WSConnection(connection_id=1, websocket=ws, selected_client_id="test_id")
-    assert conn.websocket is ws
-    assert conn.selected_client_id == "test_id"
+    assert hub.connection_count() == 0
 
 
 @pytest.mark.asyncio
@@ -116,12 +103,8 @@ async def test_broadcast_survives_payload_builder_exception() -> None:
 
     # Should not raise; the exception is caught inside _build_payload
     await hub.broadcast(failing_builder)
-    # Connection should NOT be removed (builder failed, not send)
-    conns = await hub._snapshot()
-    assert len(conns) == 1
-    # Connection should receive the error payload instead of nothing
-    ws.send_text.assert_awaited_once()
-    assert _sent_json(ws) == {"error": "payload_build_failed"}
+    assert hub.connection_count() == 1
+    assert _sent_json_sequence(ws) == [{"error": "payload_build_failed"}]
 
 
 @pytest.mark.asyncio
@@ -148,17 +131,9 @@ async def test_payload_error_does_not_block_other_clients() -> None:
 
     await hub.broadcast(selective_builder)
 
-    # good_ws received normal payload
-    good_ws.send_text.assert_awaited_once()
-    assert _sent_json(good_ws) == {"status": "ok", "client": "good_client"}
-
-    # bad_ws received error payload (not silently skipped)
-    bad_ws.send_text.assert_awaited_once()
-    assert _sent_json(bad_ws) == {"error": "payload_build_failed"}
-
-    # Both connections are still alive
-    conns = await hub._snapshot()
-    assert len(conns) == 2
+    assert _sent_json_sequence(good_ws) == [{"status": "ok", "client": "good_client"}]
+    assert _sent_json_sequence(bad_ws) == [{"error": "payload_build_failed"}]
+    assert hub.connection_count() == 2
 
 
 @pytest.mark.asyncio
@@ -350,8 +325,7 @@ async def test_error_payload_is_cached_per_client_id() -> None:
     assert call_count == 1
     # Both connections still received the error payload
     for ws in (ws1, ws2):
-        ws.send_text.assert_awaited_once()
-        assert _sent_json(ws) == {"error": "payload_build_failed"}
+        assert _sent_json_sequence(ws) == [{"error": "payload_build_failed"}]
 
 
 @pytest.mark.asyncio
@@ -518,8 +492,7 @@ async def test_broadcast_sanitizes_nan_to_null() -> None:
     }
     await hub.broadcast(lambda _: payload_with_nan)
 
-    ws.send_text.assert_awaited_once()
-    parsed = _sent_json(ws)
+    parsed = _sent_json_sequence(ws)[0]
     assert parsed["wheel"]["rpm"] is None
     assert parsed["speed"] is None
     assert parsed["ok"] == 42
@@ -545,7 +518,7 @@ async def test_broadcast_send_timeout_removes_connection() -> None:
 
     await hub.broadcast(lambda _: {"ok": True})
 
-    assert await hub._snapshot() == []
+    assert hub.connection_count() == 0
 
 
 @pytest.mark.asyncio
@@ -611,7 +584,7 @@ async def test_broadcast_closes_dead_websocket() -> None:
     await hub.broadcast(lambda _: {"ok": True})
 
     ws.close.assert_awaited_once()
-    assert await hub._snapshot() == []
+    assert hub.connection_count() == 0
 
 
 @pytest.mark.asyncio
@@ -626,7 +599,7 @@ async def test_broadcast_close_error_does_not_prevent_removal() -> None:
     await hub.broadcast(lambda _: {"data": True})
 
     # Hub should have cleaned up despite close() raising.
-    assert await hub._snapshot() == []
+    assert hub.connection_count() == 0
 
 
 # ── send-failure log includes selected_client_id ─────────────────────────────
@@ -664,4 +637,4 @@ async def test_broadcast_skips_cleanup_for_connection_removed_during_send() -> N
     await hub.broadcast(lambda _: {"ok": True})
 
     ws.close.assert_not_awaited()
-    assert await hub._snapshot() == []
+    assert hub.connection_count() == 0

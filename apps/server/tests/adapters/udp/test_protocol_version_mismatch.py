@@ -96,12 +96,16 @@ def test_control_datagram_version_mismatch_logs_warning(
     assert "expected 1, got 2" in caplog.text
 
 
-def test_data_datagram_version_mismatch_logs_warning(
+@pytest.mark.asyncio
+async def test_data_datagram_version_mismatch_logs_warning(
     caplog: pytest.LogCaptureFixture,
+    fake_transport,
+    drain_queue,
 ) -> None:
     registry = Mock()
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(fake_transport)
     packet = bytearray(
         pack_data(
             bytes.fromhex("aabbccddeeff"),
@@ -113,9 +117,11 @@ def test_data_datagram_version_mismatch_logs_warning(
     packet[1] = 2
 
     with caplog.at_level(logging.WARNING):
-        proto._process_datagram(bytes(packet), ("127.0.0.1", 12345))
+        proto.datagram_received(bytes(packet), ("127.0.0.1", 12345))
+        await drain_queue(proto)
 
     registry.note_parse_error.assert_called_once_with("aabbccddeeff")
     registry.update_from_data.assert_not_called()
     processor.ingest.assert_not_called()
+    assert fake_transport.sent == []
     assert "DATA version mismatch" in caplog.text

@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import numpy as np
+import pytest
 
 from vibesensor.adapters.udp.protocol import HelloMessage, pack_data, parse_data_ack
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
@@ -32,7 +33,11 @@ def _wave_chunk(freq_hz: float) -> np.ndarray:
     return np.column_stack([wave, zeros, zeros])
 
 
-def test_late_packet_is_quarantined_to_raw_capture_only(fake_transport) -> None:
+@pytest.mark.asyncio
+async def test_late_packet_is_quarantined_to_raw_capture_only(
+    fake_transport,
+    drain_queue,
+) -> None:
     registry = ClientRegistry()
     registry.update_from_hello(
         HelloMessage(
@@ -60,12 +65,14 @@ def test_late_packet_is_quarantined_to_raw_capture_only(fake_transport) -> None:
     late = pack_data(_CLIENT_ID, seq=1, t0_us=1_640_000, samples=_wave_chunk(30.0))
 
     with patch.object(processor, "ingest", wraps=processor.ingest) as ingest_spy:
-        proto._process_datagram(first, _ADDR)
-        proto._process_datagram(newest, _ADDR)
+        proto.datagram_received(first, _ADDR)
+        proto.datagram_received(newest, _ADDR)
+        await drain_queue(proto)
         metrics_before = processor.compute_metrics("aabbccddeeff", sample_rate_hz=800)
         latest_before = processor.latest_sample_xyz("aabbccddeeff")
 
-        proto._process_datagram(late, _ADDR)
+        proto.datagram_received(late, _ADDR)
+        await drain_queue(proto)
         metrics_after = processor.compute_metrics("aabbccddeeff", sample_rate_hz=800)
         latest_after = processor.latest_sample_xyz("aabbccddeeff")
 
