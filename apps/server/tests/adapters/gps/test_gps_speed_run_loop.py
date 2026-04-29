@@ -6,8 +6,10 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
+from dataclasses import dataclass
 
 import pytest
+from test_support.core import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
@@ -41,14 +43,22 @@ def _non_tpv_line() -> bytes:
     return json.dumps({"class": "VERSION", "release": "3.25"}).encode() + b"\n"
 
 
+@dataclass(frozen=True)
+class _GpsServerScenario:
+    monitor: GPSSpeedMonitor
+    lines_sent: asyncio.Event
+    handler_done: asyncio.Event
+
+
 @asynccontextmanager
 async def _gps_server_scenario(
     *lines: bytes,
-    settle_s: float = 0.05,
-) -> AsyncIterator[GPSSpeedMonitor]:
+) -> AsyncIterator[_GpsServerScenario]:
     """Start a mock gpsd that sends *lines*, yield the connected monitor, then tear down."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
     handler_tasks: set[asyncio.Task[None]] = set()
+    lines_sent = asyncio.Event()
+    handler_done = asyncio.Event()
 
     async def _serve_client(
         reader: asyncio.StreamReader,
@@ -59,11 +69,12 @@ async def _gps_server_scenario(
             for line in lines:
                 writer.write(line)
             await writer.drain()
-            await asyncio.sleep(settle_s)
+            lines_sent.set()
         finally:
             writer.close()
             with suppress(ConnectionResetError, BrokenPipeError):
                 await writer.wait_closed()
+            handler_done.set()
 
     def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         task = asyncio.create_task(_serve_client(reader, writer))
@@ -74,7 +85,11 @@ async def _gps_server_scenario(
     host, port = server.sockets[0].getsockname()[:2]
     task = asyncio.create_task(monitor.run(host=host, port=port))
     try:
-        yield monitor
+        yield _GpsServerScenario(
+            monitor=monitor,
+            lines_sent=lines_sent,
+            handler_done=handler_done,
+        )
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
@@ -90,10 +105,21 @@ async def _gps_server_scenario(
 
 async def _await_speed(monitor: GPSSpeedMonitor, *, timeout_s: float = 2.5) -> None:
     """Block until ``monitor.speed_mps`` is set or *timeout_s* elapses."""
-    for _ in range(int(timeout_s / 0.05)):
-        if monitor.speed_mps is not None:
-            return
-        await asyncio.sleep(0.05)
+    assert await async_wait_until(
+        lambda: monitor.speed_mps is not None,
+        timeout_s=timeout_s,
+    ), "Timed out waiting for GPS speed_mps to become non-null"
+
+
+async def _await_condition(
+    description: str,
+    predicate,
+    *,
+    timeout_s: float = 2.5,
+) -> None:
+    assert await async_wait_until(predicate, timeout_s=timeout_s), (
+        f"Timed out waiting for {description}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -120,17 +146,17 @@ async def test_run_accepts_valid_tpv_speed(
     expected_speed: float,
 ) -> None:
     """TPV messages with valid fix mode and speed update monitor.speed_mps."""
-    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
-        await _await_speed(monitor)
-        assert monitor.speed_mps == expected_speed
+    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as scenario:
+        await _await_speed(scenario.monitor)
+        assert scenario.monitor.speed_mps == expected_speed
 
 
 @pytest.mark.asyncio
 async def test_run_ignores_non_tpv_messages() -> None:
     """Non-TPV messages are skipped; only TPV updates speed."""
-    async with _gps_server_scenario(_non_tpv_line(), _tpv_line(12.3)) as monitor:
-        await _await_speed(monitor)
-        assert monitor.speed_mps == 12.3
+    async with _gps_server_scenario(_non_tpv_line(), _tpv_line(12.3)) as scenario:
+        await _await_speed(scenario.monitor)
+        assert scenario.monitor.speed_mps == 12.3
 
 
 @pytest.mark.asyncio
@@ -163,7 +189,15 @@ async def test_run_reconnects_on_connection_failure(
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
     await asyncio.wait_for(enough_attempts.wait(), timeout=5.0)
-    await asyncio.sleep(0.05)
+    await _await_condition(
+        "GPS reconnect error state after refused connections",
+        lambda: (
+            attempt_count >= 2
+            and monitor.last_error == "mock refused"
+            and 0.02 <= monitor.current_reconnect_delay <= 0.04
+        ),
+        timeout_s=5.0,
+    )
 
     assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
     assert monitor.speed_mps is None
@@ -194,7 +228,6 @@ async def test_run_does_not_swallow_processing_programming_errors() -> None:
         await reader.readline()
         writer.write(_tpv_line(12.3))
         await writer.drain()
-        await asyncio.sleep(0.1)
         writer.close()
         await writer.wait_closed()
 
@@ -218,8 +251,11 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
         await reader.readline()
         writer.write(_tpv_line(42.0))
         await writer.drain()
-        # Give the client time to read
-        await asyncio.sleep(0.1)
+        await _await_condition(
+            "GPS client to consume the initial speed sample before disconnect",
+            lambda: monitor.speed_mps == 42.0,
+            timeout_s=1.0,
+        )
         # Close the connection to trigger disconnect
         writer.close()
         await writer.wait_closed()
@@ -235,11 +271,11 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
 
     task = asyncio.create_task(monitor.run(host=host, port=port))
 
-    # Wait for speed to be set
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
+    await _await_condition(
+        "GPS speed to update before server disconnect",
+        lambda: monitor.speed_mps == 42.0,
+        timeout_s=2.0,
+    )
     assert monitor.speed_mps == 42.0
 
     # After the server closes, the client detects EOF and the except block
@@ -248,10 +284,11 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
     server.close()
     await server.wait_closed()
 
-    for _ in range(80):
-        if monitor.speed_mps is None:
-            break
-        await asyncio.sleep(0.05)
+    await _await_condition(
+        "GPS speed to clear after disconnect and failed reconnect",
+        lambda: monitor.speed_mps is None,
+        timeout_s=5.0,
+    )
     assert monitor.speed_mps is None
 
     task.cancel()
@@ -274,9 +311,18 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
         "vibesensor.adapters.gps.transport_lifecycle.GPS_DISABLED_POLL_S",
         0.02,
     )
+    original_sleep = asyncio.sleep
+    disabled_poll_seen = asyncio.Event()
+
+    async def _spy_sleep(delay: float) -> None:
+        if delay == 0.02:
+            disabled_poll_seen.set()
+        await original_sleep(0)
+
+    monkeypatch.setattr(asyncio, "sleep", _spy_sleep)
 
     task = asyncio.create_task(monitor.run())
-    await asyncio.sleep(0.1)
+    await asyncio.wait_for(disabled_poll_seen.wait(), timeout=1.0)
 
     assert monitor.speed_mps is None
     assert not connection_attempted
@@ -288,9 +334,9 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
 @pytest.mark.asyncio
 async def test_run_ignores_malformed_json() -> None:
     """Malformed JSON lines are skipped; subsequent valid TPV is processed."""
-    async with _gps_server_scenario(b"NOT VALID JSON\n", _tpv_line(7.77)) as monitor:
-        await _await_speed(monitor)
-        assert monitor.speed_mps == 7.77
+    async with _gps_server_scenario(b"NOT VALID JSON\n", _tpv_line(7.77)) as scenario:
+        await _await_speed(scenario.monitor)
+        assert scenario.monitor.speed_mps == 7.77
 
 
 @pytest.mark.asyncio
@@ -305,9 +351,9 @@ async def test_run_ignores_malformed_json() -> None:
 )
 async def test_run_ignores_non_dict_json(non_dict_line: bytes) -> None:
     """Non-object JSON lines (arrays, strings, numbers, null) are silently skipped."""
-    async with _gps_server_scenario(non_dict_line, _tpv_line(9.5)) as monitor:
-        await _await_speed(monitor)
-        assert monitor.speed_mps == 9.5
+    async with _gps_server_scenario(non_dict_line, _tpv_line(9.5)) as scenario:
+        await _await_speed(scenario.monitor)
+        assert scenario.monitor.speed_mps == 9.5
 
 
 @pytest.mark.asyncio
@@ -321,9 +367,16 @@ async def test_run_ignores_non_dict_json(non_dict_line: bytes) -> None:
 )
 async def test_run_rejects_invalid_tpv_speed(tpv_kwargs: dict[str, object]) -> None:
     """TPV messages with invalid speed/mode must not update speed_mps."""
-    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
-        await asyncio.sleep(0.15)
-        assert monitor.speed_mps is None
+    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as scenario:
+        expected_mode = int(tpv_kwargs.get("mode", 3))
+        await _await_condition(
+            "GPS run loop to process the invalid TPV sample",
+            lambda: (
+                scenario.handler_done.is_set() and scenario.monitor.last_fix_mode == expected_mode
+            ),
+            timeout_s=2.0,
+        )
+        assert scenario.monitor.speed_mps is None
 
 
 @pytest.mark.asyncio
@@ -332,11 +385,13 @@ async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update
     async with _gps_server_scenario(
         _tpv_line(8.0, lat=54.6872, lon=25.2797),
         _tpv_line(13.0, lat=0.0, lon=0.0),
-    ) as monitor:
-        await _await_speed(monitor)
-        await asyncio.sleep(0.1)
-        assert monitor.speed_mps == 13.0
-        assert monitor.last_update_ts is not None
+    ) as scenario:
+        await _await_condition(
+            "GPS speed to update after the zero-coordinate TPV sample",
+            lambda: scenario.monitor.speed_mps == 13.0,
+            timeout_s=2.0,
+        )
+        assert scenario.monitor.last_update_ts is not None
 
 
 @pytest.mark.asyncio
@@ -346,10 +401,10 @@ async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update
 )
 async def test_run_ignores_tpv_speed_with_negative_uncertainty(eph: float, eps: float) -> None:
     """mode=3 TPV with negative eph/eps still updates speed."""
-    async with _gps_server_scenario(_tpv_line(8.8, mode=3, eph=eph, eps=eps)) as monitor:
-        await _await_speed(monitor)
-        assert monitor.speed_mps == 8.8
-        assert monitor.last_update_ts is not None
+    async with _gps_server_scenario(_tpv_line(8.8, mode=3, eph=eph, eps=eps)) as scenario:
+        await _await_speed(scenario.monitor)
+        assert scenario.monitor.speed_mps == 8.8
+        assert scenario.monitor.last_update_ts is not None
 
 
 @pytest.mark.asyncio
@@ -358,9 +413,17 @@ async def test_run_filters_single_zero_speed_drop() -> None:
         _tpv_line(12.0, mode=2),
         _tpv_line(0.0, mode=2),
         _tpv_line(12.0, mode=2),
-    ) as monitor:
-        await asyncio.sleep(0.15)
-        assert monitor.speed_mps == 12.0
+    ) as scenario:
+        await _await_condition(
+            "GPS zero-speed drop filter to preserve the last non-zero sample",
+            lambda: (
+                scenario.handler_done.is_set()
+                and scenario.monitor.speed_mps == 12.0
+                and scenario.monitor._zero_speed_streak == 0
+            ),
+            timeout_s=2.0,
+        )
+        assert scenario.monitor.speed_mps == 12.0
 
 
 @pytest.mark.asyncio
@@ -370,6 +433,14 @@ async def test_run_accepts_three_consecutive_zero_speed_samples() -> None:
         _tpv_line(0.0, mode=2),
         _tpv_line(0.0, mode=2),
         _tpv_line(0.0, mode=2),
-    ) as monitor:
-        await asyncio.sleep(0.15)
-        assert monitor.speed_mps == 0.0
+    ) as scenario:
+        await _await_condition(
+            "GPS zero-speed streak to reach the accepted stationary sample",
+            lambda: (
+                scenario.handler_done.is_set()
+                and scenario.monitor.speed_mps == 0.0
+                and scenario.monitor._zero_speed_streak == 3
+            ),
+            timeout_s=2.0,
+        )
+        assert scenario.monitor.speed_mps == 0.0
