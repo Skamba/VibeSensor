@@ -55,7 +55,7 @@ export function getSpectrumCssVars(): Readonly<SpectrumCssVars> {
   return spectrumCssVars.value;
 }
 
-export function refreshSpectrumCssVars(): Readonly<SpectrumCssVars> {
+function refreshSpectrumCssVars(): Readonly<SpectrumCssVars> {
   ensureSpectrumCssVarsThemeTracking();
   spectrumCssVarsVersion.value += 1;
   return spectrumCssVars.value;
@@ -71,7 +71,7 @@ function ensureSpectrumCssVarsThemeTracking(): void {
   stopSpectrumCssVarsThemeTracking = effect(() => {
     const mediaQuery = globalThis.matchMedia(THEME_MEDIA_QUERY);
     const refresh = () => {
-      spectrumCssVarsVersion.value += 1;
+      refreshSpectrumCssVars();
     };
     mediaQuery.addEventListener("change", refresh);
     return () => {
