@@ -46,6 +46,7 @@ class _FailFirstTransport:
         return None
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "packet",
     [
@@ -54,16 +55,18 @@ class _FailFirstTransport:
     ],
     ids=["truncated-data", "oversized-sample-count"],
 )
-def test_process_datagram_rejects_malformed_or_oversized_packets(
+async def test_datagram_received_rejects_malformed_or_oversized_packets(
     packet: bytes,
     fake_transport,
+    drain_queue,
 ) -> None:
     registry = Mock()
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
-    proto._process_datagram(packet, ("127.0.0.1", 12345))
+    proto.datagram_received(packet, ("127.0.0.1", 12345))
+    await drain_queue(proto)
 
     registry.note_parse_error.assert_called_once_with("010203040506")
     registry.update_from_data.assert_not_called()
