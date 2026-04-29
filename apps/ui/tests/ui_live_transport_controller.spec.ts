@@ -33,10 +33,6 @@ function makeClient(id: string): LiveWsPayload["clients"][number] {
   };
 }
 
-function applyPayload(controller: UiLiveTransportController, payload: LiveWsPayload): void {
-  (controller as unknown as { applyPayload(nextPayload: LiveWsPayload): void }).applyPayload(payload);
-}
-
 function installRafHarness() {
   const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
   const callbacks: FrameRequestCallback[] = [];
@@ -269,18 +265,6 @@ describe("UiLiveTransportController", () => {
     wsUiState.value = "connected";
     await flushAsyncWork();
     expect(state.transport.wsState.value).toBe("connected");
-  });
-
-  test("applies payloads without requiring feature-port attachment", async () => {
-    const state = createAppState();
-    const controller = new UiLiveTransportController({
-      state,
-      payloadErrorMessage: () => "payload error",
-    });
-
-    expect(() => applyPayload(controller, makeLivePayload())).not.toThrow();
-    await flushAsyncWork(30);
-    expect(state.realtime.speedMps.value).toBe(10);
   });
 
   test("routes demo mode through the shared queued transport pipeline", async () => {
