@@ -70,11 +70,13 @@ larger FFT sizes, the adaptive parallel path still carries the benefit.
 ## How to run the benchmark
 
 ```bash
-make benchmark-backend \
-  BACKEND_BENCHMARK_TARGETS=tests/infra/workers/benchmark_compute_all.py \
-  BENCHMARK_OPTS="--benchmark-save=worker-pool"
+make benchmark-backend BENCHMARK_OPTS="--benchmark-save=worker-pool"
 make benchmark-compare-backend
 ```
+
+`make benchmark-backend` uses the default backend benchmark target list defined in
+the repository `Makefile`. Override `BACKEND_BENCHMARK_TARGETS` only for ad hoc
+single-file runs so the documented default cannot drift from the Makefile.
 
 ## Design decisions for a 4-core Pi
 

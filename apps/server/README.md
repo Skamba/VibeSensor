@@ -178,14 +178,13 @@ settings snapshots now follow the same pattern in
 For repeatable codec comparisons, run the explicit benchmark suite:
 
 ```bash
-make benchmark-backend \
-  BACKEND_BENCHMARK_TARGETS=tests/use_cases/updates/benchmark_update_status_codec.py \
-  BENCHMARK_OPTS="--benchmark-save=update-status-codec"
+make benchmark-backend BENCHMARK_OPTS="--benchmark-save=update-status-codec"
 make benchmark-compare-backend
 ```
 
-The benchmark uses a representative updater-status payload. Saved runs land in
-`apps/server/.benchmarks/` so later runs can be compared with the same target.
+The default benchmark target list is defined in the repository `Makefile` and
+includes the updater-status codec benchmark. Saved runs land in
+`apps/server/.benchmarks/` so later runs can be compared with the same targets.
 
 ## Configuration
 
