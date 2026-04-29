@@ -8,8 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, cast
 from unittest.mock import MagicMock
 
-from fastapi import FastAPI, WebSocketDisconnect
-from test_support import response_payload as _response_payload
+from fastapi import FastAPI
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
@@ -252,22 +251,6 @@ class FakeWsHub:
         self.selected_updates.append(client_id)
 
 
-class FakeWs:
-    def __init__(self, messages: list[str], selected_query: str | None = None) -> None:
-        self.query_params = {}
-        if selected_query is not None:
-            self.query_params["client_id"] = selected_query
-        self._messages = list(messages)
-
-    async def accept(self) -> None:
-        return None
-
-    async def receive_text(self) -> str:
-        if not self._messages:
-            raise WebSocketDisconnect()
-        return self._messages.pop(0)
-
-
 class FakeState:
     def __init__(
         self,
@@ -459,7 +442,7 @@ class FakeState:
         )
 
 
-def make_router_and_state(
+def _build_app_router_and_state(
     language: str = "en",
     sample_count: int = 20,
     *,
@@ -482,30 +465,30 @@ def make_router_and_state(
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)
-    return router, state
+    return app, router, state
 
 
-def route_endpoint(router, path: str):
-    for route in router.routes:
-        if getattr(route, "path", "") == path:
-            return route.endpoint
-    raise AssertionError(f"Route not found: {path}")
+def make_app_and_state(
+    language: str = "en",
+    sample_count: int = 20,
+    *,
+    metadata: dict[str, Any] | None = None,
+    samples: list[dict[str, Any]] | None = None,
+    analysis: dict[str, Any] | None = None,
+    pdf_renderer: PdfRendererFn = _real_pdf_renderer,
+):
+    app, _router, state = _build_app_router_and_state(
+        language=language,
+        sample_count=sample_count,
+        metadata=metadata,
+        samples=samples,
+        analysis=analysis,
+        pdf_renderer=pdf_renderer,
+    )
+    return app, state
 
 
-def route_endpoint_with_method(router, path: str, method: str):
-    for route in router.routes:
-        if getattr(route, "path", "") != path:
-            continue
-        if method.upper() in getattr(route, "methods", set()):
-            return route.endpoint
-    raise AssertionError(f"Route not found: {method.upper()} {path}")
-
-
-def response_payload(response):
-    return _response_payload(response)
-
-
-def make_status_router(
+def make_status_app(
     *,
     status: str,
     analysis: dict[str, Any] | None,
@@ -550,17 +533,9 @@ def make_status_router(
     metadata = make_metadata(language="en")
     samples = [sample(0)]
     db = StatusDB(metadata, samples, {}, run_status=status, run_analysis=analysis)
-    return create_router(FakeState(db, FakeWsHub()))
-
-
-async def read_streaming_body(response) -> bytes:
-    chunks = []
-    async for chunk in response.body_iterator:
-        if isinstance(chunk, str):
-            chunks.append(chunk.encode("utf-8"))
-        else:
-            chunks.append(chunk)
-    return b"".join(chunks)
+    app = FastAPI()
+    app.include_router(create_router(FakeState(db, FakeWsHub())))
+    return app
 
 
 def read_export_archive(body: bytes) -> tuple[set[str], dict[str, Any], list[dict[str, str]]]:
