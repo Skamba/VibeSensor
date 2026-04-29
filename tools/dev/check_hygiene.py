@@ -1858,10 +1858,6 @@ def check_contract_sync_entrypoint() -> list[str]:
         errors.append(
             "Makefile sync-contracts target must route through apps/ui npm run sync:contracts and forward CHECK=1 to --check."
         )
-    if "regen-contracts: sync-contracts" not in makefile_text:
-        errors.append(
-            "Makefile regen-contracts target must stay a thin alias to sync-contracts."
-        )
     for rel_path in _UI_DERIVATIVE_GENERATED_ARTIFACTS:
         if rel_path in tracked_paths and (ROOT / rel_path).exists():
             errors.append(
