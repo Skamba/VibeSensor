@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
-from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.report_presentation import (
     confidence_snapshot_text,
     display_location,

@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
-
-from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
+from typing import Final, Literal
 
 from .finding import Finding
 
@@ -16,6 +15,7 @@ __all__ = [
     "DiagnosisAssessmentFactor",
     "DiagnosisAssessmentFactorDetails",
     "DiagnosisAssessmentInputs",
+    "LEGACY_CONTEXT_CAVEAT_KEY",
     "apply_diagnosis_assessment_fallback",
     "diagnosis_assessment_from_components",
     "score_diagnosis_assessment_inputs",
@@ -23,6 +23,9 @@ __all__ = [
 
 DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP = 0.10
 DIAGNOSIS_AMBIGUOUS_SCORE_GAP = 0.05
+LEGACY_CONTEXT_CAVEAT_KEY: Final[Literal["legacy_context"]] = "legacy_context"
+"""Shared caveat/factor key for legacy whole-run context fallbacks."""
+
 _DIAGNOSIS_SUSPICIOUS_CAVEAT_KEYS = frozenset(
     {
         "drifting_frequency",
