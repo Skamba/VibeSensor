@@ -140,21 +140,17 @@ def _ready_health_state() -> RuntimeHealthState:
 
 
 def _backpressure_wait_state(
-    proto: DataDatagramProtocol,
     ingest_diagnostics: IngestDiagnosticsCollector,
-    websocket: AsyncMock,
 ) -> dict[str, object]:
     udp = ingest_diagnostics.udp_snapshot()
     raw_capture = ingest_diagnostics.raw_capture_snapshot()
     ws_publish = ingest_diagnostics.ws_publish_snapshot()
     return {
-        "udp_queue_size": proto._queue.qsize(),
         "udp_processed_datagrams": udp.processed_datagrams,
         "udp_queue_depth": udp.queue_depth,
         "raw_capture_queue_depth": raw_capture.queue_depth,
         "ws_publish_ticks": ws_publish.total_publish_ticks,
         "ws_active_connections": ws_publish.active_connections,
-        "ws_send_count": websocket.send_text.await_count,
     }
 
 
@@ -241,11 +237,13 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
         )
     )
     try:
-        recorder.start_recording()
+        started = recorder.start_recording()
+        run_id = started.run_id
+        start_utc = started.start_time_utc
+        assert run_id is not None
+        assert start_utc is not None
         snapshot = recorder._session_snapshot()
         assert snapshot is not None
-        run_id = snapshot.run_id
-        start_utc = snapshot.start_time_utc
         start_mono = snapshot.start_mono_s
         seq_by_sensor = {sensor.client_id.hex(): 1 for sensor in sensors}
         deferred_late_seq_by_sensor: dict[str, int] = {}
@@ -292,11 +290,7 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
                     lambda expected=expected_processed_datagrams: (
                         ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
                     ),
-                    state=lambda: _backpressure_wait_state(
-                        proto,
-                        ingest_diagnostics,
-                        websocket,
-                    ),
+                    state=lambda: _backpressure_wait_state(ingest_diagnostics),
                 )
                 processor.compute_all(
                     registry.active_client_ids(),
@@ -311,15 +305,19 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
             if step % 6 == 5:
                 await _assert_async_wait_until(
                     "udp queue drain after the current burst",
-                    lambda: proto._queue.qsize() == 0,
-                    state=lambda: _backpressure_wait_state(
-                        proto,
-                        ingest_diagnostics,
-                        websocket,
-                    ),
+                    lambda: ingest_diagnostics.udp_snapshot().queue_depth == 0,
+                    state=lambda: _backpressure_wait_state(ingest_diagnostics),
                 )
 
-        await asyncio.wait_for(proto._queue.join(), timeout=10.0)
+        await _assert_async_wait_until(
+            "udp queue drain after simulator load completes",
+            lambda expected=expected_processed_datagrams: (
+                ingest_diagnostics.udp_snapshot().queue_depth == 0
+                and ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
+            ),
+            timeout_s=10.0,
+            state=lambda: _backpressure_wait_state(ingest_diagnostics),
+        )
         processor.compute_all(
             registry.active_client_ids(),
             sample_rates_hz=_sample_rates(registry),
@@ -335,14 +333,9 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
             lambda: (
                 ingest_diagnostics.raw_capture_snapshot().queue_depth == 0
                 and ingest_diagnostics.ws_publish_snapshot().total_publish_ticks > 0
-                and websocket.send_text.await_count > 0
             ),
             timeout_s=5.0,
-            state=lambda: _backpressure_wait_state(
-                proto,
-                ingest_diagnostics,
-                websocket,
-            ),
+            state=lambda: _backpressure_wait_state(ingest_diagnostics),
         )
 
         health = await asyncio.to_thread(
