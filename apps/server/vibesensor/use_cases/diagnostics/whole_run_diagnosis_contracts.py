@@ -19,7 +19,28 @@ from vibesensor.shared.types.history_analysis_contracts import (
     LocationProofBasis,
     WholeRunDiagnosisDataBasis,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.whole_run_json_helpers import (
+    non_empty_text_or_none as _non_empty_text_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    optional_float_or_none as _optional_float_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    optional_int_or_none as _optional_int_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_bool_field as _required_bool_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_float_field as _required_float_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_int_field as _required_int_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    set_optional_value as _set_optional,
+)
 
 __all__ = [
     "DiagnosisExemplarReference",
@@ -381,24 +402,27 @@ def _required_text(data: JsonObject, field_name: str) -> str:
 
 
 def _required_int(data: JsonObject, field_name: str) -> int:
-    value = data.get(field_name)
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be an int")
-    return value
+    return _required_int_field(
+        data,
+        field_name,
+        invalid_message=f"{field_name} must be an int",
+    )
 
 
 def _required_bool(data: JsonObject, field_name: str) -> bool:
-    value = data.get(field_name)
-    if not isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a bool")
-    return value
+    return _required_bool_field(
+        data,
+        field_name,
+        invalid_message=f"{field_name} must be a bool",
+    )
 
 
 def _required_numeric(data: JsonObject, field_name: str) -> float:
-    value = data.get(field_name)
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{field_name} must be a number")
-    return float(value)
+    return _required_float_field(
+        data,
+        field_name,
+        invalid_message=f"{field_name} must be a number",
+    )
 
 
 def _required_exemplar_kind(value: object) -> DiagnosisExemplarKind:
@@ -487,30 +511,12 @@ def _optional_proof_basis(value: object) -> LocationProofBasis | None:
 
 
 def _optional_float(value: object) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError("optional numeric field must be a number or null")
-    return float(value)
+    return _optional_float_or_none(value, strict=True)
 
 
 def _optional_int(value: object) -> int | None:
-    if value is None:
-        return None
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError("optional int field must be an int or null")
-    return value
+    return _optional_int_or_none(value, strict=True)
 
 
 def _optional_text(value: object) -> str | None:
-    if value is None:
-        return None
-    if not isinstance(value, str):
-        raise ValueError("optional text field must be a string or null")
-    text = value.strip()
-    return text or None
-
-
-def _set_optional(payload: JsonObject, key: str, value: JsonValue | None) -> None:
-    if value is not None:
-        payload[key] = value
+    return _non_empty_text_or_none(value, strict=True)

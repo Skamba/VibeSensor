@@ -82,6 +82,30 @@ def test_window_descriptor_from_policy_sets_sample_and_time_bounds() -> None:
     assert WholeRunWindowDescriptor.from_mapping(descriptor.to_json_object()) == descriptor
 
 
+def test_window_descriptor_from_mapping_coerces_numeric_strings() -> None:
+    descriptor = WholeRunWindowDescriptor.from_mapping(
+        {
+            "window_index": "3",
+            "sample_start": "600",
+            "sample_end": "2648",
+            "center_sample": "1624",
+            "start_t_s": "0.75",
+            "end_t_s": "3.31",
+            "center_t_s": "2.03",
+        }
+    )
+
+    assert descriptor == WholeRunWindowDescriptor(
+        window_index=3,
+        sample_start=600,
+        sample_end=2648,
+        center_sample=1624,
+        start_t_s=0.75,
+        end_t_s=3.31,
+        center_t_s=2.03,
+    )
+
+
 def test_whole_run_artifact_manifest_round_trips_with_window_policy() -> None:
     policy = WholeRunWindowPolicy.from_metadata(_metadata())
     manifest = WholeRunArtifactManifest(
@@ -171,6 +195,32 @@ def test_context_interval_round_trips_with_window_range_summary() -> None:
 
     assert restored == interval
     assert restored.window_count == 7
+
+
+def test_context_interval_from_mapping_defaults_invalid_numeric_fields() -> None:
+    interval = WholeRunContextInterval.from_mapping(
+        {
+            "segment_index": "2",
+            "phase": "acceleration",
+            "load_state": "transient",
+            "start_window_index": "8",
+            "end_window_index": "14",
+            "start_t_s": "bad",
+            "end_t_s": "5.5",
+            "full_context_window_count": "bad",
+            "partial_context_window_count": 2,
+            "missing_context_window_count": None,
+        }
+    )
+
+    assert interval.segment_index == 2
+    assert interval.start_window_index == 8
+    assert interval.end_window_index == 14
+    assert interval.start_t_s is None
+    assert interval.end_t_s == pytest.approx(5.5)
+    assert interval.full_context_window_count == 0
+    assert interval.partial_context_window_count == 2
+    assert interval.missing_context_window_count == 0
 
 
 def test_context_interval_rejects_inverted_window_ranges() -> None:

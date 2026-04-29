@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.shared.types.history_analysis_contracts import (
     OrderHarmonicEvidenceSummaryResponse,
     OrderTracePhaseSupportResponse,
@@ -106,6 +108,35 @@ def test_order_trace_summary_round_trips_nested_compact_contracts() -> None:
     )
 
     assert OrderTraceSummary.from_mapping(summary.to_json_object()) == summary
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("exemplar_interval_index", 2.5),
+        ("dominant_phase", 7),
+        ("mean_relative_error", "bad"),
+    ],
+)
+def test_order_trace_summary_drops_invalid_optional_values(field: str, value: object) -> None:
+    payload = OrderTraceSummary(
+        hypothesis_key="engine_2x",
+        suspected_source="engine",
+        order_family="engine",
+        order_label="2x engine",
+        total_window_count=128,
+        eligible_window_count=96,
+        matched_window_count=52,
+        support_ratio=52 / 96,
+        reference_coverage_ratio=96 / 128,
+        longest_contiguous_support_window_count=12,
+        contiguous_support_ratio=12 / 96,
+    ).to_json_object()
+    payload[field] = value
+
+    restored = OrderTraceSummary.from_mapping(payload)
+
+    assert getattr(restored, field) is None
 
 
 def test_history_order_trace_response_contracts_expose_named_summary_fields() -> None:

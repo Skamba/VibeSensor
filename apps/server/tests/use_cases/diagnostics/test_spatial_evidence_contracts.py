@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.shared.types.history_analysis_contracts import (
     SpatialEvidenceSummaryResponse,
     SpatialLocationSummaryResponse,
@@ -70,6 +72,32 @@ def test_spatial_evidence_summary_round_trips_nested_compact_contracts() -> None
     )
 
     assert SpatialEvidenceSummary.from_mapping(summary.to_json_object()) == summary
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("dominant_location", 7, "optional text field must be a string or null"),
+        ("coherence_ratio", "bad", "optional numeric field must be a number or null"),
+    ],
+)
+def test_spatial_evidence_summary_rejects_invalid_optional_values(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    payload = SpatialEvidenceSummary(
+        candidate_key="wheel",
+        suspected_source="wheel/tire",
+        proof_basis="supporting_windows_raw_backed",
+        total_window_count=128,
+        supporting_window_count=42,
+        supporting_sensor_count=4,
+    ).to_json_object()
+    payload[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        SpatialEvidenceSummary.from_mapping(payload)
 
 
 def test_history_spatial_response_contracts_expose_named_summary_fields() -> None:
