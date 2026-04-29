@@ -7,13 +7,15 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import sqrt
 
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
+)
+from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
+    jsonl_bytes_from_objects,
+    jsonl_objects_from_bytes,
 )
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis, _order_hypotheses
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
@@ -142,10 +144,7 @@ def whole_run_order_trace_summaries_to_jsonl_bytes(
 ) -> bytes:
     """Serialize compact whole-run order-trace summaries into sidecar JSONL bytes."""
 
-    if not summaries:
-        return b""
-    lines = [safe_json_dumps(summary.to_json_object()).encode("utf-8") for summary in summaries]
-    return b"\n".join(lines) + b"\n"
+    return jsonl_bytes_from_objects(summaries)
 
 
 def whole_run_order_trace_summaries_from_jsonl_bytes(
@@ -153,18 +152,12 @@ def whole_run_order_trace_summaries_from_jsonl_bytes(
 ) -> tuple[OrderTraceSummary, ...]:
     """Reconstruct compact whole-run order-trace summaries from persisted JSONL bytes."""
 
-    if not payload:
-        return ()
-    summaries: list[OrderTraceSummary] = []
-    for raw_line in payload.decode("utf-8").splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        parsed = safe_json_loads(line, context="whole-run order trace summaries")
-        if not is_json_object(parsed):
-            raise ValueError("whole-run order trace summary line must decode to a JSON object")
-        summaries.append(OrderTraceSummary.from_mapping(parsed))
-    return tuple(summaries)
+    return jsonl_objects_from_bytes(
+        payload,
+        context="whole-run order trace summaries",
+        line_description="whole-run order trace summary line",
+        from_mapping=OrderTraceSummary.from_mapping,
+    )
 
 
 def _summarize_hypothesis_trace(

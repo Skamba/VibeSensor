@@ -9,9 +9,7 @@ from dataclasses import dataclass
 from math import isfinite
 
 from vibesensor.domain import DrivingPhase, speed_bin_label
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
@@ -23,6 +21,10 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunRpmValidity,
     WholeRunSpeedValidity,
+)
+from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
+    jsonl_bytes_from_objects,
+    jsonl_objects_from_bytes,
 )
 
 from ._reference_resolution import _effective_engine_rpm, _tire_reference_from_context
@@ -135,10 +137,7 @@ def whole_run_context_labels_to_jsonl_bytes(
 ) -> bytes:
     """Serialize whole-run context labels into the sidecar JSONL format."""
 
-    if not labels:
-        return b""
-    lines = [safe_json_dumps(label.to_json_object()).encode("utf-8") for label in labels]
-    return b"\n".join(lines) + b"\n"
+    return jsonl_bytes_from_objects(labels)
 
 
 def whole_run_context_labels_from_jsonl_bytes(
@@ -146,19 +145,12 @@ def whole_run_context_labels_from_jsonl_bytes(
 ) -> tuple[WholeRunContextWindowLabel, ...]:
     """Reconstruct persisted whole-run context labels from sidecar JSONL bytes."""
 
-    if not payload:
-        return ()
-    labels: list[WholeRunContextWindowLabel] = []
-    text = payload.decode("utf-8")
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        parsed = safe_json_loads(line, context="whole-run context labels")
-        if not is_json_object(parsed):
-            raise ValueError("whole-run context label line must decode to a JSON object")
-        labels.append(WholeRunContextWindowLabel.from_mapping(parsed))
-    return tuple(labels)
+    return jsonl_objects_from_bytes(
+        payload,
+        context="whole-run context labels",
+        line_description="whole-run context label line",
+        from_mapping=WholeRunContextWindowLabel.from_mapping,
+    )
 
 
 def normalize_whole_run_context_labels(
