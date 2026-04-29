@@ -13,7 +13,6 @@ const supported = ["en", "nl"] as const;
 type SupportedLanguage = (typeof supported)[number];
 
 const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
-const _HAS_OWN = Object.prototype.hasOwnProperty;
 const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
   en: enCatalog,
 };
@@ -80,7 +79,7 @@ export function get(lang: string, key: string, vars?: Record<string, unknown>): 
   const template = getLoadedCatalog(normalized)?.[key] || fallback;
   if (!vars || typeof vars !== "object") return template;
   return String(template).replace(_PLACEHOLDER_RE, (_m, placeholder) => {
-    if (_HAS_OWN.call(vars, placeholder)) {
+    if (Object.hasOwn(vars, placeholder)) {
       return formatVar(normalized, vars[placeholder]);
     }
     return `{${placeholder}}`;
