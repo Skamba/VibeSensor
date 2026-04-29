@@ -1,4 +1,4 @@
-"""Docker E2E tests for short-run and reduced-sensor data quality cases."""
+"""Docker E2E tests for short-run edges plus one representative report-pipeline smoke."""
 
 from __future__ import annotations
 
@@ -63,10 +63,12 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     _cleanup_run(base, run_short)
 
 
-def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None:
+def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
+        # Keep the representative pipeline smoke fast by using a reduced-sensor capture
+        # while still proving ingest -> diagnosis -> export -> PDF works end to end.
         _simulate(e2e_env, duration=3.0, count=2, names="front-left,rear-left")
         api_json(base, "/api/recording/stop", method="POST")
         run = _wait_complete(base, run_id)
