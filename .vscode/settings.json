@@ -1,0 +1,16 @@
+{
+  "search.exclude": {
+    "**/.cache/**": true,
+    "apps/server/build/**": true,
+    "apps/server/dist/**": true,
+    "apps/server/vibesensor.egg-info/**": true,
+    "infra/pi-image/pi-gen/.cache/**": true
+  },
+  "files.watcherExclude": {
+    "**/.cache/**": true,
+    "apps/server/build/**": true,
+    "apps/server/dist/**": true,
+    "apps/server/vibesensor.egg-info/**": true,
+    "infra/pi-image/pi-gen/.cache/**": true
+  }
+}
