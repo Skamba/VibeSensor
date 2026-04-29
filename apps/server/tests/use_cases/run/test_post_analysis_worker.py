@@ -63,6 +63,13 @@ class _StoredRun:
     sample_count: int
 
 
+def _patch_fast_retry_delays(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis._RETRY_DELAYS_S",
+        (0.01, 0.02, 0.03),
+    )
+
+
 class TestPostAnalysisWorkerSchedule:
     def test_schedule_and_process(self, make_worker) -> None:
         """Worker processes a scheduled run."""
@@ -356,7 +363,9 @@ class TestPostAnalysisWorkerErrorHandling:
 
     def test_worker_retries_retryable_failure_until_success(
         self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        _patch_fast_retry_delays(monkeypatch)
         errors: list[str] = []
         cleared: list[str] = []
         stored: list[tuple[str, object]] = []
@@ -394,7 +403,7 @@ class TestPostAnalysisWorkerErrorHandling:
         )
         worker.schedule("run-retry")
 
-        assert worker.wait(timeout_s=6.0)
+        assert worker.wait(timeout_s=3.0)
         assert errors == ["post-analysis failed for run run-retry: db locked"]
         assert cleared == ["cleared"]
         assert stored and stored[0][0] == "run-retry"
@@ -402,7 +411,11 @@ class TestPostAnalysisWorkerErrorHandling:
         assert snapshot.last_completed_run_id == "run-retry"
         assert snapshot.last_completed_error is None
 
-    def test_worker_retries_until_budget_exhausted(self) -> None:
+    def test_worker_retries_until_budget_exhausted(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _patch_fast_retry_delays(monkeypatch)
         errors: list[str] = []
         stored_errors: list[tuple[str, str]] = []
 
@@ -432,7 +445,7 @@ class TestPostAnalysisWorkerErrorHandling:
         )
         worker.schedule("run-exhausted")
 
-        assert worker.wait(timeout_s=8.0)
+        assert worker.wait(timeout_s=3.0)
         assert len(errors) > 1
         assert set(errors) == {"post-analysis failed for run run-exhausted: db locked"}
         assert stored_errors == [("run-exhausted", "db locked")]
