@@ -17,23 +17,18 @@ from vibesensor.strength_bands import (
 # -- bucket_for_strength -------------------------------------------------------
 
 
-def test_bucket_below_threshold_returns_l0() -> None:
-    assert bucket_for_strength(vibration_strength_db=0.0) == "l0"
-    assert bucket_for_strength(vibration_strength_db=5.0) == "l0"
-
-
-def test_bucket_l1_threshold() -> None:
-    assert bucket_for_strength(vibration_strength_db=8.0) == "l1"
-
-
-def test_bucket_l5_threshold() -> None:
-    assert bucket_for_strength(vibration_strength_db=46.0) == "l5"
-
-
-def test_bucket_returns_highest_matching() -> None:
-    # Meets L1-L3 thresholds → returns L3
-    result = bucket_for_strength(vibration_strength_db=26.0)
-    assert result == "l3"
+@pytest.mark.parametrize(
+    ("vibration_strength_db", "expected"),
+    [
+        pytest.param(0.0, "l0", id="zero"),
+        pytest.param(5.0, "l0", id="below-first-threshold"),
+        pytest.param(8.0, "l1", id="l1-threshold"),
+        pytest.param(26.0, "l3", id="highest-matching-threshold"),
+        pytest.param(46.0, "l5", id="l5-threshold"),
+    ],
+)
+def test_bucket_examples(vibration_strength_db: float, expected: str) -> None:
+    assert bucket_for_strength(vibration_strength_db=vibration_strength_db) == expected
 
 
 def test_batch_buckets_match_scalar_helper() -> None:
