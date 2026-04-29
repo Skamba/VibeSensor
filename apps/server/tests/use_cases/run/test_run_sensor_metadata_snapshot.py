@@ -1,17 +1,27 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
-from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
+from vibesensor.use_cases.run import _recorder_runtime
+
+
+class _StopLoop(Exception):
+    pass
 
 
 def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     make_logger,
     fake_registry,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
     sensor_id = "AA:BB:CC:DD:EE:01"
     active_ids = [sensor_id]
     fake_registry._records[sensor_id] = replace(
@@ -34,49 +44,58 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     logger = make_logger(
         registry=fake_registry,
         sensor_metadata_reader=sensor_metadata_reader,
+        history_db=history_db.run_repository,
     )
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    status = logger.start_recording()
+    run_id = status.run_id
+    assert run_id is not None
+    active_record = fake_registry.get(sensor_id)
+    assert active_record is not None
+    active_record.frames_total = 1
 
-    initial_rows = logger._sample_flush.build_sample_records(
-        run_id=snapshot.run_id,
-        t_s=1.0,
-        timestamp_utc="2026-02-16T12:00:00+00:00",
-    )
-    assert len(initial_rows) == 1
-    assert initial_rows[0].client_name == "Configured front left"
-    assert initial_rows[0].location == "front_left_wheel"
+    sleep_calls = 0
 
-    fake_registry._records[sensor_id].name = "Renamed live sensor"
-    fake_registry._records[sensor_id].location_code = "rear_right_wheel"
-    sensors_by_mac["aabbccddee01"] = {
-        "name": "Configured rear right",
-        "location_code": "rear_right_wheel",
-    }
+    async def fake_sleep(_seconds: float) -> None:
+        nonlocal sleep_calls
+        sleep_calls += 1
+        if sleep_calls == 1:
+            active_record.frames_total = 2
+            active_record.name = "Renamed live sensor"
+            active_record.location_code = "rear_right_wheel"
+            sensors_by_mac["aabbccddee01"] = {
+                "name": "Configured rear right",
+                "location_code": "rear_right_wheel",
+            }
+            return
+        raise _StopLoop
 
-    later_rows = logger._sample_flush.build_sample_records(
-        run_id=snapshot.run_id,
-        t_s=2.0,
-        timestamp_utc="2026-02-16T12:00:01+00:00",
-    )
-    assert len(later_rows) == 1
-    assert later_rows[0].client_name == initial_rows[0].client_name
-    assert later_rows[0].location == initial_rows[0].location
+    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
 
-    metadata = _build_run_metadata_record(logger, snapshot.run_id, snapshot.start_time_utc)
-    assert len(metadata.sensor_snapshots) == 1
-    sensor_snapshot = metadata.sensor_snapshots[0]
-    assert sensor_snapshot.sensor_id == sensor_id
+    with pytest.raises(_StopLoop):
+        asyncio.run(logger.run())
+
+    logger.stop_recording()
+    assert logger.wait_for_post_analysis(timeout_s=3.0)
+
+    stored_run = history_db.run_repository.get_run(run_id)
+    assert stored_run is not None
+    sensor_snapshot = stored_run.metadata.sensor_snapshot_for(sensor_id)
+    assert sensor_snapshot is not None
     assert sensor_snapshot.display_name == "Configured front left"
     assert sensor_snapshot.location_code == "front_left_wheel"
     assert sensor_snapshot.mount_orientation == "radial"
+
+    stored_samples = history_db.run_repository.get_run_samples(run_id)
+    assert len(stored_samples) == 2
+    assert {sample.client_name for sample in stored_samples} == {"Configured front left"}
+    assert {sample.location for sample in stored_samples} == {"front_left_wheel"}
 
 
 def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     make_logger,
     fake_registry,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = create_history_persistence_adapters(tmp_path / "history.db")
     active_sensor_id = "AA:BB:CC:DD:EE:01"
@@ -104,16 +123,12 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
         sensor_metadata_reader=sensor_metadata_reader,
         history_db=history_db.run_repository,
     )
-    logger.schedule_post_analysis = lambda _run_id: None
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
-
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    status = logger.start_recording()
+    run_id = status.run_id
+    assert run_id is not None
+    active_record = fake_registry.get(active_sensor_id)
+    assert active_record is not None
+    active_record.frames_total = 1
 
     late_record = replace(
         fake_registry._records[active_sensor_id],
@@ -121,45 +136,56 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
         name="Late joiner live",
         location_code="rear_left_wheel",
         firmware_version="2.0.0",
+        frames_total=0,
     )
-    fake_registry._records[late_sensor_id] = late_record
-    active_ids.append(late_sensor_id)
-    sensors_by_mac["aabbccddee02"] = {
-        "name": "Configured rear left",
-        "location_code": "rear_left_wheel",
-        "mount_orientation": "axial",
-    }
+    sleep_calls = 0
 
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    async def fake_sleep(_seconds: float) -> None:
+        nonlocal sleep_calls
+        sleep_calls += 1
+        if sleep_calls == 1:
+            fake_registry._records[late_sensor_id] = late_record
+            active_ids.append(late_sensor_id)
+            sensors_by_mac["aabbccddee02"] = {
+                "name": "Configured rear left",
+                "location_code": "rear_left_wheel",
+                "mount_orientation": "axial",
+            }
+            active_record.frames_total = 2
+            late_record.frames_total = 1
+            return
+        if sleep_calls == 2:
+            sensors_by_mac["aabbccddee02"] = {
+                "name": "Configured moved later",
+                "location_code": "front_right_wheel",
+                "mount_orientation": "rearward",
+            }
+            fake_registry._records[late_sensor_id].name = "Late joiner renamed live"
+            fake_registry._records[late_sensor_id].location_code = "front_right_wheel"
+            active_record.frames_total = 3
+            fake_registry._records[late_sensor_id].frames_total = 2
+            return
+        raise _StopLoop
 
-    sensors_by_mac["aabbccddee02"] = {
-        "name": "Configured moved later",
-        "location_code": "front_right_wheel",
-        "mount_orientation": "rearward",
-    }
-    fake_registry._records[late_sensor_id].name = "Late joiner renamed live"
-    fake_registry._records[late_sensor_id].location_code = "front_right_wheel"
+    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
 
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    with pytest.raises(_StopLoop):
+        asyncio.run(logger.run())
+
     logger.stop_recording()
+    assert logger.wait_for_post_analysis(timeout_s=3.0)
 
-    stored_metadata = history_db.run_repository.get_run(snapshot.run_id).metadata
+    stored_run = history_db.run_repository.get_run(run_id)
+    assert stored_run is not None
+    stored_metadata = stored_run.metadata
     late_snapshot = stored_metadata.sensor_snapshot_for(late_sensor_id)
     assert late_snapshot is not None
     assert late_snapshot.display_name == "Configured rear left"
     assert late_snapshot.location_code == "rear_left_wheel"
     assert late_snapshot.mount_orientation == "axial"
 
-    stored_samples = history_db.run_repository.get_run_samples(snapshot.run_id)
+    stored_samples = history_db.run_repository.get_run_samples(run_id)
     late_rows = [sample for sample in stored_samples if sample.client_id == late_sensor_id]
-    assert late_rows
+    assert len(late_rows) == 2
     assert {sample.client_name for sample in late_rows} == {"Configured rear left"}
     assert {sample.location for sample in late_rows} == {"rear_left_wheel"}

@@ -1,17 +1,27 @@
 from __future__ import annotations
 
+import asyncio
+from pathlib import Path
+
 import pytest
 
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain import CarSnapshot
-from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
+from vibesensor.use_cases.run import _recorder_runtime
+
+
+class _StopLoop(Exception):
+    pass
 
 
 def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     make_logger,
     mutable_fake_settings,
     fake_gps_monitor,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
     active_car_holder = [
         CarSnapshot(
             car_id="car-1",
@@ -33,60 +43,70 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     )
     fake_gps_monitor.override_speed_mps = 10.0
 
-    logger = make_logger(settings_reader=mutable_fake_settings, gps_monitor=fake_gps_monitor)
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
-
-    initial_rows = logger._sample_flush.build_sample_records(
-        run_id=snapshot.run_id,
-        t_s=1.0,
-        timestamp_utc="2026-02-16T12:00:00+00:00",
+    logger = make_logger(
+        settings_reader=mutable_fake_settings,
+        gps_monitor=fake_gps_monitor,
+        history_db=history_db.run_repository,
     )
+    status = logger.start_recording()
+    run_id = status.run_id
+    assert run_id is not None
+    active_record = logger.registry.get("active")
+    assert active_record is not None
+    active_record.frames_total = 1
 
-    assert len(initial_rows) == 1
-    initial_row = initial_rows[0]
-    assert initial_row.final_drive_ratio == pytest.approx(3.08)
-    assert initial_row.gear == pytest.approx(0.64)
-    assert initial_row.engine_rpm is not None
+    sleep_calls = 0
 
-    mutable_fake_settings.values.update(
-        {
-            "tire_width_mm": 315.0,
-            "tire_aspect_pct": 35.0,
-            "rim_in": 20.0,
-            "final_drive_ratio": 4.1,
-            "current_gear_ratio": 0.95,
-        }
-    )
-    active_car_holder[0] = CarSnapshot(
-        car_id="car-2",
-        name="Changed",
-        car_type="hatchback",
-        aspects={
-            "tire_width_mm": 315.0,
-            "tire_aspect_pct": 35.0,
-            "rim_in": 20.0,
-            "final_drive_ratio": 4.1,
-            "current_gear_ratio": 0.95,
-        },
-    )
+    async def fake_sleep(_seconds: float) -> None:
+        nonlocal sleep_calls
+        sleep_calls += 1
+        if sleep_calls == 1:
+            mutable_fake_settings.values.update(
+                {
+                    "tire_width_mm": 315.0,
+                    "tire_aspect_pct": 35.0,
+                    "rim_in": 20.0,
+                    "final_drive_ratio": 4.1,
+                    "current_gear_ratio": 0.95,
+                }
+            )
+            active_car_holder[0] = CarSnapshot(
+                car_id="car-2",
+                name="Changed",
+                car_type="hatchback",
+                aspects={
+                    "tire_width_mm": 315.0,
+                    "tire_aspect_pct": 35.0,
+                    "rim_in": 20.0,
+                    "final_drive_ratio": 4.1,
+                    "current_gear_ratio": 0.95,
+                },
+            )
+            active_record.frames_total = 2
+            return
+        raise _StopLoop
 
-    later_rows = logger._sample_flush.build_sample_records(
-        run_id=snapshot.run_id,
-        t_s=2.0,
-        timestamp_utc="2026-02-16T12:00:01+00:00",
-    )
+    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
 
-    assert len(later_rows) == 1
-    later_row = later_rows[0]
-    assert later_row.final_drive_ratio == pytest.approx(initial_row.final_drive_ratio)
-    assert later_row.gear == pytest.approx(initial_row.gear)
-    assert later_row.engine_rpm == pytest.approx(initial_row.engine_rpm)
+    with pytest.raises(_StopLoop):
+        asyncio.run(logger.run())
 
-    metadata = _build_run_metadata_record(logger, snapshot.run_id, snapshot.start_time_utc)
-    assert not hasattr(metadata, "tire_width_mm")
+    logger.stop_recording()
+    assert logger.wait_for_post_analysis(timeout_s=3.0)
+
+    stored_run = history_db.run_repository.get_run(run_id)
+    assert stored_run is not None
+    metadata = stored_run.metadata
     assert metadata.analysis_settings.tire_width_mm == pytest.approx(285.0)
     assert metadata.car is not None
     assert metadata.car.car_id == "car-1"
     assert metadata.car.name == "Primary"
+
+    stored_samples = history_db.run_repository.get_run_samples(run_id)
+    assert len(stored_samples) == 2
+    reference_rpm = stored_samples[0].engine_rpm
+    assert reference_rpm is not None
+    for sample in stored_samples:
+        assert sample.final_drive_ratio == pytest.approx(3.08)
+        assert sample.gear == pytest.approx(0.64)
+        assert sample.engine_rpm == pytest.approx(reference_rpm)
