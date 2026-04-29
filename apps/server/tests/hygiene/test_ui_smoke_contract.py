@@ -133,3 +133,38 @@ def test_ui_smoke_failure_artifact_contract() -> None:
     assert upload_step["with"]["path"] == f"apps/ui/{_smoke_output_dir()}/"
     assert upload_step["with"]["if-no-files-found"] == "ignore"
     assert upload_step["with"]["retention-days"] == 5
+
+
+def test_ui_smoke_playwright_cache_hit_install_contract() -> None:
+    workflow = _ci_workflow()
+    jobs = workflow["jobs"]
+    assert isinstance(jobs, dict)
+    ui_smoke_job = jobs["ui-smoke"]
+    assert isinstance(ui_smoke_job, dict)
+    steps = ui_smoke_job["steps"]
+    assert isinstance(steps, list)
+
+    cache_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("uses") == "actions/cache@v5"
+        and step.get("with", {}).get("path") == "~/.cache/ms-playwright"
+    )
+    assert cache_step["id"] == "playwright-browser-cache"
+
+    install_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Install Playwright Chromium (cache miss)"
+    )
+    assert install_step["if"] == "${{ steps.playwright-browser-cache.outputs.cache-hit != 'true' }}"
+    assert install_step["working-directory"] == "apps/ui"
+    assert install_step["run"] == "npx playwright install chromium"
+
+    smoke_step = next(
+        step for step in steps if isinstance(step, dict) and step.get("name") == "UI smoke tests"
+    )
+    assert smoke_step["working-directory"] == "apps/ui"
+    assert smoke_step["env"]["PLAYWRIGHT_SMOKE_WORKERS"] == 4
+    assert smoke_step["run"] == "npm run test:smoke"
