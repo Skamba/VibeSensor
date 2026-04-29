@@ -139,6 +139,61 @@ def test_order_trace_summary_drops_invalid_optional_values(field: str, value: ob
     assert getattr(restored, field) is None
 
 
+def test_order_trace_summary_skips_non_mapping_nested_rows() -> None:
+    payload = OrderTraceSummary(
+        hypothesis_key="engine_2x",
+        suspected_source="engine",
+        order_family="engine",
+        order_label="2x engine",
+        total_window_count=8,
+        eligible_window_count=6,
+        matched_window_count=3,
+        support_ratio=0.5,
+        reference_coverage_ratio=0.75,
+        longest_contiguous_support_window_count=2,
+        contiguous_support_ratio=2 / 6,
+    ).to_json_object()
+    payload["support_intervals"] = [
+        {
+            "interval_index": 0,
+            "start_window_index": 1,
+            "end_window_index": 2,
+            "matched_window_count": 2,
+            "support_ratio": 1.0,
+        },
+        "skip-me",
+    ]
+    payload["phase_support"] = [
+        {
+            "phase": "cruise",
+            "eligible_window_count": 4,
+            "matched_window_count": 2,
+            "support_ratio": 0.5,
+        },
+        7,
+    ]
+    payload["harmonic_summaries"] = [
+        {
+            "harmonic": 2,
+            "order_label": "2x engine",
+            "eligible_window_count": 6,
+            "matched_window_count": 3,
+            "support_ratio": 0.5,
+            "reference_coverage_ratio": 0.75,
+            "contiguous_support_ratio": 2 / 6,
+            "lock_score": 0.6,
+            "drift_score": 0.4,
+        },
+        [],
+    ]
+
+    restored = OrderTraceSummary.from_mapping(payload)
+
+    assert [interval.interval_index for interval in restored.support_intervals] == [0]
+    assert [row.phase for row in restored.phase_support] == ["cruise"]
+    assert [summary.harmonic for summary in restored.harmonic_summaries] == [2]
+
+
 def test_history_order_trace_response_contracts_expose_named_summary_fields() -> None:
     assert set(OrderTraceSupportIntervalResponse.__annotations__) == {
         "interval_index",
