@@ -353,5 +353,8 @@ git config core.hooksPath .githooks
 Current behavior:
 
 - Hooks are safe to enable in normal development.
-- The optional privacy guard only runs when `tools/privacy/privacy_guard.py` exists in the checkout.
+- The privacy guard scans staged and pushed additions for high-confidence secret
+  material and sensitive local-only files.
+- Hooks prefer `.venv/bin/python` after `make setup`, then fall back to `python3`
+  or `python` for bootstrap-only checkouts.
 - Use [CONTRIBUTING.md](CONTRIBUTING.md) for the supported local validation and CI reproduction workflow.
