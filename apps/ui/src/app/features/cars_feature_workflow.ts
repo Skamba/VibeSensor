@@ -6,7 +6,7 @@ import type {
   CarOrderReferenceStatus,
   CarLibraryTireOption,
   CarLibraryVariant,
-} from "../../api/types";
+} from "../../api";
 import {
   createCarsManualInputStore,
   firstMissingManualInputField,

@@ -1,4 +1,4 @@
-import type { CarLibraryGearbox, CarOrderReferenceStatus } from "../../api/types";
+import type { CarLibraryGearbox, CarOrderReferenceStatus } from "../../api";
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 
