@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
+from contextlib import nullcontext
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
@@ -235,6 +238,40 @@ def test_download_release_asset_streams_response_to_disk(
     )
 
     assert dest.read_bytes() == b"wheel-bytes"
+
+
+def test_download_release_asset_closes_fd_when_fdopen_fails(tmp_path: Path) -> None:
+    fake_response = MagicMock()
+    fake_response.iter_bytes.return_value = iter([b"wheel-bytes"])
+
+    with (
+        patch(
+            "vibesensor.use_cases.updates.asset_download.stream_http_response",
+            return_value=nullcontext(fake_response),
+        ),
+        patch(
+            "vibesensor.use_cases.updates.asset_download.os.fdopen",
+            side_effect=OSError("fdopen failed"),
+        ),
+        patch(
+            "vibesensor.use_cases.updates.asset_download.os.close",
+            wraps=os.close,
+        ) as mock_close,
+    ):
+        with pytest.raises(OSError, match="fdopen failed"):
+            download_release_asset(
+                client=GitHubApiClient(),
+                url="https://api.github.com/repos/owner/repo/releases/assets/1",
+                dest=tmp_path / "artifact.whl",
+                timeout_s=30.0,
+                max_bytes=1024,
+                chunk_size=4,
+                size_limit_message="too large",
+            )
+
+    mock_close.assert_called_once()
+    assert not (tmp_path / "artifact.whl").exists()
+    assert list(tmp_path.glob("*.dl_tmp")) == []
 
 
 def test_download_release_asset_maps_status_errors(httpx_mock: HTTPXMock, tmp_path: Path) -> None:

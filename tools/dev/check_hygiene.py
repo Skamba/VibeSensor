@@ -828,6 +828,8 @@ def _pytestmark_values(statements: Sequence[ast.stmt]) -> list[ast.expr]:
 def _marker_policy_test_files() -> list[Path]:
     files: list[Path] = []
     for path in _git_tracked_files():
+        if not path.exists():
+            continue
         rel_path = path.relative_to(ROOT).as_posix()
         if path.suffix != ".py":
             continue
