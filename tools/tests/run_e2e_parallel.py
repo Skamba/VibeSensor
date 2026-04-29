@@ -346,7 +346,10 @@ def _wait_health(
             RuntimeError,
         ) as exc:
             last_error = exc
-            time.sleep(0.5)
+            try:
+                server_process.wait(timeout=0.5)
+            except subprocess.TimeoutExpired:
+                pass
     raise RuntimeError(
         f"Shard server did not become ready before timeout. Last error: {last_error}"
     )
