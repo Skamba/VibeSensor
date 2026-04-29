@@ -80,16 +80,20 @@ def test_integer_speed_mps_treated_as_float() -> None:
 @pytest.mark.asyncio
 async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
+    client_connected = asyncio.Event()
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await asyncio.sleep(0.15)
-        writer.close()
-        await writer.wait_closed()
+        client_connected.set()
+        try:
+            await reader.read()
+        finally:
+            writer.close()
+            await writer.wait_closed()
 
     server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
     host, port = server.sockets[0].getsockname()[:2]
     task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.05)
+    await asyncio.wait_for(client_connected.wait(), timeout=1.0)
     task.cancel()
     results = await asyncio.gather(task, return_exceptions=True)
     assert isinstance(results[0], asyncio.CancelledError)
@@ -103,10 +107,13 @@ async def test_run_cancellation_waits_writer_close_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
+    read_started = asyncio.Event()
+    release_read = asyncio.Event()
 
     class _FakeReader:
         async def readline(self) -> bytes:
-            await asyncio.sleep(5)
+            read_started.set()
+            await release_read.wait()
             return b""
 
     class _FakeWriter:
@@ -132,7 +139,7 @@ async def test_run_cancellation_waits_writer_close_once(
 
     monkeypatch.setattr(asyncio, "open_connection", _open_connection)
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=2947))
-    await asyncio.sleep(0.05)
+    await asyncio.wait_for(read_started.wait(), timeout=1.0)
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
     assert fake_writer.wait_closed_calls == 1

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from test_support.core import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.gps.transport_lifecycle import (
@@ -58,7 +59,6 @@ class TestGPSReconnectBackoff:
             await writer.drain()
             writer.write(b'{"class":"TPV","mode":3,"speed":10.0}\n')
             await writer.drain()
-            await asyncio.sleep(0.05)
             writer.close()
             await writer.wait_closed()
 
@@ -66,7 +66,10 @@ class TestGPSReconnectBackoff:
         host, port = server.sockets[0].getsockname()[:2]
 
         task = asyncio.create_task(monitor.run(host=host, port=port))
-        await asyncio.sleep(0.2)
+        assert await async_wait_until(
+            lambda: monitor.device_info == "gpsd 3.25" and monitor.speed_mps == 10.0,
+            timeout_s=1.5,
+        ), "Timed out waiting for GPS VERSION and TPV messages to update monitor state"
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
         server.close()
