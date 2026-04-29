@@ -48,7 +48,7 @@ with explicit drop logging.
 | `processing/` | `compute_all()` dispatches per-client FFT adaptively; ingest/compute timing counters added |
 | `runtime/builders.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
-| Benchmark | `apps/server/tests/infra/workers/benchmark_compute_all.py` — canonical pytest-benchmark regression path; `tools/tests/benchmark_pipeline.py` stays as the standalone throughput table harness |
+| Benchmark | `apps/server/tests/infra/workers/benchmark_compute_all.py` — canonical pytest-benchmark regression path |
 
 ## Before/After Metrics
 
