@@ -18,7 +18,6 @@ class TestWeightedPercentile:
     def test_empty_returns_none(self) -> None:
         assert _weighted_percentile([], 0.5) is None
 
-    @pytest.mark.smoke
     def test_single_element(self) -> None:
         assert _weighted_percentile([(10.0, 1.0)], 0.5) == 10.0
 
@@ -89,7 +88,6 @@ class TestSpeedProfileFromPoints:
     def test_empty(self) -> None:
         assert _speed_profile_from_points([]) == (None, None, None)
 
-    @pytest.mark.smoke
     def test_peak_speed_uses_highest_amplitude_point(self) -> None:
         points = [(80.0, 0.06), (90.0, 0.08), (100.0, 0.04)]
         peak_speed, _band, _label = _speed_profile_from_points(points)

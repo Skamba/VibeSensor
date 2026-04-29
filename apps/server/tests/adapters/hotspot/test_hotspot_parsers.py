@@ -76,7 +76,6 @@ class TestParseActiveConnDevice:
 
 
 class TestParseIp:
-    @pytest.mark.smoke
     def test_extracts_first_inet_cidr(self) -> None:
         output = "    inet 192.168.4.1/24 brd 192.168.4.255 scope global wlan0\n"
         assert parse_ip(output) == "192.168.4.1/24"
