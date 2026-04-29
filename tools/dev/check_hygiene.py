@@ -1778,10 +1778,41 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     ui_smoke = jobs.get("ui-smoke") if isinstance(jobs, Mapping) else None
     steps = ui_smoke.get("steps") if isinstance(ui_smoke, Mapping) else None
     playwright_cache_ok = False
+    playwright_install_step_ok = False
+    ui_smoke_command_ok = False
     if isinstance(steps, list):
         for step in steps:
             if not isinstance(step, Mapping):
                 continue
+            step_name = step.get("name")
+            step_run = step.get("run")
+            step_working_directory = step.get("working-directory")
+            step_env = step.get("env") if isinstance(step.get("env"), Mapping) else None
+            normalized_command = ""
+            if isinstance(step_run, str):
+                cwd_prefix = ""
+                if isinstance(step_working_directory, str) and step_working_directory:
+                    cwd_prefix = f"cd {step_working_directory} && "
+                normalized_command = (
+                    f"{cwd_prefix}{_normalize_env(step_env)}"
+                    f"{_normalize_shell_command(step_run.strip())}"
+                )
+            if (
+                isinstance(step_name, str)
+                and step_name == "Install Playwright Chromium (cache miss)"
+                and step.get("if")
+                == "${{ steps.playwright-browser-cache.outputs.cache-hit != 'true' }}"
+                and normalized_command
+                == "cd apps/ui && npx playwright install chromium"
+            ):
+                playwright_install_step_ok = True
+            if (
+                isinstance(step_name, str)
+                and step_name == "UI smoke tests"
+                and normalized_command
+                == "cd apps/ui && env PLAYWRIGHT_SMOKE_WORKERS=4 npm run test:smoke"
+            ):
+                ui_smoke_command_ok = True
             uses = step.get("uses")
             if not isinstance(uses, str) or not uses.startswith("actions/cache@"):
                 continue
@@ -1791,17 +1822,25 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             path = with_data.get("path")
             key = with_data.get("key")
             if (
-                isinstance(path, str)
+                step.get("id") == "playwright-browser-cache"
+                and isinstance(path, str)
                 and path.strip() == "~/.cache/ms-playwright"
                 and isinstance(key, str)
                 and "ms-playwright" in key
                 and "package-lock.json" in key
             ):
                 playwright_cache_ok = True
-                break
     if not playwright_cache_ok:
         errors.append(
-            "ui-smoke must cache ~/.cache/ms-playwright with a package-lock-based actions/cache key."
+            "ui-smoke must cache ~/.cache/ms-playwright with id playwright-browser-cache and a package-lock-based actions/cache key."
+        )
+    if not playwright_install_step_ok:
+        errors.append(
+            "ui-smoke must install Playwright Chromium in a separate cache-miss-only step."
+        )
+    if not ui_smoke_command_ok:
+        errors.append(
+            "ui-smoke must keep the smoke step focused on npm run test:smoke."
         )
 
     backend_job = (

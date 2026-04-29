@@ -345,7 +345,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
-      - uses: actions/cache@v5
+      - id: playwright-browser-cache
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('apps/ui/package-lock.json') }}
@@ -356,13 +357,16 @@ jobs:
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
+      - name: Install Playwright Chromium (cache miss)
+        if: ${{ steps.playwright-browser-cache.outputs.cache-hit != 'true' }}
+        working-directory: apps/ui
+        run: npx playwright install chromium
+
       - name: UI smoke tests
         working-directory: apps/ui
         env:
           PLAYWRIGHT_SMOKE_WORKERS: 4
-        run: |
-          npx playwright install chromium
-          npm run test:smoke
+        run: npm run test:smoke
 
       - name: Upload UI smoke test artifacts
         if: failure()
