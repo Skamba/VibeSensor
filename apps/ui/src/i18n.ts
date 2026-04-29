@@ -1,4 +1,5 @@
 import enCatalog from "./i18n/catalogs/en.json" with { type: "json" };
+import { getDefaultNumberFormat } from "./number_format";
 
 type Catalog = Record<string, string>;
 type CatalogModule = { default: Catalog };
@@ -12,7 +13,6 @@ const supported = ["en", "nl"] as const;
 type SupportedLanguage = (typeof supported)[number];
 
 const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
-const _numberFormatCache = new Map<string, Intl.NumberFormat>();
 const _HAS_OWN = Object.prototype.hasOwnProperty;
 const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
   en: enCatalog,
@@ -22,15 +22,6 @@ const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> =
   nl: () => import("./i18n/catalogs/nl"),
   en: async () => ({ default: enCatalog }),
 };
-
-function _getDefaultNumberFormat(lang: string): Intl.NumberFormat {
-  let fmt = _numberFormatCache.get(lang);
-  if (!fmt) {
-    fmt = new Intl.NumberFormat(lang);
-    _numberFormatCache.set(lang, fmt);
-  }
-  return fmt;
-}
 
 export function normalizeLang(value: string): string {
   const raw = String(value || "").trim().toLowerCase();
@@ -78,7 +69,7 @@ function formatVar(lang: string, value: unknown): string {
   }
   if (typeof value === "number") {
     if (!Number.isFinite(value)) return "--";
-    return _getDefaultNumberFormat(lang).format(value);
+    return getDefaultNumberFormat(lang).format(value);
   }
   return String(value);
 }
