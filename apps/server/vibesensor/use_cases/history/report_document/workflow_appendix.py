@@ -6,7 +6,6 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document import AppendixAData, RankedCandidateRow
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
@@ -17,6 +16,7 @@ from vibesensor.shared.report_presentation import (
     confidence_pct_text,
     display_location,
     has_source_overlap,
+    human_source,
     is_transient_primary,
     proof_caveat_text,
     uses_shared_overlap_wording,

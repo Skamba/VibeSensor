@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
-from vibesensor.report_i18n import human_location, human_source, location_candidates
+from vibesensor.report_i18n import human_location, location_candidates
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.strength_bands import BANDS
@@ -24,6 +25,7 @@ __all__ = [
     "display_location",
     "first_confidence_reason_clause",
     "has_source_overlap",
+    "human_source",
     "is_transient_primary",
     "location_confidence_text",
     "order_label_human",
@@ -38,6 +40,18 @@ __all__ = [
 ]
 
 _isfinite = math.isfinite
+_logger = logging.getLogger(__name__)
+
+_SOURCE_I18N_KEYS: dict[VibrationSource, str] = {
+    VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
+    VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
+    VibrationSource.ENGINE: "SOURCE_ENGINE",
+    VibrationSource.BODY_RESONANCE: "SOURCE_BODY_RESONANCE",
+    VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
+    VibrationSource.BASELINE_NOISE: "SOURCE_BASELINE_NOISE",
+    VibrationSource.UNKNOWN_RESONANCE: "SOURCE_UNKNOWN_RESONANCE",
+    VibrationSource.UNKNOWN: "UNKNOWN",
+}
 
 _STRENGTH_LABELS_BY_BUCKET: dict[str, tuple[str, str, str]] = {
     "l0": ("negligible", "Negligible", "Verwaarloosbaar"),
@@ -292,6 +306,20 @@ def confidence_caveat_text(
     if not caveats:
         return None
     return "; ".join(caveats[:2])
+
+
+def human_source(source: object, *, tr: Callable[[str], str]) -> str:
+    """Resolve a source code to its user-facing label."""
+    raw = str(source or "").strip().lower()
+    try:
+        key = VibrationSource(raw)
+    except ValueError:
+        _logger.warning(
+            "Unrecognized vibration source %r; falling back to titlecase",
+            raw,
+        )
+        return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
+    return tr(_SOURCE_I18N_KEYS.get(key, "UNKNOWN"))
 
 
 def source_with_confidence(finding: Finding, *, tr: Callable[..., str]) -> str:

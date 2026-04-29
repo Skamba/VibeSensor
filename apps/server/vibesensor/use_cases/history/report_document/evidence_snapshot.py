@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
 from vibesensor.shared.report_presentation import (
     confidence_snapshot_text,
     display_location,
+    human_source,
 )
 
 __all__ = ["build_evidence_snapshot_rows"]

@@ -7,13 +7,13 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document import PatternEvidence, VerdictPageData
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
     action_status_text,
     display_location,
+    human_source,
     location_confidence_text,
     presented_location_confidence_key,
     proof_caveat_text,

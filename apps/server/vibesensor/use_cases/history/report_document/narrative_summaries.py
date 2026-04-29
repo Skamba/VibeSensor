@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
+    human_source,
     uses_shared_overlap_wording,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
