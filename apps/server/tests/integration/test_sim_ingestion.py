@@ -18,13 +18,13 @@ import json
 import os
 import subprocess
 import sys
-import time
 from typing import Any
 from urllib.request import Request, urlopen
 
 import pytest
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
+from test_support.core import wait_until
 
 ROOT = SERVER_ROOT.parent
 
@@ -78,29 +78,65 @@ def _history_run_ids() -> set[str]:
     return {str(r["run_id"]) for r in data.get("runs", [])}
 
 
-def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> bool:
-    """Poll history every 0.25s until run ID appears or timeout expires."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if run_id in _history_run_ids():
-            return True
-        time.sleep(0.25)
-    return False
+def _recording_status() -> dict[str, Any]:
+    """Return the current recording status payload."""
+    return _api_json("/api/recording/status")
+
+
+def _wait_for_recording_idle(*, timeout_s: float = 5.0) -> dict[str, Any]:
+    """Wait until the server reports no active recording session."""
+    last_status: dict[str, Any] = {}
+
+    def _recording_is_idle() -> bool:
+        nonlocal last_status
+        last_status = _recording_status()
+        return not str(last_status.get("run_id") or "").strip()
+
+    assert wait_until(_recording_is_idle, timeout_s=timeout_s, step_s=0.1), (
+        f"Recording session did not become idle within {timeout_s}s: {last_status}"
+    )
+    return last_status
+
+
+def _wait_for_run_persisted(
+    run_id: str,
+    *,
+    timeout_s: float = 15.0,
+) -> tuple[bool, set[str]]:
+    """Wait until *run_id* appears in history and return the last seen run IDs."""
+    latest_run_ids: set[str] = set()
+
+    def _run_seen() -> bool:
+        nonlocal latest_run_ids
+        latest_run_ids = _history_run_ids()
+        return run_id in latest_run_ids
+
+    persisted = wait_until(_run_seen, timeout_s=timeout_s, step_s=0.25)
+    return persisted, latest_run_ids
 
 
 def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict[str, Any]:
     """Poll until the insights payload reflects completed current analysis."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
+    last_payload: dict[str, Any] | None = None
+    last_error: str | None = None
+
+    def _analysis_complete() -> bool:
+        nonlocal last_payload, last_error
         try:
-            data = _api_json(f"/api/history/{run_id}/insights")
-            status = data.get("status", "")
-            if status == "complete":
-                return data
-        except Exception:
-            pass
-        time.sleep(2.0)
-    raise AssertionError(f"Run {run_id} did not complete within {timeout_s}s")
+            last_payload = _api_json(f"/api/history/{run_id}/insights")
+            last_error = None
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            return False
+        return str(last_payload.get("status") or "") == "complete"
+
+    if wait_until(_analysis_complete, timeout_s=timeout_s, step_s=1.0):
+        assert last_payload is not None
+        return last_payload
+    raise AssertionError(
+        f"Run {run_id} did not complete within {timeout_s}s; "
+        f"last_payload={last_payload}; last_error={last_error}"
+    )
 
 
 def _server_is_reachable() -> bool:
@@ -130,7 +166,7 @@ class TestSimulatorIngestion:
         # Reset any stale active recording session first so this test controls
         # the run lifecycle deterministically.
         _api_post_json("/api/recording/stop")
-        time.sleep(0.5)
+        _wait_for_recording_idle()
 
         pre_runs = _history_run_ids()
         start_status = _api_post_json("/api/recording/start")
@@ -167,10 +203,9 @@ class TestSimulatorIngestion:
         _api_post_json("/api/recording/stop")
 
         # Wait for server to persist the run ID before continuing.
-        persisted = _wait_for_run_persisted(started_run_id)
+        persisted, post_runs = _wait_for_run_persisted(started_run_id)
 
         # Prefer the explicit started run id; fallback to history diff if needed.
-        post_runs = _history_run_ids()
         if persisted and started_run_id in post_runs:
             self.run_id = started_run_id
         else:
@@ -179,7 +214,7 @@ class TestSimulatorIngestion:
                 pytest.skip(
                     "Server is reachable but did not persist a new history run after logging "
                     "start/stop; skip simulator-ingestion e2e in this environment "
-                    f"(started={started_run_id})",
+                    f"(started={started_run_id}, visible_runs={sorted(post_runs)})",
                 )
             self.run_id = sorted(new_runs)[-1]
 
