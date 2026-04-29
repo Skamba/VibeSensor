@@ -1,4 +1,10 @@
-"""Tests for LifecycleManager._validate_startup() disk-check branches (8H)."""
+"""Disk-check coverage for ``LifecycleManager._validate_startup()``.
+
+This file intentionally exercises the private startup-validation helper because
+the low-disk warning branches have no narrower public seam than booting the
+full lifecycle manager. #3394 keeps this as the one justified private-method
+test in the runtime lifecycle cluster.
+"""
 
 from __future__ import annotations
 
