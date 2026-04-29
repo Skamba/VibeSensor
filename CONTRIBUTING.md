@@ -66,7 +66,10 @@ git config core.hooksPath .githooks
 Current hook behavior:
 
 - Hooks are safe to enable.
-- The optional privacy guard only runs when `tools/privacy/privacy_guard.py` exists.
+- The privacy guard scans staged and pushed additions for high-confidence secret
+  material and sensitive local-only files.
+- Hooks prefer `.venv/bin/python` after `make setup`, then fall back to `python3`
+  or `python` for bootstrap-only checkouts.
 - If a hook blocks you unexpectedly, use the commands below directly and then investigate instead of guessing.
 
 ## Validation workflow
@@ -184,7 +187,7 @@ unless a hot-path custom validator is explicitly justified.
 
 ## Common failure cases
 
-- Hook warning about missing `privacy_guard.py`: this is non-blocking; run the documented validation commands directly.
+- Privacy hook failure: remove the secret material or replace it with a documented placeholder, then rerun the commit or push.
 - Port confusion: production-style access is usually `http://127.0.0.1`, while native dev often uses `http://127.0.0.1:8000`.
 - UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the authoritative HTTP/WS/constants sync flow and rerun `make sync-contracts`.
 - Slow or failing end-to-end runs: check Docker status and the operational runbook before debugging application logic.
