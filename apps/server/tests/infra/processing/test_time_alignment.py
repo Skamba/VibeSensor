@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.processing.time_align import _ALIGNMENT_MIN_OVERLAP
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -114,7 +113,7 @@ class TestTimeAlignmentInfoAligned:
         _fill_sensor(proc, "s2", mono_time=100.5)  # 0.5 s offset
         info = proc.time_alignment_info(["s1", "s2"])
         assert info["aligned"] is True
-        assert info["overlap_ratio"] > _ALIGNMENT_MIN_OVERLAP
+        assert info["overlap_ratio"] > 0.5
         assert info["shared_window"] is not None
         assert info["shared_window"]["duration_s"] > 1.0
 
