@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
+from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.report_presentation import (
     confidence_snapshot_text,
     display_location,
@@ -215,7 +216,7 @@ def _diagnosis_counterevidence_texts(
         notes.append(tr("REPORT_COUNTEREVIDENCE_REFERENCE_GAP"))
     if "summary_only" in counter_keys:
         notes.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
-    if "legacy_context" in counter_keys:
+    if LEGACY_CONTEXT_CAVEAT_KEY in counter_keys:
         notes.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
     if "speed_context_gaps" in counter_keys:
         notes.append(tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS"))
