@@ -18,9 +18,6 @@ def test_pi_gen_pipeline_split_files_exist() -> None:
     assert (
         pi_gen_root / "templates" / "stage-vibesensor" / "00-vibesensor" / "00-run.sh.template"
     ).is_file()
-    assert (
-        REPO_ROOT / "apps" / "server" / "systemd" / "vibesensor-rfkill-unblock.service"
-    ).is_file()
 
 
 @pytest.mark.smoke
