@@ -1,0 +1,29 @@
+smoke:
+  apps/server/tests/hygiene/test_hotspot_script_guardrails.py:
+    test_hotspot_script_has_no_runtime_apt_get: Hotspot bootstrap must stay in the compact offline-first critical path.
+    test_hotspot_script_prefers_repo_venv_hotspot_config_cli: Hotspot config CLI wiring is part of the critical provisioning path.
+    test_hotspot_script_err_trap_logs_to_stderr: Hotspot failure reporting must stay observable in the compact guardrail path.
+  apps/server/tests/hygiene/test_install_offline_artifact_guardrails.py:
+    test_install_pi_requires: Pi install artifact prerequisites stay in the compact install path.
+    test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints: Offline install CLIs stay in the compact install path.
+    test_firmware_uses_vendored_neopixel_library_for_offline_builds: Offline firmware packaging stays in the compact install path.
+  apps/server/tests/hygiene/test_pi_image_static_guardrails.py:
+    test_build_wrapper_asserts_requirement: Pi-image build wrapper requirements stay in the compact image guard path.
+    test_pi_gen_pipeline_split_files_exist: Pi-image pipeline layout stays in the compact image guard path.
+    test_server_systemd_uses_console_script_entrypoint: Packaged server startup wiring stays in the compact image guard path.
+    test_pi_image_validation_checks_current_packaged_static_data_layout: Pi-image validation stays in the compact static-data guard path.
+  apps/server/tests/hygiene/test_runtime_smoke.py:
+    test_smoke_health_route_registered: The health route stays in the minimal runtime smoke path.
+  apps/server/tests/integration/test_contract_analysis_persistence_http.py:
+    __module__: The persistence-to-HTTP bridge stays in the compact contract smoke lane.
+  apps/server/tests/integration/test_contract_analysis_report.py:
+    __module__: The analysis-to-report bridge stays in the compact contract smoke lane.
+  apps/server/tests/integration/test_contract_persistence_analysis.py:
+    __module__: The persistence-to-analysis bridge stays in the compact contract smoke lane.
+long_sim:
+  apps/server/tests/integration/test_report_pipeline.py:
+    TestPdfReportValidation: The realistic 20-second PDF validation suite must stay out of fast E2E lanes.
+    TestPdfLanguageParity: The realistic 20-second EN/NL PDF parity suite must stay out of fast E2E lanes.
+  apps/server/tests/integration/test_sim_ingestion.py:
+    TestSimulatorIngestion: The live-server simulator ingestion suite must stay out of fast E2E lanes.
+e2e_file_exemptions: {}

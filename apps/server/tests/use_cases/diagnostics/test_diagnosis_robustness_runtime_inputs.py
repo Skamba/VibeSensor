@@ -190,7 +190,6 @@ class TestSensorNameNormalization:
         result.encode("utf-8")
         assert len(result.encode("utf-8")) <= 32
 
-    @pytest.mark.smoke
     def test_sanitize_name_empty_returns_empty(self) -> None:
         from vibesensor.infra.runtime.client_metadata import sanitize_client_name
 

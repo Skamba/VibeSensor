@@ -82,7 +82,6 @@ class TestCarPersistedDict:
         car = car_from_persistence_dict({"name": long})
         assert len(car.name) <= 64
 
-    @pytest.mark.smoke
     def test_roundtrip(self) -> None:
         car = car_from_persistence_dict({"id": "x", "name": "Test", "type": "suv"})
         d = car_to_persistence_dict(car)
@@ -168,7 +167,6 @@ class TestSensorConfig:
 
 
 class TestSpeedSourceConfig:
-    @pytest.mark.smoke
     def test_default(self) -> None:
         ssc = SpeedSourceConfig.default()
         assert ssc.speed_source == "gps"
@@ -300,7 +298,6 @@ class TestRunMetadata:
         assert rm.raw_sample_rate_hz is None
         assert rm.feature_interval_s is None
 
-    @pytest.mark.smoke
     def test_roundtrip(self) -> None:
         rm = RunMetadata.create(
             run_id="r4",
@@ -353,7 +350,6 @@ class TestSensorFrame:
     def _frame(self, **overrides: Any) -> SensorFrame:
         return sensor_frame_from_mapping(self._minimal_record(**overrides))
 
-    @pytest.mark.smoke
     def test_from_dict_basic(self) -> None:
         sf = self._frame()
         assert sf.run_id == "run1"

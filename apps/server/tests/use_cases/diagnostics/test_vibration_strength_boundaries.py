@@ -19,7 +19,6 @@ _NAN = float("nan")
 
 
 class TestComputeVibrationStrengthBoundaries:
-    @pytest.mark.smoke
     def test_empty_input(self) -> None:
         result = compute_vibration_strength_db(
             freq_hz=[],
@@ -76,7 +75,6 @@ class TestComputeVibrationStrengthBoundaries:
         assert math.isfinite(result["vibration_strength_db"]), f"{label}: dB not finite"
         assert "strength_bucket" in result, f"{label}: missing strength_bucket"
 
-    @pytest.mark.smoke
     def test_clear_peak(self) -> None:
         """One clear peak in the middle: should produce positive dB."""
         freq = [float(i) for i in range(20)]
