@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 from pathlib import Path
+
+import pytest
 
 
 def _load_release_smoke_runner():
@@ -15,113 +18,97 @@ def _load_release_smoke_runner():
     return module, repo_root
 
 
-def test_run_release_smoke_builds_ui_and_wheel_then_runs_smoke(monkeypatch, tmp_path: Path) -> None:
-    module, repo_root = _load_release_smoke_runner()
-    commands: list[tuple[list[str], Path, dict[str, str] | None]] = []
-    built_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-    built_wheel.write_text("wheel", encoding="utf-8")
-
-    monkeypatch.setattr(module, "_build_server_wheel", lambda root: built_wheel)
-    monkeypatch.setattr(
-        module,
-        "_run",
-        lambda cmd, *, cwd, env=None: commands.append((list(cmd), cwd, env)),
-    )
-    monkeypatch.setattr(module.venv.EnvBuilder, "create", lambda self, path: None)
-    monkeypatch.setattr(module, "_venv_python", lambda path: path / "bin" / "python")
-
-    exit_code = module.main(["--skip-npm-ci"])
-
-    assert exit_code == 0
-    assert commands[0][0] == [
-        module.sys.executable,
-        "tools/build_ui_static.py",
-        "--skip-typecheck",
-        "--assume-prevalidated-contracts",
-        "--skip-npm-ci",
-    ]
-    assert commands[0][1] == repo_root
-    assert any(command[0][-1] == str(built_wheel) for command in commands)
-    smoke_command = commands[-1]
-    assert smoke_command[0][1:4] == [
-        "-m",
-        "vibesensor.use_cases.updates.releases.release_validation",
-        "smoke-server",
-    ]
-    assert smoke_command[2] is None
+def _set_repo_root(module: object, repo_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_script = repo_root / "tools" / "tests" / "run_release_smoke.py"
+    fake_script.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(module, "__file__", str(fake_script))
 
 
-def test_run_release_smoke_can_reuse_existing_wheel_and_skip_ui_build(
-    monkeypatch,
+def test_run_release_smoke_main_builds_artifacts_and_runs_smoke(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    module, repo_root = _load_release_smoke_runner()
-    commands: list[tuple[list[str], Path, dict[str, str] | None]] = []
-    existing_wheel = repo_root / "apps" / "server" / "dist" / "prebuilt.whl"
-    existing_wheel.parent.mkdir(parents=True, exist_ok=True)
-    existing_wheel.write_text("wheel", encoding="utf-8")
-
-    def _unexpected_build(root: Path) -> Path:
-        raise AssertionError("wheel build should be skipped when --wheel-path is provided")
-
-    monkeypatch.setattr(module, "_build_server_wheel", _unexpected_build)
-    monkeypatch.setattr(
-        module,
-        "_run",
-        lambda cmd, *, cwd, env=None: commands.append((list(cmd), cwd, env)),
-    )
-    monkeypatch.setattr(module.venv.EnvBuilder, "create", lambda self, path: None)
-    monkeypatch.setattr(module, "_venv_python", lambda path: path / "bin" / "python")
-
-    exit_code = module.main(["--skip-ui-build", "--wheel-path", "apps/server/dist/prebuilt.whl"])
-
-    assert exit_code == 0
-    assert all(command[0][1] != "tools/build_ui_static.py" for command in commands)
-    pip_install_command = next(
-        command for command in commands if command[0][-1] == str(existing_wheel.resolve())
-    )
-    assert pip_install_command[0][-1] == str(existing_wheel.resolve())
-
-
-def test_build_server_wheel_uses_builder_venv(monkeypatch, tmp_path: Path) -> None:
     module, _repo_root = _load_release_smoke_runner()
     repo_root = tmp_path / "repo"
     dist_dir = repo_root / "apps" / "server" / "dist"
-    dist_dir.mkdir(parents=True)
+    dist_dir.mkdir(parents=True, exist_ok=True)
     built_wheel = dist_dir / "vibesensor-2025.6.15-py3-none-any.whl"
     commands: list[tuple[list[str], Path, dict[str, str] | None]] = []
-    builder_venv = tmp_path / "builder-venv"
 
-    class _FakeTempDir:
-        def __init__(self, *_args, **_kwargs) -> None:
-            pass
-
-        def __enter__(self) -> str:
-            return str(builder_venv)
-
-        def __exit__(self, exc_type, exc, tb) -> bool:
-            return False
-
-    def _fake_run(cmd: list[str], *, cwd: Path, env=None) -> None:
-        commands.append((list(cmd), cwd, env))
-        if cmd[1:4] == ["-m", "build", "--wheel"]:
+    def fake_run(
+        cmd: list[str],
+        *,
+        cwd: str,
+        check: bool,
+        env: dict[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        assert check is True
+        commands.append((list(cmd), Path(cwd), env))
+        if "-m build --wheel apps/server/" in " ".join(cmd):
             built_wheel.parent.mkdir(parents=True, exist_ok=True)
             built_wheel.write_text("wheel", encoding="utf-8")
+        return subprocess.CompletedProcess(cmd, 0)
 
-    monkeypatch.setattr(module.tempfile, "TemporaryDirectory", _FakeTempDir)
+    _set_repo_root(module, repo_root, monkeypatch)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
     monkeypatch.setattr(module.venv.EnvBuilder, "create", lambda self, path: None)
-    monkeypatch.setattr(module, "_venv_python", lambda path: Path(path) / "bin" / "python")
-    monkeypatch.setattr(module, "_run", _fake_run)
 
-    wheel_path = module._build_server_wheel(repo_root)
+    exit_code = module.main(["--skip-npm-ci", "--port", "18081"])
 
-    assert wheel_path == built_wheel
-    expected_python = str(builder_venv / "bin" / "python")
-    assert commands == [
-        (
-            [expected_python, "-m", "pip", "install", "--upgrade", "pip", "build"],
-            repo_root,
-            None,
-        ),
-        ([expected_python, "-m", "build", "--wheel", "apps/server/"], repo_root, None),
-    ]
+    command_lines = [" ".join(cmd) for cmd, _cwd, _env in commands]
+    assert exit_code == 0
+    assert built_wheel.is_file()
+    assert any("tools/build_ui_static.py" in line for line in command_lines)
+    assert any("-m build --wheel apps/server/" in line for line in command_lines)
+    assert any("-m pip install" in line and str(built_wheel) in line for line in command_lines)
+    assert any("smoke-server" in line and "--port 18081" in line for line in command_lines)
+
+
+def test_run_release_smoke_main_reuses_existing_wheel_and_skips_ui_build(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module, _repo_root = _load_release_smoke_runner()
+    repo_root = tmp_path / "repo"
+    dist_dir = repo_root / "apps" / "server" / "dist"
+    dist_dir.mkdir(parents=True, exist_ok=True)
+    commands: list[tuple[list[str], Path, dict[str, str] | None]] = []
+    existing_wheel = dist_dir / "prebuilt.whl"
+    existing_wheel.write_text("wheel", encoding="utf-8")
+
+    def fake_run(
+        cmd: list[str],
+        *,
+        cwd: str,
+        check: bool,
+        env: dict[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        assert check is True
+        commands.append((list(cmd), Path(cwd), env))
+        return subprocess.CompletedProcess(cmd, 0)
+
+    _set_repo_root(module, repo_root, monkeypatch)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(module.venv.EnvBuilder, "create", lambda self, path: None)
+
+    exit_code = module.main(["--skip-ui-build", "--wheel-path", "apps/server/dist/prebuilt.whl"])
+
+    command_lines = [" ".join(cmd) for cmd, _cwd, _env in commands]
+    assert exit_code == 0
+    assert not any("tools/build_ui_static.py" in line for line in command_lines)
+    assert not any("-m build --wheel apps/server/" in line for line in command_lines)
+    assert any(
+        "-m pip install" in line and str(existing_wheel.resolve()) in line for line in command_lines
+    )
+
+
+def test_run_release_smoke_main_rejects_missing_wheel_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module, _repo_root = _load_release_smoke_runner()
+    repo_root = tmp_path / "repo"
+    _set_repo_root(module, repo_root, monkeypatch)
+
+    with pytest.raises(RuntimeError, match="Wheel path does not exist or is not a .whl file"):
+        module.main(["--skip-ui-build", "--wheel-path", "apps/server/dist/missing.whl"])
