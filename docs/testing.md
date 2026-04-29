@@ -344,7 +344,7 @@ No secrets are currently required. If needed in the future, copy
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
-| `backend-tests` | ⚠️ Mostly works | This matrix job emits the `Backend tests (shard 1/5)` through `Backend tests (shard 5/5)` checks. The same 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
+| `backend-tests` | ✅ Fully supported | This matrix job emits the `Backend tests (shard 1/5)` through `Backend tests (shard 5/5)` checks. Update-module workflow tests now patch tool lookup and privilege checks through shared fakes, so missing `nmcli` or non-root host state does not create `act`-only flakes. |
 | `e2e` | ✅ Fully supported | Runs isolated server subprocess shards directly; no Docker-in-Docker dependency. |
 
 ### Relationship to `run_ci_parallel.py`

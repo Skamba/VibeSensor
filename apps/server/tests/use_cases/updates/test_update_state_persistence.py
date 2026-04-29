@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from _update_manager_test_helpers import patch_validation_environment
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
@@ -65,11 +66,6 @@ class FakeRunner(CommandRunner):
 # ---------------------------------------------------------------------------
 # Shared helpers / fixtures
 # ---------------------------------------------------------------------------
-
-
-def _mock_which(name: str) -> str | None:
-    """Fake ``shutil.which`` recognising only ``nmcli`` and ``python3``."""
-    return f"/usr/bin/{name}" if name in ("nmcli", "python3") else None
 
 
 def _running_status(
@@ -305,7 +301,7 @@ class TestNoSecretsInPersistedFile:
 
         secret_password = "SuperSecret!WiFi#Password42"
 
-        with patch("shutil.which", _mock_which):
+        with patch_validation_environment():
             mgr.start("TestNet", secret_password)
             assert mgr.job_task is not None
             with contextlib.suppress(TimeoutError, asyncio.CancelledError):
@@ -507,7 +503,7 @@ class TestPersistenceDuringLifecycle:
         runner.set_response("nmcli", 1, "", "not available")
         mgr = make_mgr()
 
-        with patch("shutil.which", _mock_which):
+        with patch_validation_environment():
             mgr.start("TestNet", "")
             loaded = store.load()
             assert loaded is not None
@@ -526,8 +522,7 @@ class TestPersistenceDuringLifecycle:
         mgr = make_mgr()
 
         with (
-            patch("shutil.which", _mock_which),
-            patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
+            patch_validation_environment(),
             patch(
                 "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
                 side_effect=AssertionError("release resolution should not run without privileges"),
