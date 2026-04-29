@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import zipfile
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from _update_manager_test_helpers import (
@@ -18,8 +19,20 @@ from _update_manager_test_helpers import (
 )
 
 from vibesensor.shared.exceptions import UpdateCleanupError
+from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
+from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
-from vibesensor.use_cases.updates.status import collect_runtime_details, update_status_to_builtins
+from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
+from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
+from vibesensor.use_cases.updates.status import (
+    UpdateStateStore,
+    UpdateTerminalStateReporter,
+    build_update_status_tracker,
+    collect_runtime_details,
+    update_status_to_builtins,
+)
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 
 
 class _StaticUsbInternetService:
@@ -41,6 +54,48 @@ def _build_fake_wheel(path, *, version: str) -> bytes:
         )
         wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
     return path.read_bytes()
+
+
+def _build_manager_with_cancellation_cleanup(
+    tmp_path,
+) -> tuple[UpdateManager, UpdateStateStore]:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    state_store = UpdateStateStore(tmp_path / "update_status.json")
+    tracker = build_update_status_tracker(state_store=state_store)
+    reporter = UpdateTerminalStateReporter(status=tracker)
+    prepared_transport = SimpleNamespace(cleanup_after_update=AsyncMock())
+    workflow = UpdateWorkflow(
+        preparation=SimpleNamespace(
+            prepare=AsyncMock(
+                return_value=PreparedUpdateRun(prepared_transport=prepared_transport),
+            )
+        ),
+        release_planner=SimpleNamespace(
+            plan=AsyncMock(side_effect=asyncio.CancelledError()),
+        ),
+        workflow_executor=SimpleNamespace(execute=AsyncMock()),
+        finalizer=UpdateWorkflowFinalizer(
+            transport_coordinator=UpdateTransportCoordinator(
+                lifecycles=MagicMock(),
+                logger=logging.getLogger("vibesensor.tests.update_cleanup"),
+            ),
+            runtime_details_refresher=UpdateRuntimeDetailsRefresher(
+                status=tracker,
+                repo=repo,
+                logger=logging.getLogger("vibesensor.tests.update_cleanup"),
+            ),
+        ),
+    )
+    manager = UpdateManager(
+        status=tracker,
+        reporter=reporter,
+        workflow=workflow,
+        startup_recovery=SimpleNamespace(recover=AsyncMock()),
+        usb_status_service=MagicMock(),
+        timeout_s=10.0,
+    )
+    return manager, state_store
 
 
 @pytest.mark.asyncio
@@ -466,26 +521,12 @@ class TestUpdateManagerAsync:
         tmp_path,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path)
+        manager, state_store = _build_manager_with_cancellation_cleanup(tmp_path)
 
         with (
             patch(
                 "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
                 side_effect=OSError("runtime unavailable"),
-            ),
-            patch.object(
-                type(manager._workflow.preparation),
-                "prepare",
-                new=AsyncMock(
-                    return_value=SimpleNamespace(
-                        prepared_transport=AsyncMock(),
-                    )
-                ),
-            ),
-            patch.object(
-                type(manager._workflow.release_planner),
-                "plan",
-                new=AsyncMock(side_effect=asyncio.CancelledError()),
             ),
             caplog.at_level("ERROR"),
         ):
@@ -499,6 +540,9 @@ class TestUpdateManagerAsync:
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
+        persisted = state_store.load()
+        assert persisted is not None
+        assert persisted.state == UpdateState.failed
         assert any(
             issue.message == "Cleanup failed after cancellation: Runtime details refresh failed"
             and issue.detail == ""
@@ -515,26 +559,12 @@ class TestUpdateManagerAsync:
         self,
         tmp_path,
     ) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path)
+        manager, state_store = _build_manager_with_cancellation_cleanup(tmp_path)
 
         with (
             patch(
                 "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
                 side_effect=TypeError("runtime bug"),
-            ),
-            patch.object(
-                type(manager._workflow.preparation),
-                "prepare",
-                new=AsyncMock(
-                    return_value=SimpleNamespace(
-                        prepared_transport=AsyncMock(),
-                    )
-                ),
-            ),
-            patch.object(
-                type(manager._workflow.release_planner),
-                "plan",
-                new=AsyncMock(side_effect=asyncio.CancelledError()),
             ),
         ):
             manager.start("TestNet", "pass123")
@@ -544,6 +574,9 @@ class TestUpdateManagerAsync:
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
+        persisted = state_store.load()
+        assert persisted is not None
+        assert persisted.state == UpdateState.failed
 
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         with patch_release_fetcher(current_version="2025.6.14") as fetcher:
