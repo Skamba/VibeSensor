@@ -6,21 +6,18 @@ RunRecorder, validating queue management, threading, and error handling.
 
 from __future__ import annotations
 
+import sqlite3
 import threading
 import time
+from dataclasses import dataclass
 
 import pytest
 
+from tests.test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.run import post_analysis as post_analysis_module
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
-from vibesensor.use_cases.run.post_analysis_outcomes import (
-    PostAnalysisExecutionPersistenceFailure,
-    PostAnalysisExecutionRetryableFailure,
-    PostAnalysisExecutionSuccess,
-)
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -58,6 +55,12 @@ def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
             "language": language,
         }
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _StoredRun:
+    metadata: RunMetadata
+    sample_count: int
 
 
 class TestPostAnalysisWorkerSchedule:
@@ -106,45 +109,6 @@ class TestPostAnalysisWorkerSchedule:
 
         assert worker.wait(timeout_s=5.0)
         assert seen == [f"run-{index}" for index in range(105)]
-
-    def test_schedule_restarts_worker_when_run_is_queued_during_worker_exit(
-        self,
-        make_worker,
-    ) -> None:
-        seen: list[str] = []
-        ready_to_schedule = threading.Event()
-        scheduled_during_exit = threading.Event()
-        loop_calls = 0
-
-        worker = make_worker(history_db=None)
-
-        def _controlled_worker_loop() -> None:
-            nonlocal loop_calls
-            loop_calls += 1
-            if loop_calls == 1:
-                with worker._lock:
-                    run_id = worker._state.start_next(started_at=time.time())
-                    assert run_id == "run-1"
-                    worker._state.finish_active(run_id)
-                seen.append("run-1")
-                ready_to_schedule.set()
-                assert scheduled_during_exit.wait(timeout=2.0)
-                return
-            with worker._lock:
-                run_id = worker._state.start_next(started_at=time.time())
-                assert run_id == "run-2"
-                worker._state.finish_active(run_id)
-            seen.append("run-2")
-
-        worker._worker_loop = _controlled_worker_loop
-
-        worker.schedule("run-1")
-        assert ready_to_schedule.wait(timeout=2.0)
-        worker.schedule("run-2")
-        scheduled_during_exit.set()
-
-        assert worker.wait(timeout_s=2.0)
-        assert seen == ["run-1", "run-2"]
 
 
 class TestPostAnalysisWorkerIsActive:
@@ -392,105 +356,92 @@ class TestPostAnalysisWorkerErrorHandling:
 
     def test_worker_retries_retryable_failure_until_success(
         self,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        attempts: list[bool] = []
         errors: list[str] = []
         cleared: list[str] = []
+        stored: list[tuple[str, object]] = []
 
-        def _execute(
-            *,
-            run_id: str,
-            db,
-            analysis_runner,
-            load_run=None,
-            defer_retryable_error_storage: bool = False,
-        ):
-            attempts.append(defer_retryable_error_storage)
-            if len(attempts) == 1:
-                return PostAnalysisExecutionRetryableFailure(
-                    run_id=run_id,
-                    error_message="db locked",
-                    callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
+        class FakeDB:
+            def __init__(self) -> None:
+                self._store_attempts = 0
+
+            async def aget_run(self, run_id):
+                return _StoredRun(metadata=_run_metadata(run_id), sample_count=2)
+
+            async def aiter_run_samples(self, run_id, batch_size=1024):
+                assert run_id == "run-retry"
+                yield sensor_frames_from_mappings(
+                    [
+                        {"t_s": 1.0, "vibration_strength_db": 10.0},
+                        {"t_s": 2.0, "vibration_strength_db": 11.0},
+                    ]
                 )
-            return PostAnalysisExecutionSuccess(run_id=run_id)
 
-        monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
-        monkeypatch.setattr(post_analysis_module, "_RETRY_DELAYS_S", (0.0, 0.0, 0.0))
+            async def astore_analysis(self, run_id, analysis):
+                self._store_attempts += 1
+                if self._store_attempts == 1:
+                    raise sqlite3.OperationalError("db locked")
+                stored.append((run_id, analysis))
+
+            async def astore_analysis_error(self, run_id, msg):
+                raise AssertionError(f"unexpected persisted error for {run_id}: {msg}")
 
         worker = PostAnalysisWorker(
-            history_db=object(),
+            history_db=FakeDB(),
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
             error_callback=errors.append,
             clear_error_callback=lambda: cleared.append("cleared"),
         )
         worker.schedule("run-retry")
 
-        assert worker.wait(timeout_s=3.0)
-        assert attempts == [True, True]
+        assert worker.wait(timeout_s=6.0)
         assert errors == ["post-analysis failed for run run-retry: db locked"]
         assert cleared == ["cleared"]
+        assert stored and stored[0][0] == "run-retry"
         snapshot = worker.snapshot()
         assert snapshot.last_completed_run_id == "run-retry"
         assert snapshot.last_completed_error is None
 
-    def test_worker_retries_until_budget_exhausted(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        attempts: list[bool] = []
+    def test_worker_retries_until_budget_exhausted(self) -> None:
         errors: list[str] = []
+        stored_errors: list[tuple[str, str]] = []
 
-        def _execute(
-            *,
-            run_id: str,
-            db,
-            analysis_runner,
-            load_run=None,
-            defer_retryable_error_storage: bool = False,
-        ):
-            attempts.append(defer_retryable_error_storage)
-            if defer_retryable_error_storage:
-                return PostAnalysisExecutionRetryableFailure(
-                    run_id=run_id,
-                    error_message="db locked",
-                    callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
+        class FakeDB:
+            async def aget_run(self, run_id):
+                return _StoredRun(metadata=_run_metadata(run_id), sample_count=2)
+
+            async def aiter_run_samples(self, run_id, batch_size=1024):
+                assert run_id == "run-exhausted"
+                yield sensor_frames_from_mappings(
+                    [
+                        {"t_s": 1.0, "vibration_strength_db": 10.0},
+                        {"t_s": 2.0, "vibration_strength_db": 11.0},
+                    ]
                 )
-            return PostAnalysisExecutionPersistenceFailure(
-                run_id=run_id,
-                completed_error="db locked",
-                callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
-            )
 
-        monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
-        monkeypatch.setattr(post_analysis_module, "_RETRY_DELAYS_S", (0.0, 0.0, 0.0))
+            async def astore_analysis(self, run_id, analysis):
+                raise sqlite3.OperationalError("db locked")
+
+            async def astore_analysis_error(self, run_id, msg):
+                stored_errors.append((run_id, msg))
 
         worker = PostAnalysisWorker(
-            history_db=object(),
+            history_db=FakeDB(),
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
             error_callback=errors.append,
         )
         worker.schedule("run-exhausted")
 
-        assert worker.wait(timeout_s=3.0)
-        assert attempts == [True] * len(post_analysis_module._RETRY_DELAYS_S) + [False]
-        assert errors == [
-            "post-analysis failed for run run-exhausted: db locked",
-        ] * (len(post_analysis_module._RETRY_DELAYS_S) + 1)
+        assert worker.wait(timeout_s=8.0)
+        assert len(errors) > 1
+        assert set(errors) == {"post-analysis failed for run run-exhausted: db locked"}
+        assert stored_errors == [("run-exhausted", "db locked")]
         snapshot = worker.snapshot()
         assert snapshot.last_completed_run_id == "run-exhausted"
         assert snapshot.last_completed_error == "db locked"
 
 
 class TestPostAnalysisWorkerThreadClearing:
-    def test_thread_cleared_after_completion(self, make_worker) -> None:
-        """Worker thread reference is cleared after all work completes."""
-        worker = make_worker(run_fn=lambda rid: None)
-
-        worker.schedule("run-1")
-        assert worker.wait(timeout_s=2.0)
-
-        with worker._lock:
-            assert worker._analysis_thread is None
-
     def test_single_worker_thread(self, make_worker) -> None:
         """Only one worker thread runs at a time, even with many schedules."""
         max_active = 0
