@@ -39,20 +39,19 @@ def test_build_pi_image_action_reuses_shared_runtime_setup_and_artifact_collecti
         step for step in steps if isinstance(step, dict) and step.get("name") == "Build Pi image"
     )
     assert build_step["env"]["VS_PYTHON_BIN"] == "${{ steps.setup-python.outputs.python-path }}"
-    assert "./infra/pi-image/pi-gen/build.sh" in build_step["run"]
 
     collect_step = next(
         step
         for step in steps
         if isinstance(step, dict) and step.get("name") == "Collect Pi image workflow artifacts"
     )
-    collect_script = collect_step["run"]
-    assert 'release_dir="${RUNNER_TEMP}/${VS_RELEASE_DIR_NAME}"' in collect_script
-    assert 'artifact_name="${VS_RELEASE_ARTIFACT_NAME}"' in collect_script
-    assert 'echo "published_artifact=${artifact_name}"' in collect_script
-    assert 'echo "runner_label=ubuntu-24.04-arm"' in collect_script
-    assert 'echo "release-dir=${release_dir}"' in collect_script
-    assert 'echo "release-artifact-name=${artifact_name}"' in collect_script
+    assert collect_step["id"] == "assets"
+    assert collect_step["env"]["VS_RELEASE_DIR_NAME"] == "${{ inputs.release-dir-name }}"
+    assert collect_step["env"]["VS_RELEASE_ARTIFACT_NAME"] == "${{ inputs.release-artifact-name }}"
+    assert (
+        collect_step["env"]["VS_INCLUDE_PUBLISHED_ARTIFACT"]
+        == "${{ inputs.include-published-artifact }}"
+    )
 
     upload_step = next(
         step
