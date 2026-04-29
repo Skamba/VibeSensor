@@ -39,6 +39,23 @@ def test_order_trace_point_round_trips_json_shape() -> None:
     assert OrderTracePoint.from_mapping(point.to_json_object()) == point
 
 
+def test_order_trace_point_rejects_unsupported_order_family() -> None:
+    payload = OrderTracePoint(
+        hypothesis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        order_family="wheel",
+        harmonic=1,
+        order_label="1x wheel",
+        window_index=42,
+        eligible=True,
+        matched=True,
+    ).to_json_object()
+    payload["order_family"] = "axle"
+
+    with pytest.raises(ValueError, match="Unsupported order_family"):
+        OrderTracePoint.from_mapping(payload)
+
+
 def test_order_trace_summary_round_trips_nested_compact_contracts() -> None:
     summary = OrderTraceSummary(
         hypothesis_key="engine_2x",

@@ -125,6 +125,21 @@ def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
     assert [summary.location for summary in restored.location_summaries] == ["Front Left"]
 
 
+def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
+    payload = SpatialEvidenceSummary(
+        candidate_key="wheel",
+        suspected_source="wheel/tire",
+        proof_basis="supporting_windows_raw_backed",
+        total_window_count=128,
+        supporting_window_count=42,
+        supporting_sensor_count=4,
+    ).to_json_object()
+    payload["proof_basis"] = "sensor_vote"
+
+    with pytest.raises(ValueError, match="supported location proof basis"):
+        SpatialEvidenceSummary.from_mapping(payload)
+
+
 def test_history_spatial_response_contracts_expose_named_summary_fields() -> None:
     assert set(SpatialLocationSummaryResponse.__annotations__) == {
         "location",
