@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from unittest.mock import MagicMock
 
 from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
@@ -122,6 +122,10 @@ def build_connected_obd_runtime_parts(
         obd_device_mac="00043e5a4a4d",
         obd_device_name="OBDLink MX+",
     )
-    _, device = parts.executor._connect_blocking("00043e5a4a4d", "OBDLink MX+")
-    parts.connection_control.mark_connected(device)
+    configured_device = replace(
+        parts.admin_client.device_info.return_value,
+        name=parts.admin_client.device_info.return_value.name or "OBDLink MX+",
+        connected=True,
+    )
+    parts.connection_control.mark_connected(configured_device)
     return parts
