@@ -228,12 +228,17 @@ _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT = 10
 _OVERSIZED_TEST_UI_SUFFIXES = {".ts", ".tsx", ".js", ".jsx"}
 _OVERSIZED_TEST_IGNORED_PARTS = {"snapshots", "test-results"}
 _TEST_INVENTORY_ALLOWLIST_PATH = ROOT / "tools" / "dev" / "test_inventory_allowlist.yml"
+_TEST_MARKER_POLICY_ALLOWLIST_PATH = (
+    ROOT / "tools" / "dev" / "test_marker_policy_allowlist.yml"
+)
 _UI_ROOT = ROOT / "apps" / "ui"
 _UI_TESTS_DIR = _UI_ROOT / "tests"
 _UI_VITEST_CONFIG = _UI_ROOT / "vitest.config.ts"
 _UI_PLAYWRIGHT_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.config.ts"
 _UI_PLAYWRIGHT_MOCK_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.msw.config.ts"
 _UI_PLAYWRIGHT_VISUAL_CONFIG = _UI_ROOT / "playwright.config.ts"
+_MARKER_POLICY_NODE_MODULE = "__module__"
+_MARKER_POLICY_MARKERS = ("smoke", "e2e", "long_sim", "benchmark")
 _IMPORT_FROM_RE = re.compile(r"""\bfrom\s+["']([^"']+)["']""")
 _SIDE_EFFECT_IMPORT_RE = re.compile(r"""\bimport\s+["']([^"']+)["']""")
 _EMPTY_INNERHTML_ASSIGNMENT_RE = re.compile(
@@ -785,6 +790,363 @@ def check_test_inventory_ownership() -> list[str]:
                 f"but is already owned by {list(runner_owners)}; remove the stale allowlist entry."
             )
 
+    return errors
+
+
+def _is_pytest_mark(expr: ast.expr, marker: str) -> bool:
+    if isinstance(expr, ast.Call):
+        return _is_pytest_mark(expr.func, marker)
+    if not isinstance(expr, ast.Attribute) or expr.attr != marker:
+        return False
+    base = expr.value
+    return (
+        isinstance(base, ast.Attribute)
+        and base.attr == "mark"
+        and isinstance(base.value, ast.Name)
+        and base.value.id == "pytest"
+    )
+
+
+def _pytestmark_values(statements: Sequence[ast.stmt]) -> list[ast.expr]:
+    values: list[ast.expr] = []
+    for stmt in statements:
+        if not isinstance(stmt, ast.Assign):
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "pytestmark"
+            for target in stmt.targets
+        ):
+            continue
+        raw_value = stmt.value
+        if isinstance(raw_value, (ast.List, ast.Tuple)):
+            values.extend(raw_value.elts)
+        else:
+            values.append(raw_value)
+    return values
+
+
+def _marker_policy_test_files() -> list[Path]:
+    files: list[Path] = []
+    for path in _git_tracked_files():
+        rel_path = path.relative_to(ROOT).as_posix()
+        if path.suffix != ".py":
+            continue
+        if rel_path.startswith("apps/server/tests/") or rel_path.startswith(
+            "apps/server/tests_e2e/"
+        ):
+            files.append(path)
+    return sorted(files)
+
+
+def _collect_test_marker_usage() -> tuple[dict[str, dict[str, set[str]]], list[str]]:
+    errors: list[str] = []
+    usage: dict[str, dict[str, set[str]]] = {}
+
+    for path in _marker_policy_test_files():
+        rel_path = path.relative_to(ROOT).as_posix()
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError) as exc:
+            errors.append(
+                f"{rel_path} could not be parsed for marker policy checks: {exc}"
+            )
+            continue
+
+        file_usage = {marker: set() for marker in _MARKER_POLICY_MARKERS}
+
+        for expr in _pytestmark_values(tree.body):
+            for marker in _MARKER_POLICY_MARKERS:
+                if _is_pytest_mark(expr, marker):
+                    file_usage[marker].add(_MARKER_POLICY_NODE_MODULE)
+
+        for stmt in tree.body:
+            if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                for marker in _MARKER_POLICY_MARKERS:
+                    if any(_is_pytest_mark(dec, marker) for dec in stmt.decorator_list):
+                        file_usage[marker].add(stmt.name)
+                continue
+
+            if not isinstance(stmt, ast.ClassDef):
+                continue
+
+            for marker in _MARKER_POLICY_MARKERS:
+                if any(_is_pytest_mark(dec, marker) for dec in stmt.decorator_list):
+                    file_usage[marker].add(stmt.name)
+
+            for expr in _pytestmark_values(stmt.body):
+                for marker in _MARKER_POLICY_MARKERS:
+                    if _is_pytest_mark(expr, marker):
+                        file_usage[marker].add(stmt.name)
+
+            for child in stmt.body:
+                if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                node_id = f"{stmt.name}::{child.name}"
+                for marker in _MARKER_POLICY_MARKERS:
+                    if any(
+                        _is_pytest_mark(dec, marker) for dec in child.decorator_list
+                    ):
+                        file_usage[marker].add(node_id)
+
+        usage[rel_path] = {
+            marker: nodes for marker, nodes in file_usage.items() if nodes
+        }
+
+    return usage, errors
+
+
+def _load_marker_node_allowlist_section(
+    loaded: Mapping[str, object],
+    key: str,
+) -> tuple[dict[tuple[str, str], str], list[str]]:
+    errors: list[str] = []
+    section = loaded.get(key)
+    allowlist: dict[tuple[str, str], str] = {}
+    if not isinstance(section, Mapping):
+        return allowlist, [
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} must define {key} as a mapping of file path -> node id -> reason."
+        ]
+
+    for raw_path, raw_nodes in section.items():
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            errors.append(
+                f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} contains a non-string {key} file path."
+            )
+            continue
+        rel_path = raw_path.strip()
+        if not isinstance(raw_nodes, Mapping):
+            errors.append(
+                f"{rel_path} in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)}::{key} must map node ids to reasons."
+            )
+            continue
+        for raw_node, raw_reason in raw_nodes.items():
+            if not isinstance(raw_node, str) or not raw_node.strip():
+                errors.append(
+                    f"{rel_path} in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)}::{key} contains a non-string node id."
+                )
+                continue
+            if not isinstance(raw_reason, str) or not raw_reason.strip():
+                errors.append(
+                    f"{rel_path}::{raw_node} in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)}::{key} must include a non-empty reason."
+                )
+                continue
+            allowlist[(rel_path, raw_node.strip())] = raw_reason.strip()
+    return allowlist, errors
+
+
+def _load_marker_file_allowlist_section(
+    loaded: Mapping[str, object],
+    key: str,
+) -> tuple[dict[str, str], list[str]]:
+    errors: list[str] = []
+    section = loaded.get(key)
+    allowlist: dict[str, str] = {}
+    if not isinstance(section, Mapping):
+        return allowlist, [
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} must define {key} as a mapping of file path -> reason."
+        ]
+
+    for raw_path, raw_reason in section.items():
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            errors.append(
+                f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} contains a non-string {key} file path."
+            )
+            continue
+        if not isinstance(raw_reason, str) or not raw_reason.strip():
+            errors.append(
+                f"{raw_path} in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)}::{key} must include a non-empty reason."
+            )
+            continue
+        allowlist[raw_path.strip()] = raw_reason.strip()
+    return allowlist, errors
+
+
+def _load_test_marker_policy_allowlist() -> tuple[
+    dict[tuple[str, str], str],
+    dict[tuple[str, str], str],
+    dict[str, str],
+    list[str],
+]:
+    errors: list[str] = []
+    if not _TEST_MARKER_POLICY_ALLOWLIST_PATH.exists():
+        return (
+            {},
+            {},
+            {},
+            [
+                f"Missing test-marker policy allowlist at {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)}."
+            ],
+        )
+
+    loaded = yaml.safe_load(
+        _TEST_MARKER_POLICY_ALLOWLIST_PATH.read_text(encoding="utf-8")
+    )
+    if not isinstance(loaded, Mapping):
+        return (
+            {},
+            {},
+            {},
+            [
+                f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} must load as a mapping."
+            ],
+        )
+
+    smoke_allowlist, smoke_errors = _load_marker_node_allowlist_section(loaded, "smoke")
+    long_sim_allowlist, long_sim_errors = _load_marker_node_allowlist_section(
+        loaded, "long_sim"
+    )
+    e2e_file_exemptions, e2e_errors = _load_marker_file_allowlist_section(
+        loaded, "e2e_file_exemptions"
+    )
+    errors.extend(smoke_errors)
+    errors.extend(long_sim_errors)
+    errors.extend(e2e_errors)
+    return smoke_allowlist, long_sim_allowlist, e2e_file_exemptions, errors
+
+
+def _marker_usage_nodes(
+    marker_usage: Mapping[str, Mapping[str, set[str]]],
+    marker: str,
+) -> set[tuple[str, str]]:
+    nodes: set[tuple[str, str]] = set()
+    for rel_path, file_usage in marker_usage.items():
+        for node_id in file_usage.get(marker, set()):
+            nodes.add((rel_path, node_id))
+    return nodes
+
+
+def _marker_node_label(rel_path: str, node_id: str) -> str:
+    if node_id == _MARKER_POLICY_NODE_MODULE:
+        return f"{rel_path} [module]"
+    return f"{rel_path}::{node_id}"
+
+
+def marker_policy_errors(
+    marker_usage: Mapping[str, Mapping[str, set[str]]],
+    *,
+    tracked_e2e_files: Sequence[str],
+    tracked_benchmark_files: Sequence[str],
+    smoke_allowlist: Mapping[tuple[str, str], str],
+    long_sim_allowlist: Mapping[tuple[str, str], str],
+    e2e_file_exemptions: Mapping[str, str],
+) -> list[str]:
+    errors: list[str] = []
+
+    actual_smoke = _marker_usage_nodes(marker_usage, "smoke")
+    expected_smoke = set(smoke_allowlist)
+    for rel_path, node_id in sorted(expected_smoke - actual_smoke):
+        errors.append(
+            f"{_marker_node_label(rel_path, node_id)} is listed in "
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} under smoke "
+            "but is not marked smoke; restore pytest.mark.smoke or remove the stale allowlist entry."
+        )
+    for rel_path, node_id in sorted(actual_smoke - expected_smoke):
+        errors.append(
+            f"{_marker_node_label(rel_path, node_id)} is marked smoke but is not listed in "
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} under smoke; "
+            "remove pytest.mark.smoke or document why it belongs in the compact critical path."
+        )
+
+    actual_long_sim = _marker_usage_nodes(marker_usage, "long_sim")
+    expected_long_sim = set(long_sim_allowlist)
+    for rel_path, node_id in sorted(expected_long_sim - actual_long_sim):
+        errors.append(
+            f"{_marker_node_label(rel_path, node_id)} is listed in "
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} under long_sim "
+            "but is not marked long_sim; restore pytest.mark.long_sim or remove the stale allowlist entry."
+        )
+    for rel_path, node_id in sorted(actual_long_sim - expected_long_sim):
+        errors.append(
+            f"{_marker_node_label(rel_path, node_id)} is marked long_sim but is not listed in "
+            f"{_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} under long_sim; "
+            "remove pytest.mark.long_sim or document why it must stay out of fast E2E lanes."
+        )
+
+    e2e_nodes = _marker_usage_nodes(marker_usage, "e2e")
+    tracked_e2e_file_set = set(tracked_e2e_files)
+    for rel_path, _reason in sorted(e2e_file_exemptions.items()):
+        if rel_path not in tracked_e2e_file_set:
+            errors.append(
+                f"{rel_path} is listed in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} "
+                "under e2e_file_exemptions but is not a tracked apps/server/tests_e2e test file."
+            )
+
+    for rel_path in sorted(tracked_e2e_file_set):
+        has_module_e2e = (rel_path, _MARKER_POLICY_NODE_MODULE) in e2e_nodes
+        if rel_path in e2e_file_exemptions:
+            if has_module_e2e:
+                errors.append(
+                    f"{rel_path} is exempted in {_TEST_MARKER_POLICY_ALLOWLIST_PATH.relative_to(ROOT)} "
+                    "under e2e_file_exemptions but already has module-level pytest.mark.e2e; remove the stale exemption."
+                )
+            continue
+        if not has_module_e2e:
+            errors.append(
+                f"{rel_path} lives under apps/server/tests_e2e/ but is missing module-level pytest.mark.e2e; "
+                "add pytestmark = pytest.mark.e2e or document a file exemption."
+            )
+
+    for rel_path, node_id in sorted(e2e_nodes):
+        if rel_path.startswith("apps/server/tests_e2e/"):
+            continue
+        if (rel_path, node_id) not in actual_long_sim:
+            errors.append(
+                f"{_marker_node_label(rel_path, node_id)} is marked e2e outside apps/server/tests_e2e/ "
+                "but is not marked long_sim; add pytest.mark.long_sim so fast E2E lanes keep excluding it."
+            )
+
+    benchmark_nodes = _marker_usage_nodes(marker_usage, "benchmark")
+    tracked_benchmark_file_set = set(tracked_benchmark_files)
+    for rel_path in sorted(tracked_benchmark_file_set):
+        if not marker_usage.get(rel_path, {}).get("benchmark", set()):
+            errors.append(
+                f"{rel_path} matches apps/server/tests/**/benchmark_*.py but has no pytest.mark.benchmark tests; "
+                "add the benchmark marker or rename/move the file."
+            )
+    for rel_path, node_id in sorted(benchmark_nodes):
+        if rel_path in tracked_benchmark_file_set:
+            continue
+        errors.append(
+            f"{_marker_node_label(rel_path, node_id)} is marked benchmark but does not live in "
+            "apps/server/tests/**/benchmark_*.py; move it into an explicit benchmark file or remove pytest.mark.benchmark."
+        )
+
+    return errors
+
+
+def check_test_marker_policy() -> list[str]:
+    smoke_allowlist, long_sim_allowlist, e2e_file_exemptions, allowlist_errors = (
+        _load_test_marker_policy_allowlist()
+    )
+    marker_usage, parse_errors = _collect_test_marker_usage()
+    errors = list(allowlist_errors)
+    errors.extend(parse_errors)
+    if parse_errors:
+        return errors
+
+    tracked_e2e_files = sorted(
+        rel_path
+        for rel_path in marker_usage
+        if rel_path.startswith("apps/server/tests_e2e/")
+        and Path(rel_path).name.startswith("test_")
+    )
+    tracked_benchmark_files = sorted(
+        rel_path
+        for rel_path in marker_usage
+        if rel_path.startswith("apps/server/tests/")
+        and Path(rel_path).name.startswith("benchmark_")
+    )
+
+    errors.extend(
+        marker_policy_errors(
+            marker_usage,
+            tracked_e2e_files=tracked_e2e_files,
+            tracked_benchmark_files=tracked_benchmark_files,
+            smoke_allowlist=smoke_allowlist,
+            long_sim_allowlist=long_sim_allowlist,
+            e2e_file_exemptions=e2e_file_exemptions,
+        )
+    )
     return errors
 
 
@@ -2918,6 +3280,11 @@ _LIST_CHECK_SPECS = (
         runner=check_test_inventory_ownership,
         failure_heading="Test inventory ownership drift detected:",
         success_message="Committed test-looking files all map to a runner or documented benchmark exception.",
+    ),
+    ListCheckSpec(
+        runner=check_test_marker_policy,
+        failure_heading="Test marker policy drift detected:",
+        success_message="Pytest marker policy checks passed.",
     ),
 )
 

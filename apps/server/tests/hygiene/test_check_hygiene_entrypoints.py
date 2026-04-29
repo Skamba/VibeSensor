@@ -34,6 +34,7 @@ _CHECK_ENTRYPOINTS = (
     ),
     pytest.param("check_frontend_raw_html_boundaries", id="frontend-raw-html-boundaries"),
     pytest.param("check_test_inventory_ownership", id="test-inventory-ownership"),
+    pytest.param("check_test_marker_policy", id="test-marker-policy"),
     pytest.param("check_runtime_policy_drift", id="runtime-policy-drift"),
 )
 
