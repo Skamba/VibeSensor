@@ -1,0 +1,4 @@
+**/.cache/
+apps/server/build/
+apps/server/dist/
+apps/server/vibesensor.egg-info/

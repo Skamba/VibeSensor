@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -40,6 +40,9 @@ setup: ## Install backend dev dependencies and UI node_modules
 
 dev: ## Start the source-mounted Docker dev stack with backend reload + Vite HMR
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+clean: ## Remove local build, package, and Pi image cache artifacts
+	rm -rf $(SERVER_DIR)/build $(SERVER_DIR)/dist $(SERVER_DIR)/vibesensor.egg-info infra/pi-image/pi-gen/.cache
 
 format: ## Run Ruff formatter over backend and tooling files
 	@$(RESOLVE_PYTHON) \
