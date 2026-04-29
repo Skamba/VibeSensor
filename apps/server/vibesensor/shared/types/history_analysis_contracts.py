@@ -47,6 +47,10 @@ __all__ = [
     "DataQualityRequiredMissingPctResponse",
     "DataQualityResponse",
     "DataQualitySpeedCoverageResponse",
+    "DIAGNOSIS_EXEMPLAR_KIND_VALUES",
+    "DIAGNOSIS_FACTOR_KEY_VALUES",
+    "DIAGNOSIS_FACTOR_POLARITY_VALUES",
+    "DIAGNOSIS_FACTOR_SEVERITY_VALUES",
     "DiagnosisFactorDetailsResponse",
     "DiagnosisFactorKey",
     "DiagnosisFactorPolarity",
@@ -55,8 +59,10 @@ __all__ = [
     "FindingPayload",
     "DiagnosisExemplarKind",
     "DiagnosisExemplarReferenceResponse",
+    "LOCATION_PROOF_BASIS_VALUES",
     "LocationIntensitySummaryResponse",
     "LocationProofBasis",
+    "WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES",
     "WholeRunDiagnosisDataBasis",
     "WholeRunDiagnosisSummaryResponse",
     "OutlierSummaryResponse",
@@ -123,6 +129,55 @@ type LocationProofBasis = Literal[
     "supporting_windows_raw_backed",
     "supporting_windows_summary_only",
 ]
+
+DIAGNOSIS_EXEMPLAR_KIND_VALUES: frozenset[DiagnosisExemplarKind] = frozenset(
+    {"order_support_interval", "whole_run_context_interval", "spatial_location"}
+)
+DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
+    {
+        "raw_backed",
+        "repeated_support",
+        "sustained_support",
+        "stable_frequency",
+        "tight_order_lock",
+        "localized_support",
+        "clean_signal",
+        "user_confirmed_vehicle_data",
+        "summary_only",
+        "raw_replay_incomplete",
+        "legacy_context",
+        "speed_context_gaps",
+        "rpm_context_gaps",
+        "sparse_support",
+        "brief_support",
+        "drifting_frequency",
+        "loose_order_lock",
+        "mixed_support_locations",
+        "noisy_signal",
+        "weak_spatial",
+        "close_alternative",
+        "incomplete_reference",
+        "secondary_vehicle_data",
+        "approximate_vehicle_data",
+        "unverified_vehicle_data",
+    }
+)
+DIAGNOSIS_FACTOR_POLARITY_VALUES: frozenset[DiagnosisFactorPolarity] = frozenset(
+    {"support", "counterevidence"}
+)
+DIAGNOSIS_FACTOR_SEVERITY_VALUES: frozenset[DiagnosisFactorSeverity] = frozenset(
+    {"low", "medium", "high"}
+)
+WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES: frozenset[WholeRunDiagnosisDataBasis] = frozenset(
+    {"raw_backed", "partial_raw_backed", "summary_only"}
+)
+LOCATION_PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
+    {
+        "whole_run_summary",
+        "supporting_windows_raw_backed",
+        "supporting_windows_summary_only",
+    }
+)
 
 
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")

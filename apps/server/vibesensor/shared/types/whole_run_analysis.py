@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isclose
-from typing import Literal
+from typing import Literal, cast
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -31,6 +31,10 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 __all__ = [
     "WHOLE_RUN_ARTIFACT_SCHEMA_VERSION",
     "WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME",
+    "WHOLE_RUN_CONTEXT_COVERAGE_VALUES",
+    "WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES",
+    "WHOLE_RUN_RPM_VALIDITY_VALUES",
+    "WHOLE_RUN_SPEED_VALIDITY_VALUES",
     "WholeRunArtifactFile",
     "WholeRunArtifactManifest",
     "WholeRunContextCoverage",
@@ -51,6 +55,19 @@ type WholeRunContextCoverage = Literal["full", "partial", "missing"]
 type WholeRunSpeedValidity = Literal["measured", "assumed", "missing"]
 type WholeRunRpmValidity = Literal["measured", "estimated", "missing"]
 type WholeRunContextLoadState = Literal["idle", "steady", "transient", "unknown"]
+
+WHOLE_RUN_CONTEXT_COVERAGE_VALUES: frozenset[WholeRunContextCoverage] = frozenset(
+    {"full", "partial", "missing"}
+)
+WHOLE_RUN_SPEED_VALIDITY_VALUES: frozenset[WholeRunSpeedValidity] = frozenset(
+    {"measured", "assumed", "missing"}
+)
+WHOLE_RUN_RPM_VALIDITY_VALUES: frozenset[WholeRunRpmValidity] = frozenset(
+    {"measured", "estimated", "missing"}
+)
+WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES: frozenset[WholeRunContextLoadState] = frozenset(
+    {"idle", "steady", "transient", "unknown"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -454,37 +471,27 @@ def _bool_from_json(value: JsonValue | object) -> bool:
 
 def _context_coverage_from_json(value: JsonValue | object) -> WholeRunContextCoverage:
     raw = _str_or_none(value)
-    if raw == "full":
-        return "full"
-    if raw == "partial":
-        return "partial"
+    if raw in WHOLE_RUN_CONTEXT_COVERAGE_VALUES:
+        return cast(WholeRunContextCoverage, raw)
     return "missing"
 
 
 def _speed_validity_from_json(value: JsonValue | object) -> WholeRunSpeedValidity:
     raw = _str_or_none(value)
-    if raw == "measured":
-        return "measured"
-    if raw == "assumed":
-        return "assumed"
+    if raw in WHOLE_RUN_SPEED_VALIDITY_VALUES:
+        return cast(WholeRunSpeedValidity, raw)
     return "missing"
 
 
 def _rpm_validity_from_json(value: JsonValue | object) -> WholeRunRpmValidity:
     raw = _str_or_none(value)
-    if raw == "measured":
-        return "measured"
-    if raw == "estimated":
-        return "estimated"
+    if raw in WHOLE_RUN_RPM_VALIDITY_VALUES:
+        return cast(WholeRunRpmValidity, raw)
     return "missing"
 
 
 def _load_state_from_json(value: JsonValue | object) -> WholeRunContextLoadState:
     raw = _str_or_none(value)
-    if raw == "idle":
-        return "idle"
-    if raw == "steady":
-        return "steady"
-    if raw == "transient":
-        return "transient"
+    if raw in WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES:
+        return cast(WholeRunContextLoadState, raw)
     return "unknown"
