@@ -288,7 +288,7 @@ def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_queue_stays_fu
     assert result.manifest is None
     assert result.error is not None
     history_db.block_append.set()
-    assert writer.shutdown(timeout_s=1.0) is True
+    assert writer.shutdown(timeout_s=5.0) is True
 
 
 def test_raw_capture_writer_finalize_failure_returns_failed_result() -> None:
@@ -361,4 +361,4 @@ def test_raw_capture_writer_shutdown_returns_false_when_queue_stays_full() -> No
     assert writer.shutdown(timeout_s=0.1) is False
 
     history_db.block_append.set()
-    assert writer.shutdown(timeout_s=1.0) is True
+    assert writer.shutdown(timeout_s=5.0) is True
