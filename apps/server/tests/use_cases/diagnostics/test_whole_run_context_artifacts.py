@@ -48,6 +48,23 @@ def test_build_whole_run_context_artifact_bundle_round_trips_labels_and_interval
     assert artifact is not None
     assert artifact.relative_path == "context/window-labels.jsonl"
     assert artifact.record_count == 4
+    assert bundle.manifest.to_json_object() == {
+        "schema_version": bundle.manifest.schema_version,
+        "storage_type": bundle.manifest.storage_type,
+        "run_id": "run-context-artifacts",
+        "relative_dir": "whole-run-artifacts/run-context-artifacts",
+        "window_policy": bundle.manifest.window_policy.to_json_object(),
+        "total_window_count": 4,
+        "artifacts": [
+            {
+                "artifact_key": WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+                "relative_path": "context/window-labels.jsonl",
+                "file_format": "jsonl",
+                "record_count": 4,
+            }
+        ],
+        "created_at": "2025-01-01T00:00:01Z",
+    }
     assert len(bundle.labels) == 4
     assert len(bundle.intervals) >= 1
     assert bundle.intervals[0].start_window_index == 0
