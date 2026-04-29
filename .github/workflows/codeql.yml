@@ -20,9 +20,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Current CodeQL coverage targets the Python backend.
+        # Analyze both backend Python and UI JavaScript/TypeScript.
         language:
           - python
+          - javascript-typescript
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
