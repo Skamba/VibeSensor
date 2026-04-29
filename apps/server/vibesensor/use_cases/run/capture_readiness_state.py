@@ -7,6 +7,7 @@ from collections import deque
 from dataclasses import dataclass
 
 from vibesensor.domain import CaptureReadinessPolicy
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.use_cases.run.capture_readiness_observation import (
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,
@@ -220,4 +221,4 @@ class CaptureReadinessState:
 
 
 def _is_finite_number(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool) and math.isfinite(value)
