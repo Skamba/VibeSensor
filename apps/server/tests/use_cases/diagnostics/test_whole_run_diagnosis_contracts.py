@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarReferenceResponse,
     DiagnosisFactorDetailsResponse,
@@ -98,6 +100,31 @@ def test_whole_run_diagnosis_summary_round_trips_nested_compact_contracts() -> N
     )
 
     assert WholeRunDiagnosisSummary.from_mapping(summary.to_json_object()) == summary
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("support_score", "bad", "optional numeric field must be a number or null"),
+        ("supporting_window_count", 1.5, "optional int field must be an int or null"),
+        ("dominant_location", 7, "optional text field must be a string or null"),
+    ],
+)
+def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    payload = WholeRunDiagnosisSummary(
+        diagnosis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        rank=1,
+        data_basis="raw_backed",
+    ).to_json_object()
+    payload[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        WholeRunDiagnosisSummary.from_mapping(payload)
 
 
 def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> None:
