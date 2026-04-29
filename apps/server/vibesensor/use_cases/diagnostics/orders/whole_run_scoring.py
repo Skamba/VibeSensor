@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import sqrt
@@ -19,6 +19,7 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,
 )
+from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
 from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
     order_hypotheses_by_key,
     ordered_order_hypothesis_keys,
@@ -342,17 +343,7 @@ def _dominant_context_value(
 
 
 def _dominant_value(*, values: Iterable[tuple[str, float]]) -> str | None:
-    items = tuple(values)
-    if not items:
-        return None
-    counts = Counter(value for value, _weight in items)
-    weights: dict[str, float] = defaultdict(float)
-    for value, weight in items:
-        weights[value] += float(weight)
-    return max(
-        counts,
-        key=lambda value: (counts[value], weights[value], value),
-    )
+    return dominant_weighted_value(values=values)
 
 
 def _mean(values: Iterable[float]) -> float | None:
