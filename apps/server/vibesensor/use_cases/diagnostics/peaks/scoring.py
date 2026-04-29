@@ -6,9 +6,7 @@ from collections.abc import Mapping, Sequence
 from math import log1p
 
 from vibesensor.shared.constants.analysis import NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 from .._sample_metrics import _effective_baseline_floor
 from .classification import classify_peak_type
@@ -169,7 +167,7 @@ class PeakBin:
             spatial_uniformity=spatial_uniformity,
             speed_uniformity=speed_uniformity,
         )
-        peak_strength_db = canonical_vibration_db(
+        peak_strength_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=stats.p95_amp,
             floor_amp_g=effective_floor,
         )
