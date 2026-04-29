@@ -91,7 +91,7 @@ apps/server/build/
 apps/server/dist/
 
 # Playwright test artifacts
-apps/ui/tests/test-results/
+apps/ui/test-results/
 apps/ui/playwright-report/
 
 # Generic artifacts/caches
@@ -111,7 +111,6 @@ artifacts/fuzz/*
 *.swo
 .DS_Store
 .coverage
-apps/ui/test-results/
 apps/ui/src/constants.ts
 apps/ui/src/generated/http_api_contracts.ts
 apps/ui/src/contracts/ws_payload_schema.generated.ts
