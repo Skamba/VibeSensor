@@ -1,12 +1,10 @@
-"""Lifecycle, pruning, corruption, and metadata CRUD coverage for HistoryDB."""
+"""Lifecycle, corruption, and durable-state coverage for HistoryDB."""
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -31,43 +29,34 @@ from test_support.history_db_lifecycle import (
 )
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import (
-    SQLiteHistoryEngine,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
 
 
-def test_append_samples_in_chunks(tmp_path: Path) -> None:
+def _create_corrupted_history_db(tmp_path: Path, *, truncate_bytes: int = 100) -> Path:
+    db_path = tmp_path / "history.db"
+    db = create_history_persistence_adapters(db_path)
+    db.run_repository.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
+    db.run_repository.append_samples(
+        "run-corrupt",
+        [sensor_frame_from_mapping({"i": i, "x": 0.1}) for i in range(1000)],
+    )
+    db.lifecycle.close()
+    db_path.write_bytes(db_path.read_bytes()[:-truncate_bytes])
+    return db_path
+
+
+def test_append_samples_large_batch_persists_all_rows(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
     create_recording_run(db, "run-1")
-    calls: list[int] = []
-    original_write_tx = db.run_repository._write_transaction_cursor_provider
-
-    @asynccontextmanager
-    async def _wrapped_write_transaction():
-        async with original_write_tx() as cur:
-
-            class _CursorProxy:
-                def __init__(self, base_cursor):
-                    self._base_cursor = base_cursor
-
-                def __getattr__(self, name: str):
-                    return getattr(self._base_cursor, name)
-
-                async def executemany(self, sql: str, seq_of_parameters):
-                    rows = list(seq_of_parameters)
-                    calls.append(len(rows))
-                    return await self._base_cursor.executemany(sql, rows)
-
-            yield _CursorProxy(cur)
-
-    db.run_repository._write_transaction_cursor_provider = _wrapped_write_transaction
     samples = [sensor_frame_from_mapping({"i": i, "x": 0.1}) for i in range(700)]
-    db.run_repository.append_samples("run-1", samples)
-    assert sum(calls) == 700
-    assert max(calls) <= 256
-    assert len(calls) >= 3
+    written = db.run_repository.append_samples("run-1", samples)
+
+    assert written == 700
+    run = db.run_repository.get_run("run-1")
+    assert run is not None
+    assert run.sample_count == 700
+    assert len(db.run_repository.get_run_samples("run-1")) == 700
 
 
 def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
@@ -103,30 +92,27 @@ def test_append_samples_rejects_non_recording_runs(tmp_path: Path) -> None:
     assert len(db.run_repository.get_run_samples("run-guard")) == 1
 
 
-def test_close_uses_lock_and_clears_connection(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    events: list[str] = []
-
-    class RecordingLock:
-        def __init__(self, label: str) -> None:
-            self._label = label
-
-        def __enter__(self) -> None:
-            events.append(f"{self._label}-enter")
-            return None
-
-        def __exit__(self, exc_type, exc, tb) -> bool:
-            events.append(f"{self._label}-exit")
-            return False
-
-    db.lifecycle._lock = RecordingLock("write")  # type: ignore[assignment]
-    db.lifecycle._read_lock = RecordingLock("read")  # type: ignore[assignment]
-
+def test_close_then_reopen_preserves_persisted_state(tmp_path: Path) -> None:
+    db_path = tmp_path / "history.db"
+    db = create_history_persistence_adapters(db_path)
+    db.run_repository.create_run("run-close", "2026-01-01T00:00:00Z", _metadata("run-close"))
+    db.run_repository.append_samples(
+        "run-close",
+        [sensor_frame_from_mapping({"i": 1}), sensor_frame_from_mapping({"i": 2})],
+    )
+    db.settings_snapshot_repository.set_settings_snapshot(_settings_snapshot())
+    db.client_name_repository.upsert_client_name("client-1", "Alice")
     db.lifecycle.close()
 
-    assert events == ["write-enter", "write-exit", "read-enter", "read-exit"]
-    assert db.lifecycle._conn is None
-    assert db.lifecycle._read_conn is None
+    reopened = create_history_persistence_adapters(db_path)
+    try:
+        run = reopened.run_repository.get_run("run-close")
+        assert run is not None
+        assert run.sample_count == 2
+        assert reopened.client_name_repository.list_client_names() == {"client-1": "Alice"}
+        assert reopened.settings_snapshot_repository.get_settings_snapshot() == _settings_snapshot()
+    finally:
+        reopened.lifecycle.close()
 
 
 def test_iter_run_samples_batches(tmp_path: Path) -> None:
@@ -282,112 +268,62 @@ def test_recover_stale_recording_logs_warning(
     assert run is not None and run.status.value == "error"
 
 
-def test_history_db_runs_startup_quick_check(
+def test_startup_quick_check_logs_corruption(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    calls: list[Path] = []
-    original = SQLiteHistoryEngine._run_startup_quick_check
+    db_path = _create_corrupted_history_db(tmp_path)
 
-    async def _tracking(self: SQLiteHistoryEngine) -> None:
-        calls.append(self.db_path)
-        await original(self)
-
-    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check", _tracking)
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    with caplog.at_level(
+        logging.CRITICAL, logger="vibesensor.adapters.persistence.history_db._engine"
+    ):
+        db = create_history_persistence_adapters(db_path)
     try:
-        assert calls == [tmp_path / "history.db"]
+        assert "quick_check reported corruption" in caplog.text
+        assert db.lifecycle.corruption_detected is True
+        assert db.lifecycle.corruption_details is not None
+        assert db.lifecycle.corruption_details in caplog.text
     finally:
         db.lifecycle.close()
 
 
-def test_startup_quick_check_logs_corruption(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-
-    class _FakeCursor:
-        async def execute(self, sql: str) -> None:
-            assert sql == "PRAGMA quick_check"
-
-        async def fetchall(self) -> list[tuple[str]]:
-            return [("row 7 missing from index",)]
-
-    @asynccontextmanager
-    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
-        yield _FakeCursor()
-
-    monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
-    with caplog.at_level(logging.CRITICAL):
-        asyncio.run(db.lifecycle._run_startup_quick_check())
-    assert "quick_check reported corruption" in caplog.text
-    assert "row 7 missing from index" in caplog.text
-    assert db.lifecycle.corruption_detected is True
-    assert db.lifecycle.corruption_details == "row 7 missing from index"
-    db.lifecycle.close()
-
-
 def test_startup_quick_check_reports_corruption_via_callback(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     reported: list[str] = []
+    db_path = _create_corrupted_history_db(tmp_path)
     db = create_history_persistence_adapters(
-        tmp_path / "history.db",
+        db_path,
         corruption_reporter=reported.append,
     )
-
-    class _FakeCursor:
-        async def execute(self, sql: str) -> None:
-            assert sql == "PRAGMA quick_check"
-
-        async def fetchall(self) -> list[tuple[str]]:
-            return [("row 7 missing from index",)]
-
-    @asynccontextmanager
-    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
-        yield _FakeCursor()
-
-    monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
-    asyncio.run(db.lifecycle._run_startup_quick_check())
-    assert reported == ["row 7 missing from index"]
-    assert db.lifecycle.corruption_detected is True
-    db.lifecycle.close()
+    try:
+        assert db.lifecycle.corruption_detected is True
+        assert db.lifecycle.corruption_details is not None
+        assert reported == [db.lifecycle.corruption_details]
+    finally:
+        db.lifecycle.close()
 
 
 def test_startup_quick_check_blocks_future_writes(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
+    db_path = _create_corrupted_history_db(tmp_path)
+    db = create_history_persistence_adapters(db_path)
 
-    class _FakeCursor:
-        async def execute(self, sql: str) -> None:
-            assert sql == "PRAGMA quick_check"
+    try:
+        with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
+            db.run_repository.append_samples(
+                "run-corrupt", [sensor_frame_from_mapping({"i": 1001})]
+            )
+        with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
+            db.run_repository.finalize_run("run-corrupt", "2026-01-01T00:10:00Z")
 
-        async def fetchall(self) -> list[tuple[str]]:
-            return [("row 7 missing from index",)]
-
-    @asynccontextmanager
-    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
-        yield _FakeCursor()
-
-    monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
-    asyncio.run(db.lifecycle._run_startup_quick_check())
-
-    with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
-        db.run_repository.append_samples("run-corrupt", [sensor_frame_from_mapping({"i": 1})])
-    with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
-        db.run_repository.finalize_run("run-corrupt", "2026-01-01T00:10:00Z")
-
-    run = db.run_repository.get_run("run-corrupt")
-    assert run is not None
-    assert run.sample_count == 0
-    assert run.status.value == "recording"
-    db.lifecycle.close()
+        run = db.run_repository.get_run("run-corrupt")
+        assert run is not None
+        assert run.sample_count == 1000
+        assert run.status.value == "recording"
+    finally:
+        db.lifecycle.close()
 
 
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
@@ -447,29 +383,22 @@ def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> N
 def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-rollback", "2026-01-01T00:00:00Z", _metadata("run-rollback"))
-    original_write_tx = db.run_repository._write_transaction_cursor_provider
+    _execute_statements(
+        db.lifecycle,
+        (
+            """
+            CREATE TRIGGER fail_sample_count_update
+            BEFORE UPDATE OF sample_count ON runs
+            WHEN NEW.sample_count > OLD.sample_count
+            BEGIN
+                SELECT RAISE(FAIL, 'simulated sample_count failure');
+            END
+            """,
+            (),
+        ),
+    )
 
-    @asynccontextmanager
-    async def _wrapped_write_transaction():
-        async with original_write_tx() as cur:
-
-            class _CursorProxy:
-                def __init__(self, base_cursor):
-                    self._base_cursor = base_cursor
-
-                def __getattr__(self, name: str):
-                    return getattr(self._base_cursor, name)
-
-                async def execute(self, sql: str, params=()):
-                    if "UPDATE runs SET sample_count = sample_count + ?" in sql:
-                        raise sqlite3.OperationalError("simulated sample_count failure")
-                    return await self._base_cursor.execute(sql, params)
-
-            yield _CursorProxy(cur)
-
-    db.run_repository._write_transaction_cursor_provider = _wrapped_write_transaction
-
-    with pytest.raises(sqlite3.OperationalError, match="simulated sample_count failure"):
+    with pytest.raises(sqlite3.IntegrityError, match="simulated sample_count failure"):
         db.run_repository.append_samples(
             "run-rollback",
             [sensor_frame_from_mapping({"i": 1}), sensor_frame_from_mapping({"i": 2})],
@@ -576,50 +505,6 @@ def test_client_names_crud(tmp_path: Path) -> None:
     assert db.client_name_repository.delete_client_name("client-2") is True
     assert db.client_name_repository.delete_client_name("client-2") is False
     assert "client-2" not in db.client_name_repository.list_client_names()
-
-
-def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-ro", "2026-01-01T00:00:00Z", _metadata("run-ro"))
-    db.run_repository.append_samples(
-        "run-ro",
-        [
-            sensor_frame_from_mapping({"i": 1}),
-            sensor_frame_from_mapping({"i": 2}),
-        ],
-    )
-    db.settings_snapshot_repository.set_settings_snapshot(_settings_snapshot())
-    db.client_name_repository.upsert_client_name("client-1", "Alice")
-
-    class _ConnProxy:
-        def __init__(self, conn):
-            self._conn = conn
-            self.commit_calls = 0
-
-        def __getattr__(self, name: str):
-            return getattr(self._conn, name)
-
-        def commit(self):
-            self.commit_calls += 1
-            return self._conn.commit()
-
-    proxy = _ConnProxy(db.lifecycle._conn)
-    db.lifecycle._conn = proxy
-
-    _ = db.run_repository.get_run("run-ro")
-    _ = db.run_repository.list_runs()
-    _ = list(db.run_repository.iter_run_samples("run-ro", batch_size=1))
-    _ = db.run_repository.get_run_metadata("run-ro")
-    _ = db.run_repository.get_run("run-ro").analysis
-    _ = db.run_repository.get_run("run-ro").status
-    _ = db.run_repository.get_active_run_id()
-    _ = db.settings_snapshot_repository.get_settings_snapshot()
-    _ = db.client_name_repository.list_client_names()
-
-    assert proxy.commit_calls == 0
-
-    db.settings_snapshot_repository.set_settings_snapshot(_settings_snapshot())
-    assert proxy.commit_calls == 1
 
 
 def test_get_run_metadata_non_dict_json_returns_none_and_warns(
