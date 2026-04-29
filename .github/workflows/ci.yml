@@ -579,9 +579,10 @@ jobs:
           path: ~/.cache/vibesensor/backend-duration-cache.json
           # Keep each run's write key distinct while still restoring from the stable test-history prefix.
           key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-${{ matrix.cache_suffix }}-${{ github.run_id }}
+          # Avoid restoring duration caches from older test-suite hashes: stale timings can
+          # rebalance whole-file shards badly enough to trip the 15-minute backend-test timeout.
           restore-keys: |
             ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-            ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
         run: mkdir -p artifacts/ai/logs/ci
