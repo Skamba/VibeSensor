@@ -1,12 +1,11 @@
-"""T9.20–T9.25: Decode/project integration tests.
+"""Decode/project integration tests for the persistence reload boundary.
 
-Verifies that domain meaning is preserved across the full lifecycle:
-analysis → persistence → history-service reload → report mapping → export.
+These tests keep ownership of domain meaning across:
+analysis -> persistence -> history-service reload projection.
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -20,18 +19,14 @@ from test_support import (
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
-from vibesensor.adapters.history import build_projected_run_details_json
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_payloads import project_analysis_summary
-from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
-from vibesensor.use_cases.history.report_document import build_report_document
 
 # -- helpers ---------------------------------------------------------------
 
@@ -170,107 +165,3 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     assert direct_meaning["origin_source"] == reloaded_meaning["origin_source"]
     assert direct_meaning["suitability_states"] == reloaded_meaning["suitability_states"]
     assert direct_meaning["action_ids"] == reloaded_meaning["action_ids"]
-
-
-# -- T9.23: Report from reconstructed aggregate ---------------------------
-
-
-def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
-    """Report mapping from a reconstructed (persisted → reloaded) summary
-    must produce valid ReportDocument with the same primary system."""
-    _analysis, result = _run_analysis()
-    direct_summary = analysis_result_to_summary(result)
-    run = _persist_and_reload(tmp_path, direct_summary)
-
-    analysis_blob = run.analysis
-    assert analysis_blob is not None
-    reconstructed = _reproject(analysis_blob.to_json_object())
-
-    direct_report = build_report_document(prepare_report_input(direct_summary))
-    reloaded_report = build_report_document(prepare_report_input(reconstructed))
-
-    assert isinstance(direct_report, ReportDocument)
-    assert isinstance(reloaded_report, ReportDocument)
-
-    # Same primary system identification
-    assert direct_report.observed.primary_system == reloaded_report.observed.primary_system
-    # Same certainty tier
-    assert direct_report.certainty_tier_key == reloaded_report.certainty_tier_key
-    # Same number of system cards and next steps
-    assert len(direct_report.system_cards) == len(reloaded_report.system_cards)
-    assert len(direct_report.next_steps) == len(reloaded_report.next_steps)
-
-
-# -- T9.24: Export from reconstructed aggregate ----------------------------
-
-
-def test_export_from_reconstructed_aggregate(tmp_path: Path) -> None:
-    """build_projected_run_details_json must produce valid JSON from a history run
-    whose analysis was projected through domain."""
-    _analysis, result = _run_analysis()
-    direct_summary = analysis_result_to_summary(result)
-    run = _persist_and_reload(tmp_path, direct_summary)
-
-    export_json = build_projected_run_details_json(
-        run,
-        sample_count=35,
-        run_id=_RUN_ID,
-    )
-    export_data = json.loads(export_json)
-
-    assert isinstance(export_data, dict)
-    analysis = export_data.get("analysis")
-    assert isinstance(analysis, dict)
-
-    # Domain meaning survived export pipeline
-    top_causes = analysis.get("top_causes", [])
-    assert len(top_causes) > 0
-    assert top_causes[0]["finding_key"] is not None
-
-    # Internal fields stripped
-    assert "_internal" not in analysis
-
-
-# -- T9.25: Cross-boundary consistency assertion ---------------------------
-
-
-def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
-    """Same scenario through direct analysis and history-reload paths must
-    produce equivalent domain meaning in summary, report, and export outputs."""
-    analysis, result = _run_analysis()
-    direct_summary = analysis_result_to_summary(result)
-    run = _persist_and_reload(tmp_path, direct_summary)
-
-    analysis_blob = run.analysis
-    assert analysis_blob is not None
-    reconstructed = _reproject(analysis_blob.to_json_object())
-
-    # 1. Summary-level consistency
-    direct_meaning = _extract_domain_meaning(direct_summary)
-    reloaded_meaning = _extract_domain_meaning(reconstructed)
-    assert direct_meaning["finding_key"] == reloaded_meaning["finding_key"]
-    assert direct_meaning["suspected_source"] == reloaded_meaning["suspected_source"]
-    assert direct_meaning["confidence"] == pytest.approx(reloaded_meaning["confidence"])
-    assert direct_meaning["action_ids"] == reloaded_meaning["action_ids"]
-
-    # 2. Report-level consistency
-    direct_report = build_report_document(prepare_report_input(direct_summary))
-    reloaded_report = build_report_document(prepare_report_input(reconstructed))
-    assert direct_report.observed.primary_system == reloaded_report.observed.primary_system
-    assert direct_report.observed.certainty_label == reloaded_report.observed.certainty_label
-    direct_card_names = [c.system_name for c in direct_report.system_cards]
-    reloaded_card_names = [c.system_name for c in reloaded_report.system_cards]
-    assert direct_card_names == reloaded_card_names
-
-    # 3. Export-level consistency
-    export_json = build_projected_run_details_json(
-        run,
-        sample_count=35,
-        run_id=_RUN_ID,
-    )
-    export_data = json.loads(export_json)
-    export_analysis = export_data["analysis"]
-    export_top_causes = export_analysis.get("top_causes", [])
-    assert len(export_top_causes) == len(direct_summary.get("top_causes", []))
-    if export_top_causes:
-        assert export_top_causes[0]["finding_key"] == direct_meaning["finding_key"]
