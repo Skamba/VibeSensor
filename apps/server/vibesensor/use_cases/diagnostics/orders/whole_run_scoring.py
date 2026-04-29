@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from math import sqrt
 
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.whole_run_analysis import (
@@ -20,6 +19,19 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_objects_from_bytes,
 )
 from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _max_or_none,
+    _min_or_none,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _mean_or_none as _mean,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _ratio_or_zero as _ratio,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _stddev_or_none as _stddev,
+)
 from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
     order_hypotheses_by_key,
     ordered_order_hypothesis_keys,
@@ -344,41 +356,3 @@ def _dominant_context_value(
 
 def _dominant_value(*, values: Iterable[tuple[str, float]]) -> str | None:
     return dominant_weighted_value(values=values)
-
-
-def _mean(values: Iterable[float]) -> float | None:
-    items = tuple(values)
-    if not items:
-        return None
-    return sum(float(value) for value in items) / len(items)
-
-
-def _max_or_none(values: Iterable[float]) -> float | None:
-    items = tuple(values)
-    if not items:
-        return None
-    return max(float(value) for value in items)
-
-
-def _min_or_none(values: Iterable[float]) -> float | None:
-    items = tuple(values)
-    if not items:
-        return None
-    return min(float(value) for value in items)
-
-
-def _stddev(values: Iterable[float]) -> float | None:
-    items = tuple(values)
-    if not items:
-        return None
-    mean_value = _mean(items)
-    if mean_value is None:
-        return None
-    variance = sum((float(value) - mean_value) ** 2 for value in items) / len(items)
-    return sqrt(max(0.0, variance))
-
-
-def _ratio(numerator: int, denominator: int) -> float:
-    if denominator <= 0:
-        return 0.0
-    return numerator / denominator

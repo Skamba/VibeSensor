@@ -15,6 +15,19 @@ from vibesensor.use_cases.diagnostics._artifact_bundles import (
     build_single_artifact_bundle_parts,
 )
 from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _max_or_none,
+    _min_or_none,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _mean_or_none as _mean,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _ratio_or_zero as _ratio,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _stddev_or_none as _stddev,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTracePhaseSupport,
     OrderTracePoint,
@@ -27,11 +40,6 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     _drift_score,
     _lock_score,
     _longest_contiguous_match_run,
-    _max_or_none,
-    _mean,
-    _min_or_none,
-    _ratio,
-    _stddev,
     whole_run_order_trace_summaries_to_jsonl_bytes,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
