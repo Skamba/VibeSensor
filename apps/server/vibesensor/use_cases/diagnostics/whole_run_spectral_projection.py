@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from vibesensor.shared.json_utils import i18n_ref, safe_json_dumps, safe_json_loads
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
     raw_timeline_has_unverified_sync,
@@ -23,6 +23,10 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
+    jsonl_bytes_from_objects,
+    jsonl_objects_from_bytes,
+)
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.vibration_strength import StrengthPeak
 
@@ -388,10 +392,7 @@ def build_whole_run_warnings(
 def whole_run_window_spectral_summaries_to_jsonl_bytes(
     summaries: Sequence[WholeRunWindowSpectralSummary],
 ) -> bytes:
-    if not summaries:
-        return b""
-    lines = [safe_json_dumps(summary.to_json_object()).encode("utf-8") for summary in summaries]
-    return b"\n".join(lines) + b"\n"
+    return jsonl_bytes_from_objects(summaries)
 
 
 def whole_run_window_spectral_summaries_from_jsonl_bytes(
@@ -399,19 +400,12 @@ def whole_run_window_spectral_summaries_from_jsonl_bytes(
 ) -> tuple[WholeRunWindowSpectralSummary, ...]:
     """Reconstruct persisted whole-run spectral summaries from sidecar JSONL bytes."""
 
-    if not payload:
-        return ()
-    summaries: list[WholeRunWindowSpectralSummary] = []
-    text = payload.decode("utf-8")
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        parsed = safe_json_loads(line, context="whole-run spectral summaries")
-        if not is_json_object(parsed):
-            raise ValueError("whole-run spectral summary line must decode to a JSON object")
-        summaries.append(WholeRunWindowSpectralSummary.from_mapping(parsed))
-    return tuple(summaries)
+    return jsonl_objects_from_bytes(
+        payload,
+        context="whole-run spectral summaries",
+        line_description="whole-run spectral summary line",
+        from_mapping=WholeRunWindowSpectralSummary.from_mapping,
+    )
 
 
 def whole_run_spectral_summaries_by_sensor(

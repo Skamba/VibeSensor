@@ -10,6 +10,8 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     summarize_whole_run_order_traces,
+    whole_run_order_trace_summaries_from_jsonl_bytes,
+    whole_run_order_trace_summaries_to_jsonl_bytes,
 )
 
 
@@ -129,6 +131,26 @@ def test_summarize_whole_run_order_traces_distinguishes_strong_and_weak_lock() -
     assert strong.strongest_location == "Front Left"
     assert strong.harmonic_summaries[0].lock_score == strong.lock_score
     assert weak.harmonic_summaries[0].relative_error_stddev is not None
+
+
+def test_whole_run_order_trace_summaries_jsonl_round_trip() -> None:
+    labels = tuple(_label(index) for index in range(2))
+    points = tuple(
+        _point(
+            index,
+            matched=True,
+            relative_error=0.01,
+            peak_intensity_db=18.0,
+            vibration_strength_db=12.0,
+            strongest_location="Front Left",
+        )
+        for index in range(2)
+    )
+
+    summaries = summarize_whole_run_order_traces(points=points, context_labels=labels)
+    payload = whole_run_order_trace_summaries_to_jsonl_bytes(summaries)
+
+    assert whole_run_order_trace_summaries_from_jsonl_bytes(payload) == summaries
 
 
 def test_summarize_whole_run_order_traces_degrades_partial_reference_explicitly() -> None:
