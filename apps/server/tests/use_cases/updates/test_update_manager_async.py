@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from _update_manager_test_helpers import (
-    assert_hotspot_restored,
     make_mock_release,
     patch_release_fetcher,
     patch_validation_environment,
@@ -54,6 +53,10 @@ def _build_fake_wheel(path, *, version: str) -> bytes:
         )
         wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
     return path.read_bytes()
+
+
+def _assert_hotspot_restore_logged(manager: UpdateManager) -> None:
+    assert any("Hotspot restored on attempt" in line for line in manager.status.log_tail)
 
 
 def _build_manager_with_cancellation_cleanup(
@@ -125,7 +128,7 @@ class TestUpdateManagerAsync:
             for call in runner.calls
             if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
         ]
-        assert_hotspot_restored(runner)
+        _assert_hotspot_restore_logged(manager)
         fw_mod = "vibesensor.use_cases.updates.firmware.firmware_cache"
         firmware_refresh_calls = [call[0] for call in runner.calls if fw_mod in " ".join(call[0])]
         assert firmware_refresh_calls
@@ -178,33 +181,23 @@ class TestUpdateManagerAsync:
         )
         await run_update(manager, "BadNet", "wrong")
         assert manager.status.state == UpdateState.failed
-        assert_hotspot_restored(runner)
+        _assert_hotspot_restore_logged(manager)
 
     async def test_wifi_ssid_not_found_retries_then_succeeds(self, tmp_path) -> None:
         with (
             patch_release_fetcher() as fetcher,
-            patch(
-                "vibesensor.use_cases.updates.wifi.wifi_uplink_setup.asyncio.sleep",
-                new=AsyncMock(return_value=None),
-            ),
+            patch("vibesensor.use_cases.updates.wifi.wifi_config.UPLINK_RESCAN_DELAY_S", 0.0),
         ):
             manager, runner, _ = setup_update_env(
                 tmp_path,
                 seed_artifacts=True,
                 server_release_fetcher=fetcher,
             )
-            original_run = runner.run
-            connect_calls = {"count": 0}
-
-            async def run_with_retry(args, *, timeout=30, env=None):
-                joined = " ".join(args)
-                if "connection up VibeSensor-Uplink" in joined:
-                    connect_calls["count"] += 1
-                    if connect_calls["count"] == 1:
-                        return (10, "", "Error: No network with SSID 'TestNet' found.\n")
-                return await original_run(args, timeout=timeout, env=env)
-
-            runner.run = run_with_retry
+            runner.set_response_sequence(
+                "connection up VibeSensor-Uplink",
+                (10, "", "Error: No network with SSID 'TestNet' found.\n"),
+                (0, "", ""),
+            )
             fetcher.find_latest_release.return_value = make_mock_release()
             manager.start("TestNet", "pass123")
             task = manager.job_task
@@ -212,7 +205,7 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(task, timeout=10)
 
         assert manager.status.state == UpdateState.success
-        assert connect_calls["count"] >= 2
+        assert any("rescanning and retrying" in line for line in manager.status.log_tail)
 
     async def test_dns_not_ready_fails_with_clear_issue(self, tmp_path) -> None:
         with (
@@ -230,31 +223,26 @@ class TestUpdateManagerAsync:
         assert manager.status.state == UpdateState.failed
 
     async def test_dns_probe_retries_then_update_continues(self, tmp_path) -> None:
-        probe_attempts = {"count": 0}
         with (
             patch_release_fetcher() as fetcher,
-            patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.2),
-            patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 1.0),
+            patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.0),
         ):
             manager, runner, _ = setup_update_env(
                 tmp_path,
                 seed_artifacts=True,
                 server_release_fetcher=fetcher,
             )
-            original_run = runner.run
-
-            async def run_with_dns_retry(args, *, timeout=30, env=None):
-                if "socket.getaddrinfo" in " ".join(args):
-                    probe_attempts["count"] += 1
-                    if probe_attempts["count"] < 3:
-                        return (1, "", "Temporary failure in name resolution")
-                return await original_run(args, timeout=timeout, env=env)
-
-            runner.run = run_with_dns_retry
+            runner.set_response_sequence(
+                "socket.getaddrinfo",
+                (1, "", "Temporary failure in name resolution"),
+                (1, "", "Temporary failure in name resolution"),
+                (0, "", ""),
+            )
             await run_update(manager)
 
         assert manager.status.state == UpdateState.success
-        assert probe_attempts["count"] >= 3
+        assert any("DNS probe succeeded on attempt 3" in line for line in manager.status.log_tail)
 
     async def test_secure_ssid_requires_password(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
@@ -262,18 +250,18 @@ class TestUpdateManagerAsync:
         await run_update(manager, "Pim", "")
         assert manager.status.state == UpdateState.failed
 
-    async def test_password_is_applied_via_connection_modify(self, tmp_path) -> None:
+    async def test_password_configuration_failure_fails_update(self, tmp_path) -> None:
         with patch_release_fetcher() as fetcher:
             manager, runner, _ = setup_update_env(
                 tmp_path,
                 seed_artifacts=True,
                 server_release_fetcher=fetcher,
             )
+            runner.set_response("wifi-sec.psk", 10, "", "failed to set Wi-Fi credentials")
             await run_update(manager, "Pim", "tomaat123")
+        assert manager.status.state == UpdateState.failed
         assert any(
-            "connection modify VibeSensor-Uplink "
-            "wifi-sec.key-mgmt wpa-psk wifi-sec.psk" in " ".join(call[0])
-            for call in runner.calls
+            issue.message == "Failed to set Wi-Fi credentials" for issue in manager.status.issues
         )
 
     async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
@@ -287,7 +275,7 @@ class TestUpdateManagerAsync:
             fetcher.download_wheel.side_effect = OSError("Network error")
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
-        assert_hotspot_restored(runner)
+        _assert_hotspot_restore_logged(manager)
 
     async def test_install_failure_triggers_rollback(self, tmp_path) -> None:
         with patch_release_fetcher(current_version="2025.6.14") as fetcher:
@@ -365,7 +353,7 @@ class TestUpdateManagerAsync:
             if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
         ]
         assert not pip_calls
-        assert_hotspot_restored(runner)
+        _assert_hotspot_restore_logged(manager)
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         secret = "SuperSecret!Password#2024"

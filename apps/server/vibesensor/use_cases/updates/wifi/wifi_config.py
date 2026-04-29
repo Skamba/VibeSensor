@@ -5,6 +5,7 @@ from dataclasses import dataclass
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
 UPLINK_CONNECT_RETRIES = 3
+UPLINK_RESCAN_DELAY_S = 2.0
 UPLINK_FALLBACK_DNS = "1.1.1.1,1.0.0.1"
 DNS_READY_MIN_WAIT_S = 10.0
 DNS_RETRY_INTERVAL_S = 1.0
@@ -23,6 +24,7 @@ class UpdateWifiConfig:
     uplink_connection_name: str
     uplink_connect_wait_s: int
     uplink_connect_retries: int
+    uplink_rescan_delay_s: float
     uplink_fallback_dns: str
     dns_ready_min_wait_s: float
     dns_retry_interval_s: float
@@ -41,6 +43,7 @@ def build_default_wifi_config(*, ap_con_name: str, wifi_ifname: str) -> UpdateWi
         uplink_connection_name=UPLINK_CONNECTION_NAME,
         uplink_connect_wait_s=UPLINK_CONNECT_WAIT_S,
         uplink_connect_retries=UPLINK_CONNECT_RETRIES,
+        uplink_rescan_delay_s=UPLINK_RESCAN_DELAY_S,
         uplink_fallback_dns=UPLINK_FALLBACK_DNS,
         dns_ready_min_wait_s=DNS_READY_MIN_WAIT_S,
         dns_retry_interval_s=DNS_RETRY_INTERVAL_S,

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+from collections import deque
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -32,10 +33,18 @@ class FakeRunner(CommandRunner):
     def __init__(self) -> None:
         self.calls: list[tuple[list[str], dict]] = []
         self.responses: list[tuple[str, tuple[int, str, str]]] = []
+        self.response_sequences: list[tuple[str, deque[tuple[int, str, str]]]] = []
         self.default_response: tuple[int, str, str] = (0, "", "")
 
     def set_response(self, match_substr: str, rc: int, stdout: str = "", stderr: str = "") -> None:
         self.responses.append((match_substr, (rc, stdout, stderr)))
+
+    def set_response_sequence(
+        self,
+        match_substr: str,
+        *responses: tuple[int, str, str],
+    ) -> None:
+        self.response_sequences.append((match_substr, deque(responses)))
 
     async def run(
         self,
@@ -46,6 +55,9 @@ class FakeRunner(CommandRunner):
     ) -> tuple[int, str, str]:
         self.calls.append((list(args), {"timeout": timeout, "env": env}))
         joined = " ".join(args)
+        for match_substr, response_queue in self.response_sequences:
+            if match_substr in joined and response_queue:
+                return response_queue.popleft()
         for match_substr, response in self.responses:
             if match_substr in joined:
                 return response
@@ -116,15 +128,6 @@ async def cancel_task(mgr: UpdateManager) -> None:
         mgr.cancel()
         with contextlib.suppress(asyncio.CancelledError, Exception):
             await task
-
-
-def assert_hotspot_restored(runner: FakeRunner) -> None:
-    restore_calls = [
-        call
-        for call in runner.calls
-        if "VibeSensor-AP" in " ".join(call[0]) and "up" in " ".join(call[0])
-    ]
-    assert len(restore_calls) > 0
 
 
 async def run_update(
