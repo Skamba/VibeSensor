@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from io import BytesIO
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 from pypdf import PdfReader
 from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
@@ -25,11 +27,24 @@ from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
     NextStep,
+    RankedCandidateRow,
     ReportDocument,
     VerdictPageData,
 )
 from vibesensor.use_cases.history.report_document import build_report_document
+
+_I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
+_RECAPTURE_SECTION_HEADING_KEYS = [
+    "REPORT_ACTIONS_PANEL_TITLE",
+    "REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE",
+    "REPORT_RECAPTURE_GUIDANCE_TITLE",
+    "REPORT_CAPTURE_ISSUES_TITLE",
+    "REPORT_CAPTURE_CHANGES_TITLE",
+    "REPORT_CAPTURE_CONDITIONS_TITLE",
+    "REPORT_TRACEABILITY_PANEL_TITLE",
+]
 
 
 def _sample(
@@ -130,6 +145,32 @@ def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> N
     assert "Marker color shows relative vibration strength." in page_two_text
     assert "Appendix B" not in page_two_text
     assert "Evidence and Run Context" in (reader.pages[2].extract_text() or "")
+
+
+@pytest.mark.parametrize(
+    ("lang", "i18n_keys"),
+    [
+        pytest.param("en", _RECAPTURE_SECTION_HEADING_KEYS, id="en_recapture_section_headings"),
+        pytest.param("nl", _RECAPTURE_SECTION_HEADING_KEYS, id="nl_recapture_section_headings"),
+    ],
+)
+def test_report_pdf_recapture_sections_render_localized_headings(
+    tmp_path: Path,
+    lang: str,
+    i18n_keys: list[str],
+) -> None:
+    run_path = tmp_path / f"recapture-headings-{lang}.jsonl"
+    records: list[dict[str, object]] = [_run_metadata()]
+    for idx in range(30):
+        records.append(_sample(idx, speed_kmh=40.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.09))
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, lang=lang)
+    text = extract_pdf_text(build_report_pdf(build_report_document(prepare_report_input(summary))))
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    missing = [f"{key} ({i18n[key][lang]!r})" for key in i18n_keys if i18n[key][lang] not in text]
+    assert missing == [], f"Missing {lang} labels in PDF: {missing}"
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
@@ -472,6 +513,44 @@ def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_
     assert "Front-Left" in text
     assert "Rear-Right" in text
     assert "No single corner stayed dominant through the whole run" in text
+
+
+@pytest.mark.parametrize("lang", ["en", "nl"])
+def test_report_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    data = ReportDocument(
+        title="Diagnostic worksheet",
+        run_id=f"workflow-headings-{lang}",
+        lang=lang,
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Wheel / Tire",
+            alternative_source="Driveline",
+            why_primary_first="Wheel / Tire stayed strongest near Front-Left.",
+            next_if_clean="Move to the driveline path next and inspect Front-Right.",
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Wheel / Tire",
+                    inspect_first="Front-Left",
+                    path_role="Primary path",
+                    reason="Wheel / Tire stayed strongest near Front-Left.",
+                )
+            ],
+        ),
+        next_steps=[
+            NextStep(
+                action="Check wheel balance",
+                why="The strongest repeated pattern stayed near Front-Left.",
+                confirm="If confirmed, repeat the run to confirm the reduction.",
+                falsify="If balance is clean, move to the driveline path.",
+            )
+        ],
+    )
+
+    text = extract_pdf_text(build_report_pdf(data))
+
+    assert i18n["REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"][lang] in text
+    assert i18n["REPORT_ACTION_MATRIX_TITLE"][lang] in text
 
 
 @pytest.mark.parametrize(
