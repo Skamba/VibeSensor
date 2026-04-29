@@ -19,6 +19,13 @@ def test_weekly_pi_image_workflow_uses_native_arm_runner_and_keeps_release_namin
         isinstance(step, dict) and step.get("uses") == "docker/setup-qemu-action@v4"
         for step in steps
     )
+    source_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Compute weekly source SHA"
+    )
+    assert source_step["id"] == "source"
+    assert "git rev-parse HEAD" in source_step["run"]
 
     build_step = next(
         step
@@ -36,6 +43,16 @@ def test_weekly_pi_image_workflow_uses_native_arm_runner_and_keeps_release_namin
         == "weekly-pi-image-${{ steps.metadata.outputs.build_label }}"
     )
     assert build_step["with"]["include-published-artifact"] == "true"
+    publish_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Publish weekly Pi image release"
+    )
+    publish_script = publish_step["run"]
+    assert "${{ steps.assets.outputs.artifact_name }}" not in publish_script
+    assert "${GITHUB_SHA}" not in publish_script
+    assert "${{ steps.build-image.outputs.release-artifact-name }}" in publish_script
+    assert '--target "${{ steps.source.outputs.sha }}"' in publish_script
     step_names = {
         step.get("name")
         for step in steps
