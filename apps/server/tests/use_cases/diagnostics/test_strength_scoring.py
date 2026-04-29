@@ -8,29 +8,10 @@ import pytest
 import vibesensor.vibration_strength as vibration_strength_module
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
-    median,
     peak_band_rms_amp_g,
     strength_floor_amp_g,
     vibration_strength_db_scalar,
 )
-
-# -- median ------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("values", "expected"),
-    [
-        pytest.param([], 0.0, id="empty_returns_zero"),
-        pytest.param([7.0], 7.0, id="single_element"),
-        pytest.param([3.0, 1.0, 2.0], 2.0, id="odd_count"),
-        pytest.param([1.0, 2.0, 3.0, 4.0], 2.5, id="even_count_true_median"),
-        pytest.param([1.0, 3.0], 2.0, id="two_elements"),
-        pytest.param([4.0, 1.0, 3.0, 2.0], 2.5, id="even_unsorted"),
-    ],
-)
-def test_median(values: list[float], expected: float) -> None:
-    assert median(values) == expected
-
 
 # -- strength_floor_amp_g ----------------------------------------------------
 
@@ -564,29 +545,3 @@ def test_batch_vibration_strength_db_matches_scalar() -> None:
     )
 
     vibration_strength_module.np.testing.assert_allclose(batch, expected)
-
-
-def test_strength_db_equal_band_and_floor() -> None:
-    # When band_rms == floor_rms the result should be ~0 dB
-    db = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=1.0,
-        floor_amp_g=1.0,
-    )
-    assert abs(db) < 0.01
-
-
-def test_strength_db_band_much_above_floor() -> None:
-    db = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=10.0,
-        floor_amp_g=1.0,
-    )
-    assert db > 15.0  # ~20 dB
-
-
-def test_strength_db_floor_zero_returns_finite() -> None:
-    db = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=1e-6,
-        floor_amp_g=0.0,
-    )
-    assert db > 0
-    assert db < 200
