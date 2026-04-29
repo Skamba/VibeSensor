@@ -10,7 +10,6 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.infra.processing.time_align import (
-    _ALIGNMENT_MIN_OVERLAP,
     analysis_time_range,
     compute_overlap,
 )
@@ -121,9 +120,9 @@ class TestComputeOverlap:
         assert result.overlap_ratio == pytest.approx(expected_ratio)
         assert result.aligned is expected_aligned
         if expected_aligned:
-            assert result.overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
+            assert result.overlap_ratio >= 0.5
         else:
-            assert result.overlap_ratio < _ALIGNMENT_MIN_OVERLAP
+            assert result.overlap_ratio < 0.5
 
 
 _ATR_DEFAULTS: dict[str, object] = {

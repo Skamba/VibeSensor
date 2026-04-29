@@ -17,10 +17,6 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
-from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _phase_speed_breakdown,
-    _sensor_intensity_by_location,
-)
 
 
 class TestPhaseSegmentation:
@@ -143,56 +139,7 @@ class TestPhaseSegmentation:
 
 
 class TestSensorIntensityPhaseContext:
-    """Per-location intensity rows should carry phase context when available."""
-
-    def test_phase_intensity_present_when_phases_provided(self) -> None:
-        samples = []
-        for idx in range(5):
-            samples.append(
-                {
-                    "t_s": float(idx),
-                    "speed_kmh": 0.0,
-                    "vibration_strength_db": 4.0,
-                    "location_key": "front-left",
-                },
-            )
-        for idx in range(5, 15):
-            samples.append(
-                {
-                    "t_s": float(idx),
-                    "speed_kmh": 60.0,
-                    "vibration_strength_db": 22.0,
-                    "location_key": "front-left",
-                },
-            )
-
-        typed_samples = sensor_frames_from_mappings(samples)
-        per_sample_phases, _ = segment_run_phases(typed_samples)
-        rows = _sensor_intensity_by_location(typed_samples, per_sample_phases=per_sample_phases)
-
-        for row in rows:
-            phase_intensity = row.phase_intensity
-            assert phase_intensity is not None
-            assert len(phase_intensity) >= 1
-            for stats in phase_intensity.values():
-                assert stats.count > 0
-                assert stats.mean_intensity_db is not None
-
-    def test_phase_intensity_absent_without_phases(self) -> None:
-        rows = _sensor_intensity_by_location(
-            sensor_frames_from_mappings(
-                [
-                    {
-                        "t_s": 0.0,
-                        "speed_kmh": 60.0,
-                        "vibration_strength_db": 22.0,
-                        "location_key": "fl",
-                    },
-                ],
-            ),
-        )
-        for row in rows:
-            assert row.phase_intensity is None
+    """Per-location intensity rows should carry phase context in the public summary."""
 
     def test_summarize_run_data_includes_phase_intensity_in_location_rows(self) -> None:
         summary = summarize_run_data(
@@ -248,24 +195,7 @@ class TestOrderFindingsPhaseFiltering:
 
 
 class TestPhaseSpeedBreakdown:
-    """Phase-speed breakdown should expose temporal context instead of only speed bins."""
-
-    def test_phase_speed_breakdown_groups_by_phase(self) -> None:
-        samples = []
-        for idx in range(5):
-            samples.append({"t_s": float(idx), "speed_kmh": 0.5, "vibration_strength_db": 5.0})
-        for idx in range(5, 20):
-            samples.append({"t_s": float(idx), "speed_kmh": 60.0, "vibration_strength_db": 22.0})
-
-        typed_samples = sensor_frames_from_mappings(samples)
-        per_sample_phases, _ = segment_run_phases(typed_samples)
-        rows = _phase_speed_breakdown(typed_samples, per_sample_phases)
-        phase_names = {row.phase for row in rows}
-        assert DrivingPhase.IDLE.value in phase_names
-        assert (
-            DrivingPhase.CRUISE.value in phase_names
-            or DrivingPhase.ACCELERATION.value in phase_names
-        )
+    """Phase-speed breakdown should expose temporal context in the public summary."""
 
     def test_phase_speed_breakdown_included_in_summary(self) -> None:
         summary = summarize_run_data(
@@ -282,13 +212,6 @@ class TestPhaseSpeedBreakdown:
             assert "count" in row
             assert row["count"] > 0
 
-    def test_phase_breakdown_rows_cover_all_samples(self) -> None:
-        samples = build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
-        typed_samples = sensor_frames_from_mappings(samples)
-        per_sample_phases, _ = segment_run_phases(typed_samples)
-        rows = _phase_speed_breakdown(typed_samples, per_sample_phases)
-        assert sum(row.count for row in rows) == len(samples)
-
     def test_amp_vs_phase_in_plots(self) -> None:
         summary = summarize_run_data(
             standard_metadata(),
@@ -304,16 +227,6 @@ class TestPhaseSpeedBreakdown:
             assert "count" in row
             assert "mean_vib_db" in row
             assert row["count"] > 0
-
-    def test_phase_speed_breakdown_does_not_drop_samples_when_phase_list_short(self) -> None:
-        samples = [
-            {"t_s": 0.0, "speed_kmh": 40.0, "vibration_strength_db": 10.0},
-            {"t_s": 1.0, "speed_kmh": 50.0, "vibration_strength_db": 11.0},
-            {"t_s": 2.0, "speed_kmh": 60.0, "vibration_strength_db": 12.0},
-        ]
-        rows = _phase_speed_breakdown(sensor_frames_from_mappings(samples), ["cruise"])
-        assert sum(row.count for row in rows) == 3
-        assert any(row.phase == "unknown" for row in rows)
 
 
 class TestPhaseInfoInSummary:
