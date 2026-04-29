@@ -105,3 +105,19 @@ def test_benchmark_marker_outside_benchmark_file_fails(
         "benchmark but does not live in apps/server/tests/**/benchmark_*.py; move it "
         "into an explicit benchmark file or remove pytest.mark.benchmark."
     ]
+
+
+def test_marker_policy_skips_missing_tracked_files(
+    hygiene_module: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    existing = tmp_path / "apps/server/tests/use_cases/demo/test_demo.py"
+    existing.parent.mkdir(parents=True, exist_ok=True)
+    existing.write_text("def test_demo() -> None:\n    pass\n", encoding="utf-8")
+    missing = tmp_path / "apps/server/tests/integration/test_removed.py"
+
+    monkeypatch.setattr(hygiene_module, "ROOT", tmp_path)
+    monkeypatch.setattr(hygiene_module, "_git_tracked_files", lambda: [existing, missing])
+
+    assert hygiene_module._marker_policy_test_files() == [existing]
