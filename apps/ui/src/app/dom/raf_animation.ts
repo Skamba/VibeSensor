@@ -37,9 +37,9 @@ export function createRafAnimation(
       callbacks.onFrame(alpha);
       if (alpha >= 1) {
         handle = null;
-      callbacks.onComplete();
-      return;
-    }
+        callbacks.onComplete();
+        return;
+      }
       handle = api.requestAnimationFrame(animate);
     };
     handle = api.requestAnimationFrame(animate);
