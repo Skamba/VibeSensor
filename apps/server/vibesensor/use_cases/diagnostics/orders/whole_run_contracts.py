@@ -12,7 +12,31 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.whole_run_json_helpers import (
+    non_empty_text_or_none as _non_empty_text_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    optional_float_or_none as _optional_float_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    optional_int_or_none as _optional_int_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_bool_field as _required_bool_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_float_field as _required_float_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_int_field as _required_int_field,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    required_non_empty_text as _required_non_empty_text,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    set_optional_value as _set_optional,
+)
 
 __all__ = [
     "OrderHarmonicEvidenceSummary",
@@ -402,50 +426,47 @@ def _text_tuple(value: object) -> tuple[str, ...]:
 
 
 def _required_text(data: JsonObject, field: str) -> str:
-    value = _optional_text(data.get(field))
-    if value is None:
-        raise ValueError(f"{field} requires a non-empty string")
-    return value
+    return _required_non_empty_text(
+        data,
+        field,
+        invalid_message=f"{field} requires a non-empty string",
+    )
 
 
 def _optional_text(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    return text or None
+    return _non_empty_text_or_none(value)
 
 
 def _required_bool(data: JsonObject, field: str) -> bool:
-    value = data.get(field)
-    if not isinstance(value, bool):
-        raise ValueError(f"{field} requires a boolean value")
-    return value
+    return _required_bool_field(
+        data,
+        field,
+        invalid_message=f"{field} requires a boolean value",
+    )
 
 
 def _required_int(data: JsonObject, field: str) -> int:
-    value = data.get(field)
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{field} requires an integer value")
-    return value
+    return _required_int_field(
+        data,
+        field,
+        invalid_message=f"{field} requires an integer value",
+    )
 
 
 def _required_float(data: JsonObject, field: str) -> float:
-    value = _optional_float(data.get(field))
-    if value is None:
-        raise ValueError(f"{field} requires a numeric value")
-    return value
+    return _required_float_field(
+        data,
+        field,
+        invalid_message=f"{field} requires a numeric value",
+    )
 
 
 def _optional_int(value: object) -> int | None:
-    if isinstance(value, bool) or not isinstance(value, int):
-        return None
-    return value
+    return _optional_int_or_none(value)
 
 
 def _optional_float(value: object) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    return float(value)
+    return _optional_float_or_none(value)
 
 
 def _order_family(value: object) -> OrderTraceFamily:
@@ -473,8 +494,3 @@ def _require_text(value: str, *, field_name: str) -> None:
 def _require_ratio(value: float, *, field_name: str) -> None:
     if not 0.0 <= value <= 1.0:
         raise ValueError(f"{field_name} must be in [0, 1]")
-
-
-def _set_optional(payload: JsonObject, field: str, value: object) -> None:
-    if value is not None:
-        payload[field] = cast(JsonValue, value)

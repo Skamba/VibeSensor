@@ -9,6 +9,24 @@ from typing import Literal
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.whole_run_json_helpers import (
+    coerce_float_or_default as _float_from_json,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    coerce_float_or_none as _float_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    coerce_int_or_default as _int_from_json,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    coerce_int_or_none as _int_or_none,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    json_text_or_default as _str_from_json,
+)
+from vibesensor.shared.types.whole_run_json_helpers import (
+    json_text_or_none as _str_or_none,
+)
 
 __all__ = [
     "WHOLE_RUN_ARTIFACT_SCHEMA_VERSION",
@@ -418,52 +436,6 @@ class WholeRunContextInterval:
             partial_context_window_count=_int_from_json(data.get("partial_context_window_count")),
             missing_context_window_count=_int_from_json(data.get("missing_context_window_count")),
         )
-
-
-def _int_or_none(value: JsonValue | object) -> int | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float, str)):
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
-    return None
-
-
-def _int_from_json(value: JsonValue | object, default: int = 0) -> int:
-    parsed = _int_or_none(value)
-    return parsed if parsed is not None else default
-
-
-def _float_from_json(value: JsonValue | object, default: float = 0.0) -> float:
-    if isinstance(value, bool) or value is None:
-        return default
-    if isinstance(value, (int, float, str)):
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return default
-    return default
-
-
-def _float_or_none(value: JsonValue | object) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float, str)):
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return None
-    return None
-
-
-def _str_from_json(value: JsonValue | object, default: str = "") -> str:
-    return value if isinstance(value, str) else default
-
-
-def _str_or_none(value: JsonValue | object) -> str | None:
-    return value if isinstance(value, str) else None
 
 
 def _driving_phase_from_json(value: JsonValue | object) -> DrivingPhase:
