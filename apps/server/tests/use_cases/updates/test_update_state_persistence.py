@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import pytest
 from _update_manager_test_helpers import patch_validation_environment
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
@@ -369,6 +370,25 @@ class TestStartupRecovery:
         await mgr.startup_recover()
         issue_messages = [i.message for i in mgr.status.issues]
         assert not any("interrupted" in m.lower() for m in issue_messages)
+
+    async def test_startup_recover_exports_trace_span(self, update_env, tmp_path: Path) -> None:
+        """Startup recovery traces the real persisted recovery path."""
+        _, store, _, make_mgr = update_env
+        store.save(_running_status(UpdatePhase.installing))
+        mgr = make_mgr()
+
+        with configured_trace_output(tmp_path) as trace_path:
+            await mgr.startup_recover()
+
+        span = next(
+            item
+            for item in read_trace_output(trace_path)
+            if item["name"] == "update.startup_recover"
+        )
+        assert span["attributes"] == {}
+        loaded = store.load()
+        assert loaded is not None
+        assert loaded.state == UpdateState.failed
 
     async def test_recovery_attempts_network_cleanup(self, update_env) -> None:
         """Startup recovery attempts to clean up uplink and restore hotspot."""
