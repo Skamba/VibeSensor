@@ -181,11 +181,6 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"
-    exit 1
-  fi
-
   if [ ! -f "${ROOT_MNT}/usr/lib/systemd/system/bluetooth.service" ] && \
     [ ! -f "${ROOT_MNT}/lib/systemd/system/bluetooth.service" ]; then
     echo "Validation failed: missing bluetooth.service systemd unit in the image rootfs"
@@ -208,13 +203,9 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if ! grep -Fq 'rfkill unblock bluetooth' "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"; then
-    echo "Validation failed: rfkill unblock service does not explicitly unblock Bluetooth"
-    exit 1
-  fi
-
-  if [ ! -L "${ROOT_MNT}/etc/systemd/system/bluetooth.service.wants/vibesensor-rfkill-unblock.service" ]; then
-    echo "Validation failed: bluetooth.service is not wired to start vibesensor-rfkill-unblock.service"
+  if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
+    "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then
+    echo "Validation failed: hotspot service is missing the rfkill Wi-Fi preflight"
     exit 1
   fi
 
