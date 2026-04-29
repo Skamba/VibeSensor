@@ -73,7 +73,6 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | `firmware/esp/README.md` | ESP32 firmware setup and flashing. |
 | `firmware/esp/HARDENING.md` | Firmware security hardening notes. |
 | `hardware/README.md` | Hardware components and wiring. |
-| `infra/ci/README.md` | CI pipeline overview. |
 | `infra/pi-image/pi-gen/README.md` | Raspberry Pi image build flow. |
 
 ## Data & reference
