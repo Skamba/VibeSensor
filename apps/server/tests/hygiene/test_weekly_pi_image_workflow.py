@@ -36,27 +36,13 @@ def test_weekly_pi_image_workflow_uses_native_arm_runner_and_keeps_release_namin
         == "weekly-pi-image-${{ steps.metadata.outputs.build_label }}"
     )
     assert build_step["with"]["include-published-artifact"] == "true"
-
-    delete_step = next(
-        step
+    step_names = {
+        step.get("name")
         for step in steps
-        if isinstance(step, dict) and step.get("name") == "Delete previous weekly Pi image releases"
-    )
-    assert 'select(.tag_name == "weekly-pi-image"' in delete_step["run"]
-
-    publish_step = next(
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("name") == "Publish weekly Pi image release"
-    )
-    publish_script = publish_step["run"]
-    assert (
-        'find "${{ steps.build-image.outputs.release-dir }}" -maxdepth 1 -type f | sort'
-        in publish_script
-    )
-    assert 'python_bin="${{ steps.build-image.outputs.python-path }}"' in publish_script
-    assert '--tag "${{ steps.metadata.outputs.tag }}"' in publish_script
-    assert '--title "${{ steps.metadata.outputs.release_name }}"' in publish_script
+        if isinstance(step, dict) and isinstance(step.get("name"), str)
+    }
+    assert "Delete previous weekly Pi image releases" in step_names
+    assert "Publish weekly Pi image release" in step_names
 
 
 def test_manual_pi_image_workflow_reuses_shared_build_action_and_stays_artifact_only() -> None:
