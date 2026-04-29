@@ -6,27 +6,14 @@ Translation data is loaded from ``apps/server/vibesensor/data/report_i18n.json``
 from __future__ import annotations
 
 import json
-import logging
 from collections.abc import Callable
 from functools import lru_cache
 
-from vibesensor.domain import VibrationSource
 from vibesensor.shared._data_files import resolve_static_data_file
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")
-_SOURCE_I18N_KEYS: dict[VibrationSource, str] = {
-    VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
-    VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
-    VibrationSource.ENGINE: "SOURCE_ENGINE",
-    VibrationSource.BODY_RESONANCE: "SOURCE_BODY_RESONANCE",
-    VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
-    VibrationSource.BASELINE_NOISE: "SOURCE_BASELINE_NOISE",
-    VibrationSource.UNKNOWN_RESONANCE: "SOURCE_UNKNOWN_RESONANCE",
-    VibrationSource.UNKNOWN: "UNKNOWN",
-}
-
 _SHORT_LOCATION_LABELS: dict[str, str] = {
     "front left": "Front-Left",
     "front left wheel": "Front-Left",
@@ -91,26 +78,9 @@ def tr(lang: object, key: str, **kwargs: JsonValue) -> str:
         return template
 
 
-_logger = logging.getLogger(__name__)
-
-
 def is_i18n_ref(value: object) -> bool:
     """Check whether *value* is a language-neutral i18n reference dict."""
     return isinstance(value, dict) and "_i18n_key" in value
-
-
-def human_source(source: object, *, tr: Callable[[str], str]) -> str:
-    """Resolve a source code to its user-facing label."""
-    raw = str(source or "").strip().lower()
-    try:
-        key = VibrationSource(raw)
-    except ValueError:
-        _logger.warning(
-            "Unrecognized vibration source %r; falling back to titlecase",
-            raw,
-        )
-        return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
-    return tr(_SOURCE_I18N_KEYS.get(key, "UNKNOWN"))
 
 
 def human_location(location: object, *, short: bool = True) -> str:
@@ -176,6 +146,8 @@ def resolve_i18n(
         if is_i18n_ref(param_value):
             resolved_params[param_key] = resolve_i18n(lang, param_value, tr=tr)
         elif param_key == "source" and isinstance(param_value, str):
+            from vibesensor.shared.report_presentation import human_source
+
             resolved_params[param_key] = human_source(param_value, tr=tr)
         elif param_key == "phase" and isinstance(param_value, str):
             i18n_key = PHASE_I18N_KEYS.get(param_value)

@@ -6,12 +6,15 @@ from collections.abc import Callable
 from math import isfinite
 
 from vibesensor.domain import Finding, TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.document import (
     SensorObservationCell,
     SensorObservationMatrixRow,
 )
-from vibesensor.shared.report_presentation import candidate_signal_text, display_location
+from vibesensor.shared.report_presentation import (
+    candidate_signal_text,
+    display_location,
+    human_source,
+)
 from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = ["build_sensor_observation_matrix_rows"]
