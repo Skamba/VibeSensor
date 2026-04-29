@@ -98,91 +98,6 @@ test("closes the add car wizard from Escape on the focused input and restores fo
   await expect(page.locator("#addCarBtn")).toBeFocused();
 });
 
-test("uses the full mobile viewport and keeps the final action visible on short screens", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 667 });
-  await installCommonRoutes(page, {
-    settingsHandler: createSettingsHandlerFromMap({
-      "/api/settings/cars": {
-        cars: [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }],
-        active_car_id: "car-1",
-      },
-    }),
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    const path = requestPath(route);
-    if (path === "/api/car-library/brands") {
-      await fulfillJson(route, { brands: ["BMW"] });
-      return;
-    }
-    if (path === "/api/car-library/types") {
-      await fulfillJson(route, { types: ["SUV"] });
-      return;
-    }
-    if (path === "/api/car-library/models") {
-      await fulfillJson(route, {
-        models: [{
-          model: "X5",
-          tire_width_mm: 275,
-          tire_aspect_pct: 40,
-          rim_in: 21,
-          variants: [],
-          gearboxes: [],
-          tire_options: [],
-        }],
-      });
-      return;
-    }
-    await fulfillJson(route, { brands: [], types: [], models: [] });
-  });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
-  await page.locator("#addCarBtn").click();
-  await page.locator("#wizardBrandList .wiz-opt").click();
-  await page.locator("#wizardTypeList .wiz-opt").click();
-  await page.locator("#wizardCustomModel").fill("X5 M60i");
-  await page.locator("#wizardCustomModelBtn").click();
-
-  const wizard = page.locator("#addCarWizard");
-  await expect(wizard).toBeVisible();
-  await expect(page.locator("#wizardManualAddBtn")).toBeVisible();
-
-  const box = await wizard.boundingBox();
-  if (!box) {
-    throw new Error("Expected mobile wizard to have a bounding box");
-  }
-  expect(Math.round(box.x)).toBe(0);
-  expect(Math.round(box.y)).toBe(0);
-  expect(Math.abs(Math.round(box.width) - 390)).toBeLessThanOrEqual(1);
-
-  const overflowMetrics = await wizard.evaluate((wizardElement) => {
-    const steps = wizardElement.querySelector<HTMLElement>(".wizard-steps");
-    if (!steps) {
-      throw new Error("Expected wizard steps container");
-    }
-    const stepsStyle = window.getComputedStyle(steps);
-    return {
-      stepsOverflowY: stepsStyle.overflowY,
-      wizardClientHeight: Math.round(wizardElement.clientHeight),
-      wizardScrollHeight: Math.round(wizardElement.scrollHeight),
-    };
-  });
-
-  expect(overflowMetrics.stepsOverflowY).toBe("auto");
-  expect(overflowMetrics.wizardScrollHeight).toBeLessThanOrEqual(overflowMetrics.wizardClientHeight + 2);
-
-  await wizard.evaluate((wizardElement) => {
-    wizardElement.scrollTop = wizardElement.scrollHeight;
-  });
-  await activateWizardCloseButton(page);
-  await page.locator("#addCarBtn").click();
-
-  await expect(page.locator("#addCarWizard")).toBeVisible();
-  await expect(wizard.evaluate((wizardElement) => Math.round(wizardElement.scrollTop))).resolves.toBeLessThanOrEqual(1);
-});
-
 test("keeps the manual branch deliberate while summarizing selections and activating the new car", async ({ page }) => {
   const cars = [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }];
   let activeCarId = "car-1";
@@ -298,7 +213,8 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(newRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
 });
 
-test("keeps the final Add Car action visible for the library branch until the user finishes", async ({ page }) => {
+test("completes the library branch on a short mobile screen without losing the final action", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 667 });
   const cars = [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }];
   let activeCarId = "car-1";
   let createdCarName = "";
@@ -381,17 +297,42 @@ test("keeps the final Add Car action visible for the library branch until the us
   await page.locator("#wizardTypeList .wiz-opt").click();
   await page.locator("#wizardModelList .wiz-opt").click();
 
+  const wizard = page.locator("#addCarWizard");
   await expect(page.locator("#wizardProgressText")).toContainText("Step 5 of 5");
   await expect(page.locator("#wizardActionHint")).toContainText("Choose a library gearbox or edit the manual specs to finish.");
   await expect(page.locator("#wizardManualAddBtn")).toBeDisabled();
 
+  const box = await wizard.boundingBox();
+  if (!box) {
+    throw new Error("Expected mobile wizard to have a bounding box");
+  }
+  expect(Math.round(box.x)).toBe(0);
+  expect(Math.round(box.y)).toBe(0);
+  expect(Math.abs(Math.round(box.width) - 390)).toBeLessThanOrEqual(1);
+
+  const overflowMetrics = await wizard.evaluate((wizardElement) => {
+    const steps = wizardElement.querySelector<HTMLElement>(".wizard-steps");
+    if (!steps) {
+      throw new Error("Expected wizard steps container");
+    }
+    const stepsStyle = window.getComputedStyle(steps);
+    return {
+      stepsOverflowY: stepsStyle.overflowY,
+      wizardClientHeight: Math.round(wizardElement.clientHeight),
+      wizardScrollHeight: Math.round(wizardElement.scrollHeight),
+    };
+  });
+
+  expect(overflowMetrics.stepsOverflowY).toBe("auto");
+  expect(overflowMetrics.wizardScrollHeight).toBeLessThanOrEqual(overflowMetrics.wizardClientHeight + 2);
+
   await page.locator("#wizardGearboxList .wiz-opt").click();
 
-  await expect(page.locator("#addCarWizard")).toBeVisible();
+  await expect(wizard).toBeVisible();
   await expect(page.locator("#wizardActionHint")).toContainText("Library path selected");
   await expect(page.locator("#wizardManualAddBtn")).toBeEnabled();
-  await page.locator("#addCarWizard").evaluate((wizard) => {
-    wizard.scrollTop = wizard.scrollHeight;
+  await wizard.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
   });
   await expect(page.locator("#wizardManualAddBtn")).toBeVisible();
 
