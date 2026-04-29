@@ -165,26 +165,20 @@ def normalize_whole_run_context_labels(
         metadata=metadata,
         samples=samples,
     )
+    speed_observation_times = tuple(observation.t_s for observation in speed_observations)
+    rpm_observation_times = tuple(observation.t_s for observation in rpm_observations)
     freshness_limit_s = max(1e-9, window_plan.policy.stride_duration_s)
     labels: list[WholeRunContextWindowLabel] = []
     for window in window_plan.windows:
-        speed_index = _nearest_observation_index(
+        speed_observation, speed_age_s = _nearest_observation_and_age(
             target_t_s=window.center_t_s,
-            observation_times=[observation.t_s for observation in speed_observations],
+            observations=speed_observations,
+            observation_times=speed_observation_times,
         )
-        rpm_index = _nearest_observation_index(
+        rpm_observation, rpm_age_s = _nearest_observation_and_age(
             target_t_s=window.center_t_s,
-            observation_times=[observation.t_s for observation in rpm_observations],
-        )
-        speed_observation = speed_observations[speed_index] if speed_index is not None else None
-        rpm_observation = rpm_observations[rpm_index] if rpm_index is not None else None
-        speed_age_s = (
-            abs(speed_observation.t_s - window.center_t_s)
-            if speed_observation is not None
-            else None
-        )
-        rpm_age_s = (
-            abs(rpm_observation.t_s - window.center_t_s) if rpm_observation is not None else None
+            observations=rpm_observations,
+            observation_times=rpm_observation_times,
         )
         speed_source = speed_observation.speed_source if speed_observation is not None else None
         engine_rpm_source = (
@@ -355,6 +349,21 @@ def _nearest_observation_index(
             observation_times[candidate_index],
         ),
     )
+
+
+def _nearest_observation_and_age[T](
+    *,
+    target_t_s: float,
+    observations: Sequence[T],
+    observation_times: Sequence[float],
+) -> tuple[T | None, float | None]:
+    index = _nearest_observation_index(
+        target_t_s=target_t_s,
+        observation_times=observation_times,
+    )
+    if index is None:
+        return None, None
+    return observations[index], abs(observation_times[index] - target_t_s)
 
 
 def _context_coverage(
