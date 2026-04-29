@@ -4,10 +4,9 @@ import asyncio
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
+from _update_manager_test_helpers import FakeRunner, cancel_task, patch_validation_environment
 
 from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -61,14 +60,13 @@ class TestUpdateManager:
         runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
-        with patch("shutil.which", mock_which):
+        with patch_validation_environment():
             manager.start("TestNet", "pass123")
             assert manager.status.state == UpdateState.running
             with pytest.raises(UpdateError, match="already in progress"):
                 manager.start("OtherNet", "pass456")
-
-        manager.cancel()
-        await cancel_task(manager)
+            manager.cancel()
+            await cancel_task(manager)
 
     def test_cancel_returns_false_when_idle(self) -> None:
         manager, _ = self.make_manager()
@@ -90,11 +88,10 @@ class TestUpdateManager:
         runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
-        with patch("shutil.which", mock_which):
+        with patch_validation_environment():
             manager.start("TestNet", "pass")
             assert manager.cancel() is True
-
-        await cancel_task(manager)
+            await cancel_task(manager)
 
     @pytest.mark.asyncio
     async def test_status_to_payload_never_leaks_password(self) -> None:
@@ -102,11 +99,11 @@ class TestUpdateManager:
         runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
-        with patch("shutil.which", mock_which):
+        with patch_validation_environment():
             manager.start("TestNet", "supersecret")
 
-        assert "supersecret" not in str(update_status_to_builtins(manager.status))
-        await cancel_task(manager)
+            assert "supersecret" not in str(update_status_to_builtins(manager.status))
+            await cancel_task(manager)
 
     @pytest.mark.asyncio
     async def test_start_sets_ssid_and_timestamps(self) -> None:
@@ -115,10 +112,10 @@ class TestUpdateManager:
         manager, _ = self.make_manager(runner=runner)
 
         before = time.time()
-        with patch("shutil.which", mock_which):
+        with patch_validation_environment():
             manager.start("MyWifi", "pw")
-        after = time.time()
+            after = time.time()
 
-        assert manager.status.ssid == "MyWifi"
-        assert before <= manager.status.started_at <= after
-        await cancel_task(manager)
+            assert manager.status.ssid == "MyWifi"
+            assert before <= manager.status.started_at <= after
+            await cancel_task(manager)

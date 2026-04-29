@@ -10,8 +10,8 @@ import pytest
 from _update_manager_test_helpers import (
     assert_hotspot_restored,
     make_mock_release,
-    mock_which,
     patch_release_fetcher,
+    patch_validation_environment,
     run_update,
     seed_runtime_artifacts,
     setup_update_env,
@@ -100,15 +100,11 @@ class TestUpdateManagerAsync:
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
         runner.set_response("python3 -c pass", 1, "", "sudo: a password is required")
-        with (
-            patch("shutil.which", mock_which),
-            patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
-            patch(
-                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
-                side_effect=AssertionError("release resolution should not run without privileges"),
-            ),
+        with patch(
+            "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
+            side_effect=AssertionError("release resolution should not run without privileges"),
         ):
-            await run_update(manager, "TestNet", "pass")
+            await run_update(manager, "TestNet", "pass", effective_uid=1000)
         assert manager.status.state == UpdateState.failed
         assert (
             "privileg"
@@ -125,8 +121,7 @@ class TestUpdateManagerAsync:
             "",
             "Error: Connection activation failed",
         )
-        with patch("shutil.which", mock_which):
-            await run_update(manager, "BadNet", "wrong")
+        await run_update(manager, "BadNet", "wrong")
         assert manager.status.state == UpdateState.failed
         assert_hotspot_restored(runner)
 
@@ -209,8 +204,7 @@ class TestUpdateManagerAsync:
     async def test_secure_ssid_requires_password(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
         runner.set_response("dev wifi list", 0, "Pim:WPA2\n")
-        with patch("shutil.which", mock_which):
-            await run_update(manager, "Pim", "")
+        await run_update(manager, "Pim", "")
         assert manager.status.state == UpdateState.failed
 
     async def test_password_is_applied_via_connection_modify(self, tmp_path) -> None:
@@ -286,10 +280,7 @@ class TestUpdateManagerAsync:
 
     async def test_disk_check_failure_aborts_update(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
-        with (
-            patch("shutil.which", mock_which),
-            patch("shutil.disk_usage", side_effect=OSError("statfs failed")),
-        ):
+        with patch("shutil.disk_usage", side_effect=OSError("statfs failed")):
             await run_update(manager, "TestNet", "pass")
 
         assert manager.status.state == UpdateState.failed
@@ -450,7 +441,7 @@ class TestUpdateManagerAsync:
 
     async def test_timeout_handling(self, tmp_path) -> None:
         with (
-            patch("shutil.which", mock_which),
+            patch_validation_environment(),
             patch("vibesensor.use_cases.updates.runtime.UPDATE_TIMEOUT_S", 0.5),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
         ):
@@ -571,6 +562,5 @@ class TestUpdateManagerAsync:
         def which_without(name: str) -> str | None:
             return None if name == missing_tool else f"/usr/bin/{name}"
 
-        with patch("shutil.which", which_without):
-            await run_update(manager, "TestNet", "pass")
+        await run_update(manager, "TestNet", "pass", tool_lookup=which_without)
         assert manager.status.state == UpdateState.failed
