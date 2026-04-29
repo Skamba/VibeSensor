@@ -18,7 +18,7 @@ from typing import Any, Literal, Required, TypedDict
 
 from pydantic import ConfigDict
 
-from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
     PlotDataResult,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Final, Literal
+from typing import Final
 
 SILENCE_DB: Final[float] = -120.0
 """dB value representing silence / no meaningful vibration signal."""
@@ -46,9 +46,6 @@ shown as perfectly certain."""
 
 SNR_LOG_DIVISOR: Final[float] = 2.5
 """Divisor for log1p(SNR) normalisation to [0, 1]."""
-
-LEGACY_CONTEXT_CAVEAT_KEY: Final[Literal["legacy_context"]] = "legacy_context"
-"""Shared caveat/factor key for legacy whole-run context fallbacks."""
 
 ORDER_SUPPRESS_PERSISTENT_MIN_CONF: Final[float] = 0.40
 """Minimum order-finding confidence to suppress a matching persistent peak."""

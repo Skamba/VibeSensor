@@ -3,8 +3,8 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
-from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
 

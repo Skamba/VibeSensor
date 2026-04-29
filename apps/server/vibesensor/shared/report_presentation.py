@@ -7,10 +7,10 @@ import math
 from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report_i18n import human_location, location_candidates
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.strength_bands import BANDS
 
 __all__ = [
