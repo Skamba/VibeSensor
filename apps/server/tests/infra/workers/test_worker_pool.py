@@ -11,12 +11,12 @@ Validates:
 from __future__ import annotations
 
 import threading
-import time
 from concurrent.futures import Future
 from math import pi
 
 import numpy as np
 import pytest
+from test_support.core import wait_until
 
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.workers.worker_pool import WorkerPool
@@ -30,6 +30,10 @@ def _submit_blocking_task(
     release = threading.Event()
     future = pool.submit(lambda: release.wait(timeout=1.0) or result)
     return release, future
+
+
+def _assert_wait_until(description: str, predicate, *, timeout_s: float = 1.0) -> None:
+    assert wait_until(predicate, timeout_s=timeout_s), f"Timed out waiting for {description}"
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +116,7 @@ class TestWorkerPool:
 
     def test_submit_blocks_when_pool_is_saturated(self, make_pool) -> None:
         pool = make_pool(max_workers=1, max_queue_size=0)
+        submit_started = threading.Event()
         second_submitted = threading.Event()
         second_finished = threading.Event()
         results: list[int] = []
@@ -119,6 +124,7 @@ class TestWorkerPool:
         release_first, first = _submit_blocking_task(pool, result=1)
 
         def _submit_second() -> None:
+            submit_started.set()
             future = pool.submit(lambda: 2)
             second_submitted.set()
             results.append(future.result(timeout=1.0))
@@ -127,7 +133,14 @@ class TestWorkerPool:
         submit_thread = threading.Thread(target=_submit_second)
         submit_thread.start()
 
-        time.sleep(0.05)
+        _assert_wait_until(
+            "second submitter to block behind the saturated pool",
+            lambda: (
+                submit_started.is_set()
+                and submit_thread.is_alive()
+                and not second_submitted.is_set()
+            ),
+        )
         assert submit_thread.is_alive()
         assert not second_submitted.is_set()
 
@@ -158,16 +171,21 @@ class TestWorkerPool:
         pool = make_pool(max_workers=1, max_queue_size=0)
         release_first, first = _submit_blocking_task(pool)
         blocked_result: dict[str, str] = {}
+        blocked_submit_started = threading.Event()
 
         def _blocked_submit() -> None:
             try:
+                blocked_submit_started.set()
                 pool.submit(lambda: 2)
             except RuntimeError as exc:
                 blocked_result["error"] = str(exc)
 
         submit_thread = threading.Thread(target=_blocked_submit)
         submit_thread.start()
-        time.sleep(0.05)
+        _assert_wait_until(
+            "blocked submitter to wait behind the saturated pool",
+            lambda: blocked_submit_started.is_set() and submit_thread.is_alive(),
+        )
         assert submit_thread.is_alive()
 
         pool.shutdown(wait=False, cancel_futures=True)
@@ -179,7 +197,7 @@ class TestWorkerPool:
 
     def test_map_unordered_handles_batches_larger_than_capacity(self, make_pool) -> None:
         pool = make_pool(max_workers=2, max_queue_size=1)
-        result = pool.map_unordered(lambda x: time.sleep(0.01) or x * 2, [1, 2, 3, 4, 5])
+        result = pool.map_unordered(lambda x: x * 2, [1, 2, 3, 4, 5])
         assert result == {1: 2, 2: 4, 3: 6, 4: 8, 5: 10}
         stats = pool.stats()
         assert stats["pending_tasks"] == 0
@@ -189,10 +207,21 @@ class TestWorkerPool:
     def test_uses_multiple_threads(self, make_pool) -> None:
         """Verify that work actually runs on different threads."""
         pool = make_pool(max_workers=4)
+        overlap_seen = threading.Event()
+        started_threads: set[int] = set()
+        started_threads_lock = threading.Lock()
 
         def _get_thread_id(_: int) -> int | None:
-            time.sleep(0.02)  # ensure tasks overlap
-            return threading.current_thread().ident
+            thread_id = threading.current_thread().ident
+            assert thread_id is not None
+            with started_threads_lock:
+                started_threads.add(thread_id)
+                if len(started_threads) >= 2:
+                    overlap_seen.set()
+            assert overlap_seen.wait(timeout=1.0), (
+                "Timed out waiting for at least two worker threads to overlap"
+            )
+            return thread_id
 
         thread_ids = pool.map_unordered(_get_thread_id, [1, 2, 3, 4])
         # At least 2 different threads should be used
@@ -298,6 +327,7 @@ class TestParallelComputeAll:
         pool = make_pool(max_workers=4)
         proc = _make_processor(pool=pool, fft_n=2048)
         client_ids = [f"c{i}" for i in range(4)]
+        start_barrier = threading.Barrier(3)
 
         # Pre-fill buffers
         for cid in client_ids:
@@ -307,18 +337,18 @@ class TestParallelComputeAll:
 
         def _ingest_loop() -> None:
             try:
+                start_barrier.wait(timeout=1.0)
                 for _ in range(50):
                     for cid in client_ids:
                         _inject_test_signal(proc, cid, n_samples=64)
-                    time.sleep(0.001)
             except Exception as e:
                 errors.append(e)
 
         def _compute_loop() -> None:
             try:
+                start_barrier.wait(timeout=1.0)
                 for _ in range(20):
                     proc.compute_all(client_ids)
-                    time.sleep(0.002)
             except Exception as e:
                 errors.append(e)
 
@@ -326,6 +356,7 @@ class TestParallelComputeAll:
         t2 = threading.Thread(target=_compute_loop)
         t1.start()
         t2.start()
+        start_barrier.wait(timeout=1.0)
         t1.join(timeout=10)
         t2.join(timeout=10)
         assert not t1.is_alive(), "Ingest thread hung (possible deadlock)"
