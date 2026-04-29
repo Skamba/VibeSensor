@@ -18,6 +18,8 @@ from tests_e2e.e2e_helpers import (
     parse_export_zip,
     pdf_text,
     run_simulator,
+    wait_export_ready,
+    wait_report_pdf_ready,
     wait_run_status,
 )
 
@@ -221,7 +223,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             wait_run_status(base_url, run_id_2)
             created_run_ids.append(run_id_2)
 
-            export_resp = api_bytes(base_url, f"/api/history/{run_id_2}/export")
+            export_resp = wait_export_ready(base_url, run_id_2)
             assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
             run_details, rows, names = parse_export_zip(export_resp.body)
             assert names == {f"{run_id_2}.json", f"{run_id_2}_raw.csv"}
@@ -272,8 +274,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_nl
             assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_en
 
-            pdf_nl = api_bytes(base_url, f"/api/history/{run_id_3}/report.pdf?lang=nl")
-            pdf_en = api_bytes(base_url, f"/api/history/{run_id_3}/report.pdf?lang=en")
+            pdf_nl = wait_report_pdf_ready(base_url, run_id_3, lang="nl")
+            pdf_en = wait_report_pdf_ready(base_url, run_id_3, lang="en")
             assert str(pdf_nl.headers.get("content-type", "")).startswith("application/pdf")
             assert str(pdf_en.headers.get("content-type", "")).startswith("application/pdf")
             text_nl = pdf_text(pdf_nl.body)

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from tests_e2e._docker_edge_helpers import (
@@ -16,12 +14,15 @@ from tests_e2e._docker_edge_helpers import (
     _wait_complete,
 )
 from tests_e2e.e2e_helpers import (
-    api_bytes,
     api_json,
     history_run_ids,
     parse_export_zip,
     pdf_text,
+    recording_status,
     wait_for,
+    wait_for_stable,
+    wait_export_ready,
+    wait_report_pdf_ready,
 )
 
 pytestmark = pytest.mark.e2e
@@ -30,12 +31,29 @@ pytestmark = pytest.mark.e2e
 def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     _cleanup_clients(base)
-    wait_for(
-        lambda: not api_json(base, "/api/clients").get("clients"),
-        timeout_s=5.0,
-        message="simulator clients did not quiesce before empty-run check",
+
+    def _quiescence_state() -> dict[str, object]:
+        status = recording_status(base)
+        clients = api_json(base, "/api/clients").get("clients", [])
+        return {
+            "client_ids": [client.get("id") for client in clients],
+            "run_id": status.get("run_id"),
+            "analysis_in_progress": status.get("analysis_in_progress"),
+            "last_completed_run_id": status.get("last_completed_run_id"),
+        }
+
+    def _quiescent_state() -> dict[str, object] | None:
+        state = _quiescence_state()
+        return state if not state["client_ids"] and state["run_id"] is None else None
+
+    wait_for_stable(
+        _quiescent_state,
+        timeout_s=15.0,
+        stable_for_s=2.5,
+        interval_s=0.25,
+        message="simulator clients or active recording did not stay quiescent before empty-run check",
+        state=_quiescence_state,
     )
-    time.sleep(2.5)
     before = history_run_ids(base)
 
     first = api_json(base, "/api/recording/start", method="POST")
@@ -58,7 +76,7 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     run = _wait_complete(base, run_short)
     assert run["status"] in {"complete", "error"}
     if run["status"] == "complete":
-        pdf = api_bytes(base, f"/api/history/{run_short}/report.pdf")
+        pdf = wait_report_pdf_ready(base, run_short)
         assert pdf.body.startswith(b"%PDF-")
     _cleanup_run(base, run_short)
 
@@ -79,11 +97,11 @@ def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> No
         insights = api_json(base, f"/api/history/{run_id}/insights")
         assert insights.get("findings"), "reduced-sensor run produced no findings"
 
-        export_resp = api_bytes(base, f"/api/history/{run_id}/export")
+        export_resp = wait_export_ready(base, run_id)
         _, rows, _ = parse_export_zip(export_resp.body)
         assert rows, "reduced-sensor export has no rows"
 
-        pdf_resp = api_bytes(base, f"/api/history/{run_id}/report.pdf")
+        pdf_resp = wait_report_pdf_ready(base, run_id)
         text = pdf_text(pdf_resp.body)
         assert "vibesensor diagnostic report" in text
         _assert_no_placeholders(text)
