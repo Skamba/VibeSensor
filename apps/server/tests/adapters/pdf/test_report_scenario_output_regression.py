@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from test_support.core import standard_metadata
+from test_support.findings import make_ref_finding
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
-from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 from vibesensor.use_cases.history.report_document import build_report_document
 
@@ -96,18 +96,12 @@ class TestReferenceFindingDistinguishability:
     """Reference-gap findings must remain distinct from diagnostic findings."""
 
     def test_reference_finding_has_finding_kind_field(self) -> None:
-        reference = _reference_missing_finding(
-            finding_id="REF_SPEED",
-            suspected_source="unknown",
-        )
+        reference = finding_from_payload(make_ref_finding("REF_SPEED"))
         assert reference.kind is not None
         assert reference.kind.value == "reference"
 
     def test_reference_findings_excluded_from_top_causes(self) -> None:
-        reference = _reference_missing_finding(
-            finding_id="REF_SPEED",
-            suspected_source="unknown",
-        )
+        reference = finding_from_payload(make_ref_finding("REF_SPEED"))
         findings = [
             reference,
             finding_from_payload(
@@ -124,16 +118,10 @@ class TestReferenceFindingDistinguishability:
 
     def test_all_ref_variants_have_reference_type(self) -> None:
         for finding_id in ("REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"):
-            reference = _reference_missing_finding(
-                finding_id=finding_id,
-                suspected_source="unknown",
-            )
+            reference = finding_from_payload(make_ref_finding(finding_id))
             assert reference.kind is not None
             assert reference.kind.value == "reference"
 
     def test_reference_finding_confidence_is_none(self) -> None:
-        reference = _reference_missing_finding(
-            finding_id="REF_SPEED",
-            suspected_source="unknown",
-        )
+        reference = finding_from_payload(make_ref_finding("REF_SPEED"))
         assert reference.confidence is None
