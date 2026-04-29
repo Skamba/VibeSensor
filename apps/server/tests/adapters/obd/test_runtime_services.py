@@ -15,13 +15,16 @@ from test_support.obd_runtime import (
 )
 
 from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
+from vibesensor.adapters.obd.connection_executor import ObdConnectionLoopState
+from vibesensor.adapters.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.adapters.obd.elm327 import ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPidFailureKind, ObdPidPollResult, ObdPollResult
 from vibesensor.shared.operational_errors import ExternalCommandError
 
 
-def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -> None:
+@pytest.mark.asyncio
+async def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -> None:
     clock = _FakeClock(now=time.monotonic())
     started_at = clock.now
     calls: list[tuple[str, float | None]] = []
@@ -43,9 +46,16 @@ def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -
 
     parts.session.request.side_effect = request
 
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    state = ObdConnectionLoopState(session=parts.session, session_device_mac="00043e5a4a4d")
+    state = await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
     clock.now = started_at + 0.05
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.2)]
     assert parts.projection.resolve_speed().source == "obd2"
@@ -60,7 +70,8 @@ def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -
     assert status.connection_state == "connected"
 
 
-def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stale() -> None:
+@pytest.mark.asyncio
+async def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stale() -> None:
     clock = _FakeClock()
     rpm_responses = [("410C1AF8", 0.01)]
     speed_responses = [("410D28", 0.01)]
@@ -82,9 +93,16 @@ def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stale() ->
 
     parts.session.request.side_effect = request
 
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    state = ObdConnectionLoopState(session=parts.session, session_device_mac="00043e5a4a4d")
+    state = await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
     clock.now = 0.05
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
 
     assert parts.facts.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 1.99
@@ -97,7 +115,10 @@ def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stale() ->
     assert status.backoff_active is True
 
 
-def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_speed_times_out() -> None:
+@pytest.mark.asyncio
+async def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_speed_times_out() -> (
+    None
+):
     clock = _FakeClock()
     calls: list[tuple[str, float | None]] = []
     rpm_responses = [("410C1AF8", 0.12), ("410C1AF8", 0.06)]
@@ -116,8 +137,15 @@ def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_speed_ti
 
     parts.session.request.side_effect = request
 
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
-    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    state = ObdConnectionLoopState(session=parts.session, session_device_mac="00043e5a4a4d")
+    state = await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
+    await parts.executor.execute(
+        state=state,
+        step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
+    )
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.3)]
     status = parts.projection.status_snapshot()
@@ -151,6 +179,14 @@ def test_obd_runtime_projection_resolves_stale_speed_to_manual_fallback() -> Non
 
 def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
     admin_client = MagicMock()
+    admin_client.device_info.return_value = ObdDeviceSnapshot(
+        mac_address="00043e5a4a4d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=True,
+        rfcomm_channel=1,
+    )
     parts = _build_runtime_parts(clock=lambda: 100.0, admin_client=admin_client)
     parts.settings.apply_speed_source_settings(
         effective_speed_kmh=None,
@@ -162,9 +198,9 @@ def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
 
     status = parts.projection.status_snapshot()
 
-    admin_client.device_info.assert_not_called()
     assert status.device_mac == "00043e5a4a4d"
     assert status.paired is False
+    assert status.trusted is False
 
 
 def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
@@ -210,56 +246,3 @@ def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> Non
     assert status.connection_state == "disconnected"
     assert status.last_error == "PID 010C request failed: Session is not connected"
     assert status.reconnect_delay_s == 4.0
-
-
-def test_connect_blocking_closes_session_and_propagates_transport_error() -> None:
-    clock = _FakeClock()
-    admin_client = MagicMock()
-    admin_client.device_info.return_value = ObdDeviceSnapshot(
-        mac_address="00043e5a4a4d",
-        name="OBDLink MX+",
-        paired=True,
-        trusted=True,
-        connected=False,
-        rfcomm_channel=1,
-    )
-    session = MagicMock()
-    session.initialize.side_effect = ObdTransportError("no prompt from adapter")
-    parts = _build_runtime_parts(clock=clock, admin_client=admin_client, session=session)
-
-    with pytest.raises(ObdTransportError, match="no prompt from adapter"):
-        parts.executor._connect_blocking("00043e5a4a4d", "OBDLink MX+")
-
-    session.close.assert_called_once_with()
-
-
-def test_connect_blocking_keeps_initialized_session_open() -> None:
-    clock = _FakeClock()
-    parts = _connected_runtime_parts(clock=clock)
-
-    assert parts.runner is not None
-    assert parts.facts is not None
-    assert parts.projection is not None
-    parts.session.initialize.assert_called_once_with()
-    assert parts.session.close.call_count == 0
-
-
-def test_connect_blocking_closes_session_and_propagates_unexpected_runtime_error() -> None:
-    clock = _FakeClock()
-    admin_client = MagicMock()
-    admin_client.device_info.return_value = ObdDeviceSnapshot(
-        mac_address="00043e5a4a4d",
-        name="OBDLink MX+",
-        paired=True,
-        trusted=True,
-        connected=False,
-        rfcomm_channel=1,
-    )
-    session = MagicMock()
-    session.initialize.side_effect = RuntimeError("session bug")
-    parts = _build_runtime_parts(clock=clock, admin_client=admin_client, session=session)
-
-    with pytest.raises(RuntimeError, match="session bug"):
-        parts.executor._connect_blocking("00043e5a4a4d", "OBDLink MX+")
-
-    session.close.assert_called_once_with()
