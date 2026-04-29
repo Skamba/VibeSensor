@@ -19,7 +19,11 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,
 )
-from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis, _order_hypotheses
+from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
+    order_hypotheses_by_key,
+    ordered_order_hypothesis_keys,
+)
+from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderHarmonicEvidenceSummary,
     OrderTracePoint,
@@ -106,17 +110,9 @@ def summarize_whole_run_order_traces(
     for point in points:
         points_by_hypothesis[point.hypothesis_key].append(point)
 
-    hypothesis_catalog = {hypothesis.key: hypothesis for hypothesis in _order_hypotheses()}
-    ordered_keys = [
-        hypothesis.key
-        for hypothesis in _order_hypotheses()
-        if hypothesis.key in points_by_hypothesis
-    ]
-    ordered_keys.extend(
-        sorted(key for key in points_by_hypothesis if key not in hypothesis_catalog)
-    )
+    hypothesis_catalog = order_hypotheses_by_key()
     summaries: list[OrderTraceSummary] = []
-    for hypothesis_key in ordered_keys:
+    for hypothesis_key in ordered_order_hypothesis_keys(points_by_hypothesis):
         hypothesis_points = tuple(
             sorted(points_by_hypothesis[hypothesis_key], key=lambda point: point.window_index)
         )
