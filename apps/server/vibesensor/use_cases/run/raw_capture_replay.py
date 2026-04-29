@@ -252,7 +252,9 @@ def build_raw_backed_samples(
     sample_rate_unverified_sensor_count = sum(
         1 for sensor in raw_capture.sensors if sensor.manifest.sample_rate_unverified
     )
-    legacy_sensor_count = sum(1 for timeline in timelines.values() if _timeline_is_legacy(timeline))
+    legacy_sensor_count = sum(
+        1 for timeline in timelines.values() if raw_timeline_is_legacy(timeline)
+    )
     sync_unverified_sensor_count = sum(
         1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
     )
@@ -740,10 +742,6 @@ def _build_replay_warnings(
         )
     )
     return tuple(warnings)
-
-
-def _timeline_is_legacy(timeline: RawSensorTimeline) -> bool:
-    return raw_timeline_is_legacy(timeline)
 
 
 def _timeline_has_unverified_sync(timeline: RawSensorTimeline) -> bool:
