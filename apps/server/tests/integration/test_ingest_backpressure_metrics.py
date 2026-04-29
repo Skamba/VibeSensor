@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import math
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +23,7 @@ from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
+from test_support.core import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import (
@@ -138,6 +139,37 @@ def _ready_health_state() -> RuntimeHealthState:
     return health_state
 
 
+def _backpressure_wait_state(
+    proto: DataDatagramProtocol,
+    ingest_diagnostics: IngestDiagnosticsCollector,
+    websocket: AsyncMock,
+) -> dict[str, object]:
+    udp = ingest_diagnostics.udp_snapshot()
+    raw_capture = ingest_diagnostics.raw_capture_snapshot()
+    ws_publish = ingest_diagnostics.ws_publish_snapshot()
+    return {
+        "udp_queue_size": proto._queue.qsize(),
+        "udp_processed_datagrams": udp.processed_datagrams,
+        "udp_queue_depth": udp.queue_depth,
+        "raw_capture_queue_depth": raw_capture.queue_depth,
+        "ws_publish_ticks": ws_publish.total_publish_ticks,
+        "ws_active_connections": ws_publish.active_connections,
+        "ws_send_count": websocket.send_text.await_count,
+    }
+
+
+async def _assert_async_wait_until(
+    description: str,
+    predicate: Callable[[], object],
+    *,
+    timeout_s: float = 2.0,
+    state: Callable[[], object],
+) -> None:
+    assert await async_wait_until(predicate, timeout_s=timeout_s), (
+        f"Timed out waiting for {description}; state={state()}"
+    )
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sensor_count", [1, 2, 5], ids=["one-sensor", "two-sensor", "five-sensor"])
 async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
@@ -217,6 +249,7 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
         start_mono = snapshot.start_mono_s
         seq_by_sensor = {sensor.client_id.hex(): 1 for sensor in sensors}
         deferred_late_seq_by_sensor: dict[str, int] = {}
+        expected_processed_datagrams = 0
 
         for step in range(48):
             speed_kmh = 35.0 + (step % 12) * 4.0
@@ -238,6 +271,7 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
                     wheel_hz,
                 )
                 proto.datagram_received(packet, ("127.0.0.1", 7000 + index))
+                expected_processed_datagrams += 1
                 seq_by_sensor[sensor_id] = current_seq + 1
                 if index == 0 and step in (12, 30) and sensor_id in deferred_late_seq_by_sensor:
                     proto.datagram_received(
@@ -250,9 +284,20 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
                         ),
                         ("127.0.0.1", 7000 + index),
                     )
+                    expected_processed_datagrams += 1
 
             if step % 2 == 1:
-                await asyncio.sleep(0)
+                await _assert_async_wait_until(
+                    f"udp processing to reach {expected_processed_datagrams} datagrams",
+                    lambda expected=expected_processed_datagrams: (
+                        ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
+                    ),
+                    state=lambda: _backpressure_wait_state(
+                        proto,
+                        ingest_diagnostics,
+                        websocket,
+                    ),
+                )
                 processor.compute_all(
                     registry.active_client_ids(),
                     sample_rates_hz=_sample_rates(registry),
@@ -264,7 +309,15 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
                     start_mono,
                 )
             if step % 6 == 5:
-                await asyncio.sleep(0.01)
+                await _assert_async_wait_until(
+                    "udp queue drain after the current burst",
+                    lambda: proto._queue.qsize() == 0,
+                    state=lambda: _backpressure_wait_state(
+                        proto,
+                        ingest_diagnostics,
+                        websocket,
+                    ),
+                )
 
         await asyncio.wait_for(proto._queue.join(), timeout=10.0)
         processor.compute_all(
@@ -277,7 +330,20 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
             start_utc,
             start_mono,
         )
-        await asyncio.sleep(0.1)
+        await _assert_async_wait_until(
+            "raw-capture drain and websocket publish metrics",
+            lambda: (
+                ingest_diagnostics.raw_capture_snapshot().queue_depth == 0
+                and ingest_diagnostics.ws_publish_snapshot().total_publish_ticks > 0
+                and websocket.send_text.await_count > 0
+            ),
+            timeout_s=5.0,
+            state=lambda: _backpressure_wait_state(
+                proto,
+                ingest_diagnostics,
+                websocket,
+            ),
+        )
 
         health = await asyncio.to_thread(
             build_system_health_snapshot,
