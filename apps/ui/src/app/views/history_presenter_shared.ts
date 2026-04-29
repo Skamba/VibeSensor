@@ -1,5 +1,4 @@
 import type {
-  FindingPayload,
   HistoryEntry,
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
@@ -21,6 +20,8 @@ export type PresenterParams = Pick<
   | "runs"
   | "t"
 >;
+
+export type HistoryFindingPayload = HistoryInsightsPayload["findings"][number];
 
 export type HistoryRowStatusBadge = {
   label: string;
@@ -56,7 +57,7 @@ export const EMPTY_RUN_DETAIL: RunDetail = {
 
 export function summarizeFindings(
   summary: HistoryInsightsPayload | null,
-): FindingPayload[] {
+): HistoryFindingPayload[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
 
@@ -101,12 +102,14 @@ function isInconclusiveSource(source: unknown): boolean {
   return key === "" || key === "unknown_resonance" || key === "baseline_noise";
 }
 
-export function isInconclusiveFinding(finding: FindingPayload | null): boolean {
+export function isInconclusiveFinding(
+  finding: HistoryFindingPayload | null,
+): boolean {
   return finding !== null && isInconclusiveSource(finding.suspected_source);
 }
 
 export function confidenceText(
-  finding: FindingPayload,
+  finding: HistoryFindingPayload,
   params: Pick<PresenterParams, "fmt" | "t">,
 ): string {
   const { fmt, t } = params;
@@ -121,7 +124,7 @@ export function confidenceText(
 }
 
 export function findingTone(
-  finding: FindingPayload | null,
+  finding: HistoryFindingPayload | null,
 ): HistoryFindingTone {
   const tone = String(finding?.confidence_tone ?? "").toLowerCase();
   if (tone === "success" || tone === "warn") {
@@ -131,7 +134,7 @@ export function findingTone(
 }
 
 export function findingSignatureText(
-  finding: FindingPayload,
+  finding: HistoryFindingPayload,
   params: Pick<PresenterParams, "fmt">,
 ): string {
   const raw = finding.frequency_hz_or_order;
@@ -143,7 +146,7 @@ export function findingSignatureText(
 }
 
 export function findingLocationText(
-  finding: FindingPayload,
+  finding: HistoryFindingPayload,
   summary: HistoryInsightsPayload | null,
   t: PresenterParams["t"],
 ): string {
@@ -155,7 +158,7 @@ export function findingLocationText(
 }
 
 export function findingSpeedBandText(
-  finding: FindingPayload,
+  finding: HistoryFindingPayload,
   summary: HistoryInsightsPayload | null,
   t: PresenterParams["t"],
 ): string {
