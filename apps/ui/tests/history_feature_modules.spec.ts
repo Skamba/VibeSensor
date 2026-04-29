@@ -341,13 +341,11 @@ test("history feature refreshes runs and renders table state through one owner",
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
-test("history feature binds panel actions through the shared owner", () => {
+test("history feature routes the open-live table action to dashboard navigation", () => {
   const { feature, getLatestHandlers, primaryViewActivations } = createFeatureHarness();
   feature.bindHandlers();
 
-  const handlers = getLatestHandlers();
-  expect(handlers).not.toBeNull();
-  handlers?.onTableInteraction({ type: "open-live" });
+  getLatestHandlers()?.onTableInteraction({ type: "open-live" });
 
   expect(primaryViewActivations).toEqual(["dashboardView"]);
 });
