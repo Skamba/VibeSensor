@@ -86,8 +86,7 @@ imported from the legacy grouped car library. During import, fields
 without authoritative provenance were given `unverified` confidence and
 the original `no_confidence` remap was recorded in per-field notes. Once
 the canonical loader and validators stabilized, those migration notes
-were removed in bulk via
-`tools/dev/strip_vehicle_shards_migration_notes.py`. New rows must not
+were removed during the canonical-loader migration. New rows must not
 re-introduce migration boilerplate at the field level; if a value is
 inherited from family-level data, encode that through `confidence` and
 `evidence_refs`, not through prose.
