@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 
@@ -142,3 +144,14 @@ def json_text_or_default(value: JsonValue | object, default: str = "") -> str:
 
 def json_text_or_none(value: JsonValue | object) -> str | None:
     return value if isinstance(value, str) else None
+
+
+def tuple_from_mapping_list_field[T](
+    data: JsonObject,
+    field_name: str,
+    row_from_mapping: Callable[[JsonObject], T],
+) -> tuple[T, ...]:
+    raw_rows = data.get(field_name)
+    if not isinstance(raw_rows, list):
+        return ()
+    return tuple(row_from_mapping(row) for row in raw_rows if isinstance(row, dict))

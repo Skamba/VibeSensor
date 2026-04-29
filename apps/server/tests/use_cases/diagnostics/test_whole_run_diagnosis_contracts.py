@@ -127,6 +127,47 @@ def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
         WholeRunDiagnosisSummary.from_mapping(payload)
 
 
+def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
+    payload = WholeRunDiagnosisSummary(
+        diagnosis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        rank=1,
+        data_basis="raw_backed",
+    ).to_json_object()
+    payload["exemplar_references"] = [
+        {"kind": "whole_run_context_interval", "context_segment_index": 2},
+        "skip-me",
+    ]
+    payload["support_factors"] = [
+        {
+            "factor_key": "raw_backed",
+            "polarity": "support",
+            "severity": "high",
+            "weight": 0.1,
+        },
+        3,
+    ]
+    payload["counterevidence_factors"] = [
+        {
+            "factor_key": "incomplete_reference",
+            "polarity": "counterevidence",
+            "severity": "low",
+            "weight": 0.05,
+        },
+        None,
+    ]
+
+    restored = WholeRunDiagnosisSummary.from_mapping(payload)
+
+    assert [reference.kind for reference in restored.exemplar_references] == [
+        "whole_run_context_interval"
+    ]
+    assert [factor.factor_key for factor in restored.support_factors] == ["raw_backed"]
+    assert [factor.factor_key for factor in restored.counterevidence_factors] == [
+        "incomplete_reference"
+    ]
+
+
 def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> None:
     assert set(DiagnosisExemplarReferenceResponse.__annotations__) == {
         "kind",

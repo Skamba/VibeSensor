@@ -100,6 +100,31 @@ def test_spatial_evidence_summary_rejects_invalid_optional_values(
         SpatialEvidenceSummary.from_mapping(payload)
 
 
+def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
+    payload = SpatialEvidenceSummary(
+        candidate_key="wheel",
+        suspected_source="wheel/tire",
+        proof_basis="supporting_windows_raw_backed",
+        total_window_count=12,
+        supporting_window_count=4,
+        supporting_sensor_count=2,
+    ).to_json_object()
+    payload["location_summaries"] = [
+        {
+            "location": "Front Left",
+            "sensor_ids": ["front-left"],
+            "supporting_window_count": 3,
+            "support_ratio": 0.75,
+            "coherent_window_count": 2,
+        },
+        "skip-me",
+    ]
+
+    restored = SpatialEvidenceSummary.from_mapping(payload)
+
+    assert [summary.location for summary in restored.location_summaries] == ["Front Left"]
+
+
 def test_history_spatial_response_contracts_expose_named_summary_fields() -> None:
     assert set(SpatialLocationSummaryResponse.__annotations__) == {
         "location",

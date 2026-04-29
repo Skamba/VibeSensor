@@ -41,6 +41,9 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 from vibesensor.shared.types.whole_run_json_helpers import (
     set_optional_value as _set_optional,
 )
+from vibesensor.shared.types.whole_run_json_helpers import (
+    tuple_from_mapping_list_field as _tuple_from_mapping_list_field,
+)
 
 __all__ = [
     "DiagnosisExemplarReference",
@@ -317,36 +320,6 @@ class WholeRunDiagnosisSummary:
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> WholeRunDiagnosisSummary:
-        raw_exemplars = data.get("exemplar_references")
-        exemplars = (
-            tuple(
-                DiagnosisExemplarReference.from_mapping(row)
-                for row in raw_exemplars
-                if isinstance(row, dict)
-            )
-            if isinstance(raw_exemplars, list)
-            else ()
-        )
-        raw_support_factors = data.get("support_factors")
-        support_factors = (
-            tuple(
-                DiagnosisFactor.from_mapping(row)
-                for row in raw_support_factors
-                if isinstance(row, dict)
-            )
-            if isinstance(raw_support_factors, list)
-            else ()
-        )
-        raw_counter_factors = data.get("counterevidence_factors")
-        counter_factors = (
-            tuple(
-                DiagnosisFactor.from_mapping(row)
-                for row in raw_counter_factors
-                if isinstance(row, dict)
-            )
-            if isinstance(raw_counter_factors, list)
-            else ()
-        )
         return cls(
             diagnosis_key=_required_text(data, "diagnosis_key"),
             suspected_source=_required_text(data, "suspected_source"),
@@ -380,9 +353,21 @@ class WholeRunDiagnosisSummary:
             has_reference_gap=_required_bool(data, "has_reference_gap"),
             uses_summary_fallback=_required_bool(data, "uses_summary_fallback"),
             fallback_reason=_optional_text(data.get("fallback_reason")),
-            exemplar_references=exemplars,
-            support_factors=support_factors,
-            counterevidence_factors=counter_factors,
+            exemplar_references=_tuple_from_mapping_list_field(
+                data,
+                "exemplar_references",
+                DiagnosisExemplarReference.from_mapping,
+            ),
+            support_factors=_tuple_from_mapping_list_field(
+                data,
+                "support_factors",
+                DiagnosisFactor.from_mapping,
+            ),
+            counterevidence_factors=_tuple_from_mapping_list_field(
+                data,
+                "counterevidence_factors",
+                DiagnosisFactor.from_mapping,
+            ),
         )
 
 
