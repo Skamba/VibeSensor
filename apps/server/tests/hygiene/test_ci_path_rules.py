@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from dataclasses import dataclass, fields
+from types import ModuleType
+
+import pytest
 
 from tests._paths import REPO_ROOT
 
 _CI_PATH_RULES = REPO_ROOT / "tools" / "tests" / "ci_path_rules.py"
+_FULL_STACK = None
 
 
-def _load_ci_path_rules_module():
+def _load_ci_path_rules_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("ci_path_rules_local_test", _CI_PATH_RULES)
     assert spec is not None and spec.loader is not None, f"Unable to load {_CI_PATH_RULES}"
     module = importlib.util.module_from_spec(spec)
@@ -19,133 +24,185 @@ def _load_ci_path_rules_module():
     return module
 
 
-def test_docs_only_changes_only_run_docs_lint() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("README.md", "docs/design_language.md"))
-    assert selection.docs_lint is True
-    assert selection.repo_hygiene is False
-    assert selection.backend_lint is False
-    assert selection.frontend_typecheck is False
-    assert selection.release_smoke is False
-    assert selection.firmware_native_tests is False
-    assert selection.e2e is False
+@pytest.fixture(scope="module")
+def ci_path_rules() -> ModuleType:
+    return _load_ci_path_rules_module()
 
 
-def test_frontend_only_changes_run_frontend_and_release_checks() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("apps/ui/src/main.ts",))
-    assert selection.repo_hygiene is True
-    assert selection.frontend_typecheck is True
-    assert selection.ui_smoke is True
-    assert selection.release_smoke is True
-    assert selection.backend_tests is False
-    assert selection.firmware_native_tests is False
+@dataclass(frozen=True)
+class SelectionCase:
+    changed_files: tuple[str, ...]
+    expected_jobs: frozenset[str] | None
 
 
-def test_authoritative_contract_input_changes_run_frontend_and_contract_drift() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("apps/ui/src/contracts/http_api_schema.json",))
-    assert selection.repo_hygiene is True
-    assert selection.backend_contract_drift is True
-    assert selection.frontend_typecheck is True
-    assert selection.ui_smoke is True
-    assert selection.release_smoke is True
+def _all_jobs(module: ModuleType) -> frozenset[str]:
+    return frozenset(field.name for field in fields(module.WorkflowJobSelection))
 
 
-def test_backend_only_changes_run_backend_stack_without_frontend_smoke() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("apps/server/vibesensor/app/container.py",))
-    assert selection.repo_hygiene is True
-    assert selection.backend_lint is True
-    assert selection.backend_static_guards is True
-    assert selection.backend_preflight is True
-    assert selection.backend_contract_drift is True
-    assert selection.backend_typecheck is True
-    assert selection.backend_tests is True
-    assert selection.release_smoke is True
-    assert selection.e2e is True
-    assert selection.frontend_typecheck is False
-    assert selection.ui_smoke is False
-    assert selection.firmware_native_tests is False
-
-
-def test_firmware_only_changes_run_only_firmware_native_checks() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("firmware/esp/src/main.cpp",))
-    assert selection.firmware_native_tests is True
-    assert selection.backend_lint is False
-    assert selection.frontend_typecheck is False
-    assert selection.release_smoke is False
-    assert selection.e2e is False
-
-
-def test_backend_udp_protocol_changes_also_run_firmware_native_checks() -> None:
-    module = _load_ci_path_rules_module()
-
-    for changed_path in (
-        "apps/server/vibesensor/adapters/udp/protocol.py",
-        "apps/server/vibesensor/adapters/udp/protocol_validator.py",
-    ):
-        selection = module.workflow_job_selection((changed_path,))
-        assert selection.backend_lint is True
-        assert selection.backend_static_guards is True
-        assert selection.backend_preflight is True
-        assert selection.backend_contract_drift is True
-        assert selection.backend_typecheck is True
-        assert selection.backend_tests is True
-        assert selection.release_smoke is True
-        assert selection.e2e is True
-        assert selection.firmware_native_tests is True
-        assert selection.frontend_typecheck is False
-        assert selection.ui_smoke is False
-
-
-def test_non_protocol_backend_udp_changes_do_not_run_firmware_native_checks() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(
-        ("apps/server/vibesensor/adapters/udp/udp_data_rx.py",)
+def _selected_jobs(module: ModuleType, changed_files: tuple[str, ...]) -> frozenset[str]:
+    selection = module.workflow_job_selection(changed_files)
+    return frozenset(
+        field.name
+        for field in fields(module.WorkflowJobSelection)
+        if getattr(selection, field.name)
     )
-    assert selection.backend_lint is True
-    assert selection.backend_static_guards is True
-    assert selection.backend_preflight is True
-    assert selection.backend_contract_drift is True
-    assert selection.backend_typecheck is True
-    assert selection.backend_tests is True
-    assert selection.release_smoke is True
-    assert selection.e2e is True
-    assert selection.firmware_native_tests is False
-    assert selection.frontend_typecheck is False
-    assert selection.ui_smoke is False
 
 
-def test_workflow_changes_fall_back_to_full_stack() -> None:
-    module = _load_ci_path_rules_module()
+_SELECTION_CASES = (
+    pytest.param(
+        SelectionCase(
+            changed_files=("README.md", "docs/design_language.md"),
+            expected_jobs=frozenset({"docs_lint"}),
+        ),
+        id="docs-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/server/vibesensor/app/container.py",),
+            expected_jobs=frozenset(
+                {
+                    "repo_hygiene",
+                    "backend_lint",
+                    "backend_static_guards",
+                    "backend_preflight",
+                    "backend_contract_drift",
+                    "backend_typecheck",
+                    "backend_tests",
+                    "release_smoke",
+                    "e2e",
+                }
+            ),
+        ),
+        id="backend-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/ui/src/main.ts",),
+            expected_jobs=frozenset(
+                {
+                    "repo_hygiene",
+                    "frontend_typecheck",
+                    "ui_smoke",
+                    "release_smoke",
+                    "e2e",
+                }
+            ),
+        ),
+        id="frontend-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("firmware/esp/src/main.cpp",),
+            expected_jobs=frozenset({"firmware_native_tests"}),
+        ),
+        id="firmware-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/ui/src/contracts/http_api_schema.json",),
+            expected_jobs=frozenset(
+                {
+                    "repo_hygiene",
+                    "backend_contract_drift",
+                    "frontend_typecheck",
+                    "ui_smoke",
+                    "release_smoke",
+                    "e2e",
+                }
+            ),
+        ),
+        id="contract-json",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/config/sync_contract_artifacts.mjs",),
+            expected_jobs=frozenset({"repo_hygiene", "backend_contract_drift"}),
+        ),
+        id="contract-sync-tool",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/server/Dockerfile",),
+            expected_jobs=_FULL_STACK,
+        ),
+        id="dockerfile-full-stack",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(".github/workflows/ci.yml",),
+            expected_jobs=_FULL_STACK,
+        ),
+        id="workflow-full-stack",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("README.md", "apps/ui/src/main.ts"),
+            expected_jobs=frozenset(
+                {
+                    "docs_lint",
+                    "repo_hygiene",
+                    "frontend_typecheck",
+                    "ui_smoke",
+                    "release_smoke",
+                    "e2e",
+                }
+            ),
+        ),
+        id="mixed-docs-and-frontend",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/server/vibesensor/adapters/udp/protocol.py",),
+            expected_jobs=frozenset(
+                {
+                    "repo_hygiene",
+                    "backend_lint",
+                    "backend_static_guards",
+                    "backend_preflight",
+                    "backend_contract_drift",
+                    "backend_typecheck",
+                    "backend_tests",
+                    "release_smoke",
+                    "firmware_native_tests",
+                    "e2e",
+                }
+            ),
+        ),
+        id="backend-udp-protocol",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("apps/server/vibesensor/adapters/udp/udp_data_rx.py",),
+            expected_jobs=frozenset(
+                {
+                    "repo_hygiene",
+                    "backend_lint",
+                    "backend_static_guards",
+                    "backend_preflight",
+                    "backend_contract_drift",
+                    "backend_typecheck",
+                    "backend_tests",
+                    "release_smoke",
+                    "e2e",
+                }
+            ),
+        ),
+        id="backend-udp-non-protocol",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("docs/protocol.md",),
+            expected_jobs=frozenset({"docs_lint", "repo_hygiene", "backend_contract_drift"}),
+        ),
+        id="protocol-doc",
+    ),
+)
 
-    selection = module.workflow_job_selection((".github/workflows/ci.yml",))
-    assert selection == module.WorkflowJobSelection.full_stack()
 
-
-def test_protocol_doc_changes_run_docs_lint_and_contract_drift() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("docs/protocol.md",))
-    assert selection.docs_lint is True
-    assert selection.repo_hygiene is True
-    assert selection.backend_contract_drift is True
-    assert selection.frontend_typecheck is False
-
-
-def test_contract_sync_tool_changes_run_repo_hygiene_and_contract_drift() -> None:
-    module = _load_ci_path_rules_module()
-
-    selection = module.workflow_job_selection(("tools/config/sync_contract_artifacts.mjs",))
-    assert selection.repo_hygiene is True
-    assert selection.backend_contract_drift is True
-    assert selection.backend_lint is False
-    assert selection.frontend_typecheck is False
+@pytest.mark.parametrize("case", _SELECTION_CASES)
+def test_workflow_job_selection_matrix(ci_path_rules: ModuleType, case: SelectionCase) -> None:
+    expected_jobs = (
+        _all_jobs(ci_path_rules) if case.expected_jobs is _FULL_STACK else case.expected_jobs
+    )
+    assert expected_jobs is not None
+    assert _selected_jobs(ci_path_rules, case.changed_files) == expected_jobs
