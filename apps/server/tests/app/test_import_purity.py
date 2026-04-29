@@ -53,15 +53,17 @@ def _run_import_probe(import_code: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_importing_app_package_stays_lightweight() -> None:
+def test_importing_app_package_exposes_startup_entrypoints() -> None:
     result = _run_import_probe(
         """
 import importlib
-import sys
 
 module = importlib.import_module("vibesensor.app")
 assert module.__name__ == "vibesensor.app"
-assert "vibesensor.app.bootstrap" not in sys.modules
+assert callable(module.create_app)
+assert callable(module.create_app_from_env)
+assert callable(module.main)
+assert not hasattr(module, "app")
         """
     )
     assert result.stdout.strip() == "ok"
