@@ -82,3 +82,21 @@ updates:
         update-types:
           - minor
           - patch
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    # Docker image updates affect build and local-dev runtime coverage.
+    labels:
+      - CI
+      - dependencies
+    open-pull-requests-limit: 5
+    groups:
+      docker-base-images-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

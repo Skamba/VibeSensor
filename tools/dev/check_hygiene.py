@@ -3184,26 +3184,43 @@ def check_dependency_reproducibility_hygiene() -> list[str]:
         errors.append(".github/dependabot.yml must define an updates list.")
         return errors
 
-    configured_updates: set[tuple[str, str]] = set()
+    configured_updates: dict[tuple[str, str], Mapping[str, object]] = {}
     for item in raw_updates:
         if not isinstance(item, Mapping):
             continue
         ecosystem = item.get("package-ecosystem")
         directory = item.get("directory")
         if isinstance(ecosystem, str) and isinstance(directory, str):
-            configured_updates.add((ecosystem, directory))
+            configured_updates[(ecosystem, directory)] = item
 
     required_updates = {
         ("pip", "/apps/server"),
         ("npm", "/apps/ui"),
         ("github-actions", "/"),
+        ("docker", "/"),
     }
-    missing_updates = sorted(required_updates - configured_updates)
+    missing_updates = sorted(required_updates - set(configured_updates))
     if missing_updates:
         errors.append(
             ".github/dependabot.yml is missing required update entries: "
             f"{missing_updates}"
         )
+
+    docker_update = configured_updates.get(("docker", "/"))
+    if docker_update is not None:
+        schedule = docker_update.get("schedule")
+        if not isinstance(schedule, Mapping) or schedule.get("interval") != "weekly":
+            errors.append(".github/dependabot.yml docker updates must run weekly.")
+        labels = docker_update.get("labels")
+        label_names = (
+            {label for label in labels if isinstance(label, str)}
+            if isinstance(labels, list)
+            else set()
+        )
+        if {"CI", "dependencies"} - label_names:
+            errors.append(
+                ".github/dependabot.yml docker updates must carry CI and dependencies labels."
+            )
 
     return errors
 
