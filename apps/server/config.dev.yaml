@@ -6,3 +6,6 @@ server:
 
 gps:
   gps_enabled: false  # Developer machines do not run a gpsd daemon
+
+update:
+  rollback_dir: data/rollback

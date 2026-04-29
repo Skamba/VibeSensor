@@ -38,6 +38,9 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
                     "state_file": "/tmp/hotspot-state.json",
                 }
             },
+            "update": {
+                "rollback_dir": "/tmp/rollback",
+            },
         },
     )
 
@@ -47,6 +50,7 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
     assert result.logging.app_log_path == Path("/tmp/app.log")
     assert result.tracing.output_path == Path("/tmp/traces.jsonl")
     assert result.ap.self_heal.state_file == Path("/tmp/hotspot-state.json")
+    assert result.update.rollback_dir == Path("/tmp/rollback")
 
 
 def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) -> None:
@@ -67,6 +71,9 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
                     "state_file": "data/hotspot-state.json",
                 }
             },
+            "update": {
+                "rollback_dir": "data/rollback",
+            },
         },
     )
 
@@ -76,6 +83,7 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
     assert result.logging.app_log_path == config_path.parent / "logs/app.log"
     assert result.tracing.output_path == config_path.parent / "logs/traces.jsonl"
     assert result.ap.self_heal.state_file == config_path.parent / "data/hotspot-state.json"
+    assert result.update.rollback_dir == config_path.parent / "data/rollback"
 
 
 def test_load_config_preserves_parent_traversal_relative_to_config(tmp_path: Path) -> None:
