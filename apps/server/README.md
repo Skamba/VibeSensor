@@ -186,8 +186,6 @@ make benchmark-compare-backend
 
 The benchmark uses a representative updater-status payload. Saved runs land in
 `apps/server/.benchmarks/` so later runs can be compared with the same target.
-The older `tools/tests/benchmark_update_status_codec.py` script remains as a
-standalone single-shot harness when you just want the raw Pi timing printout.
 
 ## Configuration
 
