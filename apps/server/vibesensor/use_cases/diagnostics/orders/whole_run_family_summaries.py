@@ -14,6 +14,7 @@ from vibesensor.shared.types.whole_run_analysis import (
 from vibesensor.use_cases.diagnostics._artifact_bundles import (
     build_single_artifact_bundle_parts,
 )
+from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTracePhaseSupport,
     OrderTracePoint,
@@ -23,7 +24,6 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WholeRunOrderTraceSummaryArtifactBundle,
     _dominant_context_value,
-    _dominant_value,
     _drift_score,
     _lock_score,
     _longest_contiguous_match_run,
@@ -212,7 +212,7 @@ def _family_summary(
         for point in matched_points
         if point.vibration_strength_db is not None
     )
-    strongest_location = _dominant_value(
+    strongest_location = dominant_weighted_value(
         values=(
             (
                 point.strongest_location,
@@ -437,7 +437,7 @@ def _dominant_load_state(
                 point.peak_intensity_db if point.peak_intensity_db is not None else 0.0,
             )
         )
-    return _dominant_value(values=ranked_values)
+    return dominant_weighted_value(values=ranked_values)
 
 
 def _point_rank(

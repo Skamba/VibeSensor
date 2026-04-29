@@ -20,6 +20,7 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,
 )
+from vibesensor.use_cases.diagnostics._ranking_utils import sortable_optional_metric
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.location_scoring import (
     NEAR_TIE_DOMINANCE_THRESHOLD,
@@ -369,8 +370,8 @@ def _summarize_location_support(
                 -summary.support_ratio,
                 -summary.coherent_window_count,
                 -(summary.coherence_ratio or 0.0),
-                -_sortable_metric(summary.mean_vibration_strength_db),
-                -_sortable_metric(summary.peak_intensity_db),
+                -sortable_optional_metric(summary.mean_vibration_strength_db),
+                -sortable_optional_metric(summary.peak_intensity_db),
                 summary.location.lower(),
             ),
         )
@@ -456,7 +457,3 @@ def _weak_spatial_separation(
         return False
     threshold = LocationHotspot.weak_spatial_threshold(len(location_summaries))
     return dominance_ratio < threshold
-
-
-def _sortable_metric(value: float | None) -> float:
-    return value if value is not None else float("-inf")
