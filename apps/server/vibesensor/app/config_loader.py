@@ -223,7 +223,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         update=UpdateConfig(
-            rollback_dir=Path(str(update_cfg["rollback_dir"])),
+            rollback_dir=_resolve_config_path(
+                str(update_cfg["rollback_dir"]),
+                path,
+            ),
         ),
         tracing=TracingConfig(
             enabled=bool(tracing_cfg["enabled"]),
