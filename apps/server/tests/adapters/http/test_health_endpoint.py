@@ -3,35 +3,42 @@
 from __future__ import annotations
 
 import pytest
-from _history_endpoint_helpers import route_endpoint
-from test_support import response_payload
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def _health_router(fake_state):
-    """Return ``(router, state)`` for health-endpoint tests."""
+def _health_client(fake_state):
+    """Return ``(client, state, app)`` for health-endpoint tests."""
+
     from vibesensor.adapters.http import create_router
 
     fake_state.processing_loop_state.processing_state = "ok"
     fake_state.processing_loop_state.processing_failure_count = 0
-    return create_router(fake_state), fake_state
+    app = FastAPI()
+    app.include_router(create_router(fake_state))
+    with TestClient(app) as client:
+        yield client, fake_state, app
 
 
-def test_health_route_registered(_health_router):
+def test_health_route_registered(_health_client):
     """Verify /api/health is registered as a GET route in the API router."""
-    router, _ = _health_router
-    routes = {r.path: r.methods for r in router.routes if hasattr(r, "methods")}
+
+    _client, _state, app = _health_client
+    routes = {r.path: r.methods for r in app.router.routes if hasattr(r, "methods")}
     assert "/api/health" in routes
     assert "GET" in routes["/api/health"]
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_response_shape(_health_router):
+def test_health_endpoint_response_shape(_health_client):
     """Verify GET /api/health returns typed degradation, data-loss, and persistence state."""
-    router, _ = _health_router
-    endpoint = route_endpoint(router, "/api/health")
 
-    result = response_payload(await endpoint())
+    client, _state, _app = _health_client
+
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+    result = response.json()
     assert result["status"] == "ok"
     assert result["startup_state"] == "ready"
     assert result["startup_phase"] == "ready"
@@ -59,10 +66,8 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["ingest"]["clients"] == []
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_router):
-    router, state = _health_router
-    endpoint = route_endpoint(router, "/api/health")
+def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_client):
+    client, state, _app = _health_client
 
     state.registry.data_loss_snapshot.return_value = {
         "tracked_clients": 2,
@@ -96,8 +101,10 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     state.health_state.mark_failed("gps-speed", "gpsd unavailable")
     state.health_state.record_task_failure("metrics-log", "disk write failed")
 
-    result = response_payload(await endpoint())
+    response = client.get("/api/health")
 
+    assert response.status_code == 200
+    result = response.json()
     assert result["status"] == "degraded"
     assert result["degradation_reasons"] == [
         "startup_state:failed",
@@ -125,58 +132,55 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     assert result["persistence"]["analysis_active_run_id"] == "run-42"
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_degrades_for_db_corruption(_health_router):
-    router, state = _health_router
-    endpoint = route_endpoint(router, "/api/health")
-
+def test_health_endpoint_degrades_for_db_corruption(_health_client):
+    client, state, _app = _health_client
     state.health_state.mark_db_corrupted("row 7 missing from index")
 
-    result = response_payload(await endpoint())
+    response = client.get("/api/health")
 
+    assert response.status_code == 200
+    result = response.json()
     assert result["status"] == "degraded"
     assert result["db_corruption_detected"] is True
     assert "db_corruption_detected" in result["degradation_reasons"]
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_warns_for_buffer_overflow_drops(_health_router):
-    router, state = _health_router
-    endpoint = route_endpoint(router, "/api/health")
-
+def test_health_endpoint_warns_for_buffer_overflow_drops(_health_client):
+    client, state, _app = _health_client
     state.processor.buffer_overflow_drops.return_value = 4
 
-    result = response_payload(await endpoint())
+    response = client.get("/api/health")
 
+    assert response.status_code == 200
+    result = response.json()
     assert result["status"] == "warn"
     assert result["data_loss"]["buffer_overflow_drops"] == 4
     assert "buffer_overflow_drops" in result["degradation_reasons"]
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_validates_through_fastapi_response_field(_health_router):
+def test_health_endpoint_validates_through_fastapi_response_field(_health_client):
     """Verify FastAPI can validate the declared /api/health response model."""
-    router, _ = _health_router
-    route = next(r for r in router.routes if getattr(r, "path", "") == "/api/health")
-    payload = await route.endpoint()
-    validated, errors = route.response_field.validate(payload, {}, loc=("response",))
-    payload_dict = response_payload(payload)
 
+    client, _state, app = _health_client
+    route = next(r for r in app.router.routes if getattr(r, "path", "") == "/api/health")
+
+    response = client.get("/api/health")
+    payload = response.json()
+    validated, errors = route.response_field.validate(payload, {}, loc=("response",))
+
+    assert response.status_code == 200
     assert errors == []
-    assert payload_dict["status"] == "ok"
-    assert payload_dict["startup_state"] == "ready"
-    assert payload_dict["data_loss"]["tracked_clients"] == 0
-    assert payload_dict["persistence"]["analysis_in_progress"] is False
+    assert payload["status"] == "ok"
+    assert payload["startup_state"] == "ready"
+    assert payload["data_loss"]["tracked_clients"] == 0
+    assert payload["persistence"]["analysis_in_progress"] is False
     assert validated.status == "ok"
 
 
-@pytest.mark.asyncio
-async def test_health_endpoint_keeps_public_intake_stats_shape_when_worker_pool_is_present(
-    _health_router,
+def test_health_endpoint_keeps_public_intake_stats_shape_when_worker_pool_is_present(
+    _health_client,
 ):
-    router, state = _health_router
-    endpoint = route_endpoint(router, "/api/health")
-
+    client, state, _app = _health_client
     state.processor.intake_stats.return_value = {
         "total_ingested_samples": 10,
         "total_compute_calls": 2,
@@ -201,8 +205,10 @@ async def test_health_endpoint_keeps_public_intake_stats_shape_when_worker_pool_
         },
     }
 
-    result = response_payload(await endpoint())
+    response = client.get("/api/health")
 
+    assert response.status_code == 200
+    result = response.json()
     assert result["intake_stats"] == {
         "total_ingested_samples": 10,
         "total_compute_calls": 2,
