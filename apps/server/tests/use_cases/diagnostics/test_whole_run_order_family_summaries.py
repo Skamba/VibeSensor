@@ -3,16 +3,30 @@
 from __future__ import annotations
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
+from vibesensor.shared.types.whole_run_analysis import (
+    WholeRunArtifactFile,
+    WholeRunArtifactManifest,
+    WholeRunContextWindowLabel,
+    WholeRunWindowPolicy,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTraceFamily,
     OrderTracePoint,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
+    WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
+    build_whole_run_order_family_summary_artifact_bundle,
     summarize_whole_run_order_trace_families,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
+    WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
+    WholeRunOrderTraceSummaryArtifactBundle,
     summarize_whole_run_order_traces,
+    whole_run_order_trace_summaries_from_jsonl_bytes,
+)
+from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
+    WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
+    WholeRunOrderTraceArtifactBundle,
 )
 
 
@@ -35,6 +49,38 @@ def _label(
         speed_source="gps",
         engine_rpm=1800.0 if phase == DrivingPhase.CRUISE else 2200.0,
         engine_rpm_source="obd2",
+    )
+
+
+def _window_policy() -> WholeRunWindowPolicy:
+    return WholeRunWindowPolicy(
+        sample_rate_hz=200,
+        window_size_samples=256,
+        stride_samples=100,
+        overlap_samples=156,
+        feature_interval_s=0.5,
+    )
+
+
+def _order_trace_bundle(points: tuple[OrderTracePoint, ...]) -> WholeRunOrderTraceArtifactBundle:
+    return WholeRunOrderTraceArtifactBundle(
+        manifest=WholeRunArtifactManifest(
+            run_id="run-order-families",
+            relative_dir="whole-run-artifacts/run-order-families",
+            window_policy=_window_policy(),
+            total_window_count=4,
+            artifacts=(
+                WholeRunArtifactFile(
+                    artifact_key=WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
+                    relative_path="orders/traces.jsonl",
+                    file_format="jsonl",
+                    record_count=len(points),
+                ),
+            ),
+            created_at="2025-01-01T00:00:00Z",
+        ),
+        artifact_contents={WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: b""},
+        points=points,
     )
 
 
@@ -153,3 +199,73 @@ def test_summarize_whole_run_order_trace_families_builds_phase_and_interval_roll
     assert summary.strongest_location == "Front Left"
     assert summary.stable_frequency_min_hz == 11.8
     assert summary.stable_frequency_max_hz == 24.6
+
+
+def test_build_whole_run_order_family_summary_artifact_bundle_preserves_manifest_shape() -> None:
+    labels = tuple(_label(index) for index in range(4))
+    points = tuple(
+        _point(
+            index,
+            hypothesis_key="wheel_1x",
+            harmonic=1,
+            order_label="1x wheel",
+            matched=True,
+            matched_hz=12.0 + index,
+            relative_error=0.02,
+            peak_intensity_db=18.0,
+            vibration_strength_db=12.0,
+            strongest_location="Front Left",
+        )
+        for index in range(4)
+    )
+    candidate_summaries = summarize_whole_run_order_traces(points=points, context_labels=labels)
+    order_trace_bundle = _order_trace_bundle(points)
+    order_trace_summary_bundle = WholeRunOrderTraceSummaryArtifactBundle(
+        manifest=WholeRunArtifactManifest(
+            run_id="run-order-families",
+            relative_dir="whole-run-artifacts/run-order-families",
+            window_policy=_window_policy(),
+            total_window_count=4,
+            artifacts=(
+                WholeRunArtifactFile(
+                    artifact_key=WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
+                    relative_path="orders/trace-summaries.jsonl",
+                    file_format="jsonl",
+                    record_count=len(candidate_summaries),
+                ),
+            ),
+            created_at="2025-01-01T00:00:00Z",
+        ),
+        artifact_contents={WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY: b""},
+        summaries=candidate_summaries,
+    )
+
+    bundle = build_whole_run_order_family_summary_artifact_bundle(
+        order_trace_bundle=order_trace_bundle,
+        order_trace_summary_bundle=order_trace_summary_bundle,
+        context_labels=tuple(reversed(labels)),
+    )
+
+    assert bundle.manifest.to_json_object() == {
+        "schema_version": bundle.manifest.schema_version,
+        "storage_type": bundle.manifest.storage_type,
+        "run_id": "run-order-families",
+        "relative_dir": "whole-run-artifacts/run-order-families",
+        "window_policy": bundle.manifest.window_policy.to_json_object(),
+        "total_window_count": 4,
+        "artifacts": [
+            {
+                "artifact_key": WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
+                "relative_path": "orders/family-summaries.jsonl",
+                "file_format": "jsonl",
+                "record_count": len(bundle.summaries),
+            }
+        ],
+        "created_at": "2025-01-01T00:00:00Z",
+    }
+    assert (
+        whole_run_order_trace_summaries_from_jsonl_bytes(
+            bundle.artifact_contents[WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY]
+        )
+        == bundle.summaries
+    )
