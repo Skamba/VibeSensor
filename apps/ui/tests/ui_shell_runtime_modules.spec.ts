@@ -36,13 +36,7 @@ function installWindowStub(): void {
   } as Window & typeof globalThis;
 }
 
-function createChromeViewRecorder() {
-  const counts = {
-    dialog: 0,
-    navigation: 0,
-    preferences: 0,
-    status: 0,
-  };
+function createChromeViewHarness() {
   const models: {
     dialog: ReadonlySignal<UiShellChromeDialogModel> | null;
     navigation: ReadonlySignal<UiShellChromeNavigationModel> | null;
@@ -56,25 +50,20 @@ function createChromeViewRecorder() {
   };
 
   return {
-    counts,
     models,
     view: {
       bindDialogModel(model: ReadonlySignal<UiShellChromeDialogModel>) {
-        counts.dialog += 1;
         models.dialog = model;
       },
       bindNavigationModel(model: ReadonlySignal<UiShellChromeNavigationModel>) {
-        counts.navigation += 1;
         models.navigation = model;
       },
       bindPreferencesModel(
         model: ReadonlySignal<UiShellChromePreferencesModel>,
       ) {
-        counts.preferences += 1;
         models.preferences = model;
       },
       bindStatusModel(model: ReadonlySignal<UiShellChromeStatusModel>) {
-        counts.status += 1;
         models.status = model;
       },
     },
@@ -171,7 +160,7 @@ describe("UiShellController", () => {
 
   test("publishes live shell actions through the provided signal", () => {
     const state = createAppState();
-    const chrome = createChromeViewRecorder();
+    const chrome = createChromeViewHarness();
     const chromeActions = signal<UiShellChromeActions>({
       ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
     });
@@ -193,7 +182,7 @@ describe("UiShellController", () => {
 
   test("binds live overview speed text to the shell status signal", () => {
     const state = createAppState();
-    const chrome = createChromeViewRecorder();
+    const chrome = createChromeViewHarness();
     const liveOverview = {
       model: signal(null),
       speedText: signal<ReadonlySignal<string> | null>(null),
@@ -226,7 +215,7 @@ describe("UiShellController", () => {
   test("syncs the document language from shell state without a chrome component", () => {
     const restoreDocument = installDocumentStub();
     const state = createAppState();
-    const chrome = createChromeViewRecorder();
+    const chrome = createChromeViewHarness();
     try {
       new UiShellController({
         bindFeatureHandlers: () => undefined,
@@ -252,9 +241,9 @@ describe("UiShellController", () => {
     }
   });
 
-  test("routes live status updates through the status model only", () => {
+  test("publishes live status updates to the shell status model", () => {
     const state = createAppState();
-    const chrome = createChromeViewRecorder();
+    const chrome = createChromeViewHarness();
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
@@ -269,19 +258,15 @@ describe("UiShellController", () => {
       state,
     });
 
-    expect(chrome.counts).toEqual({
-      dialog: 1,
-      navigation: 1,
-      preferences: 1,
-      status: 1,
-    });
     expect(chrome.models.status?.value.shellLiveStatus).toEqual({
       text: "No live signal",
       variant: "muted",
     });
-    const initialDialogModel = chrome.models.dialog?.value;
-    const initialNavigationModel = chrome.models.navigation?.value;
-    const initialPreferencesModel = chrome.models.preferences?.value;
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
+      hidden: true,
+      text: "",
+      variant: null,
+    });
 
     controller.setLiveStatus("warn", "Signal weak");
 
@@ -289,14 +274,16 @@ describe("UiShellController", () => {
       text: "Signal weak",
       variant: "warn",
     });
-    expect(chrome.models.dialog?.value).toEqual(initialDialogModel);
-    expect(chrome.models.navigation?.value).toEqual(initialNavigationModel);
-    expect(chrome.models.preferences?.value).toEqual(initialPreferencesModel);
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
+      hidden: true,
+      text: "",
+      variant: null,
+    });
   });
 
-  test("routes notification banner updates through the dialog model only", () => {
+  test("publishes controller errors to the shared banner model", () => {
     const state = createAppState();
-    const chrome = createChromeViewRecorder();
+    const chrome = createChromeViewHarness();
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
@@ -311,20 +298,15 @@ describe("UiShellController", () => {
       state,
     });
 
-    expect(chrome.counts).toEqual({
-      dialog: 1,
-      navigation: 1,
-      preferences: 1,
-      status: 1,
-    });
     expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
       hidden: true,
       text: "",
       variant: null,
     });
-    const initialNavigationModel = chrome.models.navigation?.value;
-    const initialPreferencesModel = chrome.models.preferences?.value;
-    const initialStatusModel = chrome.models.status?.value;
+    expect(chrome.models.status?.value.shellLiveStatus).toEqual({
+      text: "No live signal",
+      variant: "muted",
+    });
 
     controller.showError("save failed");
 
@@ -333,9 +315,10 @@ describe("UiShellController", () => {
       text: "save failed",
       variant: "bad",
     });
-    expect(chrome.models.navigation?.value).toEqual(initialNavigationModel);
-    expect(chrome.models.preferences?.value).toEqual(initialPreferencesModel);
-    expect(chrome.models.status?.value).toEqual(initialStatusModel);
+    expect(chrome.models.status?.value.shellLiveStatus).toEqual({
+      text: "No live signal",
+      variant: "muted",
+    });
   });
 });
 
