@@ -130,6 +130,11 @@ stable network target instead of exposing an on-device provisioning flow.
 Runtime-critical firmware parameters can be overridden without editing source by
 adding build flags in `platformio.ini` (`build_flags`).
 
+Shared ESP32 build settings live in the `env:firmware_esp32` base environment
+inside `platformio.ini`. Board-specific environments extend that base and pin
+third-party firmware libraries through PlatformIO registry dependencies, including
+`adafruit/Adafruit NeoPixel@1.15.4`.
+
 Supported override macros:
 
 - `VIBESENSOR_SAMPLE_RATE_HZ`

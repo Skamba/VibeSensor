@@ -6,7 +6,7 @@ smoke:
   apps/server/tests/hygiene/test_install_offline_artifact_guardrails.py:
     test_install_pi_requires: Pi install artifact prerequisites stay in the compact install path.
     test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints: Offline install CLIs stay in the compact install path.
-    test_firmware_uses_vendored_neopixel_library_for_offline_builds: Offline firmware packaging stays in the compact install path.
+    test_firmware_uses_pinned_registry_neopixel_library: Firmware dependency provenance stays in the compact install path.
   apps/server/tests/hygiene/test_pi_image_static_guardrails.py:
     test_pi_gen_pipeline_split_files_exist: Pi-image pipeline layout stays in the compact image guard path.
     test_server_systemd_uses_console_script_entrypoint: Packaged server startup wiring stays in the compact image guard path.

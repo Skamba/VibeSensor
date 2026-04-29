@@ -64,16 +64,20 @@ def test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints() ->
 
 
 @pytest.mark.smoke
-def test_firmware_uses_vendored_neopixel_library_for_offline_builds() -> None:
+def test_firmware_uses_pinned_registry_neopixel_library() -> None:
     platformio_text = (REPO_ROOT / "firmware" / "esp" / "platformio.ini").read_text(
         encoding="utf-8"
     )
-    assert "${PROJECT_DIR}/lib/Adafruit_NeoPixel" in platformio_text, (
-        "firmware platformio.ini must use vendored NeoPixel library path"
+    assert platformio_text.count("platform = espressif32@6.13.0") == 1, (
+        "shared ESP32 PlatformIO settings must stay consolidated in one base env"
     )
-    vendored_header = (
-        REPO_ROOT / "firmware" / "esp" / "lib" / "Adafruit_NeoPixel" / "Adafruit_NeoPixel.h"
+    assert platformio_text.count("extends = env:firmware_esp32") == 2, (
+        "both ESP32 board environments must inherit the shared firmware base env"
     )
-    assert vendored_header.is_file(), (
-        "vendored NeoPixel header must exist for offline firmware build"
+    assert "adafruit/Adafruit NeoPixel@1.15.4" in platformio_text, (
+        "firmware platformio.ini must pin the NeoPixel PlatformIO registry dependency"
+    )
+    vendored_library = REPO_ROOT / "firmware" / "esp" / "lib" / "Adafruit_NeoPixel"
+    assert not vendored_library.exists(), (
+        "firmware must not vendor Adafruit NeoPixel now that platformio.ini pins it"
     )
