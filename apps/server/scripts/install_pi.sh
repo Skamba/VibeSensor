@@ -9,6 +9,8 @@ HOTSPOT_HEAL_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.se
 HOTSPOT_HEAL_TIMER_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.timer"
 SERVER_PYPROJECT="${PI_DIR}/pyproject.toml"
 RUNTIME_POLICY_DOC="docs/runtime_support_matrix.md"
+UPDATE_SUDO_WRAPPER="${PI_DIR}/scripts/vibesensor_update_sudo.sh"
+UPDATE_SUDOERS="/etc/sudoers.d/vibesensor-update"
 VENV_DIR="${PI_DIR}/.venv"
 SKIP_SERVICE_START="${VIBESENSOR_SKIP_SERVICE_START:-0}"
 
@@ -101,6 +103,7 @@ validate_supported_python "${PYTHON_BIN}"
 "${VENV_DIR}/bin/vibesensor-config-preflight" "${PI_DIR}/config.pi.yaml" >/dev/null
 
 run_as_root install -d /etc/vibesensor
+run_as_root install -d /etc/sudoers.d
 run_as_root install -d /etc/tmpfiles.d
 run_as_root install -d -m 0755 /var/lib/vibesensor
 run_as_root install -d -m 0755 /var/lib/vibesensor/rollback
@@ -108,6 +111,16 @@ run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/lib/vibesensor/rollback /var/log/vibesensor
 run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
+if [ ! -f "${UPDATE_SUDO_WRAPPER}" ]; then
+  echo "ERROR: Missing update sudo wrapper at ${UPDATE_SUDO_WRAPPER}." >&2
+  exit 1
+fi
+run_as_root chmod 0755 "${UPDATE_SUDO_WRAPPER}"
+run_as_root install -o root -g root -m 0440 /dev/null "${UPDATE_SUDOERS}"
+run_as_root tee "${UPDATE_SUDOERS}" >/dev/null <<EOF
+${SERVICE_USER} ALL=(root) NOPASSWD: ${UPDATE_SUDO_WRAPPER}
+EOF
+run_as_root chmod 0440 "${UPDATE_SUDOERS}"
 
 # Refresh ESP firmware cache from GitHub Releases (requires network).
 # This downloads the latest prebuilt firmware bundle so the device can flash

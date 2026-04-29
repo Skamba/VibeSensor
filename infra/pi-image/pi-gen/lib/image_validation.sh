@@ -187,6 +187,11 @@ validate_image_artifact() {
     exit 1
   fi
 
+  if [ ! -x "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh" ]; then
+    echo "Validation failed: missing executable ${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh"
+    exit 1
+  fi
+
   if [ ! -x "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" ]; then
     echo "Validation failed: missing executable ${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py"
     exit 1
@@ -194,6 +199,12 @@ validate_image_artifact() {
 
   if [ ! -f "${ROOT_MNT}/etc/sudoers.d/vibesensor-update" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+    exit 1
+  fi
+
+  if ! sudo grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh' \
+    "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"; then
+    echo "Validation failed: update sudo wrapper entry missing from ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
     exit 1
   fi
 
