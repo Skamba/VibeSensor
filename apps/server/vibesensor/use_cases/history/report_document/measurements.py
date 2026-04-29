@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.document import (
     EvidenceChainRow,
     MeasurementRow,
@@ -14,6 +13,7 @@ from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
+    human_source,
     source_with_confidence,
 )
 

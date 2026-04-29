@@ -6,12 +6,11 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.document import (
     PartSuggestion,
     SystemFindingCard,
 )
-from vibesensor.shared.report_presentation import order_label_human
+from vibesensor.shared.report_presentation import human_source, order_label_human
 from vibesensor.use_cases.history.report_document.pattern_parts import parts_for_pattern
 
 if TYPE_CHECKING:

@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, TestRun, VibrationOrigin
-from vibesensor.report_i18n import human_source, resolve_i18n
+from vibesensor.report_i18n import resolve_i18n
 from vibesensor.shared.boundaries.reporting.document import PatternEvidence
 from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
 from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
-from vibesensor.shared.report_presentation import display_location, order_label_human
+from vibesensor.shared.report_presentation import display_location, human_source, order_label_human
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 from vibesensor.use_cases.history.report_document.pattern_parts import why_parts_listed
 
