@@ -86,7 +86,7 @@ def test_parse_args_defaults_to_single_shard(monkeypatch) -> None:
     assert args.shards == 1
     assert args.shard_index == 1
     assert args.junitxml is None
-    assert args.xdist_workers == 2
+    assert args.xdist_workers == 3
 
 
 def test_parse_args_reads_xdist_workers_from_env(monkeypatch) -> None:

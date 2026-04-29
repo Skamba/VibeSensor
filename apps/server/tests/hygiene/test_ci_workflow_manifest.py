@@ -44,6 +44,8 @@ def test_backend_shard_matrix_preserves_shard_specific_commands() -> None:
         if spec.label == "Backend tests shard 3/5"
     ]
     assert len(commands) == 1
+    assert "env VIBESENSOR_BACKEND_XDIST_WORKERS=3" in commands[0]
+    assert "--shards 5" in commands[0]
     assert "--shard-index 3" in commands[0]
     assert "backend-tests-3.xml" in commands[0]
 
