@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import * as I18N from "../../i18n";
-import { formatIntLocale } from "../../format";
 import { setUiLanguage, translateUiText } from "../ui_i18n";
 import type { AppState } from "../ui_app_state";
 import {
@@ -155,10 +154,6 @@ export class UiShellController {
 
   t(key: string, vars?: Record<string, unknown>): string {
     return translateUiText(key, vars);
-  }
-
-  localFormatInt(value: number): string {
-    return formatIntLocale(value, this.state.shell.lang.value);
   }
 
   showError(message: string): void {
