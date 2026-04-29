@@ -12,7 +12,6 @@ from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepE
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
-_UPLINK_RESCAN_DELAY_S = 2.0
 
 
 class _RetryableSsidNotFoundError(Exception):
@@ -88,7 +87,7 @@ class UpdateUplinkProvisioner:
         try:
             async for attempt in AsyncRetrying(
                 stop=stop_after_attempt(self._config.uplink_connect_retries),
-                wait=wait_fixed(_UPLINK_RESCAN_DELAY_S),
+                wait=wait_fixed(self._config.uplink_rescan_delay_s),
                 retry=retry_if_exception_type(_RetryableSsidNotFoundError),
                 sleep=asyncio.sleep,
                 reraise=True,
