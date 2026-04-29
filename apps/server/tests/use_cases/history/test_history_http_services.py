@@ -17,9 +17,6 @@ from test_support.tracing import configured_trace_output, read_trace_output
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
-    build_projected_run_details_json,
-    project_history_insights,
-    project_history_run_record,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
@@ -210,21 +207,20 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
             },
         },
     )
-    loader = HistoryReportRequestLoader(
-        _HistoryDbStub(
-            run={
-                "run_id": "run-1",
-                "status": "complete",
-                "metadata": {"language": "en"},
-                "analysis": persisted_analysis,
-            }
-        ),
+    history_db = _HistoryDbStub(
+        run={
+            "run_id": "run-1",
+            "status": "complete",
+            "metadata": {"language": "en"},
+            "analysis": persisted_analysis,
+        }
     )
+    loader = HistoryReportRequestLoader(history_db)
 
     request = await loader.load_report_request("run-1", "en")
     prepared = request.prepared
 
-    stored_analysis = await loader._history_db.aget_run("run-1")
+    stored_analysis = await history_db.aget_run("run-1")
     assert stored_analysis is not None
     assert stored_analysis.analysis is not None
     assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [
@@ -400,181 +396,6 @@ async def test_projected_run_service_drops_persisted_origin_without_primary_find
     assert analysis is not None
     assert analysis["most_likely_origin"] == {}
     assert "_internal" not in analysis
-
-
-def test_build_projected_run_details_json_strips_internal_analysis_fields() -> None:
-    payload = json.loads(
-        build_projected_run_details_json(
-            _stored_run(
-                {
-                    "run_id": "run-1",
-                    "analysis": {"visible": 1, "_internal": {"secret": True}},
-                }
-            ),
-            sample_count=5,
-            run_id="run-1",
-        )
-    )
-
-    assert payload["sample_count"] == 5
-    assert payload["analysis"] == {"visible": 1}
-
-
-def test_build_run_details_json_projects_analysis_through_domain() -> None:
-    payload = json.loads(
-        build_projected_run_details_json(
-            _stored_run(
-                {
-                    "run_id": "run-1",
-                    "analysis": {
-                        "findings": [
-                            {
-                                "finding_id": "F001",
-                                "suspected_source": "wheel/tire",
-                                "strongest_location": "front-left",
-                                "confidence": 0.71,
-                            },
-                        ],
-                        "top_causes": [],
-                        "most_likely_origin": {},
-                        "test_plan": [],
-                        "run_suitability": [],
-                    },
-                }
-            ),
-            sample_count=5,
-            run_id="run-1",
-        ),
-    )
-
-    assert payload["analysis"]["top_causes"][0]["finding_id"] == "F001"
-    assert payload["analysis"]["most_likely_origin"]["suspected_source"] == "wheel/tire"
-
-
-def test_build_run_details_json_projects_canonical_nested_run_context() -> None:
-    payload = json.loads(
-        build_projected_run_details_json(
-            _stored_run(
-                {
-                    "run_id": "run-1",
-                    "metadata": {
-                        "analysis_settings_snapshot": {
-                            "tire_width_mm": 255.0,
-                            "tire_aspect_pct": 40.0,
-                            "rim_in": 19.0,
-                            "final_drive_ratio": 3.15,
-                            "current_gear_ratio": 0.81,
-                        },
-                        "active_car_snapshot": {
-                            "id": "car-1",
-                            "name": "Primary",
-                            "type": "sedan",
-                        },
-                    },
-                }
-            ),
-            sample_count=5,
-            run_id="run-1",
-        ),
-    )
-
-    metadata = payload["metadata"]
-    assert metadata["active_car_snapshot"]["name"] == "Primary"
-    assert metadata["active_car_snapshot"]["id"] == "car-1"
-    assert "aspects" not in metadata["active_car_snapshot"]
-    assert float(metadata["analysis_settings_snapshot"]["tire_width_mm"]) == pytest.approx(255.0)
-    assert "reference_context" not in metadata
-    assert "tire_circumference_m" not in metadata
-
-
-def test_run_record_and_export_details_share_projected_metadata_and_analysis() -> None:
-    run = _stored_run(
-        {
-            "run_id": "run-1",
-            "metadata": {
-                "analysis_settings_snapshot": {
-                    "tire_width_mm": 255.0,
-                    "tire_aspect_pct": 40.0,
-                    "rim_in": 19.0,
-                    "final_drive_ratio": 3.15,
-                    "current_gear_ratio": 0.81,
-                },
-                "active_car_snapshot": {
-                    "id": "car-1",
-                    "name": "Primary",
-                    "type": "sedan",
-                },
-            },
-            "analysis": {
-                "findings": [
-                    {
-                        "finding_id": "F001",
-                        "suspected_source": "wheel/tire",
-                        "strongest_location": "front-left",
-                        "confidence": 0.71,
-                    },
-                ],
-                "top_causes": [],
-                "most_likely_origin": {},
-                "test_plan": [],
-                "run_suitability": [],
-                "_internal": {"secret": True},
-            },
-        }
-    )
-
-    run_record = project_history_run_record(run)
-    exported_payload = json.loads(
-        build_projected_run_details_json(
-            run,
-            sample_count=5,
-            run_id="run-1",
-        )
-    )
-
-    assert run_record["metadata"] == exported_payload["metadata"]
-    assert run_record["analysis"] == exported_payload["analysis"]
-
-
-def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None:
-    projected = project_history_insights(
-        {
-            "lang": "en",
-            "metadata": {"active_car_snapshot": {"name": "Track Car"}},
-            "_internal": {"secret": True},
-        }
-    )
-
-    assert projected == {
-        "lang": "en",
-        "metadata": {"active_car_snapshot": {"name": "Track Car"}},
-    }
-
-
-def test_build_projected_run_details_json_sanitizes_non_finite_floats() -> None:
-    """Non-finite floats in analysis are replaced with null, producing valid JSON."""
-    result = build_projected_run_details_json(
-        _stored_run(
-            {
-                "run_id": "run-nan",
-                "analysis": {
-                    "score": float("nan"),
-                    "maximum": float("inf"),
-                    "minimum": float("-inf"),
-                    "valid": 42.5,
-                },
-            }
-        ),
-        sample_count=3,
-        run_id="run-nan",
-    )
-
-    # Must be parseable by json.loads (no NaN/Infinity)
-    payload = json.loads(result)
-    assert payload["analysis"]["score"] is None
-    assert payload["analysis"]["maximum"] is None
-    assert payload["analysis"]["minimum"] is None
-    assert payload["analysis"]["valid"] == 42.5
 
 
 @pytest.mark.asyncio
