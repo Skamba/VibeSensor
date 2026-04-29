@@ -3,6 +3,7 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
@@ -141,7 +142,7 @@ def test_prepare_persisted_report_input_builds_raw_backed_legacy_fallback_diagno
     assert "summary_only" not in {
         factor.factor_key for factor in diagnosis[0].counterevidence_factors
     }
-    assert "legacy_context" in {
+    assert LEGACY_CONTEXT_CAVEAT_KEY in {
         factor.factor_key for factor in diagnosis[0].counterevidence_factors
     }
 

@@ -7,6 +7,7 @@ import math
 from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report_i18n import human_location, location_candidates
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
@@ -451,7 +452,7 @@ def _confidence_caveat_texts(
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
         elif key == "raw_replay_incomplete":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE"))
-        elif key == "legacy_context":
+        elif key == LEGACY_CONTEXT_CAVEAT_KEY:
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
         elif key == "sparse_support":
             parts.append(

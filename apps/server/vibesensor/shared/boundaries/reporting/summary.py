@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.codecs.scalars import (
     coerce_count,
     optional_float,
@@ -460,7 +461,7 @@ _DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
         "clean_signal",
         "summary_only",
         "raw_replay_incomplete",
-        "legacy_context",
+        LEGACY_CONTEXT_CAVEAT_KEY,
         "speed_context_gaps",
         "rpm_context_gaps",
         "sparse_support",

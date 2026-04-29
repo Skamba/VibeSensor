@@ -18,6 +18,7 @@ from typing import Any, Literal, Required, TypedDict
 
 from pydantic import ConfigDict
 
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
     PlotDataResult,
@@ -145,7 +146,7 @@ DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
         "user_confirmed_vehicle_data",
         "summary_only",
         "raw_replay_incomplete",
-        "legacy_context",
+        LEGACY_CONTEXT_CAVEAT_KEY,
         "speed_context_gaps",
         "rpm_context_gaps",
         "sparse_support",

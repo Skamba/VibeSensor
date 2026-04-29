@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
+from typing import Final, Literal
 
 from .finding import Finding
 
@@ -14,6 +15,7 @@ __all__ = [
     "DiagnosisAssessmentFactor",
     "DiagnosisAssessmentFactorDetails",
     "DiagnosisAssessmentInputs",
+    "LEGACY_CONTEXT_CAVEAT_KEY",
     "apply_diagnosis_assessment_fallback",
     "diagnosis_assessment_from_components",
     "score_diagnosis_assessment_inputs",
@@ -21,6 +23,9 @@ __all__ = [
 
 DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP = 0.10
 DIAGNOSIS_AMBIGUOUS_SCORE_GAP = 0.05
+LEGACY_CONTEXT_CAVEAT_KEY: Final[Literal["legacy_context"]] = "legacy_context"
+"""Shared caveat/factor key for legacy whole-run context fallbacks."""
+
 _DIAGNOSIS_SUSPICIOUS_CAVEAT_KEYS = frozenset(
     {
         "drifting_frequency",
@@ -156,7 +161,7 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
     if inputs.context_traceable:
         if inputs.context_source == "legacy":
             score -= 0.05
-            caveat_keys.append("legacy_context")
+            caveat_keys.append(LEGACY_CONTEXT_CAVEAT_KEY)
         else:
             if inputs.speed_gap_window_count > 0:
                 score -= 0.04
@@ -557,7 +562,7 @@ def _support_factor_weight(factor_key: str, assessment: DiagnosisAssessment) -> 
 
 
 def _counter_factor_weight(factor_key: str) -> float:
-    if factor_key in {"summary_only", "legacy_context", "raw_replay_incomplete"}:
+    if factor_key in {"summary_only", LEGACY_CONTEXT_CAVEAT_KEY, "raw_replay_incomplete"}:
         return 0.05
     if factor_key in {"speed_context_gaps", "rpm_context_gaps"}:
         return 0.04
@@ -666,7 +671,7 @@ def _tier_for_score(*, label_key: str, score_0_to_1: float, caveat_keys: tuple[s
             "weak_spatial",
             "close_alternative",
             "incomplete_reference",
-            "legacy_context",
+            LEGACY_CONTEXT_CAVEAT_KEY,
             "speed_context_gaps",
             "rpm_context_gaps",
             "noisy_signal",
