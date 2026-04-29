@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from _history_endpoint_helpers import route_endpoint, route_endpoint_with_method
-from test_support import response_payload
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from vibesensor.domain import AnalysisSettingsSnapshot
 
@@ -13,61 +13,51 @@ def _make_default_snapshot() -> AnalysisSettingsSnapshot:
     return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
 
 
-def _find_endpoint(router, path: str, method: str = "GET"):
-    if method.upper() == "GET":
-        return route_endpoint(router, path)
-    return route_endpoint_with_method(router, path, method)
-
-
 @pytest.fixture
-def _analysis_router(fake_state):
+def _analysis_client(fake_state):
     from vibesensor.adapters.http.settings.analysis import create_analysis_settings_routes
     from vibesensor.adapters.http.settings.dependencies import AnalysisSettingsRouteDeps
 
     fake_state.settings_store.analysis_settings_snapshot.return_value = _make_default_snapshot()
-    return (
+    app = FastAPI()
+    app.include_router(
         create_analysis_settings_routes(
             AnalysisSettingsRouteDeps(analysis_settings=fake_state.settings_store),
-        ),
-        fake_state,
+        )
     )
+    with TestClient(app) as client:
+        yield client, fake_state
 
 
 class TestSetAnalysisSettingsEndpoint:
-    @pytest.mark.asyncio
-    async def test_empty_changes_is_noop(self, _analysis_router) -> None:
+    def test_empty_changes_is_noop(self, _analysis_client) -> None:
         """PUT /api/settings/analysis with all-None body skips update_active_car_aspects."""
 
-        router, state = _analysis_router
-        endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
+        client, state = _analysis_client
 
-        from vibesensor.adapters.http.models import AnalysisSettingsRequest
+        response = client.put("/api/settings/analysis", json={})
 
-        result = response_payload(await endpoint(req=AnalysisSettingsRequest()))
-
+        assert response.status_code == 200
         state.settings_store.update_active_car_aspects.assert_not_called()
-        assert "tire_width_mm" in result
+        assert "tire_width_mm" in response.json()
 
-    @pytest.mark.asyncio
-    async def test_valid_changes_calls_update(self, _analysis_router) -> None:
-        router, state = _analysis_router
-        endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
+    def test_valid_changes_calls_update(self, _analysis_client) -> None:
+        client, state = _analysis_client
 
-        from vibesensor.adapters.http.models import AnalysisSettingsRequest
+        response = client.put("/api/settings/analysis", json={"tire_width_mm": 265.0})
 
-        await endpoint(req=AnalysisSettingsRequest(tire_width_mm=265.0))
-
+        assert response.status_code == 200
         state.settings_store.update_active_car_aspects.assert_called_once_with(
             {"tire_width_mm": 265.0}
         )
 
-    @pytest.mark.asyncio
-    async def test_get_analysis_settings_response_shape(self, _analysis_router) -> None:
-        router, _ = _analysis_router
-        endpoint = _find_endpoint(router, "/api/settings/analysis", "GET")
+    def test_get_analysis_settings_response_shape(self, _analysis_client) -> None:
+        client, _ = _analysis_client
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/settings/analysis")
 
+        assert response.status_code == 200
+        result = response.json()
         for key in (
             "tire_width_mm",
             "tire_aspect_pct",

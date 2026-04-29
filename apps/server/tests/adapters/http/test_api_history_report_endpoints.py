@@ -9,14 +9,12 @@ from _history_endpoint_helpers import (
     FakeState,
     FakeWsHub,
     _real_pdf_renderer,
+    make_app_and_state,
     make_metadata,
-    make_router_and_state,
-    make_status_router,
-    response_payload,
-    route_endpoint,
+    make_status_app,
     sample,
 )
-from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 from pypdf import PdfReader
 from test_support.persisted_analysis import make_persisted_analysis
 
@@ -29,49 +27,48 @@ def _pdf_text(body: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(body)).pages).lower()
 
 
-@pytest.mark.asyncio
-async def test_history_insights_returns_persisted_analysis() -> None:
-    router, _ = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
-    result = response_payload(await endpoint("run-1"))
+def test_history_insights_returns_persisted_analysis() -> None:
+    app, _ = make_app_and_state(language="en")
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1/insights")
+
+    assert response.status_code == 200
+    result = response.json()
     assert result["lang"] == "en"
     assert "most_likely_origin" in result
     check_keys = {str(item.get("check_key")) for item in result.get("run_suitability", [])}
     assert "SUITABILITY_CHECK_SPEED_VARIATION" in check_keys
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_respects_lang_query() -> None:
-    router, _ = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
-    en = await endpoint("run-1", "en")
-    nl = await endpoint("run-1", "nl")
-    assert en.body.startswith(b"%PDF")
-    assert nl.body.startswith(b"%PDF")
-    assert en.body == nl.body
+def test_report_pdf_respects_lang_query() -> None:
+    app, _ = make_app_and_state(language="en")
+    with TestClient(app) as client:
+        en = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
+        nl = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
+
+    assert en.content.startswith(b"%PDF")
+    assert nl.content.startswith(b"%PDF")
+    assert en.content == nl.content
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
-    router, state = make_router_and_state(language="nl")
+def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
+    app, state = make_app_and_state(language="nl")
     state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    with TestClient(app) as client:
+        nl = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
+        en = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
-    nl = await endpoint("run-1", "nl")
-    en = await endpoint("run-1", "en")
+    assert nl.content.startswith(b"%PDF")
+    assert en.content.startswith(b"%PDF")
 
-    assert nl.body.startswith(b"%PDF")
-    assert en.body.startswith(b"%PDF")
-
-    nl_text = _pdf_text(nl.body)
-    text_from_en_request = _pdf_text(en.body)
+    nl_text = _pdf_text(nl.content)
+    text_from_en_request = _pdf_text(en.content)
     assert "vibesensor-diagnoserapport" in nl_text
     assert "vibesensor-diagnoserapport" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
+def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     metadata = make_metadata(language="nl")
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
@@ -87,27 +84,26 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
     db = FakeHistoryDB(metadata, samples, analysis)
     state = FakeState(db, FakeWsHub(), pdf_renderer=counting_renderer)
-    app = FastAPI()
-    router = create_router(state)
-    app.include_router(router)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    app = create_router(state)
+    from fastapi import FastAPI
 
-    nl = await endpoint("run-1", "nl")
-    en = await endpoint("run-1", "en")
+    fastapi_app = FastAPI()
+    fastapi_app.include_router(app)
+    with TestClient(fastapi_app) as client:
+        nl = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
+        en = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
     assert render_count == 1
-
-    assert nl.body.startswith(b"%PDF")
-    assert en.body.startswith(b"%PDF")
-    nl_text = _pdf_text(nl.body)
-    text_from_en_request = _pdf_text(en.body)
+    assert nl.content.startswith(b"%PDF")
+    assert en.content.startswith(b"%PDF")
+    nl_text = _pdf_text(nl.content)
+    text_from_en_request = _pdf_text(en.content)
     assert "vibesensor-diagnoserapport" in nl_text
     assert "vibesensor-diagnoserapport" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
+def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
     call_count = 0
 
     def fake_renderer(_prepared: object) -> bytes:
@@ -115,18 +111,16 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> 
         call_count += 1
         return b"%PDF-cached"
 
-    router, _ = make_router_and_state(language="en", pdf_renderer=fake_renderer)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
-
-    first = await endpoint("run-1", "en")
-    second = await endpoint("run-1", "en")
+    app, _ = make_app_and_state(language="en", pdf_renderer=fake_renderer)
+    with TestClient(app) as client:
+        first = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
+        second = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
     assert call_count == 1
-    assert first.body == second.body == b"%PDF-cached"
+    assert first.content == second.content == b"%PDF-cached"
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
+def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
     call_count = 0
 
     def fake_renderer(_prepared: object) -> bytes:
@@ -134,19 +128,17 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
         call_count += 1
         return b"%PDF-cached-cross-lang"
 
-    router, state = make_router_and_state(language="nl", pdf_renderer=fake_renderer)
+    app, state = make_app_and_state(language="nl", pdf_renderer=fake_renderer)
     state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
-
-    first = await endpoint("run-1", "en")
-    second = await endpoint("run-1", "nl")
+    with TestClient(app) as client:
+        first = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
+        second = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
 
     assert call_count == 1
-    assert first.body == second.body == b"%PDF-cached-cross-lang"
+    assert first.content == second.content == b"%PDF-cached-cross-lang"
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> None:
+def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
@@ -177,17 +169,18 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
     state = FakeState(
         TimestampFlipDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=fake_renderer
     )
-    router = create_router(state)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    from fastapi import FastAPI
 
-    await endpoint("run-1", "en")
-    await endpoint("run-1", "en")
+    app = FastAPI()
+    app.include_router(create_router(state))
+    with TestClient(app) as client:
+        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
+        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
     assert call_count == 2
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
+def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
     first_analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
@@ -225,16 +218,17 @@ async def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> N
         FakeWsHub(),
         pdf_renderer=fake_renderer,
     )
-    router = create_router(state)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    from fastapi import FastAPI
 
-    await endpoint("run-1", "en")
-    await endpoint("run-1", "en")
+    app = FastAPI()
+    app.include_router(create_router(state))
+    with TestClient(app) as client:
+        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
+        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
     assert call_count == 2
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("status", "analysis", "expected_status", "expected_detail"),
     [
@@ -249,16 +243,15 @@ async def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> N
         ),
     ],
 )
-async def test_report_pdf_status_and_analysis_errors(
+def test_report_pdf_status_and_analysis_errors(
     status: str,
     analysis: dict[str, object] | None,
     expected_status: int,
     expected_detail: str,
 ) -> None:
-    router = make_status_router(status=status, analysis=analysis, include_error_message=True)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    app = make_status_app(status=status, analysis=analysis, include_error_message=True)
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
 
-    with pytest.raises(HTTPException) as exc_info:
-        await endpoint("run-1", "en")
-    assert exc_info.value.status_code == expected_status
-    assert exc_info.value.detail == expected_detail
+    assert response.status_code == expected_status
+    assert response.json()["detail"] == expected_detail

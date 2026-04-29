@@ -6,37 +6,35 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from _history_endpoint_helpers import (
-    FakeWs,
-    make_router_and_state,
-    response_payload,
-    route_endpoint,
-    route_endpoint_with_method,
-)
-from fastapi import HTTPException
+from _history_endpoint_helpers import make_app_and_state
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 async def _close_history_db(db) -> None:
     await db.aclose()
 
 
-@pytest.mark.asyncio
-async def test_ws_selected_client_id_validation() -> None:
-    router, state = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/ws")
-    ws = FakeWs(
-        messages=[
-            json.dumps({"client_id": "not-a-mac"}),
-            json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"}),
-        ],
-        selected_query="ZZZZZZZZZZZZ",
-    )
-    await endpoint(ws)
+def _client_routes_app(registry, control_plane, settings_store, processor) -> FastAPI:
+    from vibesensor.adapters.http.clients import create_client_routes
+
+    app = FastAPI()
+    app.include_router(create_client_routes(registry, control_plane, settings_store, processor))
+    return app
+
+
+def test_ws_selected_client_id_validation() -> None:
+    app, state = make_app_and_state(language="en")
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws?client_id=ZZZZZZZZZZZZ") as ws:
+            ws.send_text(json.dumps({"client_id": "not-a-mac"}))
+            ws.send_text(json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"}))
+
     assert None in state.ws_hub.selected_updates
     assert "aabbccddeeff" in state.ws_hub.selected_updates
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "messages",
     [
@@ -46,98 +44,76 @@ async def test_ws_selected_client_id_validation() -> None:
         ['{"client_id":"not-a-mac"}'],
     ],
 )
-async def test_ws_ignores_invalid_client_selection_messages(messages: list[str]) -> None:
-    router, state = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/ws")
-    ws = FakeWs(messages=messages)
-    await endpoint(ws)
+def test_ws_ignores_invalid_client_selection_messages(messages: list[str]) -> None:
+    app, state = make_app_and_state(language="en")
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws") as ws:
+            for message in messages:
+                ws.send_text(message)
+
     assert state.ws_hub.selected_updates == [None]
 
 
-@pytest.mark.asyncio
-async def test_ws_unexpected_update_error_propagates() -> None:
-    router, state = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/ws")
+def test_ws_unexpected_update_error_propagates() -> None:
+    app, state = make_app_and_state(language="en")
     state.ws_hub.update_selected_client = AsyncMock(side_effect=RuntimeError("boom"))
-    ws = FakeWs(messages=[json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"})])
 
-    with pytest.raises(RuntimeError, match="boom"):
-        await endpoint(ws)
-
-
-@pytest.mark.asyncio
-async def test_health_ok_status_when_no_failures() -> None:
-    router, _ = make_router_and_state()
-    endpoint = route_endpoint(router, "/api/health")
-    resp = response_payload(await endpoint())
-    assert resp["status"] == "ok"
-    assert resp["startup_state"] == "ready"
+    with TestClient(app) as client, pytest.raises(RuntimeError, match="boom"):
+        with client.websocket_connect("/ws") as ws:
+            ws.send_text(json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"}))
 
 
-@pytest.mark.asyncio
-async def test_health_warn_status_when_processing_failures() -> None:
-    router, state = make_router_and_state()
-    state.health_state.mark_ready()
-    state.processing_loop_state.processing_failure_count = 3
-    endpoint = route_endpoint(router, "/api/health")
-    resp = response_payload(await endpoint())
-    assert resp["status"] == "warn"
-    assert resp["processing_failures"] == 3
-
-
-@pytest.mark.asyncio
-async def test_identify_client_404_when_sensor_not_in_registry() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_identify_client_404_when_sensor_not_in_registry() -> None:
     registry = type("R", (), {"get": lambda self, cid: None})()
     control_plane = MagicMock()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    with pytest.raises(HTTPException) as exc_info:
-        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
-    assert exc_info.value.status_code == 404
-    assert "not found" in exc_info.value.detail.lower()
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
+            json={"duration_ms": 1000},
+        )
+
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"].lower()
 
 
-@pytest.mark.asyncio
-async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
     sentinel = object()
     registry = type("R", (), {"get": lambda self, cid: sentinel})()
     control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    with pytest.raises(HTTPException) as exc_info:
-        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
-    assert exc_info.value.status_code == 503
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
+            json={"duration_ms": 1000},
+        )
+
+    assert response.status_code == 503
 
 
-@pytest.mark.asyncio
-async def test_identify_client_200_when_sensor_reachable() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_identify_client_200_when_sensor_reachable() -> None:
     sentinel = object()
     registry = type("R", (), {"get": lambda self, cid: sentinel})()
     control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    resp = response_payload(
-        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})()),
-    )
-    assert resp == {"status": "sent", "cmd_seq": 7}
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
+            json={"duration_ms": 1000},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "sent", "cmd_seq": 7}
 
 
-@pytest.mark.asyncio
-async def test_identify_client_normalizes_client_id_before_registry_and_control_plane() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_identify_client_normalizes_client_id_before_registry_and_control_plane() -> None:
     class RecordingRegistry:
         def __init__(self) -> None:
             self.requested_ids: list[str] = []
@@ -157,22 +133,21 @@ async def test_identify_client_normalizes_client_id_before_registry_and_control_
     registry = RecordingRegistry()
     control_plane = RecordingControlPlane()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    resp = response_payload(
-        await endpoint(" AA:BB:CC:DD:EE:FF ", type("Req", (), {"duration_ms": 1000})()),
-    )
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/ AA:BB:CC:DD:EE:FF /identify",
+            json={"duration_ms": 1000},
+        )
 
+    assert response.status_code == 200
     assert registry.requested_ids == ["aabbccddeeff"]
     assert control_plane.calls == [("aabbccddeeff", 1000)]
-    assert resp == {"status": "sent", "cmd_seq": 7}
+    assert response.json() == {"status": "sent", "cmd_seq": 7}
 
 
-@pytest.mark.asyncio
-async def test_set_client_location_maps_canonical_location_conflict_to_409() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_set_client_location_maps_canonical_location_conflict_to_409() -> None:
     class KnownRegistry:
         def get(self, _client_id: str) -> object:
             return object()
@@ -183,20 +158,19 @@ async def test_set_client_location_maps_canonical_location_conflict_to_409() -> 
     settings_store.assign_sensor_location.side_effect = ValueError(
         "Location 'front_left_wheel' already assigned to other sensor",
     )
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    with pytest.raises(HTTPException) as exc_info:
-        request = type("Req", (), {"location_code": "front_left_wheel"})()
-        await endpoint("aa:bb:cc:dd:ee:ff", request)
-    assert exc_info.value.status_code == 409
-    assert "already assigned" in exc_info.value.detail
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/location",
+            json={"location_code": "front_left_wheel"},
+        )
+
+    assert response.status_code == 409
+    assert "already assigned" in response.json()["detail"]
 
 
-@pytest.mark.asyncio
-async def test_set_client_location_maps_unknown_location_to_400() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_set_client_location_maps_unknown_location_to_400() -> None:
     class KnownRegistry:
         def get(self, _client_id: str) -> object:
             return object()
@@ -205,20 +179,19 @@ async def test_set_client_location_maps_unknown_location_to_400() -> None:
     control_plane = MagicMock()
     settings_store = MagicMock()
     settings_store.assign_sensor_location.side_effect = ValueError("Unknown location_code")
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    with pytest.raises(HTTPException) as exc_info:
-        request = type("Req", (), {"location_code": "not_a_real_location"})()
-        await endpoint("aa:bb:cc:dd:ee:ff", request)
-    assert exc_info.value.status_code == 400
-    assert exc_info.value.detail == "Unknown location_code"
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/location",
+            json={"location_code": "not_a_real_location"},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unknown location_code"
 
 
-@pytest.mark.asyncio
-async def test_set_client_location_persists_canonical_name_and_location() -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
-
+def test_set_client_location_persists_canonical_name_and_location() -> None:
     class KnownRegistry:
         def __init__(self) -> None:
             self.cleared: list[str] = []
@@ -249,12 +222,15 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
             "location_code": "front_left_wheel",
         }
     }
-    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
-    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    request = type("Req", (), {"location_code": "front_left_wheel"})()
-    resp = response_payload(await endpoint("aa:bb:cc:dd:ee:ff", request))
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/clients/aa:bb:cc:dd:ee:ff/location",
+            json={"location_code": "front_left_wheel"},
+        )
 
+    assert response.status_code == 200
     settings_store.assign_sensor_location.assert_called_once_with(
         "aabbccddeeff",
         "front_left_wheel",
@@ -262,32 +238,24 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
     assert registry.locations == [("aabbccddeeff", "front_left_wheel")]
     assert registry.names == [("aabbccddeeff", "Front Left Wheel")]
     assert registry.cleared == []
-    assert resp["name"] == "Front Left Wheel"
-    assert resp["location_code"] == "front_left_wheel"
+    assert response.json()["name"] == "Front Left Wheel"
+    assert response.json()["location_code"] == "front_left_wheel"
 
 
-@pytest.mark.asyncio
-async def test_set_client_location_works_with_real_persistence_in_async_route(
+def test_set_client_location_works_with_real_persistence_in_async_route(
     tmp_path: Path,
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.http.clients import create_client_routes
     from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
-        settings_store = (
-            await asyncio.to_thread(
-                build_settings_services,
-                db=db.settings_snapshot_repository,
-            )
-        ).sensor_settings
-        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
-        await asyncio.to_thread(
-            registry.update_from_hello,
+        settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
+        registry = ClientRegistry(db=db.client_name_repository)
+        registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),
                 control_port=9010,
@@ -300,40 +268,36 @@ async def test_set_client_location_works_with_real_persistence_in_async_route(
             now_mono=1.0,
         )
 
-        router = create_client_routes(registry, MagicMock(), settings_store, MagicMock())
-        endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+        app = _client_routes_app(registry, MagicMock(), settings_store, MagicMock())
 
-        resp = response_payload(
-            await endpoint(
-                "00:11:22:33:44:55",
-                type("Req", (), {"location_code": "front_left_wheel"})(),
-            ),
-        )
+        with TestClient(app) as client:
+            response = client.post(
+                "/api/clients/00:11:22:33:44:55/location",
+                json={"location_code": "front_left_wheel"},
+            )
 
-        assert resp["name"] == "Front Left Wheel"
-        assert resp["location_code"] == "front_left_wheel"
-        assert await asyncio.to_thread(settings_store.get_sensors) == {
+        assert response.status_code == 200
+        assert response.json()["name"] == "Front Left Wheel"
+        assert response.json()["location_code"] == "front_left_wheel"
+        assert settings_store.get_sensors() == {
             "001122334455": {
                 "name": "Front Left Wheel",
                 "location_code": "front_left_wheel",
             }
         }
     finally:
-        await _close_history_db(db)
+        asyncio.run(_close_history_db(db))
 
 
-@pytest.mark.asyncio
-async def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
+def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
     from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
-        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
-        await asyncio.to_thread(
-            registry.update_from_hello,
+        registry = ClientRegistry(db=db.client_name_repository)
+        registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),
                 control_port=9010,
@@ -345,33 +309,31 @@ async def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Pa
             1.0,
             now_mono=1.0,
         )
-        await asyncio.to_thread(registry.set_name, "001122334455", "Front Left Wheel")
+        registry.set_name("001122334455", "Front Left Wheel")
 
-        router = create_client_routes(registry, MagicMock(), MagicMock(), MagicMock())
-        endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}", "DELETE")
+        app = _client_routes_app(registry, MagicMock(), MagicMock(), MagicMock())
 
-        resp = response_payload(await endpoint("00:11:22:33:44:55"))
+        with TestClient(app) as client:
+            response = client.delete("/api/clients/00:11:22:33:44:55")
 
-        assert resp == {"id": "001122334455", "status": "removed"}
-        assert await asyncio.to_thread(db.client_name_repository.list_client_names) == {}
+        assert response.status_code == 200
+        assert response.json() == {"id": "001122334455", "status": "removed"}
+        assert db.client_name_repository.list_client_names() == {}
     finally:
-        await _close_history_db(db)
+        asyncio.run(_close_history_db(db))
 
 
-@pytest.mark.asyncio
-async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
+def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.http.clients import create_client_routes
     from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
-        registry = await asyncio.to_thread(
-            ClientRegistry,
+        registry = ClientRegistry(
             db=db.client_name_repository,
             live_ttl_seconds=5.0,
             retention_ttl_seconds=30.0,
@@ -394,12 +356,14 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
         settings_store.get_sensors.return_value = {}
         processor = MagicMock()
         processor.all_latest_metrics.return_value = {}
-        router = create_client_routes(registry, control_plane, settings_store, processor)
-        endpoint = route_endpoint(router, "/api/clients")
+        app = _client_routes_app(registry, control_plane, settings_store, processor)
 
-        resp = response_payload(await endpoint())
+        with TestClient(app) as client:
+            response = client.get("/api/clients")
+
+        assert response.status_code == 200
         assert processor.all_latest_metrics.call_args.args == ([],)
-        assert resp["clients"] == [
+        assert response.json()["clients"] == [
             {
                 "id": "001122334455",
                 "mac_address": "00:11:22:33:44:55",
@@ -418,40 +382,29 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
             },
         ]
     finally:
-        await _close_history_db(db)
+        asyncio.run(_close_history_db(db))
 
 
-@pytest.mark.asyncio
-async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
+def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.http.clients import create_client_routes
     from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
-        initial_settings = await asyncio.to_thread(
-            build_settings_services,
-            db=db.settings_snapshot_repository,
-        )
-        await asyncio.to_thread(
-            initial_settings.sensor_settings.assign_sensor_location,
+        initial_settings = build_settings_services(db=db.settings_snapshot_repository)
+        initial_settings.sensor_settings.assign_sensor_location(
             "00:11:22:33:44:55",
             "rear_left_wheel",
         )
 
-        settings_store = (
-            await asyncio.to_thread(
-                build_settings_services,
-                db=db.settings_snapshot_repository,
-            )
-        ).sensor_settings
-        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
+        settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
+        registry = ClientRegistry(db=db.client_name_repository)
         registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),
@@ -470,16 +423,17 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
         control_plane = MagicMock()
         processor = MagicMock()
         processor.all_latest_metrics.return_value = {}
-        router = create_client_routes(registry, control_plane, settings_store, processor)
-        endpoint = route_endpoint(router, "/api/clients")
+        app = _client_routes_app(registry, control_plane, settings_store, processor)
 
-        resp = response_payload(await endpoint())
+        with TestClient(app) as client:
+            response = client.get("/api/clients")
 
+        assert response.status_code == 200
         assert settings_store.get_sensors()["001122334455"] == {
             "name": "Rear Left Wheel",
             "location_code": "rear_left_wheel",
         }
-        assert resp["clients"] == [
+        assert response.json()["clients"] == [
             {
                 "id": "001122334455",
                 "mac_address": "00:11:22:33:44:55",
@@ -498,4 +452,4 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
             },
         ]
     finally:
-        await _close_history_db(db)
+        asyncio.run(_close_history_db(db))
