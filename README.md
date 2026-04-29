@@ -358,3 +358,8 @@ Current behavior:
 - Hooks prefer `.venv/bin/python` after `make setup`, then fall back to `python3`
   or `python` for bootstrap-only checkouts.
 - Use [CONTRIBUTING.md](CONTRIBUTING.md) for the supported local validation and CI reproduction workflow.
+
+## License
+
+VibeSensor is not currently distributed under an open-source license. See
+[LICENSE](LICENSE) for the explicit reuse notice.
