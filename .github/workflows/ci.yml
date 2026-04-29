@@ -584,7 +584,7 @@ jobs:
 
       - name: Backend tests shard ${{ matrix.shard_label }}
         env:
-          VIBESENSOR_BACKEND_XDIST_WORKERS: "2"
+          VIBESENSOR_BACKEND_XDIST_WORKERS: "3"
         run: >-
           "${{ steps.setup-backend.outputs.python-path }}"
           tools/tests/run_backend_parallel.py --shards 5 --shard-index ${{ matrix.shard_index }}

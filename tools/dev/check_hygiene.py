@@ -115,12 +115,10 @@ _RELEASE_SMOKE_QUALITY_NEEDS = (
 )
 _UI_SMOKE_NEEDS = (_CI_SCOPE_JOB, _FRONTEND_TYPECHECK_JOB)
 _UI_BUILD_ARTIFACT_NEEDS = (_CI_SCOPE_JOB, _FRONTEND_TYPECHECK_JOB)
-_BACKEND_TEST_SHARD_JOBS = (
-    "backend-tests-1",
-    "backend-tests-2",
-    "backend-tests-3",
-    "backend-tests-4",
-    "backend-tests-5",
+_BACKEND_TEST_SHARD_COUNT = 5
+_BACKEND_TEST_XDIST_WORKERS = "3"
+_BACKEND_TEST_SHARD_JOBS = tuple(
+    f"backend-tests-{index}" for index in range(1, _BACKEND_TEST_SHARD_COUNT + 1)
 )
 _BACKEND_SETUP_JOBS = (
     "backend-lint",
@@ -1844,10 +1842,34 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
 
         backend_steps = backend_job.get("steps")
         backend_duration_cache_ok = False
+        backend_parallel_config_ok = False
         if isinstance(backend_steps, list):
             for step in backend_steps:
                 if not isinstance(step, Mapping):
                     continue
+                step_name = step.get("name")
+                step_run = step.get("run")
+                step_env = step.get("env")
+                normalized_run = (
+                    " ".join(
+                        line.strip() for line in step_run.splitlines() if line.strip()
+                    )
+                    if isinstance(step_run, str)
+                    else ""
+                )
+                if (
+                    isinstance(step_name, str)
+                    and step_name == "Backend tests shard ${{ matrix.shard_label }}"
+                    and isinstance(step_env, Mapping)
+                    and str(
+                        step_env.get("VIBESENSOR_BACKEND_XDIST_WORKERS", "")
+                    ).strip()
+                    == _BACKEND_TEST_XDIST_WORKERS
+                    and f"tools/tests/run_backend_parallel.py --shards {_BACKEND_TEST_SHARD_COUNT}"
+                    in normalized_run
+                    and "--shard-index ${{ matrix.shard_index }}" in normalized_run
+                ):
+                    backend_parallel_config_ok = True
                 uses = step.get("uses")
                 if not isinstance(uses, str) or not uses.startswith("actions/cache@"):
                     continue
@@ -1872,12 +1894,17 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                     and "${{ runner.os }}-backend-test-durations-" in restore_keys
                 ):
                     backend_duration_cache_ok = True
-                    break
         if not backend_duration_cache_ok:
             errors.append(
                 "backend-tests must cache ~/.cache/vibesensor/backend-duration-cache.json "
                 "with a restoreable actions/cache key tied to run_backend_parallel.py, "
                 "apps/server/tests, matrix.cache_suffix, and github.run_id."
+            )
+        if not backend_parallel_config_ok:
+            errors.append(
+                "backend-tests must run run_backend_parallel.py with --shards 5 and "
+                "VIBESENSOR_BACKEND_XDIST_WORKERS=3 so the measured backend test tuning "
+                "stays explicit in CI."
             )
 
     e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
