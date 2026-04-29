@@ -10,9 +10,9 @@ from tests_e2e._docker_edge_helpers import (
     _wait_complete,
 )
 from tests_e2e.e2e_helpers import (
-    api_bytes,
     api_json,
     parse_export_zip,
+    wait_export_ready,
 )
 
 pytestmark = pytest.mark.e2e
@@ -54,7 +54,7 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
         complete = _wait_complete(base, run_id)
         assert complete["status"] == "complete"
 
-        export_resp = api_bytes(base, f"/api/history/{run_id}/export")
+        export_resp = wait_export_ready(base, run_id)
         _, rows, _ = parse_export_zip(export_resp.body)
         speed_values = [float(r["speed_kmh"]) for r in rows if r.get("speed_kmh") not in (None, "")]
         assert speed_values
