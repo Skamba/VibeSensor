@@ -22,6 +22,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Compute weekly source SHA
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
       - name: Compute weekly image metadata
         id: metadata
         shell: bash
@@ -67,9 +74,9 @@ jobs:
           cat > "${notes_file}" <<EOF
           Automated weekly Raspberry Pi image snapshot from \`main\`.
 
-          - Commit: \`${GITHUB_SHA}\`
+          - Commit: \`${{ steps.source.outputs.sha }}\`
           - Build label: \`${{ steps.metadata.outputs.build_label }}\`
-          - Asset: \`${{ steps.assets.outputs.artifact_name }}\`
+          - Asset: \`${{ steps.build-image.outputs.release-artifact-name }}\`
           - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
           This workflow reuses \`infra/pi-image/pi-gen/build.sh\` so the weekly image follows the same supported image-build path as local builds.
@@ -91,7 +98,7 @@ jobs:
           "${python_bin}" tools/publish_github_release.py \
             --repo "${GITHUB_REPOSITORY}" \
             --tag "${{ steps.metadata.outputs.tag }}" \
-            --target "${GITHUB_SHA}" \
+            --target "${{ steps.source.outputs.sha }}" \
             --title "${{ steps.metadata.outputs.release_name }}" \
             --notes-file "${notes_file}" \
             --make-latest false \

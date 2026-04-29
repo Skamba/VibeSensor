@@ -31,6 +31,13 @@ jobs:
           # workflow_run releases must build the exact commit that completed CI successfully.
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Compute release source SHA
+        id: release_source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
       - name: Set up configured Python runtime
         id: setup-python
         uses: ./.github/actions/setup-python
@@ -164,7 +171,7 @@ jobs:
           python_bin="${{ steps.setup-python.outputs.python-path }}"
           "${python_bin}" tools/release/main_release.py generate-firmware-manifest \
             --firmware-dir "${{ steps.firmware_dir.outputs.path }}" \
-            --generated-from "${GITHUB_SHA}"
+            --generated-from "${{ steps.release_source.outputs.sha }}"
 
       - name: Validate firmware manifest
         shell: bash
@@ -237,7 +244,7 @@ jobs:
           "${python_bin}" tools/publish_github_release.py \
             --repo "${GITHUB_REPOSITORY}" \
             --tag "${{ steps.version.outputs.tag }}" \
-            --target "${GITHUB_SHA}" \
+            --target "${{ steps.release_source.outputs.sha }}" \
             --title "Wheel / ESP release ${{ steps.version.outputs.version }}" \
             --notes-file "${notes_file}" \
             "${release_args[@]}"

@@ -22,6 +22,15 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
         if isinstance(step, dict) and step.get("uses") == "actions/checkout@v6"
     )
     assert checkout_step["with"]["fetch-depth"] == 0
+    assert "github.event.workflow_run.head_sha" in checkout_step["with"]["ref"]
+
+    source_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Compute release source SHA"
+    )
+    assert source_step["id"] == "release_source"
+    assert "git rev-parse HEAD" in source_step["run"]
 
     compute_version_step = next(
         step for step in steps if isinstance(step, dict) and step.get("name") == "Compute version"
@@ -65,6 +74,8 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
     )
     manifest_script = manifest_step["run"]
     assert "tools/release/main_release.py generate-firmware-manifest" in manifest_script
+    assert '--generated-from "${{ steps.release_source.outputs.sha }}"' in manifest_script
+    assert "GITHUB_SHA" not in manifest_script
 
     release_step_names = {
         step.get("name")
@@ -89,6 +100,8 @@ def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> No
         if isinstance(step, dict) and step.get("name") == "Create combined Wheel / ESP release"
     )
     assert isinstance(create_step["run"], str)
+    assert '--target "${{ steps.release_source.outputs.sha }}"' in create_step["run"]
+    assert "GITHUB_SHA" not in create_step["run"]
 
     cleanup_step = next(
         step
