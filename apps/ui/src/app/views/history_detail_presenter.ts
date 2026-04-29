@@ -1,8 +1,4 @@
-import type {
-  FindingPayload,
-  HistoryEntry,
-  HistoryInsightsPayload,
-} from "../../api/types";
+import type { HistoryEntry, HistoryInsightsPayload } from "../../api/types";
 import type { RunDetail } from "../ui_app_state";
 import { buildHistoryHeatmapViewModel } from "./history_heatmap_presenter";
 import {
@@ -17,6 +13,7 @@ import {
   isInconclusiveFinding,
   summarizeFindings,
   summarizeWarnings,
+  type HistoryFindingPayload,
   type PresenterParams,
 } from "./history_presenter_shared";
 import type {
@@ -27,7 +24,7 @@ import type {
   HistoryWarningBannerViewModel,
 } from "./history_table_models";
 
-function shouldShowNextStep(finding: FindingPayload | null): boolean {
+function shouldShowNextStep(finding: HistoryFindingPayload | null): boolean {
   if (!finding) {
     return false;
   }
@@ -95,7 +92,7 @@ function buildPrimaryFinding(
 }
 
 function buildSecondaryFinding(
-  finding: FindingPayload,
+  finding: HistoryFindingPayload,
   summary: HistoryInsightsPayload,
   params: Pick<PresenterParams, "fmt" | "t">,
 ): HistorySecondaryFindingViewModel {
