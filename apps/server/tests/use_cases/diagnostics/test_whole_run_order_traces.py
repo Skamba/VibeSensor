@@ -4,13 +4,13 @@ from test_support.report_helpers import diagnostics_context, wheel_metadata
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.orders.physics import _order_hypotheses
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     build_whole_run_order_trace_artifact_bundle,
@@ -113,16 +113,40 @@ def _summary_rows(*, sensor_scale: float) -> tuple[WholeRunWindowSpectralSummary
             speed_kmh=float(label.speed_kmh or 0.0),
             engine_rpm=float(label.engine_rpm or 0.0),
         )
-        peaks = []
-        for hypothesis in _order_hypotheses():
-            predicted_hz, _ = hypothesis.predicted_hz(
-                context_sample,
-                metadata,
-                metadata.tire_circumference_m,
+        wheel_hz = None
+        driveshaft_hz = None
+        order_reference_spec = metadata.order_reference_spec_for(context_sample)
+        if order_reference_spec is not None and label.speed_kmh is not None:
+            wheel_hz = order_reference_spec.wheel_hz_from_speed_kmh(float(label.speed_kmh))
+            driveshaft_hz = order_reference_spec.driveshaft_hz_from_speed_kmh(
+                float(label.speed_kmh)
             )
+        elif (
+            label.speed_kmh is not None
+            and metadata.tire_circumference_m is not None
+            and metadata.tire_circumference_m > 0
+        ):
+            wheel_hz = float(label.speed_kmh) * KMH_TO_MPS / float(metadata.tire_circumference_m)
+            if metadata.final_drive_ratio is not None and metadata.final_drive_ratio > 0:
+                driveshaft_hz = wheel_hz * float(metadata.final_drive_ratio)
+        engine_hz = (
+            float(label.engine_rpm) / SECONDS_PER_MINUTE
+            if label.engine_rpm is not None and label.engine_rpm > 0
+            else None
+        )
+        peaks = []
+        predicted_frequencies = (
+            wheel_hz,
+            wheel_hz * 2.0 if wheel_hz is not None else None,
+            driveshaft_hz,
+            driveshaft_hz * 2.0 if driveshaft_hz is not None else None,
+            engine_hz,
+            engine_hz * 2.0 if engine_hz is not None else None,
+        )
+        for index, predicted_hz in enumerate(predicted_frequencies, start=1):
             if predicted_hz is None or predicted_hz <= 0:
                 continue
-            amplitude = sensor_scale / max(1, hypothesis.order)
+            amplitude = sensor_scale / float(index)
             peaks.append(
                 {
                     "hz": float(predicted_hz),

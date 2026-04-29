@@ -3,8 +3,6 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
@@ -12,8 +10,6 @@ from vibesensor.shared.order_bands import (
     tolerance_for_order,
     vehicle_orders_hz,
 )
-from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
-from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 
@@ -161,28 +157,3 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
     }
     assert captured["final_drive_ratio"] == 3.55
     assert captured["tire_width_mm"] == 285.0
-
-
-def test_effective_engine_rpm_prefers_order_reference_spec(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class _FakeSpec:
-        supports_engine_reference = True
-
-        def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
-            assert speed_kmh == 80.0
-            return 2345.0
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics._reference_resolution._order_reference_spec_from_context",
-        lambda context, sample=None: _FakeSpec(),
-    )
-
-    rpm, source = _effective_engine_rpm(
-        sensor_frames_from_mappings([{"speed_kmh": 80.0}])[0],
-        context=normalize_run_metadata(run_metadata_from_mapping({}), file_name="test"),
-        tire_circumference_m=None,
-    )
-
-    assert rpm == pytest.approx(2345.0)
-    assert source == "estimated_from_speed_and_ratios"
