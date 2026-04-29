@@ -105,6 +105,7 @@ def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_pat
     base_cfg = _write_and_load(tmp_path / "config.yaml", {})
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
+    pi_cfg = load_config(SERVER_DIR / "config.pi.yaml")
 
     assert base_cfg.server.host == dev_cfg.server.host == docker_cfg.server.host
     assert base_cfg.server.port == 80
@@ -120,6 +121,9 @@ def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_pat
     assert base_cfg.ap.self_heal.enabled is True
     assert dev_cfg.ap.self_heal.enabled is True
     assert docker_cfg.ap.self_heal.enabled is False
+    assert base_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")
+    assert pi_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")
+    assert dev_cfg.update.rollback_dir == SERVER_DIR / "data/rollback"
     assert docker_cfg.update.rollback_dir != base_cfg.update.rollback_dir
 
 
