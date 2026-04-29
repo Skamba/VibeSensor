@@ -1,10 +1,11 @@
-"""Guard backend test shard planning and cache observations."""
+"""Guard backend test shard planning and CLI-visible runner behavior."""
 
 from __future__ import annotations
 
 import importlib.util
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 from tests._paths import REPO_ROOT
 
@@ -20,6 +21,30 @@ def _load_run_backend_parallel_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _install_main_fakes(module, monkeypatch, tmp_path: Path) -> tuple[dict[str, object], list[str]]:
+    captured: dict[str, object] = {}
+    emitted: list[str] = []
+
+    monkeypatch.setattr(module, "LOG_DIR", tmp_path)
+    monkeypatch.setattr(
+        module,
+        "collect_test_ids",
+        lambda _pytest_args: ["apps/server/tests/app/test_app_main.py::test_fast"],
+    )
+    monkeypatch.setattr(module, "_load_duration_cache", lambda _path: {})
+    monkeypatch.setattr(module, "_observed_durations_from_junit", lambda _path, _selected: {})
+    monkeypatch.setattr(module, "_emit", emitted.append)
+
+    def _fake_run(cmd: list[str], *, log_path: Path) -> int:
+        captured["cmd"] = list(cmd)
+        captured["log_path"] = log_path
+        log_path.write_text("$ fake pytest\n", encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr(module, "_run", _fake_run)
+    return captured, emitted
 
 
 def test_assign_shards_uses_cached_durations_by_file() -> None:
@@ -42,7 +67,7 @@ def test_assign_shards_uses_cached_durations_by_file() -> None:
     assert shards[1] == ["apps/server/tests/app/test_app_main.py"]
 
 
-def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> None:
+def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path: Path) -> None:
     module = _load_run_backend_parallel_module()
     junit_path = tmp_path / "backend-shard.xml"
     root = ET.Element("testsuite")
@@ -76,38 +101,43 @@ def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> No
     }
 
 
-def test_parse_args_defaults_to_single_shard(monkeypatch) -> None:
+def test_main_uses_default_single_shard_and_default_workers(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_backend_parallel_module()
     monkeypatch.delenv(module._XDIST_WORKERS_ENV, raising=False)
-    monkeypatch.setattr(module.sys, "argv", ["run_backend_parallel.py"])
+    captured, emitted = _install_main_fakes(module, monkeypatch, tmp_path)
 
-    args = module._parse_args()
+    assert module.main([]) == 0
 
-    assert args.shards == 1
-    assert args.shard_index == 1
-    assert args.junitxml is None
-    assert args.xdist_workers == 3
+    assert captured["cmd"] == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-n",
+        "3",
+        "--tb=short",
+        "--junitxml",
+        str(tmp_path / "backend-tests-1.xml"),
+        "apps/server/tests/app/test_app_main.py",
+    ]
+    assert any("running shard 1/1" in line for line in emitted)
 
 
-def test_parse_args_reads_xdist_workers_from_env(monkeypatch) -> None:
+def test_main_reads_xdist_workers_from_env(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_backend_parallel_module()
-    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "3")
-    monkeypatch.setattr(module.sys, "argv", ["run_backend_parallel.py"])
+    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "5")
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
 
-    args = module._parse_args()
+    assert module.main([]) == 0
 
-    assert args.xdist_workers == 3
+    assert captured["cmd"][4:6] == ["-n", "5"]
 
 
-def test_parse_args_cli_overrides_env_xdist_workers(monkeypatch) -> None:
+def test_main_cli_overrides_env_xdist_workers(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_backend_parallel_module()
-    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "3")
-    monkeypatch.setattr(
-        module.sys,
-        "argv",
-        ["run_backend_parallel.py", "--xdist-workers", "2"],
-    )
+    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "5")
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
 
-    args = module._parse_args()
+    assert module.main(["--xdist-workers", "2"]) == 0
 
-    assert args.xdist_workers == 2
+    assert captured["cmd"][4:6] == ["-n", "2"]

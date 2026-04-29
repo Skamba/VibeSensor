@@ -192,7 +192,7 @@ def _run_planned_commands(commands: tuple[PlannedCommand, ...]) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--base-ref",
@@ -203,7 +203,7 @@ def main() -> int:
         action="store_true",
         help="Print the selected commands without running them.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     base_ref = _resolve_base_ref(args.base_ref)
     changed_files = _changed_files(base_ref)
