@@ -10,9 +10,11 @@ from statistics import mean as _mean
 from vibesensor.domain import LocationHotspot
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.whole_run_analysis import (
-    WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
+)
+from vibesensor.use_cases.diagnostics._artifact_bundles import (
+    build_single_artifact_bundle_parts,
 )
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
@@ -100,29 +102,18 @@ def build_whole_run_spatial_coherence_artifact_bundle(
         order_points=order_trace_bundle.points,
     )
     summaries = summarize_whole_run_spatial_coherence(windows)
-    artifact = WholeRunArtifactFile(
+    parts = build_single_artifact_bundle_parts(
         artifact_key=WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
         relative_path=_WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_PATH,
         file_format="jsonl",
         record_count=len(windows),
-    )
-    manifest = WholeRunArtifactManifest(
-        run_id=order_trace_bundle.manifest.run_id,
-        relative_dir=order_trace_bundle.manifest.relative_dir,
-        window_policy=order_trace_bundle.manifest.window_policy,
-        total_window_count=order_trace_bundle.manifest.total_window_count,
-        artifacts=(artifact,),
+        source_manifest=order_trace_bundle.manifest,
         created_at=created_at or order_trace_bundle.manifest.created_at or utc_now_iso(),
-        schema_version=order_trace_bundle.manifest.schema_version,
-        storage_type=order_trace_bundle.manifest.storage_type,
+        content_bytes=whole_run_spatial_evidence_windows_to_jsonl_bytes(windows),
     )
     return WholeRunSpatialCoherenceArtifactBundle(
-        manifest=manifest,
-        artifact_contents={
-            WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY: (
-                whole_run_spatial_evidence_windows_to_jsonl_bytes(windows)
-            )
-        },
+        manifest=parts.manifest,
+        artifact_contents=parts.artifact_contents,
         windows=windows,
         summaries=summaries,
     )

@@ -13,7 +13,6 @@ from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
-    WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextCoverage,
     WholeRunContextInterval,
@@ -21,6 +20,9 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunRpmValidity,
     WholeRunSpeedValidity,
+)
+from vibesensor.use_cases.diagnostics._artifact_bundles import (
+    build_single_artifact_bundle_parts,
 )
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
@@ -106,27 +108,21 @@ def build_whole_run_context_artifact_bundle(
         window_plan=window_plan,
     )
     segmentation = segment_whole_run_context(labels=labels, window_plan=window_plan)
-    artifact_file = WholeRunArtifactFile(
+    parts = build_single_artifact_bundle_parts(
         artifact_key=WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
         relative_path=_WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_PATH,
         file_format="jsonl",
         record_count=len(segmentation.labels),
-    )
-    manifest = WholeRunArtifactManifest(
         run_id=run_id,
         relative_dir=f"{WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME}/{run_id}",
         window_policy=window_plan.policy,
         total_window_count=window_plan.total_window_count,
-        artifacts=(artifact_file,),
         created_at=created_at or utc_now_iso(),
+        content_bytes=whole_run_context_labels_to_jsonl_bytes(segmentation.labels),
     )
     return WholeRunContextArtifactBundle(
-        manifest=manifest,
-        artifact_contents={
-            WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY: whole_run_context_labels_to_jsonl_bytes(
-                segmentation.labels
-            )
-        },
+        manifest=parts.manifest,
+        artifact_contents=parts.artifact_contents,
         labels=segmentation.labels,
         intervals=segmentation.intervals,
     )

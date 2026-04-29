@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
+from vibesensor.shared.types.whole_run_analysis import (
+    WholeRunArtifactFile,
+    WholeRunArtifactManifest,
+    WholeRunContextWindowLabel,
+    WholeRunWindowPolicy,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTraceFamily,
     OrderTracePoint,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
+    WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
+    build_whole_run_order_trace_summary_artifact_bundle,
     summarize_whole_run_order_traces,
     whole_run_order_trace_summaries_from_jsonl_bytes,
     whole_run_order_trace_summaries_to_jsonl_bytes,
+)
+from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
+    WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
+    WholeRunOrderTraceArtifactBundle,
 )
 
 
@@ -34,6 +45,38 @@ def _label(
         speed_source="obd2",
         engine_rpm=1800.0,
         engine_rpm_source="obd2",
+    )
+
+
+def _window_policy() -> WholeRunWindowPolicy:
+    return WholeRunWindowPolicy(
+        sample_rate_hz=200,
+        window_size_samples=256,
+        stride_samples=100,
+        overlap_samples=156,
+        feature_interval_s=0.5,
+    )
+
+
+def _order_trace_bundle(points: tuple[OrderTracePoint, ...]) -> WholeRunOrderTraceArtifactBundle:
+    return WholeRunOrderTraceArtifactBundle(
+        manifest=WholeRunArtifactManifest(
+            run_id="run-order-scoring",
+            relative_dir="whole-run-artifacts/run-order-scoring",
+            window_policy=_window_policy(),
+            total_window_count=2,
+            artifacts=(
+                WholeRunArtifactFile(
+                    artifact_key=WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
+                    relative_path="orders/traces.jsonl",
+                    file_format="jsonl",
+                    record_count=len(points),
+                ),
+            ),
+            created_at="2025-01-01T00:00:00Z",
+        ),
+        artifact_contents={WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: b""},
+        points=points,
     )
 
 
@@ -151,6 +194,50 @@ def test_whole_run_order_trace_summaries_jsonl_round_trip() -> None:
     payload = whole_run_order_trace_summaries_to_jsonl_bytes(summaries)
 
     assert whole_run_order_trace_summaries_from_jsonl_bytes(payload) == summaries
+
+
+def test_build_whole_run_order_trace_summary_artifact_bundle_preserves_manifest_shape() -> None:
+    labels = tuple(_label(index) for index in range(2))
+    points = tuple(
+        _point(
+            index,
+            matched=True,
+            relative_error=0.01,
+            peak_intensity_db=18.0,
+            vibration_strength_db=12.0,
+            strongest_location="Front Left",
+        )
+        for index in range(2)
+    )
+
+    bundle = build_whole_run_order_trace_summary_artifact_bundle(
+        order_trace_bundle=_order_trace_bundle(points),
+        context_labels=tuple(reversed(labels)),
+    )
+
+    assert bundle.manifest.to_json_object() == {
+        "schema_version": bundle.manifest.schema_version,
+        "storage_type": bundle.manifest.storage_type,
+        "run_id": "run-order-scoring",
+        "relative_dir": "whole-run-artifacts/run-order-scoring",
+        "window_policy": bundle.manifest.window_policy.to_json_object(),
+        "total_window_count": 2,
+        "artifacts": [
+            {
+                "artifact_key": WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
+                "relative_path": "orders/trace-summaries.jsonl",
+                "file_format": "jsonl",
+                "record_count": len(bundle.summaries),
+            }
+        ],
+        "created_at": "2025-01-01T00:00:00Z",
+    }
+    assert (
+        whole_run_order_trace_summaries_from_jsonl_bytes(
+            bundle.artifact_contents[WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY]
+        )
+        == bundle.summaries
+    )
 
 
 def test_summarize_whole_run_order_traces_degrades_partial_reference_explicitly() -> None:

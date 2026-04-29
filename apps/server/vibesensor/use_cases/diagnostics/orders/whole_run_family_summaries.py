@@ -8,9 +8,11 @@ from dataclasses import dataclass
 
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.whole_run_analysis import (
-    WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
+)
+from vibesensor.use_cases.diagnostics._artifact_bundles import (
+    build_single_artifact_bundle_parts,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTracePhaseSupport,
@@ -79,29 +81,18 @@ def build_whole_run_order_family_summary_artifact_bundle(
         candidate_summaries=order_trace_summary_bundle.summaries,
         context_labels=ordered_labels,
     )
-    artifact = WholeRunArtifactFile(
+    parts = build_single_artifact_bundle_parts(
         artifact_key=WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
         relative_path=_WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_PATH,
         file_format="jsonl",
         record_count=len(summaries),
-    )
-    summary_manifest = WholeRunArtifactManifest(
-        run_id=manifest.run_id,
-        relative_dir=manifest.relative_dir,
-        window_policy=manifest.window_policy,
-        total_window_count=manifest.total_window_count,
-        artifacts=(artifact,),
+        source_manifest=manifest,
         created_at=created_at or manifest.created_at or utc_now_iso(),
-        schema_version=manifest.schema_version,
-        storage_type=manifest.storage_type,
+        content_bytes=whole_run_order_trace_summaries_to_jsonl_bytes(summaries),
     )
     return WholeRunOrderFamilySummaryArtifactBundle(
-        manifest=summary_manifest,
-        artifact_contents={
-            WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY: (
-                whole_run_order_trace_summaries_to_jsonl_bytes(summaries)
-            )
-        },
+        manifest=parts.manifest,
+        artifact_contents=parts.artifact_contents,
         summaries=summaries,
     )
 
