@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, replace
 
 import pytest
@@ -8,15 +7,13 @@ from _history_endpoint_helpers import (
     FakeHistoryDB,
     FakeState,
     FakeWsHub,
+    make_app_and_state,
     make_metadata,
-    make_router_and_state,
-    make_status_router,
-    response_payload,
-    route_endpoint,
-    route_endpoint_with_method,
+    make_status_app,
     sample,
 )
-from fastapi import HTTPException
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
@@ -25,8 +22,13 @@ from vibesensor.domain import CarSnapshot
 from vibesensor.shared.types.history_records import StoredHistoryRun
 
 
-@pytest.mark.asyncio
-async def test_delete_active_run_returns_409() -> None:
+def _app_from_state(state: FakeState) -> FastAPI:
+    app = FastAPI()
+    app.include_router(create_router(state))
+    return app
+
+
+def test_delete_active_run_returns_409() -> None:
     @dataclass
     class ActiveDB(FakeHistoryDB):
         async def aget_active_run_id(self) -> str | None:
@@ -40,18 +42,15 @@ async def test_delete_active_run_returns_409() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    db = ActiveDB(metadata, samples, analysis)
-    state = FakeState(db, FakeWsHub())
-    router = create_router(state)
+    app = _app_from_state(FakeState(ActiveDB(metadata, samples, analysis), FakeWsHub()))
 
-    delete_endpoint = route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
-    with pytest.raises(HTTPException) as exc_info:
-        await delete_endpoint("run-1")
-    assert exc_info.value.status_code == 409
+    with TestClient(app) as client:
+        response = client.delete("/api/history/run-1")
+
+    assert response.status_code == 409
 
 
-@pytest.mark.asyncio
-async def test_delete_analyzing_run_returns_409() -> None:
+def test_delete_analyzing_run_returns_409() -> None:
     @dataclass
     class AnalyzingDB(FakeHistoryDB):
         async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
@@ -65,16 +64,14 @@ async def test_delete_analyzing_run_returns_409() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    db = AnalyzingDB(metadata, samples, analysis)
-    router = create_router(FakeState(db, FakeWsHub()))
-    delete_endpoint = route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
+    app = _app_from_state(FakeState(AnalyzingDB(metadata, samples, analysis), FakeWsHub()))
 
-    with pytest.raises(HTTPException) as exc_info:
-        await delete_endpoint("run-1")
-    assert exc_info.value.status_code == 409
+    with TestClient(app) as client:
+        response = client.delete("/api/history/run-1")
+
+    assert response.status_code == 409
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("status", "analysis", "expected_status", "expected_detail"),
     [
@@ -83,44 +80,36 @@ async def test_delete_analyzing_run_returns_409() -> None:
         ("complete", None, 422, "No analysis available for this run"),
     ],
 )
-async def test_history_insights_status_and_analysis_errors(
+def test_history_insights_status_and_analysis_errors(
     status: str,
     analysis: dict[str, object] | None,
     expected_status: int,
     expected_detail: str | None,
 ) -> None:
-    router = make_status_router(status=status, analysis=analysis, include_error_message=False)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
+    app = make_status_app(status=status, analysis=analysis, include_error_message=False)
 
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1/insights")
+
+    assert response.status_code == expected_status
     if expected_status == 202:
-        from fastapi.responses import JSONResponse
-
-        payload = await endpoint("run-1")
-        assert isinstance(payload, JSONResponse)
-        assert payload.status_code == 202
-        body = json.loads(payload.body)
+        body = response.json()
         assert body["status"] == "analyzing"
         assert body["run_id"] == "run-1"
         return
-
-    with pytest.raises(HTTPException) as exc_info:
-        await endpoint("run-1")
-    assert exc_info.value.status_code == expected_status
-    assert exc_info.value.detail == expected_detail
+    assert response.json()["detail"] == expected_detail
 
 
-@pytest.mark.asyncio
-async def test_delete_run_returns_404_for_not_found_reason() -> None:
-    router, _ = make_router_and_state(language="en")
-    delete_endpoint = route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
+def test_delete_run_returns_404_for_not_found_reason() -> None:
+    app, _ = make_app_and_state(language="en")
 
-    with pytest.raises(HTTPException) as exc_info:
-        await delete_endpoint("missing-run")
-    assert exc_info.value.status_code == 404
+    with TestClient(app) as client:
+        response = client.delete("/api/history/missing-run")
+
+    assert response.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
+def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
     @dataclass
     class LockedDB(FakeHistoryDB):
         async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
@@ -131,88 +120,91 @@ async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(LockedDB(metadata, samples, analysis), FakeWsHub()))
-    delete_endpoint = route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
+    app = _app_from_state(FakeState(LockedDB(metadata, samples, analysis), FakeWsHub()))
 
-    with pytest.raises(HTTPException) as exc_info:
-        await delete_endpoint("run-1")
-    assert exc_info.value.status_code == 409
-    assert exc_info.value.detail == "Cannot delete run at this time"
+    with TestClient(app) as client:
+        response = client.delete("/api/history/run-1")
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Cannot delete run at this time"
 
 
-@pytest.mark.asyncio
-async def test_history_insights_does_not_mutate_db_analysis() -> None:
-    router, state = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
+def test_history_insights_does_not_mutate_db_analysis() -> None:
+    app, state = make_app_and_state(language="en")
     original_analysis = state.history_db.analysis
     original_keys = set(original_analysis.keys())
 
-    await endpoint("run-1")
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1/insights")
 
+    assert response.status_code == 200
     assert set(state.history_db.analysis.keys()) == original_keys
 
 
-@pytest.mark.asyncio
-async def test_history_insights_complete_response_includes_status_and_run_id() -> None:
+def test_history_insights_complete_response_includes_status_and_run_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     analysis.pop("status", None)
     analysis.pop("run_id", None)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    payload = response_payload(await endpoint("run-1"))
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1/insights")
 
+    payload = response.json()
     assert payload["status"] == "complete"
     assert payload["run_id"] == "run-1"
 
 
-@pytest.mark.asyncio
-async def test_history_endpoints_preserve_analysis_case_id() -> None:
+def test_history_endpoints_preserve_analysis_case_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     analysis["case_id"] = "case-123"
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    history_payload = response_payload(
-        await route_endpoint(router, "/api/history/{run_id}")("run-1")
-    )
-    insights_payload = response_payload(
-        await route_endpoint(router, "/api/history/{run_id}/insights")("run-1")
-    )
+    with TestClient(app) as client:
+        history_payload = client.get("/api/history/run-1").json()
+        insights_payload = client.get("/api/history/run-1/insights").json()
 
     assert history_payload["analysis"]["case_id"] == "case-123"
     assert insights_payload["case_id"] == "case-123"
 
 
-@pytest.mark.asyncio
-async def test_history_run_includes_sample_count() -> None:
+def test_history_run_includes_sample_count() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
 
-    assert payload["sample_count"] == 3
+    assert response.json()["sample_count"] == 3
 
 
-@pytest.mark.asyncio
-async def test_history_list_includes_recorded_car_name() -> None:
+def test_history_list_includes_recorded_car_name() -> None:
     metadata = make_metadata(active_car_snapshot={"name": "Track Car"})
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    payload = response_payload(await route_endpoint(router, "/api/history")())
+    with TestClient(app) as client:
+        response = client.get("/api/history")
 
-    assert payload["runs"][0]["car_name"] == "Track Car"
+    assert response.json()["runs"][0]["car_name"] == "Track Car"
 
 
-@pytest.mark.asyncio
-async def test_history_endpoints_include_degraded_raw_capture_finalize_state() -> None:
+def test_history_endpoints_include_degraded_raw_capture_finalize_state() -> None:
     metadata = make_metadata(
         raw_capture_finalize={
             "status": "timeout",
@@ -222,10 +214,13 @@ async def test_history_endpoints_include_degraded_raw_capture_finalize_state() -
     )
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    list_payload = response_payload(await route_endpoint(router, "/api/history")())
-    run_payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+    with TestClient(app) as client:
+        list_payload = client.get("/api/history").json()
+        run_payload = client.get("/api/history/run-1").json()
 
     assert list_payload["runs"][0]["lifecycle"] == {
         "stage": "post_analysis_ready",
@@ -255,8 +250,7 @@ async def test_history_endpoints_include_degraded_raw_capture_finalize_state() -
     }
 
 
-@pytest.mark.asyncio
-async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
+def test_history_list_uses_nested_active_car_snapshot_name() -> None:
     metadata = make_metadata(
         active_car_snapshot={
             "id": "car-1",
@@ -266,15 +260,17 @@ async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
     )
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    payload = response_payload(await route_endpoint(router, "/api/history")())
+    with TestClient(app) as client:
+        payload = client.get("/api/history").json()
 
     assert payload["runs"][0]["car_name"] == "Nested Track Car"
 
 
-@pytest.mark.asyncio
-async def test_history_run_projects_canonical_nested_run_context() -> None:
+def test_history_run_projects_canonical_nested_run_context() -> None:
     metadata = make_metadata(
         analysis_settings_snapshot={
             "tire_width_mm": 275.0,
@@ -291,11 +287,14 @@ async def test_history_run_projects_canonical_nested_run_context() -> None:
     )
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
 
-    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+    with TestClient(app) as client:
+        payload = client.get("/api/history/run-1").json()
+
     projected_metadata = payload["metadata"]
-
     assert projected_metadata["active_car_snapshot"]["name"] == "Nested Track Car"
     assert projected_metadata["active_car_snapshot"]["type"] == "hatchback"
     assert projected_metadata["active_car_snapshot"]["id"] == "car-1"
@@ -311,21 +310,20 @@ async def test_history_run_projects_canonical_nested_run_context() -> None:
     assert "tire_circumference_m" not in projected_metadata
 
 
-@pytest.mark.asyncio
-async def test_history_run_includes_error_message_for_error_status() -> None:
-    router = make_status_router(
+def test_history_run_includes_error_message_for_error_status() -> None:
+    app = make_status_app(
         status="error",
         analysis={"status": "error"},
         include_error_message=True,
     )
 
-    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
 
-    assert payload["error_message"] == "Analysis failed"
+    assert response.json()["error_message"] == "Analysis failed"
 
 
-@pytest.mark.asyncio
-async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
+def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
         analysis_settings_snapshot={
             "tire_width_mm": 245.0,
@@ -350,7 +348,7 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
 
-    router, state = make_router_and_state(
+    app, state = make_app_and_state(
         language="en",
         metadata=metadata,
         analysis=analysis,
@@ -368,9 +366,10 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
             "current_gear_ratio": 0.72,
         },
     )
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
 
-    payload = response_payload(await endpoint("run-1", "nl"))
+    with TestClient(app) as client:
+        payload = client.get("/api/history/run-1/insights", params={"lang": "nl"}).json()
+
     warnings = payload.get("warnings")
     assert isinstance(warnings, list)
     assert len(warnings) == 2
@@ -379,8 +378,7 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
     assert "Voertuigprofielinstellingen zijn na deze run gewijzigd" in titles
 
 
-@pytest.mark.asyncio
-async def test_history_run_strips_internal_analysis_fields() -> None:
+def test_history_run_strips_internal_analysis_fields() -> None:
     @dataclass
     class InternalFieldDB(FakeHistoryDB):
         async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
@@ -395,11 +393,12 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
 
     metadata = make_metadata()
     samples = [sample(0)]
-    db = InternalFieldDB(metadata, samples, {})
-    router = create_router(FakeState(db, FakeWsHub()))
-    endpoint = route_endpoint(router, "/api/history/{run_id}")
+    app = _app_from_state(FakeState(InternalFieldDB(metadata, samples, {}), FakeWsHub()))
 
-    result = response_payload(await endpoint("run-1"))
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
+
+    result = response.json()
     assert {"run_id", "status", "sample_count", "metadata", "analysis"}.issubset(result.keys())
     assert result.get("error_message") is None
     analysis = result.get("analysis", {})
@@ -407,25 +406,25 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     assert "_report_template_data" not in analysis
 
 
-@pytest.mark.asyncio
-async def test_history_run_preserves_missing_optional_analysis_fields() -> None:
+def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     metadata = make_metadata()
     samples = [sample(0)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     analysis.pop("plots", None)
     analysis.pop("analysis_metadata", None)
     db = FakeHistoryDB(metadata, samples, analysis)
-    router = create_router(FakeState(db, FakeWsHub()))
-    endpoint = route_endpoint(router, "/api/history/{run_id}")
+    app = _app_from_state(FakeState(db, FakeWsHub()))
     route = next(
         route
-        for route in router.routes
+        for route in app.router.routes
         if getattr(route, "path", "") == "/api/history/{run_id}"
         and "GET" in getattr(route, "methods", set())
     )
 
-    result = await endpoint("run-1")
-    payload = response_payload(result)["analysis"]
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
+
+    payload = response.json()["analysis"]
     assert getattr(route, "response_model_exclude_unset", False) is True
     assert "findings" in payload
     assert "samples" not in payload

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from _history_endpoint_helpers import route_endpoint
-from test_support import response_payload
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
@@ -38,7 +38,7 @@ def _make_recording_status_snapshot(
 
 
 @pytest.fixture
-def _recording_router(fake_state):
+def _recording_client(fake_state):
     from vibesensor.adapters.http.recording import create_recording_routes
 
     fake_state.run_recorder.status.return_value = _make_recording_status_snapshot(
@@ -56,17 +56,20 @@ def _recording_router(fake_state):
         run_id=None,
         samples_written=0,
     )
-    return create_recording_routes(fake_state.run_recorder), fake_state
+    app = FastAPI()
+    app.include_router(create_recording_routes(fake_state.run_recorder))
+    with TestClient(app) as client:
+        yield client, fake_state
 
 
 class TestRecordingStatusEndpoint:
-    @pytest.mark.asyncio
-    async def test_status_response_shape(self, _recording_router) -> None:
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/status")
+    def test_status_response_shape(self, _recording_client) -> None:
+        client, _state = _recording_client
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/recording/status")
 
+        assert response.status_code == 200
+        result = response.json()
         assert "enabled" in result
         assert "run_id" in result
         assert "write_error" in result
@@ -78,22 +81,20 @@ class TestRecordingStatusEndpoint:
         assert "capture_readiness" in result
         assert "current_file" not in result
 
-    @pytest.mark.asyncio
-    async def test_status_idle_enabled_false(self, _recording_router) -> None:
-        router, _ = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/status")
+    def test_status_idle_enabled_false(self, _recording_client) -> None:
+        client, _ = _recording_client
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/recording/status")
 
+        assert response.status_code == 200
+        result = response.json()
         assert result["enabled"] is False
         assert result["run_id"] is None
         assert result["start_time_utc"] is None
         assert result["samples_written"] == 0
 
-    @pytest.mark.asyncio
-    async def test_status_serializes_capture_readiness(self, _recording_router) -> None:
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/status")
+    def test_status_serializes_capture_readiness(self, _recording_client) -> None:
+        client, state = _recording_client
         state.run_recorder.status.return_value = _make_recording_status_snapshot(
             enabled=False,
             run_id=None,
@@ -116,9 +117,10 @@ class TestRecordingStatusEndpoint:
             ),
         )
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/recording/status")
 
-        assert result["capture_readiness"] == {
+        assert response.status_code == 200
+        assert response.json()["capture_readiness"] == {
             "is_ready": False,
             "checks": [
                 {
@@ -138,22 +140,20 @@ class TestRecordingStatusEndpoint:
 
 
 class TestRecordingStartEndpoint:
-    @pytest.mark.asyncio
-    async def test_start_calls_run_recorder(self, _recording_router) -> None:
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/start")
+    def test_start_calls_run_recorder(self, _recording_client) -> None:
+        client, state = _recording_client
 
-        result = response_payload(await endpoint())
+        response = client.post("/api/recording/start")
 
+        assert response.status_code == 200
         state.run_recorder.start_recording.assert_called_once()
-        assert result["enabled"] is True
-        assert result["run_id"] == "run-abc"
+        assert response.json()["enabled"] is True
+        assert response.json()["run_id"] == "run-abc"
 
-    @pytest.mark.asyncio
-    async def test_start_when_already_recording_returns_status(self, _recording_router) -> None:
+    def test_start_when_already_recording_returns_status(self, _recording_client) -> None:
         """start_recording is idempotent — called again it still returns a valid status."""
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/start")
+
+        client, state = _recording_client
         state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
             enabled=True,
             run_id="run-abc",
@@ -161,36 +161,36 @@ class TestRecordingStartEndpoint:
             samples_written=42,
         )
 
-        result = response_payload(await endpoint())
+        response = client.post("/api/recording/start")
 
-        assert result["enabled"] is True
-        assert "run_id" in result
-        assert result["start_time_utc"] == "2026-03-27T12:01:00Z"
+        assert response.status_code == 200
+        assert response.json()["enabled"] is True
+        assert "run_id" in response.json()
+        assert response.json()["start_time_utc"] == "2026-03-27T12:01:00Z"
 
 
 class TestRecordingStopEndpoint:
-    @pytest.mark.asyncio
-    async def test_stop_calls_run_recorder(self, _recording_router) -> None:
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/stop")
+    def test_stop_calls_run_recorder(self, _recording_client) -> None:
+        client, state = _recording_client
 
-        result = response_payload(await endpoint())
+        response = client.post("/api/recording/stop")
 
+        assert response.status_code == 200
         state.run_recorder.stop_recording.assert_called_once()
-        assert result["enabled"] is False
+        assert response.json()["enabled"] is False
 
-    @pytest.mark.asyncio
-    async def test_stop_when_not_recording_returns_idle_status(self, _recording_router) -> None:
+    def test_stop_when_not_recording_returns_idle_status(self, _recording_client) -> None:
         """stop_recording when not recording is safe — returns idle status."""
-        router, state = _recording_router
-        endpoint = route_endpoint(router, "/api/recording/stop")
+
+        client, state = _recording_client
         state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
             enabled=False,
             run_id=None,
             samples_written=0,
         )
 
-        result = response_payload(await endpoint())
+        response = client.post("/api/recording/stop")
 
-        assert result["enabled"] is False
-        assert result["run_id"] is None
+        assert response.status_code == 200
+        assert response.json()["enabled"] is False
+        assert response.json()["run_id"] is None

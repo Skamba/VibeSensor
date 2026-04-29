@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from _history_endpoint_helpers import route_endpoint, route_endpoint_with_method
-from fastapi import HTTPException
-from test_support import response_payload
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 
@@ -32,34 +31,27 @@ def _make_speed_source_status_snapshot() -> SpeedSourceStatusSnapshot:
     )
 
 
-def _find_endpoint(router, path: str, method: str = "GET"):
-    if method.upper() == "GET":
-        return route_endpoint(router, path)
-    return route_endpoint_with_method(router, path, method)
-
-
 @pytest.fixture
-def _speed_source_router(fake_state):
+def _speed_source_client(fake_state):
     from vibesensor.adapters.http.settings.dependencies import SpeedSourceRouteDeps
     from vibesensor.adapters.http.settings.speed_source import create_speed_source_routes
 
-    return (
+    app = FastAPI()
+    app.include_router(
         create_speed_source_routes(
             SpeedSourceRouteDeps(
                 speed_source_service=fake_state.speed_source_service,
                 speed_status_service=fake_state.gps_monitor,
             ),
-        ),
-        fake_state,
+        )
     )
+    with TestClient(app) as client:
+        yield client, fake_state
 
 
 class TestSpeedSourceEndpoint:
-    @pytest.mark.asyncio
-    async def test_get_speed_source_response_shape(self, _speed_source_router) -> None:
-        router, state = _speed_source_router
-        endpoint = _find_endpoint(router, "/api/settings/speed-source", "GET")
-
+    def test_get_speed_source_response_shape(self, _speed_source_client) -> None:
+        client, state = _speed_source_client
         state.speed_source_service.get_speed_source.return_value = {
             "speedSource": "manual",
             "manualSpeedKph": 42.0,
@@ -68,9 +60,10 @@ class TestSpeedSourceEndpoint:
             "obdDeviceName": "OBDLink MX+",
         }
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/settings/speed-source")
 
-        assert result == {
+        assert response.status_code == 200
+        assert response.json() == {
             "speed_source": "manual",
             "manual_speed_kph": 42.0,
             "stale_timeout_s": 15.0,
@@ -78,55 +71,47 @@ class TestSpeedSourceEndpoint:
             "obd_device_name": "OBDLink MX+",
         }
 
-    @pytest.mark.asyncio
-    async def test_update_speed_source_passes_only_non_null_fields(
+    def test_update_speed_source_passes_only_non_null_fields(
         self,
-        _speed_source_router,
+        _speed_source_client,
     ) -> None:
-        router, state = _speed_source_router
-        endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
-
-        from vibesensor.adapters.http.models import SpeedSourceRequest
-
+        client, state = _speed_source_client
         state.speed_source_service.update_speed_source.return_value = {
             "speedSource": "manual",
             "manualSpeedKph": 42.0,
             "staleTimeoutS": 15.0,
         }
 
-        await endpoint(req=SpeedSourceRequest(speed_source="manual", manual_speed_kph=42.0))
+        response = client.put(
+            "/api/settings/speed-source",
+            json={"speed_source": "manual", "manual_speed_kph": 42.0},
+        )
 
+        assert response.status_code == 200
         state.speed_source_service.update_speed_source.assert_called_once_with(
             {"speedSource": "manual", "manualSpeedKph": 42.0}
         )
 
-    @pytest.mark.asyncio
-    async def test_update_speed_source_maps_invalid_config_to_400(
+    def test_update_speed_source_maps_invalid_config_to_400(
         self,
-        _speed_source_router,
+        _speed_source_client,
     ) -> None:
-        router, state = _speed_source_router
-        endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
-
-        from vibesensor.adapters.http.models import SpeedSourceRequest
-
+        client, state = _speed_source_client
         state.speed_source_service.update_speed_source.side_effect = ValueError(
             "SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph"
         )
 
-        with pytest.raises(HTTPException) as exc_info:
-            await endpoint(req=SpeedSourceRequest(speed_source="manual"))
+        response = client.put("/api/settings/speed-source", json={"speed_source": "manual"})
 
-        assert exc_info.value.status_code == 400
+        assert response.status_code == 400
 
-    @pytest.mark.asyncio
-    async def test_speed_source_status_response_shape(self, _speed_source_router) -> None:
-        router, state = _speed_source_router
-        endpoint = _find_endpoint(router, "/api/settings/speed-source/status", "GET")
-
+    def test_speed_source_status_response_shape(self, _speed_source_client) -> None:
+        client, state = _speed_source_client
         state.gps_monitor.status_snapshot.return_value = _make_speed_source_status_snapshot()
 
-        result = response_payload(await endpoint())
+        response = client.get("/api/settings/speed-source/status")
 
+        assert response.status_code == 200
+        result = response.json()
         assert result["speed_source"] == "gps"
         assert result["fix_dimension"] == "3d"
