@@ -4,6 +4,7 @@ from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
+from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
 
@@ -417,7 +418,7 @@ def test_prepare_persisted_report_input_marks_legacy_raw_backed_context_fallback
     data = build_report_document(prepared)
 
     assert prepared.report_facts.context.source == "legacy"
-    assert "legacy_context" in confidence.caveat_keys
+    assert LEGACY_CONTEXT_CAVEAT_KEY in confidence.caveat_keys
     assert "summary_only" not in confidence.caveat_keys
     assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
         "whole_run_context_legacy_fallback"

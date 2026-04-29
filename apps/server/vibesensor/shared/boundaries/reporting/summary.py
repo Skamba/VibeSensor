@@ -16,6 +16,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
+from vibesensor.shared.constants.analysis import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarKind,
@@ -460,7 +461,7 @@ _DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
         "clean_signal",
         "summary_only",
         "raw_replay_incomplete",
-        "legacy_context",
+        LEGACY_CONTEXT_CAVEAT_KEY,
         "speed_context_gaps",
         "rpm_context_gaps",
         "sparse_support",
