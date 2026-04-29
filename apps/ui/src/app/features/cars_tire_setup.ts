@@ -1,4 +1,4 @@
-import type { CarLibraryTireOption } from "../../api/types";
+import type { CarLibraryTireOption } from "../../api";
 
 type FormatNumber = (value: number, digits?: number) => string;
 

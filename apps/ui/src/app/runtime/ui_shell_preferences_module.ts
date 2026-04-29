@@ -5,7 +5,7 @@ import {
   getSettingsSpeedUnit,
   setSettingsLanguage,
   setSettingsSpeedUnit,
-} from "../../api/settings";
+} from "../../api";
 import { uiLogger } from "../../ui_logger";
 import { serverStateQueryKeys } from "../features/server_state_query_keys";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
