@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.codecs.scalars import (
     coerce_count,
     optional_float,
@@ -16,7 +17,6 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarKind,
