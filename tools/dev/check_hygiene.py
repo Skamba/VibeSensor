@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import re
@@ -226,6 +227,13 @@ _OVERSIZED_TEST_DEFAULT_LIMIT = 700
 _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT = 10
 _OVERSIZED_TEST_UI_SUFFIXES = {".ts", ".tsx", ".js", ".jsx"}
 _OVERSIZED_TEST_IGNORED_PARTS = {"snapshots", "test-results"}
+_TEST_INVENTORY_ALLOWLIST_PATH = ROOT / "tools" / "dev" / "test_inventory_allowlist.yml"
+_UI_ROOT = ROOT / "apps" / "ui"
+_UI_TESTS_DIR = _UI_ROOT / "tests"
+_UI_VITEST_CONFIG = _UI_ROOT / "vitest.config.ts"
+_UI_PLAYWRIGHT_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.config.ts"
+_UI_PLAYWRIGHT_MOCK_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.msw.config.ts"
+_UI_PLAYWRIGHT_VISUAL_CONFIG = _UI_ROOT / "playwright.config.ts"
 _IMPORT_FROM_RE = re.compile(r"""\bfrom\s+["']([^"']+)["']""")
 _SIDE_EFFECT_IMPORT_RE = re.compile(r"""\bimport\s+["']([^"']+)["']""")
 _EMPTY_INNERHTML_ASSIGNMENT_RE = re.compile(
@@ -486,6 +494,298 @@ def check_oversized_test_files() -> tuple[list[str], list[str]]:
         )[:report_limit]
     ]
     return errors, report
+
+
+def _config_array_literal(config_path: Path, key: str) -> list[str]:
+    config_text = config_path.read_text(encoding="utf-8")
+    match = re.search(rf"{key}:\s*(\[[^\]]+\])", config_text)
+    if match is None:
+        raise ValueError(
+            f"{config_path.relative_to(ROOT)} is missing a {key} array literal."
+        )
+    normalized_literal = re.sub(r"//.*", "", match.group(1))
+    try:
+        parsed = ast.literal_eval(normalized_literal)
+    except (SyntaxError, ValueError) as exc:
+        raise ValueError(
+            f"{config_path.relative_to(ROOT)} has an unreadable {key} array literal."
+        ) from exc
+    if not isinstance(parsed, list) or not all(
+        isinstance(item, str) for item in parsed
+    ):
+        raise ValueError(
+            f"{config_path.relative_to(ROOT)} must define {key} as a list of strings."
+        )
+    return [str(pattern) for pattern in parsed]
+
+
+def _config_string_literal(config_path: Path, key: str) -> str:
+    config_text = config_path.read_text(encoding="utf-8")
+    match = re.search(rf'{key}:\s*"([^"]+)"', config_text)
+    if match is None:
+        raise ValueError(
+            f'{config_path.relative_to(ROOT)} is missing a "{key}" string literal.'
+        )
+    return str(match.group(1))
+
+
+def _resolve_ui_globs(*patterns: str) -> set[str]:
+    resolved: set[str] = set()
+    for pattern in patterns:
+        for path in _UI_ROOT.glob(pattern):
+            if path.is_file():
+                resolved.add(path.relative_to(_UI_ROOT).as_posix())
+    return resolved
+
+
+def _resolve_playwright_specs(config_path: Path) -> set[str]:
+    test_dir = _config_string_literal(config_path, "testDir")
+    test_match_patterns = _config_array_literal(config_path, "testMatch")
+    return _resolve_ui_globs(
+        *(f"{test_dir}/{pattern}" for pattern in test_match_patterns)
+    )
+
+
+def all_ui_specs() -> set[str]:
+    return {
+        path.relative_to(_UI_ROOT).as_posix()
+        for path in _UI_TESTS_DIR.glob("**/*.spec.ts")
+        if path.is_file()
+    }
+
+
+def ui_runner_owned_specs() -> dict[str, set[str]]:
+    vitest_include = _resolve_ui_globs(
+        *_config_array_literal(_UI_VITEST_CONFIG, "include")
+    )
+    vitest_exclude = _resolve_ui_globs(
+        *_config_array_literal(_UI_VITEST_CONFIG, "exclude")
+    )
+    return {
+        "vitest": vitest_include - vitest_exclude,
+        "playwright-smoke": _resolve_playwright_specs(_UI_PLAYWRIGHT_SMOKE_CONFIG),
+        "playwright-mock-smoke": _resolve_playwright_specs(
+            _UI_PLAYWRIGHT_MOCK_SMOKE_CONFIG
+        ),
+        "playwright-visual": _resolve_playwright_specs(_UI_PLAYWRIGHT_VISUAL_CONFIG),
+    }
+
+
+def _load_test_inventory_allowlist() -> tuple[dict[str, str], list[str]]:
+    errors: list[str] = []
+    if not _TEST_INVENTORY_ALLOWLIST_PATH.exists():
+        return (
+            {},
+            [
+                f"Missing test-inventory allowlist at {_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)}."
+            ],
+        )
+
+    loaded = yaml.safe_load(_TEST_INVENTORY_ALLOWLIST_PATH.read_text(encoding="utf-8"))
+    if not isinstance(loaded, Mapping):
+        return (
+            {},
+            [
+                f"{_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} must load as a mapping."
+            ],
+        )
+
+    allowlist: dict[str, str] = {}
+    raw_allowlist = loaded.get("allowlist")
+    if not isinstance(raw_allowlist, Mapping):
+        errors.append(
+            f"{_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} must define allowlist as a mapping of path -> reason."
+        )
+        return allowlist, errors
+
+    for raw_path, raw_reason in raw_allowlist.items():
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            errors.append(
+                f"{_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} contains a non-string allowlist path."
+            )
+            continue
+        if not isinstance(raw_reason, str) or not raw_reason.strip():
+            errors.append(
+                f"{raw_path} in {_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} must include a non-empty reason."
+            )
+            continue
+        rel_path = raw_path.strip()
+        candidate = Path(rel_path)
+        if candidate.suffix != ".py" or not candidate.name.startswith("benchmark_"):
+            errors.append(
+                f"{rel_path} in {_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} must point to a benchmark_*.py script."
+            )
+            continue
+        allowlist[rel_path] = raw_reason.strip()
+
+    stale_allowlist = sorted(
+        rel_path for rel_path in allowlist if not (ROOT / rel_path).is_file()
+    )
+    if stale_allowlist:
+        errors.append(
+            f"{_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} contains missing files: {', '.join(stale_allowlist)}"
+        )
+    return allowlist, errors
+
+
+def _is_test_inventory_candidate(rel_path: str) -> bool:
+    path = Path(rel_path)
+    name = path.name
+    if rel_path.startswith("apps/server/vibesensor/"):
+        return False
+    if name.startswith("test_") and path.suffix == ".py":
+        return True
+    if rel_path.endswith(".spec.ts"):
+        return True
+    if name.startswith("benchmark_") and path.suffix == ".py":
+        return True
+    if rel_path.startswith("firmware/esp/test/") and name == "test_main.cpp":
+        return True
+    return False
+
+
+def _test_inventory_candidates() -> list[str]:
+    candidates: set[str] = set()
+    for path in _git_tracked_files():
+        rel_path = path.relative_to(ROOT).as_posix()
+        if _is_test_inventory_candidate(rel_path):
+            candidates.add(rel_path)
+    return sorted(candidates)
+
+
+def _test_inventory_owners(
+    rel_path: str,
+    *,
+    ui_runner_specs: Mapping[str, set[str]],
+    benchmark_allowlist: Mapping[str, str],
+) -> tuple[str, ...]:
+    owners: list[str] = []
+    name = Path(rel_path).name
+    if rel_path.endswith(".spec.ts"):
+        if rel_path.startswith("apps/ui/"):
+            ui_rel_path = rel_path.removeprefix("apps/ui/")
+            owners.extend(
+                runner_name
+                for runner_name, owned_specs in ui_runner_specs.items()
+                if ui_rel_path in owned_specs
+            )
+        return tuple(sorted(owners))
+    if name.startswith("test_") and rel_path.endswith(".py"):
+        if rel_path.startswith("apps/server/tests/"):
+            owners.append("backend-pytest")
+        elif rel_path.startswith("apps/server/tests_e2e/"):
+            owners.append("e2e-pytest")
+        return tuple(owners)
+    if name.startswith("benchmark_") and rel_path.endswith(".py"):
+        if rel_path.startswith("apps/server/tests/"):
+            owners.append("backend-pytest-benchmark")
+        if rel_path in benchmark_allowlist:
+            owners.append("allowlisted-benchmark-script")
+        return tuple(owners)
+    if rel_path.startswith("firmware/esp/test/") and name == "test_main.cpp":
+        owners.append("firmware-native")
+    return tuple(owners)
+
+
+def _test_inventory_guidance(rel_path: str) -> str:
+    name = Path(rel_path).name
+    if rel_path.endswith(".spec.ts"):
+        return (
+            "Move it under apps/ui/tests/ and update apps/ui/vitest.config.ts or the "
+            "Playwright testMatch config in apps/ui/playwright.smoke.config.ts, "
+            "apps/ui/playwright.smoke.msw.config.ts, or apps/ui/playwright.config.ts "
+            "so exactly one UI runner owns it."
+        )
+    if name.startswith("test_") and rel_path.endswith(".py"):
+        return (
+            "Move it under apps/server/tests/ or apps/server/tests_e2e/ so pytest owns "
+            "it, or rename it if it is a helper module."
+        )
+    if name.startswith("benchmark_") and rel_path.endswith(".py"):
+        return (
+            "Move it under apps/server/tests/**/benchmark_*.py so the explicit "
+            f"pytest-benchmark lane owns it, or document it in "
+            f"{_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} as an intentional "
+            "standalone benchmark script."
+        )
+    if rel_path.startswith("firmware/esp/test/") and name == "test_main.cpp":
+        return (
+            "Keep firmware native suites under firmware/esp/test/<suite>/test_main.cpp "
+            "so the PlatformIO native runner can collect them."
+        )
+    return "Rename it if it is a helper module, or wire it into an owned test runner."
+
+
+def inventory_errors_for_test_paths(
+    candidate_paths: Sequence[str],
+    *,
+    ui_runner_specs: Mapping[str, set[str]] | None = None,
+    benchmark_allowlist: Mapping[str, str] | None = None,
+) -> list[str]:
+    resolved_ui_runner_specs = (
+        dict(ui_runner_specs)
+        if ui_runner_specs is not None
+        else ui_runner_owned_specs()
+    )
+    resolved_benchmark_allowlist = (
+        dict(benchmark_allowlist) if benchmark_allowlist is not None else {}
+    )
+
+    errors: list[str] = []
+    for rel_path in sorted(set(candidate_paths)):
+        if not _is_test_inventory_candidate(rel_path):
+            continue
+        owners = _test_inventory_owners(
+            rel_path,
+            ui_runner_specs=resolved_ui_runner_specs,
+            benchmark_allowlist=resolved_benchmark_allowlist,
+        )
+        if rel_path.endswith(".spec.ts") and len(owners) > 1:
+            errors.append(
+                f"{rel_path} is owned by multiple UI runners {list(owners)}; tighten "
+                "apps/ui/vitest.config.ts include/exclude or the Playwright "
+                "testMatch patterns so exactly one runner owns it."
+            )
+            continue
+        if not owners:
+            errors.append(
+                f"{rel_path} looks like a test but is not owned by any configured runner; "
+                f"{_test_inventory_guidance(rel_path)}"
+            )
+    return errors
+
+
+def check_test_inventory_ownership() -> list[str]:
+    benchmark_allowlist, allowlist_errors = _load_test_inventory_allowlist()
+    errors = list(allowlist_errors)
+
+    try:
+        runner_specs = ui_runner_owned_specs()
+    except ValueError as exc:
+        errors.append(str(exc))
+        return errors
+
+    errors.extend(
+        inventory_errors_for_test_paths(
+            _test_inventory_candidates(),
+            ui_runner_specs=runner_specs,
+            benchmark_allowlist=benchmark_allowlist,
+        )
+    )
+
+    for rel_path in sorted(benchmark_allowlist):
+        runner_owners = _test_inventory_owners(
+            rel_path,
+            ui_runner_specs=runner_specs,
+            benchmark_allowlist={},
+        )
+        if runner_owners:
+            errors.append(
+                f"{rel_path} is listed in {_TEST_INVENTORY_ALLOWLIST_PATH.relative_to(ROOT)} "
+                f"but is already owned by {list(runner_owners)}; remove the stale allowlist entry."
+            )
+
+    return errors
 
 
 def _load_runtime_support_matrix_rows() -> dict[str, RuntimeSupportMatrixRow]:
@@ -2613,6 +2913,11 @@ _LIST_CHECK_SPECS = (
         runner=check_frontend_component_use_computed_guardrails,
         failure_heading="Frontend component useComputed guardrail drift detected:",
         success_message="Frontend component useComputed guardrails passed.",
+    ),
+    ListCheckSpec(
+        runner=check_test_inventory_ownership,
+        failure_heading="Test inventory ownership drift detected:",
+        success_message="Committed test-looking files all map to a runner or documented benchmark exception.",
     ),
 )
 
