@@ -59,6 +59,16 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     )
     assert miss_step["if"] == "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
 
+    prepare_retry_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Prepare retry helper"
+    )
+    prepare_retry_run = prepare_retry_step["run"]
+    assert isinstance(prepare_retry_run, str)
+    assert prepare_retry_run.count("retry_command()") == 1
+    assert 'cat > "${retry_helper}"' in prepare_retry_run
+
     install_step = next(
         step
         for step in steps
@@ -67,6 +77,8 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     assert install_step["if"] == "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
     install_run = install_step["run"]
     assert isinstance(install_run, str)
+    assert 'source "${RUNNER_TEMP}/setup-backend-retry.sh"' in install_run
+    assert "retry_command()" not in install_run
     assert "rm -rf .venv" in install_run
     assert '"${{ steps.setup-python.outputs.python-path }}" -m venv .venv' in install_run
     assert ".venv/bin/python -m pip install --upgrade pip" in install_run
@@ -88,6 +100,8 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     )
     platformio_run = platformio_step["run"]
     assert isinstance(platformio_run, str)
+    assert 'source "${RUNNER_TEMP}/setup-backend-retry.sh"' in platformio_run
+    assert "retry_command()" not in platformio_run
     assert (
         'retry_command 3 "${{ steps.backend-python.outputs.python-path }}"'
         ' -m pip install "platformio>=6,<7"' in platformio_run
