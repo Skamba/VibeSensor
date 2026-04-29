@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from types import ModuleType
 
 import pytest
-from _paths import REPO_ROOT
-
-_CHECK_HYGIENE = REPO_ROOT / "tools" / "dev" / "check_hygiene.py"
+from test_support.check_hygiene_loader import load_check_hygiene_module
 
 _CHECK_ENTRYPOINTS = (
     pytest.param("check_ci_command_sync", id="ci-command-sync"),
@@ -37,25 +33,14 @@ _CHECK_ENTRYPOINTS = (
         id="frontend-generated-contract-boundaries",
     ),
     pytest.param("check_frontend_raw_html_boundaries", id="frontend-raw-html-boundaries"),
+    pytest.param("check_test_inventory_ownership", id="test-inventory-ownership"),
     pytest.param("check_runtime_policy_drift", id="runtime-policy-drift"),
 )
 
 
-def _load_check_hygiene_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        "check_hygiene_test_entrypoints",
-        _CHECK_HYGIENE,
-    )
-    assert spec is not None and spec.loader is not None, f"Unable to load {_CHECK_HYGIENE}"
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
 @pytest.fixture(scope="module")
 def hygiene_module() -> ModuleType:
-    return _load_check_hygiene_module()
+    return load_check_hygiene_module("check_hygiene_test_entrypoints")
 
 
 @pytest.mark.parametrize("check_name", _CHECK_ENTRYPOINTS)

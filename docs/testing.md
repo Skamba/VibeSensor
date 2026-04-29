@@ -20,6 +20,7 @@
 - Use the shared MSW helpers under `apps/ui/tests/msw/` for frontend HTTP-boundary tests; they normalize relative `/api/...` requests onto the test origin and fail unhandled requests loudly by default.
 - Use `cd apps/ui && npm run dev:mock` for the optional browser-worker MSW mode when you need to exercise the UI without a live backend HTTP stack. That mode keeps unmocked HTTP requests on bypass, does not mock WebSockets, and has a dedicated smoke entrypoint at `cd apps/ui && npm run test:smoke:mock`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py`, and repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`; both run via `make lint`.
+- Committed test-looking files are inventory-guarded in `tools/dev/check_hygiene.py`. New `test_*.py`, `*.spec.ts`, `benchmark_*.py`, and `firmware/esp/test/**/test_main.cpp` files must either map to a runner or, for intentional standalone benchmark scripts, carry a reason in `tools/dev/test_inventory_allowlist.yml`.
 - Oversized tracked test/spec files are guarded in `tools/dev/check_hygiene.py` with the allowlist at `tools/dev/oversized_test_allowlist.yml`. Files at or above the shared threshold must either be split or carry an explicit allowlist reason, and the hygiene output always prints the current largest tracked test/spec files.
 - `make sync-contracts` is the authoritative contract/doc regeneration path; `make lint` and the `backend-contract-drift` CI job run it in `--check` mode.
 
