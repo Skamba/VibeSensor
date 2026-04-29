@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { CarOrderReferenceStatus, CarsPayload } from "../../api/types";
+import type { CarOrderReferenceStatus, CarsPayload } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState, ShellState } from "../ui_app_state";

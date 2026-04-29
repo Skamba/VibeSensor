@@ -1,4 +1,4 @@
-import type { CarLibraryTireOption } from "../../api/types";
+import type { CarLibraryTireOption } from "../../api";
 import { tireOptionFront } from "./cars_tire_setup";
 import {
   DEFAULT_CARS_WIZARD_MANUAL_INPUTS,

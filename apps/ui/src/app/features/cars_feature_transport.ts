@@ -3,7 +3,7 @@ import {
   getCarLibraryModels,
   getCarLibraryTypes,
 } from "../../api";
-import type { CarLibraryModel } from "../../api/types";
+import type { CarLibraryModel } from "../../api";
 
 export interface CarsFeatureTransport {
   loadBrands(): Promise<string[]>;
