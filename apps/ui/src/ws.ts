@@ -7,7 +7,7 @@ import { batch, signal, type ReadonlySignal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
-export interface WsClientOptions {
+interface WsClientOptions {
   url: string;
   staleAfterMs?: number;
   reconnectDelayMs?: number;
