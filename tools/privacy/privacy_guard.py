@@ -85,7 +85,9 @@ def _repo_root() -> Path:
 
 
 def _changed_paths(args: list[str], *, repo_root: Path) -> list[str]:
-    result = _run_git([*args, "-z", "--diff-filter=ACMR", "--name-only", "--"], cwd=repo_root)
+    result = _run_git(
+        [*args, "-z", "--diff-filter=ACMR", "--name-only", "--"], cwd=repo_root
+    )
     if result.returncode != 0:
         raise SystemExit(result.stderr.strip())
     return [path for path in result.stdout.split("\0") if path]
@@ -133,12 +135,20 @@ def _assignment_findings(path: str, line_number: int, text: str) -> list[Finding
     for match in _QUOTED_SECRET_ASSIGNMENT.finditer(text):
         if _looks_like_real_secret(match.group("value")):
             findings.append(
-                Finding(path, line_number, f"possible hard-coded secret in `{match.group('key')}`")
+                Finding(
+                    path,
+                    line_number,
+                    f"possible hard-coded secret in `{match.group('key')}`",
+                )
             )
     env_match = _ENV_SECRET_ASSIGNMENT.search(text)
     if env_match and _looks_like_real_secret(env_match.group("value")):
         findings.append(
-            Finding(path, line_number, f"possible hard-coded secret in `{env_match.group('key')}`")
+            Finding(
+                path,
+                line_number,
+                f"possible hard-coded secret in `{env_match.group('key')}`",
+            )
         )
     return findings
 
@@ -190,7 +200,9 @@ def _check(paths_args: list[str], diff_args: list[str], *, repo_root: Path) -> i
     if not findings:
         return 0
 
-    print("[vibesensor privacy guard] Possible secret material detected:", file=sys.stderr)
+    print(
+        "[vibesensor privacy guard] Possible secret material detected:", file=sys.stderr
+    )
     for finding in findings:
         print(f"  - {finding.format()}", file=sys.stderr)
     print(
@@ -214,7 +226,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("check-staged", help="scan staged additions")
-    range_parser = subparsers.add_parser("check-range", help="scan additions in a commit range")
+    range_parser = subparsers.add_parser(
+        "check-range", help="scan additions in a commit range"
+    )
     range_parser.add_argument("commit_range")
     args = parser.parse_args(argv)
 
