@@ -25,7 +25,6 @@ export type EspFlashPortsPayload = Schema<"EspFlashPortsResponse">;
 export type EspFlashStartPayload = Schema<"EspFlashStartResponse">;
 export type EspFlashStatusPayload = Schema<"EspFlashStatusResponse">;
 export type EspSerialPortPayload = Schema<"EspSerialPortResponse">;
-export type FindingPayload = Schema<"FindingPayload">;
 export type HealthStatusPayload = Schema<"HealthResponse">;
 export type HistoryEntry = Schema<"HistoryListEntryResponse">;
 export type HistoryInsightWarningPayload = Schema<"HistoryInsightWarningResponse">;
