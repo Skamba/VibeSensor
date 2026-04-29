@@ -8,6 +8,7 @@ from test_support.vehicle_configuration_shards import (
     load_sample_vehicle_configuration_shards,
     write_vehicle_configuration_shard,
 )
+
 from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 
 
