@@ -1,8 +1,8 @@
-"""Level C – Single sensor, transient (≥50 direct-injection cases).
+"""Single-sensor transient scenarios that stay distinct after matrix consolidation.
 
-Tests the analysis pipeline with exactly ONE sensor and TRANSIENT spikes
-present.  Validates that transient events are de-weighted and do not
-override persistent fault signals.
+Representative steady-vs-transient corner/speed, no-fault baseline, and
+phased-onset coverage now lives in ``test_synthetic_scenario_matrix.py``.
+This module keeps the single-sensor transient behaviors that remain unique.
 """
 
 from __future__ import annotations
@@ -13,7 +13,6 @@ import pytest
 from test_support import (
     CAR_PROFILES,
     CORNER_SENSORS,
-    SENSOR_FL,
     SENSOR_FR,
     SENSOR_RR,
     SPEED_HIGH,
@@ -22,22 +21,16 @@ from test_support import (
     SPEED_VERY_HIGH,
     assert_confidence_between,
     assert_confidence_label_valid,
-    assert_has_warnings,
     assert_tolerant_no_fault,
     extract_top,
     make_diffuse_samples,
-    make_idle_samples,
     make_noise_samples,
     make_profile_fault_samples,
-    make_ramp_samples,
     make_transient_samples,
     profile_metadata,
     profile_wheel_hz,
     run_analysis,
 )
-
-# C.1 – Fault + transient at each corner × speed (4×3 = 12 cases)
-# Transient should NOT override persistent fault diagnosis
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
@@ -88,52 +81,6 @@ def _build_fault_with_transient_samples(
         ),
     )
     return samples
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_fault_with_transient_preserves_diagnosis(
-    corner: str,
-    speed: float,
-    profile: dict[str, Any],
-) -> None:
-    """Persistent wheel fault + short transient → fault still detected."""
-    sensor = CORNER_SENSORS[corner]
-    samples = _build_fault_with_transient_samples(profile, sensor, speed)
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost diagnosis for {corner}@{speed} with transient"
-    assert_confidence_between(summary, 0.30, 1.0, msg=f"{corner}@{speed} w/transient")
-    assert_confidence_label_valid(summary, msg=f"{corner}@{speed} w/transient")
-    assert_has_warnings(summary, msg=f"{corner}@{speed} w/transient")
-
-
-# C.2 – Transient only, no fault → no persistent wheel diagnosis (3 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any]) -> None:
-    """Only transient spikes on one sensor → no persistent wheel fault."""
-    sensor = SENSOR_FL
-    samples: list[dict[str, Any]] = []
-    # Road noise baseline
-    samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=speed, n_samples=35))
-    # Transient spike
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=speed,
-            n_samples=3,
-            start_t_s=35,
-            spike_amp=0.15,
-            spike_vib_db=35.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    # Should not produce a high-confidence wheel fault
-    assert_tolerant_no_fault(summary, msg=f"transient-only@{speed}")
 
 
 # C.3 – Multiple transients at different times (4 corners = 4 cases)
@@ -202,54 +149,6 @@ def test_transient_amplitude_deweighting(
     assert top is not None, f"Lost fault with {label} spike on {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike={label}")
     assert_confidence_label_valid(summary, msg=f"{corner} spike={label}")
-
-
-# C.5 – Phased onset with transient (4 corners = 4 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-def test_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> None:
-    """Idle → ramp → fault + transient → fault still detected."""
-    sensor = CORNER_SENSORS[corner]
-    samples: list[dict[str, Any]] = []
-    samples.extend(make_idle_samples(sensors=[sensor], n_samples=8, start_t_s=0))
-    samples.extend(
-        make_ramp_samples(
-            sensors=[sensor],
-            speed_start=20,
-            speed_end=80,
-            n_samples=12,
-            start_t_s=8,
-        ),
-    )
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=80.0,
-            n_samples=30,
-            start_t_s=20,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        ),
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=80.0,
-            n_samples=3,
-            start_t_s=30,
-            spike_amp=0.18,
-            spike_vib_db=36.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Phased+transient lost {corner}"
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"phased+transient {corner}")
-    assert_confidence_label_valid(summary, msg=f"phased+transient {corner}")
 
 
 # C.6 – Transient at different frequencies (4 freqs = 4 cases)

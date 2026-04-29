@@ -1,8 +1,8 @@
-"""Level D – Multiple sensors, no transient (≥50 direct-injection cases).
+"""Multi-sensor steady scenarios that stay distinct after matrix consolidation.
 
-Tests the analysis pipeline with MULTIPLE sensors (2, 4, 8, or 12) and
-NO transient events.  Validates spatial localization, confidence scaling,
-no-fault suppression, and diffuse excitation handling.
+Representative corner/speed, no-fault baseline, and phased-onset coverage now
+lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
+multi-sensor-specific steady-state behaviors that remain unique.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from test_support import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
-    assert_diagnosis_contract,
     assert_no_wheel_fault,
     assert_pairwise_monotonic,
     assert_strongest_location,
@@ -25,11 +24,9 @@ from test_support import (
     extract_top,
     make_diffuse_samples,
     make_fault_samples,
-    make_idle_samples,
     make_noise_samples,
     make_profile_fault_samples,
     make_profile_speed_sweep_fault_samples,
-    make_ramp_samples,
     profile_metadata,
     run_analysis,
     top_confidence,
@@ -46,7 +43,6 @@ from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_MULTI_SENSOR_LEVEL_CASES,
     DIAGNOSTIC_OPTIMIZED_PROFILE_IDS,
     DIAGNOSTIC_OPTIMIZED_PROFILES,
-    DIAGNOSTIC_PHASED_CORNERS,
     DIAGNOSTIC_SPEED_SWEEP_CORNERS,
     DIAGNOSTIC_STANDARD_SPEED_IDS,
     DIAGNOSTIC_STANDARD_SPEEDS,
@@ -64,51 +60,6 @@ def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     assert top is not None, f"{msg}: no finding"
     assert_wheel_source(summary, msg=msg)
     assert_strongest_location(summary, sensor, msg=msg)
-
-
-# D.1 – 4-sensor fault at each corner × speed (4×3 = 12 cases)
-
-
-@pytest.mark.parametrize(
-    "profile", DIAGNOSTIC_OPTIMIZED_PROFILES, ids=DIAGNOSTIC_OPTIMIZED_PROFILE_IDS
-)
-@pytest.mark.parametrize("corner", DIAGNOSTIC_WHEEL_CORNERS)
-@pytest.mark.parametrize("speed", DIAGNOSTIC_STANDARD_SPEEDS, ids=DIAGNOSTIC_STANDARD_SPEED_IDS)
-def test_4sensor_fault_corner_speed(corner: str, speed: float, profile: dict[str, Any]) -> None:
-    """4 wheel sensors, fault at one corner across speed bands."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=DIAGNOSTIC_4_SENSOR_SET,
-        speed_kmh=speed,
-        n_samples=35,
-        fault_amp=0.07,
-        fault_vib_db=28.0,
-        noise_vib_db=8.0,
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_diagnosis_contract(
-        summary,
-        expected_source="wheel",
-        expected_sensor=sensor,
-        min_confidence=0.15,
-        msg=f"4s {corner}@{speed}",
-    )
-
-
-# D.2 – 4-sensor no-fault baseline (3 speeds = 3 cases)
-
-
-@pytest.mark.parametrize(
-    "profile", DIAGNOSTIC_OPTIMIZED_PROFILES, ids=DIAGNOSTIC_OPTIMIZED_PROFILE_IDS
-)
-@pytest.mark.parametrize("speed", DIAGNOSTIC_STANDARD_SPEEDS, ids=DIAGNOSTIC_STANDARD_SPEED_IDS)
-def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
-    """4 sensors, all noise → no wheel fault."""
-    samples = make_noise_samples(sensors=DIAGNOSTIC_4_SENSOR_SET, speed_kmh=speed, n_samples=40)
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg=f"4sensor-no-fault@{speed}")
 
 
 # D.3 – 2-sensor pairs with fault localization (4 cases)
@@ -313,43 +264,6 @@ def test_4sensor_transfer_path(corner: str, profile: dict[str, Any]) -> None:
     )
     summary = run_analysis(samples)
     _assert_fault_at(summary, sensor, msg=f"transfer {corner}")
-
-
-# D.9 – Phased onset multi-sensor (2 corners = 2 cases)
-
-
-@pytest.mark.parametrize(
-    "profile", DIAGNOSTIC_OPTIMIZED_PROFILES, ids=DIAGNOSTIC_OPTIMIZED_PROFILE_IDS
-)
-@pytest.mark.parametrize("corner", DIAGNOSTIC_PHASED_CORNERS)
-def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
-    """Idle → ramp → fault on 4 sensors → correct detection."""
-    sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(make_idle_samples(sensors=DIAGNOSTIC_4_SENSOR_SET, n_samples=8, start_t_s=0))
-    samples.extend(
-        make_ramp_samples(
-            sensors=DIAGNOSTIC_4_SENSOR_SET,
-            speed_start=20,
-            speed_end=80,
-            n_samples=12,
-            start_t_s=8,
-        ),
-    )
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=DIAGNOSTIC_4_SENSOR_SET,
-            speed_kmh=80.0,
-            n_samples=30,
-            start_t_s=20,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    _assert_fault_at(summary, sensor, msg=f"phased 4s {corner}")
 
 
 # D.10/D.11 – 8/12-sensor no-fault baseline (2 sensor sets = 2 cases)

@@ -1,9 +1,8 @@
-"""Level F – Messy real-world scenarios (direct injection, deterministic).
+"""Messy synthetic scenarios with optimized profile coverage.
 
-Tests the analysis pipeline with realistic edge cases that simulate
-real-world data quality issues: sensor dropouts, speed jitter, road
-surface changes, overlapping harmonics, dual faults, and gain mismatch.
-All tests use direct injection for speed and determinism.
+These tests keep the real-world data-quality dimensions that are distinct from
+the core scenario matrix while avoiding a full profile cross-product on every
+edge case.
 """
 
 from __future__ import annotations
@@ -14,8 +13,6 @@ import pytest
 from test_support import (
     ADDITIONAL_CAR_PROFILE_IDS,
     ADDITIONAL_CAR_PROFILES,
-    CAR_PROFILE_IDS,
-    CAR_PROFILES,
     CORNER_SENSORS,
     SENSOR_FL,
     SENSOR_RR,
@@ -47,6 +44,12 @@ from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_4_SENSOR_SET as _4S,
 )
 from test_support.diagnostic_matrix_catalogs import (
+    DIAGNOSTIC_OPTIMIZED_PROFILE_IDS as _MESSY_PROFILE_IDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    DIAGNOSTIC_OPTIMIZED_PROFILES as _MESSY_PROFILES,
+)
+from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_WHEEL_CORNERS as _CORNERS,
 )
 from test_support.diagnostic_matrix_catalogs import (
@@ -66,7 +69,7 @@ from test_support.diagnostic_matrix_catalogs import (
 # F.1 – Persistent wheel fault + sensor dropout (4 corners = 4 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_fault_with_sensor_dropout(corner: str, profile: dict[str, Any]) -> None:
     """Persistent fault on one corner, with dropout on a *different* sensor mid-run.
@@ -104,7 +107,7 @@ def test_fault_with_sensor_dropout(corner: str, profile: dict[str, Any]) -> None
 # F.2 – Persistent wheel fault + speed jitter (4 corners = 4 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
     """Persistent fault with GPS speed jitter (±8 km/h fluctuation).
@@ -144,7 +147,7 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
 # F.3 – No-fault diffuse + pothole transients (2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize(
     "speed",
     [speed for _, speed in MESSY_POTHOLE_SPEED_CASES],
@@ -179,7 +182,7 @@ def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, 
 # F.4 – Overlapping engine/wheel harmonics (2 speeds = 2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize(
     "speed",
     [speed for _, speed in MESSY_OVERLAP_SPEED_CASES],
@@ -226,7 +229,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
 # F.5 – Dual fault ambiguity (2 pairs = 2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize(
     ("pair", "primary"),
     [(pair, primary) for _, pair, primary in MESSY_DUAL_FAULT_CASES],
@@ -266,7 +269,7 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict
 # F.6 – Road surface phase changes (1 case)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 def test_road_phase_smooth_rough_pothole(profile: dict[str, Any]) -> None:
     """Smooth → rough → pothole road surface with no real fault.
 
@@ -286,7 +289,7 @@ def test_road_phase_smooth_rough_pothole(profile: dict[str, Any]) -> None:
 # F.7 – Out-of-order timestamps with fault (2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", MESSY_OUT_OF_ORDER_CORNERS)
 def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]) -> None:
     """Fault data with some out-of-order timestamps (simulating network reordering)."""
@@ -311,7 +314,7 @@ def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]
 # F.8 – Clock skew on one sensor with fault (2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", MESSY_CLOCK_SKEW_CORNERS)
 def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
     """Fault with a 0.3s clock skew on one non-fault sensor."""
@@ -341,7 +344,7 @@ def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
 # F.9 – Gain mismatch on fault sensor (2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", MESSY_GAIN_MISMATCH_CORNERS)
 def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor has 1.5x gain (different sensitivity). Fault should still be localized."""
@@ -366,7 +369,7 @@ def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
 # F.10 – Pairwise monotonic amplitude trend on 4 sensors (1 case)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
     """Confidence should increase (pairwise) with fault amplitude on 4 sensors."""
     confs: list[float] = []
@@ -391,7 +394,7 @@ def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
 # F.11 – Persistent wheel fault + dropout on fault sensor itself (2 cases)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 @pytest.mark.parametrize("corner", MESSY_SELF_DROPOUT_CORNERS)
 def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor itself drops out mid-run but has enough data before/after.
@@ -424,7 +427,7 @@ def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
 # F.12 – Engine-only excitation → no wheel fault (1 case)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 def test_engine_only_no_wheel_fault(profile: dict[str, Any]) -> None:
     """Pure engine-order excitation on all sensors should NOT be a wheel fault."""
     samples = make_profile_engine_order_samples(
@@ -442,7 +445,7 @@ def test_engine_only_no_wheel_fault(profile: dict[str, Any]) -> None:
 # F.13 – Speed jitter baseline → no false fault (1 case)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _MESSY_PROFILES, ids=_MESSY_PROFILE_IDS)
 def test_speed_jitter_baseline_no_fault(profile: dict[str, Any]) -> None:
     """Speed jitter with clean noise → no false fault."""
     samples = make_speed_jitter_samples(

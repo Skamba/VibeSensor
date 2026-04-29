@@ -1,8 +1,8 @@
-"""Level E – Multiple sensors, transient (≥50 direct-injection cases).
+"""Multi-sensor transient scenarios that stay distinct after matrix consolidation.
 
-Tests the analysis pipeline with MULTIPLE sensors (2, 4, 8, 12) and
-TRANSIENT events present.  Validates transient de-weighting, persistent
-fault preservation under spatial noise, and confidence calibration.
+Representative corner/speed, no-fault baseline, and phased-onset coverage now
+lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
+multi-sensor transient behaviors that remain unique.
 """
 
 from __future__ import annotations
@@ -19,17 +19,13 @@ from test_support import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_label_valid,
-    assert_diagnosis_contract,
     assert_strongest_location,
     assert_tolerant_no_fault,
     assert_wheel_source,
     extract_top,
     make_diffuse_samples,
-    make_idle_samples,
-    make_noise_samples,
     make_profile_fault_samples,
     make_profile_speed_sweep_fault_samples,
-    make_ramp_samples,
     make_transient_samples,
     profile_metadata,
     run_analysis,
@@ -40,12 +36,9 @@ from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_12_SENSOR_SET,
     DIAGNOSTIC_OPTIMIZED_PROFILE_IDS,
     DIAGNOSTIC_OPTIMIZED_PROFILES,
-    DIAGNOSTIC_PHASED_CORNERS,
     DIAGNOSTIC_STANDARD_SPEED_IDS,
-    DIAGNOSTIC_STANDARD_SPEEDS,
     DIAGNOSTIC_TWO_SENSOR_LOCALIZATION_CASES,
     DIAGNOSTIC_WHEEL_CORNERS,
-    TRANSIENT_NO_FAULT_SPEED_CASES,
     TRANSIENT_SPEED_SWEEP_CORNERS,
     TRANSIENT_VERY_HIGH_SPEED_CORNERS,
 )
@@ -54,9 +47,6 @@ from test_support.diagnostic_matrix_catalogs import (
 )
 from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_8_SENSOR_SET as _8S,
-)
-from test_support.diagnostic_matrix_catalogs import (
-    DIAGNOSTIC_12_SENSOR_SET as _12S,
 )
 from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_OPTIMIZED_PROFILE_IDS as _OPTIMIZED_CAR_PROFILE_IDS,
@@ -80,53 +70,6 @@ def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     assert top is not None, f"{msg}: no finding"
     assert_wheel_source(summary, msg=msg)
     assert_strongest_location(summary, sensor, msg=msg)
-
-
-# E.1 – 4-sensor fault + transient at each corner × speed (4×3 = 12 cases)
-
-
-@pytest.mark.parametrize(
-    "profile", DIAGNOSTIC_OPTIMIZED_PROFILES, ids=DIAGNOSTIC_OPTIMIZED_PROFILE_IDS
-)
-@pytest.mark.parametrize("corner", DIAGNOSTIC_WHEEL_CORNERS)
-@pytest.mark.parametrize("speed", DIAGNOSTIC_STANDARD_SPEEDS, ids=DIAGNOSTIC_STANDARD_SPEED_IDS)
-def test_4sensor_fault_with_transient(corner: str, speed: float, profile: dict[str, Any]) -> None:
-    """4 sensors, fault at corner + transient → fault preserved."""
-    sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=DIAGNOSTIC_4_SENSOR_SET,
-            speed_kmh=speed,
-            n_samples=30,
-            start_t_s=0,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        ),
-    )
-    # Transient on the same fault sensor
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=speed,
-            n_samples=3,
-            start_t_s=12,
-            spike_amp=0.18,
-            spike_vib_db=36.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost 4sensor fault+transient {corner}@{speed}"
-    assert_diagnosis_contract(
-        summary,
-        expected_source="wheel",
-        expected_sensor=sensor,
-        min_confidence=0.15,
-        msg=f"4s+t {corner}@{speed}",
-    )
 
 
 # E.2 – 4-sensor transient on non-fault sensor (4 cases)
@@ -165,33 +108,6 @@ def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any])
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"4s other-t {corner}")
-
-
-# E.3 – 4-sensor no-fault + transient → no persistent fault (3 speeds = 3 cases)
-
-
-@pytest.mark.parametrize(
-    "profile", DIAGNOSTIC_OPTIMIZED_PROFILES, ids=DIAGNOSTIC_OPTIMIZED_PROFILE_IDS
-)
-@pytest.mark.parametrize("speed", DIAGNOSTIC_STANDARD_SPEEDS, ids=DIAGNOSTIC_STANDARD_SPEED_IDS)
-def test_4sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) -> None:
-    """4 sensors, road noise + transient → no persistent wheel fault."""
-    samples: list[dict] = []
-    samples.extend(
-        make_noise_samples(sensors=DIAGNOSTIC_4_SENSOR_SET, speed_kmh=speed, n_samples=35)
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=SENSOR_FL,
-            speed_kmh=speed,
-            n_samples=3,
-            start_t_s=35,
-            spike_amp=0.15,
-            spike_vib_db=35.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_tolerant_no_fault(summary, msg=f"4sensor transient-only@{speed}")
 
 
 # E.4 – 8-sensor fault + transient (4 corners = 4 cases)
@@ -386,45 +302,6 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
     _assert_fault_at(summary, sensor, msg=f"multi-t {corner}")
 
 
-# E.9 – Phased onset + transient on 4 sensors (2 corners = 2 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", DIAGNOSTIC_PHASED_CORNERS)
-def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> None:
-    """Idle → ramp → fault + transient on 4 sensors."""
-    sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(make_idle_samples(sensors=_4S, n_samples=6, start_t_s=0))
-    samples.extend(
-        make_ramp_samples(sensors=_4S, speed_start=20, speed_end=80, n_samples=10, start_t_s=6),
-    )
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=_4S,
-            speed_kmh=80.0,
-            n_samples=25,
-            start_t_s=16,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        ),
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=80.0,
-            n_samples=3,
-            start_t_s=28,
-            spike_amp=0.18,
-            spike_vib_db=36.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    _assert_fault_at(summary, sensor, msg=f"phased+t {corner}")
-
-
 # E.10 – Transfer path + transient (4 corners = 4 cases)
 
 
@@ -494,33 +371,6 @@ def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> 
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"8s vhigh+t {corner}")
-
-
-# E.12 – 12-sensor no-fault + transient → no fault (2 speeds = 2 cases)
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize(
-    "speed",
-    [speed for _, speed in TRANSIENT_NO_FAULT_SPEED_CASES],
-    ids=[case_id for case_id, _ in TRANSIENT_NO_FAULT_SPEED_CASES],
-)
-def test_12sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) -> None:
-    """12 sensors, road noise + transient → no persistent wheel fault."""
-    samples: list[dict] = []
-    samples.extend(make_noise_samples(sensors=_12S, speed_kmh=speed, n_samples=35))
-    samples.extend(
-        make_transient_samples(
-            sensor=SENSOR_FL,
-            speed_kmh=speed,
-            n_samples=3,
-            start_t_s=35,
-            spike_amp=0.15,
-            spike_vib_db=35.0,
-        ),
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_tolerant_no_fault(summary, msg=f"12sensor transient-only@{speed}")
 
 
 # E.13 – Speed sweep with transient on 4 sensors (2 corners = 2 cases)
