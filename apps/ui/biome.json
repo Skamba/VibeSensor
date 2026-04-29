@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
   "files": {
     "ignoreUnknown": true,
     "includes": [
@@ -8,8 +8,9 @@
       "!src/contracts",
       "!src/constants.ts",
       "!package-lock.json",
+      "!test-results",
+      "!tests/test-results",
       "!!dist",
-      "!!test-results",
       "!!tests/snapshots"
     ]
   },
@@ -20,6 +21,8 @@
       "tests/**/*.ts",
       "playwright.config.ts",
       "playwright.smoke.config.ts",
+      "playwright.smoke.msw.config.ts",
+      "playwright.visual-audit.config.ts",
       "vite.config.ts",
       "vitest.config.ts",
       "take-screenshot.mjs",
@@ -39,6 +42,8 @@
       "index.html",
       "playwright.config.ts",
       "playwright.smoke.config.ts",
+      "playwright.smoke.msw.config.ts",
+      "playwright.visual-audit.config.ts",
       "vite.config.ts",
       "vitest.config.ts",
       "take-screenshot.mjs",

@@ -12,7 +12,9 @@ import yaml
 from tests._paths import REPO_ROOT
 
 _UI_PACKAGE_JSON = REPO_ROOT / "apps" / "ui" / "package.json"
+_UI_BIOME_JSON = REPO_ROOT / "apps" / "ui" / "biome.json"
 _SMOKE_CONFIG = REPO_ROOT / "apps" / "ui" / "playwright.smoke.config.ts"
+_UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
 _CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _EXPECTED_CORE_SMOKE_SPECS = {
@@ -67,12 +69,56 @@ def _ci_workflow() -> dict[str, object]:
     return loaded
 
 
+def _playwright_configs_from_package_scripts() -> set[str]:
+    configs: set[str] = set()
+    for script in _package_scripts().values():
+        tokens = shlex.split(script)
+        if tokens[:3] != ["npx", "playwright", "test"]:
+            continue
+        explicit_configs = {
+            token.removeprefix("--config=") for token in tokens if token.startswith("--config=")
+        }
+        configs.update(explicit_configs or {"playwright.config.ts"})
+    return configs
+
+
+def _output_dirs_from_playwright_configs(configs: set[str]) -> set[str]:
+    output_dirs: set[str] = set()
+    for config in configs:
+        config_text = (_UI_ROOT / config).read_text(encoding="utf-8")
+        output_dirs.update(re.findall(r'outputDir:\s*"([^"]+)"', config_text))
+    return output_dirs
+
+
 def _resolved_smoke_specs() -> set[str]:
     return {
         path.name
         for pattern in _smoke_test_match_patterns()
         for path in (REPO_ROOT / "apps" / "ui" / _smoke_test_dir()).glob(pattern)
     }
+
+
+def test_ui_tooling_covers_playwright_configs_and_ignores_generated_results() -> None:
+    playwright_configs = _playwright_configs_from_package_scripts()
+    biome = json.loads(_UI_BIOME_JSON.read_text(encoding="utf-8"))
+    files_includes = set(biome["files"]["includes"])
+    linter_includes = set(biome["linter"]["includes"])
+    formatter_includes = set(biome["formatter"]["includes"])
+    output_dirs = _output_dirs_from_playwright_configs(playwright_configs)
+
+    assert playwright_configs == {
+        "playwright.config.ts",
+        "playwright.smoke.config.ts",
+        "playwright.smoke.msw.config.ts",
+        "playwright.visual-audit.config.ts",
+    }
+    assert playwright_configs <= linter_includes
+    assert playwright_configs <= formatter_includes
+    assert "!!test-results" not in files_includes
+    assert "!test-results" in files_includes
+    assert "!tests/test-results" in files_includes
+    assert output_dirs
+    assert all(output_dir.startswith("test-results/") for output_dir in output_dirs)
 
 
 def test_ui_smoke_command_and_config_alignment() -> None:
