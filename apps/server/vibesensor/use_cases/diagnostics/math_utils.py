@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from math import isfinite, sqrt
 
 
@@ -11,6 +11,44 @@ def _mean(values: Sequence[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def _mean_or_none(values: Iterable[float]) -> float | None:
+    items = tuple(values)
+    if not items:
+        return None
+    return sum(float(value) for value in items) / len(items)
+
+
+def _max_or_none(values: Iterable[float]) -> float | None:
+    items = tuple(values)
+    if not items:
+        return None
+    return max(float(value) for value in items)
+
+
+def _min_or_none(values: Iterable[float]) -> float | None:
+    items = tuple(values)
+    if not items:
+        return None
+    return min(float(value) for value in items)
+
+
+def _stddev_or_none(values: Iterable[float]) -> float | None:
+    items = tuple(values)
+    if not items:
+        return None
+    mean_value = _mean_or_none(items)
+    if mean_value is None:
+        return None
+    variance = sum((float(value) - mean_value) ** 2 for value in items) / len(items)
+    return sqrt(max(0.0, variance))
+
+
+def _ratio_or_zero(numerator: int | float, denominator: int | float) -> float:
+    if denominator <= 0:
+        return 0.0
+    return float(numerator) / float(denominator)
 
 
 def _corr_abs(x_vals: Sequence[float], y_vals: Sequence[float]) -> float | None:
