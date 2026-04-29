@@ -9,9 +9,11 @@ report/history-facing proof fields needed after persistence.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
 
-from vibesensor.shared.types.history_analysis_contracts import LocationProofBasis
+from vibesensor.shared.types.history_analysis_contracts import (
+    LOCATION_PROOF_BASIS_VALUES,
+    LocationProofBasis,
+)
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.whole_run_json_helpers import (
     non_empty_text_or_none as _non_empty_text_or_none,
@@ -279,13 +281,9 @@ def _required_bool(data: JsonObject, field_name: str) -> bool:
 
 
 def _required_proof_basis(value: object) -> LocationProofBasis:
-    if value not in {
-        "whole_run_summary",
-        "supporting_windows_raw_backed",
-        "supporting_windows_summary_only",
-    }:
+    if value not in LOCATION_PROOF_BASIS_VALUES:
         raise ValueError("proof_basis must be a supported location proof basis")
-    return cast(LocationProofBasis, value)
+    return value
 
 
 def _optional_float(value: object) -> float | None:
