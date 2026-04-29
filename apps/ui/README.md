@@ -514,7 +514,9 @@ Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
 `smoke*.spec.ts`, `visual.spec.ts`, and `msw-browser.smoke.spec.ts` files via
 [`vitest.config.ts`](./vitest.config.ts). New logic-level tests should land as
 `tests/<feature>_*.spec.ts`; new browser flows should land as
-`tests/smoke.<feature>.spec.ts`.
+`tests/smoke.<feature>.spec.ts`. The hygiene suite also guards that every
+committed `tests/*.spec.ts` file matches exactly one of those runner ownership
+patterns.
 
 ## Visual Tests
 
