@@ -19,6 +19,7 @@ from vibesensor.infra.runtime.processing_failures import (
 )
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
+from vibesensor.infra.runtime.processing_tick import ProcessingTickRunner
 from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.runtime_failures import ProcessingLoopFailure
 
@@ -107,8 +108,30 @@ def _make_loop(
     return loop, state
 
 
+def _make_tick_runner(
+    *,
+    processor: Any = None,
+    registry: Any = None,
+    sample_rate_hz: int = 800,
+    fft_n: int = 2048,
+    control_plane: Any = None,
+) -> tuple[ProcessingTickRunner, ProcessingLoopState]:
+    state = ProcessingLoopState()
+    proc = processor if processor is not None else _StubProcessor()
+    reg = registry if registry is not None else _StubRegistry()
+    runner = ProcessingTickRunner(
+        state=state,
+        sample_rate_hz=sample_rate_hz,
+        fft_n=fft_n,
+        registry=reg,
+        processor=proc,
+        control_plane=control_plane,
+    )
+    return runner, state
+
+
 # ---------------------------------------------------------------------------
-# Run helper (mirrors test_runtime.py pattern)
+# Run helper for one-loop public-behavior tests
 # ---------------------------------------------------------------------------
 
 
@@ -127,6 +150,34 @@ async def _run_loop(loop: ProcessingLoop, *, max_ticks: int) -> None:
     with patch("anyio.sleep", _counting_sleep):
         with pytest.raises(asyncio.CancelledError):
             await loop.run()
+
+
+async def _capture_first_delay(
+    loop: ProcessingLoop,
+    *,
+    monotonic_points: tuple[float, float],
+) -> float:
+    captured_delays: list[float] = []
+    monotonic_values = iter(monotonic_points)
+    final_value = monotonic_points[-1]
+
+    async def _recording_sleep(delay: float) -> None:
+        captured_delays.append(delay)
+        raise asyncio.CancelledError
+
+    def _fake_monotonic() -> float:
+        return next(monotonic_values, final_value)
+
+    with patch(
+        "vibesensor.infra.runtime.processing_loop.time.monotonic",
+        side_effect=_fake_monotonic,
+    ):
+        with patch("vibesensor.infra.runtime.processing_loop.anyio.sleep", _recording_sleep):
+            with pytest.raises(asyncio.CancelledError):
+                await loop.run()
+
+    assert captured_delays
+    return captured_delays[0]
 
 
 # ---------------------------------------------------------------------------
@@ -230,63 +281,66 @@ class TestProcessingLoopFailureTracking:
 
 
 # ---------------------------------------------------------------------------
-# Mismatch detection tests (via _run_tick directly)
+# Tick-runner mismatch detection and public loop cadence tests
 # ---------------------------------------------------------------------------
 
 
 class TestProcessingLoopMismatchDetection:
-    """Verify sync-clock handling and configuration mismatch tracking during run ticks."""
+    """Verify sync-clock handling and mismatch tracking without loop private methods."""
 
     @pytest.mark.asyncio
     async def test_sync_clock_uses_control_plane_broadcaster(self) -> None:
-        """Sync-clock ticks use the injected control-plane broadcaster seam."""
+        """Sync-clock ticks use the public ProcessingTickRunner seam."""
         processor = _StubProcessor()
         control_plane = _StubControlPlane()
-        loop, _state = _make_loop(processor=processor, control_plane=control_plane)
+        runner, _state = _make_tick_runner(
+            processor=processor,
+            control_plane=control_plane,
+        )
 
-        await loop._run_tick(sync_clock=True)
+        await runner.run(sync_clock=True)
 
         assert control_plane.broadcast_calls == 1
 
 
 class TestProcessingLoopCadence:
-    def test_success_delay_uses_low_load_fast_path_with_duty_cap(self) -> None:
+    @pytest.mark.asyncio
+    async def test_success_delay_uses_low_load_fast_path_with_duty_cap(self) -> None:
         clients = {f"sensor-{index}": _StubRecord() for index in range(5)}
         loop, _state = _make_loop(
             registry=_StubRegistry(clients),
             fft_update_hz=4,
         )
 
-        delay_s = loop._success_delay_s(
-            interval_s=0.25,
-            tick_duration_s=0.04,
-            active_client_count=5,
+        delay_s = await _capture_first_delay(
+            loop,
+            monotonic_points=(0.0, 0.04),
         )
 
         assert delay_s == pytest.approx(0.06)
 
-    def test_success_delay_keeps_base_interval_for_larger_active_set(self) -> None:
+    @pytest.mark.asyncio
+    async def test_success_delay_keeps_base_interval_for_larger_active_set(self) -> None:
         clients = {f"sensor-{index}": _StubRecord() for index in range(12)}
         loop, _state = _make_loop(
             registry=_StubRegistry(clients),
             fft_update_hz=4,
         )
 
-        delay_s = loop._success_delay_s(
-            interval_s=0.25,
-            tick_duration_s=0.04,
-            active_client_count=12,
+        delay_s = await _capture_first_delay(
+            loop,
+            monotonic_points=(0.0, 0.04),
         )
 
         assert delay_s == pytest.approx(0.25)
 
-    def test_success_delay_keeps_base_interval_when_idle(self) -> None:
+    @pytest.mark.asyncio
+    async def test_success_delay_keeps_base_interval_when_idle(self) -> None:
         loop, _state = _make_loop(fft_update_hz=4)
 
-        delay_s = loop._success_delay_s(
-            interval_s=0.25,
-            tick_duration_s=0.01,
-            active_client_count=0,
+        delay_s = await _capture_first_delay(
+            loop,
+            monotonic_points=(0.0, 0.01),
         )
 
         assert delay_s == pytest.approx(0.25)
@@ -298,7 +352,10 @@ class TestProcessingLoopCadence:
     ) -> None:
         processor = _StubProcessor()
         control_plane = _StubControlPlane()
-        loop, _state = _make_loop(processor=processor, control_plane=control_plane)
+        runner, _state = _make_tick_runner(
+            processor=processor,
+            control_plane=control_plane,
+        )
         to_thread_calls: list[tuple[object | None, str]] = []
 
         async def fake_to_thread(func, /, *args, **kwargs):
@@ -315,7 +372,7 @@ class TestProcessingLoopCadence:
             fake_to_thread,
         )
 
-        await loop._run_tick(sync_clock=True)
+        await runner.run(sync_clock=True)
 
         assert to_thread_calls[0] == (control_plane, "broadcast_sync_clock")
         assert control_plane.broadcast_calls == 1
@@ -326,11 +383,14 @@ class TestProcessingLoopCadence:
         mismatched = _StubRecord(sample_rate_hz=400, frame_samples=1024)
         registry = _StubRegistry(clients={"sess_a": mismatched})
         processor = _StubProcessor()
-        loop, state = _make_loop(processor=processor, registry=registry, sample_rate_hz=800)
+        runner, state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+            sample_rate_hz=800,
+        )
 
-        # Call _run_tick twice; mismatch should be logged only once.
-        await loop._run_tick(sync_clock=False)
-        await loop._run_tick(sync_clock=False)
+        await runner.run(sync_clock=False)
+        await runner.run(sync_clock=False)
 
         assert "sess_a" in state.sample_rate_mismatch_logged
         assert len(state.sample_rate_mismatch_logged) == 1
@@ -341,9 +401,13 @@ class TestProcessingLoopCadence:
         matching = _StubRecord(sample_rate_hz=800, frame_samples=1024)
         registry = _StubRegistry(clients={"sess_b": matching})
         processor = _StubProcessor()
-        loop, state = _make_loop(processor=processor, registry=registry, sample_rate_hz=800)
+        runner, state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+            sample_rate_hz=800,
+        )
 
-        await loop._run_tick(sync_clock=False)
+        await runner.run(sync_clock=False)
 
         assert len(state.sample_rate_mismatch_logged) == 0
 
@@ -353,10 +417,14 @@ class TestProcessingLoopCadence:
         oversized = _StubRecord(sample_rate_hz=800, frame_samples=4096)
         registry = _StubRegistry(clients={"sess_c": oversized})
         processor = _StubProcessor()
-        loop, state = _make_loop(processor=processor, registry=registry, fft_n=2048)
+        runner, state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+            fft_n=2048,
+        )
 
-        await loop._run_tick(sync_clock=False)
-        await loop._run_tick(sync_clock=False)
+        await runner.run(sync_clock=False)
+        await runner.run(sync_clock=False)
 
         assert "sess_c" in state.frame_size_mismatch_logged
         assert len(state.frame_size_mismatch_logged) == 1
@@ -367,9 +435,13 @@ class TestProcessingLoopCadence:
         fine = _StubRecord(sample_rate_hz=800, frame_samples=2048)
         registry = _StubRegistry(clients={"sess_d": fine})
         processor = _StubProcessor()
-        loop, state = _make_loop(processor=processor, registry=registry, fft_n=2048)
+        runner, state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+            fft_n=2048,
+        )
 
-        await loop._run_tick(sync_clock=False)
+        await runner.run(sync_clock=False)
 
         assert len(state.frame_size_mismatch_logged) == 0
 
@@ -399,10 +471,13 @@ class TestProcessingLoopCleanup:
 
         registry = _RefreshingRegistry()
         processor = _StubProcessor(fail_count=1)
-        loop, _state = _make_loop(processor=processor, registry=registry)
+        runner, _state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+        )
 
         with pytest.raises(ProcessingTickFailure, match="stub compute_all failure") as exc_info:
-            await loop._run_tick(sync_clock=False)
+            await runner.run(sync_clock=False)
 
         assert exc_info.value.category is ProcessingFailureCategory.COMPUTE_ALL
         assert processor.compute_call_args == [
@@ -431,9 +506,12 @@ class TestProcessingLoopCleanup:
 
         registry = _DisappearingRegistry()
         processor = _StubProcessor()
-        loop, _state = _make_loop(processor=processor, registry=registry)
+        runner, _state = _make_tick_runner(
+            processor=processor,
+            registry=registry,
+        )
 
-        await loop._run_tick(sync_clock=False)
+        await runner.run(sync_clock=False)
 
         assert processor.compute_call_args == [
             (

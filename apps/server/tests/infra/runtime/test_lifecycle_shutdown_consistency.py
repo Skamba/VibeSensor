@@ -15,7 +15,7 @@ from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntim
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
-def _make_lifecycle() -> LifecycleManager:
+def _make_lifecycle(*, update_job_task: asyncio.Task[None] | None = None) -> LifecycleManager:
     health_state = RuntimeHealthState()
     health_state.mark_ready()
     runtime = LifecycleRuntime(
@@ -48,7 +48,7 @@ def _make_lifecycle() -> LifecycleManager:
         ),
         gps_monitor=MagicMock(),
         obd_runner=MagicMock(),
-        update_manager=MagicMock(job_task=None),
+        update_manager=MagicMock(job_task=update_job_task),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),
         history_db=MagicMock(aclose=AsyncMock()),
@@ -72,9 +72,8 @@ async def test_stop_logs_managed_jobs_that_outlive_cancel_timeout(
 ) -> None:
     import vibesensor.infra.runtime.lifecycle as lifecycle_module
 
-    lifecycle = _make_lifecycle()
     managed = asyncio.create_task(_stubborn_task(), name="system-update")
-    lifecycle._runtime.update_manager = MagicMock(job_task=managed)
+    lifecycle = _make_lifecycle(update_job_task=managed)
     await asyncio.sleep(0)
 
     async def _wait_pending(tasks, timeout):

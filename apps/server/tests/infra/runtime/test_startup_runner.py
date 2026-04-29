@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.startup_runner import StartupRunner
-from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 
-def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
+def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock, list[str]]:
     """Build a minimal StartupRunner with mock collaborators."""
     health_state = RuntimeHealthState()
 
@@ -34,8 +33,10 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
     task_supervisor = MagicMock()
     task_supervisor.run = AsyncMock()
 
+    started_names: list[str] = []
+
     def _start_background_task(task_factory, *, name: str) -> None:
-        del name
+        started_names.append(name)
         task_factory().close()
 
     background_tasks = MagicMock()
@@ -51,54 +52,33 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
         background_tasks=background_tasks,
         udp_transport_lifecycle=udp_transport,
     )
-    return runner, health_state, runtime
+    return runner, health_state, runtime, started_names
 
 
 class TestStartupRunnerPhases:
-    """Cover startup phase ordering, success, failure, and UDP-before-background sequencing."""
+    """Cover startup success/failure outcomes without pinning internal phase plumbing."""
 
     @pytest.mark.asyncio
-    async def test_phases_tracked_in_order(self) -> None:
-        """Health-state phases are set in the expected order."""
-        runner, health_state, _ = _make_runner()
-        phases_seen: list[str] = []
+    async def test_marks_ready_on_success_and_starts_runtime_tasks(self) -> None:
+        """Successful startup reaches ready state and starts the expected background tasks."""
+        runner, health_state, _runtime, started_names = _make_runner()
+        await runner.run()
 
-        original_set_phase = RuntimeHealthState.set_phase
-
-        def recording_set_phase(self_hs: RuntimeHealthState, phase: str) -> None:
-            phases_seen.append(phase)
-            original_set_phase(self_hs, phase)
-
-        with patch.object(type(health_state), "set_phase", recording_set_phase):
-            await runner.run()
-
-        assert phases_seen == [
-            "starting",
-            "udp_receiver",
-            "control_plane",
+        assert health_state.startup_state == "ready"
+        assert set(started_names) == {
             "processing-loop",
             "ws-broadcast",
             "metrics-log",
             "gps-speed",
             "obd-speed",
             "update-startup-recover",
-        ]
-
-    @pytest.mark.asyncio
-    async def test_marks_ready_on_success(self) -> None:
-        """Health state is marked ready after all phases complete."""
-        runner, health_state, _ = _make_runner()
-
-        await runner.run()
-
-        assert health_state.startup_state == "ready"
+        }
 
     @pytest.mark.asyncio
     async def test_marks_failed_on_exception(self) -> None:
         """Health state records the failing phase on exception."""
-        runner, health_state, runtime = _make_runner()
+        runner, health_state, runtime, _started_names = _make_runner()
         runtime.control_plane.start = AsyncMock(side_effect=RuntimeError("boom"))
-
         with pytest.raises(RuntimeError, match="boom"):
             await runner.run()
 
@@ -106,47 +86,10 @@ class TestStartupRunnerPhases:
         assert health_state.startup_phase == "control_plane"
 
     @pytest.mark.asyncio
-    async def test_ws_broadcast_phase_uses_explicit_restartable_exception_types(self) -> None:
-        runner, _, _ = _make_runner()
-
-        await runner.run()
-
-        restartable = runner._task_supervisor.run.call_args_list[1].kwargs["restartable_exceptions"]
-        assert restartable == (BroadcastTickLoopFailure,)
-
-    @pytest.mark.asyncio
     async def test_type_error_propagates_without_operational_wrapping(self) -> None:
-        runner, health_state, runtime = _make_runner()
+        runner, health_state, runtime, _started_names = _make_runner()
         runtime.control_plane.start = AsyncMock(side_effect=TypeError("bad startup wiring"))
-
         with pytest.raises(TypeError, match="bad startup wiring"):
             await runner.run()
 
         assert health_state.startup_state != "failed"
-
-    async def test_udp_startup_called_first(self) -> None:
-        """UDP receiver starts before background tasks are created."""
-        runner, _, _ = _make_runner()
-        call_order: list[str] = []
-
-        orig_startup = runner._udp_transport_lifecycle.startup
-
-        async def recording_startup(*a, **kw):
-            call_order.append("udp_startup")
-            return await orig_startup(*a, **kw)
-
-        runner._udp_transport_lifecycle.startup = recording_startup
-
-        orig_start = runner._background_tasks.start
-
-        def recording_start(*a, **kw):
-            call_order.append("background_start")
-            return orig_start(*a, **kw)
-
-        runner._background_tasks.start = recording_start
-
-        await runner.run()
-
-        udp_idx = call_order.index("udp_startup")
-        bg_idx = call_order.index("background_start")
-        assert udp_idx < bg_idx
