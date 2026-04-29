@@ -21,6 +21,8 @@ from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
     build_whole_run_spatial_coherence_artifact_bundle,
     summarize_whole_run_spatial_coherence,
+    whole_run_spatial_evidence_windows_from_jsonl_bytes,
+    whole_run_spatial_evidence_windows_to_jsonl_bytes,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
@@ -277,6 +279,38 @@ def test_build_whole_run_spatial_coherence_artifact_bundle_is_deterministic() ->
     assert first.artifact_contents == second.artifact_contents
     assert first.windows == second.windows
     assert first.summaries == second.summaries
+
+
+def test_whole_run_spatial_evidence_windows_jsonl_round_trip() -> None:
+    windows = (
+        SpatialEvidenceWindow(
+            candidate_key="wheel_1x",
+            suspected_source="wheel/tire",
+            window_index=0,
+            sensor_id="sensor-front",
+            location="front-left",
+            supporting=True,
+            coherent=True,
+            peak_intensity_db=32.0,
+            vibration_strength_db=28.0,
+            matched_frequency_hz=10.0,
+            coherence_score=1.0,
+        ),
+        SpatialEvidenceWindow(
+            candidate_key="wheel_1x",
+            suspected_source="wheel/tire",
+            window_index=0,
+            sensor_id="sensor-rear",
+            location="rear-left",
+            supporting=False,
+            coherent=False,
+            vibration_strength_db=20.0,
+        ),
+    )
+
+    payload = whole_run_spatial_evidence_windows_to_jsonl_bytes(windows)
+
+    assert whole_run_spatial_evidence_windows_from_jsonl_bytes(payload) == windows
 
 
 def test_summarize_whole_run_spatial_coherence_builds_clear_hotspot_location_summary() -> None:

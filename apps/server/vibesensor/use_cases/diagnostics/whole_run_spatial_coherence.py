@@ -8,13 +8,15 @@ from dataclasses import dataclass
 from statistics import mean as _mean
 
 from vibesensor.domain import LocationHotspot
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
+)
+from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
+    jsonl_bytes_from_objects,
+    jsonl_objects_from_bytes,
 )
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.location_scoring import (
@@ -241,10 +243,7 @@ def whole_run_spatial_evidence_windows_to_jsonl_bytes(
 ) -> bytes:
     """Serialize dense whole-run spatial evidence rows into sidecar JSONL bytes."""
 
-    if not windows:
-        return b""
-    lines = [safe_json_dumps(window.to_json_object()).encode("utf-8") for window in windows]
-    return b"\n".join(lines) + b"\n"
+    return jsonl_bytes_from_objects(windows)
 
 
 def whole_run_spatial_evidence_windows_from_jsonl_bytes(
@@ -252,18 +251,12 @@ def whole_run_spatial_evidence_windows_from_jsonl_bytes(
 ) -> tuple[SpatialEvidenceWindow, ...]:
     """Reconstruct persisted dense whole-run spatial evidence rows from JSONL bytes."""
 
-    if not payload:
-        return ()
-    windows: list[SpatialEvidenceWindow] = []
-    for raw_line in payload.decode("utf-8").splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        parsed = safe_json_loads(line, context="whole-run spatial evidence windows")
-        if not is_json_object(parsed):
-            raise ValueError("whole-run spatial evidence line must decode to a JSON object")
-        windows.append(SpatialEvidenceWindow.from_mapping(parsed))
-    return tuple(windows)
+    return jsonl_objects_from_bytes(
+        payload,
+        context="whole-run spatial evidence windows",
+        line_description="whole-run spatial evidence line",
+        from_mapping=SpatialEvidenceWindow.from_mapping,
+    )
 
 
 def _candidate_window_rows(
