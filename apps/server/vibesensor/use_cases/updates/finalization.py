@@ -35,8 +35,6 @@ class UpdateWorkflowFinalizer:
         try:
             await self._transport_coordinator.cleanup_after_update(prepared_transport)
             await self._runtime_details_refresher.refresh()
-        except asyncio.CancelledError:
-            raise
         except UpdateCleanupError as exc:
             if prior_error is None:
                 raise
