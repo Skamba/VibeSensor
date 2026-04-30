@@ -15,6 +15,7 @@ def test_finalize_active_run_reports_successful_stage_results() -> None:
     append_calls: list[tuple[str, str, float, bool]] = []
     raw_finalize_calls: list[tuple[str, object | None]] = []
     recorded_finalize_statuses: list[str] = []
+    recorded_stage_results: list[tuple[str, str, list[str]]] = []
 
     sample_flush = SimpleNamespace(
         pending_flush_snapshot=lambda: SimpleNamespace(
@@ -56,6 +57,14 @@ def test_finalize_active_run_reports_successful_stage_results() -> None:
         record_raw_capture_finalize_result=lambda run_id, result: recorded_finalize_statuses.append(
             result.status
         ),
+        record_finalization_stage_results=(
+            lambda run_id, start_time_utc, stages: (
+                recorded_stage_results.append(
+                    (run_id, start_time_utc, [stage.stage_name for stage in stages])
+                )
+                or True
+            )
+        ),
         logger=logging.getLogger("test.finalize.success"),
     )
 
@@ -75,6 +84,18 @@ def test_finalize_active_run_reports_successful_stage_results() -> None:
         "ResolvePostAnalysisCandidateStage",
     ]
     assert [stage.status for stage in result.stage_results] == ["ok", "ok", "ok", "ok"]
+    assert recorded_stage_results == [
+        (
+            "run-1",
+            "2026-04-25T06:39:00Z",
+            [
+                "FlushPendingRowsStage",
+                "FinalizeRawCaptureStage",
+                "FinalizePersistenceStage",
+                "ResolvePostAnalysisCandidateStage",
+            ],
+        )
+    ]
 
 
 def test_finalize_active_run_marks_skipped_and_degraded_stages(
@@ -292,3 +313,14 @@ def test_stop_recording_logs_finalize_stage_results(
     ]
     assert any(record.stage_name == "FinalizeRawCaptureStage" for record in stage_logs)
     assert any(record.stage_status == "degraded" for record in stage_logs)
+    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
+    assert updated_run_id == started.run_id
+    assert [stage.stage_name for stage in metadata.finalization_stages] == [
+        "FlushPendingRowsStage",
+        "FinalizeRawCaptureStage",
+        "FinalizePersistenceStage",
+        "ResolvePostAnalysisCandidateStage",
+    ]
+    assert {stage.stage_name: stage.status for stage in metadata.finalization_stages}[
+        "FinalizeRawCaptureStage"
+    ] == "degraded"

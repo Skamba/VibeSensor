@@ -155,3 +155,63 @@ def test_run_metadata_codec_tolerates_missing_calibration_metadata_for_legacy_ru
     assert metadata.calibration_profile_id is None
     assert metadata.vehicle_baseline_profile_id is None
     assert metadata.sensor_snapshots[0].mount_orientation is None
+
+
+def test_run_metadata_codec_roundtrip_preserves_finalization_stages() -> None:
+    metadata = run_metadata_from_mapping(
+        {
+            "run_id": "run-finalized",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "finalization_stages": [
+                {
+                    "stage_name": "FinalizeRawCaptureStage",
+                    "status": "degraded",
+                    "duration_ms": 12,
+                    "artifacts_created": ["raw_capture_manifest"],
+                    "warnings": ["raw capture finalize timed out"],
+                    "diagnostic_context": {
+                        "run_id": "run-finalized",
+                        "raw_capture_status": "timeout",
+                        "queue_depth": 3,
+                    },
+                },
+                {
+                    "stage_name": "ResolvePostAnalysisCandidateStage",
+                    "status": "skipped",
+                    "duration_ms": -5,
+                    "diagnostic_context": {"reason": "raw_capture_finalize_unsettled"},
+                },
+            ],
+        }
+    )
+
+    payload = run_metadata_to_json_object(metadata)
+    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+
+    assert payload["finalization_stages"] == [
+        {
+            "stage_name": "FinalizeRawCaptureStage",
+            "status": "degraded",
+            "duration_ms": 12,
+            "artifacts_created": ["raw_capture_manifest"],
+            "warnings": ["raw capture finalize timed out"],
+            "diagnostic_context": {
+                "run_id": "run-finalized",
+                "raw_capture_status": "timeout",
+                "queue_depth": 3,
+            },
+        },
+        {
+            "stage_name": "ResolvePostAnalysisCandidateStage",
+            "status": "skipped",
+            "duration_ms": 0,
+            "diagnostic_context": {"reason": "raw_capture_finalize_unsettled"},
+        },
+    ]
+    assert [stage.stage_name for stage in decoded.finalization_stages] == [
+        "FinalizeRawCaptureStage",
+        "ResolvePostAnalysisCandidateStage",
+    ]
+    assert decoded.finalization_stages[0].status == "degraded"
+    assert decoded.finalization_stages[0].diagnostic_context["queue_depth"] == 3

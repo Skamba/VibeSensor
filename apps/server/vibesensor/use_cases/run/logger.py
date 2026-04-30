@@ -396,6 +396,7 @@ class RunRecorder:
             persistence=self._persistence,
             raw_capture=self._raw_capture,
             record_raw_capture_finalize_result=self._record_raw_capture_finalize_result,
+            record_finalization_stage_results=self._persistence.update_finalization_stage_results,
             logger=LOGGER,
         )
 

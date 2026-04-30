@@ -131,6 +131,17 @@ class HistoryRawCaptureFinalizeResponse(BaseModel):
     error_summary: str | None = None
 
 
+class HistoryFinalizationStageResponse(BaseModel):
+    """Response body describing one persisted run-finalization stage outcome."""
+
+    stage_name: str
+    status: Literal["ok", "skipped", "degraded", "failed"]
+    duration_ms: int
+    artifacts_created: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    diagnostic_context: ApiPayloadObject = Field(default_factory=dict)
+
+
 class HistoryListEntryResponse(BaseModel):
     """Response body for a single history-run list row."""
 
@@ -145,6 +156,7 @@ class HistoryListEntryResponse(BaseModel):
     lifecycle: HistoryRunLifecycleResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
+    finalization_stages: list[HistoryFinalizationStageResponse] | None = None
 
 
 class HistoryListResponse(BaseModel):
@@ -171,6 +183,7 @@ class HistoryRunResponse(_StrictBase):
     lifecycle: HistoryRunLifecycleResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
+    finalization_stages: list[HistoryFinalizationStageResponse] | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):

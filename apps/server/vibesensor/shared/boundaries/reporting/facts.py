@@ -472,6 +472,8 @@ def _whole_run_diagnosis_fallback_reason(
     *,
     summary: NormalizedReportSummary,
 ) -> str | None:
+    if (finalization_reason := _finalization_stage_fallback_reason(summary)) is not None:
+        return finalization_reason
     analysis_metadata = payload.get("analysis_metadata")
     if not isinstance(analysis_metadata, Mapping):
         return "analysis metadata missing; replayed summary-era evidence"
@@ -491,6 +493,38 @@ def _whole_run_diagnosis_fallback_reason(
     if has_partial_whole_run_inputs:
         return "whole-run diagnosis inputs incomplete; replayed summary-era evidence"
     return "whole-run artifacts unavailable; replayed summary-era evidence"
+
+
+def _finalization_stage_fallback_reason(summary: NormalizedReportSummary) -> str | None:
+    metadata = summary.metadata
+    if metadata is None or not metadata.finalization_stages:
+        return None
+    stages = {stage.stage_name: stage for stage in metadata.finalization_stages}
+    raw_stage = stages.get("FinalizeRawCaptureStage")
+    resolve_stage = stages.get("ResolvePostAnalysisCandidateStage")
+    raw_status = (
+        text_or_none(raw_stage.diagnostic_context.get("raw_capture_status"))
+        if raw_stage is not None
+        else None
+    )
+    resolve_reason = (
+        text_or_none(resolve_stage.diagnostic_context.get("reason"))
+        if resolve_stage is not None
+        else None
+    )
+    if resolve_reason == "persistence_finalize_unsettled":
+        return "persistence_finalize_unsettled"
+    if raw_status == "not_configured":
+        return "raw_capture_not_configured"
+    if resolve_reason == "raw_capture_finalize_unsettled" or (
+        raw_stage is not None and raw_stage.status == "degraded"
+    ):
+        if raw_status in {"enqueue_timeout", "timeout", "failed"}:
+            return f"raw_capture_finalize_{raw_status}"
+        return "raw_capture_finalize_unsettled"
+    if resolve_reason == "history_not_ready":
+        return "history_not_ready"
+    return None
 
 
 def _report_surface_confidence_facts(

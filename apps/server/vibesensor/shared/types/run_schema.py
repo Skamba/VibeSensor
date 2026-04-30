@@ -25,6 +25,8 @@ __all__ = [
     "RUN_SAMPLE_TYPE",
     "RUN_SCHEMA_VERSION",
     "RunRawCaptureFinalize",
+    "RunFinalizationStageResult",
+    "RunFinalizationStageStatus",
     "RunMetadata",
     "RunCarMetadata",
     "RunSensorMetadata",
@@ -92,6 +94,35 @@ class RunRawCaptureFinalize:
         return payload
 
 
+type RunFinalizationStageStatus = Literal["ok", "skipped", "degraded", "failed"]
+
+
+@dataclass(frozen=True, slots=True)
+class RunFinalizationStageResult:
+    """Persisted per-run recorder finalization stage outcome."""
+
+    stage_name: str
+    status: RunFinalizationStageStatus
+    duration_ms: int
+    artifacts_created: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+    diagnostic_context: JsonObject = field(default_factory=dict)
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {
+            "stage_name": self.stage_name,
+            "status": self.status,
+            "duration_ms": self.duration_ms,
+        }
+        if self.artifacts_created:
+            payload["artifacts_created"] = list(self.artifacts_created)
+        if self.warnings:
+            payload["warnings"] = list(self.warnings)
+        if self.diagnostic_context:
+            payload["diagnostic_context"] = self.diagnostic_context
+        return payload
+
+
 @dataclass(slots=True)
 class RunMetadata:
     """Typed persisted run metadata with explicit run-context ownership."""
@@ -119,6 +150,7 @@ class RunMetadata:
     car: RunCarMetadata | None = None
     sensor_snapshots: tuple[RunSensorMetadata, ...] = field(default_factory=tuple)
     raw_capture_finalize: RunRawCaptureFinalize | None = None
+    finalization_stages: tuple[RunFinalizationStageResult, ...] = field(default_factory=tuple)
     case_id: str = ""
     sensor_mac: str | None = None
     symptom: Symptom | None = None
@@ -150,6 +182,7 @@ class RunMetadata:
         car: RunCarMetadata | None = None,
         sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
         raw_capture_finalize: RunRawCaptureFinalize | None = None,
+        finalization_stages: tuple[RunFinalizationStageResult, ...] = (),
         case_id: str = "",
         sensor_mac: str | None = None,
         symptom: Symptom | None = None,
@@ -185,6 +218,7 @@ class RunMetadata:
             car=car,
             sensor_snapshots=tuple(sensor_snapshots),
             raw_capture_finalize=raw_capture_finalize,
+            finalization_stages=tuple(finalization_stages),
             case_id=case_id.strip(),
             sensor_mac=sensor_mac,
             symptom=symptom,
