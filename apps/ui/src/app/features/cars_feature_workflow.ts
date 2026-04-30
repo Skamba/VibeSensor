@@ -571,6 +571,29 @@ export function createCarsFeatureWorkflow(
     loadSpecsStep(generation);
   }
 
+  async function addWizardCar(
+    name: string,
+    carType: string,
+    aspects: Record<string, number | string>,
+    orderReferenceStatus: CarOrderReferenceStatus,
+    variant?: string,
+  ): Promise<boolean> {
+    try {
+      await deps.addCarFromWizard(
+        name,
+        carType,
+        aspects,
+        orderReferenceStatus,
+        variant,
+      );
+    } catch {
+      deps.view.focus("finish");
+      return false;
+    }
+    isOpen.value = false;
+    return true;
+  }
+
   return {
     closeWizard(): void {
       invalidateWizardLoads();
@@ -592,7 +615,7 @@ export function createCarsFeatureWorkflow(
           deps.view.focus("gearbox-option");
           return false;
         }
-        await deps.addCarFromWizard(
+        return addWizardCar(
           buildWizardCarName(state.brand, state.model, state.selectedVariant),
           state.carType || "Custom",
           {
@@ -615,8 +638,6 @@ export function createCarsFeatureWorkflow(
           },
           state.selectedVariant?.name,
         );
-        isOpen.value = false;
-        return true;
       }
 
       const missingFocusTarget = missingManualInputFocusTarget(inputs);
@@ -625,7 +646,7 @@ export function createCarsFeatureWorkflow(
         return false;
       }
 
-      await deps.addCarFromWizard(
+      return addWizardCar(
         buildWizardCarName(state.brand, state.model, state.selectedVariant),
         state.carType || "Custom",
         {
@@ -644,8 +665,6 @@ export function createCarsFeatureWorkflow(
         },
         state.selectedVariant?.name,
       );
-      isOpen.value = false;
-      return true;
     },
 
     getRenderState,

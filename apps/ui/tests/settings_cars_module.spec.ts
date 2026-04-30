@@ -369,8 +369,9 @@ test("settings cars module creates and activates wizard cars through the shared 
   ]);
 });
 
-test("settings cars module preserves current silent wizard failure behavior", async () => {
+test("settings cars module propagates wizard creation failures", async () => {
   const lifecycleCalls: string[] = [];
+  const errors: string[] = [];
   const module = createSettingsCarsModule({
     queryClient: createTestQueryClient(),
     settings: createAppState().settings,
@@ -398,7 +399,9 @@ test("settings cars module preserves current silent wizard failure behavior", as
     services: {
       t: (key) => key,
       requestConfirmation: async () => true,
-      showError: () => undefined,
+      showError: (message) => {
+        errors.push(message);
+      },
     },
     formatting: {
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -419,7 +422,10 @@ test("settings cars module preserves current silent wizard failure behavior", as
     },
   });
 
-  await module.addCarFromWizard("My Car", "Custom", { tire_width_mm: 225 });
+  await expect(
+    module.addCarFromWizard("My Car", "Custom", { tire_width_mm: 225 }),
+  ).rejects.toThrow("network failed");
 
+  expect(errors).toEqual(["settings.car.create_failed"]);
   expect(lifecycleCalls).toEqual([]);
 });

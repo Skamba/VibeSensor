@@ -112,6 +112,30 @@ export function createSettingsCarsModule(
       ctx.ports.activeSettingsTabId.value === "carTab",
   );
   const buildCarListRenderModel = createSettingsCarListRenderModelMemo();
+  let disposed = false;
+  let requestGeneration = 0;
+  let mutationInFlight = false;
+
+  function nextRequestGeneration(): number {
+    requestGeneration += 1;
+    return requestGeneration;
+  }
+
+  function isCurrent(generation: number): boolean {
+    return !disposed && generation === requestGeneration;
+  }
+
+  function beginMutation(): number | null {
+    if (disposed || mutationInFlight) {
+      return null;
+    }
+    mutationInFlight = true;
+    return nextRequestGeneration();
+  }
+
+  function finishMutation(): void {
+    mutationInFlight = false;
+  }
 
   function hasValidActiveCar(): boolean {
     return carSelection.hasResolvedActiveCar.value;
@@ -156,14 +180,23 @@ export function createSettingsCarsModule(
   function renderCarList(): void {}
 
   function clearHighlightedCarFeedback(): void {
+    if (disposed) {
+      return;
+    }
     highlightedCar.value = null;
   }
 
   function showCarCreationSuccess(carId: string, carName: string): void {
+    if (disposed) {
+      return;
+    }
     highlightedCar.value = { carId, carName };
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
+    if (disposed) {
+      return;
+    }
     applyCarsPayloadToSettings(settings.car, payload);
     if (
       highlightedCar.value &&
@@ -180,6 +213,9 @@ export function createSettingsCarsModule(
   }
 
   function syncActiveCarToInputs(): void {
+    if (disposed) {
+      return;
+    }
     copyActiveCarAspects(carSelection.activeCar.value, settings);
     if (hasValidActiveCar()) {
       ctx.ports.syncAnalysisInputs();
@@ -193,6 +229,11 @@ export function createSettingsCarsModule(
     orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void> {
+    const generation = beginMutation();
+    if (generation === null) {
+      throw new Error("A car settings operation is already in progress.");
+    }
+    let failureMessageKey = "settings.car.create_failed";
     try {
       const payload: CarUpsertRequest = {
         aspects: {
@@ -212,8 +253,11 @@ export function createSettingsCarsModule(
         payload.variant = variant;
       }
       const createdPayload = await transport.createCar(payload);
+      if (!isCurrent(generation)) {
+        throw new Error("Stale car creation result ignored.");
+      }
       if (!Array.isArray(createdPayload.cars)) {
-        return;
+        throw new Error("Car creation response did not include cars.");
       }
       ctx.queryClient.setQueryData(
         serverStateQueryKeys.settings.cars(),
@@ -222,9 +266,13 @@ export function createSettingsCarsModule(
       syncCarsPayload(createdPayload);
       const newCar = createdPayload.cars[createdPayload.cars.length - 1];
       if (!newCar) {
-        return;
+        throw new Error("Car creation response did not include a created car.");
       }
+      failureMessageKey = "settings.car.activate_failed";
       const activatedPayload = await transport.activateCar(newCar.id);
+      if (!isCurrent(generation)) {
+        throw new Error("Stale car activation result ignored.");
+      }
       ctx.queryClient.setQueryData(
         serverStateQueryKeys.settings.cars(),
         activatedPayload,
@@ -233,24 +281,35 @@ export function createSettingsCarsModule(
       syncActiveCarToInputs();
       showCarCreationSuccess(newCar.id, newCar.name);
       ctx.ports.refreshSpectrumDecorations();
-    } catch (_err) {
-      // Preserve the current wizard behavior: failed creation does not close over
-      // extra UI state or grow a second error-handling path outside settings.
+    } catch (error) {
+      if (isCurrent(generation)) {
+        services.showError(t(failureMessageKey));
+      }
+      throw error;
+    } finally {
+      finishMutation();
     }
   }
 
   async function loadCarsFromServer(): Promise<void> {
+    if (disposed) {
+      return;
+    }
+    const generation = nextRequestGeneration();
     const payload = await ctx.queryClient.fetchQuery({
       queryFn: () => transport.loadCars(),
       queryKey: serverStateQueryKeys.settings.cars(),
       staleTime: 0,
     });
+    if (!isCurrent(generation)) {
+      return;
+    }
     syncCarsPayload(payload);
     syncActiveCarToInputs();
   }
 
   async function handleActivateCar(carId: string): Promise<void> {
-    if (!carId) {
+    if (disposed || !carId) {
       return;
     }
     const car = findCar(carId);
@@ -261,8 +320,15 @@ export function createSettingsCarsModule(
       services.showError(t("settings.car.activate_incomplete"));
       return;
     }
+    const generation = beginMutation();
+    if (generation === null) {
+      return;
+    }
     try {
       const payload = await transport.activateCar(carId);
+      if (!isCurrent(generation)) {
+        return;
+      }
       ctx.queryClient.setQueryData(
         serverStateQueryKeys.settings.cars(),
         payload,
@@ -272,21 +338,32 @@ export function createSettingsCarsModule(
       clearHighlightedCarFeedback();
       ctx.ports.refreshSpectrumDecorations();
     } catch (_err) {
-      services.showError(t("settings.car.activate_failed"));
+      if (isCurrent(generation)) {
+        services.showError(t("settings.car.activate_failed"));
+      }
+    } finally {
+      finishMutation();
     }
   }
 
   async function handleCompleteCar(carId: string): Promise<void> {
-    if (!carId) {
+    if (disposed || !carId) {
       return;
     }
     const car = findCar(carId);
     if (!car) {
       return;
     }
+    const generation = beginMutation();
+    if (generation === null) {
+      return;
+    }
     try {
       if (car.id !== settings.car.activeCarId.value) {
         const payload = await transport.activateCar(carId);
+        if (!isCurrent(generation)) {
+          return;
+        }
         ctx.queryClient.setQueryData(
           serverStateQueryKeys.settings.cars(),
           payload,
@@ -295,26 +372,40 @@ export function createSettingsCarsModule(
         syncActiveCarToInputs();
         ctx.ports.refreshSpectrumDecorations();
       }
+      if (!isCurrent(generation)) {
+        return;
+      }
       clearHighlightedCarFeedback();
       ctx.ports.openAnalysisTab();
     } catch (_err) {
-      services.showError(t("settings.car.activate_failed"));
+      if (isCurrent(generation)) {
+        services.showError(t("settings.car.activate_failed"));
+      }
+    } finally {
+      finishMutation();
     }
   }
 
   async function handleDeleteCar(carId: string): Promise<void> {
-    if (!carId) {
+    if (disposed || !carId) {
       return;
     }
     const car = findCar(carId);
     const confirmed = await services.requestConfirmation(
       t("settings.car.delete_confirm", { name: car?.name || "" }),
     );
-    if (!confirmed) {
+    if (disposed || !confirmed) {
+      return;
+    }
+    const generation = beginMutation();
+    if (generation === null) {
       return;
     }
     try {
       const payload = await transport.deleteCar(carId);
+      if (!isCurrent(generation)) {
+        return;
+      }
       ctx.queryClient.setQueryData(
         serverStateQueryKeys.settings.cars(),
         payload,
@@ -324,7 +415,11 @@ export function createSettingsCarsModule(
       clearHighlightedCarFeedback();
       ctx.ports.refreshSpectrumDecorations();
     } catch (_err) {
-      services.showError(t("settings.car.delete_failed"));
+      if (isCurrent(generation)) {
+        services.showError(t("settings.car.delete_failed"));
+      }
+    } finally {
+      finishMutation();
     }
   }
 
@@ -367,6 +462,9 @@ export function createSettingsCarsModule(
     addCarFromWizard,
     bindHandlers,
     dispose(): void {
+      disposed = true;
+      requestGeneration += 1;
+      mutationInFlight = false;
       disposeHighlightedCarSync?.();
       disposeHighlightedCarSync = null;
     },
