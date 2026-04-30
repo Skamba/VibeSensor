@@ -12,10 +12,11 @@ shared contracts that must settle early, and the recommended execution order.
 ### Live path
 
 - Raw UDP samples enter through `apps/server/vibesensor/adapters/udp/udp_data_rx.py`.
-- Live FFT/strength computation lives in `apps/server/vibesensor/infra/processing/`.
-- The canonical spectrum window is `FFT_N = 2048` with a Hann window from
-  `apps/server/vibesensor/shared/constants/dsp.py` and
+- Live FFT/strength coordination lives in
   `apps/server/vibesensor/infra/processing/compute.py`.
+- The canonical spectrum window is `FFT_N = 2048`; shared spectral primitives
+  live in `apps/server/vibesensor/shared/fft_analysis.py` with DSP constants in
+  `apps/server/vibesensor/shared/constants/dsp.py`.
 - Live feature cadence is derived from `feature_interval_s`, which is currently
   written as `1 / metrics_log_hz` by
   `apps/server/vibesensor/use_cases/run/run_metadata_builder.py`.
@@ -105,7 +106,7 @@ raw capture manifest/files (#3065)
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata |
-| Whole-run spectra | `use_cases/diagnostics/`, `shared/fft_analysis.py`, `apps/server/vibesensor/infra/processing/` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
+| Whole-run spectra | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |

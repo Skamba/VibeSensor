@@ -62,6 +62,9 @@ REPO_PATH_PREFIXES = (
 GENERATED_REPO_PATH_REFERENCES = {
     "apps/ui/src/constants.ts",
 }
+STALE_REPO_PATH_REFERENCES = {
+    "infra/processing/fft.py": "apps/server/vibesensor/shared/fft_analysis.py",
+}
 MAKE_COMMAND_RE = re.compile(r"(?<![\w./-])make\s+(?P<args>[^`#\n]*)")
 MAKE_TARGET_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 MAKE_OPTION_ARGS = {"-C", "-f", "--file", "--directory"}
@@ -414,6 +417,21 @@ def _check_backticked_repo_paths(
     return issues
 
 
+def _check_stale_repo_path_references(markdown_files: list[str]) -> list[str]:
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        text = _read_text(REPO_ROOT, path)
+        if text is None:
+            continue
+        for stale_path, replacement in STALE_REPO_PATH_REFERENCES.items():
+            if stale_path in text:
+                issues.append(
+                    f"{path}: stale repo path reference: {stale_path} "
+                    f"(use {replacement})"
+                )
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -430,6 +448,7 @@ def main() -> int:
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
+    issues.extend(_check_stale_repo_path_references(markdown_files))
     issues.extend(_check_make_command_targets(markdown_files, repo_root))
 
     if issues:
