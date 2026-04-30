@@ -291,6 +291,8 @@ def _skipped_ci_actions(
 
 
 def _local_action_substitute(job_name: str, step_name: str, uses: str) -> str | None:
+    if uses.startswith("actions/checkout@"):
+        return "local runner uses the current checked-out workspace"
     if job_name == "release-smoke" and uses.startswith("actions/download-artifact@"):
         return "local release-smoke builds UI static directly by running run_release_smoke.py without --skip-ui-build"
     if uses.startswith("actions/upload-artifact@"):

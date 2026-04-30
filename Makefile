@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed plan-validation test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -81,6 +81,10 @@ test: ## Run the fast backend pytest suite
 test-changed: ## Run heuristic checks for files changed vs origin/main
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_changed.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
+
+plan-validation: ## Plan changed-file validation from CI path rules
+	@$(RESOLVE_PYTHON) \
+	"$$PYTHON" tools/tests/plan_validation.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
 
 test-ci-lite: ## Run the non-Docker blocking CI subset locally
 	@$(RESOLVE_PYTHON) \
