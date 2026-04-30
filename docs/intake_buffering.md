@@ -74,7 +74,7 @@ then analyzes that one block.
 
 ### FFT pipeline
 
-`infra/processing/compute.py` owns the cached FFT setup:
+`apps/server/vibesensor/infra/processing/compute.py` owns the cached FFT setup:
 
 - `SignalMetricsComputer` precomputes a Hann window with
   `scipy.signal.windows.hann(config.fft_n)`.
@@ -83,7 +83,8 @@ then analyzes that one block.
 - `fft_params(sample_rate_hz)` caches the frequency slice and valid FFT indices
   per sample rate so repeated ticks do not rebuild them.
 
-`infra/processing/fft.py` owns the pure DSP steps:
+`apps/server/vibesensor/infra/processing/compute.py` coordinates the pure DSP
+steps with shared FFT/strength helpers:
 
 1. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
    removes isolated transport/I2C spikes without blurring normal vibration

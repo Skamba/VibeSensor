@@ -398,8 +398,8 @@ Coverage guidance:
 
 - Treat coverage as a risk-finding tool, not the only quality signal.
 - High-risk backend areas such as `use_cases/diagnostics/`,
-  `infra/processing/`, `adapters/persistence/history_db/`, and
-  `use_cases/updates/` should stay above the repo-wide baseline whenever
+  `apps/server/vibesensor/infra/processing/`,
+  `adapters/persistence/history_db/`, and `use_cases/updates/` should stay above the repo-wide baseline whenever
   practical.
 
 The default CI-parity suite now derives these blocking GitHub checks from the
