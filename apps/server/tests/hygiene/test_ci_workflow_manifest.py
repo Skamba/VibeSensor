@@ -131,6 +131,37 @@ def test_ci_lite_jobs_are_non_docker_blocking_jobs_except_e2e() -> None:
     }.issubset(lite_jobs)
 
 
+def test_workflow_manifest_preserves_local_job_needs() -> None:
+    module = _load_ci_manifest_module()
+
+    jobs = module.ci_workflow_jobs()
+
+    assert jobs["ui-unit"].needs == ("frontend-typecheck",)
+    assert jobs["ui-smoke"].needs == ("frontend-typecheck",)
+    assert set(jobs["firmware-native-tests"].needs) == {
+        "backend-lint",
+        "repo-hygiene",
+        "backend-static-guards",
+        "backend-preflight",
+        "docs-lint",
+        "backend-contract-drift",
+    }
+    assert set(jobs["release-smoke"].needs) == {
+        "backend-lint",
+        "repo-hygiene",
+        "backend-static-guards",
+        "backend-preflight",
+        "docs-lint",
+        "backend-contract-drift",
+        "backend-typecheck",
+        "frontend-quality",
+        "frontend-typecheck",
+    }
+    assert "ci-scope" not in jobs["release-smoke"].needs
+    assert "ui-build-artifact" not in jobs["release-smoke"].needs
+    assert jobs["release-smoke"].workflow_only_needs == ("ui-build-artifact",)
+
+
 def test_release_smoke_local_manifest_builds_ui_static_instead_of_downloading_artifact() -> None:
     module = _load_ci_manifest_module()
 

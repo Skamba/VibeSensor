@@ -76,6 +76,7 @@ Commands
 Validation chooser
 - Start with `make plan-validation` for changed-file CI scope; use `python3 tools/tests/plan_validation.py --run` to execute planned non-Docker jobs, or `--act` when ACT/GitHub-workflow parity is required.
 - Use `make test-ci-fast` for a broad but fast local gate before heavier browser/release/backend suites; use `make test-ci-lite` only when you want the larger non-Docker workflow surface except e2e.
+- `run_ci_parallel.py` respects GitHub `needs` order among selected jobs, warns when you select a downstream job without its prerequisites, and reports workflow-only needs it substitutes locally.
 - Local `shell-lint` parity requires host `shellcheck`; use ACT when you need CI to install ShellCheck inside the workflow job.
 - Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`.
 - Backend contracts/API payloads: add `make sync-contracts` and `make ui-typecheck`.
