@@ -85,3 +85,34 @@ def test_check_docker_requires_compose_v2_even_if_legacy_binary_exists(monkeypat
         ),
         ("docker daemon", "OK", "reachable"),
     ]
+
+
+def test_check_shellcheck_reports_missing_local_ci_prerequisite(monkeypatch) -> None:
+    module = _load_module()
+
+    monkeypatch.setattr(module, "_which", lambda _command: None)
+
+    result = module._check_shellcheck()
+
+    assert result.name == "shellcheck"
+    assert result.status == "WARN"
+    assert "local shell-lint CI parity" in result.message
+
+
+def test_check_shellcheck_reports_installed_version(monkeypatch) -> None:
+    module = _load_module()
+
+    monkeypatch.setattr(module, "_which", lambda command: "/usr/bin/shellcheck")
+    monkeypatch.setattr(
+        module,
+        "_run",
+        lambda command: (True, "ShellCheck - shell script analysis tool\nversion: 0.10.0\n"),
+    )
+
+    result = module._check_shellcheck()
+
+    assert (result.name, result.status, result.message) == (
+        "shellcheck",
+        "OK",
+        "version: 0.10.0",
+    )

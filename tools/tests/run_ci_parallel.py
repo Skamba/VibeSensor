@@ -8,6 +8,7 @@ import importlib.util
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import threading
@@ -287,6 +288,13 @@ def _job_workspace_write_sets() -> dict[str, tuple[str, ...]]:
     }
 
 
+def _job_host_tools() -> dict[str, tuple[str, ...]]:
+    return {
+        job_name: job.host_tools
+        for job_name, job in _CI_MANIFEST.ci_workflow_jobs().items()
+    }
+
+
 def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
     jobs = _CI_MANIFEST.ci_workflow_jobs()
     warned = False
@@ -305,6 +313,37 @@ def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
                 else "; no local substitute"
             )
             _emit(f"[ci-local] - {job_name}{action_name}: {action.uses}{substitute}")
+
+
+def _missing_host_tools(
+    selected_jobs: list[str],
+    job_host_tools: dict[str, tuple[str, ...]],
+) -> dict[str, tuple[str, ...]]:
+    missing_by_job: dict[str, tuple[str, ...]] = {}
+    for job_name in selected_jobs:
+        missing = tuple(
+            tool for tool in job_host_tools[job_name] if shutil.which(tool) is None
+        )
+        if missing:
+            missing_by_job[job_name] = missing
+    return missing_by_job
+
+
+def _check_host_tool_prerequisites(
+    selected_jobs: list[str],
+    job_host_tools: dict[str, tuple[str, ...]],
+) -> bool:
+    missing = _missing_host_tools(selected_jobs, job_host_tools)
+    if not missing:
+        return True
+    _emit("[ci-local] missing host prerequisites for selected jobs:")
+    for job_name, tools in missing.items():
+        _emit(
+            f"[ci-local] - {job_name} requires {', '.join(tools)}. "
+            "GitHub CI installs these inside the job; install them locally or run "
+            "the job through ACT for workflow-managed prerequisites."
+        )
+    return False
 
 
 def _overlapping_workspace_write_sets(
@@ -400,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
 
     all_jobs = _job_steps(python_cmd)
     job_write_sets = _job_workspace_write_sets()
+    job_host_tools = _job_host_tools()
     selected_jobs = (
         args.job
         if args.job
@@ -407,6 +447,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     _emit_skipped_action_warnings(selected_jobs)
     _emit_workspace_write_set_warnings(selected_jobs, job_write_sets)
+    if not _check_host_tool_prerequisites(selected_jobs, job_host_tools):
+        return 2
 
     if _shared_ui_workspace_would_race(
         selected_jobs,
