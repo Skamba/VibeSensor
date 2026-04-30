@@ -61,6 +61,7 @@ class JobResult:
     return_code: int
     duration_s: float
     log_path: Path
+    skipped_reason: str | None = None
 
 
 def _emit(line: str) -> None:
@@ -315,6 +316,19 @@ def _job_host_tools() -> dict[str, tuple[str, ...]]:
     }
 
 
+def _job_needs() -> dict[str, tuple[str, ...]]:
+    return {
+        job_name: job.needs for job_name, job in _CI_MANIFEST.ci_workflow_jobs().items()
+    }
+
+
+def _job_workflow_only_needs() -> dict[str, tuple[str, ...]]:
+    return {
+        job_name: job.workflow_only_needs
+        for job_name, job in _CI_MANIFEST.ci_workflow_jobs().items()
+    }
+
+
 def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
     jobs = _CI_MANIFEST.ci_workflow_jobs()
     warned = False
@@ -396,6 +410,42 @@ def _emit_workspace_write_set_warnings(
         )
 
 
+def _emit_dependency_warnings(
+    selected_jobs: list[str],
+    job_needs: dict[str, tuple[str, ...]],
+    job_workflow_only_needs: dict[str, tuple[str, ...]],
+) -> None:
+    selected = set(selected_jobs)
+    missing_by_job = {
+        job_name: tuple(need for need in job_needs[job_name] if need not in selected)
+        for job_name in selected_jobs
+    }
+    missing_by_job = {
+        job_name: missing for job_name, missing in missing_by_job.items() if missing
+    }
+    if missing_by_job:
+        _emit("[ci-local] GitHub needs not selected locally:")
+        for job_name, missing in missing_by_job.items():
+            _emit(
+                f"[ci-local] - {job_name} normally needs {', '.join(missing)}; "
+                "selected jobs still run, but omitted prerequisites are not modeled."
+            )
+    workflow_only_by_job = {
+        job_name: job_workflow_only_needs[job_name] for job_name in selected_jobs
+    }
+    workflow_only_by_job = {
+        job_name: needs for job_name, needs in workflow_only_by_job.items() if needs
+    }
+    if not workflow_only_by_job:
+        return
+    _emit("[ci-local] GitHub workflow-only needs not runnable locally:")
+    for job_name, needs in workflow_only_by_job.items():
+        _emit(
+            f"[ci-local] - {job_name} normally needs {', '.join(needs)}; "
+            "the local runner reports the dependency-order difference instead."
+        )
+
+
 def _selected_jobs_require_platformio(selected_jobs: list[str]) -> bool:
     jobs = _CI_MANIFEST.ci_workflow_jobs()
     return any(jobs[job_name].requires_platformio for job_name in selected_jobs)
@@ -420,6 +470,89 @@ def _run_bootstrap(steps: list[Step]) -> int:
             _emit(f"[bootstrap] ok '{step.label}' in {elapsed:.1f}s")
     _emit("[bootstrap] success")
     return 0
+
+
+def _skipped_job_result(name: str, reason: str, started: float) -> JobResult:
+    return JobResult(
+        name=name,
+        ok=False,
+        failed_step=None,
+        return_code=0,
+        duration_s=time.monotonic() - started,
+        log_path=LOG_DIR / f"{name}.log",
+        skipped_reason=reason,
+    )
+
+
+def _run_selected_jobs(
+    selected_jobs: list[str],
+    all_jobs: dict[str, list[Step]],
+    job_write_sets: dict[str, tuple[str, ...]],
+    job_needs: dict[str, tuple[str, ...]],
+) -> tuple[dict[str, JobResult], float, bool]:
+    started = time.monotonic()
+    results: dict[str, JobResult] = {}
+    selected = set(selected_jobs)
+    pending = set(selected_jobs)
+    workspace_locks = {
+        write_set: threading.Lock()
+        for job_name in selected_jobs
+        for write_set in job_write_sets[job_name]
+    }
+    while pending:
+        ready = [
+            job_name
+            for job_name in selected_jobs
+            if job_name in pending
+            and all(
+                need not in selected or need in results for need in job_needs[job_name]
+            )
+        ]
+        if not ready:
+            _emit(
+                "[ci-local] unable to resolve selected job dependency order; "
+                f"remaining jobs: {', '.join(sorted(pending))}"
+            )
+            return results, time.monotonic() - started, False
+
+        runnable: list[str] = []
+        for job_name in ready:
+            failed_needs = [
+                need
+                for need in job_needs[job_name]
+                if need in selected and not results[need].ok
+            ]
+            if failed_needs:
+                reason = f"needed job failed: {', '.join(failed_needs)}"
+                _emit(f"[{job_name}] skip ({reason})")
+                with RESULT_LOCK:
+                    results[job_name] = _skipped_job_result(job_name, reason, started)
+                pending.remove(job_name)
+                continue
+            runnable.append(job_name)
+
+        threads: list[threading.Thread] = []
+        for job_name in runnable:
+            thread = threading.Thread(
+                target=_run_job_with_workspace_locks,
+                args=(
+                    job_name,
+                    all_jobs[job_name],
+                    results,
+                    job_write_sets[job_name],
+                    workspace_locks,
+                ),
+                daemon=False,
+            )
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
+        for job_name in runnable:
+            pending.remove(job_name)
+
+    return results, time.monotonic() - started, True
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -466,6 +599,8 @@ def main(argv: list[str] | None = None) -> int:
     all_jobs = _job_steps(python_cmd)
     job_write_sets = _job_workspace_write_sets()
     job_host_tools = _job_host_tools()
+    job_needs = _job_needs()
+    job_workflow_only_needs = _job_workflow_only_needs()
     if args.job:
         selected_jobs = args.job
     elif args.ci_fast:
@@ -476,6 +611,7 @@ def main(argv: list[str] | None = None) -> int:
         selected_jobs = list(ALL_JOB_NAMES)
     _emit_skipped_action_warnings(selected_jobs)
     _emit_workspace_write_set_warnings(selected_jobs, job_write_sets)
+    _emit_dependency_warnings(selected_jobs, job_needs, job_workflow_only_needs)
     if not _check_host_tool_prerequisites(selected_jobs, job_host_tools):
         return 2
 
@@ -511,41 +647,24 @@ def main(argv: list[str] | None = None) -> int:
     if bootstrap_rc != 0:
         return bootstrap_rc
 
-    started = time.monotonic()
-    results: dict[str, JobResult] = {}
-    threads: list[threading.Thread] = []
-    workspace_locks = {
-        write_set: threading.Lock()
-        for job_name in selected_jobs
-        for write_set in job_write_sets[job_name]
-    }
-    for job_name in selected_jobs:
-        thread = threading.Thread(
-            target=_run_job_with_workspace_locks,
-            args=(
-                job_name,
-                all_jobs[job_name],
-                results,
-                job_write_sets[job_name],
-                workspace_locks,
-            ),
-            daemon=False,
-        )
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
-
-    elapsed = time.monotonic() - started
+    results, elapsed, ordered = _run_selected_jobs(
+        selected_jobs, all_jobs, job_write_sets, job_needs
+    )
     _emit("\n=== ci-local summary ===")
-    overall_ok = True
+    overall_ok = ordered
     for job_name in selected_jobs:
-        result = results[job_name]
+        result = results.get(job_name)
+        if result is None:
+            overall_ok = False
+            _emit(f"- {job_name}: NOT RUN (dependency order could not be resolved)")
+            continue
         if result.ok:
             _emit(
                 f"- {job_name}: PASS ({result.duration_s:.1f}s) log={result.log_path}"
             )
+            continue
+        if result.skipped_reason is not None:
+            _emit(f"- {job_name}: SKIP ({result.skipped_reason})")
             continue
         overall_ok = False
         _emit(
