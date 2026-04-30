@@ -117,6 +117,10 @@ def test_ui_bootstrap_helper_skips_npm_ci_when_lock_hash_is_current(tmp_path: Pa
 
     assert result.returncode == 0
     assert not log_path.exists()
+    assert (
+        "[ui:bootstrap] Skipping npm ci because node_modules and package-lock marker are current."
+        in result.stdout
+    )
 
 
 def test_ui_bootstrap_helper_check_mode_reports_npm_ci_need(tmp_path: Path) -> None:

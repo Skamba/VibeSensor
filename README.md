@@ -163,7 +163,7 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e "./apps/server[dev]"
-npm --prefix apps/ui ci
+(cd apps/ui && node ../../tools/ui/ensure_ui_bootstrap.mjs)
 vibesensor-server --reload --config apps/server/config.dev.yaml
 ```
 

@@ -38,9 +38,11 @@ npm run analyze      # Production build + bundle analysis report at dist/bundle-
 npm run typecheck    # Type check without emitting
 ```
 
-Use `npm ci` for normal repo bootstrap and dependency refresh from the checked-in
-lockfile. Only use `npm install` when you are intentionally adding or updating
-UI dependencies so the resulting `package-lock.json` change is deliberate.
+From the repo root, `make setup` uses the shared UI bootstrap helper and records
+the current `package-lock.json` marker after `npm ci`. For UI-only dependency
+refreshes, use `npm ci` from this directory against the checked-in lockfile.
+Only use `npm install` when you are intentionally adding or updating UI
+dependencies so the resulting `package-lock.json` change is deliberate.
 
 The source-mounted Docker dev stack calls `npm run dev:docker` inside the UI
 container. It re-runs `npm ci` only when `node_modules` is missing or the
