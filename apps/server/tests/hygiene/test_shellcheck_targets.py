@@ -9,8 +9,11 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import yaml
+
 from tests._paths import REPO_ROOT
 
+_CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _MAKEFILE = REPO_ROOT / "Makefile"
 _SHELLCHECK_TARGETS = REPO_ROOT / "tools" / "dev" / "shellcheck_targets.py"
 _SHELL_SUFFIXES = (".sh", ".sh.template")
@@ -88,3 +91,21 @@ def test_make_shell_lint_uses_dynamic_target_discovery() -> None:
     assert "SHELLCHECK_TARGETS :=" not in makefile
     assert '"$$PYTHON" tools/dev/shellcheck_targets.py' in makefile
     assert "shellcheck --severity=warning -x -s bash" in makefile
+
+
+def test_ci_shell_lint_sets_up_python_for_dynamic_target_discovery() -> None:
+    workflow = yaml.safe_load(_CI_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["shell-lint"]["steps"]
+    assert isinstance(steps, list)
+
+    setup_python_index = next(
+        index
+        for index, step in enumerate(steps)
+        if isinstance(step, dict) and step.get("uses") == "./.github/actions/setup-python"
+    )
+    shellcheck_index = next(
+        index
+        for index, step in enumerate(steps)
+        if isinstance(step, dict) and step.get("name") == "ShellCheck deployment scripts"
+    )
+    assert setup_python_index < shellcheck_index
