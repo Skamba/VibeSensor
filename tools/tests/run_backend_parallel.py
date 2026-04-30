@@ -19,19 +19,18 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
-def _load_parallel_runner_support():
-    helper_path = Path(__file__).with_name("_parallel_runner_support.py")
-    spec = importlib.util.spec_from_file_location(
-        "_parallel_runner_support", helper_path
-    )
+def _load_repo_tooling_support():
+    helper_path = Path(__file__).resolve().parents[1] / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Unable to load parallel runner helpers from {helper_path}")
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-_parallel_runner_support = _load_parallel_runner_support()
+_repo_tooling_support = _load_repo_tooling_support()
+_parallel_runner_support = _repo_tooling_support.load_parallel_runner_support(__file__)
 resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
 read_duration_cache = _parallel_runner_support.load_duration_cache
 merge_duration_observations = _parallel_runner_support.merge_duration_observations

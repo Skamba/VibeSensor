@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import re
 import shlex
 from collections.abc import Collection, Mapping
@@ -12,6 +13,19 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_repo_tooling_support():
+    helper_path = ROOT / "tools" / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_repo_tooling_support = _load_repo_tooling_support()
 _CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 _INSTALL_STEP_NAMES = frozenset(
     {
@@ -105,26 +119,11 @@ def _substitute_matrix_values(
 
 
 def _normalize_tokenized_command(tokens: list[str]) -> str:
-    return shlex.join(tokens)
+    return _repo_tooling_support.normalize_tokenized_command(tokens)
 
 
 def _normalize_shell_command(command: str) -> str:
-    tokens = shlex.split(command)
-    if "&&" not in tokens:
-        return _normalize_tokenized_command(tokens)
-
-    parts: list[str] = []
-    current: list[str] = []
-    for token in tokens:
-        if token == "&&":
-            if current:
-                parts.append(_normalize_tokenized_command(current))
-                current = []
-            continue
-        current.append(token)
-    if current:
-        parts.append(_normalize_tokenized_command(current))
-    return " && ".join(parts)
+    return _repo_tooling_support.normalize_shell_command(command)
 
 
 def _normalize_env(env: Mapping[str, object] | None) -> str:
