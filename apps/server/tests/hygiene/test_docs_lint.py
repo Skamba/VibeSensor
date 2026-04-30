@@ -184,3 +184,29 @@ def test_design_doc_status_lint_requires_explicit_status(tmp_path: Path) -> None
     ) == [
         "docs/designs/missing.md: design doc must declare Status: Active, Historical, or Superseded"
     ]
+
+
+def test_docs_index_lint_requires_every_docs_markdown_file(
+    tmp_path: Path,
+) -> None:
+    module = _load_docs_lint_module()
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "README.md").write_text(
+        "| File | Description |\n|---|---|\n| `docs/README.md` | Index. |\n",
+        encoding="utf-8",
+    )
+    (docs_dir / "listed.md").write_text("# Listed\n", encoding="utf-8")
+    (docs_dir / "missing.md").write_text("# Missing\n", encoding="utf-8")
+
+    assert module._check_docs_index_complete(
+        [
+            "docs/README.md",
+            "docs/listed.md",
+            "docs/missing.md",
+        ],
+        tmp_path,
+    ) == [
+        "docs/README.md must list docs/listed.md",
+        "docs/README.md must list docs/missing.md",
+    ]
