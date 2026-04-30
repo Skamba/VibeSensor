@@ -280,6 +280,7 @@
   "settings.car.guidance.no_active_detail": "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
   "settings.car.delete_confirm": "Delete car \"{name}\"? This cannot be undone.",
   "settings.car.cannot_delete_last": "Cannot delete the last car.",
+  "settings.car.create_failed": "Failed to add car.",
   "settings.car.delete_failed": "Failed to delete car.",
   "settings.car.activate_failed": "Failed to activate car.",
   "settings.car.activate_incomplete": "Finish the car setup in Analysis before activating it.",
