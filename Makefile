@@ -128,7 +128,7 @@ ui-lint: ## Run UI lint checks
 
 ui-typecheck: ## Materialize UI-derived contracts, then run lint and TypeScript type checking
 	@$(RESOLVE_PYTHON) \
-	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:generated-contracts && npm run lint && npm run lint:deps && npm run lint:unused && PYTHON="$$PYTHON" npm run typecheck
+	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:generated-contracts && npm run lint && npm run lint:deps && npm run lint:unused && PYTHON="$$PYTHON" npm run typecheck && npm run typecheck:tests
 
 ui-test: ## Run UI unit tests
 	@$(RESOLVE_PYTHON) \

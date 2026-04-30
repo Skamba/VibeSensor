@@ -294,6 +294,10 @@ jobs:
           PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: npm run typecheck
 
+      - name: UI test typecheck
+        working-directory: apps/ui
+        run: npm run typecheck:tests
+
   ui-unit:
     name: UI unit tests
     needs:
