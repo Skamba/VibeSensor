@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from pathlib import Path
 
 import pytest
 from test_support.update_status import build_update_status_harness
 
 from vibesensor.use_cases.updates.runner import (
+    COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES,
     CommandExecutionResult,
     CommandRunner,
     UpdateCommandExecutor,
@@ -30,18 +32,21 @@ class _StaticRunner(CommandRunner):
         return (self._response.returncode, self._response.stdout, self._response.stderr)
 
 
+class _BlockingStream:
+    async def read(self, n: int = -1) -> bytes:
+        del n
+        await asyncio.sleep(60)
+        return b""
+
+
 class _CancellableProcess:
     def __init__(self, *, block_wait: bool = False) -> None:
         self.returncode: int | None = None
         self.block_wait = block_wait
-        self.communicate_started = asyncio.Event()
+        self.stdout = _BlockingStream()
+        self.stderr = _BlockingStream()
         self.wait_called = asyncio.Event()
         self.killed = False
-
-    async def communicate(self) -> tuple[bytes, bytes]:
-        self.communicate_started.set()
-        await asyncio.sleep(60)
-        return (b"", b"")
 
     def kill(self) -> None:
         self.killed = True
@@ -50,6 +55,8 @@ class _CancellableProcess:
     async def wait(self) -> int:
         self.wait_called.set()
         if self.block_wait:
+            await asyncio.sleep(60)
+        if self.returncode is None:
             await asyncio.sleep(60)
         await asyncio.sleep(0)
         return self.returncode if self.returncode is not None else 0
@@ -124,7 +131,7 @@ async def test_command_runner_waits_for_killed_process_on_task_cancellation(
     )
 
     task = asyncio.create_task(CommandRunner().run(["sleep", "60"], timeout=30))
-    await asyncio.wait_for(process.communicate_started.wait(), timeout=1)
+    await asyncio.wait_for(process.wait_called.wait(), timeout=1)
 
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -158,3 +165,25 @@ async def test_command_runner_bounds_wait_after_timeout_kill(
     assert result == (124, "", "Command timed out")
     assert process.killed is True
     assert process.wait_called.is_set()
+
+
+@pytest.mark.asyncio
+async def test_command_runner_bounds_stdout_and_stderr_capture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.runner.COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES",
+        16,
+    )
+    script = (
+        "import sys; "
+        "sys.stdout.write('out-' + 'A' * 40 + '-tail'); "
+        "sys.stderr.write('err-' + 'B' * 40 + '-tail')"
+    )
+
+    result = await CommandRunner().run([sys.executable, "-c", script], timeout=5)
+
+    assert result[0] == 0
+    assert result[1] == "[output truncated to last 16 bytes]\n" + ("A" * 11) + "-tail"
+    assert result[2] == "[output truncated to last 16 bytes]\n" + ("B" * 11) + "-tail"
+    assert COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES == 64 * 1024

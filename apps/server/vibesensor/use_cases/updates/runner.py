@@ -14,9 +14,11 @@ from vibesensor.use_cases.updates.privilege import build_sudo_args
 
 LOGGER = logging.getLogger(__name__)
 COMMAND_KILL_WAIT_S = 5.0
+COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES = 64 * 1024
 
 __all__ = [
     "COMMAND_KILL_WAIT_S",
+    "COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES",
     "CommandExecutionReporter",
     "CommandExecutionResult",
     "CommandRunner",
@@ -82,6 +84,52 @@ async def _kill_process(
         LOGGER.warning("Killed command process did not exit within %.1fs.", kill_wait_s)
 
 
+def _append_bounded(buffer: bytearray, chunk: bytes, *, limit_bytes: int) -> bool:
+    if limit_bytes <= 0:
+        buffer.clear()
+        return bool(chunk)
+    if len(chunk) >= limit_bytes:
+        buffer[:] = chunk[-limit_bytes:]
+        return True
+    buffer.extend(chunk)
+    excess = len(buffer) - limit_bytes
+    if excess > 0:
+        del buffer[:excess]
+        return True
+    return False
+
+
+async def _read_bounded_stream(
+    stream: asyncio.StreamReader | None,
+    *,
+    limit_bytes: int,
+) -> tuple[bytes, bool]:
+    if stream is None:
+        return (b"", False)
+    buffer = bytearray()
+    truncated = False
+    while chunk := await stream.read(8192):
+        truncated = _append_bounded(buffer, chunk, limit_bytes=limit_bytes) or truncated
+    return (bytes(buffer), truncated)
+
+
+def _decode_command_output(data: bytes, *, truncated: bool, limit_bytes: int) -> str:
+    decoded = data.decode(errors="replace")
+    if not truncated:
+        return decoded
+    return f"[output truncated to last {limit_bytes} bytes]\n{decoded}"
+
+
+async def _cancel_output_tasks(
+    *tasks: asyncio.Task[tuple[bytes, bool]] | None,
+) -> None:
+    pending_tasks = [task for task in tasks if task is not None and not task.done()]
+    for task in pending_tasks:
+        task.cancel()
+    if pending_tasks:
+        await asyncio.gather(*pending_tasks, return_exceptions=True)
+
+
 class CommandRunner:
     """Execute shell commands.  Override for testing."""
 
@@ -95,6 +143,8 @@ class CommandRunner:
         """Return (returncode, stdout, stderr)."""
         merged_env = {**os.environ, **env} if env else None
         proc: asyncio.subprocess.Process | None = None
+        stdout_task: asyncio.Task[tuple[bytes, bool]] | None = None
+        stderr_task: asyncio.Task[tuple[bytes, bool]] | None = None
         try:
             proc = await asyncio.create_subprocess_exec(
                 *args,
@@ -102,21 +152,45 @@ class CommandRunner:
                 stderr=asyncio.subprocess.PIPE,
                 env=merged_env,
             )
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            stdout_task = asyncio.create_task(
+                _read_bounded_stream(
+                    proc.stdout,
+                    limit_bytes=COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES,
+                ),
+            )
+            stderr_task = asyncio.create_task(
+                _read_bounded_stream(
+                    proc.stderr,
+                    limit_bytes=COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES,
+                ),
+            )
+            await asyncio.wait_for(proc.wait(), timeout=timeout)
+            stdout_bytes, stdout_truncated = await stdout_task
+            stderr_bytes, stderr_truncated = await stderr_task
             return (
                 proc.returncode if proc.returncode is not None else 0,
-                stdout_bytes.decode(errors="replace"),
-                stderr_bytes.decode(errors="replace"),
+                _decode_command_output(
+                    stdout_bytes,
+                    truncated=stdout_truncated,
+                    limit_bytes=COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES,
+                ),
+                _decode_command_output(
+                    stderr_bytes,
+                    truncated=stderr_truncated,
+                    limit_bytes=COMMAND_OUTPUT_CAPTURE_LIMIT_BYTES,
+                ),
             )
         except TimeoutError:
             if proc is not None:
                 await _kill_process(proc)
+            await _cancel_output_tasks(stdout_task, stderr_task)
             LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))
             return (124, "", "Command timed out")
         except asyncio.CancelledError:
             # Kill the subprocess so it doesn't outlive the cancelled task.
             if proc is not None:
                 await _kill_process(proc)
+            await _cancel_output_tasks(stdout_task, stderr_task)
             raise
         except FileNotFoundError:
             LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)
