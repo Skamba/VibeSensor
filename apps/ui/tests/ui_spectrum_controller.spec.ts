@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import type { SpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
-import { applyLivePayloadUpdate, createAppState } from "../src/app/ui_app_state";
+import {
+  applyLivePayloadUpdate,
+  createAppState,
+} from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
 import type { AdaptedPayload } from "../src/transport/live_models";
 import {
@@ -9,27 +12,33 @@ import {
   flushSignalUpdates,
   installWindowGlobal,
 } from "./async_test_helpers";
-import { createElementStub, installDocumentStub } from "./spectrum_test_support";
+import {
+  createElementStub,
+  installDocumentStub,
+} from "./spectrum_test_support";
 
 async function importUiSpectrumController() {
-  return (await import("../src/app/runtime/ui_spectrum_controller")).UiSpectrumController;
+  return (await import("../src/app/runtime/ui_spectrum_controller"))
+    .UiSpectrumController;
 }
 
 function makeSpectrumPayload(values: readonly number[]): AdaptedPayload {
   return {
-    clients: [{
-      id: "sensor-a",
-      name: "Sensor A",
-      connected: true,
-      mac_address: "00:11:22:33:44:55",
-      location_code: "",
-      last_seen_age_ms: 0,
-      dropped_frames: 0,
-      frames_total: 1,
-      frame_samples: 0,
-      sample_rate_hz: 1600,
-      firmware_version: "1.0.0",
-    }],
+    clients: [
+      {
+        id: "sensor-a",
+        name: "Sensor A",
+        connected: true,
+        mac_address: "00:11:22:33:44:55",
+        location_code: "",
+        last_seen_age_ms: 0,
+        dropped_frames: 0,
+        frames_total: 1,
+        frame_samples: 0,
+        sample_rate_hz: 1600,
+        firmware_version: "1.0.0",
+      },
+    ],
     speed_mps: 10,
     rotational_speeds: null,
     spectra: {
@@ -59,23 +68,23 @@ function createPanelStub(): {
   let lastOverlayModel: { hidden: boolean; text: string } | null = null;
 
   return {
-      panel: {
-        chartDom: {
-          specChartWrap: createElementStub("div"),
-          specChart: createElementStub("div"),
-        },
-        bindBandToggle() {},
-        bindBandToggleModel() {},
-        bindSensorLegendModel() {},
-        bindBandLegendModel() {},
-        renderHeader(model) {
-          lastHeaderModel = model;
-        },
-        renderOverlay(model) {
-          lastOverlayModel = model;
-        },
-        renderInspector() {},
+    panel: {
+      chartDom: {
+        specChartWrap: createElementStub("div"),
+        specChart: createElementStub("div"),
       },
+      bindBandToggle() {},
+      bindBandToggleModel() {},
+      bindSensorLegendModel() {},
+      bindBandLegendModel() {},
+      renderHeader(model) {
+        lastHeaderModel = model;
+      },
+      renderOverlay(model) {
+        lastOverlayModel = model;
+      },
+      renderInspector() {},
+    },
     get lastHeaderModel() {
       return lastHeaderModel;
     },
@@ -234,18 +243,20 @@ describe("UiSpectrumController", () => {
         panel: panel.panel,
         t: (key) => key,
       });
-      const canvas = (controller as unknown as {
-        canvas: {
-          refreshPreparedFrameMetadata: () => {
-            entries: [];
-            freqAxis: [];
-            chartBands: [];
-            frame: null;
-            hasData: false;
+      const canvas = (
+        controller as unknown as {
+          canvas: {
+            refreshPreparedFrameMetadata: () => {
+              entries: [];
+              freqAxis: [];
+              chartBands: [];
+              frame: null;
+              hasData: false;
+            };
+            refreshDecorations: () => void;
           };
-          refreshDecorations: () => void;
-        };
-      }).canvas;
+        }
+      ).canvas;
       let refreshCalls = 0;
 
       canvas.refreshPreparedFrameMetadata = () => ({
@@ -294,7 +305,9 @@ describe("UiSpectrumController", () => {
         hidden: false,
         text: "frame prep failed: worker crashed",
       });
-      expect(state.spectrum.framePrepareErrorDetail.value).toBe("worker crashed");
+      expect(state.spectrum.framePrepareErrorDetail.value).toBe(
+        "worker crashed",
+      );
     } finally {
       restoreDocument();
     }
@@ -324,7 +337,9 @@ describe("UiSpectrumController", () => {
         panel: panel.panel,
         t: (key) => key,
         framePreparer: createFramePreparerStub(async (input) => {
-          calls.push(String(input.spectraByClient["sensor-a"]?.combined[2] ?? "empty"));
+          calls.push(
+            String(input.spectraByClient["sensor-a"]?.combined[2] ?? "empty"),
+          );
           if (calls.length === 1) {
             return first.promise;
           }

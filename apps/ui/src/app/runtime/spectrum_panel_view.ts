@@ -1,6 +1,10 @@
 import type { ReadonlySignal } from "../ui_signals";
 
-export type SpectrumLegendState = "all-visible" | "visible" | "isolated" | "inactive";
+export type SpectrumLegendState =
+  | "all-visible"
+  | "visible"
+  | "isolated"
+  | "inactive";
 
 export interface SpectrumPanelHeaderModel {
   titleText: string;
@@ -75,7 +79,9 @@ export interface SpectrumLegendHandlers {
 export interface SpectrumPanelView {
   readonly chartDom: SpectrumPanelChartDom;
   bindBandToggle(onToggle: () => void): void;
-  bindBandToggleModel(model: ReadonlySignal<SpectrumPanelBandToggleModel>): void;
+  bindBandToggleModel(
+    model: ReadonlySignal<SpectrumPanelBandToggleModel>,
+  ): void;
   bindSensorLegendModel(
     model: ReadonlySignal<SpectrumSensorLegendModel | null>,
     handlers: ReadonlySignal<SpectrumLegendHandlers | null>,

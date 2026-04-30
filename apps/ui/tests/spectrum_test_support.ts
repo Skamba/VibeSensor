@@ -128,7 +128,8 @@ export function createElementStub(tagName = "div"): ElementStub {
 export function installDocumentStub(): () => void {
   const originalDocument = globalThis.document;
   const originalGetComputedStyle = globalThis.getComputedStyle;
-  const originalDevicePixelRatio = (globalThis as { devicePixelRatio?: number }).devicePixelRatio;
+  const originalDevicePixelRatio = (globalThis as { devicePixelRatio?: number })
+    .devicePixelRatio;
   const originalMatchMedia = globalThis.matchMedia;
   const originalAddEventListener = globalThis.addEventListener;
   const originalRemoveEventListener = globalThis.removeEventListener;
@@ -152,7 +153,8 @@ export function installDocumentStub(): () => void {
       dispatchEvent: () => false,
     }) as MediaQueryList) as typeof matchMedia;
   globalThis.addEventListener = (() => undefined) as typeof addEventListener;
-  globalThis.removeEventListener = (() => undefined) as typeof removeEventListener;
+  globalThis.removeEventListener = (() =>
+    undefined) as typeof removeEventListener;
   globalThis.dispatchEvent = (() => false) as typeof dispatchEvent;
   globalThis.getComputedStyle = (() =>
     ({
@@ -160,7 +162,8 @@ export function installDocumentStub(): () => void {
     }) as CSSStyleDeclaration) as typeof getComputedStyle;
   return () => {
     (globalThis as { document?: Document }).document = originalDocument;
-    (globalThis as { devicePixelRatio?: number }).devicePixelRatio = originalDevicePixelRatio;
+    (globalThis as { devicePixelRatio?: number }).devicePixelRatio =
+      originalDevicePixelRatio;
     globalThis.matchMedia = originalMatchMedia;
     globalThis.addEventListener = originalAddEventListener;
     globalThis.removeEventListener = originalRemoveEventListener;

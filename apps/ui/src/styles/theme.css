@@ -88,13 +88,16 @@
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 
-  .history-row[data-expanded="true"] td { background: var(--md-sys-color-surface-container-high) !important; }
-
+  .history-row[data-expanded="true"] td {
+    background: var(--md-sys-color-surface-container-high) !important;
+  }
 }
 
 /* ── Drive / tablet sizing mode ────────────────────────────── */
 @media (pointer: coarse) and (max-width: 1024px) {
-  body { font-size: 17px; }
+  body {
+    font-size: 17px;
+  }
 
   select,
   input,
@@ -117,10 +120,16 @@
     font-size: 0.88rem;
   }
 
-  .stat__label { font-size: 0.84rem; }
-  .stat__value { font-size: 1.25rem; }
+  .stat__label {
+    font-size: 0.84rem;
+  }
+  .stat__value {
+    font-size: 1.25rem;
+  }
 
-  .card__title { font-size: 1.1rem; }
+  .card__title {
+    font-size: 1.1rem;
+  }
 
   .history-table th,
   .history-table td,
@@ -134,13 +143,19 @@
     font-size: 1.4rem;
   }
 
-  .wrap { padding: var(--space-4); }
-  .site-header { padding: var(--space-3) var(--space-4); }
+  .wrap {
+    padding: var(--space-4);
+  }
+  .site-header {
+    padding: var(--space-3) var(--space-4);
+  }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

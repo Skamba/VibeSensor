@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type LiveWsPayload,
+} from "../src/contracts/ws_payload_types";
 import { UiLiveTransportController } from "../src/app/runtime/ui_live_transport_controller";
 import { createAppState } from "../src/app/ui_app_state";
 import { signal } from "../src/app/ui_signals";
 import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
-function makeLivePayload(overrides: Partial<LiveWsPayload> = {}): LiveWsPayload {
+function makeLivePayload(
+  overrides: Partial<LiveWsPayload> = {},
+): LiveWsPayload {
   return {
     schema_version: EXPECTED_SCHEMA_VERSION,
     server_time: "2026-01-01T00:00:00Z",
@@ -153,7 +158,9 @@ describe("UiLiveTransportController", () => {
       await flushAsyncWork(30);
 
       expect(state.transport.pendingPayload.value).toBeNull();
-      expect(state.realtime.clients.value.map((client) => client.id)).toEqual(["client-1"]);
+      expect(state.realtime.clients.value.map((client) => client.id)).toEqual([
+        "client-1",
+      ]);
       expect(state.realtime.selectedClientId.value).toBe("client-1");
       expect(state.realtime.speedMps.value).toBe(12);
       expect(sentSelections).toEqual([{ client_id: "client-1" }]);
@@ -215,9 +222,7 @@ describe("UiLiveTransportController", () => {
     wsUiState.value = "stale";
     await flushAsyncWork();
 
-    expect(sentSelections).toEqual([
-      { client_id: "client-7" },
-    ]);
+    expect(sentSelections).toEqual([{ client_id: "client-7" }]);
   });
 
   test("resends the current selection after leaving and re-entering a ready cycle", async () => {
@@ -376,7 +381,8 @@ describe("UiLiveTransportController", () => {
 
   test("starts websocket transport mode only once", async () => {
     const originalWebSocket = globalThis.WebSocket;
-    globalThis.WebSocket = StartModeFakeWebSocket as unknown as typeof WebSocket;
+    globalThis.WebSocket =
+      StartModeFakeWebSocket as unknown as typeof WebSocket;
     const state = createAppState();
     const controller = new UiLiveTransportController({
       state,
@@ -389,7 +395,9 @@ describe("UiLiveTransportController", () => {
       await flushAsyncWork(30);
 
       expect(StartModeFakeWebSocket.instances).toHaveLength(1);
-      expect(StartModeFakeWebSocket.instances[0]?.url).toBe("ws://localhost/ws");
+      expect(StartModeFakeWebSocket.instances[0]?.url).toBe(
+        "ws://localhost/ws",
+      );
       expect(state.transport.ws.value).not.toBeNull();
     } finally {
       controller.dispose();

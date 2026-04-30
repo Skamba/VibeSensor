@@ -15,9 +15,15 @@ export function createCarsFeatureTransport(
   overrides: Partial<CarsFeatureTransport> | undefined,
 ): CarsFeatureTransport {
   return {
-    loadBrands: overrides?.loadBrands ?? (async () => (await getCarLibraryBrands()).brands || []),
-    loadModels: overrides?.loadModels
-      ?? (async (brand, carType) => (await getCarLibraryModels(brand, carType)).models || []),
-    loadTypes: overrides?.loadTypes ?? (async (brand) => (await getCarLibraryTypes(brand)).types || []),
+    loadBrands:
+      overrides?.loadBrands ??
+      (async () => (await getCarLibraryBrands()).brands || []),
+    loadModels:
+      overrides?.loadModels ??
+      (async (brand, carType) =>
+        (await getCarLibraryModels(brand, carType)).models || []),
+    loadTypes:
+      overrides?.loadTypes ??
+      (async (brand) => (await getCarLibraryTypes(brand)).types || []),
   };
 }

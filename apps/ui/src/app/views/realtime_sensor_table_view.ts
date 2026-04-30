@@ -57,32 +57,39 @@ function sameLocationOptions(
   left: readonly RealtimeSensorTableLocationOptionViewModel[],
   right: readonly RealtimeSensorTableLocationOptionViewModel[],
 ): boolean {
-  return left.length === right.length
-    && left.every((option, index) => sameLocationOption(option, right[index]));
+  return (
+    left.length === right.length &&
+    left.every((option, index) => sameLocationOption(option, right[index]))
+  );
 }
 
 function sameSensorRow(
   left: RealtimeSensorTableRowViewModel,
   right: RealtimeSensorTableRowViewModel,
 ): boolean {
-  return left.clientId === right.clientId
-    && left.displayName === right.displayName
-    && left.statusText === right.statusText
-    && left.statusClass === right.statusClass
-    && left.macAddress === right.macAddress
-    && left.selectedLocationCode === right.selectedLocationCode
-    && left.locationSelectLabel === right.locationSelectLabel
-    && sameLocationOptions(left.locationOptions, right.locationOptions)
-    && left.identifyLabel === right.identifyLabel
-    && left.identifyDisabled === right.identifyDisabled
-    && left.removeLabel === right.removeLabel;
+  return (
+    left.clientId === right.clientId &&
+    left.displayName === right.displayName &&
+    left.statusText === right.statusText &&
+    left.statusClass === right.statusClass &&
+    left.macAddress === right.macAddress &&
+    left.selectedLocationCode === right.selectedLocationCode &&
+    left.locationSelectLabel === right.locationSelectLabel &&
+    sameLocationOptions(left.locationOptions, right.locationOptions) &&
+    left.identifyLabel === right.identifyLabel &&
+    left.identifyDisabled === right.identifyDisabled &&
+    left.removeLabel === right.removeLabel
+  );
 }
 
 function sameRowReferences(
   left: readonly RealtimeSensorTableRowViewModel[],
   right: readonly RealtimeSensorTableRowViewModel[],
 ): boolean {
-  return left.length === right.length && left.every((row, index) => row === right[index]);
+  return (
+    left.length === right.length &&
+    left.every((row, index) => row === right[index])
+  );
 }
 
 export function buildRealtimeSensorTableRenderModel(
@@ -126,11 +133,16 @@ export function createRealtimeSensorTableRenderModelMemo(): (
   let previousModel: RealtimeSensorTableRenderModel | null = null;
   let previousRowsById = new Map<string, RealtimeSensorTableRowViewModel>();
 
-  return (params: RealtimeSensorTableViewParams): RealtimeSensorTableRenderModel => {
+  return (
+    params: RealtimeSensorTableViewParams,
+  ): RealtimeSensorTableRenderModel => {
     const nextModel = buildRealtimeSensorTableRenderModel(params);
     if (nextModel.kind === "empty") {
       previousRowsById = new Map();
-      if (previousModel?.kind === "empty" && previousModel.emptyText === nextModel.emptyText) {
+      if (
+        previousModel?.kind === "empty" &&
+        previousModel.emptyText === nextModel.emptyText
+      ) {
         return previousModel;
       }
       previousModel = nextModel;
@@ -142,7 +154,10 @@ export function createRealtimeSensorTableRenderModelMemo(): (
       return previousRow && sameSensorRow(previousRow, row) ? previousRow : row;
     });
     previousRowsById = new Map(nextRows.map((row) => [row.clientId, row]));
-    if (previousModel?.kind === "rows" && sameRowReferences(previousModel.rows, nextRows)) {
+    if (
+      previousModel?.kind === "rows" &&
+      sameRowReferences(previousModel.rows, nextRows)
+    ) {
       return previousModel;
     }
 

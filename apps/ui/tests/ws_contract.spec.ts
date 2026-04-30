@@ -24,14 +24,14 @@ type RequiredKeys<T> = {
   [K in keyof T]-?: object extends Pick<T, K> ? never : K;
 }[keyof T];
 
-type _WsFrameSamplesRequired = "frame_samples" extends RequiredKeys<WsClientInfo>
-  ? true
-  : never;
-type _HttpFrameSamplesRequired = "frame_samples" extends RequiredKeys<
-  HttpComponents["schemas"]["ClientApiRow"]
->
-  ? true
-  : never;
+type _WsFrameSamplesRequired =
+  "frame_samples" extends RequiredKeys<WsClientInfo> ? true : never;
+type _HttpFrameSamplesRequired =
+  "frame_samples" extends RequiredKeys<
+    HttpComponents["schemas"]["ClientApiRow"]
+  >
+    ? true
+    : never;
 const _wsFrameSamplesRequired: _WsFrameSamplesRequired = true;
 const _httpFrameSamplesRequired: _HttpFrameSamplesRequired = true;
 void _wsFrameSamplesRequired;
@@ -101,8 +101,11 @@ describe("schema_version handling", () => {
   });
 
   test("accepts unknown schema_version (logs warning, does not throw)", async () => {
-    const { adaptServerPayload, uiLogger } = await loadFreshServerPayloadModule();
-    const errorSpy = vi.spyOn(uiLogger, "error").mockImplementation(() => undefined);
+    const { adaptServerPayload, uiLogger } =
+      await loadFreshServerPayloadModule();
+    const errorSpy = vi
+      .spyOn(uiLogger, "error")
+      .mockImplementation(() => undefined);
 
     const adapted = adaptServerPayload({
       ...basePayload,
@@ -114,8 +117,11 @@ describe("schema_version handling", () => {
   });
 
   test("logs unknown schema_version once across repeated mismatches", async () => {
-    const { adaptServerPayload, uiLogger } = await loadFreshServerPayloadModule();
-    const errorSpy = vi.spyOn(uiLogger, "error").mockImplementation(() => undefined);
+    const { adaptServerPayload, uiLogger } =
+      await loadFreshServerPayloadModule();
+    const errorSpy = vi
+      .spyOn(uiLogger, "error")
+      .mockImplementation(() => undefined);
 
     adaptServerPayload({
       ...basePayload,

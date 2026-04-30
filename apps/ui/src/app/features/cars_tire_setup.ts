@@ -31,14 +31,16 @@ function formatRim(rimIn: number, fmt: FormatNumber): string {
   return fmt(rimIn, Number.isInteger(rimIn) ? 0 : 1);
 }
 
-export function tireOptionFront(option: CarLibraryTireOption): TireDimensions | null {
+export function tireOptionFront(
+  option: CarLibraryTireOption,
+): TireDimensions | null {
   if (option.front) {
     return option.front;
   }
   if (
-    isPositiveNumber(option.tire_width_mm)
-    && isPositiveNumber(option.tire_aspect_pct)
-    && isPositiveNumber(option.rim_in)
+    isPositiveNumber(option.tire_width_mm) &&
+    isPositiveNumber(option.tire_aspect_pct) &&
+    isPositiveNumber(option.rim_in)
   ) {
     return {
       width_mm: option.tire_width_mm,
@@ -59,9 +61,11 @@ function tireOptionIsStaggered(option: CarLibraryTireOption): boolean {
   if (!front || !rear) {
     return false;
   }
-  return front.width_mm !== rear.width_mm
-    || front.aspect_pct !== rear.aspect_pct
-    || front.rim_in !== rear.rim_in;
+  return (
+    front.width_mm !== rear.width_mm ||
+    front.aspect_pct !== rear.aspect_pct ||
+    front.rim_in !== rear.rim_in
+  );
 }
 
 function formatTireSize(size: TireDimensions, fmt: FormatNumber): string {
@@ -90,7 +94,11 @@ function tireFromAspects(
   const width = aspects[`${prefix}tire_width_mm`];
   const aspect = aspects[`${prefix}tire_aspect_pct`];
   const rim = aspects[`${prefix}rim_in`];
-  if (!isPositiveNumber(width) || !isPositiveNumber(aspect) || !isPositiveNumber(rim)) {
+  if (
+    !isPositiveNumber(width) ||
+    !isPositiveNumber(aspect) ||
+    !isPositiveNumber(rim)
+  ) {
     return null;
   }
   return {
@@ -108,15 +116,16 @@ export function formatSavedCarTireSummary(
   if (!aspects) {
     return missingText;
   }
-  const front = tireFromAspects(aspects, "front_") ?? tireFromAspects(aspects, "");
+  const front =
+    tireFromAspects(aspects, "front_") ?? tireFromAspects(aspects, "");
   const rear = tireFromAspects(aspects, "rear_") ?? front;
   if (!front || !rear) {
     return missingText;
   }
   if (
-    front.width_mm === rear.width_mm
-    && front.aspect_pct === rear.aspect_pct
-    && front.rim_in === rear.rim_in
+    front.width_mm === rear.width_mm &&
+    front.aspect_pct === rear.aspect_pct &&
+    front.rim_in === rear.rim_in
   ) {
     return formatTireSize(front, fmt);
   }
@@ -136,7 +145,10 @@ export function tireSetupAspectsFromOption(
     tire_aspect_pct: option.tire_aspect_pct,
     tire_width_mm: option.tire_width_mm,
   };
-  if (tireOptionIsStaggered(option) || option.default_axle_for_speed !== "rear") {
+  if (
+    tireOptionIsStaggered(option) ||
+    option.default_axle_for_speed !== "rear"
+  ) {
     payload.front_tire_width_mm = front.width_mm;
     payload.front_tire_aspect_pct = front.aspect_pct;
     payload.front_rim_in = front.rim_in;

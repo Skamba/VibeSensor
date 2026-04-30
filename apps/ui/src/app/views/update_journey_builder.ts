@@ -1,7 +1,4 @@
-import type {
-  UpdateIssue,
-  UpdateStatusPayload,
-} from "../../api/types";
+import type { UpdateIssue, UpdateStatusPayload } from "../../api/types";
 import type {
   JourneyStageState,
   UpdateFailureSummary,
@@ -108,8 +105,12 @@ function normalizeUpdatePhase(phase: string | null | undefined): string {
   return phase;
 }
 
-function journeyStages(transport: UpdateJourneyTransport): readonly UpdateJourneyStage[] {
-  return transport === "usb_internet" ? USB_JOURNEY_STAGES : WIFI_JOURNEY_STAGES;
+function journeyStages(
+  transport: UpdateJourneyTransport,
+): readonly UpdateJourneyStage[] {
+  return transport === "usb_internet"
+    ? USB_JOURNEY_STAGES
+    : WIFI_JOURNEY_STAGES;
 }
 
 function resolvedJourneyTransport(
@@ -156,7 +157,9 @@ function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
       return issue;
     }
   }
-  return status.issues.length > 0 ? status.issues[status.issues.length - 1] : null;
+  return status.issues.length > 0
+    ? status.issues[status.issues.length - 1]
+    : null;
 }
 
 function recoveryGuidanceKey(phase: string): string {
@@ -186,7 +189,9 @@ function buildJourneyFailureNoteModel(
     return null;
   }
   return {
-    summaryText: failure.message ? `${failure.phaseLabel} — ${failure.message}` : failure.phaseLabel,
+    summaryText: failure.message
+      ? `${failure.phaseLabel} — ${failure.message}`
+      : failure.phaseLabel,
     detailText: failure.detail,
     recoveryTitleText: failure.recoveryTitle,
     recoveryDetailText: failure.recoveryDetail,
@@ -198,7 +203,11 @@ export function formatUpdatePhase(
   t: (key: string, vars?: Record<string, unknown>) => string,
 ): string {
   const normalized = normalizeUpdatePhase(phase);
-  return translateKeyOrFallback(`settings.update.phase.${normalized}`, normalized, t);
+  return translateKeyOrFallback(
+    `settings.update.phase.${normalized}`,
+    normalized,
+    t,
+  );
 }
 
 export function getUpdateFailureSummary(
@@ -224,7 +233,9 @@ export function buildUpdateJourneySectionModel(
   status: UpdateStatusPayload,
   deps: UpdateStatusViewDeps,
 ): UpdateJourneySectionModel {
-  const stages = journeyStages(resolvedJourneyTransport(status, deps.selectedTransport));
+  const stages = journeyStages(
+    resolvedJourneyTransport(status, deps.selectedTransport),
+  );
   return {
     titleText: deps.t("settings.update.journey_title"),
     subtitleText: deps.t("settings.update.journey_intro"),

@@ -6,7 +6,9 @@ import type {
 } from "./update_status_models";
 import { formatUpdatePhase } from "./update_journey_builder";
 
-const STATE_VARIANT: Readonly<Record<UpdateStatusPayload["state"], UpdateStatusBadgeVariant>> = {
+const STATE_VARIANT: Readonly<
+  Record<UpdateStatusPayload["state"], UpdateStatusBadgeVariant>
+> = {
   idle: "muted",
   running: "warn",
   success: "ok",
@@ -16,7 +18,8 @@ const STATE_VARIANT: Readonly<Record<UpdateStatusPayload["state"], UpdateStatusB
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 
 export function formatDuration(seconds: number | null | undefined): string {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return "—";
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds))
+    return "—";
   const rounded = Math.max(0, Math.floor(seconds));
   const hours = Math.floor(rounded / 3600);
   const minutes = Math.floor((rounded % 3600) / 60);
@@ -26,7 +29,10 @@ export function formatDuration(seconds: number | null | undefined): string {
   return `${secs}s`;
 }
 
-export function buildStatusRow(labelText: string, valueText: string): UpdateStatusRowModel {
+export function buildStatusRow(
+  labelText: string,
+  valueText: string,
+): UpdateStatusRowModel {
   return { labelText, valueText };
 }
 
@@ -52,13 +58,17 @@ export function buildTransportValueText(
       : t("settings.update.transport_value.usb");
   }
   if (status.ssid) {
-    return t("settings.update.transport_value.wifi_ssid", { ssid: status.ssid });
+    return t("settings.update.transport_value.wifi_ssid", {
+      ssid: status.ssid,
+    });
   }
   return t("settings.update.transport_value.wifi");
 }
 
 export function hasAssetRelatedIssue(status: UpdateStatusPayload): boolean {
-  return status.issues.some((issue) => ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`));
+  return status.issues.some((issue) =>
+    ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`),
+  );
 }
 
 export { formatUpdatePhase };

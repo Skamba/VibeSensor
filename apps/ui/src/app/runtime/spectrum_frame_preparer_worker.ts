@@ -7,12 +7,16 @@ import {
 } from "./spectrum_frame_preparer";
 
 interface SpectrumFramePreparerWorkerApi {
-  prepare(input: SpectrumFramePreparationInput): Promise<SpectrumPreparedFrameData>;
+  prepare(
+    input: SpectrumFramePreparationInput,
+  ): Promise<SpectrumPreparedFrameData>;
 }
 
 const core = createSpectrumFramePreparerCore();
 
-function collectTransferables(prepared: SpectrumPreparedFrameData): Transferable[] {
+function collectTransferables(
+  prepared: SpectrumPreparedFrameData,
+): Transferable[] {
   const seen = new Set<ArrayBufferLike>();
   const transferables: Transferable[] = [];
 
@@ -40,13 +44,17 @@ function collectTransferables(prepared: SpectrumPreparedFrameData): Transferable
   return transferables;
 }
 
-function toTransferablePreparedFrame(prepared: SpectrumPreparedFrameData): SpectrumPreparedFrameData {
+function toTransferablePreparedFrame(
+  prepared: SpectrumPreparedFrameData,
+): SpectrumPreparedFrameData {
   if (!prepared.frame) {
     return prepared;
   }
 
   const freqAxis = Float64Array.from(prepared.frame.freq);
-  const frameValues = prepared.frame.values.map((values) => Float64Array.from(values));
+  const frameValues = prepared.frame.values.map((values) =>
+    Float64Array.from(values),
+  );
   return {
     entries: prepared.entries.map((entry, index) => ({
       ...entry,

@@ -1,7 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  createCarSelectionDerivedState,
-} from "../src/app/car_selection_state";
+import { createCarSelectionDerivedState } from "../src/app/car_selection_state";
 import { createAppState } from "../src/app/ui_app_state";
 import type { CarRecord } from "../src/api/types";
 

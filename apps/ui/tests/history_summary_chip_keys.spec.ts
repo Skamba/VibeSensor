@@ -21,7 +21,10 @@ function defaultDetail(detail: Partial<RunDetail> = {}): RunDetail {
   };
 }
 
-function historyListRun(runId: string, overrides: Partial<HistoryEntry> = {}): HistoryEntry {
+function historyListRun(
+  runId: string,
+  overrides: Partial<HistoryEntry> = {},
+): HistoryEntry {
   return {
     run_id: runId,
     start_time_utc: "2026-01-01T00:00:00Z",
@@ -55,5 +58,8 @@ test("history summary chips expose stable presenter-owned keys", () => {
   });
 
   expect(rows[0].summaryChips.map((chip) => chip.key)).toEqual(["status"]);
-  expect(rows[1].summaryChips.map((chip) => chip.key)).toEqual(["status", "error-message"]);
+  expect(rows[1].summaryChips.map((chip) => chip.key)).toEqual([
+    "status",
+    "error-message",
+  ]);
 });

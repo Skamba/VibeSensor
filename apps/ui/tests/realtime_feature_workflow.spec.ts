@@ -21,7 +21,10 @@ type WorkflowHarness = {
   showErrors: string[];
 };
 
-function makeClient(id: string, overrides: Partial<AdaptedClient> = {}): AdaptedClient {
+function makeClient(
+  id: string,
+  overrides: Partial<AdaptedClient> = {},
+): AdaptedClient {
   return {
     id,
     name: id,
@@ -135,7 +138,9 @@ describe("createRealtimeFeatureWorkflow", () => {
       confirmRemoveClient: async () => true,
       api: {
         async getLoggingStatus() {
-          harness.apiCalls.push(`getLoggingStatus:${idleCaptureReadinessSignature.value}`);
+          harness.apiCalls.push(
+            `getLoggingStatus:${idleCaptureReadinessSignature.value}`,
+          );
           return harness.state.realtime.loggingStatus.value;
         },
       },
@@ -146,12 +151,16 @@ describe("createRealtimeFeatureWorkflow", () => {
     await expect.poll(() => harness.apiCalls.length).toBeGreaterThanOrEqual(1);
     const initialCalls = harness.apiCalls.length;
     idleCaptureReadinessSignature.value = "car-1##client-a|client-b";
-    await expect.poll(() => harness.apiCalls.length).toBeGreaterThan(initialCalls);
-    expect(harness.apiCalls.at(-1)).toBe("getLoggingStatus:car-1##client-a|client-b");
+    await expect
+      .poll(() => harness.apiCalls.length)
+      .toBeGreaterThan(initialCalls);
+    expect(harness.apiCalls.at(-1)).toBe(
+      "getLoggingStatus:car-1##client-a|client-b",
+    );
     workflow.dispose();
   });
 
-test("keeps the last known location codes and rejects when refreshing locations fails", async () => {
+  test("keeps the last known location codes and rejects when refreshing locations fails", async () => {
     const harness = createHarness();
     harness.state.realtime.locationCodes.value = ["custom-code"];
     const workflow = createRealtimeFeatureWorkflow({
@@ -181,11 +190,13 @@ test("keeps the last known location codes and rejects when refreshing locations 
       },
     });
 
-    await expect(workflow.refreshLocationOptions()).rejects.toThrow("network unavailable");
+    await expect(workflow.refreshLocationOptions()).rejects.toThrow(
+      "network unavailable",
+    );
 
-  expect(harness.state.realtime.locationCodes.value).toEqual(["custom-code"]);
-  workflow.dispose();
-});
+    expect(harness.state.realtime.locationCodes.value).toEqual(["custom-code"]);
+    workflow.dispose();
+  });
 
   test("refreshes history once when polling observes analysis completion", async () => {
     const harness = createHarness();
@@ -279,9 +290,13 @@ test("keeps the last known location codes and rejects when refreshing locations 
 
     await workflow.removeClient("client-a");
 
-    expect(harness.confirmMessages).toEqual(["actions.remove_client_confirm:client-a"]);
+    expect(harness.confirmMessages).toEqual([
+      "actions.remove_client_confirm:client-a",
+    ]);
     expect(harness.apiCalls).toEqual(["removeClient:client-a"]);
-    expect(harness.state.realtime.clients.value.map((client) => client.id)).toEqual(["client-b"]);
+    expect(
+      harness.state.realtime.clients.value.map((client) => client.id),
+    ).toEqual(["client-b"]);
     expect(harness.state.realtime.selectedClientId.value).toBe("client-b");
     expect(harness.selectionCalls).toEqual(["sendSelection"]);
     workflow.dispose();
@@ -326,12 +341,13 @@ test("keeps the last known location codes and rejects when refreshing locations 
 
     await workflow.removeClient("client-a");
 
-    expect(harness.confirmMessages).toEqual(["actions.remove_client_confirm:client-a"]);
-    expect(harness.apiCalls).toEqual([]);
-    expect(harness.state.realtime.clients.value.map((client) => client.id)).toEqual([
-      "client-a",
-      "client-b",
+    expect(harness.confirmMessages).toEqual([
+      "actions.remove_client_confirm:client-a",
     ]);
+    expect(harness.apiCalls).toEqual([]);
+    expect(
+      harness.state.realtime.clients.value.map((client) => client.id),
+    ).toEqual(["client-a", "client-b"]);
     expect(harness.state.realtime.selectedClientId.value).toBe("client-a");
     expect(harness.selectionCalls).toEqual([]);
     workflow.dispose();

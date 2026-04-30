@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { apiJson } from "../src/api/http";
-import { createDeferred, installTimerHarness, installWindowGlobal } from "./async_test_helpers";
+import {
+  createDeferred,
+  installTimerHarness,
+  installWindowGlobal,
+} from "./async_test_helpers";
 import { HttpResponse, http, uiTestUrl } from "./msw/http";
 import { createUiMswTestServer } from "./msw/node";
 
@@ -166,23 +170,36 @@ describe("apiJson", () => {
 
   test("handles 204, text response, invalid JSON and non-2xx JSON detail", async () => {
     mswServer.use(
-      http.get(uiTestUrl("/status204"), () => new HttpResponse(null, { status: 204, statusText: "No Content" })),
-      http.get(uiTestUrl("/text-ok"), () => new HttpResponse("plain-text", { status: 200, statusText: "OK" })),
-      http.get(uiTestUrl("/invalid-json"), () =>
-        new HttpResponse("{nope", {
-          status: 200,
-          statusText: "OK",
-          headers: { "content-type": "application/json" },
-        }),
+      http.get(
+        uiTestUrl("/status204"),
+        () => new HttpResponse(null, { status: 204, statusText: "No Content" }),
+      ),
+      http.get(
+        uiTestUrl("/text-ok"),
+        () => new HttpResponse("plain-text", { status: 200, statusText: "OK" }),
+      ),
+      http.get(
+        uiTestUrl("/invalid-json"),
+        () =>
+          new HttpResponse("{nope", {
+            status: 200,
+            statusText: "OK",
+            headers: { "content-type": "application/json" },
+          }),
       ),
       http.get(uiTestUrl("/error-json"), () =>
-        HttpResponse.json({ detail: "bad request detail" }, { status: 400, statusText: "Bad Request" }),
+        HttpResponse.json(
+          { detail: "bad request detail" },
+          { status: 400, statusText: "Bad Request" },
+        ),
       ),
     );
 
     const payload204 = await apiJson("/status204");
     const payloadText = await apiJson("/text-ok");
-    await expect(apiJson("/invalid-json")).rejects.toThrow(/Invalid JSON response \(200 OK\)/);
+    await expect(apiJson("/invalid-json")).rejects.toThrow(
+      /Invalid JSON response \(200 OK\)/,
+    );
     await expect(apiJson("/error-json")).rejects.toThrow("bad request detail");
     expect(payload204).toBeUndefined();
     expect(payloadText).toBe("plain-text");

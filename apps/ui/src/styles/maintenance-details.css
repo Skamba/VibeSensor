@@ -1,4 +1,6 @@
-.maintenance-log-slot { min-height: 8.5rem; }
+.maintenance-log-slot {
+  min-height: 8.5rem;
+}
 
 .maintenance-log-panel {
   min-height: 8.5rem;
@@ -65,7 +67,9 @@
   font-weight: 700;
 }
 
-.issue-detail { margin-top: 0.2rem; }
+.issue-detail {
+  margin-top: 0.2rem;
+}
 
 .maintenance-attempt__header {
   display: flex;
@@ -74,4 +78,6 @@
   gap: var(--space-2);
 }
 
-.maintenance-attempt__meta { font-size: 0.82rem; }
+.maintenance-attempt__meta {
+  font-size: 0.82rem;
+}

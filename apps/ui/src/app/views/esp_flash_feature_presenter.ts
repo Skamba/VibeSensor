@@ -15,10 +15,7 @@ import {
   statusVariantForEspFlashState,
   type EspFlashFeatureRenderState,
 } from "./esp_flash_readiness_presenter";
-import {
-  computed,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { computed, type ReadonlySignal } from "../ui_signals";
 
 export type { EspFlashFeatureRenderState } from "./esp_flash_readiness_presenter";
 
@@ -77,36 +74,39 @@ function buildHistoryPanelModel(
       },
     };
   }
-  const items: EspFlashHistoryAttemptModel[] = attempts.slice(0, 5).map((attempt) => {
-    const safeState = safeEspFlashState(attempt.state);
-    const portText = attempt.selectedPort || t("settings.esp_flash.auto_detect");
-    const meta = [
-      attempt.finishedAt != null
-        ? t("settings.esp_flash.history_finished_at", {
-            value: formatEpochTimestamp(attempt.finishedAt),
-          })
-        : t("settings.esp_flash.history_started_at", {
-            value: formatEpochTimestamp(attempt.startedAt),
-          }),
-      attempt.autoDetect
-        ? t("settings.esp_flash.history_auto_detect_used")
-        : t("settings.esp_flash.history_manual_target_used"),
-    ];
-    if (attempt.exitCode != null) {
-      meta.push(
-        t("settings.esp_flash.history_exit_code", { code: attempt.exitCode }),
-      );
-    }
-    return {
-      badge: {
-        text: t(`settings.esp_flash.state.${safeState}`),
-        variant: statusVariantForEspFlashState(safeState),
-      },
-      errorText: attempt.error,
-      metaText: meta.join(" · "),
-      portText,
-    };
-  });
+  const items: EspFlashHistoryAttemptModel[] = attempts
+    .slice(0, 5)
+    .map((attempt) => {
+      const safeState = safeEspFlashState(attempt.state);
+      const portText =
+        attempt.selectedPort || t("settings.esp_flash.auto_detect");
+      const meta = [
+        attempt.finishedAt != null
+          ? t("settings.esp_flash.history_finished_at", {
+              value: formatEpochTimestamp(attempt.finishedAt),
+            })
+          : t("settings.esp_flash.history_started_at", {
+              value: formatEpochTimestamp(attempt.startedAt),
+            }),
+        attempt.autoDetect
+          ? t("settings.esp_flash.history_auto_detect_used")
+          : t("settings.esp_flash.history_manual_target_used"),
+      ];
+      if (attempt.exitCode != null) {
+        meta.push(
+          t("settings.esp_flash.history_exit_code", { code: attempt.exitCode }),
+        );
+      }
+      return {
+        badge: {
+          text: t(`settings.esp_flash.state.${safeState}`),
+          variant: statusVariantForEspFlashState(safeState),
+        },
+        errorText: attempt.error,
+        metaText: meta.join(" · "),
+        portText,
+      };
+    });
   return {
     attempts: items,
     emptyState: null,
@@ -161,7 +161,7 @@ export function createEspFlashFeaturePresenter(
   ctx: EspFlashFeaturePresenterDeps,
 ): EspFlashFeaturePresenter {
   const model = computed(() =>
-    buildEspFlashPanelRenderModel(ctx.renderState.value, { t: ctx.t })
+    buildEspFlashPanelRenderModel(ctx.renderState.value, { t: ctx.t }),
   );
   return {
     model,

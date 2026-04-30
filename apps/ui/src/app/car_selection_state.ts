@@ -43,10 +43,15 @@ function resolveActiveCar(settings: CarSelectionStateSource): CarRecord | null {
   if (!settings.activeCarId.value) {
     return null;
   }
-  return settings.cars.value.find((car) => car.id === settings.activeCarId.value) ?? null;
+  return (
+    settings.cars.value.find((car) => car.id === settings.activeCarId.value) ??
+    null
+  );
 }
 
-function deriveCarSelectionState(settings: CarSelectionStateSource): CarSelectionState {
+function deriveCarSelectionState(
+  settings: CarSelectionStateSource,
+): CarSelectionState {
   if (!settings.carsLoaded.value) {
     return { kind: "loading" };
   }
@@ -93,7 +98,9 @@ export function createCarSelectionDerivedState(
 }
 
 export function getCarCompleteness(car: CarRecord): CarCompleteness {
-  const missingKeys = REQUIRED_CAR_ASPECT_KEYS.filter((key) => !isConfiguredAspectValue(car.aspects?.[key]));
+  const missingKeys = REQUIRED_CAR_ASPECT_KEYS.filter(
+    (key) => !isConfiguredAspectValue(car.aspects?.[key]),
+  );
   return {
     isComplete: missingKeys.length === 0,
     missingKeys,

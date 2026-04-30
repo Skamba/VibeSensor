@@ -5,10 +5,15 @@ import type * as Transport from "./types";
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
 export async function getClientLocations(): Promise<Local.ClientLocationsResponse> {
-  return await apiJson<Transport.ClientLocationsResponse>("/api/client-locations");
+  return await apiJson<Transport.ClientLocationsResponse>(
+    "/api/client-locations",
+  );
 }
 
-export async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
+export async function setClientLocation(
+  clientId: string,
+  locationCode: string,
+): Promise<void> {
   await apiJson(`/api/clients/${encodeURIComponent(clientId)}/location`, {
     method: "POST",
     headers: JSON_HEADERS,
@@ -16,7 +21,10 @@ export async function setClientLocation(clientId: string, locationCode: string):
   });
 }
 
-export async function identifyClient(clientId: string, durationMs = 1500): Promise<void> {
+export async function identifyClient(
+  clientId: string,
+  durationMs = 1500,
+): Promise<void> {
   await apiJson(`/api/clients/${encodeURIComponent(clientId)}/identify`, {
     method: "POST",
     headers: JSON_HEADERS,

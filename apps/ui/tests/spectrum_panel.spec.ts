@@ -10,7 +10,9 @@ describe("createSpectrumPanel", () => {
       announce: false,
     });
 
-    expect(panel.props.inspectorText.value).toBe("Hover:Front Right Wheel:10.0:12.0:No reference band");
+    expect(panel.props.inspectorText.value).toBe(
+      "Hover:Front Right Wheel:10.0:12.0:No reference band",
+    );
     expect(panel.props.inspectorAnnouncement.value).toBe("");
 
     panel.view.renderInspector({
@@ -18,7 +20,11 @@ describe("createSpectrumPanel", () => {
       announce: true,
     });
 
-    expect(panel.props.inspectorText.value).toBe("Selected:Front Right Wheel:10.0:12.0:No reference band");
-    expect(panel.props.inspectorAnnouncement.value).toBe("Selected:Front Right Wheel:10.0:12.0:No reference band");
+    expect(panel.props.inspectorText.value).toBe(
+      "Selected:Front Right Wheel:10.0:12.0:No reference band",
+    );
+    expect(panel.props.inspectorAnnouncement.value).toBe(
+      "Selected:Front Right Wheel:10.0:12.0:No reference band",
+    );
   });
 });

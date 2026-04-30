@@ -1,12 +1,10 @@
 import type { AdaptedPayload } from "../../transport/live_models";
 import { uiLogger } from "../../ui_logger";
-import {
-  applyLivePayloadUpdate,
-  type AppState,
-} from "../ui_app_state";
+import { applyLivePayloadUpdate, type AppState } from "../ui_app_state";
 import { batch, computed, effectOnChange, untracked } from "../ui_signals";
 
-type AdaptServerPayload = typeof import("../../server_payload").adaptServerPayload;
+type AdaptServerPayload =
+  typeof import("../../server_payload").adaptServerPayload;
 type LiveTransportRuntime = {
   createWsClient: typeof import("../../ws").createWsClient;
   runDemoMode: typeof import("../demo_mode").runDemoMode;
@@ -20,13 +18,15 @@ function loadLiveTransportRuntime(): Promise<LiveTransportRuntime> {
     liveTransportRuntimePromise = Promise.all([
       import("../../ws"),
       import("../demo_mode"),
-    ]).then(([wsModule, demoModeModule]) => ({
-      createWsClient: wsModule.createWsClient,
-      runDemoMode: demoModeModule.runDemoMode,
-    })).catch((error) => {
-      liveTransportRuntimePromise = null;
-      throw error;
-    });
+    ])
+      .then(([wsModule, demoModeModule]) => ({
+        createWsClient: wsModule.createWsClient,
+        runDemoMode: demoModeModule.runDemoMode,
+      }))
+      .catch((error) => {
+        liveTransportRuntimePromise = null;
+        throw error;
+      });
   }
   return liveTransportRuntimePromise;
 }
@@ -87,10 +87,16 @@ export class UiLiveTransportController {
     this.disposeWsStateSync = disposers.wsStateSync;
     this.disposeSelectionSync = disposers.selectionSync;
     void loadLiveTransportRuntime().catch((error) => {
-      uiLogger.error("[VibeSensor] Failed to preload websocket transport runtime.", error);
+      uiLogger.error(
+        "[VibeSensor] Failed to preload websocket transport runtime.",
+        error,
+      );
     });
     void this.preloadPayloadAdapter().catch((error) => {
-      uiLogger.error("[VibeSensor] Failed to preload live payload adapter.", error);
+      uiLogger.error(
+        "[VibeSensor] Failed to preload live payload adapter.",
+        error,
+      );
     });
   }
 
@@ -101,11 +107,9 @@ export class UiLiveTransportController {
     const ws = this.state.transport.ws.value;
     const clientId = this.state.realtime.selectedClientId.value;
     if (
-      !ws
-      || (
-        this.lastSentSelectionCycle === this.readySelectionCycle
-        && Object.is(this.lastSentSelectionClientId, clientId)
-      )
+      !ws ||
+      (this.lastSentSelectionCycle === this.readySelectionCycle &&
+        Object.is(this.lastSentSelectionClientId, clientId))
     ) {
       return;
     }
@@ -139,43 +143,62 @@ export class UiLiveTransportController {
     transportStateSync: () => void;
     wsStateSync: () => void;
   } {
-    const wsUiState = computed(() => this.state.transport.ws.value?.uiState.value ?? null);
+    const wsUiState = computed(
+      () => this.state.transport.ws.value?.uiState.value ?? null,
+    );
     const wsLatestPayload = computed(
       () => this.state.transport.ws.value?.latestPayload.value ?? null,
     );
 
     const transportStateSync = effectOnChange(wsUiState, (nextWsState) => {
-      if (nextWsState === null || this.state.transport.wsState.value === nextWsState) {
+      if (
+        nextWsState === null ||
+        this.state.transport.wsState.value === nextWsState
+      ) {
         return;
       }
       this.state.transport.wsState.value = nextWsState;
     });
 
-    const transportIngressSync = effectOnChange(wsLatestPayload, (nextPayload) => {
-      if (nextPayload === null) {
-        return;
-      }
-      this.ingestTransportPayload(nextPayload);
-    });
+    const transportIngressSync = effectOnChange(
+      wsLatestPayload,
+      (nextPayload) => {
+        if (nextPayload === null) {
+          return;
+        }
+        this.ingestTransportPayload(nextPayload);
+      },
+    );
 
-    const pendingPayloadSync = effectOnChange(this.state.transport.pendingPayload, (nextPendingPayload) => {
-      if (nextPendingPayload !== null) {
-        untracked(() => this.queueRender());
-      }
-    });
+    const pendingPayloadSync = effectOnChange(
+      this.state.transport.pendingPayload,
+      (nextPendingPayload) => {
+        if (nextPendingPayload !== null) {
+          untracked(() => this.queueRender());
+        }
+      },
+    );
 
-    const wsStateSync = effectOnChange(this.state.transport.wsState, (nextWsState, previousWsState) => {
-      const nextReady = nextWsState === "connected" || nextWsState === "no_data";
-      const previousReady = previousWsState === "connected" || previousWsState === "no_data";
-      if (nextReady && !previousReady) {
-        this.readySelectionCycle += 1;
+    const wsStateSync = effectOnChange(
+      this.state.transport.wsState,
+      (nextWsState, previousWsState) => {
+        const nextReady =
+          nextWsState === "connected" || nextWsState === "no_data";
+        const previousReady =
+          previousWsState === "connected" || previousWsState === "no_data";
+        if (nextReady && !previousReady) {
+          this.readySelectionCycle += 1;
+          untracked(() => this.sendSelection());
+        }
+      },
+    );
+
+    const selectionSync = effectOnChange(
+      this.state.realtime.selectedClientId,
+      () => {
         untracked(() => this.sendSelection());
-      }
-    });
-
-    const selectionSync = effectOnChange(this.state.realtime.selectedClientId, () => {
-      untracked(() => this.sendSelection());
-    });
+      },
+    );
 
     return {
       pendingPayloadSync,
@@ -193,18 +216,27 @@ export class UiLiveTransportController {
     this.transportStarted = true;
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     void this.preloadPayloadAdapter().catch((error) => {
-      uiLogger.error("[VibeSensor] Failed to preload live payload adapter.", error);
+      uiLogger.error(
+        "[VibeSensor] Failed to preload live payload adapter.",
+        error,
+      );
     });
     if (isDemoMode) {
       void this.startDemoMode().catch((error) => {
         this.transportStarted = false;
-        uiLogger.error("[VibeSensor] Failed to start demo transport mode.", error);
+        uiLogger.error(
+          "[VibeSensor] Failed to start demo transport mode.",
+          error,
+        );
       });
       return;
     }
     void this.connectWs().catch((error) => {
       this.transportStarted = false;
-      uiLogger.error("[VibeSensor] Failed to load websocket transport runtime.", error);
+      uiLogger.error(
+        "[VibeSensor] Failed to load websocket transport runtime.",
+        error,
+      );
     });
   }
 
@@ -220,8 +252,8 @@ export class UiLiveTransportController {
       this.state.transport.renderQueued.value = false;
       const now = Date.now();
       if (
-        now - this.state.transport.lastRenderTsMs.value
-        < this.state.transport.minRenderIntervalMs.value
+        now - this.state.transport.lastRenderTsMs.value <
+        this.state.transport.minRenderIntervalMs.value
       ) {
         // Retain RAF pacing here for render/spectrum throughput, not because the
         // transport ingress path still needs callback-style fan-out.
@@ -317,7 +349,8 @@ export class UiLiveTransportController {
       return;
     }
     runDemoMode({
-      ingestTransportPayload: (payload) => this.ingestTransportPayload(payload, "connected"),
+      ingestTransportPayload: (payload) =>
+        this.ingestTransportPayload(payload, "connected"),
       state: this.state,
     });
   }

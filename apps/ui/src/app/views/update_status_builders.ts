@@ -1,7 +1,4 @@
-import type {
-  HealthStatusPayload,
-  UpdateStatusPayload,
-} from "../../api/types";
+import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { buildUpdateJourneySectionModel } from "./update_journey_builder";
 import {
   buildUpdateCurrentStatusSectionModel,
@@ -15,12 +12,7 @@ import type {
   UpdateStatusViewDeps,
 } from "./update_status_models";
 
-export {
-  buildUpdateCurrentStatusSectionModel,
-  
-  
-} from "./update_current_status_builders";
-;
+export { buildUpdateCurrentStatusSectionModel } from "./update_current_status_builders";
 export { buildUpdateLogSectionModel } from "./update_log_status_builder";
 
 export function buildUpdateStatusPanelViewModel(

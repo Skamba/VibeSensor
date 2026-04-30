@@ -69,7 +69,8 @@ export function resolveGearboxes(
   model: CarLibraryModel | null,
   variant: CarLibraryVariant | null,
 ): CarLibraryGearbox[] {
-  if (variant?.gearboxes && variant.gearboxes.length > 0) return variant.gearboxes;
+  if (variant?.gearboxes && variant.gearboxes.length > 0)
+    return variant.gearboxes;
   return model?.gearboxes || [];
 }
 
@@ -77,7 +78,8 @@ export function resolveTireOptions(
   model: CarLibraryModel | null,
   variant: CarLibraryVariant | null,
 ): CarLibraryTireOption[] {
-  if (variant?.tire_options && variant.tire_options.length > 0) return variant.tire_options;
+  if (variant?.tire_options && variant.tire_options.length > 0)
+    return variant.tire_options;
   return model?.tire_options || [];
 }
 
@@ -127,12 +129,20 @@ export function readWizardManualGearboxValues(
   return { finalDrive, topGear };
 }
 
-export function getResolvedWizardSpecBranch(state: WizardState): WizardSpecBranch {
+export function getResolvedWizardSpecBranch(
+  state: WizardState,
+): WizardSpecBranch {
   if (state.step !== 4) {
     return null;
   }
-  const tireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
-  const gearboxes = resolveGearboxes(state.selectedModel, state.selectedVariant);
+  const tireOptions = resolveTireOptions(
+    state.selectedModel,
+    state.selectedVariant,
+  );
+  const gearboxes = resolveGearboxes(
+    state.selectedModel,
+    state.selectedVariant,
+  );
   if (!tireOptions.length || !gearboxes.length) {
     return "manual";
   }
@@ -216,8 +226,10 @@ export function getWizardActionHint(
     if (!canFinishWithLibrarySpecs(state)) {
       return t("settings.car.finish_choose_path");
     }
-    return buildGearboxConfidenceHint(state.selectedGearbox, t)
-      ?? t("settings.car.finish_library_ready");
+    return (
+      buildGearboxConfidenceHint(state.selectedGearbox, t) ??
+      t("settings.car.finish_library_ready")
+    );
   }
   if (branch === "manual") {
     return canFinishWithManualSpecs(manualTire, manualGearbox)
@@ -233,9 +245,10 @@ export function buildWizardSummaryData(
 ): WizardSummaryData {
   const { fmt, manualGearbox, manualTire, t } = deps;
   const variantIsImplicit = Boolean(
-    state.step >= 4
-      && ((!state.selectedModel && state.model)
-        || (state.selectedModel && (state.selectedModel.variants?.length ?? 0) === 0)),
+    state.step >= 4 &&
+      ((!state.selectedModel && state.model) ||
+        (state.selectedModel &&
+          (state.selectedModel.variants?.length ?? 0) === 0)),
   );
   const specBranch = getResolvedWizardSpecBranch(state);
   const selectedTireLabel = formatWizardTireLabel(state.selectedTire, fmt);
@@ -247,13 +260,20 @@ export function buildWizardSummaryData(
     brand: state.brand || null,
     carType: state.carType || null,
     model: state.model || null,
-    variant: state.selectedVariant?.name
-      || (variantIsImplicit ? t("settings.car.wizard_summary_not_needed") : null),
-    tire: specBranch === "manual"
-      ? (manualTire ? formatManualTireSummary(manualTire, deps) : selectedTireLabel)
-      : selectedTireLabel,
-    gearbox: specBranch === "manual"
-      ? (manualGearbox ? formatManualGearboxSummary(manualGearbox, deps) : null)
-      : (state.selectedGearbox?.name ?? null),
+    variant:
+      state.selectedVariant?.name ||
+      (variantIsImplicit ? t("settings.car.wizard_summary_not_needed") : null),
+    tire:
+      specBranch === "manual"
+        ? manualTire
+          ? formatManualTireSummary(manualTire, deps)
+          : selectedTireLabel
+        : selectedTireLabel,
+    gearbox:
+      specBranch === "manual"
+        ? manualGearbox
+          ? formatManualGearboxSummary(manualGearbox, deps)
+          : null
+        : (state.selectedGearbox?.name ?? null),
   };
 }

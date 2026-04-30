@@ -45,11 +45,19 @@ describe("resolveWizardFocusTarget", () => {
       tireWidthInput,
     });
 
-    expect(resolveWizardFocusTarget("brand-option", refs)).toBe(customBrandInput);
-    expect(resolveWizardFocusTarget("model-option", refs)).toBe(customModelInput);
+    expect(resolveWizardFocusTarget("brand-option", refs)).toBe(
+      customBrandInput,
+    );
+    expect(resolveWizardFocusTarget("model-option", refs)).toBe(
+      customModelInput,
+    );
     expect(resolveWizardFocusTarget("type-option", refs)).toBe(customTypeInput);
-    expect(resolveWizardFocusTarget("gearbox-option", refs)).toBe(manualAddButton);
-    expect(resolveWizardFocusTarget("spec-selection", refs)).toBe(tireWidthInput);
+    expect(resolveWizardFocusTarget("gearbox-option", refs)).toBe(
+      manualAddButton,
+    );
+    expect(resolveWizardFocusTarget("spec-selection", refs)).toBe(
+      tireWidthInput,
+    );
   });
 
   test("prefers the first available option control before fallback inputs", () => {
@@ -68,7 +76,10 @@ describe("resolveWizardFocusTarget", () => {
     expect(
       resolveWizardFocusTarget(
         "gearbox-option",
-        makeFocusElements({ gearboxOption, manualAddButton: {} as HTMLButtonElement }),
+        makeFocusElements({
+          gearboxOption,
+          manualAddButton: {} as HTMLButtonElement,
+        }),
       ),
     ).toBe(gearboxOption);
     expect(

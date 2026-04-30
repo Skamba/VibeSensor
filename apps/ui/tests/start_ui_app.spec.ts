@@ -22,7 +22,10 @@ test("startUiApp returns a disposable mounted app handle", () => {
   const host = createHostStub();
   const originalDocument = globalThis.document;
   let runtimeCreations = 0;
-  const renderCalls: Array<{ host: Element | DocumentFragment; vnode: unknown }> = [];
+  const renderCalls: Array<{
+    host: Element | DocumentFragment;
+    vnode: unknown;
+  }> = [];
   let startCalls = 0;
   let disposeCalls = 0;
 

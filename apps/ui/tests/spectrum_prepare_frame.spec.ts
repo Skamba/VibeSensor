@@ -38,10 +38,17 @@ describe("createSpectrumCanvasRenderer frame preparation", () => {
 
         expect(prepared.hasData).toBe(true);
         expect(Array.from(prepared.freqAxis)).toEqual([10, 15, 20]);
-        expect(prepared.entries.map((entry) => entry.id)).toEqual(["sensor-a", "sensor-b"]);
+        expect(prepared.entries.map((entry) => entry.id)).toEqual([
+          "sensor-a",
+          "sensor-b",
+        ]);
         expect(prepared.frame?.values[1]).toHaveLength(3);
-        expect(prepared.entries[1]?.values.every((value) => Number.isFinite(value))).toBe(true);
-        expect(prepared.entries[1]?.values[0]).toBeGreaterThan(prepared.entries[1]?.values[2] ?? 0);
+        expect(
+          prepared.entries[1]?.values.every((value) => Number.isFinite(value)),
+        ).toBe(true);
+        expect(prepared.entries[1]?.values[0]).toBeGreaterThan(
+          prepared.entries[1]?.values[2] ?? 0,
+        );
       },
     );
   });

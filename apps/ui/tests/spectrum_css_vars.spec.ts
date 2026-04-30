@@ -11,7 +11,8 @@ describe("spectrum_css_vars", () => {
       "--tooltip-bg": "rgba(1, 2, 3, 0.9)",
       "--tooltip-fg": "#fefefe",
     };
-    let themeChangeHandler: ((event: MediaQueryListEvent) => void) | null = null;
+    let themeChangeHandler: ((event: MediaQueryListEvent) => void) | null =
+      null;
     let readCount = 0;
     globalThis.getComputedStyle = (() => {
       readCount += 1;
@@ -19,18 +20,23 @@ describe("spectrum_css_vars", () => {
         getPropertyValue(name: string): string {
           return styleValues[name] ?? "";
         },
-        } as CSSStyleDeclaration;
+      } as CSSStyleDeclaration;
     }) as typeof getComputedStyle;
     globalThis.matchMedia = (() => ({
       matches: false,
       media: "(prefers-color-scheme: dark)",
       onchange: null,
-      addEventListener: (_type: string, handler: (event: MediaQueryListEvent) => void) => {
+      addEventListener: (
+        _type: string,
+        handler: (event: MediaQueryListEvent) => void,
+      ) => {
         themeChangeHandler = handler;
       },
       removeEventListener: () => undefined,
       addListener: () => {
-        throw new Error("Deprecated MediaQueryList.addListener should not be used");
+        throw new Error(
+          "Deprecated MediaQueryList.addListener should not be used",
+        );
       },
       removeListener: () => undefined,
       dispatchEvent: () => false,

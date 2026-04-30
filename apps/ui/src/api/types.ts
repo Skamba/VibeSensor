@@ -1,6 +1,7 @@
 import type { components } from "../generated/http_api_contracts";
 
-type Schema<Name extends keyof components["schemas"]> = components["schemas"][Name];
+type Schema<Name extends keyof components["schemas"]> =
+  components["schemas"][Name];
 
 export type AnalysisSettingsRequest = Schema<"AnalysisSettingsRequest">;
 export type AnalysisSettingsPayload = Schema<"AnalysisSettingsResponse">;
@@ -18,7 +19,8 @@ export type CarsPayload = Schema<"CarsResponse">;
 export type ClientLocationsResponse = Schema<"ClientLocationsResponse">;
 export type DeleteHistoryRunPayload = Schema<"DeleteHistoryRunResponse">;
 export type EspFlashCancelPayload = Schema<"EspFlashCancelResponse">;
-export type EspFlashHistoryAttemptPayload = Schema<"EspFlashHistoryEntryResponse">;
+export type EspFlashHistoryAttemptPayload =
+  Schema<"EspFlashHistoryEntryResponse">;
 export type EspFlashHistoryPayload = Schema<"EspFlashHistoryResponse">;
 export type EspFlashLogsPayload = Schema<"EspFlashLogsResponse">;
 export type EspFlashPortsPayload = Schema<"EspFlashPortsResponse">;
@@ -27,13 +29,19 @@ export type EspFlashStatusPayload = Schema<"EspFlashStatusResponse">;
 export type EspSerialPortPayload = Schema<"EspSerialPortResponse">;
 export type HealthStatusPayload = Schema<"HealthResponse">;
 export type HistoryEntry = Schema<"HistoryListEntryResponse">;
-export type HistoryInsightWarningPayload = Schema<"HistoryInsightWarningResponse">;
-export type HistoryInsightsAnalyzingPayload = Schema<"HistoryInsightsAnalyzingResponse">;
+export type HistoryInsightWarningPayload =
+  Schema<"HistoryInsightWarningResponse">;
+export type HistoryInsightsAnalyzingPayload =
+  Schema<"HistoryInsightsAnalyzingResponse">;
 export type HistoryInsightsPayload = Schema<"HistoryInsightsResponse">;
-export type HistoryInsightsResult = HistoryInsightsPayload | HistoryInsightsAnalyzingPayload;
+export type HistoryInsightsResult =
+  | HistoryInsightsPayload
+  | HistoryInsightsAnalyzingPayload;
 export type HistoryListPayload = Schema<"HistoryListResponse">;
 export type HistoryRunPayload = Schema<"HistoryRunResponse">;
-export type HistoryRunAnalysisPayload = NonNullable<HistoryRunPayload["analysis"]>;
+export type HistoryRunAnalysisPayload = NonNullable<
+  HistoryRunPayload["analysis"]
+>;
 export type LanguagePayload = Schema<"LanguageResponse">;
 export type LocationOption = Schema<"LocationOptionResponse">;
 export type LoggingStatusPayload = Schema<"RecordingStatusResponse">;

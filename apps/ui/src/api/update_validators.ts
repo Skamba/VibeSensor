@@ -177,7 +177,9 @@ const healthStatusPayloadSchema = v.looseObject({
   tick_duration_s: finiteNumberSchema,
 });
 
-export function parseUpdateStatusPayload(payload: unknown): UpdateStatusPayload {
+export function parseUpdateStatusPayload(
+  payload: unknown,
+): UpdateStatusPayload {
   return parseRuntimeBoundary({
     boundary: "update status response",
     payload,
@@ -185,7 +187,9 @@ export function parseUpdateStatusPayload(payload: unknown): UpdateStatusPayload 
   });
 }
 
-export function parseUsbInternetStatusPayload(payload: unknown): UsbInternetStatusPayload {
+export function parseUsbInternetStatusPayload(
+  payload: unknown,
+): UsbInternetStatusPayload {
   return parseRuntimeBoundary({
     boundary: "USB internet status response",
     payload,
@@ -193,7 +197,9 @@ export function parseUsbInternetStatusPayload(payload: unknown): UsbInternetStat
   });
 }
 
-export function parseHealthStatusPayload(payload: unknown): HealthStatusPayload {
+export function parseHealthStatusPayload(
+  payload: unknown,
+): HealthStatusPayload {
   return parseRuntimeBoundary({
     boundary: "health status response",
     payload,

@@ -14,7 +14,9 @@ export type LiveSensorPayloadOptions = Omit<FakeWebSocketOptions, "payload"> & {
   speedMps?: number | null;
 };
 
-function withCanonicalClientCadence(payload: Record<string, unknown>): Record<string, unknown> {
+function withCanonicalClientCadence(
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
   const rawClients = payload.clients;
   if (!Array.isArray(rawClients)) {
     return payload;
@@ -22,7 +24,11 @@ function withCanonicalClientCadence(payload: Record<string, unknown>): Record<st
   return {
     ...payload,
     clients: rawClients.map((client) => {
-      if (typeof client !== "object" || client === null || Array.isArray(client)) {
+      if (
+        typeof client !== "object" ||
+        client === null ||
+        Array.isArray(client)
+      ) {
         return client;
       }
       if ("frame_samples" in client) {
@@ -36,93 +42,113 @@ function withCanonicalClientCadence(payload: Record<string, unknown>): Record<st
   };
 }
 
-export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
-  await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs, trackerKey }) => {
-    const mergedPayload = payload
-      ? {
-          schema_version: schemaVersion,
-          server_time: new Date().toISOString(),
-          speed_mps: null,
-          clients: [],
-          selected_client_id: null,
-          rotational_speeds: null,
-          ...payload,
-        }
-      : null;
-    const globalState = window as Window & typeof globalThis & Record<string, unknown>;
-    const tracker = trackerKey
-      ? {
-          deliveredCount: 0,
-          repeatTimerActive: false,
-        }
-      : null;
-    if (trackerKey && tracker) {
-      globalState[trackerKey] = tracker;
-    }
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      repeatTimer = 0;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        if (mergedPayload) {
-          const emitPayload = () => {
-            if (tracker) {
-              tracker.deliveredCount += 1;
-            }
-            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(mergedPayload) }));
-          };
-          queueMicrotask(emitPayload);
-          if ((repeatPayloadCount ?? 0) > 0) {
-            if (tracker) {
-              tracker.repeatTimerActive = true;
-            }
-            let remainingRepeats = repeatPayloadCount ?? 0;
-            this.repeatTimer = window.setInterval(() => {
-              if (this.readyState !== FakeWebSocket.OPEN) {
-                window.clearInterval(this.repeatTimer);
-                this.repeatTimer = 0;
-                if (tracker) {
-                  tracker.repeatTimerActive = false;
-                }
-                return;
+export async function installFakeWebSocket(
+  page: Page,
+  options: FakeWebSocketOptions = {},
+): Promise<void> {
+  await page.addInitScript(
+    ({
+      payload,
+      schemaVersion,
+      repeatPayloadCount,
+      repeatPayloadIntervalMs,
+      trackerKey,
+    }) => {
+      const mergedPayload = payload
+        ? {
+            schema_version: schemaVersion,
+            server_time: new Date().toISOString(),
+            speed_mps: null,
+            clients: [],
+            selected_client_id: null,
+            rotational_speeds: null,
+            ...payload,
+          }
+        : null;
+      const globalState = window as Window &
+        typeof globalThis &
+        Record<string, unknown>;
+      const tracker = trackerKey
+        ? {
+            deliveredCount: 0,
+            repeatTimerActive: false,
+          }
+        : null;
+      if (trackerKey && tracker) {
+        globalState[trackerKey] = tracker;
+      }
+      class FakeWebSocket {
+        static OPEN = 1;
+        readyState = 1;
+        onopen: ((event: Event) => void) | null = null;
+        onmessage: ((event: MessageEvent<string>) => void) | null = null;
+        onclose: ((event: CloseEvent) => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+        repeatTimer = 0;
+        constructor() {
+          queueMicrotask(() => this.onopen?.(new Event("open")));
+          if (mergedPayload) {
+            const emitPayload = () => {
+              if (tracker) {
+                tracker.deliveredCount += 1;
               }
-              emitPayload();
-              remainingRepeats -= 1;
-              if (remainingRepeats <= 0) {
-                window.clearInterval(this.repeatTimer);
-                this.repeatTimer = 0;
-                if (tracker) {
-                  tracker.repeatTimerActive = false;
-                }
+              this.onmessage?.(
+                new MessageEvent("message", {
+                  data: JSON.stringify(mergedPayload),
+                }),
+              );
+            };
+            queueMicrotask(emitPayload);
+            if ((repeatPayloadCount ?? 0) > 0) {
+              if (tracker) {
+                tracker.repeatTimerActive = true;
               }
-            }, repeatPayloadIntervalMs ?? 50);
+              let remainingRepeats = repeatPayloadCount ?? 0;
+              this.repeatTimer = window.setInterval(() => {
+                if (this.readyState !== FakeWebSocket.OPEN) {
+                  window.clearInterval(this.repeatTimer);
+                  this.repeatTimer = 0;
+                  if (tracker) {
+                    tracker.repeatTimerActive = false;
+                  }
+                  return;
+                }
+                emitPayload();
+                remainingRepeats -= 1;
+                if (remainingRepeats <= 0) {
+                  window.clearInterval(this.repeatTimer);
+                  this.repeatTimer = 0;
+                  if (tracker) {
+                    tracker.repeatTimerActive = false;
+                  }
+                }
+              }, repeatPayloadIntervalMs ?? 50);
+            }
           }
         }
-      }
-      send() {}
-      close() {
-        if (this.repeatTimer) {
-          window.clearInterval(this.repeatTimer);
-          this.repeatTimer = 0;
-          if (tracker) {
-            tracker.repeatTimerActive = false;
+        send() {}
+        close() {
+          if (this.repeatTimer) {
+            window.clearInterval(this.repeatTimer);
+            this.repeatTimer = 0;
+            if (tracker) {
+              tracker.repeatTimerActive = false;
+            }
           }
+          this.readyState = 3;
+          this.onclose?.(new CloseEvent("close"));
         }
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
       }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  }, {
-    ...options,
-    payload: options.payload ? withCanonicalClientCadence(options.payload) : undefined,
-    schemaVersion: EXPECTED_SCHEMA_VERSION,
-  });
+      window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    },
+    {
+      ...options,
+      payload: options.payload
+        ? withCanonicalClientCadence(options.payload)
+        : undefined,
+      schemaVersion: EXPECTED_SCHEMA_VERSION,
+    },
+  );
 }
 
 async function installLiveSensorPayload(
@@ -152,29 +178,33 @@ export async function waitForFakeWebSocketSettled(
   trackerKey: string,
   minimumDeliveredCount: number,
 ): Promise<void> {
-  await expect.poll(async () => {
-    const tracker = await page.evaluate((key) => {
-      const tracker = (
-        window as Window & typeof globalThis & Record<string, unknown>
-      )[key];
-      if (
-        typeof tracker !== "object"
-        || tracker === null
-        || !("deliveredCount" in tracker)
-        || !("repeatTimerActive" in tracker)
-        || typeof tracker.deliveredCount !== "number"
-        || typeof tracker.repeatTimerActive !== "boolean"
-      ) {
-        throw new Error(`Missing fake WebSocket tracker: ${key}`);
-      }
-      return {
-        deliveredCount: tracker.deliveredCount,
-        repeatTimerActive: tracker.repeatTimerActive,
-      };
-    }, trackerKey);
-    return tracker.repeatTimerActive === false
-      && tracker.deliveredCount >= minimumDeliveredCount;
-  }).toBe(true);
+  await expect
+    .poll(async () => {
+      const tracker = await page.evaluate((key) => {
+        const tracker = (
+          window as Window & typeof globalThis & Record<string, unknown>
+        )[key];
+        if (
+          typeof tracker !== "object" ||
+          tracker === null ||
+          !("deliveredCount" in tracker) ||
+          !("repeatTimerActive" in tracker) ||
+          typeof tracker.deliveredCount !== "number" ||
+          typeof tracker.repeatTimerActive !== "boolean"
+        ) {
+          throw new Error(`Missing fake WebSocket tracker: ${key}`);
+        }
+        return {
+          deliveredCount: tracker.deliveredCount,
+          repeatTimerActive: tracker.repeatTimerActive,
+        };
+      }, trackerKey);
+      return (
+        tracker.repeatTimerActive === false &&
+        tracker.deliveredCount >= minimumDeliveredCount
+      );
+    })
+    .toBe(true);
 }
 
 export async function confirmPrompt(page: Page): Promise<void> {
@@ -208,10 +238,20 @@ export type BootLiveDashboardOptions = CommonRouteOptions & {
   liveSensorPayload?: LiveSensorPayloadOptions;
 };
 
-export type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | undefined>);
+export type SettingsRouteValue =
+  | unknown
+  | ((
+      route: Route,
+      path: string,
+      method: string,
+    ) => Promise<unknown | undefined>);
 
 function jsonOk(body: unknown) {
-  return { status: 200, contentType: "application/json", body: JSON.stringify(body) };
+  return {
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(body),
+  };
 }
 
 export function normalizePathname(pathname: string): string {
@@ -257,33 +297,30 @@ export async function readSemanticToneStyles(
     textVar?: string;
   },
 ): Promise<SemanticToneStyles> {
-  return locator.evaluate(
-    (element, vars) => {
-      const probe = document.createElement("div");
-      probe.style.background = `var(${vars.surfaceVar})`;
-      probe.style.border = vars.borderVar
-        ? `1px solid var(${vars.borderVar})`
-        : "1px solid transparent";
-      probe.style.color = vars.textVar ? `var(${vars.textVar})` : "inherit";
-      probe.style.position = "absolute";
-      probe.style.visibility = "hidden";
-      probe.style.pointerEvents = "none";
-      document.body.appendChild(probe);
-      const elementStyles = getComputedStyle(element);
-      const probeStyles = getComputedStyle(probe);
-      const result = {
-        backgroundColor: elementStyles.backgroundColor,
-        borderColor: elementStyles.borderTopColor,
-        color: elementStyles.color,
-        expectedBackgroundColor: probeStyles.backgroundColor,
-        expectedBorderColor: probeStyles.borderTopColor,
-        expectedColor: probeStyles.color,
-      };
-      probe.remove();
-      return result;
-    },
-    vars,
-  );
+  return locator.evaluate((element, vars) => {
+    const probe = document.createElement("div");
+    probe.style.background = `var(${vars.surfaceVar})`;
+    probe.style.border = vars.borderVar
+      ? `1px solid var(${vars.borderVar})`
+      : "1px solid transparent";
+    probe.style.color = vars.textVar ? `var(${vars.textVar})` : "inherit";
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    document.body.appendChild(probe);
+    const elementStyles = getComputedStyle(element);
+    const probeStyles = getComputedStyle(probe);
+    const result = {
+      backgroundColor: elementStyles.backgroundColor,
+      borderColor: elementStyles.borderTopColor,
+      color: elementStyles.color,
+      expectedBackgroundColor: probeStyles.backgroundColor,
+      expectedBorderColor: probeStyles.borderTopColor,
+      expectedColor: probeStyles.color,
+    };
+    probe.remove();
+    return result;
+  }, vars);
 }
 
 export async function readSemanticSurfaceStyles(
@@ -291,7 +328,10 @@ export async function readSemanticSurfaceStyles(
   surfaceVar: string,
   borderVar: string,
 ): Promise<SemanticSurfaceStyles> {
-  const styles = await readSemanticToneStyles(locator, { surfaceVar, borderVar });
+  const styles = await readSemanticToneStyles(locator, {
+    surfaceVar,
+    borderVar,
+  });
   return {
     backgroundColor: styles.backgroundColor,
     borderColor: styles.borderColor,
@@ -337,16 +377,18 @@ function readinessCheck(
   };
 }
 
-export function buildCaptureReadiness(input: CaptureReadinessInput): Record<string, unknown> {
-  const overall = input.overall ?? (
-    input.isReady
+export function buildCaptureReadiness(
+  input: CaptureReadinessInput,
+): Record<string, unknown> {
+  const overall =
+    input.overall ??
+    (input.isReady
       ? { state: "pass", reasonKey: "capture_ready", details: {} }
       : {
-        state: "fail",
-        reasonKey: "capture_blocked",
-        details: { blocking_check: "reference_ready" },
-      }
-  );
+          state: "fail",
+          reasonKey: "capture_blocked",
+          details: { blocking_check: "reference_ready" },
+        });
   return {
     is_ready: input.isReady,
     checks: [
@@ -358,7 +400,10 @@ export function buildCaptureReadiness(input: CaptureReadinessInput): Record<stri
   };
 }
 
-export async function installCommonRoutes(page: Page, options: CommonRouteOptions = {}): Promise<void> {
+export async function installCommonRoutes(
+  page: Page,
+  options: CommonRouteOptions = {},
+): Promise<void> {
   await page.route("**/api/recording/status", async (route) => {
     await fulfillJson(route, {
       enabled: false,
@@ -497,7 +542,9 @@ export async function openHistoryTab(page: Page): Promise<void> {
   await page.locator("#tab-history").click();
 }
 
-export function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {
+export function createSettingsHandlerFromMap(
+  settingsMap: Record<string, SettingsRouteValue>,
+) {
   return async (route: Route): Promise<void> => {
     const path = requestPath(route);
     const method = route.request().method();

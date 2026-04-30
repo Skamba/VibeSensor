@@ -252,6 +252,10 @@ jobs:
         working-directory: apps/ui
         run: npm run lint
 
+      - name: UI format check
+        working-directory: apps/ui
+        run: npm run format:check
+
       - name: UI dependency boundary checks
         working-directory: apps/ui
         run: npm run lint:deps

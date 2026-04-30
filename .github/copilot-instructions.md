@@ -51,7 +51,7 @@ Commands
 - `make lint`
 - `make typecheck-backend`
 - `make sync-contracts`
-- `make ui-typecheck` (default frontend validation path: materialize generated UI contract artifacts, then run UI lint and TypeScript checks)
+- `make ui-typecheck` (default frontend validation path: materialize generated UI contract artifacts, then run UI format drift, lint, and TypeScript checks)
 - `make docs-lint`
 - `make plan-validation` (primary AI/dev validation planner: changed-file CI plan, local command, ACT command, and JSON summary)
 - `python3 tools/tests/plan_validation.py --run` (run the planned non-Docker local CI jobs)
@@ -87,7 +87,7 @@ Validation chooser
 - Docs or AI-instruction-only changes: `make docs-lint`.
 
 Command gotchas
-- `make ui-typecheck` is the default frontend gate because it materializes generated UI contract artifacts before linting and TypeScript checks.
+- `make ui-typecheck` is the default frontend gate because it materializes generated UI contract artifacts before checking Biome formatting, linting, and TypeScript.
 - Raw `cd apps/ui && npm run typecheck` or `npm run build` can fail when generated UI contract files are stale; run `make sync-contracts` or `make ui-typecheck` first when backend contracts changed.
 - `act` requires Docker; prefer `tools/tests/run_ci_with_act.sh` when validating PR changed-file CI scope because it generates base/head SHAs for the pull-request event.
 - PlatformIO must be installed before `cd firmware/esp && pio run`.

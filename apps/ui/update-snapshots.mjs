@@ -8,7 +8,8 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CHROME_EXEC = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
+const CHROME_EXEC =
+  "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
 const SERVER_PORT = 4176;
 const SERVER_TIMEOUT_MS = 25_000;
 const PAGE_TIMEOUT_MS = 15_000;
@@ -16,21 +17,32 @@ const SNAPSHOT_DIR = "tests/snapshots/visual.spec.ts";
 
 const VIEWPORT_CONFIGS = [
   ["laptop-light", { width: 1280, height: 800 }, "light"],
-  ["laptop-dark",  { width: 1280, height: 800 }, "dark"],
+  ["laptop-dark", { width: 1280, height: 800 }, "dark"],
   ["tablet-light", { width: 810, height: 1080 }, "light"],
-  ["tablet-dark",  { width: 810, height: 1080 }, "dark"],
+  ["tablet-dark", { width: 810, height: 1080 }, "dark"],
 ];
 
 async function startServer(cwd) {
   return new Promise((resolve, reject) => {
     const server = spawn(
       "node",
-      ["node_modules/.bin/vite", "preview", "--host", "0.0.0.0", "--strictPort", "--port", String(SERVER_PORT)],
+      [
+        "node_modules/.bin/vite",
+        "preview",
+        "--host",
+        "0.0.0.0",
+        "--strictPort",
+        "--port",
+        String(SERVER_PORT),
+      ],
       { cwd, stdio: ["ignore", "pipe", "pipe"] },
     );
     let started = false;
     const timer = setTimeout(() => {
-      if (!started) { server.kill(); reject(new Error("Server start timeout")); }
+      if (!started) {
+        server.kill();
+        reject(new Error("Server start timeout"));
+      }
     }, SERVER_TIMEOUT_MS);
     server.stdout.on("data", (d) => {
       if (!started && d.toString().includes(String(SERVER_PORT))) {
@@ -60,7 +72,11 @@ async function main() {
 
     browser = await chromium.launch({
       executablePath: CHROME_EXEC,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
     });
 
     // ----- Snapshot: live-view (laptop-light) -----
@@ -68,13 +84,20 @@ async function main() {
     for (const [projectName, viewport, colorScheme] of VIEWPORT_CONFIGS) {
       const ctx = await browser.newContext({ viewport, colorScheme });
       const page = await ctx.newPage();
-      await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
-      await page.waitForSelector(".car-map-dot--visible", { timeout: PAGE_TIMEOUT_MS });
+      await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
+        timeout: PAGE_TIMEOUT_MS,
+      });
+      await page.waitForSelector(".car-map-dot--visible", {
+        timeout: PAGE_TIMEOUT_MS,
+      });
       await page.waitForFunction(
         () => document.querySelector(".log-row .log-time") !== null,
         { timeout: PAGE_TIMEOUT_MS },
       );
-      const buf = await page.screenshot({ fullPage: true, animations: "disabled" });
+      const buf = await page.screenshot({
+        fullPage: true,
+        animations: "disabled",
+      });
       savePng(`${SNAPSHOT_DIR}/live-view-${projectName}.png`, buf);
       await ctx.close();
     }
@@ -84,11 +107,16 @@ async function main() {
     for (const [projectName, viewport, colorScheme] of VIEWPORT_CONFIGS) {
       const ctx = await browser.newContext({ viewport, colorScheme });
       const page = await ctx.newPage();
-      await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
+      await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
+        timeout: PAGE_TIMEOUT_MS,
+      });
       await page.click('[data-view="settingsView"]');
       await page.click('[data-settings-tab="analysisTab"]');
       await page.waitForSelector("#analysisTab.active", { timeout: 8_000 });
-      const buf = await page.screenshot({ fullPage: true, animations: "disabled" });
+      const buf = await page.screenshot({
+        fullPage: true,
+        animations: "disabled",
+      });
       savePng(`${SNAPSHOT_DIR}/settings-analysis-${projectName}.png`, buf);
       await ctx.close();
     }
@@ -100,4 +128,7 @@ async function main() {
   }
 }
 
-main().catch((err) => { console.error("Snapshot update failed:", err.message); process.exit(1); });
+main().catch((err) => {
+  console.error("Snapshot update failed:", err.message);
+  process.exit(1);
+});

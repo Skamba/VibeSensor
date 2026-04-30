@@ -1,10 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import {
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { computed, signal, type ReadonlySignal } from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import {
@@ -37,15 +33,22 @@ export interface UpdateFeature {
 }
 
 function isUpdatePollingContext(viewId: string, tabId: string): boolean {
-  return viewId === "settingsView" && (tabId === "internetTab" || tabId === "updateTab");
+  return (
+    viewId === "settingsView" &&
+    (tabId === "internetTab" || tabId === "updateTab")
+  );
 }
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { panels, ports, services } = ctx;
   const handlersBound = signal(false);
-  const pollingEnabled = computed(() =>
-    handlersBound.value
-    && isUpdatePollingContext(ports.activeViewId.value, ports.activeSettingsTabId.value)
+  const pollingEnabled = computed(
+    () =>
+      handlersBound.value &&
+      isUpdatePollingContext(
+        ports.activeViewId.value,
+        ports.activeSettingsTabId.value,
+      ),
   );
   let presenter!: UpdateFeaturePresenter;
   const workflow = createUpdateFeatureWorkflow({

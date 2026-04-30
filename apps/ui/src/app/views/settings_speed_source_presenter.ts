@@ -314,15 +314,16 @@ export function buildSettingsSpeedSourcePanelModel(
       }),
     },
     diagnosticsShouldOpen:
-      state.diagnosticsOpen
-      || resolveEffectiveSpeedSource(state.settings) !== state.settings.speedSource,
+      state.diagnosticsOpen ||
+      resolveEffectiveSpeedSource(state.settings) !==
+        state.settings.speedSource,
     manualConfigVisible: state.selectedMode === "manual",
     manualSpeedFeedback: state.manualSpeedFeedback,
     manualSpeedInputValue: state.manualSpeedInputValue,
     obdConfigVisible: state.selectedMode === "obd2",
     obdConfiguredDeviceText: formatConfiguredObdDevice(state.settings, deps.t),
     obdDevices: state.scannedDevices.map((device) =>
-      buildObdDeviceModel(device, state, deps.t)
+      buildObdDeviceModel(device, state, deps.t),
     ),
     obdScanStatusText:
       state.obdScanStatusMessage ?? deps.t("settings.speed.obd_scan_idle"),
@@ -357,8 +358,8 @@ export function buildSpeedSourceDiagnosticsRenderModel(
       fallbackText: boolLabel(status.fallback_active, deps.t),
       lastErrorText: status.last_error ?? "--",
       lastUpdateText:
-        formatAgeSeconds(status.last_update_age_s, deps.t)
-        ?? deps.t("settings.speed.last_update_never"),
+        formatAgeSeconds(status.last_update_age_s, deps.t) ??
+        deps.t("settings.speed.last_update_never"),
       rawSpeedText: formatSpeedValue(status.raw_speed_kmh, deps),
       reconnectText:
         status.reconnect_delay_s != null
@@ -395,8 +396,8 @@ export function buildSpeedSourceDiagnosticsRenderModel(
           rpmAgeText:
             formatAgeSeconds(obdStatus.rpm_sample_age_s, deps.t) ?? "--",
           targetCadenceText:
-            formatCadenceFromTarget(obdStatus.rpm_target_interval_ms, deps)
-            ?? "--",
+            formatCadenceFromTarget(obdStatus.rpm_target_interval_ms, deps) ??
+            "--",
           timeoutsText: String(obdStatus.timeout_count),
           trustedText: boolLabel(obdStatus.trusted, deps.t),
           visible: true,

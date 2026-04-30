@@ -2,7 +2,9 @@ import * as v from "valibot";
 
 type IssuePathItem = { key?: unknown };
 
-function formatIssuePath(path: ReadonlyArray<IssuePathItem> | undefined): string {
+function formatIssuePath(
+  path: ReadonlyArray<IssuePathItem> | undefined,
+): string {
   if (!path || path.length === 0) {
     return "/";
   }

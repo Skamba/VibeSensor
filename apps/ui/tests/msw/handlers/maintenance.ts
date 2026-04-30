@@ -158,70 +158,115 @@ function makeEspFlashCancelPayload(
   };
 }
 
-export function buildUpdateHandlers(options: {
-  status?: ScenarioInput<UpdateStatusPayload>;
-  health?: ScenarioInput<HealthStatusPayload>;
-  internet?: ScenarioInput<UsbInternetStatusPayload>;
-  start?: ScenarioInput<UpdateStartPayload>;
-  cancel?: ScenarioInput<UpdateCancelPayload>;
-  startRequests?: UpdateStartRequestPayload[];
-  onStartRequest?: (payload: UpdateStartRequestPayload) => void;
-} = {}) {
-  const resolveStatus = createScenarioResolver(options.status ?? createIdleUpdateStatus());
-  const resolveHealth = createScenarioResolver(options.health ?? createHealthyUpdateStatus());
-  const resolveInternet = createScenarioResolver(options.internet ?? createUsbInternetStatus());
-  const resolveStart = createScenarioResolver(options.start ?? makeUpdateStartPayload());
-  const resolveCancel = createScenarioResolver(options.cancel ?? makeUpdateCancelPayload());
+export function buildUpdateHandlers(
+  options: {
+    status?: ScenarioInput<UpdateStatusPayload>;
+    health?: ScenarioInput<HealthStatusPayload>;
+    internet?: ScenarioInput<UsbInternetStatusPayload>;
+    start?: ScenarioInput<UpdateStartPayload>;
+    cancel?: ScenarioInput<UpdateCancelPayload>;
+    startRequests?: UpdateStartRequestPayload[];
+    onStartRequest?: (payload: UpdateStartRequestPayload) => void;
+  } = {},
+) {
+  const resolveStatus = createScenarioResolver(
+    options.status ?? createIdleUpdateStatus(),
+  );
+  const resolveHealth = createScenarioResolver(
+    options.health ?? createHealthyUpdateStatus(),
+  );
+  const resolveInternet = createScenarioResolver(
+    options.internet ?? createUsbInternetStatus(),
+  );
+  const resolveStart = createScenarioResolver(
+    options.start ?? makeUpdateStartPayload(),
+  );
+  const resolveCancel = createScenarioResolver(
+    options.cancel ?? makeUpdateCancelPayload(),
+  );
   return [
-    http.get(uiTestUrl("/api/update/status"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveStatus)),
-    http.get(uiTestUrl("/api/health"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveHealth)),
-    http.get(uiTestUrl("/api/update/internet-status"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveInternet)),
+    http.get(
+      uiTestUrl("/api/update/status"),
+      async ({ request }) => await resolveJsonScenario(request, resolveStatus),
+    ),
+    http.get(
+      uiTestUrl("/api/health"),
+      async ({ request }) => await resolveJsonScenario(request, resolveHealth),
+    ),
+    http.get(
+      uiTestUrl("/api/update/internet-status"),
+      async ({ request }) =>
+        await resolveJsonScenario(request, resolveInternet),
+    ),
     http.post(uiTestUrl("/api/update/start"), async ({ request }) => {
-      const payload = await request.json() as UpdateStartRequestPayload;
+      const payload = (await request.json()) as UpdateStartRequestPayload;
       options.startRequests?.push(payload);
       options.onStartRequest?.(payload);
       return await resolveJsonScenario(request, resolveStart);
     }),
-    http.post(uiTestUrl("/api/update/cancel"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveCancel)),
+    http.post(
+      uiTestUrl("/api/update/cancel"),
+      async ({ request }) => await resolveJsonScenario(request, resolveCancel),
+    ),
   ];
 }
 
-export function buildEspFlashHandlers(options: {
-  ports?: ScenarioInput<EspFlashPortsPayload>;
-  status?: ScenarioInput<EspFlashStatusPayload>;
-  logs?: ScenarioInput<EspFlashLogsPayload>;
-  history?: ScenarioInput<EspFlashHistoryPayload>;
-  start?: ScenarioInput<EspFlashStartPayload>;
-  cancel?: ScenarioInput<EspFlashCancelPayload>;
-  startRequests?: EspFlashStartRequestPayload[];
-  onStartRequest?: (payload: EspFlashStartRequestPayload) => void;
-} = {}) {
-  const resolvePorts = createScenarioResolver(options.ports ?? makeEspFlashPortsPayload());
-  const resolveStatus = createScenarioResolver(options.status ?? makeEspFlashStatusPayload());
-  const resolveLogs = createScenarioResolver(options.logs ?? makeEspFlashLogsPayload());
-  const resolveHistory = createScenarioResolver(options.history ?? makeEspFlashHistoryPayload());
-  const resolveStart = createScenarioResolver(options.start ?? makeEspFlashStartPayload());
-  const resolveCancel = createScenarioResolver(options.cancel ?? makeEspFlashCancelPayload());
+export function buildEspFlashHandlers(
+  options: {
+    ports?: ScenarioInput<EspFlashPortsPayload>;
+    status?: ScenarioInput<EspFlashStatusPayload>;
+    logs?: ScenarioInput<EspFlashLogsPayload>;
+    history?: ScenarioInput<EspFlashHistoryPayload>;
+    start?: ScenarioInput<EspFlashStartPayload>;
+    cancel?: ScenarioInput<EspFlashCancelPayload>;
+    startRequests?: EspFlashStartRequestPayload[];
+    onStartRequest?: (payload: EspFlashStartRequestPayload) => void;
+  } = {},
+) {
+  const resolvePorts = createScenarioResolver(
+    options.ports ?? makeEspFlashPortsPayload(),
+  );
+  const resolveStatus = createScenarioResolver(
+    options.status ?? makeEspFlashStatusPayload(),
+  );
+  const resolveLogs = createScenarioResolver(
+    options.logs ?? makeEspFlashLogsPayload(),
+  );
+  const resolveHistory = createScenarioResolver(
+    options.history ?? makeEspFlashHistoryPayload(),
+  );
+  const resolveStart = createScenarioResolver(
+    options.start ?? makeEspFlashStartPayload(),
+  );
+  const resolveCancel = createScenarioResolver(
+    options.cancel ?? makeEspFlashCancelPayload(),
+  );
   return [
-    http.get(uiTestUrl("/api/esp-flash/ports"), async ({ request }) =>
-      await resolveJsonScenario(request, resolvePorts)),
-    http.get(uiTestUrl("/api/esp-flash/status"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveStatus)),
-    http.get(uiTestUrl("/api/esp-flash/logs"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveLogs)),
-    http.get(uiTestUrl("/api/esp-flash/history"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveHistory)),
+    http.get(
+      uiTestUrl("/api/esp-flash/ports"),
+      async ({ request }) => await resolveJsonScenario(request, resolvePorts),
+    ),
+    http.get(
+      uiTestUrl("/api/esp-flash/status"),
+      async ({ request }) => await resolveJsonScenario(request, resolveStatus),
+    ),
+    http.get(
+      uiTestUrl("/api/esp-flash/logs"),
+      async ({ request }) => await resolveJsonScenario(request, resolveLogs),
+    ),
+    http.get(
+      uiTestUrl("/api/esp-flash/history"),
+      async ({ request }) => await resolveJsonScenario(request, resolveHistory),
+    ),
     http.post(uiTestUrl("/api/esp-flash/start"), async ({ request }) => {
-      const payload = await request.json() as EspFlashStartRequestPayload;
+      const payload = (await request.json()) as EspFlashStartRequestPayload;
       options.startRequests?.push(payload);
       options.onStartRequest?.(payload);
       return await resolveJsonScenario(request, resolveStart);
     }),
-    http.post(uiTestUrl("/api/esp-flash/cancel"), async ({ request }) =>
-      await resolveJsonScenario(request, resolveCancel)),
+    http.post(
+      uiTestUrl("/api/esp-flash/cancel"),
+      async ({ request }) => await resolveJsonScenario(request, resolveCancel),
+    ),
   ];
 }

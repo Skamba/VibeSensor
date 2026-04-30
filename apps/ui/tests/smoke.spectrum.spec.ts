@@ -16,16 +16,22 @@ const strengthMetrics = {
   peak_amp_g: 0.2,
   noise_floor_amp_g: 0.01,
   strength_bucket: null,
-  top_peaks: [{ hz: 1, amp: 0.3, vibration_strength_db: 12, strength_bucket: "l2" }],
+  top_peaks: [
+    { hz: 1, amp: 0.3, vibration_strength_db: 12, strength_bucket: "l2" },
+  ],
 };
 
-test("spectrum controls simplify the chart and update the inspector", async ({ page }) => {
+test("spectrum controls simplify the chart and update the inspector", async ({
+  page,
+}) => {
   await page.goto("/?demo=1");
 
   const inspector = page.locator("#spectrumInspector");
   const bandToggle = page.locator("#spectrumBandToggle");
   const bandLegend = page.locator("#bandLegend");
-  const allTracesChip = page.getByRole("button", { name: /All sensor traces/i });
+  const allTracesChip = page.getByRole("button", {
+    name: /All sensor traces/i,
+  });
   const adjacentChip = page.getByRole("button", { name: /Front Left Wheel/i });
   const sensorChip = page.getByRole("button", { name: /Front Right Wheel/i });
 
@@ -48,12 +54,20 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
   await expect(bandToggle).toHaveAttribute("aria-expanded", "true");
   await expect(bandToggle).toHaveText("Hide reference bands");
-  await expect(page.locator(".spectrum-toolbar__bands")).toContainText("Hide reference bands");
-  await expect(page.locator(".spectrum-toolbar__bands")).toContainText("Wheel 1x");
+  await expect(page.locator(".spectrum-toolbar__bands")).toContainText(
+    "Hide reference bands",
+  );
+  await expect(page.locator(".spectrum-toolbar__bands")).toContainText(
+    "Wheel 1x",
+  );
   await expect(bandLegend).toBeVisible();
   await expect(bandLegend).toContainText("Wheel 1x");
-  const headerBottom = await page.locator(".site-header").evaluate((el) => el.getBoundingClientRect().bottom);
-  const controlsTop = await page.locator(".spectrum-controls-panel").evaluate((el) => el.getBoundingClientRect().top);
+  const headerBottom = await page
+    .locator(".site-header")
+    .evaluate((el) => el.getBoundingClientRect().bottom);
+  const controlsTop = await page
+    .locator(".spectrum-controls-panel")
+    .evaluate((el) => el.getBoundingClientRect().top);
   expect(controlsTop).toBeGreaterThanOrEqual(headerBottom - 1);
 
   await allTracesChip.click();
@@ -64,7 +78,9 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
   await expect(inspector).toContainText("Strongest:");
 });
 
-test("spectrum controls stay interactive while repeated websocket updates arrive", async ({ page }) => {
+test("spectrum controls stay interactive while repeated websocket updates arrive", async ({
+  page,
+}) => {
   const trackerKey = "__spectrumRepeatTracker";
   await installCommonRoutes(page, {
     locations: [
@@ -74,18 +90,20 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, {
-          cars: [{
-            id: "car-1",
-            name: "Selected",
-            type: "sedan",
-            aspects: {
-              tire_width_mm: 245,
-              tire_aspect_pct: 40,
-              rim_in: 18,
-              final_drive_ratio: 3.91,
-              current_gear_ratio: 0.82,
+          cars: [
+            {
+              id: "car-1",
+              name: "Selected",
+              type: "sedan",
+              aspects: {
+                tire_width_mm: 245,
+                tire_aspect_pct: 40,
+                rim_in: 18,
+                final_drive_ratio: 3.91,
+                current_gear_ratio: 0.82,
+              },
             },
-          }],
+          ],
           active_car_id: "car-1",
         });
         return;
@@ -106,9 +124,17 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
       last_completed_run_error: null,
       capture_readiness: buildCaptureReadiness({
         isReady: true,
-        sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 2 } },
+        sensors: {
+          state: "pass",
+          reasonKey: "sensors_ready",
+          details: { live_sensor_count: 2 },
+        },
         reference: { state: "pass", reasonKey: "reference_ready" },
-        speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+        speed: {
+          state: "pass",
+          reasonKey: "speed_stable",
+          details: { dwell_elapsed_s: 8 },
+        },
       }),
     });
   });
@@ -183,7 +209,9 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
   const bandToggle = page.locator("#spectrumBandToggle");
   const bandLegend = page.locator("#bandLegend");
   const sensorChip = page.getByRole("button", { name: /Front Right Wheel/i });
-  const allTracesChip = page.getByRole("button", { name: /All sensor traces/i });
+  const allTracesChip = page.getByRole("button", {
+    name: /All sensor traces/i,
+  });
 
   await expect(sensorChip).toBeVisible();
   await expect(bandToggle).toBeVisible();
@@ -210,7 +238,9 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
   await expect(inspector).toContainText("Front Right Wheel");
 });
 
-test("spectrum band toggle stays hidden when no spectrum data is available", async ({ page }) => {
+test("spectrum band toggle stays hidden when no spectrum data is available", async ({
+  page,
+}) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
@@ -236,9 +266,17 @@ test("spectrum band toggle stays hidden when no spectrum data is available", asy
       last_completed_run_error: null,
       capture_readiness: buildCaptureReadiness({
         isReady: true,
-        sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+        sensors: {
+          state: "pass",
+          reasonKey: "sensors_ready",
+          details: { live_sensor_count: 1 },
+        },
         reference: { state: "pass", reasonKey: "reference_ready" },
-        speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+        speed: {
+          state: "pass",
+          reasonKey: "speed_stable",
+          details: { dwell_elapsed_s: 8 },
+        },
       }),
     });
   });

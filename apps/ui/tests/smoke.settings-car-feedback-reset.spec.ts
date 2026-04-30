@@ -1,8 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
-test("clears transient car creation feedback after leaving and re-entering the car screen", async ({ page }) => {
+test("clears transient car creation feedback after leaving and re-entering the car screen", async ({
+  page,
+}) => {
   let cars = [] as Array<Record<string, unknown>>;
   let activeCarId: string | null = null;
 
@@ -15,18 +22,20 @@ test("clears transient car creation feedback after leaving and re-entering the c
         return;
       }
       if (path === "/api/settings/cars" && method === "POST") {
-        cars = [{
-          id: "car-1",
-          name: "Track Demo",
-          type: "Coupe",
-          aspects: {
-            tire_width_mm: 225,
-            tire_aspect_pct: 45,
-            rim_in: 18,
-            final_drive_ratio: 3.08,
-            current_gear_ratio: 0.64,
+        cars = [
+          {
+            id: "car-1",
+            name: "Track Demo",
+            type: "Coupe",
+            aspects: {
+              tire_width_mm: 225,
+              tire_aspect_pct: 45,
+              rim_in: 18,
+              final_drive_ratio: 3.08,
+              current_gear_ratio: 0.64,
+            },
           },
-        }];
+        ];
         await fulfillJson(route, { cars, active_car_id: activeCarId });
         return;
       }

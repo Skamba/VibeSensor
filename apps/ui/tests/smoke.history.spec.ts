@@ -25,7 +25,10 @@ test("history empty state points users back to Live", async ({ page }) => {
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
         return;
       }
       await fulfillJson(route, {});
@@ -44,21 +47,32 @@ test("history empty state points users back to Live", async ({ page }) => {
   await expect(emptyState).toContainText("Capture the first run from Live.");
   await expect(emptyState).toContainText("History fills automatically");
   await emptyState.getByRole("button", { name: "Go to Live" }).click();
-  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
 });
 
-test("history rows show diagnostic context before expansion", async ({ page }) => {
+test("history rows show diagnostic context before expansion", async ({
+  page,
+}) => {
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
         return;
       }
       await fulfillJson(route, {});
     },
     historyHandler: async (route) => {
       const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+      if (
+        !pathname.startsWith("/api/history") ||
+        pathname.includes("/insights")
+      ) {
         await route.fallback();
         return;
       }
@@ -76,7 +90,8 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
         suspected_source: "Front-right wheel imbalance",
         location: "Front-right wheel",
         speed_band: "60-90 km/h",
-        explanation: "Order content and spatial dominance agree on the front-right wheel.",
+        explanation:
+          "Order content and spatial dominance agree on the front-right wheel.",
       },
       findings: [
         {
@@ -85,7 +100,8 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
           confidence: 0.92,
           confidence_pct: "92%",
           confidence_tone: "success",
-          evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
+          evidence_summary:
+            "Consistent wheel-order energy remains strongest at the front-right wheel.",
           frequency_hz_or_order: "1x wheel",
           strongest_location: "Front-right wheel",
           strongest_speed_band: "60-90 km/h",
@@ -112,27 +128,47 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
   await expect(row).toContainText("confidence 92%");
   await expect(row).toContainText("Duration: 12.3 s");
   await expect(row).toContainText("Sensors: 2");
-  await expect(row.locator(".history-row__diagnosis-title")).toHaveText("Front-right wheel imbalance");
-  await expect(row.locator(".history-row__diagnosis-meta")).toContainText("confidence 92%");
-  const chipTexts = await row.locator(".history-row__summary-chip").allTextContents();
+  await expect(row.locator(".history-row__diagnosis-title")).toHaveText(
+    "Front-right wheel imbalance",
+  );
+  await expect(row.locator(".history-row__diagnosis-meta")).toContainText(
+    "confidence 92%",
+  );
+  const chipTexts = await row
+    .locator(".history-row__summary-chip")
+    .allTextContents();
   expect(chipTexts).toContain("Analysis ready");
-  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis");
-  await expect(page.locator('[data-run-action="download-pdf"][data-run="run-001"]')).toContainText("PDF");
-  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    page.locator('[data-run-toggle="details"][data-run="run-001"]'),
+  ).toContainText("Open diagnosis");
+  await expect(
+    page.locator('[data-run-action="download-pdf"][data-run="run-001"]'),
+  ).toContainText("PDF");
+  await expect(
+    page.locator('[data-run-toggle="details"][data-run="run-001"]'),
+  ).toHaveAttribute("aria-expanded", "false");
 });
 
-test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
+test("history preview uses dB intensity fields from insights payload", async ({
+  page,
+}) => {
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
         return;
       }
       await fulfillJson(route, {});
     },
     historyHandler: async (route) => {
       const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+      if (
+        !pathname.startsWith("/api/history") ||
+        pathname.includes("/insights")
+      ) {
         await route.fallback();
         return;
       }
@@ -160,13 +196,19 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     });
   });
   await openHistoryTab(page);
-  const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
-  const diagnosisSummary = page.locator('[data-run-row="1"][data-run="run-001"] .history-row__diagnosis');
+  const toggle = page.locator(
+    '[data-run-toggle="details"][data-run="run-001"]',
+  );
+  const diagnosisSummary = page.locator(
+    '[data-run-row="1"][data-run="run-001"] .history-row__diagnosis',
+  );
   await expect(toggle).toContainText("Open diagnosis");
   await expect(diagnosisSummary).toContainText("Duration: 12.3 s");
   await expect(diagnosisSummary).toContainText("Sensors: 1");
   const overflowMetrics = await toggle.evaluate((button) => {
-    const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
+    const title = button.querySelector<HTMLElement>(
+      ".history-row__toggle-title",
+    );
     return {
       buttonClientWidth: button.clientWidth,
       buttonScrollWidth: button.scrollWidth,
@@ -177,48 +219,76 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     };
   });
   const overflowTolerancePx = 2;
-  expect(overflowMetrics.buttonScrollWidth).toBeLessThanOrEqual(overflowMetrics.buttonClientWidth + overflowTolerancePx);
-  expect(overflowMetrics.titleScrollWidth).toBeLessThanOrEqual(overflowMetrics.titleClientWidth + overflowTolerancePx);
-  expect(overflowMetrics.buttonScrollHeight).toBeLessThanOrEqual(overflowMetrics.buttonClientHeight + 1);
+  expect(overflowMetrics.buttonScrollWidth).toBeLessThanOrEqual(
+    overflowMetrics.buttonClientWidth + overflowTolerancePx,
+  );
+  expect(overflowMetrics.titleScrollWidth).toBeLessThanOrEqual(
+    overflowMetrics.titleClientWidth + overflowTolerancePx,
+  );
+  expect(overflowMetrics.buttonScrollHeight).toBeLessThanOrEqual(
+    overflowMetrics.buttonClientHeight + 1,
+  );
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(toggle).toContainText("Close diagnosis");
   await expect(page.locator(".history-details-row")).toBeVisible();
-  await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
-  const frontLeftZone = page.locator('.history-heatmap__zone[data-location-key="front-left wheel"]');
+  await expect(page.locator(".history-details-header")).toContainText(
+    "Diagnostic panel",
+  );
+  const frontLeftZone = page.locator(
+    '.history-heatmap__zone[data-location-key="front-left wheel"]',
+  );
   await expect(frontLeftZone).toContainText("Front Left Wheel");
   await expect(frontLeftZone).toContainText("20.0 dB");
-  await expect(page.locator(".history-heatmap__zone-meter-fill")).toHaveCount(1);
+  await expect(page.locator(".history-heatmap__zone-meter-fill")).toHaveCount(
+    1,
+  );
   await expect(page.locator(".mini-car-dot")).toHaveCount(0);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".history-details-row")).toHaveCount(0);
 });
 
-test("history keeps destructive actions inside the expanded management footer", async ({ page }) => {
+test("history keeps destructive actions inside the expanded management footer", async ({
+  page,
+}) => {
   await bootLiveDashboard(page, { runs: [historyListRun] });
   await openHistoryTab(page);
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const actionCell = row.locator("td").nth(3);
-  await expect(actionCell.locator('[data-run-action="download-pdf"][data-run="run-001"]')).toContainText("PDF");
+  await expect(
+    actionCell.locator('[data-run-action="download-pdf"][data-run="run-001"]'),
+  ).toContainText("PDF");
   await expect(actionCell).not.toContainText("PDF after preview.");
   await expect(actionCell).not.toContainText("Export");
   await expect(actionCell).not.toContainText("Delete");
   await row.locator('[data-run-toggle="details"]').click();
   const footer = page.locator(".history-details-footer");
-  await expect(page.locator(".history-main-column .history-details-footer")).toHaveCount(1);
+  await expect(
+    page.locator(".history-main-column .history-details-footer"),
+  ).toHaveCount(1);
   await expect(footer).toContainText("Reports and data");
-  await expect(footer.locator('[data-run-action="download-raw"][data-run="run-001"]')).toContainText("Export");
-  const deleteButton = footer.locator('[data-run-action="delete-run"][data-run="run-001"]');
+  await expect(
+    footer.locator('[data-run-action="download-raw"][data-run="run-001"]'),
+  ).toContainText("Export");
+  const deleteButton = footer.locator(
+    '[data-run-action="delete-run"][data-run="run-001"]',
+  );
   await expect(deleteButton).toContainText("Delete");
   await expect(deleteButton).toHaveClass(/btn--danger-quiet/);
 });
 
-test("history PDF download revokes object URL with safe delay", async ({ page }) => {
+test("history PDF download revokes object URL with safe delay", async ({
+  page,
+}) => {
   let reportPdfCalls = 0;
   const revokeCallCount = () =>
-    page.evaluate(() => (window as typeof window & { __revokeCallCount?: number }).__revokeCallCount ?? 0);
+    page.evaluate(
+      () =>
+        (window as typeof window & { __revokeCallCount?: number })
+          .__revokeCallCount ?? 0,
+    );
   await installCommonRoutes(page, { runs: [historyListRun] });
   await page.route("**/api/history/**/insights**", async (route) => {
     await fulfillJson(route, {
@@ -233,19 +303,31 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   });
   await page.route("**/api/history/**/report.pdf**", async (route) => {
     reportPdfCalls += 1;
-    await route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-disposition": 'attachment; filename="run-001_report.pdf"' }, body: "PDF" });
+    await route.fulfill({
+      status: 200,
+      headers: {
+        "content-type": "application/pdf",
+        "content-disposition": 'attachment; filename="run-001_report.pdf"',
+      },
+      body: "PDF",
+    });
   });
   await page.addInitScript(() => {
-    const globalState = window as typeof window & { __revokeCallCount?: number };
+    const globalState = window as typeof window & {
+      __revokeCallCount?: number;
+    };
     globalState.__revokeCallCount = 0;
-    URL.createObjectURL = (() => "blob:history-download-test") as typeof URL.createObjectURL;
+    URL.createObjectURL = (() =>
+      "blob:history-download-test") as typeof URL.createObjectURL;
     URL.revokeObjectURL = ((_: string) => {
       globalState.__revokeCallCount = (globalState.__revokeCallCount ?? 0) + 1;
     }) as typeof URL.revokeObjectURL;
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openHistoryTab(page);
-  const pdfButton = page.locator('[data-run-action="download-pdf"][data-run="run-001"]');
+  const pdfButton = page.locator(
+    '[data-run-action="download-pdf"][data-run="run-001"]',
+  );
   await expect(pdfButton).toBeVisible();
   await pdfButton.click();
   await expect.poll(() => reportPdfCalls).toBe(1);
@@ -253,18 +335,26 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   await expect.poll(revokeCallCount, { timeout: 2_000 }).toBe(1);
 });
 
-test("history loaded insights promote the result summary above supporting evidence", async ({ page }) => {
+test("history loaded insights promote the result summary above supporting evidence", async ({
+  page,
+}) => {
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
         return;
       }
       await fulfillJson(route, {});
     },
     historyHandler: async (route) => {
       const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+      if (
+        !pathname.startsWith("/api/history") ||
+        pathname.includes("/insights")
+      ) {
         await route.fallback();
         return;
       }
@@ -282,7 +372,8 @@ test("history loaded insights promote the result summary above supporting eviden
         suspected_source: "Front-right wheel imbalance",
         location: "Front-right wheel",
         speed_band: "60-90 km/h",
-        explanation: "Order content and spatial dominance agree on the front-right wheel.",
+        explanation:
+          "Order content and spatial dominance agree on the front-right wheel.",
       },
       findings: [
         {
@@ -291,7 +382,8 @@ test("history loaded insights promote the result summary above supporting eviden
           confidence: 0.92,
           confidence_pct: "92%",
           confidence_tone: "success",
-          evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
+          evidence_summary:
+            "Consistent wheel-order energy remains strongest at the front-right wheel.",
           frequency_hz_or_order: "1x wheel",
           strongest_location: "Front-right wheel",
           strongest_speed_band: "60-90 km/h",
@@ -303,7 +395,8 @@ test("history loaded insights promote the result summary above supporting eviden
           confidence: 0.67,
           confidence_pct: "67%",
           confidence_tone: "warn",
-          evidence_summary: "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
+          evidence_summary:
+            "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
           frequency_hz_or_order: "1x driveshaft",
           strongest_location: "Driveshaft tunnel",
           strongest_speed_band: "70-90 km/h",
@@ -333,31 +426,66 @@ test("history loaded insights promote the result summary above supporting eviden
   });
   await openHistoryTab(page);
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
-  await expect(page.locator(".history-details-header [data-run-action='load-insights']")).toBeVisible();
-  await page.locator(".history-details-header [data-run-action='load-insights']").click();
-  await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
-  await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
-  await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
-  await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
+  await expect(
+    page.locator(".history-details-header [data-run-action='load-insights']"),
+  ).toBeVisible();
+  await page
+    .locator(".history-details-header [data-run-action='load-insights']")
+    .click();
+  await expect(page.locator(".history-details-header")).toContainText(
+    "Diagnostic panel",
+  );
+  await expect(page.locator(".history-diagnosis-card")).toContainText(
+    "Front-right wheel imbalance",
+  );
+  await expect(page.locator(".history-diagnosis-card")).toContainText(
+    "1x wheel",
+  );
+  await expect(page.locator(".history-diagnosis-card")).toContainText(
+    "Inspect first",
+  );
   await expect(page.locator(".history-warning-banner").first()).toContainText(
     "Speed samples were sparse through part of the run.",
   );
-  await expect(page.locator('.history-heatmap__zone[data-location-key="front-right wheel"]')).toContainText("32.0 dB");
-  await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
+  await expect(
+    page.locator(
+      '.history-heatmap__zone[data-location-key="front-right wheel"]',
+    ),
+  ).toContainText("32.0 dB");
+  await expect(page.locator(".history-secondary-findings")).toContainText(
+    "Secondary candidates",
+  );
   await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);
-  await expect(page.locator(".history-finding-card--secondary")).toContainText("Secondary driveline contribution");
-  await expect(page.locator(".history-main-column .history-details-footer")).toHaveCount(1);
-  await expect(page.locator(".history-evidence-column .history-preview-stats")).toHaveCount(0);
-  const layoutMetrics = await page.locator(".history-results-layout").evaluate((layout) => {
-    const mainColumn = layout.querySelector<HTMLElement>(".history-main-column");
-    const insights = layout.querySelector<HTMLElement>(".history-insights-block");
-    const footer = layout.querySelector<HTMLElement>(".history-details-footer");
-    if (!mainColumn || !insights || !footer) {
-      throw new Error("history detail layout is missing expected sections");
-    }
-    return {
-      footerAfterInsightsGap: Math.round(footer.getBoundingClientRect().top - insights.getBoundingClientRect().bottom),
-    };
-  });
+  await expect(page.locator(".history-finding-card--secondary")).toContainText(
+    "Secondary driveline contribution",
+  );
+  await expect(
+    page.locator(".history-main-column .history-details-footer"),
+  ).toHaveCount(1);
+  await expect(
+    page.locator(".history-evidence-column .history-preview-stats"),
+  ).toHaveCount(0);
+  const layoutMetrics = await page
+    .locator(".history-results-layout")
+    .evaluate((layout) => {
+      const mainColumn = layout.querySelector<HTMLElement>(
+        ".history-main-column",
+      );
+      const insights = layout.querySelector<HTMLElement>(
+        ".history-insights-block",
+      );
+      const footer = layout.querySelector<HTMLElement>(
+        ".history-details-footer",
+      );
+      if (!mainColumn || !insights || !footer) {
+        throw new Error("history detail layout is missing expected sections");
+      }
+      return {
+        footerAfterInsightsGap: Math.round(
+          footer.getBoundingClientRect().top -
+            insights.getBoundingClientRect().bottom,
+        ),
+      };
+    });
   expect(layoutMetrics.footerAfterInsightsGap).toBeLessThanOrEqual(24);
 });

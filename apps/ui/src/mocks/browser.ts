@@ -249,21 +249,47 @@ const historyList = makeHistoryListPayload({
 });
 
 const mockWorker = setupWorker(
-  http.get("/api/settings/language", () => HttpResponse.json({ language: "en" })),
-  http.put("/api/settings/language", () => HttpResponse.json({ language: "en" })),
-  http.get("/api/settings/speed-unit", () => HttpResponse.json({ speed_unit: "kmh" })),
-  http.put("/api/settings/speed-unit", () => HttpResponse.json({ speed_unit: "kmh" })),
-  http.get("/api/recording/status", () => HttpResponse.json(makeRecordingStatusPayload())),
-  http.post("/api/recording/start", () => HttpResponse.json(makeRecordingStatusPayload())),
-  http.post("/api/recording/stop", () => HttpResponse.json(makeRecordingStatusPayload())),
+  http.get("/api/settings/language", () =>
+    HttpResponse.json({ language: "en" }),
+  ),
+  http.put("/api/settings/language", () =>
+    HttpResponse.json({ language: "en" }),
+  ),
+  http.get("/api/settings/speed-unit", () =>
+    HttpResponse.json({ speed_unit: "kmh" }),
+  ),
+  http.put("/api/settings/speed-unit", () =>
+    HttpResponse.json({ speed_unit: "kmh" }),
+  ),
+  http.get("/api/recording/status", () =>
+    HttpResponse.json(makeRecordingStatusPayload()),
+  ),
+  http.post("/api/recording/start", () =>
+    HttpResponse.json(makeRecordingStatusPayload()),
+  ),
+  http.post("/api/recording/stop", () =>
+    HttpResponse.json(makeRecordingStatusPayload()),
+  ),
   http.get("/api/client-locations", () => HttpResponse.json({ locations: [] })),
-  http.get("/api/update/status", () => HttpResponse.json(makeUpdateStatusPayload())),
+  http.get("/api/update/status", () =>
+    HttpResponse.json(makeUpdateStatusPayload()),
+  ),
   http.get("/api/health", () => HttpResponse.json(makeHealthStatusPayload())),
-  http.get("/api/update/internet-status", () => HttpResponse.json(makeUsbInternetStatusPayload())),
-  http.get("/api/esp-flash/ports", () => HttpResponse.json(makeEspFlashPortsPayload())),
-  http.get("/api/esp-flash/status", () => HttpResponse.json(makeEspFlashStatusPayload())),
-  http.get("/api/esp-flash/logs", () => HttpResponse.json(makeEspFlashLogsPayload())),
-  http.get("/api/esp-flash/history", () => HttpResponse.json(makeEspFlashHistoryPayload())),
+  http.get("/api/update/internet-status", () =>
+    HttpResponse.json(makeUsbInternetStatusPayload()),
+  ),
+  http.get("/api/esp-flash/ports", () =>
+    HttpResponse.json(makeEspFlashPortsPayload()),
+  ),
+  http.get("/api/esp-flash/status", () =>
+    HttpResponse.json(makeEspFlashStatusPayload()),
+  ),
+  http.get("/api/esp-flash/logs", () =>
+    HttpResponse.json(makeEspFlashLogsPayload()),
+  ),
+  http.get("/api/esp-flash/history", () =>
+    HttpResponse.json(makeEspFlashHistoryPayload()),
+  ),
   ...buildAnalysisSettingsHandlers(),
   ...buildCarsHandlers({
     load: makeCarsPayload({
@@ -280,8 +306,9 @@ const mockWorker = setupWorker(
 );
 
 export async function startBrowserMocksIfEnabled(): Promise<boolean> {
-  const mockMode = import.meta.env.MODE === "msw"
-    || import.meta.env.VITE_UI_MSW_MODE === "browser";
+  const mockMode =
+    import.meta.env.MODE === "msw" ||
+    import.meta.env.VITE_UI_MSW_MODE === "browser";
   if (!mockMode) {
     return false;
   }

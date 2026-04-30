@@ -4,16 +4,17 @@ import type {
   CarLibraryModel,
   CarLibraryTireOption,
 } from "../src/api/types";
-import type {
-  CarsFeatureRenderState,
-} from "../src/app/features/cars_feature_workflow";
+import type { CarsFeatureRenderState } from "../src/app/features/cars_feature_workflow";
 import type { CarsFeatureOptionsState } from "../src/app/features/cars_option_state";
 import {
   buildCarsWizardRenderModel,
   createClosedCarsWizardRenderModel,
 } from "../src/app/views/car_wizard_view";
 
-function createTranslator(): (key: string, vars?: Record<string, unknown>) => string {
+function createTranslator(): (
+  key: string,
+  vars?: Record<string, unknown>,
+) => string {
   return (key, vars) => {
     if (vars?.current && vars?.total && vars?.step) {
       return `${key}:${vars.current}/${vars.total}:${String(vars.step)}`;
@@ -34,7 +35,9 @@ function createOptionsState<TOption>(
   };
 }
 
-function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGearbox {
+function makeGearbox(
+  overrides: Partial<CarLibraryGearbox> = {},
+): CarLibraryGearbox {
   return {
     final_drive_ratio: 3.91,
     name: "6-speed",
@@ -43,7 +46,9 @@ function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGear
   };
 }
 
-function makeTireOption(overrides: Partial<CarLibraryTireOption> = {}): CarLibraryTireOption {
+function makeTireOption(
+  overrides: Partial<CarLibraryTireOption> = {},
+): CarLibraryTireOption {
   return {
     default_axle_for_speed: "rear",
     front: {
@@ -74,7 +79,9 @@ function makeModel(overrides: Partial<CarLibraryModel> = {}): CarLibraryModel {
   };
 }
 
-function createRenderState(overrides: Partial<CarsFeatureRenderState> = {}): CarsFeatureRenderState {
+function createRenderState(
+  overrides: Partial<CarsFeatureRenderState> = {},
+): CarsFeatureRenderState {
   return {
     actionHint: "",
     brandOptions: createOptionsState(["BMW"]),
@@ -127,29 +134,37 @@ describe("car wizard view helpers", () => {
   });
 
   test("buildCarsWizardRenderModel converts option state and progress metadata into typed sections", () => {
-    const model = buildCarsWizardRenderModel(createRenderState({
-      brandOptions: createOptionsState(["BMW", "Volvo"]),
-      modelOptions: createOptionsState([], "loading", "Loading models"),
-      step: 2,
-      summaryData: {
-        currentStep: 2,
-        profileName: null,
-        brand: "BMW",
-        carType: "SUV",
-        model: null,
-        variant: null,
-        tire: null,
-        gearbox: null,
+    const model = buildCarsWizardRenderModel(
+      createRenderState({
+        brandOptions: createOptionsState(["BMW", "Volvo"]),
+        modelOptions: createOptionsState([], "loading", "Loading models"),
+        step: 2,
+        summaryData: {
+          currentStep: 2,
+          profileName: null,
+          brand: "BMW",
+          carType: "SUV",
+          model: null,
+          variant: null,
+          tire: null,
+          gearbox: null,
+        },
+        typeOptions: createOptionsState([], "error", "Types offline"),
+      }),
+      {
+        fmt: (value, digits = 0) => Number(value).toFixed(digits),
+        t: createTranslator(),
       },
-      typeOptions: createOptionsState([], "error", "Types offline"),
-    }), {
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      t: createTranslator(),
-    });
+    );
 
     expect(model.backVisible).toBe(true);
-    expect(model.progressText).toBe("settings.car.wizard_progress:3/5:settings.car.step_model_short");
-    expect(model.brandOptions.options.map((option) => option.value)).toEqual(["BMW", "Volvo"]);
+    expect(model.progressText).toBe(
+      "settings.car.wizard_progress:3/5:settings.car.step_model_short",
+    );
+    expect(model.brandOptions.options.map((option) => option.value)).toEqual([
+      "BMW",
+      "Volvo",
+    ]);
     expect(model.typeOptions.messageText).toBe("Types offline");
     expect(model.modelOptions.messageText).toBe("Loading models");
     expect(model.summary.rows).toEqual([
@@ -168,57 +183,68 @@ describe("car wizard view helpers", () => {
     const tire = makeTireOption();
     const gearbox = makeGearbox();
 
-    const model = buildCarsWizardRenderModel(createRenderState({
-      actionHint: "Library path selected",
-      canFinish: true,
-      gearboxOptions: [gearbox],
-      resolvedSpecBranch: "library",
-      selectedGearbox: gearbox,
-      selectedTire: tire,
-      step: 4,
-      summaryData: {
-        currentStep: 4,
-        profileName: "BMW Roadster",
-        brand: "BMW",
-        carType: "Coupe",
-        model: "Roadster",
-        variant: null,
-        tire: "245/40R18",
-        gearbox: "6-speed",
+    const model = buildCarsWizardRenderModel(
+      createRenderState({
+        actionHint: "Library path selected",
+        canFinish: true,
+        gearboxOptions: [gearbox],
+        resolvedSpecBranch: "library",
+        selectedGearbox: gearbox,
+        selectedTire: tire,
+        step: 4,
+        summaryData: {
+          currentStep: 4,
+          profileName: "BMW Roadster",
+          brand: "BMW",
+          carType: "Coupe",
+          model: "Roadster",
+          variant: null,
+          tire: "245/40R18",
+          gearbox: "6-speed",
+        },
+        tireOptions: [tire],
+        variantOptions: [
+          {
+            drivetrain: "AWD",
+            engine: "V8",
+            name: "Competition",
+          },
+        ],
+      }),
+      {
+        fmt: (value, digits = 0) => Number(value).toFixed(digits),
+        t: createTranslator(),
       },
-      tireOptions: [tire],
-      variantOptions: [{
-        drivetrain: "AWD",
-        engine: "V8",
-        name: "Competition",
-      }],
-    }), {
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      t: createTranslator(),
-    });
+    );
 
     expect(model.finishVisible).toBe(true);
     expect(model.finishEnabled).toBe(true);
     expect(model.specBranch).toBe("library");
     expect(model.actionHintText).toBe("Library path selected");
-    expect(model.tireOptions.options).toEqual([{
-      detailText: "245/40R18",
-      labelText: "Sport",
-      selected: true,
-      value: "0",
-    }]);
-    expect(model.gearboxOptions.options).toEqual([{
-      detailText: "FD: 3.91 · Top Gear: 0.82",
-      labelText: "6-speed",
-      selected: true,
-      value: "0",
-    }]);
-    expect(model.variantOptions.options).toEqual([{
-      detailText: "AWD · V8",
-      labelText: "Competition",
-      selected: false,
-      value: "0",
-    }]);
+    expect(model.tireOptions.options).toEqual([
+      {
+        detailText: "245/40R18",
+        labelText: "Sport",
+        selected: true,
+        value: "0",
+      },
+    ]);
+    expect(model.gearboxOptions.options).toEqual([
+      {
+        detailText: "FD: 3.91 · Top Gear: 0.82",
+        labelText: "6-speed",
+        selected: true,
+        value: "0",
+      },
+    ]);
+    expect(model.variantOptions.options).toEqual([
+      {
+        detailText: "AWD · V8",
+        labelText: "Competition",
+        selected: false,
+        value: "0",
+      },
+    ]);
     expect(model.summary.profileNameValueText).toBe("BMW Roadster");
     expect(model.summary.rows.at(-1)).toEqual({
       labelText: "settings.car.wizard_summary_gearbox",
@@ -243,19 +269,24 @@ describe("car wizard view helpers", () => {
       tire_width_mm: 275,
     });
 
-    const model = buildCarsWizardRenderModel(createRenderState({
-      selectedTire: tire,
-      tireOptions: [tire],
-    }), {
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      t: createTranslator(),
-    });
+    const model = buildCarsWizardRenderModel(
+      createRenderState({
+        selectedTire: tire,
+        tireOptions: [tire],
+      }),
+      {
+        fmt: (value, digits = 0) => Number(value).toFixed(digits),
+        t: createTranslator(),
+      },
+    );
 
-    expect(model.tireOptions.options).toEqual([{
-      detailText: "Front 245/40R19 · Rear 275/35R19",
-      labelText: "Sport",
-      selected: true,
-      value: "0",
-    }]);
+    expect(model.tireOptions.options).toEqual([
+      {
+        detailText: "Front 245/40R19 · Rear 275/35R19",
+        labelText: "Sport",
+        selected: true,
+        value: "0",
+      },
+    ]);
   });
 });

@@ -56,7 +56,12 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       },
     ],
     warnings: [
-      { code: "speed-gap", severity: "warn", title: "history.warning.speed_gap", detail: "Gap" },
+      {
+        code: "speed-gap",
+        severity: "warn",
+        title: "history.warning.speed_gap",
+        detail: "Gap",
+      },
     ],
     sensor_intensity_by_location: [
       { location: "front-right wheel", p95_intensity_db: 32 },
@@ -101,13 +106,18 @@ test("buildHistoryTableRowsViewModel builds rows and expanded details from typed
 
   expect(row.runId).toBe("run-001");
   expect(row.isExpanded).toBe(true);
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.complete",
+  );
   expect(row.toggleLabel).toBe("history.close_diagnosis");
   expect(row.details?.warnings).toHaveLength(1);
-  expect(row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")?.valueLabel)
-    .toBe("32.0 dB");
-  expect(row.details?.insights.primary?.chips.map((chip) => chip.label))
-    .toContain("history.findings_signature");
+  expect(
+    row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")
+      ?.valueLabel,
+  ).toBe("32.0 dB");
+  expect(
+    row.details?.insights.primary?.chips.map((chip) => chip.label),
+  ).toContain("history.findings_signature");
   expect(row.details?.footerEyebrow).toBe("history.run_actions_title");
   expect(row.details?.exportLabel).toBe("history.export");
   expect(row.details?.deleteLabel).toBe("history.delete");

@@ -39,7 +39,11 @@ describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    mswServer.use(http.get(uiTestUrl("/api/recording/status"), () => HttpResponse.json(payload)));
+    mswServer.use(
+      http.get(uiTestUrl("/api/recording/status"), () =>
+        HttpResponse.json(payload),
+      ),
+    );
 
     try {
       await expect(getLoggingStatus()).resolves.toEqual(payload);
@@ -78,7 +82,9 @@ describe("API adapter clone usage", () => {
     );
 
     try {
-      await expect(addSettingsCar(requestPayload)).resolves.toEqual(responsePayload);
+      await expect(addSettingsCar(requestPayload)).resolves.toEqual(
+        responsePayload,
+      );
       expect(JSON.parse(requestBody)).toEqual(requestPayload);
       expect(structuredCloneCalls).toBe(0);
     } finally {
@@ -105,7 +111,9 @@ describe("API adapter clone usage", () => {
     );
 
     try {
-      await expect(getHistoryInsights("run-001", "en")).resolves.toEqual(payload);
+      await expect(getHistoryInsights("run-001", "en")).resolves.toEqual(
+        payload,
+      );
       expect(structuredCloneCalls).toBe(0);
     } finally {
       globalThis.structuredClone = originalStructuredClone;

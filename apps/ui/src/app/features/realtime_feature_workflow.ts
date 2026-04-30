@@ -108,11 +108,13 @@ function didHistoryAffectingStatusChange(
   previous: LoggingStatusPayload,
   next: LoggingStatusPayload,
 ): boolean {
-  return previous.enabled !== next.enabled
-    || previous.run_id !== next.run_id
-    || previous.analysis_in_progress !== next.analysis_in_progress
-    || previous.last_completed_run_id !== next.last_completed_run_id
-    || previous.last_completed_run_error !== next.last_completed_run_error;
+  return (
+    previous.enabled !== next.enabled ||
+    previous.run_id !== next.run_id ||
+    previous.analysis_in_progress !== next.analysis_in_progress ||
+    previous.last_completed_run_id !== next.last_completed_run_id ||
+    previous.last_completed_run_error !== next.last_completed_run_error
+  );
 }
 
 export function createRealtimeFeatureWorkflow(
@@ -150,33 +152,32 @@ export function createRealtimeFeatureWorkflow(
       realtime.loggingStatus.value.enabled ? "1" : "0",
       realtime.loggingStatus.value.analysis_in_progress ? "1" : "0",
       realtime.loggingStatus.value.last_completed_run_id ? "1" : "0",
-    ].join("::")
+    ].join("::"),
   );
 
   function syncIdleCaptureReadinessSignature(): void {
-    lastIdleCaptureReadinessSignature = deps.idleCaptureReadinessSignature.peek();
+    lastIdleCaptureReadinessSignature =
+      deps.idleCaptureReadinessSignature.peek();
     queuedIdleCaptureReadinessSignature = null;
   }
 
   function applyLocationCodes(codes: string[]): void {
-    realtime.locationCodes.value = codes.length ? codes : defaultLocationCodes.slice();
+    realtime.locationCodes.value = codes.length
+      ? codes
+      : defaultLocationCodes.slice();
   }
 
   async function refreshIdleCaptureReadiness(signature: string): Promise<void> {
     const handlersBound = state.handlersBound.peek();
     const pendingLoggingAction = state.pendingLoggingAction.peek();
-    if (
-      !handlersBound
-      || isDemoMode
-      || pendingLoggingAction !== null
-    ) {
+    if (!handlersBound || isDemoMode || pendingLoggingAction !== null) {
       return;
     }
     const loggingStatus = realtime.loggingStatus.peek();
     if (
-      loggingStatus.enabled
-      || loggingStatus.analysis_in_progress
-      || Boolean(loggingStatus.last_completed_run_id)
+      loggingStatus.enabled ||
+      loggingStatus.analysis_in_progress ||
+      Boolean(loggingStatus.last_completed_run_id)
     ) {
       return;
     }
@@ -194,16 +195,21 @@ export function createRealtimeFeatureWorkflow(
     const queuedSignature = queuedIdleCaptureReadinessSignature;
     queuedIdleCaptureReadinessSignature = null;
     if (
-      queuedSignature !== null
-      && queuedSignature !== lastIdleCaptureReadinessSignature
+      queuedSignature !== null &&
+      queuedSignature !== lastIdleCaptureReadinessSignature
     ) {
       await refreshIdleCaptureReadiness(queuedSignature);
     }
   }
 
-  const disposeIdleCaptureReadinessSync = effectOnChange(idleCaptureReadinessTrigger, () => {
-    void refreshIdleCaptureReadiness(deps.idleCaptureReadinessSignature.peek());
-  });
+  const disposeIdleCaptureReadinessSync = effectOnChange(
+    idleCaptureReadinessTrigger,
+    () => {
+      void refreshIdleCaptureReadiness(
+        deps.idleCaptureReadinessSignature.peek(),
+      );
+    },
+  );
 
   function handleLoggingStatusData(nextStatus: LoggingStatusPayload): void {
     const previousStatus = realtime.loggingStatus.peek();
@@ -213,44 +219,47 @@ export function createRealtimeFeatureWorkflow(
       return;
     }
     void recording.onRecordingStatusChanged().catch((err) => {
-      const message = err instanceof Error ? err.message : t("status.unavailable");
+      const message =
+        err instanceof Error ? err.message : t("status.unavailable");
       showError(message || t("status.unavailable"));
     });
   }
 
-  const loggingStatusPollingEnabled = computed(() => state.handlersBound.value && !isDemoMode);
+  const loggingStatusPollingEnabled = computed(
+    () => state.handlersBound.value && !isDemoMode,
+  );
 
-  const loggingStatusQuery = createObservedServerStateQuery<LoggingStatusPayload>({
-    enabled: loggingStatusPollingEnabled,
-    observerOptions: createHiddenTabPollingObserverOptions<LoggingStatusPayload>(
-      (query) => {
-        const nextStatus = query.state.data;
-        return nextStatus?.enabled || nextStatus?.analysis_in_progress
-          ? LOGGING_STATUS_ACTIVE_POLL_MS
-          : LOGGING_STATUS_IDLE_POLL_MS;
+  const loggingStatusQuery =
+    createObservedServerStateQuery<LoggingStatusPayload>({
+      enabled: loggingStatusPollingEnabled,
+      observerOptions:
+        createHiddenTabPollingObserverOptions<LoggingStatusPayload>((query) => {
+          const nextStatus = query.state.data;
+          return nextStatus?.enabled || nextStatus?.analysis_in_progress
+            ? LOGGING_STATUS_ACTIVE_POLL_MS
+            : LOGGING_STATUS_IDLE_POLL_MS;
+        }),
+      onData: handleLoggingStatusData,
+      onError: () => {
+        batch(() => {
+          state.pendingLoggingAction.value = null;
+          state.loggingError.value = {
+            kind: "unavailable",
+            message: t("status.unavailable"),
+          };
+        });
       },
-    ),
-    onData: handleLoggingStatusData,
-    onError: () => {
-      batch(() => {
-        state.pendingLoggingAction.value = null;
-        state.loggingError.value = {
-          kind: "unavailable",
-          message: t("status.unavailable"),
-        };
-      });
-    },
-    queryClient: deps.queryClient,
-    queryFn: async () => {
-      syncIdleCaptureReadinessSignature();
-      if (isDemoMode && state.pendingLoggingAction.peek() === null) {
-        state.loggingError.value = null;
-        return realtime.loggingStatus.peek();
-      }
-      return api.getLoggingStatus();
-    },
-    queryKey: serverStateQueryKeys.realtime.loggingStatus(),
-  });
+      queryClient: deps.queryClient,
+      queryFn: async () => {
+        syncIdleCaptureReadinessSignature();
+        if (isDemoMode && state.pendingLoggingAction.peek() === null) {
+          state.loggingError.value = null;
+          return realtime.loggingStatus.peek();
+        }
+        return api.getLoggingStatus();
+      },
+      queryKey: serverStateQueryKeys.realtime.loggingStatus(),
+    });
 
   function bindHandlers(): void {
     if (state.handlersBound.peek()) {
@@ -330,12 +339,17 @@ export function createRealtimeFeatureWorkflow(
       staleTime: 0,
     });
     const codes = Array.isArray(payload.locations)
-      ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
+      ? payload.locations
+          .map((row) => row.code)
+          .filter((code): code is string => typeof code === "string")
       : [];
     applyLocationCodes(codes);
   }
 
-  async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
+  async function setClientLocation(
+    clientId: string,
+    locationCode: string,
+  ): Promise<void> {
     if (!clientId) return;
     const clients = realtime.clients.peek();
     const existing = clients.find((client) => client.id === clientId);
@@ -344,14 +358,16 @@ export function createRealtimeFeatureWorkflow(
     try {
       await api.setClientLocation(clientId, locationCode);
     } catch (err) {
-      showError(err instanceof Error ? err.message : t("actions.set_location_failed"));
+      showError(
+        err instanceof Error ? err.message : t("actions.set_location_failed"),
+      );
       return;
     }
     const nextClients = realtime.clients.peek();
     const client = nextClients.find((row) => row.id === clientId);
     if (client) {
       realtime.clients.value = nextClients.map((row) =>
-        row.id === clientId ? { ...row, location_code: locationCode } : row
+        row.id === clientId ? { ...row, location_code: locationCode } : row,
       );
     }
   }
@@ -370,11 +386,15 @@ export function createRealtimeFeatureWorkflow(
     try {
       await api.removeClient(clientId);
     } catch (err) {
-      showError(err instanceof Error ? err.message : t("actions.remove_client_failed"));
+      showError(
+        err instanceof Error ? err.message : t("actions.remove_client_failed"),
+      );
       return;
     }
     const previousSelectedClientId = realtime.selectedClientId.peek();
-    realtime.clients.value = realtime.clients.peek().filter((client) => client.id !== clientId);
+    realtime.clients.value = realtime.clients
+      .peek()
+      .filter((client) => client.id !== clientId);
     if (realtime.selectedClientId.peek() === clientId) {
       realtime.selectedClientId.value = null;
     }

@@ -18,12 +18,23 @@ async function startServer(cwd) {
   return new Promise((resolve, reject) => {
     const server = spawn(
       "node",
-      ["node_modules/.bin/vite", "preview", "--host", "0.0.0.0", "--strictPort", "--port", String(SERVER_PORT)],
+      [
+        "node_modules/.bin/vite",
+        "preview",
+        "--host",
+        "0.0.0.0",
+        "--strictPort",
+        "--port",
+        String(SERVER_PORT),
+      ],
       { cwd, stdio: ["ignore", "pipe", "pipe"] },
     );
     let started = false;
     const timeout = setTimeout(() => {
-      if (!started) { server.kill(); reject(new Error("Server start timeout")); }
+      if (!started) {
+        server.kill();
+        reject(new Error("Server start timeout"));
+      }
     }, SERVER_TIMEOUT_MS);
     server.stdout.on("data", (data) => {
       if (!started && data.toString().includes(String(SERVER_PORT))) {
@@ -46,13 +57,17 @@ async function main() {
 
     try {
       browser = await chromium.launch({
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+        ],
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.toLowerCase().includes("executable doesn't exist")) {
         throw new Error(
-          "Playwright browser not installed. Run: npx playwright install chromium"
+          "Playwright browser not installed. Run: npx playwright install chromium",
         );
       }
       throw error;
@@ -60,10 +75,14 @@ async function main() {
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
+    await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
+      timeout: PAGE_TIMEOUT_MS,
+    });
 
     // Wait for car map dots (confirms demo data applied)
-    await page.waitForSelector(".car-map-dot--visible", { timeout: PAGE_TIMEOUT_MS });
+    await page.waitForSelector(".car-map-dot--visible", {
+      timeout: PAGE_TIMEOUT_MS,
+    });
 
     // Wait for vibration event log entry (confirms event payload applied)
     await page.waitForFunction(
@@ -78,10 +97,17 @@ async function main() {
       const ctx = /** @type {HTMLCanvasElement} */ (canvas).getContext("2d");
       if (!ctx) return false;
       // Sample pixels in the chart area to check for non-background color
-      const imageData = ctx.getImageData(50, 10, canvas.clientWidth - 100, canvas.clientHeight - 20);
+      const imageData = ctx.getImageData(
+        50,
+        10,
+        canvas.clientWidth - 100,
+        canvas.clientHeight - 20,
+      );
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const r = data[i],
+          g = data[i + 1],
+          b = data[i + 2];
         // Look for any non-white, non-light-gray pixel (spectrum line color)
         if (r < 200 && (r !== g || g !== b)) return true;
       }
@@ -102,4 +128,7 @@ async function main() {
   }
 }
 
-main().catch((err) => { console.error("Screenshot failed:", err.message); process.exit(1); });
+main().catch((err) => {
+  console.error("Screenshot failed:", err.message);
+  process.exit(1);
+});

@@ -1,4 +1,7 @@
-export type RafApi = Pick<typeof globalThis, "cancelAnimationFrame" | "requestAnimationFrame">;
+export type RafApi = Pick<
+  typeof globalThis,
+  "cancelAnimationFrame" | "requestAnimationFrame"
+>;
 
 export interface RafAnimationCallbacks {
   durationMs: number;
@@ -33,7 +36,10 @@ export function createRafAnimation(
     stop();
     const startedAt = performance.now();
     const animate = (now: number): void => {
-      const alpha = Math.min(1, Math.max(0, (now - startedAt) / callbacks.durationMs));
+      const alpha = Math.min(
+        1,
+        Math.max(0, (now - startedAt) / callbacks.durationMs),
+      );
       callbacks.onFrame(alpha);
       if (alpha >= 1) {
         handle = null;

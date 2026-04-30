@@ -4,12 +4,7 @@ import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
-import {
-  batch,
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "../views/speed_source_panel_defaults";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import {
@@ -63,21 +58,21 @@ export function createSettingsGpsStatusModule(
   };
   const diagnosticsModel = signal(DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL);
   panel.diagnostics.value = diagnosticsModel;
-  const pollingEnabled = computed(() =>
-    handlersBound.value
-    && startupReady.value
-    && (
-      ctx.ports.activeViewId.value === "settingsView"
-      && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
-    )
+  const pollingEnabled = computed(
+    () =>
+      handlersBound.value &&
+      startupReady.value &&
+      ctx.ports.activeViewId.value === "settingsView" &&
+      ctx.ports.activeSettingsTabId.value === "speedSourceTab",
   );
 
   const gpsStatusQuery = createObservedServerStateQuery<GpsStatusSnapshot>({
     enabled: pollingEnabled,
     observerOptions: createHiddenTabPollingObserverOptions<GpsStatusSnapshot>(
-      (query) => query.state.data?.status.connection_state === "connected"
-        ? GPS_POLL_FAST_MS
-        : GPS_POLL_SLOW_MS,
+      (query) =>
+        query.state.data?.status.connection_state === "connected"
+          ? GPS_POLL_FAST_MS
+          : GPS_POLL_SLOW_MS,
     ),
     onData: ({ status, obdStatus }) => {
       batch(() => {
@@ -93,7 +88,8 @@ export function createSettingsGpsStatusModule(
     queryClient: ctx.queryClient,
     queryFn: async () => {
       const shouldLoadObdStatus =
-        settings.speed.source.value === "obd2" || settings.speed.obdDeviceMac.value != null;
+        settings.speed.source.value === "obd2" ||
+        settings.speed.obdDeviceMac.value != null;
       const [status, obdStatus] = await Promise.all([
         getSpeedSourceStatus(),
         shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
@@ -115,7 +111,10 @@ export function createSettingsGpsStatusModule(
     },
     markStartupReady(): Promise<void> {
       startupReady.value = true;
-      return gpsStatusQuery.fetch().then(() => undefined).catch(() => undefined);
+      return gpsStatusQuery
+        .fetch()
+        .then(() => undefined)
+        .catch(() => undefined);
     },
   };
 }

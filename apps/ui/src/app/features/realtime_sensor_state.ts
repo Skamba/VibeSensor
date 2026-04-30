@@ -25,7 +25,9 @@ export type LiveHealth = {
   showOverviewPill: boolean;
 };
 
-type CaptureReadinessPayload = NonNullable<LoggingStatusPayload["capture_readiness"]>;
+type CaptureReadinessPayload = NonNullable<
+  LoggingStatusPayload["capture_readiness"]
+>;
 
 export interface RealtimeSensorStateDeps {
   realtime: RealtimeState;
@@ -60,7 +62,9 @@ const SHORTHAND_LOCATION_MAP: Record<string, string> = {
   driver: "driver_seat",
 };
 
-export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): RealtimeSensorState {
+export function createRealtimeSensorState(
+  ctx: RealtimeSensorStateDeps,
+): RealtimeSensorState {
   const { realtime, settings, shell, spectrum, t, formatInt } = ctx;
   const carSelection = createCarSelectionDerivedState(settings.car);
 
@@ -82,12 +86,21 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
 
   function locationCodeForClient(client: AdaptedClient): string {
     const explicitCode = String(client.location_code || "").trim();
-    if (explicitCode && realtime.locationCodes.value.includes(explicitCode)) return explicitCode;
+    if (explicitCode && realtime.locationCodes.value.includes(explicitCode))
+      return explicitCode;
     const name = String(client.name || "").trim();
     if (!name) return "";
-    const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    const normalizedName = name
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
-      if (normalizedName.includes(token) && realtime.locationCodes.value.includes(code)) return code;
+      if (
+        normalizedName.includes(token) &&
+        realtime.locationCodes.value.includes(code)
+      )
+        return code;
     }
     for (const code of realtime.locationCodes.value) {
       const labels = I18N.getForAllLangs(`location.${code}`);
@@ -106,7 +119,9 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
     if (!code) {
       return t("dashboard.sensor_unassigned");
     }
-    const option = locationOptions.value.find((location) => location.code === code);
+    const option = locationOptions.value.find(
+      (location) => location.code === code,
+    );
     return option?.label ?? locationLabel(code);
   }
 
@@ -115,14 +130,21 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   });
 
   const assignedClientCount = computed(() => {
-    return realtime.clients.value.filter((client) => locationCodeForClient(client)).length;
+    return realtime.clients.value.filter((client) =>
+      locationCodeForClient(client),
+    ).length;
   });
 
-  const strongestSignal = computed<{ client: AdaptedClient; db: number } | null>(() => {
+  const strongestSignal = computed<{
+    client: AdaptedClient;
+    db: number;
+  } | null>(() => {
     let bestClient: AdaptedClient | null = null;
     let bestDb = Number.NEGATIVE_INFINITY;
     for (const client of connectedClients.value) {
-      const db = spectrum.spectra.value.clients[client.id]?.strength_metrics?.vibration_strength_db;
+      const db =
+        spectrum.spectra.value.clients[client.id]?.strength_metrics
+          ?.vibration_strength_db;
       if (typeof db !== "number" || !Number.isFinite(db)) continue;
       if (db > bestDb) {
         bestDb = db;
@@ -159,9 +181,10 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
     }
     if (selection.kind !== "active") {
       return {
-        text: selection.kind === "no_cars"
-          ? t("dashboard.active_car_none_no_cars")
-          : t("dashboard.active_car_none_blocked"),
+        text:
+          selection.kind === "no_cars"
+            ? t("dashboard.active_car_none_no_cars")
+            : t("dashboard.active_car_none_blocked"),
         isWarning: true,
       };
     }
@@ -202,30 +225,42 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
         showOverviewPill: true,
       };
     }
-    const droppedCount = connected.filter((client) => (client.dropped_frames ?? 0) > 0).length;
+    const droppedCount = connected.filter(
+      (client) => (client.dropped_frames ?? 0) > 0,
+    ).length;
     if (droppedCount > 0) {
       return {
         variant: "warn",
         text: t("dashboard.health.attention"),
-        summary: t("dashboard.logging.frame_loss", { count: formatInt(droppedCount) }),
+        summary: t("dashboard.logging.frame_loss", {
+          count: formatInt(droppedCount),
+        }),
         showOverviewPill: true,
       };
     }
-    const unassignedConnectedCount = connected.filter((client) => !locationCodeForClient(client)).length;
+    const unassignedConnectedCount = connected.filter(
+      (client) => !locationCodeForClient(client),
+    ).length;
     if (unassignedConnectedCount > 0) {
       return {
         variant: "warn",
         text: t("dashboard.health.attention"),
-        summary: t("dashboard.logging.unassigned", { count: formatInt(unassignedConnectedCount) }),
+        summary: t("dashboard.logging.unassigned", {
+          count: formatInt(unassignedConnectedCount),
+        }),
         showOverviewPill: true,
       };
     }
-    const offlineCount = realtime.clients.value.filter((client) => !client.connected).length;
+    const offlineCount = realtime.clients.value.filter(
+      (client) => !client.connected,
+    ).length;
     if (offlineCount > 0) {
       return {
         variant: "warn",
         text: t("dashboard.health.attention"),
-        summary: t("dashboard.logging.offline", { count: formatInt(offlineCount) }),
+        summary: t("dashboard.logging.offline", {
+          count: formatInt(offlineCount),
+        }),
         showOverviewPill: true,
       };
     }
@@ -235,7 +270,10 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
       return {
         variant: "ok",
         text: t("dashboard.health.recording"),
-        summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
+        summary: t("dashboard.logging.running", {
+          connected: connectedCount,
+          assigned: assignedCount,
+        }),
         showOverviewPill: false,
       };
     }

@@ -80,9 +80,13 @@ export function tireInputsFromOption(
 export function createCarsManualInputStore(
   step: ReadonlySignal<number>,
 ): CarsFeatureManualInputStore {
-  const finalDrive = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.finalDrive);
+  const finalDrive = signal<string>(
+    DEFAULT_CARS_WIZARD_MANUAL_INPUTS.finalDrive,
+  );
   const rim = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.rim);
-  const tireAspect = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect);
+  const tireAspect = signal<string>(
+    DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect,
+  );
   const tireWidth = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireWidth);
   const topGear = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.topGear);
   const state = computed<CarsFeatureManualInputState>(() => ({
@@ -114,14 +118,14 @@ export function createCarsManualInputStore(
       readWizardManualGearboxValues(step.value, {
         finalDrive: finalDrive.value,
         topGear: topGear.value,
-      })
+      }),
     ),
     manualTire: computed(() =>
       readWizardManualTireValues(step.value, {
         aspect: tireAspect.value,
         rim: rim.value,
         width: tireWidth.value,
-      })
+      }),
     ),
     write,
   };
