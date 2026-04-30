@@ -1857,13 +1857,19 @@ def check_contract_sync_entrypoint() -> list[str]:
 
     ui_test_tsconfig = ROOT / "apps/ui/tsconfig.test.json"
     if not ui_test_tsconfig.exists():
-        errors.append("apps/ui/tsconfig.test.json must define the frontend test TypeScript project.")
+        errors.append(
+            "apps/ui/tsconfig.test.json must define the frontend test TypeScript project."
+        )
     ui_test_typecheck_script = ROOT / "apps/ui/tools/typecheck_tests_with_baseline.mjs"
     if not ui_test_typecheck_script.exists():
-        errors.append("apps/ui/tools/typecheck_tests_with_baseline.mjs must enforce the UI test typecheck baseline.")
+        errors.append(
+            "apps/ui/tools/typecheck_tests_with_baseline.mjs must enforce the UI test typecheck baseline."
+        )
     ui_test_typecheck_baseline = ROOT / "apps/ui/tests/typecheck-baseline.txt"
     if not ui_test_typecheck_baseline.exists():
-        errors.append("apps/ui/tests/typecheck-baseline.txt must track the current UI test typecheck diagnostics.")
+        errors.append(
+            "apps/ui/tests/typecheck-baseline.txt must track the current UI test typecheck diagnostics."
+        )
 
     makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
     gitignore_text = (ROOT / ".gitignore").read_text(encoding="utf-8")
