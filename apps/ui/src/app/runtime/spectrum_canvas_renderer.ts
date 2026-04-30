@@ -270,8 +270,7 @@ export function createSpectrumCanvasRenderer(
     currentFreqAxis.value = frame.freq;
     syncChartDataBuffer(frame.freq, frame.values);
     plot.setData(chartData.value, options.resetScales);
-    // uPlot does not commit a paint when setData() skips scale recalculation.
-    // Tween frames reuse fixed axes, so explicitly rebuild paths and redraw.
+    // Same-scale tween frames reuse fixed axes, so explicitly redraw the canvas.
     if (!options.resetScales) {
       plot.redraw(true, false);
     }
