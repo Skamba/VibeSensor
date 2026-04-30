@@ -49,6 +49,7 @@ def _project_persisted_history_analysis(
     )
     if strip_internal:
         projected = strip_internal_fields(projected)
+    _remove_history_metadata_only_fields(projected)
     return projected
 
 
@@ -57,7 +58,15 @@ def _project_summary_analysis(analysis: Mapping[str, object]) -> JsonObject:
         analysis,
         project_projectable=lambda: project_analysis_summary(cast(JsonObject, dict(analysis)))[0],
     )
-    return strip_internal_fields(projected)
+    projected = strip_internal_fields(projected)
+    _remove_history_metadata_only_fields(projected)
+    return projected
+
+
+def _remove_history_metadata_only_fields(payload: JsonObject) -> None:
+    metadata = payload.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop("finalization_stages", None)
 
 
 def _project_history_metadata(metadata: Mapping[str, object] | RunMetadata) -> JsonObject:
@@ -73,7 +82,10 @@ def _apply_projected_run_fields(
     analysis: PersistedAnalysis | None,
     strip_internal_analysis: bool,
 ) -> JsonObject:
-    payload["metadata"] = _project_history_metadata(metadata)
+    metadata_payload = _project_history_metadata(metadata)
+    if (finalization_stages := metadata_payload.pop("finalization_stages", None)) is not None:
+        payload["finalization_stages"] = finalization_stages
+    payload["metadata"] = metadata_payload
     if analysis is not None:
         payload["analysis"] = _project_persisted_history_analysis(
             analysis,

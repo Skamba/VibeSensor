@@ -17,7 +17,11 @@ from typing import Any
 import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
+from vibesensor.shared.types.run_schema import (
+    RunFinalizationStageResult,
+    RunMetadata,
+    RunRawCaptureFinalize,
+)
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
@@ -419,6 +423,45 @@ class RunPersistenceWriter:
             self.set_last_write_error(f"history metadata update failed: {exc}")
             self._logger_provider().warning(
                 "Failed to update raw capture finalize metadata for run %s",
+                run_id,
+                exc_info=True,
+            )
+            return False
+
+    def update_finalization_stage_results(
+        self,
+        run_id: str,
+        start_time_utc: str,
+        stage_results: tuple[RunFinalizationStageResult, ...],
+    ) -> bool:
+        history_db = self._history_db
+        if history_db is None:
+            return False
+        with self._lock:
+            if not self._history_run_created:
+                return False
+        try:
+            metadata = self._metadata_builder(run_id, start_time_utc)
+            updated = replace(metadata, finalization_stages=tuple(stage_results))
+            persisted = _sync_call(
+                history_db,
+                history_db.aupdate_run_metadata(run_id, updated),
+            )
+            if not persisted:
+                self.set_last_write_error(
+                    f"history finalization stage update skipped for missing run {run_id}"
+                )
+                self._logger_provider().warning(
+                    "History DB finalization stage metadata update skipped for run %s",
+                    run_id,
+                )
+                return False
+            self.clear_last_write_error()
+            return True
+        except (aiosqlite.Error, OSError) as exc:
+            self.set_last_write_error(f"history finalization stage update failed: {exc}")
+            self._logger_provider().warning(
+                "Failed to update finalization stage metadata for run %s",
                 run_id,
                 exc_info=True,
             )

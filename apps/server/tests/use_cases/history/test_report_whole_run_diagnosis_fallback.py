@@ -66,21 +66,25 @@ def _alternative_finding() -> dict[str, object]:
 def _prepared_report_input(
     *,
     analysis_metadata: dict[str, object],
+    metadata: dict[str, object] | None = None,
     whole_run_context_intervals: list[dict[str, object]] | None = None,
     whole_run_diagnosis_summaries: list[dict[str, object]] | None = None,
     findings: list[dict[str, object]] | None = None,
     top_causes: list[dict[str, object]] | None = None,
 ) -> object:
     primary = _primary_finding()
+    metadata_payload = {
+        "run_id": "fallback-run",
+        "record_type": "metadata",
+        "schema_version": "v2-jsonl",
+        "feature_interval_s": 0.5,
+    }
+    if metadata is not None:
+        metadata_payload.update(metadata)
     summary = minimal_summary(
         run_id="fallback-run",
         lang="en",
-        metadata={
-            "run_id": "fallback-run",
-            "record_type": "metadata",
-            "schema_version": "v2-jsonl",
-            "feature_interval_s": 0.5,
-        },
+        metadata=metadata_payload,
         sensor_count_used=2,
         sensor_locations=["Front Left", "Rear Left"],
         sensor_locations_connected_throughout=["Front Left", "Rear Left"],
@@ -117,6 +121,67 @@ def test_prepare_persisted_report_input_builds_summary_only_fallback_diagnosis_s
         "summary_only",
         "close_alternative",
     }
+
+
+def test_prepare_persisted_report_input_uses_finalization_timeout_fallback_reason() -> None:
+    prepared = _prepared_report_input(
+        analysis_metadata={
+            "raw_backed_sample_count": 0,
+            "raw_capture_mode": "summary_only",
+        },
+        metadata={
+            "finalization_stages": [
+                {
+                    "stage_name": "FinalizeRawCaptureStage",
+                    "status": "degraded",
+                    "duration_ms": 12,
+                    "warnings": ["raw capture finalize timed out"],
+                    "diagnostic_context": {"raw_capture_status": "timeout"},
+                },
+                {
+                    "stage_name": "ResolvePostAnalysisCandidateStage",
+                    "status": "skipped",
+                    "duration_ms": 1,
+                    "diagnostic_context": {"reason": "raw_capture_finalize_unsettled"},
+                },
+            ]
+        },
+    )
+
+    diagnosis = prepared.report_facts.whole_run_diagnosis_summaries
+
+    assert len(diagnosis) == 1
+    assert diagnosis[0].fallback_reason == "raw_capture_finalize_timeout"
+
+
+def test_prepare_persisted_report_input_uses_raw_not_configured_fallback_reason() -> None:
+    prepared = _prepared_report_input(
+        analysis_metadata={
+            "raw_backed_sample_count": 0,
+            "raw_capture_mode": "summary_only",
+        },
+        metadata={
+            "finalization_stages": [
+                {
+                    "stage_name": "FinalizeRawCaptureStage",
+                    "status": "skipped",
+                    "duration_ms": 0,
+                    "diagnostic_context": {"raw_capture_status": "not_configured"},
+                },
+                {
+                    "stage_name": "ResolvePostAnalysisCandidateStage",
+                    "status": "skipped",
+                    "duration_ms": 1,
+                    "diagnostic_context": {"reason": "history_not_ready"},
+                },
+            ]
+        },
+    )
+
+    diagnosis = prepared.report_facts.whole_run_diagnosis_summaries
+
+    assert len(diagnosis) == 1
+    assert diagnosis[0].fallback_reason == "raw_capture_not_configured"
 
 
 def test_prepare_persisted_report_input_builds_raw_backed_legacy_fallback_diagnosis_summary() -> (
