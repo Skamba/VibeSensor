@@ -6,6 +6,7 @@ import pytest
 
 from vibesensor.use_cases.updates.firmware.esp_flash_runner import (
     FLASH_CANCELLED_RETURN_CODE,
+    FLASH_TIMEOUT_RETURN_CODE,
     SubprocessFlashCommandRunner,
 )
 
@@ -21,10 +22,22 @@ class _FakeStdout:
         return self._lines.pop(0)
 
 
+class _BlockingStdout:
+    async def readline(self) -> bytes:
+        await asyncio.sleep(60)
+        return b""
+
+
 class _FakeFlashProcess:
-    def __init__(self, lines: list[bytes]) -> None:
-        self.stdout = _FakeStdout(lines)
+    def __init__(
+        self,
+        lines: list[bytes] | None = None,
+        *,
+        ignore_terminate: bool = False,
+    ) -> None:
+        self.stdout = _FakeStdout(lines or [])
         self.returncode: int | None = None
+        self.ignore_terminate = ignore_terminate
         self.terminated = False
         self.killed = False
 
@@ -38,6 +51,8 @@ class _FakeFlashProcess:
     async def wait(self) -> int:
         await asyncio.sleep(0)
         if self.returncode is None:
+            if self.ignore_terminate and not self.killed:
+                await asyncio.sleep(60)
             self.returncode = 0
         return self.returncode
 
@@ -106,3 +121,38 @@ async def test_subprocess_flash_runner_returns_cancel_code_during_output(
     assert lines == ["Connecting...", "Flash cancelled by request"]
     assert process.terminated is True
     assert process.killed is False
+
+
+@pytest.mark.asyncio
+async def test_subprocess_flash_runner_kills_timed_out_process_that_ignores_terminate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    process = _FakeFlashProcess(ignore_terminate=True)
+    process.stdout = _BlockingStdout()
+
+    async def _fake_create_subprocess_exec(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+        return process
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.firmware.esp_flash_runner.FLASH_SHUTDOWN_WAIT_S",
+        0.01,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.firmware.esp_flash_runner.asyncio.create_subprocess_exec",
+        _fake_create_subprocess_exec,
+    )
+    lines: list[str] = []
+
+    result = await SubprocessFlashCommandRunner().run(
+        ["esptool.py", "write_flash"],
+        cwd="/tmp",
+        line_cb=lines.append,
+        cancel_event=asyncio.Event(),
+        timeout_s=0.01,
+    )
+
+    assert result == FLASH_TIMEOUT_RETURN_CODE
+    assert lines == ["Command timed out after 0s"]
+    assert process.terminated is True
+    assert process.killed is True

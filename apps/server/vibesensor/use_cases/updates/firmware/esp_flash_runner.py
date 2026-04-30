@@ -12,8 +12,31 @@ from vibesensor.use_cases.updates.firmware.esp_flash_types import FlashCommandRu
 
 LOGGER = logging.getLogger(__name__)
 FLASH_CANCELLED_RETURN_CODE = 130
+FLASH_TIMEOUT_RETURN_CODE = 124
+FLASH_SHUTDOWN_WAIT_S = 5.0
 
-__all__ = ["FLASH_CANCELLED_RETURN_CODE", "SubprocessFlashCommandRunner"]
+__all__ = [
+    "FLASH_CANCELLED_RETURN_CODE",
+    "FLASH_SHUTDOWN_WAIT_S",
+    "FLASH_TIMEOUT_RETURN_CODE",
+    "SubprocessFlashCommandRunner",
+]
+
+
+async def _terminate_process(
+    proc: asyncio.subprocess.Process,
+    *,
+    wait_timeout_s: float | None = None,
+) -> None:
+    proc.terminate()
+    shutdown_wait_s = FLASH_SHUTDOWN_WAIT_S if wait_timeout_s is None else wait_timeout_s
+    try:
+        await asyncio.wait_for(proc.wait(), timeout=shutdown_wait_s)
+    except TimeoutError:
+        LOGGER.warning("Process did not exit after SIGTERM; sending SIGKILL.")
+        with contextlib.suppress(ProcessLookupError):
+            proc.kill()
+        await proc.wait()
 
 
 class SubprocessFlashCommandRunner(FlashCommandRunner):
@@ -39,18 +62,15 @@ class SubprocessFlashCommandRunner(FlashCommandRunner):
         if proc.stdout is None:  # pragma: no cover – PIPE always sets stdout
             raise RuntimeError("subprocess stdout is None despite PIPE setting")
         started_at = time.monotonic()
-        cancelled = False
         while proc.returncode is None:
             if cancel_event.is_set():
                 line_cb("Flash cancelled by request")
-                cancelled = True
-                proc.terminate()
-                break
+                await _terminate_process(proc)
+                return FLASH_CANCELLED_RETURN_CODE
             if timeout_s is not None and (time.monotonic() - started_at) > timeout_s:
                 line_cb(f"Command timed out after {int(timeout_s)}s")
-                proc.terminate()
-                await proc.wait()
-                return 124
+                await _terminate_process(proc)
+                return FLASH_TIMEOUT_RETURN_CODE
             try:
                 line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.25)
             except TimeoutError:
@@ -59,13 +79,4 @@ class SubprocessFlashCommandRunner(FlashCommandRunner):
                 await proc.wait()
                 break
             line_cb(line.decode("utf-8", errors="replace").rstrip("\n"))
-        try:
-            await asyncio.wait_for(proc.wait(), timeout=5.0)
-        except TimeoutError:
-            LOGGER.warning("Process did not exit after SIGTERM; sending SIGKILL.")
-            with contextlib.suppress(ProcessLookupError):
-                proc.kill()
-            await proc.wait()
-        if cancelled:
-            return FLASH_CANCELLED_RETURN_CODE
         return proc.returncode or 0
