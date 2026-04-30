@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import json
+import threading
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -190,11 +192,70 @@ async def test_report_pdf_cache_retries_after_build_failure() -> None:
         await cache.get_or_build(cache_key, _build)
 
     assert cache.get(cache_key) is None
+    assert cache._locks == {}
+    assert cache._lock_users == {}
 
     pdf = await cache.get_or_build(cache_key, _build)
 
     assert pdf == b"%PDF-success"
     assert calls == 2
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_prunes_distinct_failed_build_locks() -> None:
+    cache = HistoryReportPdfCache()
+
+    def _build() -> bytes:
+        raise RuntimeError("boom")
+
+    for index in range(REPORT_PDF_CACHE_MAX_ENTRIES * 3):
+        cache_key = (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none")
+        with pytest.raises(RuntimeError, match="boom"):
+            await cache.get_or_build(cache_key, _build)
+
+    assert cache._locks == {}
+    assert cache._lock_users == {}
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> None:
+    cache = HistoryReportPdfCache()
+    cache_key = ("run-concurrent", "en", None, 12, "{}", "analysis", "none")
+    first_build_started = threading.Event()
+    release_first_build = threading.Event()
+    counter_lock = threading.Lock()
+    calls = 0
+    active_builds = 0
+    max_active_builds = 0
+
+    def _build() -> bytes:
+        nonlocal active_builds, calls, max_active_builds
+        with counter_lock:
+            calls += 1
+            active_builds += 1
+            max_active_builds = max(max_active_builds, active_builds)
+        first_build_started.set()
+        if not release_first_build.wait(timeout=1.0):
+            raise RuntimeError("timed out waiting to release build")
+        with counter_lock:
+            active_builds -= 1
+        return b"%PDF-concurrent"
+
+    first = asyncio.create_task(cache.get_or_build(cache_key, _build))
+    assert await asyncio.to_thread(first_build_started.wait, 1.0)
+
+    second = asyncio.create_task(cache.get_or_build(cache_key, _build))
+    await asyncio.sleep(0.05)
+
+    assert calls == 1
+    release_first_build.set()
+    first_pdf, second_pdf = await asyncio.gather(first, second)
+
+    assert first_pdf == second_pdf == b"%PDF-concurrent"
+    assert calls == 1
+    assert max_active_builds == 1
+    assert cache._lock_users == {}
+    assert cache._locks[cache_key] is not None
 
 
 @pytest.mark.asyncio
@@ -209,12 +270,17 @@ async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
         built = await cache.get_or_build(key, lambda index=index: f"%PDF-{index}".encode())
         assert built == f"%PDF-{index}".encode()
 
+    assert len(cache._locks) == REPORT_PDF_CACHE_MAX_ENTRIES
     assert cache.get(keys[0]) == b"%PDF-0"
 
     assert await cache.get_or_build(keys[-1], lambda: b"%PDF-new") == b"%PDF-new"
 
     assert cache.get(keys[1]) is None
     assert cache.get(keys[0]) == b"%PDF-0"
+    assert keys[1] not in cache._locks
+    assert keys[0] in cache._locks
+    assert keys[-1] in cache._locks
+    assert len(cache._locks) == REPORT_PDF_CACHE_MAX_ENTRIES
 
 
 @pytest.mark.asyncio
