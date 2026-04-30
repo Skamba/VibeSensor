@@ -40,3 +40,25 @@ def test_make_command_target_lint_rejects_stale_documented_targets(
     assert module._check_make_command_targets(["docs/testing.md"], tmp_path) == [
         "docs/testing.md: documented make target does not exist: coverage-html"
     ]
+
+
+def test_docs_lint_rejects_removed_processing_path_references(tmp_path: Path) -> None:
+    module = _load_docs_lint_module()
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    docs_path = docs_dir / "intake_buffering.md"
+    docs_path.write_text(
+        "Old path: `infra/processing/fft.py`.\n",
+        encoding="utf-8",
+    )
+
+    original_repo_root = module.REPO_ROOT
+    module.REPO_ROOT = tmp_path
+    try:
+        assert module._check_stale_repo_path_references(["docs/intake_buffering.md"]) == [
+            "docs/intake_buffering.md: stale repo path reference: "
+            "infra/processing/fft.py "
+            "(use apps/server/vibesensor/shared/fft_analysis.py)"
+        ]
+    finally:
+        module.REPO_ROOT = original_repo_root
