@@ -5,6 +5,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+import threading
+import time
 from pathlib import Path
 
 from tests._paths import REPO_ROOT
@@ -241,3 +243,68 @@ def test_main_warns_about_skipped_external_workflow_actions(
     assert "release-smoke (Download release-smoke UI static artifact)" in output
     assert "actions/download-artifact@" in output
     assert "without --skip-ui-build" in output
+
+
+def test_main_serializes_jobs_with_overlapping_workspace_write_sets(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    _stub_ui_bootstrap_check(monkeypatch, module, needs_npm_ci=False)
+    jobs = {
+        "frontend-typecheck": [module.Step("UI typecheck", ["true"])],
+        "backend-contract-drift": [module.Step("Contract sync", ["true"])],
+    }
+    outputs: list[str] = []
+    active_jobs = 0
+    max_active_jobs = 0
+    lock = threading.Lock()
+
+    monkeypatch.setattr(module, "_job_steps", lambda _python_cmd: jobs)
+    monkeypatch.setattr(module, "_run_bootstrap", lambda _steps: 0)
+    monkeypatch.setattr(module, "_emit", outputs.append)
+    monkeypatch.setattr(
+        module,
+        "_job_workspace_write_sets",
+        lambda: {
+            "frontend-typecheck": ("ui-generated-contracts",),
+            "backend-contract-drift": ("ui-generated-contracts",),
+        },
+    )
+
+    def _fake_run_job(name, _steps, results):
+        nonlocal active_jobs, max_active_jobs
+        with lock:
+            active_jobs += 1
+            max_active_jobs = max(max_active_jobs, active_jobs)
+        time.sleep(0.02)
+        with lock:
+            active_jobs -= 1
+        results[name] = module.JobResult(
+            name=name,
+            ok=True,
+            failed_step=None,
+            return_code=0,
+            duration_s=0.0,
+            log_path=tmp_path / f"{name}.log",
+        )
+
+    monkeypatch.setattr(module, "_run_job", _fake_run_job)
+
+    assert (
+        module.main(
+            [
+                "--job",
+                "frontend-typecheck",
+                "--job",
+                "backend-contract-drift",
+            ]
+        )
+        == 0
+    )
+
+    output = "\n".join(outputs)
+    assert "shared workspace write-set serialization" in output
+    assert "ui-generated-contracts: frontend-typecheck, backend-contract-drift" in output
+    assert max_active_jobs == 1

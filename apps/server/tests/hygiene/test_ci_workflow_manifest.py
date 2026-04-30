@@ -122,3 +122,19 @@ def test_skipped_external_actions_are_explicit_and_substituted() -> None:
         and not action.local_substitute
     ]
     assert unsupported_required_artifact_actions == []
+
+
+def test_common_local_jobs_declare_shared_workspace_write_sets() -> None:
+    module = _load_ci_manifest_module()
+
+    jobs = module.ci_workflow_jobs()
+    assert set(jobs["frontend-typecheck"].workspace_write_sets) == {"ui-generated-contracts"}
+    assert set(jobs["backend-contract-drift"].workspace_write_sets) == {"ui-generated-contracts"}
+    assert set(jobs["release-smoke"].workspace_write_sets) == {
+        "ui-generated-contracts",
+        "ui-dist",
+        "server-static",
+        "server-dist",
+        "release-smoke-artifacts",
+    }
+    assert set(jobs["ui-smoke"].workspace_write_sets) == {"ui-test-results"}
