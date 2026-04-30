@@ -1,5 +1,9 @@
 # Final report redesign: Verdict + Workbook
 
+> **Status:** Active
+> **Use:** Current report/PDF design guidance for the verdict page, appendices,
+> vocabulary, and history-side preparation responsibilities.
+
 ## Baseline design being extended
 
 This design explicitly extends the last-selected **“Verdict + Workbook”** direction rather than replacing it.

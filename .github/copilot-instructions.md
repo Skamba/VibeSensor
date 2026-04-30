@@ -7,6 +7,7 @@ Guidance stack
 - `docs/ai/repo-map.md` is the repo map for layout, entry points, and stable ownership boundaries; it is not a second workflow or policy guide.
 - Do not create additional guidance files in `docs/ai/`.
 - Paths below are repo-relative unless a bullet is explicitly talking about a Python import namespace such as `vibesensor.domain` or `vibesensor.shared.*`.
+- Design docs under `docs/designs/` must declare `Status: Active`, `Status: Historical`, or `Status: Superseded`; follow Active docs as guidance, and treat Historical/Superseded docs as reference only.
 
 Execution philosophy
 - Be decisive, direct, and completion-oriented. Default to completing the user's requested change end to end.
