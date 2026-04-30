@@ -6,6 +6,8 @@ import importlib.util
 import subprocess
 import sys
 
+import pytest
+
 from tests._paths import REPO_ROOT
 
 _WATCH_PR_CHECKS = REPO_ROOT / "tools" / "watch_pr_checks.py"
@@ -118,7 +120,11 @@ def test_main_emits_compact_state_changes_without_repeating_unchanged_pending_po
     )
     monotonic_times = iter([0.0, 10.0, 20.0])
 
-    monkeypatch.setattr(module, "_fetch_pr_status", lambda pr, repo: next(responses))
+    monkeypatch.setattr(
+        module,
+        "_fetch_pr_status",
+        lambda pr, repo, *, timeout_s: next(responses),
+    )
     monkeypatch.setattr(module, "_now_monotonic", lambda: next(monotonic_times))
     monkeypatch.setattr(module, "_now_utc", lambda: "12:00:00")
     monkeypatch.setattr(module, "_sleep", lambda seconds: None)
@@ -144,7 +150,7 @@ def test_main_reports_real_failures_with_details_url(monkeypatch, capsys) -> Non
     monkeypatch.setattr(
         module,
         "_fetch_pr_status",
-        lambda pr, repo: _pr_status(
+        lambda pr, repo, *, timeout_s: _pr_status(
             module,
             [
                 {
@@ -171,20 +177,84 @@ def test_main_reports_real_failures_with_details_url(monkeypatch, capsys) -> Non
     ]
 
 
-def test_merge_pr_uses_match_head_commit_and_deletes_branch(monkeypatch) -> None:
+def test_fetch_pr_status_uses_timeout_and_classifies_auth_failure(monkeypatch) -> None:
     module = _load_watch_pr_checks_module()
     observed: dict[str, object] = {}
 
-    def _fake_run(cmd, *, text, capture_output, check):
+    def _fake_run(cmd, *, text, capture_output, check, timeout):
         observed["cmd"] = cmd
         observed["text"] = text
         observed["capture_output"] = capture_output
         observed["check"] = check
+        observed["timeout"] = timeout
+        return subprocess.CompletedProcess(
+            cmd,
+            1,
+            "",
+            "HTTP 401: authentication required",
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+
+    with pytest.raises(
+        module.GhCommandFailed,
+        match="auth: gh pr view exited 1: HTTP 401: authentication required",
+    ):
+        module._fetch_pr_status("2719", "Skamba/VibeSensor", timeout_s=42)
+
+    assert observed == {
+        "cmd": [
+            "gh",
+            "pr",
+            "view",
+            "2719",
+            "--json",
+            "statusCheckRollup,mergeStateStatus,mergeable,headRefOid",
+            "--repo",
+            "Skamba/VibeSensor",
+        ],
+        "text": True,
+        "capture_output": True,
+        "check": False,
+        "timeout": 42,
+    }
+
+
+def test_fetch_pr_status_reports_malformed_json(monkeypatch) -> None:
+    module = _load_watch_pr_checks_module()
+
+    def _fake_run(cmd, *, text, capture_output, check, timeout):
+        return subprocess.CompletedProcess(cmd, 0, "{", "")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+
+    with pytest.raises(
+        module.GhCommandFailed,
+        match="api: gh pr view returned malformed JSON",
+    ):
+        module._fetch_pr_status("2719", None)
+
+
+def test_merge_pr_uses_timeout_match_head_commit_and_deletes_branch(monkeypatch) -> None:
+    module = _load_watch_pr_checks_module()
+    observed: dict[str, object] = {}
+
+    def _fake_run(cmd, *, text, capture_output, check, timeout):
+        observed["cmd"] = cmd
+        observed["text"] = text
+        observed["capture_output"] = capture_output
+        observed["check"] = check
+        observed["timeout"] = timeout
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.setattr(module.subprocess, "run", _fake_run)
 
-    module._merge_pr("2719", "Skamba/VibeSensor", "abc123def4567890")
+    module._merge_pr(
+        "2719",
+        "Skamba/VibeSensor",
+        "abc123def4567890",
+        timeout_s=42,
+    )
 
     assert observed == {
         "cmd": [
@@ -202,7 +272,23 @@ def test_merge_pr_uses_match_head_commit_and_deletes_branch(monkeypatch) -> None
         "text": True,
         "capture_output": True,
         "check": False,
+        "timeout": 42,
     }
+
+
+def test_merge_pr_reports_timeout(monkeypatch) -> None:
+    module = _load_watch_pr_checks_module()
+
+    def _fake_run(cmd, *, text, capture_output, check, timeout):
+        raise subprocess.TimeoutExpired(cmd, timeout=timeout, stderr="network stall")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+
+    with pytest.raises(
+        module.MergeFailed,
+        match="timeout: gh pr merge timed out after 7s: network stall",
+    ):
+        module._merge_pr("2719", None, "abc123def4567890", timeout_s=7)
 
 
 def test_main_merges_on_green_when_requested(monkeypatch, capsys) -> None:
@@ -221,12 +307,16 @@ def test_main_merges_on_green_when_requested(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         module,
         "_fetch_pr_status",
-        lambda pr, repo: _pr_status(module, green_checks, head_sha="deadbeefcafebabe"),
+        lambda pr, repo, *, timeout_s: _pr_status(
+            module,
+            green_checks,
+            head_sha="deadbeefcafebabe",
+        ),
     )
     monkeypatch.setattr(
         module,
         "_merge_pr",
-        lambda pr, repo, head_sha: merged.append((pr, repo, head_sha)),
+        lambda pr, repo, head_sha, *, timeout_s: merged.append((pr, repo, head_sha)),
     )
     monkeypatch.setattr(module, "_now_monotonic", lambda: 0.0)
     monkeypatch.setattr(module, "_now_utc", lambda: "13:00:00")
@@ -258,12 +348,12 @@ def test_main_reports_merge_failure_when_merge_on_green_fails(monkeypatch, capsy
     monkeypatch.setattr(
         module,
         "_fetch_pr_status",
-        lambda pr, repo: _pr_status(module, green_checks),
+        lambda pr, repo, *, timeout_s: _pr_status(module, green_checks),
     )
     monkeypatch.setattr(
         module,
         "_merge_pr",
-        lambda pr, repo, head_sha: (_ for _ in ()).throw(
+        lambda pr, repo, head_sha, *, timeout_s: (_ for _ in ()).throw(
             module.MergeFailed("pull request is still a draft")
         ),
     )
@@ -277,4 +367,90 @@ def test_main_reports_merge_failure_when_merge_on_green_fails(monkeypatch, capsy
     assert output_lines == [
         "[13:05:00] PR 789 green ok=1 total=1",
         "RESULT=MERGE_FAILED (pull request is still a draft)",
+    ]
+
+
+def test_main_retries_transient_fetch_failure_then_reports_green(
+    monkeypatch,
+    capsys,
+) -> None:
+    module = _load_watch_pr_checks_module()
+    green_checks = [
+        {
+            "name": "Repo hygiene",
+            "workflowName": "CI",
+            "status": "COMPLETED",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://example.invalid/repo-hygiene",
+        }
+    ]
+    responses = iter(
+        [
+            module.GhCommandFailed("network: gh pr view exited 1: connection reset"),
+            _pr_status(module, green_checks),
+        ]
+    )
+    sleeps: list[int] = []
+
+    def _fake_fetch(pr, repo, *, timeout_s):
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    monkeypatch.setattr(module, "_fetch_pr_status", _fake_fetch)
+    monkeypatch.setattr(module, "_sleep", sleeps.append)
+    monkeypatch.setattr(module, "_now_monotonic", lambda: 0.0)
+    monkeypatch.setattr(module, "_now_utc", lambda: "13:10:00")
+
+    rc = module.main(["--pr", "123", "--interval", "2", "--fetch-failure-limit", "2"])
+    output_lines = capsys.readouterr().out.splitlines()
+
+    assert rc == 0
+    assert sleeps == [2]
+    assert output_lines == [
+        "[13:10:00] WARN gh pr view failed attempt 1/2: "
+        "network: gh pr view exited 1: connection reset",
+        "[13:10:00] PR 123 green ok=1 total=1",
+        "RESULT=ALL_GREEN",
+    ]
+
+
+def test_main_returns_fetch_failed_after_consecutive_fetch_failures(
+    monkeypatch,
+    capsys,
+) -> None:
+    module = _load_watch_pr_checks_module()
+    sleeps: list[int] = []
+
+    monkeypatch.setattr(
+        module,
+        "_fetch_pr_status",
+        lambda pr, repo, *, timeout_s: (_ for _ in ()).throw(
+            module.GhCommandFailed("timeout: gh pr view timed out after 1s")
+        ),
+    )
+    monkeypatch.setattr(module, "_sleep", sleeps.append)
+    monkeypatch.setattr(module, "_now_utc", lambda: "13:15:00")
+
+    rc = module.main(
+        [
+            "--pr",
+            "123",
+            "--interval",
+            "2",
+            "--fetch-failure-limit",
+            "2",
+            "--gh-timeout",
+            "1",
+        ]
+    )
+    output_lines = capsys.readouterr().out.splitlines()
+
+    assert rc == 5
+    assert sleeps == [2]
+    assert output_lines == [
+        "[13:15:00] WARN gh pr view failed attempt 1/2: timeout: gh pr view timed out after 1s",
+        "[13:15:00] WARN gh pr view failed attempt 2/2: timeout: gh pr view timed out after 1s",
+        "RESULT=FETCH_FAILED (timeout: gh pr view timed out after 1s)",
     ]

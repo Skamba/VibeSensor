@@ -67,7 +67,7 @@ Commands
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
 - `./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset; direct local CI runners reject the wrong Python major/minor)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
-- `./.venv/bin/python tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`; omit `--merge-on-green` for watch-only mode)
+- `./.venv/bin/python tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`, `--gh-timeout 30`, `--fetch-failure-limit 3`; omit `--merge-on-green` for watch-only mode)
 - `cd apps/ui && npm ci && npm run build` (bundle build after `make ui-typecheck`; raw `npm run typecheck` / `npm run build` only check contract freshness and fail if generated UI files are stale)
 - `cd apps/ui && npm run test:visual`
 - `cd firmware/esp && pio run`

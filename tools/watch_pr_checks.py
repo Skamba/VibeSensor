@@ -20,6 +20,8 @@ RUNNING_STATUSES = {"IN_PROGRESS"}
 QUEUED_STATUSES = {"EXPECTED", "PENDING", "QUEUED", "REQUESTED", "WAITING"}
 SUCCESS_CONCLUSIONS = {"NEUTRAL", "SKIPPED", "SUCCESS"}
 ACTIONABLE_MERGE_STATES = {"DIRTY"}
+DEFAULT_GH_TIMEOUT_S = 30
+DEFAULT_FETCH_FAILURE_LIMIT = 3
 _REPO_TOOLING_SUPPORT_PATH = ROOT / "tools" / "repo_tooling_support.py"
 
 
@@ -63,6 +65,10 @@ class MergeFailed(RuntimeError):
     """Raised when merge-on-green cannot complete the PR merge."""
 
 
+class GhCommandFailed(RuntimeError):
+    """Raised when a bounded GitHub CLI call fails before producing usable data."""
+
+
 def _now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%H:%M:%S")
 
@@ -79,7 +85,126 @@ def _upper(value: object) -> str:
     return str(value or "").strip().upper()
 
 
-def _fetch_pr_status(pr: str, repo: str | None) -> PrStatusSnapshot:
+def _coerce_output(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode(errors="replace")
+    return value
+
+
+def _compact_error_message(
+    text: str,
+    *,
+    limit: int = 200,
+    empty_message: str = "gh command failed without an error message",
+) -> str:
+    collapsed = " ".join(text.split())
+    if not collapsed:
+        return empty_message
+    if len(collapsed) <= limit:
+        return collapsed
+    return f"{collapsed[: limit - 3]}..."
+
+
+def _gh_failure_category(text: str, *, timed_out: bool = False) -> str:
+    if timed_out:
+        return "timeout"
+    lowered = text.lower()
+    if any(
+        token in lowered
+        for token in (
+            "authentication",
+            "auth",
+            "login",
+            "oauth",
+            "permission",
+            "forbidden",
+            "401",
+            "403",
+        )
+    ):
+        return "auth"
+    if any(
+        token in lowered
+        for token in (
+            "api",
+            "graphql",
+            "rate limit",
+            "http 5",
+            "500",
+            "502",
+            "503",
+            "504",
+        )
+    ):
+        return "api"
+    if any(
+        token in lowered
+        for token in (
+            "network",
+            "connection",
+            "could not resolve",
+            "timed out",
+            "timeout",
+            "tls",
+            "temporary failure",
+        )
+    ):
+        return "network"
+    return "gh"
+
+
+def _format_gh_failure(
+    action: str,
+    *,
+    category: str,
+    detail: str,
+) -> str:
+    return f"{category}: {action} {detail}"
+
+
+def _run_gh(
+    cmd: Sequence[str],
+    *,
+    action: str,
+    timeout_s: int,
+) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            cmd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired as exc:
+        output = "\n".join(
+            part
+            for part in (
+                _coerce_output(exc.stderr),
+                _coerce_output(exc.stdout),
+            )
+            if part
+        )
+        detail = f"timed out after {timeout_s}s"
+        if output:
+            detail = f"{detail}: {_compact_error_message(output)}"
+        raise GhCommandFailed(
+            _format_gh_failure(
+                action,
+                category="timeout",
+                detail=detail,
+            )
+        ) from exc
+
+
+def _fetch_pr_status(
+    pr: str,
+    repo: str | None,
+    *,
+    timeout_s: int = DEFAULT_GH_TIMEOUT_S,
+) -> PrStatusSnapshot:
     cmd = [
         "gh",
         "pr",
@@ -90,8 +215,28 @@ def _fetch_pr_status(pr: str, repo: str | None) -> PrStatusSnapshot:
     ]
     if repo:
         cmd.extend(["--repo", repo])
-    raw = subprocess.check_output(cmd, text=True)
-    payload = json.loads(raw)
+    proc = _run_gh(cmd, action="gh pr view", timeout_s=timeout_s)
+    if proc.returncode != 0:
+        output = "\n".join(part for part in (proc.stderr, proc.stdout) if part)
+        category = _gh_failure_category(output)
+        detail = (
+            f"exited {proc.returncode}: "
+            f"{_compact_error_message(output, empty_message='no stderr/stdout')}"
+        )
+        raise GhCommandFailed(
+            _format_gh_failure("gh pr view", category=category, detail=detail)
+        )
+
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise GhCommandFailed(
+            _format_gh_failure(
+                "gh pr view",
+                category="api",
+                detail=f"returned malformed JSON: {exc.msg}",
+            )
+        ) from exc
     checks_raw = payload.get("statusCheckRollup")
     return PrStatusSnapshot(
         checks=_snapshot_checks(checks_raw) if isinstance(checks_raw, list) else {},
@@ -259,16 +404,13 @@ def _short_sha(head_sha: str) -> str:
     return head_sha[:12] if head_sha else "unknown"
 
 
-def _compact_error_message(text: str, *, limit: int = 200) -> str:
-    collapsed = " ".join(text.split())
-    if not collapsed:
-        return "gh pr merge failed without an error message"
-    if len(collapsed) <= limit:
-        return collapsed
-    return f"{collapsed[: limit - 3]}..."
-
-
-def _merge_pr(pr: str, repo: str | None, head_sha: str) -> None:
+def _merge_pr(
+    pr: str,
+    repo: str | None,
+    head_sha: str,
+    *,
+    timeout_s: int = DEFAULT_GH_TIMEOUT_S,
+) -> None:
     cmd = ["gh", "pr", "merge", pr]
     if repo:
         cmd.extend(["--repo", repo])
@@ -276,16 +418,25 @@ def _merge_pr(pr: str, repo: str | None, head_sha: str) -> None:
     if head_sha:
         cmd.extend(["--match-head-commit", head_sha])
 
-    proc = subprocess.run(
-        cmd,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        proc = _run_gh(cmd, action="gh pr merge", timeout_s=timeout_s)
+    except GhCommandFailed as exc:
+        raise MergeFailed(str(exc)) from exc
+
     if proc.returncode == 0:
         return
 
-    raise MergeFailed(_compact_error_message(proc.stderr or proc.stdout))
+    output = "\n".join(part for part in (proc.stderr, proc.stdout) if part)
+    raise MergeFailed(
+        _format_gh_failure(
+            "gh pr merge",
+            category=_gh_failure_category(output),
+            detail=(
+                f"exited {proc.returncode}: "
+                f"{_compact_error_message(output, empty_message='no stderr/stdout')}"
+            ),
+        )
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -313,6 +464,21 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Merge the PR via gh as soon as checks are green",
     )
+    parser.add_argument(
+        "--gh-timeout",
+        type=int,
+        default=DEFAULT_GH_TIMEOUT_S,
+        help=f"Timeout for each gh CLI call in seconds (default: {DEFAULT_GH_TIMEOUT_S})",
+    )
+    parser.add_argument(
+        "--fetch-failure-limit",
+        type=int,
+        default=DEFAULT_FETCH_FAILURE_LIMIT,
+        help=(
+            "Consecutive gh pr view failures to tolerate before RESULT=FETCH_FAILED "
+            f"(default: {DEFAULT_FETCH_FAILURE_LIMIT})"
+        ),
+    )
     return parser
 
 
@@ -326,13 +492,38 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.heartbeat < 0:
         print("heartbeat must be >= 0", file=sys.stderr)
         return 2
+    if args.gh_timeout <= 0:
+        print("gh-timeout must be > 0", file=sys.stderr)
+        return 2
+    if args.fetch_failure_limit <= 0:
+        print("fetch-failure-limit must be > 0", file=sys.stderr)
+        return 2
 
     previous_checks: dict[str, CheckSnapshot] | None = None
     previous_merge_issue: str | None = None
     last_summary_at = 0.0
+    consecutive_fetch_failures = 0
 
     while True:
-        snapshot = _fetch_pr_status(args.pr, args.repo)
+        try:
+            snapshot = _fetch_pr_status(
+                args.pr,
+                args.repo,
+                timeout_s=args.gh_timeout,
+            )
+        except GhCommandFailed as exc:
+            consecutive_fetch_failures += 1
+            print(
+                f"[{_now_utc()}] WARN gh pr view failed "
+                f"attempt {consecutive_fetch_failures}/{args.fetch_failure_limit}: {exc}"
+            )
+            if consecutive_fetch_failures >= args.fetch_failure_limit:
+                print(f"RESULT=FETCH_FAILED ({exc})")
+                return 5
+            _sleep(args.interval)
+            continue
+
+        consecutive_fetch_failures = 0
         current_checks = snapshot.checks
         current_merge_issue = _actionable_merge_issue(
             snapshot.merge_state, snapshot.mergeable
@@ -370,7 +561,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         if _all_green(current_checks):
             if args.merge_on_green:
                 try:
-                    _merge_pr(args.pr, args.repo, snapshot.head_sha)
+                    _merge_pr(
+                        args.pr,
+                        args.repo,
+                        snapshot.head_sha,
+                        timeout_s=args.gh_timeout,
+                    )
                 except MergeFailed as exc:
                     print(f"RESULT=MERGE_FAILED ({exc})")
                     return 4
