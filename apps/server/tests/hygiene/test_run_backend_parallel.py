@@ -7,8 +7,11 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import yaml
+
 from tests._paths import REPO_ROOT
 
+_CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _RUN_BACKEND_PARALLEL = REPO_ROOT / "tools" / "tests" / "run_backend_parallel.py"
 
 
@@ -172,3 +175,18 @@ def test_run_times_out_pytest_subprocess(monkeypatch, tmp_path: Path) -> None:
     log_text = log_path.read_text(encoding="utf-8")
     assert "partial pytest output" in log_text
     assert "timed out after 5s" in log_text
+
+
+def test_ci_backend_shard_timeout_leaves_artifact_upload_budget() -> None:
+    workflow = yaml.safe_load(_CI_WORKFLOW.read_text(encoding="utf-8"))
+    backend_tests = workflow["jobs"]["backend-tests"]
+    job_timeout_s = int(backend_tests["timeout-minutes"]) * 60
+    shard_step = next(
+        step
+        for step in backend_tests["steps"]
+        if isinstance(step, dict) and step.get("name", "").startswith("Backend tests shard")
+    )
+
+    shard_timeout_s = int(shard_step["env"]["VIBESENSOR_BACKEND_SHARD_TIMEOUT_S"])
+
+    assert shard_timeout_s <= job_timeout_s - 60
