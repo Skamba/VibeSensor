@@ -57,6 +57,8 @@ Commands
 - `python3 tools/tests/plan_validation.py --run` (run the planned non-Docker local CI jobs)
 - `make doctor` (reports local prerequisites, including host `shellcheck` for local `shell-lint` parity)
 - `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
+- `make test-ci-fast` (fast local CI gates: lint, docs, static guards, and type checks; no browser/release/firmware/e2e/backend test suites)
+- `make test-ci-lite` (non-Docker workflow jobs except e2e; includes backend shards, UI smoke, release smoke, and firmware native tests)
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
 - `./tools/tests/run_ci_with_act.sh -j backend-lint` (run a single CI job locally via `act` with generated pull-request event data; requires Docker)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
@@ -73,6 +75,7 @@ Commands
 
 Validation chooser
 - Start with `make plan-validation` for changed-file CI scope; use `python3 tools/tests/plan_validation.py --run` to execute planned non-Docker jobs, or `--act` when ACT/GitHub-workflow parity is required.
+- Use `make test-ci-fast` for a broad but fast local gate before heavier browser/release/backend suites; use `make test-ci-lite` only when you want the larger non-Docker workflow surface except e2e.
 - Local `shell-lint` parity requires host `shellcheck`; use ACT when you need CI to install ShellCheck inside the workflow job.
 - Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`.
 - Backend contracts/API payloads: add `make sync-contracts` and `make ui-typecheck`.

@@ -10,6 +10,8 @@
 - Use `make plan-validation` (`python3 tools/tests/plan_validation.py`) first to turn the current diff into the CI-backed validation plan.
 - Use `python3 tools/tests/plan_validation.py --run` to run that plan through the non-Docker local runner.
 - Use `python3 tools/tests/plan_validation.py --act` when you need ACT/GitHub-workflow parity for the planned jobs.
+- Use `make test-ci-fast` for lint, docs, static guards, and type checks without browser, release, firmware, e2e, or backend test suites.
+- Use `make test-ci-lite` for the larger non-Docker workflow surface except e2e; it still includes backend shards, UI smoke, release smoke, and firmware native tests.
 - Local `shell-lint` parity requires host `shellcheck`; `make doctor` reports it, and ACT/GitHub CI install it inside the workflow job.
 - Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
 - Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
@@ -113,7 +115,7 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
+Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
 
 Main local tiers:
 
@@ -129,7 +131,8 @@ make test-changed
 # Fast iteration — backend unit tests
 make test
 
-# Non-Docker blocking-CI subset
+# Fast non-Docker CI gates, then larger non-Docker CI except e2e
+make test-ci-fast
 make test-ci-lite
 
 # Full local runner
