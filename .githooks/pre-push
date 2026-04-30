@@ -11,7 +11,7 @@ else
   python_bin="python"
 fi
 
-while read -r local_ref local_sha remote_ref remote_sha; do
+while read -r _local_ref local_sha _remote_ref remote_sha; do
   if [[ -z "${local_sha:-}" || "${local_sha}" == "0000000000000000000000000000000000000000" ]]; then
     continue
   fi

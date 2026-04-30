@@ -1,3 +1,4 @@
+# shellcheck disable=SC2034  # This library initializes globals consumed by other pi-gen libraries.
 init_pi_gen_env() {
   SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
   REPO_ROOT="${REPO_ROOT:-$(cd "${SCRIPT_DIR}/../../.." && pwd)}"

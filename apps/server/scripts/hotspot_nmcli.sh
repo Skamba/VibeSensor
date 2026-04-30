@@ -138,6 +138,7 @@ resolve_hotspot_config_cli() {
   return 1
 }
 
+# shellcheck disable=SC2154  # Bash expands BASH_LINENO/BASH_COMMAND inside the ERR trap at runtime.
 trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}" >&2; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
 trap 'rc=$?; echo "EXIT rc=${rc}"' EXIT
 

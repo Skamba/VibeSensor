@@ -156,7 +156,7 @@ configure_incremental_build() {
 
 run_pi_gen_build() {
   (
-    cd "${PI_GEN_DIR}"
+    cd "${PI_GEN_DIR}" || exit
     CONTINUE=1 PRESERVE_CONTAINER=1 ./build-docker.sh
   )
 }

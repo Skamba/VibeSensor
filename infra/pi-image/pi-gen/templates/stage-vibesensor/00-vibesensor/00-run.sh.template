@@ -270,6 +270,7 @@ After=regenerate_ssh_host_keys.service
 ExecStartPre=/bin/sh -c 'if ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then /usr/bin/ssh-keygen -A; fi'
 SSHUNIT
 
+# shellcheck disable=SC2050  # Template placeholder is replaced with 0/1 before pi-gen executes this script.
 if [ "__SSH_FIRST_BOOT_DEBUG__" = "1" ]; then
   install -d "${ROOTFS_DIR}/usr/local/sbin"
   cat >"${ROOTFS_DIR}/usr/local/sbin/vibesensor-ssh-debug" <<'SSHDEBUG'

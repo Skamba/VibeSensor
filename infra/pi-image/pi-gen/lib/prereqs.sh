@@ -11,6 +11,7 @@ ensure_output_dirs() {
 
 apply_fast_mode() {
   if [ "${FAST}" = "1" ]; then
+    # shellcheck disable=SC2034  # build.sh reads VALIDATE after this sourced helper mutates it.
     VALIDATE=0
   fi
 }

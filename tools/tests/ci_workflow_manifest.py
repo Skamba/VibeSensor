@@ -16,6 +16,7 @@ _CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 _INSTALL_STEP_NAMES = frozenset(
     {
         "Install dependencies",
+        "Install ShellCheck",
         "Install PlatformIO dependencies",
         "Install UI dependencies",
     }
