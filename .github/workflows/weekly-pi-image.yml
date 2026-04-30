@@ -109,4 +109,5 @@ jobs:
             --title "${{ steps.metadata.outputs.release_name }}" \
             --notes-file "${notes_file}" \
             --make-latest false \
+            --upload-timeout 5400 \
             "${release_args[@]}"
