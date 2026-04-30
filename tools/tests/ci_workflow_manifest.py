@@ -48,6 +48,19 @@ _ACTION_INPUT_EQ_RE = re.compile(
     r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
 )
 _MATRIX_TOKEN_RE = re.compile(r"\${{\s*matrix\.([A-Za-z0-9_-]+)\s*}}")
+_JOB_WORKSPACE_WRITE_SETS = {
+    "backend-contract-drift": ("ui-generated-contracts",),
+    "frontend-typecheck": ("ui-generated-contracts",),
+    "ui-unit": ("ui-test-results",),
+    "ui-smoke": ("ui-test-results",),
+    "release-smoke": (
+        "ui-generated-contracts",
+        "ui-dist",
+        "server-static",
+        "server-dist",
+        "release-smoke-artifacts",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -74,6 +87,7 @@ class CiWorkflowJob:
     job_name: str
     steps: tuple[CiWorkflowStep, ...]
     skipped_actions: tuple[CiWorkflowSkippedAction, ...] = ()
+    workspace_write_sets: tuple[str, ...] = ()
 
     def commands_named(self, names: Collection[str]) -> tuple[str, ...]:
         commands: list[str] = []
@@ -402,6 +416,9 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
                 job_name=expanded_job_name,
                 steps=tuple(normalized_steps),
                 skipped_actions=tuple(skipped_actions),
+                workspace_write_sets=_JOB_WORKSPACE_WRITE_SETS.get(
+                    expanded_job_name, ()
+                ),
             )
     return result
 
