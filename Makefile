@@ -35,7 +35,7 @@ setup: ## Install backend dev dependencies and UI node_modules
 	@if [ ! -x "$(VENV_PYTHON)" ]; then "$(PYTHON_BOOTSTRAP)" -m venv "$(VENV_DIR)"; fi
 	"$(VENV_PYTHON)" -m pip install --upgrade pip
 	"$(VENV_PYTHON)" -m pip install -e "./apps/server[dev]"
-	cd $(UI_DIR) && npm ci
+	cd $(UI_DIR) && node ../../tools/ui/ensure_ui_bootstrap.mjs
 	git config --local core.hooksPath .githooks
 
 dev: ## Start the source-mounted Docker dev stack with backend reload + Vite HMR

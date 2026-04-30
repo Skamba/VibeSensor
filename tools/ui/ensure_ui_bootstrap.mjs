@@ -68,6 +68,9 @@ function uiBootstrapStatus(uiDir, skipNpmCi) {
 
 function ensureUiBootstrap(uiDir, status, logPrefix) {
 	if (!status.needsNpmCi) {
+		console.log(
+			`${logPrefix} Skipping npm ci because node_modules and package-lock marker are current.`,
+		);
 		return;
 	}
 	console.log(
