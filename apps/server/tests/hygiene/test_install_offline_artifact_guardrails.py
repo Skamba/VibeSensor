@@ -14,8 +14,8 @@ def install_pi_text() -> str:
 _INSTALL_PI_CHECKS: list[tuple[str, str]] = [
     ("python3", "Pi install script must install python3"),
     (
-        'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"',
-        "Pi install script must ensure repo ownership for update writes",
+        'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${VENV_DIR}"',
+        "Pi install script must ensure virtualenv ownership for update writes",
     ),
     ("rollback", "Pi install script must create rollback directory for release-based updates"),
     (

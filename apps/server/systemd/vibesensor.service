@@ -7,16 +7,20 @@ Wants=network-online.target
 Type=simple
 User=__SERVICE_USER__
 PermissionsStartOnly=true
-AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SETUID CAP_SETGID CAP_DAC_OVERRIDE CAP_FOWNER CAP_AUDIT_WRITE
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_SETUID CAP_SETGID CAP_DAC_OVERRIDE CAP_FOWNER CAP_AUDIT_WRITE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/vibesensor /var/log/vibesensor __VENV_DIR__
 WorkingDirectory=__PI_DIR__
 ExecStartPre=/usr/bin/test -r /etc/vibesensor/config.yaml
-# Updates can touch the release tree and state paths as root, so reassert
-# service-user ownership at startup instead of relying only on install-time chown.
-ExecStartPre=/usr/bin/chown -R __SERVICE_USER__:__SERVICE_USER__ __PI_DIR__
+# Updates need writable runtime state. Keep startup repair scoped to runtime
+# paths; install/update flows own the virtualenv and release tree setup.
 ExecStartPre=/usr/bin/chown -R __SERVICE_USER__:__SERVICE_USER__ /var/log/vibesensor /var/lib/vibesensor
 ExecStartPre=/usr/bin/test -w /var/log/vibesensor
 ExecStartPre=/usr/bin/test -w /var/lib/vibesensor
+ExecStartPre=/usr/bin/test -w __VENV_DIR__
 ExecStart=__VENV_DIR__/bin/vibesensor-server --config /etc/vibesensor/config.yaml
 KillSignal=SIGINT
 TimeoutStopSec=20
