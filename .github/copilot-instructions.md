@@ -55,7 +55,7 @@ Commands
 - `make docs-lint`
 - `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
-- `act -j backend-lint -W .github/workflows/ci.yml` (run a single CI job locally via `act`; requires Docker)
+- `./tools/tests/run_ci_with_act.sh -j backend-lint` (run a single CI job locally via `act` with generated pull-request event data; requires Docker)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
 - `python3 tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
@@ -81,7 +81,7 @@ Validation chooser
 Command gotchas
 - `make ui-typecheck` is the default frontend gate because it materializes generated UI contract artifacts before linting and TypeScript checks.
 - Raw `cd apps/ui && npm run typecheck` or `npm run build` can fail when generated UI contract files are stale; run `make sync-contracts` or `make ui-typecheck` first when backend contracts changed.
-- `act` requires Docker and is best for targeted GitHub workflow parity, not docs-only changes.
+- `act` requires Docker; prefer `tools/tests/run_ci_with_act.sh` when validating PR changed-file CI scope because it generates base/head SHAs for the pull-request event.
 - PlatformIO must be installed before `cd firmware/esp && pio run`.
 - Pi image builds are expensive; use the narrow `BUILD_MODE=app` or `BUILD_MODE=image` path unless both layers changed.
 - The local Docker stack is for runtime integration behavior, not docs-only, instruction-only, or pure unit-test changes.
