@@ -280,6 +280,7 @@
   "settings.car.guidance.no_active_detail": "Gebruik Activeren op een volledige rij, of Setup afronden op een onvolledige rij, om de rest van Instellingen vrij te geven.",
   "settings.car.delete_confirm": "Auto \"{name}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
   "settings.car.cannot_delete_last": "Kan de laatste auto niet verwijderen.",
+  "settings.car.create_failed": "Kan auto niet toevoegen.",
   "settings.car.delete_failed": "Kan auto niet verwijderen.",
   "settings.car.activate_failed": "Kan auto niet activeren.",
   "settings.car.activate_incomplete": "Rond de auto-instellingen eerst af in Analyse voordat je deze activeert.",

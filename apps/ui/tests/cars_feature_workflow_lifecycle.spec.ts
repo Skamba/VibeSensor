@@ -70,6 +70,35 @@ function makeModel(model: string, carType: string): CarLibraryModel {
 }
 
 describe("createCarsFeatureWorkflow async lifecycle", () => {
+  test("keeps the wizard open when adding the car fails", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => {
+        throw new Error("create failed");
+      },
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+    await workflow.submitCustomBrand("BMW");
+    await workflow.submitCustomType("Coupe");
+    await workflow.submitCustomModel("M3");
+    workflow.handleManualInputChanged("tireWidth", "245");
+    const closed = await workflow.finishWizard();
+
+    expect(closed).toBe(false);
+    expect(workflow.getRenderState().isOpen).toBe(true);
+    expect(harness.focuses).toContain("finish");
+  });
+
   test("ignores brand load results after the wizard closes", async () => {
     const harness = createHarness();
     const brands = createDeferred<string[]>();
