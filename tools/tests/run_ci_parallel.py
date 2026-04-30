@@ -40,6 +40,7 @@ def _load_ci_workflow_manifest_module():
 
 _CI_MANIFEST = _load_ci_workflow_manifest_module()
 ALL_JOB_NAMES = _CI_MANIFEST.all_job_names()
+CI_FAST_JOB_NAMES = _CI_MANIFEST.ci_fast_job_names()
 CI_LITE_JOB_NAMES = _CI_MANIFEST.ci_lite_job_names()
 
 
@@ -49,6 +50,7 @@ class Step:
     cmd: list[str]
     cwd: Path = ROOT
     env: dict[str, str] | None = None
+    shell: bool = False
 
 
 @dataclass(frozen=True)
@@ -140,12 +142,16 @@ def _shared_ui_workspace_would_race(
 
 
 def _run_step(step: Step, log_file) -> int:
-    log_file.write(f"$ {_format_cmd(step.cmd)}\n")
+    formatted_cmd = step.cmd[0] if step.shell else _format_cmd(step.cmd)
+    log_file.write(f"$ {formatted_cmd}\n")
     env = None if step.env is None else {**os.environ, **step.env}
+    command: str | list[str] = step.cmd[0] if step.shell else step.cmd
     proc = subprocess.run(
-        step.cmd,
+        command,
         cwd=str(step.cwd),
         env=env,
+        shell=step.shell,
+        executable="/bin/bash" if step.shell else None,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -250,11 +256,13 @@ def _bootstrap_steps(
 
 
 def _step_from_manifest_command(label: str, command: str) -> Step:
-    tokens = shlex.split(command)
+    command_text = command
+    tokens = shlex.split(command_text)
     cwd = ROOT
     if len(tokens) >= 3 and tokens[0] == "cd" and tokens[2] == "&&":
         cwd = ROOT / tokens[1]
-        tokens = tokens[3:]
+        _cd_prefix, _separator, command_text = command_text.partition(" && ")
+        tokens = shlex.split(command_text)
 
     env: dict[str, str] | None = None
     if tokens and tokens[0] == "env":
@@ -266,8 +274,20 @@ def _step_from_manifest_command(label: str, command: str) -> Step:
             index += 1
         env = parsed_env or None
         tokens = tokens[index:]
+        command_text = shlex.join(tokens)
 
-    return Step(label, tokens, cwd=cwd, env=env)
+    shell = _requires_shell(command_text, tokens)
+    return Step(
+        label, [command_text] if shell else tokens, cwd=cwd, env=env, shell=shell
+    )
+
+
+def _requires_shell(command: str, tokens: list[str]) -> bool:
+    if not tokens:
+        return False
+    if tokens[0] in {"set"}:
+        return True
+    return any(operator in command for operator in (" && ", " || ", " | ", ";"))
 
 
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
@@ -416,9 +436,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Run only selected job(s). Repeat to run multiple jobs.",
     )
     parser.add_argument(
+        "--ci-fast",
+        action="store_true",
+        help="Run fast local CI gates: lint, docs, static guards, and type checks.",
+    )
+    parser.add_argument(
         "--ci-lite",
         action="store_true",
-        help="Run the non-Docker blocking CI subset derived from the workflow manifest.",
+        help="Run non-Docker workflow jobs except E2E, including heavier browser/release/backend suites.",
     )
     parser.add_argument(
         "--skip-bootstrap",
@@ -431,8 +456,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip npm ci bootstrap even when node_modules is missing.",
     )
     args = parser.parse_args(argv)
-    if args.job and args.ci_lite:
-        parser.error("--ci-lite cannot be combined with --job")
+    selected_modes = sum(bool(mode) for mode in (args.job, args.ci_fast, args.ci_lite))
+    if selected_modes > 1:
+        parser.error("--job, --ci-fast, and --ci-lite are mutually exclusive")
 
     python_cmd = sys.executable
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -440,11 +466,14 @@ def main(argv: list[str] | None = None) -> int:
     all_jobs = _job_steps(python_cmd)
     job_write_sets = _job_workspace_write_sets()
     job_host_tools = _job_host_tools()
-    selected_jobs = (
-        args.job
-        if args.job
-        else list(CI_LITE_JOB_NAMES if args.ci_lite else ALL_JOB_NAMES)
-    )
+    if args.job:
+        selected_jobs = args.job
+    elif args.ci_fast:
+        selected_jobs = list(CI_FAST_JOB_NAMES)
+    elif args.ci_lite:
+        selected_jobs = list(CI_LITE_JOB_NAMES)
+    else:
+        selected_jobs = list(ALL_JOB_NAMES)
     _emit_skipped_action_warnings(selected_jobs)
     _emit_workspace_write_set_warnings(selected_jobs, job_write_sets)
     if not _check_host_tool_prerequisites(selected_jobs, job_host_tools):

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed plan-validation test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -86,7 +86,11 @@ plan-validation: ## Plan changed-file validation from CI path rules
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/plan_validation.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
 
-test-ci-lite: ## Run the non-Docker blocking CI subset locally
+test-ci-fast: ## Run fast local CI gates without browser, release, firmware, e2e, or backend test suites
+	@$(RESOLVE_PYTHON) \
+	"$$PYTHON" tools/tests/run_ci_parallel.py --ci-fast
+
+test-ci-lite: ## Run non-Docker workflow jobs except E2E locally
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_ci_parallel.py --ci-lite
 

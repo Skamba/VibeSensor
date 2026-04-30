@@ -86,6 +86,51 @@ def test_contributing_docs_reference_focused_backend_ci_gates() -> None:
         assert gate_name in contributing_text
 
 
+def test_ci_fast_jobs_are_lint_docs_static_and_typecheck_gates() -> None:
+    module = _load_ci_manifest_module()
+
+    fast_jobs = set(module.ci_fast_job_names())
+
+    assert {
+        "backend-lint",
+        "repo-hygiene",
+        "shell-lint",
+        "backend-static-guards",
+        "backend-preflight",
+        "docs-lint",
+        "backend-contract-drift",
+        "backend-typecheck",
+        "frontend-quality",
+        "frontend-typecheck",
+    } == fast_jobs
+    assert not any(job_name.startswith("backend-tests-") for job_name in fast_jobs)
+    assert {
+        "ui-unit",
+        "ui-smoke",
+        "release-smoke",
+        "firmware-native-tests",
+        "e2e",
+    }.isdisjoint(fast_jobs)
+
+
+def test_ci_lite_jobs_are_non_docker_blocking_jobs_except_e2e() -> None:
+    module = _load_ci_manifest_module()
+
+    lite_jobs = set(module.ci_lite_job_names())
+
+    assert "e2e" not in lite_jobs
+    assert {
+        "backend-tests-1",
+        "backend-tests-2",
+        "backend-tests-3",
+        "backend-tests-4",
+        "backend-tests-5",
+        "ui-smoke",
+        "release-smoke",
+        "firmware-native-tests",
+    }.issubset(lite_jobs)
+
+
 def test_release_smoke_local_manifest_builds_ui_static_instead_of_downloading_artifact() -> None:
     module = _load_ci_manifest_module()
 

@@ -281,6 +281,21 @@ def test_main_reports_missing_shellcheck_before_running_shell_lint(
     assert "run the job through ACT" in output
 
 
+def test_manifest_shell_operator_steps_run_through_bash(tmp_path: Path) -> None:
+    module = _load_ci_parallel_module()
+    step = module._step_from_manifest_command(
+        "shell operators",
+        "set -euo pipefail && printf ok",
+    )
+
+    assert step.shell is True
+    assert step.cmd == ["set -euo pipefail && printf ok"]
+    with (tmp_path / "step.log").open("w", encoding="utf-8") as log_file:
+        assert module._run_step(step, log_file) == 0
+
+    assert "ok" in (tmp_path / "step.log").read_text(encoding="utf-8")
+
+
 def test_main_serializes_jobs_with_overlapping_workspace_write_sets(
     monkeypatch,
     tmp_path: Path,
