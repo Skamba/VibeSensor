@@ -23,7 +23,21 @@ UI_NODE_MODULES = UI_DIR / "node_modules"
 UI_BOOTSTRAP_HELPER = ROOT / "tools" / "ui" / "ensure_ui_bootstrap.mjs"
 PRINT_LOCK = threading.Lock()
 RESULT_LOCK = threading.Lock()
+_REPO_TOOLING_SUPPORT_PATH = ROOT / "tools" / "repo_tooling_support.py"
 _CI_MANIFEST_PATH = Path(__file__).with_name("ci_workflow_manifest.py")
+
+
+def _load_repo_tooling_support_module():
+    spec = importlib.util.spec_from_file_location(
+        "repo_tooling_support_for_run_ci_parallel",
+        _REPO_TOOLING_SUPPORT_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {_REPO_TOOLING_SUPPORT_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _load_ci_workflow_manifest_module():
@@ -38,6 +52,10 @@ def _load_ci_workflow_manifest_module():
     return module
 
 
+_REPO_TOOLING_SUPPORT = _load_repo_tooling_support_module()
+_REPO_TOOLING_SUPPORT.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 _CI_MANIFEST = _load_ci_workflow_manifest_module()
 ALL_JOB_NAMES = _CI_MANIFEST.all_job_names()
 CI_FAST_JOB_NAMES = _CI_MANIFEST.ci_fast_job_names()

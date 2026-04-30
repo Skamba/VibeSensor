@@ -18,9 +18,11 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 def _load_repo_tooling_support():
-    helper_path = Path(__file__).resolve().parents[1] / "repo_tooling_support.py"
+    helper_path = ROOT / "tools" / "repo_tooling_support.py"
     spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
@@ -30,6 +32,9 @@ def _load_repo_tooling_support():
 
 
 _repo_tooling_support = _load_repo_tooling_support()
+_repo_tooling_support.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 _parallel_runner_support = _repo_tooling_support.load_parallel_runner_support(__file__)
 resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
 read_duration_cache = _parallel_runner_support.load_duration_cache
@@ -40,12 +45,13 @@ read_observed_durations_from_junit = (
 collect_normalized_test_ids = _parallel_runner_support.parse_collected_test_ids
 
 
-ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci"
 _DURATION_CACHE_ENV = "VIBESENSOR_BACKEND_DURATION_CACHE"
 _XDIST_WORKERS_ENV = "VIBESENSOR_BACKEND_XDIST_WORKERS"
+_SHARD_TIMEOUT_ENV = "VIBESENSOR_BACKEND_SHARD_TIMEOUT_S"
 _DEFAULT_DURATION = 1.0
 _DEFAULT_XDIST_WORKERS = 3
+_DEFAULT_SHARD_TIMEOUT_S = 900
 
 
 def _emit(line: str) -> None:
@@ -75,6 +81,20 @@ def _xdist_workers_default(env: Mapping[str, str] | None = None) -> int:
         raise SystemExit(f"{_XDIST_WORKERS_ENV} must be an integer >= 0") from exc
     if value < 0:
         raise SystemExit(f"{_XDIST_WORKERS_ENV} must be >= 0")
+    return value
+
+
+def _shard_timeout_default(env: Mapping[str, str] | None = None) -> int:
+    source = os.environ if env is None else env
+    raw = source.get(_SHARD_TIMEOUT_ENV)
+    if raw is None or raw == "":
+        return _DEFAULT_SHARD_TIMEOUT_S
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise SystemExit(f"{_SHARD_TIMEOUT_ENV} must be an integer > 0") from exc
+    if value <= 0:
+        raise SystemExit(f"{_SHARD_TIMEOUT_ENV} must be > 0")
     return value
 
 
@@ -202,16 +222,35 @@ def _selected_test_ids(
     return selected
 
 
-def _run(cmd: list[str], *, log_path: Path) -> int:
+def _timeout_output(exc: subprocess.TimeoutExpired) -> str:
+    output = exc.stdout or exc.output or ""
+    if isinstance(output, bytes):
+        return output.decode(errors="replace")
+    return output
+
+
+def _run(cmd: list[str], *, log_path: Path, timeout_s: int) -> int:
     with log_path.open("w", encoding="utf-8") as log_file:
         log_file.write(f"$ {shlex.join(cmd)}\n")
-        proc = subprocess.run(
-            cmd,
-            cwd=str(ROOT),
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=str(ROOT),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=timeout_s,
+            )
+        except subprocess.TimeoutExpired as exc:
+            output = _timeout_output(exc)
+            if output:
+                log_file.write(output)
+                if not output.endswith("\n"):
+                    log_file.write("\n")
+            log_file.write(
+                f"[backend-parallel] timed out after {timeout_s}s; pytest process was terminated.\n"
+            )
+            return 124
         output = proc.stdout or ""
         if output:
             log_file.write(output)
@@ -262,6 +301,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"{_XDIST_WORKERS_ENV} or {_DEFAULT_XDIST_WORKERS}."
         ),
     )
+    parser.add_argument(
+        "--timeout-s",
+        type=int,
+        default=_shard_timeout_default(),
+        help=(
+            "Maximum wall-clock seconds for the shard pytest subprocess; defaults to "
+            f"{_SHARD_TIMEOUT_ENV} or {_DEFAULT_SHARD_TIMEOUT_S}."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
@@ -269,6 +317,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         raise SystemExit("--shard-index must be between 1 and --shards")
     if args.xdist_workers < 0:
         raise SystemExit("--xdist-workers must be >= 0")
+    if args.timeout_s <= 0:
+        raise SystemExit("--timeout-s must be > 0")
     return args
 
 
@@ -303,7 +353,7 @@ def main(argv: list[str] | None = None) -> int:
         f"[backend-parallel] collected {len(collected)} test cases across "
         f"{len(grouped_tests)} test files; running shard {args.shard_index}/{args.shards} "
         f"with {len(selected_targets)} files and {len(selected_tests)} test cases "
-        f"using pytest -n {args.xdist_workers}"
+        f"using pytest -n {args.xdist_workers} timeout={args.timeout_s}s"
     )
 
     if not selected_targets:
@@ -326,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
         *selected_targets,
     ]
     started = time.monotonic()
-    rc = _run(pytest_cmd, log_path=log_path)
+    rc = _run(pytest_cmd, log_path=log_path, timeout_s=args.timeout_s)
     elapsed = time.monotonic() - started
 
     observed_durations = _observed_durations_from_junit(junit_path, selected_tests)
