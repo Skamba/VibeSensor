@@ -85,6 +85,9 @@ class HealthSnapshotData(TypedDict):
     startup_warnings: list[str]
     background_task_failures: dict[str, str]
     db_corruption_detected: bool
+    db_engine_unhealthy: bool
+    db_engine_unhealthy_reason: str | None
+    db_engine_unhealthy_details: str | None
     processing_state: str
     processing_failures: int
     processing_failure_categories: dict[str, int]

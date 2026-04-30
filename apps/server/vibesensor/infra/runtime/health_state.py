@@ -14,6 +14,9 @@ class RuntimeHealthState:
     startup_warnings: list[str] = field(default_factory=list)
     db_corruption_detected: bool = False
     db_corruption_details: str | None = None
+    db_engine_unhealthy: bool = False
+    db_engine_unhealthy_reason: str | None = None
+    db_engine_unhealthy_details: str | None = None
 
     def set_phase(self, phase: str) -> None:
         self.startup_phase = phase
@@ -40,3 +43,8 @@ class RuntimeHealthState:
     def mark_db_corrupted(self, details: str) -> None:
         self.db_corruption_detected = True
         self.db_corruption_details = details
+
+    def mark_db_engine_unhealthy(self, reason: str, details: str) -> None:
+        self.db_engine_unhealthy = True
+        self.db_engine_unhealthy_reason = reason
+        self.db_engine_unhealthy_details = details
