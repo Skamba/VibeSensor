@@ -257,16 +257,30 @@ def _raw_workflow_job_ids(repo_root: Path) -> set[str]:
 
 
 def _local_logical_ci_job_ids(repo_root: Path) -> set[str]:
-    manifest_path = repo_root / "tools" / "tests" / "ci_workflow_manifest.py"
-    spec = importlib.util.spec_from_file_location(
-        "ci_workflow_manifest_docs_lint", manifest_path
-    )
-    if spec is None or spec.loader is None:
+    workflow_text = _read_text(repo_root, ".github/workflows/ci.yml")
+    if workflow_text is None:
         return set()
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return set(module.ci_workflow_jobs())
+
+    raw_job_ids = _raw_workflow_job_ids(repo_root)
+    local_job_ids = set(raw_job_ids) - {"ci-scope", "ui-build-artifact"}
+    matrix_parent_jobs: set[str] = set()
+    current_job: str | None = None
+    job_re = re.compile(r"^  (?P<job>[A-Za-z0-9_-]+):(?:\s+#.*)?$")
+    logical_job_re = re.compile(
+        r"^\s+-?\s*logical_job_name:\s*[\"']?(?P<job>[A-Za-z0-9_-]+)"
+        r"[\"']?(?:\s+#.*)?$"
+    )
+    for line in workflow_text.splitlines():
+        job_match = job_re.match(line)
+        if job_match:
+            current_job = job_match.group("job")
+            continue
+        logical_job_match = logical_job_re.match(line)
+        if current_job and logical_job_match:
+            local_job_ids.add(logical_job_match.group("job"))
+            matrix_parent_jobs.add(current_job)
+
+    return local_job_ids - matrix_parent_jobs
 
 
 def _markdown_code_snippets(text: str) -> list[str]:
