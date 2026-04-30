@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolveConfiguredPythonCommand } from './python_runtime.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -160,7 +161,7 @@ function generateWsSchemaModule() {
 }
 
 function generateSharedConstants() {
-	const pythonCmd = process.env.PYTHON || 'python3';
+	const pythonCmd = resolveConfiguredPythonCommand(root);
 	const result = spawnSync(pythonCmd, [constantsGeneratorSrc], {
 		cwd: root,
 		encoding: 'utf8',
