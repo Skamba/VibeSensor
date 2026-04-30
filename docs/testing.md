@@ -7,8 +7,9 @@
 - Firmware build/flash guidance lives in `firmware/esp/README.md`.
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
 - `make format` is the canonical Python formatting command for backend and tooling files; no other Python formatter is supported in the repo workflow.
-- Use `make test-ci-lite` (`python3 tools/tests/run_ci_parallel.py --ci-lite`) for the non-Docker blocking-CI subset.
-- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
+- Use `make plan-validation` (`python3 tools/tests/plan_validation.py`) first to turn the current diff into the CI-backed validation plan.
+- Use `python3 tools/tests/plan_validation.py --run` to run that plan through the non-Docker local runner.
+- Use `python3 tools/tests/plan_validation.py --act` when you need ACT/GitHub-workflow parity for the planned jobs.
 - Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
 - Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
 - The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
@@ -111,11 +112,16 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Backend/local CI tiers: `make test-changed` for a fast changed-file heuristic, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
+Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity.
 
 Main local tiers:
 
 ```bash
+# CI-backed changed-file validation plan
+make plan-validation
+python3 tools/tests/plan_validation.py --run
+python3 tools/tests/plan_validation.py --act
+
 # Changed-file heuristic (current branch vs origin/main, fallback to main)
 make test-changed
 

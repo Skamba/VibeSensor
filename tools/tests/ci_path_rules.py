@@ -34,6 +34,7 @@ FULL_STACK_TRIGGER_FILES = {
     "tools/tests/ci_changed_scope.py",
     "tools/tests/ci_path_rules.py",
     "tools/tests/ci_workflow_manifest.py",
+    "tools/tests/plan_validation.py",
     "tools/tests/run_ci_parallel.py",
 }
 FULL_STACK_TRIGGER_PREFIXES = (".github/",)
