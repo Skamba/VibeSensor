@@ -243,6 +243,106 @@ def test_main_warns_about_skipped_external_workflow_actions(
     assert "release-smoke (Download release-smoke UI static artifact)" in output
     assert "actions/download-artifact@" in output
     assert "without --skip-ui-build" in output
+    assert "GitHub workflow-only needs not runnable locally" in output
+    assert "release-smoke normally needs ui-build-artifact" in output
+
+
+def test_main_reports_unselected_github_needs(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    _stub_ui_bootstrap_check(monkeypatch, module, needs_npm_ci=False)
+    _captured, outputs = _install_main_harness(
+        module,
+        monkeypatch,
+        tmp_path,
+        {"ui-unit": [module.Step("UI unit tests", ["true"])]},
+    )
+
+    assert module.main(["--job", "ui-unit"]) == 0
+
+    output = "\n".join(outputs)
+    assert "GitHub needs not selected locally" in output
+    assert "ui-unit normally needs frontend-typecheck" in output
+
+
+def test_main_runs_selected_jobs_after_their_github_needs(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    _stub_ui_bootstrap_check(monkeypatch, module, needs_npm_ci=False)
+    jobs = {
+        "frontend-typecheck": [module.Step("UI typecheck", ["true"])],
+        "ui-unit": [module.Step("UI unit tests", ["true"])],
+    }
+    outputs: list[str] = []
+    run_order: list[str] = []
+
+    monkeypatch.setattr(module, "_job_steps", lambda _python_cmd: jobs)
+    monkeypatch.setattr(module, "_job_workspace_write_sets", lambda: {name: () for name in jobs})
+    monkeypatch.setattr(module, "_run_bootstrap", lambda _steps: 0)
+    monkeypatch.setattr(module, "_emit", outputs.append)
+
+    def _fake_run_job(name, _steps, results):
+        run_order.append(name)
+        results[name] = module.JobResult(
+            name=name,
+            ok=True,
+            failed_step=None,
+            return_code=0,
+            duration_s=0.0,
+            log_path=tmp_path / f"{name}.log",
+        )
+
+    monkeypatch.setattr(module, "_run_job", _fake_run_job)
+
+    assert module.main(["--job", "ui-unit", "--job", "frontend-typecheck"]) == 0
+
+    assert run_order == ["frontend-typecheck", "ui-unit"]
+
+
+def test_main_skips_selected_downstream_job_when_github_need_fails(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    _stub_ui_bootstrap_check(monkeypatch, module, needs_npm_ci=False)
+    jobs = {
+        "frontend-typecheck": [module.Step("UI typecheck", ["false"])],
+        "ui-unit": [module.Step("UI unit tests", ["true"])],
+    }
+    outputs: list[str] = []
+    run_order: list[str] = []
+
+    monkeypatch.setattr(module, "_job_steps", lambda _python_cmd: jobs)
+    monkeypatch.setattr(module, "_job_workspace_write_sets", lambda: {name: () for name in jobs})
+    monkeypatch.setattr(module, "_run_bootstrap", lambda _steps: 0)
+    monkeypatch.setattr(module, "_emit", outputs.append)
+
+    def _fake_run_job(name, _steps, results):
+        run_order.append(name)
+        results[name] = module.JobResult(
+            name=name,
+            ok=False,
+            failed_step="UI typecheck",
+            return_code=1,
+            duration_s=0.0,
+            log_path=tmp_path / f"{name}.log",
+        )
+
+    monkeypatch.setattr(module, "_run_job", _fake_run_job)
+
+    assert module.main(["--job", "frontend-typecheck", "--job", "ui-unit"]) == 1
+
+    output = "\n".join(outputs)
+    assert run_order == ["frontend-typecheck"]
+    assert "[ui-unit] skip (needed job failed: frontend-typecheck)" in output
+    assert "- ui-unit: SKIP (needed job failed: frontend-typecheck)" in output
 
 
 def test_main_reports_missing_shellcheck_before_running_shell_lint(

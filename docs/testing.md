@@ -170,6 +170,13 @@ python3 tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
 ```
 
+When multiple selected local jobs have GitHub `needs` relationships,
+`run_ci_parallel.py` runs them in dependency waves and skips selected downstream
+jobs if a selected prerequisite fails. If you select only the downstream job, the
+runner reports the omitted prerequisite so the local-vs-GitHub ordering gap is
+visible. Workflow-only prerequisites that are substituted locally, such as CI
+artifact builder jobs, are reported as non-runnable local dependencies.
+
 `release-smoke` is the packaged-artifact gate. It builds or reuses the server
 wheel, validates packaged static assets, boots the packaged server, and checks
 that `/api/health` reaches readiness. In GitHub CI it now consumes the

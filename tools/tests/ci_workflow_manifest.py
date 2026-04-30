@@ -103,6 +103,8 @@ class CiWorkflowSkippedAction:
 class CiWorkflowJob:
     job_name: str
     steps: tuple[CiWorkflowStep, ...]
+    needs: tuple[str, ...] = ()
+    workflow_only_needs: tuple[str, ...] = ()
     skipped_actions: tuple[CiWorkflowSkippedAction, ...] = ()
     workspace_write_sets: tuple[str, ...] = ()
     host_tools: tuple[str, ...] = ()
@@ -201,6 +203,31 @@ def _normalize_ci_step_commands(step: Mapping[str, object]) -> tuple[str, ...]:
             f"{cwd_prefix}{line_cwd_prefix}{env_prefix}{_normalize_shell_command(line)}"
         )
     return tuple(commands)
+
+
+def _normalized_needs(raw_needs: object) -> tuple[str, ...]:
+    needs = _raw_needs(raw_needs)
+    return tuple(
+        need
+        for need in needs
+        if need != "ci-scope" and need not in _WORKFLOW_ONLY_EXCLUDED_JOBS
+    )
+
+
+def _workflow_only_needs(raw_needs: object) -> tuple[str, ...]:
+    return tuple(
+        need
+        for need in _raw_needs(raw_needs)
+        if need != "ci-scope" and need in _WORKFLOW_ONLY_EXCLUDED_JOBS
+    )
+
+
+def _raw_needs(raw_needs: object) -> tuple[str, ...]:
+    if isinstance(raw_needs, str):
+        return (raw_needs,)
+    if isinstance(raw_needs, list):
+        return tuple(need for need in raw_needs if isinstance(need, str))
+    return ()
 
 
 def _local_action_file(action_ref: str) -> Path | None:
@@ -433,6 +460,10 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
             result[expanded_job_name] = CiWorkflowJob(
                 job_name=expanded_job_name,
                 steps=tuple(normalized_steps),
+                needs=_normalized_needs(expanded_job_body.get("needs")),
+                workflow_only_needs=_workflow_only_needs(
+                    expanded_job_body.get("needs")
+                ),
                 skipped_actions=tuple(skipped_actions),
                 workspace_write_sets=_JOB_WORKSPACE_WRITE_SETS.get(
                     expanded_job_name, ()
