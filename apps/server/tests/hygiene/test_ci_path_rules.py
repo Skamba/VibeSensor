@@ -116,14 +116,46 @@ _SELECTION_CASES = (
     pytest.param(
         SelectionCase(
             changed_files=("tools/config/sync_contract_artifacts.mjs",),
-            expected_jobs=frozenset({"repo_hygiene", "backend_contract_drift"}),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "backend_contract_drift", "frontend_typecheck"}
+            ),
         ),
         id="contract-sync-tool",
     ),
     pytest.param(
         SelectionCase(
+            changed_files=("tools/config/sync_shared_contracts_to_ui.mjs",),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "backend_contract_drift", "frontend_typecheck"}
+            ),
+        ),
+        id="shared-contract-sync-tool",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/ui/ensure_ui_bootstrap.mjs",),
+            expected_jobs=frozenset({"repo_hygiene", "frontend_typecheck"}),
+        ),
+        id="ui-node-tool",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/dev/future_node_helper.cjs",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="generic-node-tool",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/dev/future_shell_helper.sh",),
+            expected_jobs=frozenset({"repo_hygiene", "shell_lint"}),
+        ),
+        id="generic-shell-tool",
+    ),
+    pytest.param(
+        SelectionCase(
             changed_files=("tools/tests/run_ci_with_act.sh",),
-            expected_jobs=frozenset({"shell_lint"}),
+            expected_jobs=frozenset({"repo_hygiene", "shell_lint"}),
         ),
         id="shell-script-only",
     ),
