@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
+_REPO_TOOLING_SUPPORT_PATH = ROOT / "tools" / "repo_tooling_support.py"
 _CI_PATH_RULES_PATH = Path(__file__).with_name("ci_path_rules.py")
 _CI_MANIFEST_PATH = Path(__file__).with_name("ci_workflow_manifest.py")
 _RUN_CHANGED_PATH = Path(__file__).with_name("run_changed.py")
@@ -29,6 +30,13 @@ def _load_module(name: str, path: Path):
     return module
 
 
+_REPO_TOOLING_SUPPORT = _load_module(
+    "repo_tooling_support_for_plan_validation",
+    _REPO_TOOLING_SUPPORT_PATH,
+)
+_REPO_TOOLING_SUPPORT.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 _CI_PATH_RULES = _load_module("ci_path_rules_for_plan_validation", _CI_PATH_RULES_PATH)
 _CI_MANIFEST = _load_module("ci_manifest_for_plan_validation", _CI_MANIFEST_PATH)
 _RUN_CHANGED = _load_module("run_changed_for_plan_validation", _RUN_CHANGED_PATH)

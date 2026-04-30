@@ -7,15 +7,15 @@
 - Firmware build/flash guidance lives in `firmware/esp/README.md`.
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
 - `make format` is the canonical Python formatting command for backend and tooling files; no other Python formatter is supported in the repo workflow.
-- Use `make plan-validation` (`python3 tools/tests/plan_validation.py`) first to turn the current diff into the CI-backed validation plan.
-- Use `python3 tools/tests/plan_validation.py --run` to run that plan through the non-Docker local runner.
-- Use `python3 tools/tests/plan_validation.py --act` when you need ACT/GitHub-workflow parity for the planned jobs.
+- Use `make plan-validation` first to turn the current diff into the CI-backed validation plan.
+- Use `./.venv/bin/python tools/tests/plan_validation.py --run` to run that plan through the non-Docker local runner.
+- Use `./.venv/bin/python tools/tests/plan_validation.py --act` when you need ACT/GitHub-workflow parity for the planned jobs.
 - Use `make test-ci-fast` for lint, docs, static guards, and type checks without browser, release, firmware, e2e, or backend test suites.
 - Use `make test-ci-lite` for the larger non-Docker workflow surface except e2e; it still includes backend shards, UI smoke, release smoke, and firmware native tests.
 - Local `shell-lint` parity requires host `shellcheck`; `make doctor` reports it, and ACT/GitHub CI install it inside the workflow job.
 - Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
 - Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
-- The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
+- The full end-to-end verification runner is `make test-full-suite` (`./.venv/bin/python tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time. It also accepts `--xdist-workers` / `VIBESENSOR_BACKEND_XDIST_WORKERS` for controlled intra-shard xdist; CI currently pins that to `3` because the current five-shard benchmark beat the nearby `5x2`, `4x3`, `4x2`, and `6x2` alternatives without changing shard count or the failure/JUnit surface. Retune only from fresh measurements, not guesswork.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
@@ -115,15 +115,15 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. `make ui-typecheck` includes the UI Biome formatter drift check before lint/dependency/type gates. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
+Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `./.venv/bin/python tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. `make ui-typecheck` includes the UI Biome formatter drift check before lint/dependency/type gates. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
 
 Main local tiers:
 
 ```bash
 # CI-backed changed-file validation plan
 make plan-validation
-python3 tools/tests/plan_validation.py --run
-python3 tools/tests/plan_validation.py --act
+./.venv/bin/python tools/tests/plan_validation.py --run
+./.venv/bin/python tools/tests/plan_validation.py --act
 
 # Changed-file heuristic (current branch vs origin/main, fallback to main)
 make test-changed
@@ -164,11 +164,16 @@ for later runs with `make benchmark-backend` / `make benchmark-compare-backend`.
 Focused CI job groups and full-stack validation:
 
 ```bash
-python3 tools/tests/run_ci_parallel.py --ci-lite
-python3 tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-smoke
-python3 tools/tests/run_ci_parallel.py --job release-smoke
+./.venv/bin/python tools/tests/run_ci_parallel.py --ci-lite
+./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-smoke
+./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
 ```
+
+Prefer the Makefile targets after `make setup`; they resolve the repo virtualenv
+Python automatically. Direct local CI runner scripts also self-check the
+`.python-version` major/minor and stop with a targeted setup hint if an ambient
+Python such as system `python3` is wrong.
 
 When multiple selected local jobs have GitHub `needs` relationships,
 `run_ci_parallel.py` runs them in dependency waves and skips selected downstream
@@ -200,7 +205,7 @@ cd apps/ui && npm run test:unit
 cd apps/ui && npm run build
 cd apps/ui && npm run test:visual
 cd apps/ui && npm run test:visual:audit   # optional broader visual sweep
-python3 tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
+./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
 ```
 
 The UI has three test layers; pick the one that matches the seam under test:
@@ -238,7 +243,7 @@ cd firmware/esp && pio run
 BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
 BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
 ./infra/pi-image/pi-gen/validate-image.sh
-python3 tools/tests/run_ci_parallel.py --job release-smoke
+./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
 ```
 
 - Use `pio run -t upload` and `pio device monitor` only when hardware-backed

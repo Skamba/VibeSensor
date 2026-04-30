@@ -26,7 +26,7 @@ make typecheck-backend
 pytest -q apps/server/tests/app/test_config.py -k my_case
 make test-all
 # (optional faster CI-parity subset)
-python3 tools/tests/run_ci_parallel.py --job backend-preflight --job backend-tests-1
+./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-preflight --job backend-tests-1
 ```
 
 ## Acceptance Criteria

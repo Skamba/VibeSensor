@@ -37,9 +37,10 @@ def _install_main_fakes(module, monkeypatch, tmp_path: Path) -> tuple[dict[str, 
     monkeypatch.setattr(module, "_observed_durations_from_junit", lambda _path, _selected: {})
     monkeypatch.setattr(module, "_emit", emitted.append)
 
-    def _fake_run(cmd: list[str], *, log_path: Path) -> int:
+    def _fake_run(cmd: list[str], *, log_path: Path, timeout_s: int) -> int:
         captured["cmd"] = list(cmd)
         captured["log_path"] = log_path
+        captured["timeout_s"] = timeout_s
         log_path.write_text("$ fake pytest\n", encoding="utf-8")
         return 0
 
@@ -141,3 +142,33 @@ def test_main_cli_overrides_env_xdist_workers(monkeypatch, tmp_path: Path) -> No
     assert module.main(["--xdist-workers", "2"]) == 0
 
     assert captured["cmd"][4:6] == ["-n", "2"]
+
+
+def test_main_passes_configured_shard_timeout(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.setenv(module._SHARD_TIMEOUT_ENV, "17")
+    captured, emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+
+    assert module.main([]) == 0
+
+    assert captured["timeout_s"] == 17
+    assert any("timeout=17s" in line for line in emitted)
+
+
+def test_run_times_out_pytest_subprocess(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    log_path = tmp_path / "backend-tests.log"
+
+    def _fake_run(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+        raise module.subprocess.TimeoutExpired(
+            cmd=["pytest"],
+            timeout=5,
+            output="partial pytest output\n",
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+
+    assert module._run(["pytest"], log_path=log_path, timeout_s=5) == 124
+    log_text = log_path.read_text(encoding="utf-8")
+    assert "partial pytest output" in log_text
+    assert "timed out after 5s" in log_text

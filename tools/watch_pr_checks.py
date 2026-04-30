@@ -4,19 +4,42 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Sequence
 
+ROOT = Path(__file__).resolve().parents[1]
 COMPLETED_STATUS = "COMPLETED"
 RUNNING_STATUSES = {"IN_PROGRESS"}
 QUEUED_STATUSES = {"EXPECTED", "PENDING", "QUEUED", "REQUESTED", "WAITING"}
 SUCCESS_CONCLUSIONS = {"NEUTRAL", "SKIPPED", "SUCCESS"}
 ACTIONABLE_MERGE_STATES = {"DIRTY"}
+_REPO_TOOLING_SUPPORT_PATH = ROOT / "tools" / "repo_tooling_support.py"
+
+
+def _load_repo_tooling_support_module():
+    spec = importlib.util.spec_from_file_location(
+        "repo_tooling_support_for_watch_pr_checks",
+        _REPO_TOOLING_SUPPORT_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {_REPO_TOOLING_SUPPORT_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_REPO_TOOLING_SUPPORT = _load_repo_tooling_support_module()
+_REPO_TOOLING_SUPPORT.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 
 
 @dataclass(frozen=True)

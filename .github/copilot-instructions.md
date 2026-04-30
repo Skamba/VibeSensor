@@ -54,20 +54,20 @@ Commands
 - `make ui-typecheck` (default frontend validation path: materialize generated UI contract artifacts, then run UI format drift, lint, and TypeScript checks)
 - `make docs-lint`
 - `make plan-validation` (primary AI/dev validation planner: changed-file CI plan, local command, ACT command, and JSON summary)
-- `python3 tools/tests/plan_validation.py --run` (run the planned non-Docker local CI jobs)
+- `./.venv/bin/python tools/tests/plan_validation.py --run` (run the planned non-Docker local CI jobs)
 - `make doctor` (reports local prerequisites, including host `shellcheck` for local `shell-lint` parity)
 - `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
 - `make test-ci-fast` (fast local CI gates: lint, docs, static guards, and type checks; no browser/release/firmware/e2e/backend test suites)
 - `make test-ci-lite` (non-Docker workflow jobs except e2e; includes backend shards, UI smoke, release smoke, and firmware native tests)
-- `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
+- `make test-all` (CI-parity local suite using the repo Python)
 - `./tools/tests/run_ci_with_act.sh` (changed-scope ACT/GitHub workflow parity with generated pull-request event data; requires Docker)
 - `./tools/tests/run_ci_with_act.sh --full-stack` (force all CI jobs through `ci-scope`; requires Docker)
 - `./tools/tests/run_ci_with_act.sh -j backend-lint` (run a selected CI job locally via `act`; requires Docker)
 - `./tools/tests/run_ci_with_act.sh -j backend-tests` (run the backend test matrix job via `act`; ACT uses raw GitHub job ids, not local logical shard ids like `backend-tests-1`)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
-- `python3 tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
+- `./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset; direct local CI runners reject the wrong Python major/minor)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
-- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`; omit `--merge-on-green` for watch-only mode)
+- `./.venv/bin/python tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`; omit `--merge-on-green` for watch-only mode)
 - `cd apps/ui && npm ci && npm run build` (bundle build after `make ui-typecheck`; raw `npm run typecheck` / `npm run build` only check contract freshness and fail if generated UI files are stale)
 - `cd apps/ui && npm run test:visual`
 - `cd firmware/esp && pio run`
@@ -77,7 +77,7 @@ Commands
 - `docker compose build --pull && docker compose up -d`
 
 Validation chooser
-- Start with `make plan-validation` for changed-file CI scope; use `python3 tools/tests/plan_validation.py --run` to execute planned non-Docker jobs, or `--act` when ACT/GitHub-workflow parity is required.
+- Start with `make plan-validation` for changed-file CI scope; use `./.venv/bin/python tools/tests/plan_validation.py --run` to execute planned non-Docker jobs, or `--act` when ACT/GitHub-workflow parity is required.
 - Use `make test-ci-fast` for a broad but fast local gate before heavier browser/release/backend suites; use `make test-ci-lite` only when you want the larger non-Docker workflow surface except e2e.
 - `run_ci_parallel.py` respects GitHub `needs` order among selected jobs, warns when you select a downstream job without its prerequisites, and reports workflow-only needs it substitutes locally.
 - Local `shell-lint` parity requires host `shellcheck`; use ACT when you need CI to install ShellCheck inside the workflow job.

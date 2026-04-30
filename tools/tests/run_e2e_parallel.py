@@ -22,18 +22,11 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from vibesensor.use_cases.isolated_server_runtime import (
-    IsolatedRuntimePaths,
-    build_isolated_server_config,
-    build_isolated_server_env,
-    build_server_subprocess_cmd,
-    start_server_subprocess,
-    terminate_subprocess,
-)
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _load_repo_tooling_support():
-    helper_path = Path(__file__).resolve().parents[1] / "repo_tooling_support.py"
+    helper_path = ROOT / "tools" / "repo_tooling_support.py"
     spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
@@ -43,6 +36,21 @@ def _load_repo_tooling_support():
 
 
 _repo_tooling_support = _load_repo_tooling_support()
+_repo_tooling_support.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
+
+# Keep the repo Python check above the first import from the installed backend package.
+from vibesensor.use_cases.isolated_server_runtime import (  # noqa: E402
+    IsolatedRuntimePaths,
+    build_isolated_server_config,
+    build_isolated_server_env,
+    build_server_subprocess_cmd,
+    start_server_subprocess,
+    terminate_subprocess,
+)
+
+
 _parallel_runner_support = _repo_tooling_support.load_parallel_runner_support(__file__)
 resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
 read_duration_cache = _parallel_runner_support.load_duration_cache
@@ -108,7 +116,6 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
     return _parse_collected_test_ids(result.stdout or "")
 
 
-ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()
 _DURATION_CACHE_ENV = "VIBESENSOR_E2E_DURATION_CACHE"
