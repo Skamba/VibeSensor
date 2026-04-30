@@ -291,8 +291,10 @@ Prerequisites: Docker and [`act`](https://nektosact.com/installation/index.html)
 # List available CI jobs
 act -l -W .github/workflows/ci.yml
 
-# Run all CI jobs (push event)
-act -W .github/workflows/ci.yml
+# Run all CI jobs for the current branch as a pull_request event.
+# Generate the event first so ci-scope sees real base/head SHAs.
+python3 tools/tests/act_event.py --output /tmp/vibesensor-act-event.json
+act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
 
 # Run a single job
 act -j backend-lint -W .github/workflows/ci.yml
@@ -308,19 +310,23 @@ act -j backend-tests -W .github/workflows/ci.yml
 act -j ui-smoke -W .github/workflows/ci.yml
 act -j release-smoke -W .github/workflows/ci.yml
 
-# Run with pull_request event (uses the included event payload)
-act pull_request -W .github/workflows/ci.yml -e tools/tests/act-event.json
+# Use a non-default base ref when needed.
+python3 tools/tests/act_event.py --base-ref main --output /tmp/vibesensor-act-event.json
+act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
 ```
 
 ### Optional wrapper (convenience only)
 
 A thin shell wrapper is provided at `tools/tests/run_ci_with_act.sh`. It checks
-prerequisites and passes arguments through to `act`:
+prerequisites, generates a temporary pull-request event from the local checkout
+using `origin/main` then `main` as the base-ref fallback, and passes remaining
+arguments through to `act`:
 
 ```bash
 ./tools/tests/run_ci_with_act.sh -l               # list jobs
-./tools/tests/run_ci_with_act.sh                   # run all CI jobs
-./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job
+./tools/tests/run_ci_with_act.sh                   # run all CI jobs as pull_request
+./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job as pull_request
+./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 ```
 
 ### Secrets

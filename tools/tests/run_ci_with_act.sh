@@ -4,14 +4,38 @@
 # optional convenience only.
 #
 # Usage:
-#   ./tools/tests/run_ci_with_act.sh              # run all CI jobs (push event)
+#   ./tools/tests/run_ci_with_act.sh              # run all CI jobs (pull_request event)
 #   ./tools/tests/run_ci_with_act.sh -l            # list available jobs
 #   ./tools/tests/run_ci_with_act.sh -j backend-lint      # run one job
 #   ./tools/tests/run_ci_with_act.sh -j backend-tests-1   # run one backend test shard
+#   ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 #   ./tools/tests/run_ci_with_act.sh <extra act args>     # pass-through
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+BASE_REF=""
+PASSTHROUGH_ARGS=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --base-ref)
+      if [ "$#" -lt 2 ]; then
+        echo "Error: --base-ref requires a value." >&2
+        exit 2
+      fi
+      BASE_REF="$2"
+      shift 2
+      ;;
+    --base-ref=*)
+      BASE_REF="${1#--base-ref=}"
+      shift
+      ;;
+    *)
+      PASSTHROUGH_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
 
 # ── prerequisite checks ──────────────────────────────────────────────
 if ! command -v docker &>/dev/null; then
@@ -33,11 +57,21 @@ fi
 # ── run act ──────────────────────────────────────────────────────────
 cd "$REPO_ROOT"
 
-EVENT_FILE="tools/tests/act-event.json"
+EVENT_FILE="$(mktemp "${TMPDIR:-/tmp}/vibesensor-act-event.XXXXXX.json")"
+cleanup() {
+  rm -f "$EVENT_FILE"
+}
+trap cleanup EXIT
 
-ACT_ARGS=(-W .github/workflows/ci.yml -e "$EVENT_FILE")
+GENERATE_ARGS=(--output "$EVENT_FILE")
+if [ -n "$BASE_REF" ]; then
+  GENERATE_ARGS+=(--base-ref "$BASE_REF")
+fi
+"${PYTHON:-python3}" tools/tests/act_event.py "${GENERATE_ARGS[@]}"
+
+ACT_ARGS=(pull_request -W .github/workflows/ci.yml -e "$EVENT_FILE")
 if [ -f .secrets.act ]; then
   ACT_ARGS+=(--secret-file .secrets.act)
 fi
 
-exec act "${ACT_ARGS[@]}" "$@"
+act "${ACT_ARGS[@]}" "${PASSTHROUGH_ARGS[@]}"
