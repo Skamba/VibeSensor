@@ -8,7 +8,9 @@ import {
   waitForFakeWebSocketSettled,
 } from "./smoke.helpers";
 
-test("keeps the no-car Live CTA stable while repeated websocket payloads arrive", async ({ page }) => {
+test("keeps the no-car Live CTA stable while repeated websocket payloads arrive", async ({
+  page,
+}) => {
   const trackerKey = "__loggingSummaryRepeatTracker";
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -49,11 +51,15 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
   const addCarButton = liveSummary.getByRole("button", { name: "Add a car" });
   await expect(addCarButton).toBeVisible();
   await expect(page.locator("#spectrumPanelRoot")).toBeHidden();
-  expect(await page.locator(".dashboard-grid").getAttribute("data-layout")).toBeNull();
+  expect(
+    await page.locator(".dashboard-grid").getAttribute("data-layout"),
+  ).toBeNull();
 
   await page.evaluate(() => {
     const summary = document.querySelector<HTMLElement>("#loggingSummary");
-    const button = summary?.querySelector<HTMLElement>('[data-inline-state-action="open-add-car"]');
+    const button = summary?.querySelector<HTMLElement>(
+      '[data-inline-state-action="open-add-car"]',
+    );
     if (!summary || !button) {
       throw new Error("Live logging summary button was not rendered");
     }
@@ -62,7 +68,9 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
       replacements: 0,
     };
     const observer = new MutationObserver(() => {
-      const nextButton = summary.querySelector<HTMLElement>('[data-inline-state-action="open-add-car"]');
+      const nextButton = summary.querySelector<HTMLElement>(
+        '[data-inline-state-action="open-add-car"]',
+      );
       if (nextButton && nextButton !== tracker.currentButton) {
         tracker.currentButton = nextButton;
         tracker.replacements += 1;
@@ -70,26 +78,34 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
     });
     observer.observe(summary, { childList: true, subtree: true });
     (
-      window as Window & typeof globalThis & {
-        __loggingSummaryTracker?: typeof tracker;
-        __loggingSummaryObserver?: MutationObserver;
-      }
+      window as Window &
+        typeof globalThis & {
+          __loggingSummaryTracker?: typeof tracker;
+          __loggingSummaryObserver?: MutationObserver;
+        }
     ).__loggingSummaryTracker = tracker;
     (
-      window as Window & typeof globalThis & {
-        __loggingSummaryTracker?: typeof tracker;
-        __loggingSummaryObserver?: MutationObserver;
-      }
+      window as Window &
+        typeof globalThis & {
+          __loggingSummaryTracker?: typeof tracker;
+          __loggingSummaryObserver?: MutationObserver;
+        }
     ).__loggingSummaryObserver = observer;
   });
 
   await waitForFakeWebSocketSettled(page, trackerKey, 17);
 
-  expect(await page.evaluate(() => (
-    window as Window & typeof globalThis & {
-      __loggingSummaryTracker?: { replacements: number };
-    }
-  ).__loggingSummaryTracker?.replacements ?? -1)).toBe(0);
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          window as Window &
+            typeof globalThis & {
+              __loggingSummaryTracker?: { replacements: number };
+            }
+        ).__loggingSummaryTracker?.replacements ?? -1,
+    ),
+  ).toBe(0);
 
   await addCarButton.click();
   await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);

@@ -10,7 +10,10 @@ import {
 } from "./server_state_query";
 import { applySpeedSourceStatusToSettings } from "./speed_source_status_state";
 
-const DASHBOARD_SPEED_STATUS_QUERY_KEY = ["settings", "dashboard-gps-status"] as const;
+const DASHBOARD_SPEED_STATUS_QUERY_KEY = [
+  "settings",
+  "dashboard-gps-status",
+] as const;
 
 interface DashboardGpsStatusSnapshot {
   obdStatus: null;
@@ -34,10 +37,11 @@ export function createDashboardSpeedSourceStatusModule(
 ): DashboardSpeedSourceStatusModule {
   const handlersBound = signal(false);
   const startupReady = signal(false);
-  const pollingEnabled = computed(() =>
-    handlersBound.value
-    && startupReady.value
-    && deps.activeViewId.value === "dashboardView"
+  const pollingEnabled = computed(
+    () =>
+      handlersBound.value &&
+      startupReady.value &&
+      deps.activeViewId.value === "dashboardView",
   );
 
   const gpsStatusQuery = createObservedServerStateQuery({
@@ -45,8 +49,8 @@ export function createDashboardSpeedSourceStatusModule(
     observerOptions: createHiddenTabPollingObserverOptions<
       DashboardGpsStatusSnapshot,
       typeof DASHBOARD_SPEED_STATUS_QUERY_KEY
-    >(
-      (query) => query.state.data?.status.connection_state === "connected"
+    >((query) =>
+      query.state.data?.status.connection_state === "connected"
         ? GPS_POLL_FAST_MS
         : GPS_POLL_SLOW_MS,
     ),
@@ -70,7 +74,10 @@ export function createDashboardSpeedSourceStatusModule(
     },
     markStartupReady(): Promise<void> {
       startupReady.value = true;
-      return gpsStatusQuery.fetch().then(() => undefined).catch(() => undefined);
+      return gpsStatusQuery
+        .fetch()
+        .then(() => undefined)
+        .catch(() => undefined);
     },
   };
 }

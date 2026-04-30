@@ -18,7 +18,13 @@ import {
   type SpectrumHeavyFrame,
 } from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
-import { computed, effect, signal, untracked, type ReadonlySignal } from "../ui_signals";
+import {
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { SpectrumPreparedFrameData } from "./spectrum_frame_preparer";
 import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import {
@@ -28,22 +34,29 @@ import {
   type SpectrumSeriesEntry,
 } from "./spectrum_shared";
 
-type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
+type SpectrumChartModule = Pick<
+  typeof import("../../spectrum_chart"),
+  "createSpectrumChart"
+>;
 const EMPTY_FREQ_AXIS: number[] = [];
 const EMPTY_SERIES_VALUES: number[][] = [];
 const EMPTY_CHART_DATA: SpectrumAlignedData = [[]];
 
-const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
-  wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
-  wheel_2x: { color: orderBandFills.wheel2, labelKey: "bands.wheel_2x" },
-  driveshaft_1x: { color: orderBandFills.driveshaft1, labelKey: "bands.driveshaft_1x" },
-  engine_1x: { color: orderBandFills.engine1, labelKey: "bands.engine_1x" },
-  engine_2x: { color: orderBandFills.engine2, labelKey: "bands.engine_2x" },
-  driveshaft_engine_1x: {
-    color: orderBandFills.driveshaftEngine1,
-    labelKey: "bands.driveshaft_engine_1x",
-  },
-};
+const bandKeyPresentation: Record<string, { color: string; labelKey: string }> =
+  {
+    wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
+    wheel_2x: { color: orderBandFills.wheel2, labelKey: "bands.wheel_2x" },
+    driveshaft_1x: {
+      color: orderBandFills.driveshaft1,
+      labelKey: "bands.driveshaft_1x",
+    },
+    engine_1x: { color: orderBandFills.engine1, labelKey: "bands.engine_1x" },
+    engine_2x: { color: orderBandFills.engine2, labelKey: "bands.engine_2x" },
+    driveshaft_engine_1x: {
+      color: orderBandFills.driveshaftEngine1,
+      labelKey: "bands.driveshaft_engine_1x",
+    },
+  };
 
 export interface SpectrumPreparedRenderData {
   entries: SpectrumSeriesEntry[];
@@ -69,7 +82,9 @@ export interface SpectrumCanvasRendererDeps {
 
 export interface SpectrumCanvasRenderer {
   dispose(): void;
-  composePreparedFrame(frameData: SpectrumPreparedFrameData): SpectrumPreparedRenderData;
+  composePreparedFrame(
+    frameData: SpectrumPreparedFrameData,
+  ): SpectrumPreparedRenderData;
   refreshPreparedFrameMetadata(): SpectrumPreparedRenderData;
   renderPreparedFrame(prepared: SpectrumPreparedRenderData): void;
   refreshDecorations(): void;
@@ -81,7 +96,8 @@ export function createSpectrumCanvasRenderer(
 ): SpectrumCanvasRenderer {
   const onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
   const loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
-  const createAnimation = deps.createAnimation ?? ((callbacks) => createRafAnimation(callbacks));
+  const createAnimation =
+    deps.createAnimation ?? ((callbacks) => createRafAnimation(callbacks));
   const nowMs = deps.nowMs ?? (() => performance.now());
 
   let chartLoadPromise: Promise<void> | null = null;
@@ -143,7 +159,9 @@ export function createSpectrumCanvasRenderer(
     });
   }
 
-  function composePreparedFrame(frameData: SpectrumPreparedFrameData): SpectrumPreparedRenderData {
+  function composePreparedFrame(
+    frameData: SpectrumPreparedFrameData,
+  ): SpectrumPreparedRenderData {
     return {
       entries: frameData.entries,
       freqAxis: frameData.freqAxis,
@@ -192,8 +210,9 @@ export function createSpectrumCanvasRenderer(
       SPECTRUM_TWEEN_DURATION_MS,
       previousFrameAtMs === null ? null : renderAtMs - previousFrameAtMs,
     );
-    const canTween = deps.state.transport.wsState.value === "connected"
-      && tweenState.canTween.value;
+    const canTween =
+      deps.state.transport.wsState.value === "connected" &&
+      tweenState.canTween.value;
     if (!canTween || !spectrumLastFrame.value || tweenDurationForFrameMs <= 0) {
       setSpectrumDataFromFrame(nextFrame, { resetScales: true });
       return;
@@ -265,8 +284,8 @@ export function createSpectrumCanvasRenderer(
       let changed = false;
       for (let index = 0; index < entries.length; index += 1) {
         if (
-          currentMeta[index]?.label !== entries[index]?.label
-          || currentMeta[index]?.color !== entries[index]?.color
+          currentMeta[index]?.label !== entries[index]?.label ||
+          currentMeta[index]?.color !== entries[index]?.color
         ) {
           changed = true;
           break;
@@ -297,9 +316,13 @@ export function createSpectrumCanvasRenderer(
     }
     const currentData = chartData.value;
     const nextSeriesCount = seriesValues.length + 1;
-    const canReuse = currentData.length === nextSeriesCount
-      && currentData[0]?.length === freqAxis.length
-      && seriesValues.every((seriesValuesEntry, index) => currentData[index + 1]?.length === seriesValuesEntry.length);
+    const canReuse =
+      currentData.length === nextSeriesCount &&
+      currentData[0]?.length === freqAxis.length &&
+      seriesValues.every(
+        (seriesValuesEntry, index) =>
+          currentData[index + 1]?.length === seriesValuesEntry.length,
+      );
 
     if (!canReuse) {
       const nextData = new Array(nextSeriesCount) as SpectrumAlignedData;
@@ -317,7 +340,10 @@ export function createSpectrumCanvasRenderer(
     }
   }
 
-  function copyNumbersInto(target: number[], source: SpectrumNumericSeries): void {
+  function copyNumbersInto(
+    target: number[],
+    source: SpectrumNumericSeries,
+  ): void {
     for (let index = 0; index < source.length; index += 1) {
       const value = source[index];
       if (value === undefined) {
@@ -336,7 +362,11 @@ export function createSpectrumCanvasRenderer(
     for (const band of bands) {
       const center = Number(band.center_hz);
       const tolerance = Number(band.tolerance);
-      if (!Number.isFinite(center) || center <= 0 || !Number.isFinite(tolerance)) {
+      if (
+        !Number.isFinite(center) ||
+        center <= 0 ||
+        !Number.isFinite(tolerance)
+      ) {
         continue;
       }
       const presentation = bandKeyPresentation[band.key];
@@ -417,16 +447,24 @@ export function createSpectrumCanvasRenderer(
             plot.ctx.arc(x, y, 4, 0, Math.PI * 2);
             plot.ctx.fill();
             plot.ctx.font = "12px system-ui, sans-serif";
-            const labelWidth = plot.ctx.measureText(label).width + (labelPaddingX * 2);
+            const labelWidth =
+              plot.ctx.measureText(label).width + labelPaddingX * 2;
             const labelLeft = Math.max(
               plot.bbox.left,
-              Math.min(x - (labelWidth / 2), plot.bbox.left + plot.bbox.width - labelWidth),
+              Math.min(
+                x - labelWidth / 2,
+                plot.bbox.left + plot.bbox.width - labelWidth,
+              ),
             );
             plot.ctx.fillStyle = cssVars.tooltipBg;
             plot.ctx.fillRect(labelLeft, labelTop, labelWidth, labelHeight);
             plot.ctx.fillStyle = cssVars.tooltipFg;
             plot.ctx.textBaseline = "middle";
-            plot.ctx.fillText(label, labelLeft + labelPaddingX, labelTop + (labelHeight / 2));
+            plot.ctx.fillText(
+              label,
+              labelLeft + labelPaddingX,
+              labelTop + labelHeight / 2,
+            );
             plot.ctx.restore();
           },
         ],
@@ -446,15 +484,16 @@ export function createSpectrumCanvasRenderer(
       deps.state.spectrum.spectrumPlot.value.destroy();
       deps.state.spectrum.spectrumPlot.value = null;
     }
-    deps.state.spectrum.spectrumPlot.value = loadedChartModule.createSpectrumChart({
-      hostEl: deps.dom.specChart,
-      measureEl: deps.dom.specChartWrap,
-      height: chartHeight,
-      seriesMeta: chartSeriesMeta,
-      data: chartData,
-      text: chartText,
-      plugins: chartPlugins,
-    });
+    deps.state.spectrum.spectrumPlot.value =
+      loadedChartModule.createSpectrumChart({
+        hostEl: deps.dom.specChart,
+        measureEl: deps.dom.specChartWrap,
+        height: chartHeight,
+        seriesMeta: chartSeriesMeta,
+        data: chartData,
+        text: chartText,
+        plugins: chartPlugins,
+      });
   }
 
   function ensureSpectrumPlot(): boolean {
@@ -496,7 +535,8 @@ export function createSpectrumCanvasRenderer(
         if (disposed) {
           return;
         }
-        deps.state.spectrum.chartLoadErrorDetail.value = getChartLoadErrorDetail(error);
+        deps.state.spectrum.chartLoadErrorDetail.value =
+          getChartLoadErrorDetail(error);
       })
       .finally(() => {
         if (disposed) {

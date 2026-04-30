@@ -52,13 +52,17 @@ function buildStatusRows(
     {
       labelText: t("settings.internet.detected"),
       valueText: t(
-        status.detected ? "settings.internet.bool.yes" : "settings.internet.bool.no",
+        status.detected
+          ? "settings.internet.bool.yes"
+          : "settings.internet.bool.no",
       ),
     },
     {
       labelText: t("settings.internet.usable"),
       valueText: t(
-        status.usable ? "settings.internet.bool.yes" : "settings.internet.bool.no",
+        status.usable
+          ? "settings.internet.bool.yes"
+          : "settings.internet.bool.no",
       ),
     },
   ];

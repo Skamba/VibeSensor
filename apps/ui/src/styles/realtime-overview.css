@@ -6,11 +6,25 @@
     "overview overview"
     "main controls";
 }
-.dashboard-grid__overview { grid-area: overview; min-width: 0; }
-.dashboard-grid__main { grid-area: main; min-width: 0; }
-.dashboard-grid__controls { grid-area: controls; min-width: 0; align-self: start; }
-.dashboard-grid__controls .card__header > :first-child { width: 100%; }
-.dashboard-grid__controls .card__subtle { text-align: left; }
+.dashboard-grid__overview {
+  grid-area: overview;
+  min-width: 0;
+}
+.dashboard-grid__main {
+  grid-area: main;
+  min-width: 0;
+}
+.dashboard-grid__controls {
+  grid-area: controls;
+  min-width: 0;
+  align-self: start;
+}
+.dashboard-grid__controls .card__header > :first-child {
+  width: 100%;
+}
+.dashboard-grid__controls .card__subtle {
+  text-align: left;
+}
 
 .live-overview__stats {
   margin-bottom: var(--space-3);
@@ -93,7 +107,11 @@
 
 .live-sensor-card[data-strongest="true"] {
   border-color: rgba(124, 58, 237, 0.35);
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.08), var(--md-sys-color-surface-container-high));
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0.08),
+    var(--md-sys-color-surface-container-high)
+  );
 }
 
 .live-sensor-card[data-strongest="true"]::before {

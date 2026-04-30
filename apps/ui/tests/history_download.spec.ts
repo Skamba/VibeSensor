@@ -19,10 +19,15 @@ test("filenameFromDisposition decodes UTF-8 and falls back when needed", () => {
     ),
   ).toBe("run ü.pdf");
   expect(
-    filenameFromDisposition('attachment; filename="run-001_report.pdf"', "fallback.pdf"),
+    filenameFromDisposition(
+      'attachment; filename="run-001_report.pdf"',
+      "fallback.pdf",
+    ),
   ).toBe("run-001_report.pdf");
   expect(filenameFromDisposition(null, "fallback.pdf")).toBe("fallback.pdf");
-  expect(filenameFromDisposition("attachment", "fallback.pdf")).toBe("fallback.pdf");
+  expect(filenameFromDisposition("attachment", "fallback.pdf")).toBe(
+    "fallback.pdf",
+  );
 });
 
 test("downloadBlobFile downloads with decoded filename and revokes the blob URL", async () => {
@@ -72,7 +77,8 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
       } as unknown as HTMLAnchorElement;
     },
   } as Document;
-  URL.createObjectURL = (() => "blob:history-download-test") as typeof URL.createObjectURL;
+  URL.createObjectURL = (() =>
+    "blob:history-download-test") as typeof URL.createObjectURL;
   URL.revokeObjectURL = ((url: string) => {
     revoked.push(url);
   }) as typeof URL.revokeObjectURL;

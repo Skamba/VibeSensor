@@ -23,10 +23,16 @@
   background: var(--md-sys-color-surface-container-high);
 }
 
-.history-table tbody tr:nth-child(even) td { background: var(--row-even); }
-.history-table tbody tr:hover td { background: var(--row-hover); }
+.history-table tbody tr:nth-child(even) td {
+  background: var(--row-even);
+}
+.history-table tbody tr:hover td {
+  background: var(--row-hover);
+}
 
-.history-row { cursor: pointer; }
+.history-row {
+  cursor: pointer;
+}
 
 .history-row__run {
   display: grid;
@@ -170,7 +176,9 @@
   white-space: nowrap;
   cursor: pointer;
   box-shadow: none;
-  transition: color 140ms ease, background 140ms ease;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
 }
 
 .history-row__toggle:hover {
@@ -257,7 +265,9 @@
   margin-top: var(--space-2);
 }
 
-.history-row[data-expanded="true"] td { background: var(--md-sys-color-surface-container-high) !important; }
+.history-row[data-expanded="true"] td {
+  background: var(--md-sys-color-surface-container-high) !important;
+}
 
 .history-inline-error {
   display: inline-flex;

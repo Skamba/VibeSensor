@@ -41,7 +41,13 @@ export function createHiddenTabPollingObserverOptions<
   TQueryKey extends QueryKey = QueryKey,
 >(
   refetchInterval: NonNullable<
-    QueryObserverOptions<TData, unknown, TData, TData, TQueryKey>["refetchInterval"]
+    QueryObserverOptions<
+      TData,
+      unknown,
+      TData,
+      TData,
+      TQueryKey
+    >["refetchInterval"]
   >,
 ): Pick<
   QueryObserverOptions<TData, unknown, TData, TData, TQueryKey>,
@@ -70,7 +76,13 @@ export function createObservedServerStateQuery<
     queryKey,
   } = options;
 
-  function observerConfig(): QueryObserverOptions<TData, unknown, TData, TData, TQueryKey> {
+  function observerConfig(): QueryObserverOptions<
+    TData,
+    unknown,
+    TData,
+    TData,
+    TQueryKey
+  > {
     return {
       ...observerOptions,
       enabled: enabled?.value ?? true,
@@ -115,8 +127,8 @@ export function createObservedServerStateQuery<
   applyResult(observer.getCurrentResult());
   const disposeEnabledSync = enabled
     ? effect(() => {
-      observer.setOptions(observerConfig());
-    })
+        observer.setOptions(observerConfig());
+      })
     : null;
 
   return {

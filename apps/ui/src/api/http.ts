@@ -28,13 +28,23 @@ export async function apiJsonResponse<T = unknown>(
   path: string,
   init?: ApiJsonInit,
 ): Promise<ApiJsonResponse<T>> {
-  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal: externalSignal, ...requestInit } = init ?? {};
+  const {
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    signal: externalSignal,
+    ...requestInit
+  } = init ?? {};
   const timeoutController = new AbortController();
   const timeoutId = globalThis.setTimeout(
-    () => timeoutController.abort(new DOMException(DEFAULT_TIMEOUT_MESSAGE, "AbortError")),
+    () =>
+      timeoutController.abort(
+        new DOMException(DEFAULT_TIMEOUT_MESSAGE, "AbortError"),
+      ),
     timeoutMs,
   );
-  const signal = composeSignal(timeoutController.signal, externalSignal ?? undefined);
+  const signal = composeSignal(
+    timeoutController.signal,
+    externalSignal ?? undefined,
+  );
   try {
     const response = await fetch(path, { ...requestInit, signal });
     const bodyText = await response.text();
@@ -42,11 +52,16 @@ export async function apiJsonResponse<T = unknown>(
       let detail = `${response.status} ${response.statusText}`;
       try {
         const payload = bodyText ? JSON.parse(bodyText) : null;
-        if (payload && typeof payload === "object" && typeof payload.detail !== "undefined") {
+        if (
+          payload &&
+          typeof payload === "object" &&
+          typeof payload.detail !== "undefined"
+        ) {
           detail = String(payload.detail);
         }
       } catch {
-        if (bodyText.trim()) detail = `${detail}: ${formatBodySnippet(bodyText)}`;
+        if (bodyText.trim())
+          detail = `${detail}: ${formatBodySnippet(bodyText)}`;
       }
       throw new Error(detail);
     }
@@ -63,14 +78,19 @@ export async function apiJsonResponse<T = unknown>(
       return { status: response.status, body: JSON.parse(bodyText) as T };
     } catch {
       const status = `${response.status} ${response.statusText}`;
-      throw new Error(`Invalid JSON response (${status}): ${formatBodySnippet(bodyText)}`);
+      throw new Error(
+        `Invalid JSON response (${status}): ${formatBodySnippet(bodyText)}`,
+      );
     }
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
 }
 
-export async function apiJson<T = unknown>(path: string, init?: ApiJsonInit): Promise<T> {
+export async function apiJson<T = unknown>(
+  path: string,
+  init?: ApiJsonInit,
+): Promise<T> {
   const response = await apiJsonResponse<T>(path, init);
   return response.body as T;
 }

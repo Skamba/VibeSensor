@@ -7,7 +7,9 @@ import {
   installFakeWebSocket,
 } from "./smoke.helpers";
 
-test("manual OBD scan waits for a slow successful response without surfacing an abort banner", async ({ page }) => {
+test("manual OBD scan waits for a slow successful response without surfacing an abort banner", async ({
+  page,
+}) => {
   test.slow();
 
   let scanCalls = 0;
@@ -73,8 +75,14 @@ test("manual OBD scan waits for a slow successful response without surfacing an 
   await page.locator("#scanObdDevicesBtn").click();
 
   const scanStatus = page.locator("#obdDeviceScanStatus");
-  await expect(scanStatus).toContainText("Scanning for Bluetooth OBD adapters...");
-  await expect(scanStatus).toContainText("1 adapter(s) found.", { timeout: 20_000 });
-  await expect(page.locator(".speed-source-device__name").first()).toHaveText("OBDLink CX");
+  await expect(scanStatus).toContainText(
+    "Scanning for Bluetooth OBD adapters...",
+  );
+  await expect(scanStatus).toContainText("1 adapter(s) found.", {
+    timeout: 20_000,
+  });
+  await expect(page.locator(".speed-source-device__name").first()).toHaveText(
+    "OBDLink CX",
+  );
   await expect(page.locator("#appErrorBanner")).toBeHidden();
 });

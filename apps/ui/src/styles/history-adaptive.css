@@ -98,7 +98,11 @@
     justify-content: flex-start;
     padding: 0.45rem 0.75rem;
     border: 1px solid var(--brand-400);
-    background: linear-gradient(180deg, rgba(139, 92, 246, 0.08), var(--md-sys-color-surface-container));
+    background: linear-gradient(
+      180deg,
+      rgba(139, 92, 246, 0.08),
+      var(--md-sys-color-surface-container)
+    );
     white-space: normal;
   }
 

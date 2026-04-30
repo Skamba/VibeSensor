@@ -5,7 +5,11 @@
   padding: var(--space-3);
   border: 1px solid rgba(124, 58, 237, 0.18);
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.08), rgba(124, 58, 237, 0.03));
+  background: linear-gradient(
+    180deg,
+    rgba(124, 58, 237, 0.08),
+    rgba(124, 58, 237, 0.03)
+  );
 }
 .speed-source-summary__eyebrow {
   font-size: 0.78rem;

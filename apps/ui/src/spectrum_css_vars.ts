@@ -28,21 +28,29 @@ let stopSpectrumCssVarsThemeTracking: (() => void) | null = null;
 function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
   const rootStyle = getComputedStyle(document.documentElement);
   const next: SpectrumCssVars = {
-    surface: rootStyle.getPropertyValue("--surface").trim() || DEFAULT_SPECTRUM_CSS_VARS.surface,
-    muted: rootStyle.getPropertyValue("--muted").trim() || DEFAULT_SPECTRUM_CSS_VARS.muted,
-    border: rootStyle.getPropertyValue("--border").trim() || DEFAULT_SPECTRUM_CSS_VARS.border,
-    tooltipBg: rootStyle.getPropertyValue("--tooltip-bg").trim()
-      || DEFAULT_SPECTRUM_CSS_VARS.tooltipBg,
-    tooltipFg: rootStyle.getPropertyValue("--tooltip-fg").trim()
-      || DEFAULT_SPECTRUM_CSS_VARS.tooltipFg,
+    surface:
+      rootStyle.getPropertyValue("--surface").trim() ||
+      DEFAULT_SPECTRUM_CSS_VARS.surface,
+    muted:
+      rootStyle.getPropertyValue("--muted").trim() ||
+      DEFAULT_SPECTRUM_CSS_VARS.muted,
+    border:
+      rootStyle.getPropertyValue("--border").trim() ||
+      DEFAULT_SPECTRUM_CSS_VARS.border,
+    tooltipBg:
+      rootStyle.getPropertyValue("--tooltip-bg").trim() ||
+      DEFAULT_SPECTRUM_CSS_VARS.tooltipBg,
+    tooltipFg:
+      rootStyle.getPropertyValue("--tooltip-fg").trim() ||
+      DEFAULT_SPECTRUM_CSS_VARS.tooltipFg,
   };
   if (
-    cachedSpectrumCssVars
-    && cachedSpectrumCssVars.surface === next.surface
-    && cachedSpectrumCssVars.muted === next.muted
-    && cachedSpectrumCssVars.border === next.border
-    && cachedSpectrumCssVars.tooltipBg === next.tooltipBg
-    && cachedSpectrumCssVars.tooltipFg === next.tooltipFg
+    cachedSpectrumCssVars &&
+    cachedSpectrumCssVars.surface === next.surface &&
+    cachedSpectrumCssVars.muted === next.muted &&
+    cachedSpectrumCssVars.border === next.border &&
+    cachedSpectrumCssVars.tooltipBg === next.tooltipBg &&
+    cachedSpectrumCssVars.tooltipFg === next.tooltipFg
   ) {
     return cachedSpectrumCssVars;
   }

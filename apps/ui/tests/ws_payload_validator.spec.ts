@@ -85,7 +85,9 @@ function makeRepresentativePayload(): LiveWsPayload {
   };
 }
 
-function requiredFields(schema: { required?: readonly string[] }): readonly string[] {
+function requiredFields(schema: {
+  required?: readonly string[];
+}): readonly string[] {
   return schema.required ?? [];
 }
 
@@ -108,52 +110,62 @@ const driftBranches: readonly DriftBranch[] = [
     label: "client row",
     pathPrefix: "/clients/0",
     required: requiredFields(wsPayloadSchema.$defs.ClientApiRow),
-    getTarget: (payload) => payload.clients[0] as unknown as Record<string, unknown>,
+    getTarget: (payload) =>
+      payload.clients[0] as unknown as Record<string, unknown>,
   },
   {
     label: "rotational speeds",
     pathPrefix: "/rotational_speeds",
     required: requiredFields(wsPayloadSchema.$defs.RotationalSpeedsPayload),
-    getTarget: (payload) => payload.rotational_speeds as unknown as Record<string, unknown>,
+    getTarget: (payload) =>
+      payload.rotational_speeds as unknown as Record<string, unknown>,
   },
   {
     label: "rotational speed value",
     pathPrefix: "/rotational_speeds/wheel",
     required: requiredFields(wsPayloadSchema.$defs.RotationalSpeedValuePayload),
-    getTarget: (payload) => payload.rotational_speeds!.wheel as unknown as Record<string, unknown>,
+    getTarget: (payload) =>
+      payload.rotational_speeds!.wheel as unknown as Record<string, unknown>,
   },
   {
     label: "order band",
     pathPrefix: "/rotational_speeds/order_bands/0",
     required: requiredFields(wsPayloadSchema.$defs.OrderBandPayload),
     getTarget: (payload) =>
-      payload.rotational_speeds!.order_bands![0] as unknown as Record<string, unknown>,
+      payload.rotational_speeds!.order_bands![0] as unknown as Record<
+        string,
+        unknown
+      >,
   },
   {
     label: "warning",
     pathPrefix: "/spectra/warning",
     required: requiredFields(wsPayloadSchema.$defs.FrequencyWarningPayload),
-    getTarget: (payload) => payload.spectra!.warning as unknown as Record<string, unknown>,
+    getTarget: (payload) =>
+      payload.spectra!.warning as unknown as Record<string, unknown>,
   },
   {
     label: "alignment",
     pathPrefix: "/spectra/alignment",
     required: requiredFields(wsPayloadSchema.$defs.AlignmentInfoPayload),
-    getTarget: (payload) => payload.spectra!.alignment as unknown as Record<string, unknown>,
+    getTarget: (payload) =>
+      payload.spectra!.alignment as unknown as Record<string, unknown>,
   },
   {
     label: "strength metrics",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics",
     required: requiredFields(wsPayloadSchema.$defs.VibrationStrengthMetrics),
     getTarget: (payload) =>
-      payload.spectra!.clients!["sensor-1"].strength_metrics as unknown as Record<string, unknown>,
+      payload.spectra!.clients!["sensor-1"]
+        .strength_metrics as unknown as Record<string, unknown>,
   },
   {
     label: "strength peak",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics/top_peaks/0",
     required: requiredFields(wsPayloadSchema.$defs.StrengthPeak),
     getTarget: (payload) =>
-      payload.spectra!.clients!["sensor-1"].strength_metrics.top_peaks[0] as unknown as Record<string, unknown>,
+      payload.spectra!.clients!["sensor-1"].strength_metrics
+        .top_peaks[0] as unknown as Record<string, unknown>,
   },
 ];
 
@@ -232,7 +244,9 @@ describe("validateLiveWsPayload", () => {
           },
         },
       }),
-    ).toThrow(/Invalid websocket payload: \/spectra\/clients\/sensor-1\/strength_metrics\/top_peaks\/0\/amp/);
+    ).toThrow(
+      /Invalid websocket payload: \/spectra\/clients\/sensor-1\/strength_metrics\/top_peaks\/0\/amp/,
+    );
   });
 
   test("reports malformed rotational-speed metadata", () => {
@@ -253,7 +267,9 @@ describe("validateLiveWsPayload", () => {
           ],
         },
       }),
-    ).toThrow(/Invalid websocket payload: \/rotational_speeds\/order_bands\/0\/tolerance/);
+    ).toThrow(
+      /Invalid websocket payload: \/rotational_speeds\/order_bands\/0\/tolerance/,
+    );
   });
 
   test("reports malformed spectrum frame fingerprint", () => {
@@ -283,14 +299,17 @@ describe("validateLiveWsPayload", () => {
     });
   });
 
-  test.each(requiredFieldCases)(
-    "rejects missing schema-derived required $field in $label",
-    ({ field, getTarget, pathPrefix }) => {
-      const payload = structuredClone(makeRepresentativePayload());
-      delete getTarget(payload)[field];
-      expect(() => validateLiveWsPayload(payload)).toThrow(
-        new RegExp(`Invalid websocket payload: ${pathPrefix}/${field}`),
-      );
-    },
-  );
+  test.each(
+    requiredFieldCases,
+  )("rejects missing schema-derived required $field in $label", ({
+    field,
+    getTarget,
+    pathPrefix,
+  }) => {
+    const payload = structuredClone(makeRepresentativePayload());
+    delete getTarget(payload)[field];
+    expect(() => validateLiveWsPayload(payload)).toThrow(
+      new RegExp(`Invalid websocket payload: ${pathPrefix}/${field}`),
+    );
+  });
 });

@@ -5,7 +5,12 @@ import {
 } from "./app/timer_cleanup";
 import { batch, signal, type ReadonlySignal } from "./app/ui_signals";
 
-export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
+export type WsUiState =
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "stale"
+  | "no_data";
 
 interface WsClientOptions {
   url: string;
@@ -24,9 +29,10 @@ export interface WsClient {
 }
 
 function hasSpectraClients(payload: unknown): boolean {
-  const record = payload && typeof payload === "object"
-    ? (payload as Partial<LiveWsPayload>)
-    : null;
+  const record =
+    payload && typeof payload === "object"
+      ? (payload as Partial<LiveWsPayload>)
+      : null;
   const clients = record?.spectra?.clients;
   return Boolean(clients && Object.keys(clients).length > 0);
 }
@@ -72,7 +78,11 @@ export function createWsClient(options: WsClientOptions): WsClient {
       manuallyClosed.value = false;
       reconnectDelayMs.value = null;
     });
-    if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+    if (
+      ws &&
+      (ws.readyState === WebSocket.CONNECTING ||
+        ws.readyState === WebSocket.OPEN)
+    ) {
       return;
     }
     open("connecting");
@@ -151,7 +161,8 @@ export function createWsClient(options: WsClientOptions): WsClient {
       batch(() => {
         reconnectAttempt.value = 0;
         lastMessageAtMs.value = receivedAt;
-        hasReceivedData.value = hasReceivedData.value || resolvedOptions.hasData(payload);
+        hasReceivedData.value =
+          hasReceivedData.value || resolvedOptions.hasData(payload);
         commitState(hasReceivedData.value ? "connected" : "no_data");
         latestPayload.value = payload;
       });
@@ -190,7 +201,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   function nextReconnectDelayMs(): number {
     const base = Math.max(250, resolvedOptions.reconnectDelayMs);
     const exp = Math.min(6, reconnectAttempt.value);
-    const raw = Math.min(15000, base * (2 ** exp));
+    const raw = Math.min(15000, base * 2 ** exp);
     const jitter = raw * 0.25 * Math.random();
     reconnectAttempt.value += 1;
     return Math.round(raw + jitter);
@@ -217,10 +228,10 @@ export function createWsClient(options: WsClientOptions): WsClient {
   function bindStaleLifecycle(): () => void {
     return bindReplaceableTimerEffect(staleTimer, () => {
       if (
-        !socketOpen.value
-        || manuallyClosed.value
-        || !hasReceivedData.value
-        || lastMessageAtMs.value <= 0
+        !socketOpen.value ||
+        manuallyClosed.value ||
+        !hasReceivedData.value ||
+        lastMessageAtMs.value <= 0
       ) {
         return null;
       }

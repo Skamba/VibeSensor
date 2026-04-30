@@ -1,7 +1,10 @@
 import type { LoggingStatusPayload } from "../../api/types";
 
-export type CaptureReadinessPayload = NonNullable<LoggingStatusPayload["capture_readiness"]>;
-export type CaptureReadinessCheckPayload = CaptureReadinessPayload["checks"][number];
+export type CaptureReadinessPayload = NonNullable<
+  LoggingStatusPayload["capture_readiness"]
+>;
+export type CaptureReadinessCheckPayload =
+  CaptureReadinessPayload["checks"][number];
 
 export interface RealtimeCaptureReadinessChecklistItemModel {
   checkKey: CaptureReadinessCheckPayload["check_key"];
@@ -32,7 +35,9 @@ export function captureReadinessCheck(
   readiness: CaptureReadinessPayload | null,
   checkKey: CaptureReadinessCheckPayload["check_key"],
 ): CaptureReadinessCheckPayload | null {
-  return readiness?.checks.find((check) => check.check_key === checkKey) ?? null;
+  return (
+    readiness?.checks.find((check) => check.check_key === checkKey) ?? null
+  );
 }
 
 function captureReadinessDetailNumber(
@@ -69,29 +74,42 @@ export function captureReadinessDetailText(
     );
     const unassignedSensorCount = Math.max(
       0,
-      Math.ceil(captureReadinessDetailNumber(check, "unassigned_sensor_count") ?? 0),
+      Math.ceil(
+        captureReadinessDetailNumber(check, "unassigned_sensor_count") ?? 0,
+      ),
     );
     const quietPeriodRemaining = Math.max(
       0,
-      Math.ceil(captureReadinessDetailNumber(check, "quiet_period_remaining_s") ?? 0),
+      Math.ceil(
+        captureReadinessDetailNumber(check, "quiet_period_remaining_s") ?? 0,
+      ),
     );
     if (check.reason_key === "no_live_sensors") {
       return t("dashboard.capture_readiness.sensors_ready.no_live_sensors");
     }
     if (check.reason_key === "sensor_locations_missing") {
-      return t("dashboard.capture_readiness.sensors_ready.sensor_locations_missing", {
-        count: formatInt(unassignedSensorCount),
-      });
+      return t(
+        "dashboard.capture_readiness.sensors_ready.sensor_locations_missing",
+        {
+          count: formatInt(unassignedSensorCount),
+        },
+      );
     }
     if (check.reason_key === "recent_integrity_events") {
-      return t("dashboard.capture_readiness.sensors_ready.recent_integrity_events", {
-        seconds: formatInt(quietPeriodRemaining),
-      });
+      return t(
+        "dashboard.capture_readiness.sensors_ready.recent_integrity_events",
+        {
+          seconds: formatInt(quietPeriodRemaining),
+        },
+      );
     }
     if (check.reason_key === "limited_sensor_coverage") {
-      return t("dashboard.capture_readiness.sensors_ready.limited_sensor_coverage", {
-        count: formatInt(liveSensorCount),
-      });
+      return t(
+        "dashboard.capture_readiness.sensors_ready.limited_sensor_coverage",
+        {
+          count: formatInt(liveSensorCount),
+        },
+      );
     }
     return t("dashboard.capture_readiness.sensors_ready.ready", {
       count: formatInt(liveSensorCount),
@@ -100,25 +118,39 @@ export function captureReadinessDetailText(
 
   if (check.check_key === "reference_ready") {
     if (check.reason_key === "active_car_missing") {
-      return t("dashboard.capture_readiness.reference_ready.active_car_missing");
+      return t(
+        "dashboard.capture_readiness.reference_ready.active_car_missing",
+      );
     }
     if (check.reason_key === "order_reference_incomplete") {
-      return t("dashboard.capture_readiness.reference_ready.order_reference_incomplete");
+      return t(
+        "dashboard.capture_readiness.reference_ready.order_reference_incomplete",
+      );
     }
     if (check.reason_key === "speed_source_missing") {
-      return t("dashboard.capture_readiness.reference_ready.speed_source_missing");
+      return t(
+        "dashboard.capture_readiness.reference_ready.speed_source_missing",
+      );
     }
     if (check.reason_key === "speed_source_not_live") {
-      return t("dashboard.capture_readiness.reference_ready.speed_source_not_live");
+      return t(
+        "dashboard.capture_readiness.reference_ready.speed_source_not_live",
+      );
     }
     if (check.reason_key === "speed_source_fallback_active") {
-      return t("dashboard.capture_readiness.reference_ready.speed_source_fallback_active");
+      return t(
+        "dashboard.capture_readiness.reference_ready.speed_source_fallback_active",
+      );
     }
     if (check.reason_key === "speed_sample_stale") {
-      return t("dashboard.capture_readiness.reference_ready.speed_sample_stale");
+      return t(
+        "dashboard.capture_readiness.reference_ready.speed_sample_stale",
+      );
     }
     if (check.reason_key === "speed_sample_missing") {
-      return t("dashboard.capture_readiness.reference_ready.speed_sample_missing");
+      return t(
+        "dashboard.capture_readiness.reference_ready.speed_sample_missing",
+      );
     }
     if (check.reason_key === "obd_rpm_missing") {
       return t("dashboard.capture_readiness.reference_ready.obd_rpm_missing");
@@ -174,8 +206,14 @@ export function captureReadinessSummaryText(
     return "";
   }
   const primaryCheck = readiness.is_ready
-    ? readiness.checks.find((check) => check.state === "warn" && check.check_key !== "capture_ready")
-    : readiness.checks.find((check) => check.state === "fail" && check.check_key !== "capture_ready");
+    ? readiness.checks.find(
+        (check) =>
+          check.state === "warn" && check.check_key !== "capture_ready",
+      )
+    : readiness.checks.find(
+        (check) =>
+          check.state === "fail" && check.check_key !== "capture_ready",
+      );
   if (primaryCheck) {
     return captureReadinessDetailText(primaryCheck, deps);
   }
@@ -193,12 +231,14 @@ export function buildRealtimeCaptureReadinessChecklistModel(
   if (!readiness) {
     return null;
   }
-  const items = CAPTURE_READINESS_ORDER
-    .filter((checkKey) => checkKey !== "capture_ready")
+  const items = CAPTURE_READINESS_ORDER.filter(
+    (checkKey) => checkKey !== "capture_ready",
+  )
     .map((checkKey) => captureReadinessCheck(readiness, checkKey))
-    .filter((check): check is CaptureReadinessCheckPayload => (
-      check !== null && (!params.setupMode || check.state !== "pass")
-    ))
+    .filter(
+      (check): check is CaptureReadinessCheckPayload =>
+        check !== null && (!params.setupMode || check.state !== "pass"),
+    )
     .map((check) => ({
       checkKey: check.check_key,
       state: check.state,

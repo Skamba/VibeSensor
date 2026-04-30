@@ -1,8 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { createAppState, applyLivePayloadUpdate } from "../src/app/ui_app_state";
+import {
+  createAppState,
+  applyLivePayloadUpdate,
+} from "../src/app/ui_app_state";
 import type { AdaptedPayload } from "../src/transport/live_models";
 
-function makeAdaptedPayload(overrides: Partial<AdaptedPayload> = {}): AdaptedPayload {
+function makeAdaptedPayload(
+  overrides: Partial<AdaptedPayload> = {},
+): AdaptedPayload {
   return {
     clients: [],
     speed_mps: 10,
@@ -55,10 +60,14 @@ describe("applyLivePayloadUpdate", () => {
       }),
     });
 
-    expect(state.realtime.clients.value.map((client) => client.id)).toEqual(["client-1"]);
+    expect(state.realtime.clients.value.map((client) => client.id)).toEqual([
+      "client-1",
+    ]);
     expect(state.realtime.selectedClientId.value).toBe("client-1");
     expect(state.realtime.speedMps.value).toBe(12);
-    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([10, 20, 30]);
+    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([
+      10, 20, 30,
+    ]);
     expect(state.spectrum.hasSpectrumData.value).toBe(true);
     expect(update.hasSelectedClientChanged).toBe(true);
     expect(update.hasNewSpectrumFrame).toBe(true);
@@ -95,7 +104,9 @@ describe("applyLivePayloadUpdate", () => {
       }),
     });
 
-    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([1, 2, 3]);
+    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([
+      1, 2, 3,
+    ]);
     expect(state.spectrum.hasSpectrumData.value).toBe(true);
     expect(state.realtime.speedMps.value).toBe(14);
     expect(update.hasSelectedClientChanged).toBe(false);
@@ -115,7 +126,14 @@ describe("applyLivePayloadUpdate", () => {
             peak_amp_g: 0,
             noise_floor_amp_g: 0,
             strength_bucket: null,
-            top_peaks: [{ amp: 0.03, hz: 3, strength_bucket: null, vibration_strength_db: 5 }],
+            top_peaks: [
+              {
+                amp: 0.03,
+                hz: 3,
+                strength_bucket: null,
+                vibration_strength_db: 5,
+              },
+            ],
           },
         },
       },
@@ -138,7 +156,14 @@ describe("applyLivePayloadUpdate", () => {
                 peak_amp_g: 0,
                 noise_floor_amp_g: 0,
                 strength_bucket: null,
-                top_peaks: [{ amp: 0.03, hz: 3, strength_bucket: null, vibration_strength_db: 5 }],
+                top_peaks: [
+                  {
+                    amp: 0.03,
+                    hz: 3,
+                    strength_bucket: null,
+                    vibration_strength_db: 5,
+                  },
+                ],
               },
             },
           },

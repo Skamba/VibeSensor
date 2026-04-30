@@ -1832,6 +1832,7 @@ def check_contract_sync_entrypoint() -> list[str]:
         "sync:generated-contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs",
         "setup:generated-contracts": "node ../../tools/ui/ensure_ui_bootstrap.mjs --ensure-generated-contracts",
         "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
+        "format:check": "biome check . --linter-enabled=false --assist-enabled=false",
         "build": "npm run check:contracts && vite build",
         "build:prevalidated-contracts": "vite build",
         "typecheck": "npm run check:contracts && tsc --noEmit",
@@ -1953,6 +1954,13 @@ def check_contract_sync_entrypoint() -> list[str]:
                 ),
                 WorkflowStepRequirement(
                     working_directory="apps/ui",
+                    run="npm run format:check",
+                    error_message=(
+                        "frontend-quality must run the UI formatter drift check in apps/ui."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
                     run="npm run lint:deps",
                     error_message=(
                         "frontend-quality must run UI dependency boundary checks in apps/ui."
@@ -2009,6 +2017,13 @@ def check_contract_sync_entrypoint() -> list[str]:
                     forbidden=True,
                     error_message=(
                         "frontend-typecheck must not run npm run lint; that gate belongs in frontend-quality."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    run="npm run format:check",
+                    forbidden=True,
+                    error_message=(
+                        "frontend-typecheck must not run npm run format:check; that gate belongs in frontend-quality."
                     ),
                 ),
                 WorkflowStepRequirement(

@@ -226,15 +226,17 @@ describe("buildEspFlashPanelRenderModel", () => {
 
 describe("createEspFlashFeaturePresenter", () => {
   test("renders log output without a DOM-backed panel view", () => {
-    const renderState = signal(makeState({
-      availablePorts: [makePort()],
-      logText: "build ok\nflash ok\n",
-      status: makeStatus({
-        log_count: 2,
-        phase: "flashing",
-        state: "running",
+    const renderState = signal(
+      makeState({
+        availablePorts: [makePort()],
+        logText: "build ok\nflash ok\n",
+        status: makeStatus({
+          log_count: 2,
+          phase: "flashing",
+          state: "running",
+        }),
       }),
-    }));
+    );
     const presenter = createEspFlashFeaturePresenter({
       renderState,
       t: (key) => key,
@@ -243,6 +245,8 @@ describe("createEspFlashFeaturePresenter", () => {
 
     expect(latestModel?.log.emptyState).toBeNull();
     expect(latestModel?.log.text).toContain("flash ok");
-    expect(latestModel?.statusBanner.text).toBe("settings.esp_flash.state.running");
+    expect(latestModel?.statusBanner.text).toBe(
+      "settings.esp_flash.state.running",
+    );
   });
 });

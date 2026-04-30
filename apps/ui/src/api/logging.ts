@@ -7,9 +7,13 @@ export async function getLoggingStatus(): Promise<Local.LoggingStatusPayload> {
 }
 
 export async function startLoggingRun(): Promise<Local.LoggingStatusPayload> {
-  return await apiJson<Transport.LoggingStatusPayload>("/api/recording/start", { method: "POST" });
+  return await apiJson<Transport.LoggingStatusPayload>("/api/recording/start", {
+    method: "POST",
+  });
 }
 
 export async function stopLoggingRun(): Promise<Local.LoggingStatusPayload> {
-  return await apiJson<Transport.LoggingStatusPayload>("/api/recording/stop", { method: "POST" });
+  return await apiJson<Transport.LoggingStatusPayload>("/api/recording/stop", {
+    method: "POST",
+  });
 }

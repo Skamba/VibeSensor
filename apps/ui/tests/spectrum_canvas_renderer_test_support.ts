@@ -7,10 +7,15 @@ import type {
 import { createSpectrumFramePreparerCore } from "../src/app/runtime/spectrum_frame_preparer";
 import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedClient } from "../src/transport/live_models";
-import { createElementStub, installDocumentStub } from "./spectrum_test_support";
+import {
+  createElementStub,
+  installDocumentStub,
+} from "./spectrum_test_support";
 
 type AppState = ReturnType<typeof createAppState>;
-type ClientSpectrum = NonNullable<AppState["spectrum"]["spectra"]["value"]["clients"][string]>;
+type ClientSpectrum = NonNullable<
+  AppState["spectrum"]["spectra"]["value"]["clients"][string]
+>;
 
 interface ClientSpectrumOptions {
   combined?: number[];
@@ -38,7 +43,11 @@ export interface SpectrumRendererHarness {
   state: AppState;
 }
 
-export function makeClient(id: string, name: string, overrides: Partial<AdaptedClient> = {}): AdaptedClient {
+export function makeClient(
+  id: string,
+  name: string,
+  overrides: Partial<AdaptedClient> = {},
+): AdaptedClient {
   return {
     id,
     name,
@@ -55,7 +64,9 @@ export function makeClient(id: string, name: string, overrides: Partial<AdaptedC
   };
 }
 
-export function makeSpectrum(options: ClientSpectrumOptions = {}): ClientSpectrum {
+export function makeSpectrum(
+  options: ClientSpectrumOptions = {},
+): ClientSpectrum {
   const freq = options.freq ?? [10, 15, 20];
   const combined = options.combined ?? [1, 0.75, 0.5];
   const peakAmp = options.peakAmp ?? combined[0] ?? 1;
@@ -89,11 +100,16 @@ export function installClientSpectra(
   state.realtime.clients.value = entries.map((entry) => entry.client);
   state.spectrum.spectra.value = {
     ...state.spectrum.spectra.value,
-    clients: Object.fromEntries(entries.map((entry) => [entry.client.id, entry.spectrum])),
+    clients: Object.fromEntries(
+      entries.map((entry) => [entry.client.id, entry.spectrum]),
+    ),
   };
 }
 
-export function getRequiredClientSpectrum(state: AppState, clientId: string): ClientSpectrum {
+export function getRequiredClientSpectrum(
+  state: AppState,
+  clientId: string,
+): ClientSpectrum {
   const spectrum = state.spectrum.spectra.value.clients[clientId];
   if (!spectrum) {
     throw new Error(`Expected spectrum for ${clientId}`);
@@ -127,14 +143,17 @@ export async function withSpectrumRendererHarness(
       onCursorDataIndexChange: () => undefined,
       ...options.deps,
     });
-    const prepareFrame = () => renderer.composePreparedFrame(framePreparer.prepare({
-      clients: state.realtime.clients.value.map((client) => ({
-        id: client.id,
-        name: client.name,
-        connected: client.connected,
-      })),
-      spectraByClient: state.spectrum.spectra.value.clients,
-    }));
+    const prepareFrame = () =>
+      renderer.composePreparedFrame(
+        framePreparer.prepare({
+          clients: state.realtime.clients.value.map((client) => ({
+            id: client.id,
+            name: client.name,
+            connected: client.connected,
+          })),
+          spectraByClient: state.spectrum.spectra.value.clients,
+        }),
+      );
 
     await run({ dom, prepareFrame, renderer, state });
   } finally {

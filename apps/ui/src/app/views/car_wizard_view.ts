@@ -3,9 +3,7 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api";
-import type {
-  CarsFeatureRenderState,
-} from "../features/cars_feature_workflow";
+import type { CarsFeatureRenderState } from "../features/cars_feature_workflow";
 import type { CarsFeatureOptionsState } from "../features/cars_option_state";
 import { DEFAULT_CARS_WIZARD_MANUAL_INPUTS } from "../features/cars_wizard_state";
 import { formatCarLibraryTireOption } from "../features/cars_tire_setup";
@@ -149,7 +147,9 @@ function buildVariantOptionsModel(
     layout: "list",
     messageText: null,
     options: variants.map((variant, index) => ({
-      detailText: [variant.drivetrain, variant.engine].filter(Boolean).join(" · ") || null,
+      detailText:
+        [variant.drivetrain, variant.engine].filter(Boolean).join(" · ") ||
+        null,
       labelText: variant.name,
       selected: false,
       value: String(index),
@@ -208,15 +208,41 @@ function buildSummaryRows(
 ): CarsWizardSummaryRow[] {
   const pending = t("settings.car.wizard_summary_pending");
   const rows = [
-    { labelText: t("settings.car.wizard_summary_brand"), valueText: summary.brand, visibleFromStep: 1 },
-    { labelText: t("settings.car.wizard_summary_type"), valueText: summary.carType, visibleFromStep: 2 },
-    { labelText: t("settings.car.wizard_summary_model"), valueText: summary.model, visibleFromStep: 3 },
-    { labelText: t("settings.car.wizard_summary_variant"), valueText: summary.variant, visibleFromStep: 4 },
-    { labelText: t("settings.car.wizard_summary_tire"), valueText: summary.tire, visibleFromStep: 4 },
-    { labelText: t("settings.car.wizard_summary_gearbox"), valueText: summary.gearbox, visibleFromStep: 4 },
+    {
+      labelText: t("settings.car.wizard_summary_brand"),
+      valueText: summary.brand,
+      visibleFromStep: 1,
+    },
+    {
+      labelText: t("settings.car.wizard_summary_type"),
+      valueText: summary.carType,
+      visibleFromStep: 2,
+    },
+    {
+      labelText: t("settings.car.wizard_summary_model"),
+      valueText: summary.model,
+      visibleFromStep: 3,
+    },
+    {
+      labelText: t("settings.car.wizard_summary_variant"),
+      valueText: summary.variant,
+      visibleFromStep: 4,
+    },
+    {
+      labelText: t("settings.car.wizard_summary_tire"),
+      valueText: summary.tire,
+      visibleFromStep: 4,
+    },
+    {
+      labelText: t("settings.car.wizard_summary_gearbox"),
+      valueText: summary.gearbox,
+      visibleFromStep: 4,
+    },
   ];
   return rows
-    .filter((row) => row.valueText || summary.currentStep >= row.visibleFromStep)
+    .filter(
+      (row) => row.valueText || summary.currentStep >= row.visibleFromStep,
+    )
     .map((row) => ({
       labelText: row.labelText,
       valueText: row.valueText ?? pending,
@@ -268,14 +294,19 @@ export function buildCarsWizardRenderModel(
       step: t(WIZARD_STEP_LABEL_KEYS[state.step] ?? WIZARD_STEP_LABEL_KEYS[0]),
       total: WIZARD_STEP_LABEL_KEYS.length,
     }),
-    specBranch: state.step === 4 ? state.resolvedSpecBranch ?? "pending" : null,
+    specBranch:
+      state.step === 4 ? (state.resolvedSpecBranch ?? "pending") : null,
     step: state.step,
     summary: {
       profileNameLabelText: t("settings.car.wizard_summary_name"),
       profileNameValueText: state.summaryData.profileName ?? pending,
       rows: buildSummaryRows(state.summaryData, t),
     },
-    tireOptions: buildTireOptionsModel(state.tireOptions, state.selectedTire, fmt),
+    tireOptions: buildTireOptionsModel(
+      state.tireOptions,
+      state.selectedTire,
+      fmt,
+    ),
     typeOptions: buildOptionsModel(
       state.typeOptions,
       "data-value",

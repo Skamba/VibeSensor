@@ -90,11 +90,13 @@
   background: var(--readiness-surface);
 }
 
-.maintenance-readiness__item[data-readiness-state] .maintenance-readiness__marker {
+.maintenance-readiness__item[data-readiness-state]
+  .maintenance-readiness__marker {
   background: var(--readiness-marker-surface);
   color: var(--readiness-marker-text);
 }
 
-.maintenance-readiness__item[data-readiness-state] .maintenance-readiness__label {
+.maintenance-readiness__item[data-readiness-state]
+  .maintenance-readiness__label {
   color: var(--readiness-text);
 }

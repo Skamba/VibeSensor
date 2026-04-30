@@ -151,7 +151,9 @@ function createLazySecondaryFeatureBundle(
       });
     },
     refreshHistory(): Promise<void> {
-      return ensureLoaded().then((loadedBundle) => loadedBundle.history.refreshHistory());
+      return ensureLoaded().then((loadedBundle) =>
+        loadedBundle.history.refreshHistory(),
+      );
     },
   };
 }
@@ -173,7 +175,9 @@ export function createAppFeatureBundle(
   });
   const reportFeatureLoadError = (error: unknown): void => {
     services.showError(
-      error instanceof Error ? error.message : services.t("status.view_load_failed"),
+      error instanceof Error
+        ? error.message
+        : services.t("status.view_load_failed"),
     );
   };
   const ensureSecondaryViewReady = (viewId: string): Promise<void> => {
@@ -216,7 +220,9 @@ export function createAppFeatureBundle(
         },
       },
       selection: runtime.transport,
-      recording: createRealtimeFeatureRecordingPorts(() => secondary.refreshHistory()),
+      recording: createRealtimeFeatureRecordingPorts(() =>
+        secondary.refreshHistory(),
+      ),
     },
     services,
     formatting: {
@@ -227,16 +233,18 @@ export function createAppFeatureBundle(
 
   const bundle = createAppFeatureBundlePorts({
     dashboard: {
-      hydrateStartupState: () => Promise.all([
-        loadDashboardStartupState(serverState.queryClient, state.settings),
-        dashboardSpeedSourceStatus.markStartupReady(),
-      ]).then(() => undefined),
+      hydrateStartupState: () =>
+        Promise.all([
+          loadDashboardStartupState(serverState.queryClient, state.settings),
+          dashboardSpeedSourceStatus.markStartupReady(),
+        ]).then(() => undefined),
     },
     realtime,
-    ensureViewReady: (viewId) => ensureSecondaryViewReady(viewId).catch((error) => {
-      reportFeatureLoadError(error);
-      throw error;
-    }),
+    ensureViewReady: (viewId) =>
+      ensureSecondaryViewReady(viewId).catch((error) => {
+        reportFeatureLoadError(error);
+        throw error;
+      }),
     secondary: {
       dispose: () => secondary.dispose(),
     },
@@ -257,10 +265,11 @@ export function createAppFeatureBundle(
     startup: {
       ...bundle.startup,
       dashboard: {
-        hydrateStartupState: () => bundle.startup.dashboard.hydrateStartupState().catch((error) => {
-          reportFeatureLoadError(error);
-          throw error;
-        }),
+        hydrateStartupState: () =>
+          bundle.startup.dashboard.hydrateStartupState().catch((error) => {
+            reportFeatureLoadError(error);
+            throw error;
+          }),
       },
     },
   };

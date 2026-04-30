@@ -39,7 +39,9 @@ export interface AnalysisTuningSettings {
   max_band_half_width_pct: number;
 }
 
-export interface VehicleSettings extends CarAspectSettings, AnalysisTuningSettings {}
+export interface VehicleSettings
+  extends CarAspectSettings,
+    AnalysisTuningSettings {}
 
 const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_width_mm: defaultAnalysisSettings.tire_width_mm,
@@ -55,14 +57,17 @@ const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
   driveshaft_bandwidth_pct: defaultAnalysisSettings.driveshaft_bandwidth_pct,
   engine_bandwidth_pct: defaultAnalysisSettings.engine_bandwidth_pct,
   speed_uncertainty_pct: defaultAnalysisSettings.speed_uncertainty_pct,
-  tire_diameter_uncertainty_pct: defaultAnalysisSettings.tire_diameter_uncertainty_pct,
-  final_drive_uncertainty_pct: defaultAnalysisSettings.final_drive_uncertainty_pct,
+  tire_diameter_uncertainty_pct:
+    defaultAnalysisSettings.tire_diameter_uncertainty_pct,
+  final_drive_uncertainty_pct:
+    defaultAnalysisSettings.final_drive_uncertainty_pct,
   gear_uncertainty_pct: defaultAnalysisSettings.gear_uncertainty_pct,
   min_abs_band_hz: defaultAnalysisSettings.min_abs_band_hz,
   max_band_half_width_pct: defaultAnalysisSettings.max_band_half_width_pct,
 };
 
-export const defaultVehicleSettings: Readonly<VehicleSettings> = defaultAnalysisSettings;
+export const defaultVehicleSettings: Readonly<VehicleSettings> =
+  defaultAnalysisSettings;
 
 const carAspectSettingKeys = [
   "tire_width_mm",
@@ -164,7 +169,10 @@ export interface LivePayloadUpdateResult {
 }
 
 function hasRenderableSpectrumData(spectra: SpectrumFrameData): boolean {
-  return Object.values(spectra.clients).some((clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+  return Object.values(spectra.clients).some(
+    (clientSpec) =>
+      clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
+  );
 }
 
 function hasSpectrumFingerprint(
@@ -173,7 +181,10 @@ function hasSpectrumFingerprint(
   return typeof spectra.frame_fingerprint === "string";
 }
 
-function areNumberArraysEqual(left: readonly number[], right: readonly number[]): boolean {
+function areNumberArraysEqual(
+  left: readonly number[],
+  right: readonly number[],
+): boolean {
   if (left.length !== right.length) {
     return false;
   }
@@ -186,8 +197,12 @@ function areNumberArraysEqual(left: readonly number[], right: readonly number[])
 }
 
 function areStrengthPeaksEqual(
-  left: ReadonlyArray<SpectrumClientData["strength_metrics"]["top_peaks"][number]>,
-  right: ReadonlyArray<SpectrumClientData["strength_metrics"]["top_peaks"][number]>,
+  left: ReadonlyArray<
+    SpectrumClientData["strength_metrics"]["top_peaks"][number]
+  >,
+  right: ReadonlyArray<
+    SpectrumClientData["strength_metrics"]["top_peaks"][number]
+  >,
 ): boolean {
   if (left.length !== right.length) {
     return false;
@@ -196,10 +211,10 @@ function areStrengthPeaksEqual(
     const leftPeak = left[index];
     const rightPeak = right[index];
     if (
-      leftPeak.amp !== rightPeak.amp
-      || leftPeak.hz !== rightPeak.hz
-      || leftPeak.strength_bucket !== rightPeak.strength_bucket
-      || leftPeak.vibration_strength_db !== rightPeak.vibration_strength_db
+      leftPeak.amp !== rightPeak.amp ||
+      leftPeak.hz !== rightPeak.hz ||
+      leftPeak.strength_bucket !== rightPeak.strength_bucket ||
+      leftPeak.vibration_strength_db !== rightPeak.vibration_strength_db
     ) {
       return false;
     }
@@ -211,17 +226,24 @@ function areStrengthMetricsEqual(
   left: SpectrumClientData["strength_metrics"],
   right: SpectrumClientData["strength_metrics"],
 ): boolean {
-  return left.vibration_strength_db === right.vibration_strength_db
-    && left.peak_amp_g === right.peak_amp_g
-    && left.noise_floor_amp_g === right.noise_floor_amp_g
-    && left.strength_bucket === right.strength_bucket
-    && areStrengthPeaksEqual(left.top_peaks, right.top_peaks);
+  return (
+    left.vibration_strength_db === right.vibration_strength_db &&
+    left.peak_amp_g === right.peak_amp_g &&
+    left.noise_floor_amp_g === right.noise_floor_amp_g &&
+    left.strength_bucket === right.strength_bucket &&
+    areStrengthPeaksEqual(left.top_peaks, right.top_peaks)
+  );
 }
 
-function areSpectrumClientDataEqual(left: SpectrumClientData, right: SpectrumClientData): boolean {
-  return areNumberArraysEqual(left.freq, right.freq)
-    && areNumberArraysEqual(left.combined, right.combined)
-    && areStrengthMetricsEqual(left.strength_metrics, right.strength_metrics);
+function areSpectrumClientDataEqual(
+  left: SpectrumClientData,
+  right: SpectrumClientData,
+): boolean {
+  return (
+    areNumberArraysEqual(left.freq, right.freq) &&
+    areNumberArraysEqual(left.combined, right.combined) &&
+    areStrengthMetricsEqual(left.strength_metrics, right.strength_metrics)
+  );
 }
 
 function areSpectrumFramesEqual(
@@ -236,7 +258,11 @@ function areSpectrumFramesEqual(
   for (const clientId of leftClientIds) {
     const leftClient = left.clients[clientId];
     const rightClient = right.clients[clientId];
-    if (!leftClient || !rightClient || !areSpectrumClientDataEqual(leftClient, rightClient)) {
+    if (
+      !leftClient ||
+      !rightClient ||
+      !areSpectrumClientDataEqual(leftClient, rightClient)
+    ) {
       return false;
     }
   }
@@ -255,8 +281,13 @@ export function applySpectrumTick(
       hasNewSpectrumFrame: false,
     };
   }
-  if (hasSpectrumFingerprint(previousSpectra) && hasSpectrumFingerprint(incomingSpectra)) {
-    if (previousSpectra.frame_fingerprint === incomingSpectra.frame_fingerprint) {
+  if (
+    hasSpectrumFingerprint(previousSpectra) &&
+    hasSpectrumFingerprint(incomingSpectra)
+  ) {
+    if (
+      previousSpectra.frame_fingerprint === incomingSpectra.frame_fingerprint
+    ) {
       return {
         spectra: previousSpectra,
         hasSpectrumData: previousHasSpectrumData,
@@ -287,21 +318,25 @@ export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
   const clients = realtime.clients.value;
   const firstConnected = clients.find((client) => Boolean(client.connected));
   if (!realtime.selectedClientId.value && clients.length > 0) {
-    realtime.selectedClientId.value = firstConnected ? firstConnected.id : clients[0]?.id ?? null;
+    realtime.selectedClientId.value = firstConnected
+      ? firstConnected.id
+      : (clients[0]?.id ?? null);
   }
   if (
-    realtime.selectedClientId.value
-    && !clients.some((client) => client.id === realtime.selectedClientId.value)
+    realtime.selectedClientId.value &&
+    !clients.some((client) => client.id === realtime.selectedClientId.value)
   ) {
     realtime.selectedClientId.value = firstConnected
       ? firstConnected.id
       : clients.length
-        ? clients[0]?.id ?? null
+        ? (clients[0]?.id ?? null)
         : null;
   }
 }
 
-export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
+export function applyLivePayloadUpdate(
+  deps: LivePayloadUpdateDeps,
+): LivePayloadUpdateResult {
   let update!: LivePayloadUpdateResult;
   batch(() => {
     const { realtime, spectrum, adaptedPayload } = deps;
@@ -318,7 +353,8 @@ export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayload
     realtime.rotationalSpeeds.value = adaptedPayload.rotational_speeds;
     spectrum.hasSpectrumData.value = spectrumTick.hasSpectrumData;
     update = {
-      hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId.value,
+      hasSelectedClientChanged:
+        previousSelectedClientId !== realtime.selectedClientId.value,
       selectedClient: realtime.clients.value.find(
         (client) => client.id === realtime.selectedClientId.value,
       ),
@@ -463,20 +499,26 @@ export function createAppState(): AppState {
     },
     settings: {
       car: {
-        activeVehicleSettings: signal<CarAspectSettings>({ ...defaultCarAspectSettings }),
+        activeVehicleSettings: signal<CarAspectSettings>({
+          ...defaultCarAspectSettings,
+        }),
         cars: signal<CarRecord[]>([]),
         carsLoaded: signal(false),
         activeCarId: signal<string | null>(null),
       },
       analysis: {
-        vehicleSettings: signal<AnalysisTuningSettings>({ ...defaultAnalysisTuningSettings }),
+        vehicleSettings: signal<AnalysisTuningSettings>({
+          ...defaultAnalysisTuningSettings,
+        }),
       },
       speed: {
         source: signal<SpeedSourceKind>("gps"),
         manualSpeedKph: signal<number | null>(null),
         obdDeviceMac: signal<string | null>(null),
         obdDeviceName: signal<string | null>(null),
-        resolvedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(null),
+        resolvedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(
+          null,
+        ),
         gpsFallbackActive: signal(false),
         gpsEffectiveSpeedKph: signal<number | null>(null),
       },

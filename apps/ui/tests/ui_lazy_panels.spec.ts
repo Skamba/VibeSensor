@@ -48,7 +48,8 @@ function createAnalysisPanelSpy() {
 }
 
 function createCarsPanelSpy() {
-  const focusTargets: Array<Parameters<CarsPanelView["wizard"]["focus"]>[0]> = [];
+  const focusTargets: Array<Parameters<CarsPanelView["wizard"]["focus"]>[0]> =
+    [];
 
   return {
     focusTargets,
@@ -116,17 +117,27 @@ describe("createLazyUiPanels", () => {
     const speedSourcePanel = createSpeedSourcePanelSpy();
     const lazyPanels = createLazyUiPanels();
 
-    const historyActions = {} as NonNullable<HistoryPanelView["actions"]["value"]>;
-    const historyModel = signal({}) as unknown as NonNullable<HistoryPanelView["model"]["value"]>;
+    const historyActions = {} as NonNullable<
+      HistoryPanelView["actions"]["value"]
+    >;
+    const historyModel = signal({}) as unknown as NonNullable<
+      HistoryPanelView["model"]["value"]
+    >;
     lazyPanels.panels.history.model.value = historyModel;
     lazyPanels.panels.history.actions.value = historyActions;
 
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("carTab");
     lazyPanels.panels.settingsShell.activateTab("updateTab");
 
-    const internetActions = {} as NonNullable<InternetPanelView["actions"]["value"]>;
-    const internetModel = signal({}) as unknown as NonNullable<InternetPanelView["model"]["value"]>;
-    const speedSourceActions = {} as NonNullable<SpeedSourcePanelView["actions"]["value"]>;
+    const internetActions = {} as NonNullable<
+      InternetPanelView["actions"]["value"]
+    >;
+    const internetModel = signal({}) as unknown as NonNullable<
+      InternetPanelView["model"]["value"]
+    >;
+    const speedSourceActions = {} as NonNullable<
+      SpeedSourcePanelView["actions"]["value"]
+    >;
     const speedSourceDiagnostics = signal({}) as unknown as NonNullable<
       SpeedSourcePanelView["diagnostics"]["value"]
     >;
@@ -142,10 +153,13 @@ describe("createLazyUiPanels", () => {
     lazyPanels.panels.settings.cars.wizard.focus("finish");
     lazyPanels.panels.settings.speedSource.model.value = speedSourceModel;
     lazyPanels.panels.settings.speedSource.actions.value = speedSourceActions;
-    lazyPanels.panels.settings.speedSource.diagnostics.value = speedSourceDiagnostics;
+    lazyPanels.panels.settings.speedSource.diagnostics.value =
+      speedSourceDiagnostics;
     lazyPanels.panels.settings.speedSource.focusManualSpeedInput();
 
-    expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(
+      true,
+    );
 
     lazyPanels.attachSettingsPanels({
       settingsShell: settingsShell.view,
@@ -163,7 +177,9 @@ describe("createLazyUiPanels", () => {
     expect(carsPanel.focusTargets).toEqual(["finish"]);
     expect(internetPanel.focusCalls).toBe(1);
     expect(speedSourcePanel.focusManualCalls).toBe(1);
-    expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(
+      true,
+    );
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
     lazyPanels.panels.settings.speedSource.focusScanObdDevices();
@@ -182,7 +198,9 @@ describe("createLazyUiPanels", () => {
     expect(speedSourcePanel.focusStaleCalls).toBe(1);
 
     settingsShell.emit("internetTab");
-    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("internetTab");
+    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe(
+      "internetTab",
+    );
   });
 
   test("dispose prevents deferred settings replays after teardown", () => {
@@ -218,5 +236,4 @@ describe("createLazyUiPanels", () => {
     expect(internetPanel.focusCalls).toBe(0);
     expect(speedSourcePanel.focusManualCalls).toBe(0);
   });
-
 });

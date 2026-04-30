@@ -43,11 +43,10 @@ export class UiSpectrumController {
 
   private processedSpectrumVersion = 0;
 
-  constructor(
-    private readonly deps: UiSpectrumControllerDeps,
-  ) {
+  constructor(private readonly deps: UiSpectrumControllerDeps) {
     this.panel = this.deps.panel;
-    this.framePreparer = this.deps.framePreparer ?? createInlineSpectrumFramePreparer();
+    this.framePreparer =
+      this.deps.framePreparer ?? createInlineSpectrumFramePreparer();
     this.canvas = createSpectrumCanvasRenderer({
       state: this.state,
       dom: this.panel.chartDom,
@@ -55,7 +54,8 @@ export class UiSpectrumController {
       getBandsVisible: () => this.interaction.getBandsVisible(),
       getChartBands: () => this.interaction.getChartBands(),
       getFocusMarker: () => this.interaction.getFocusMarker(),
-      onCursorDataIndexChange: (cursorDataIdx) => this.interaction.setCursorDataIndex(cursorDataIdx),
+      onCursorDataIndexChange: (cursorDataIdx) =>
+        this.interaction.setCursorDataIndex(cursorDataIdx),
       onAsyncChartUpdate: () => {
         this.interaction.applyPlotSelection();
         this.updateSpectrumOverlay();
@@ -65,12 +65,13 @@ export class UiSpectrumController {
       panel: this.panel,
       t: this.t,
       getStrengthDb: (entryId) =>
-        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics?.vibration_strength_db
-        ?? null,
+        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics
+          ?.vibration_strength_db ?? null,
       getTopPeakHz: (entryId) =>
-        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics?.top_peaks?.[0]?.hz
-        ?? null,
-      setSeriesIsolation: (seriesIndex) => this.canvas.setSeriesIsolation(seriesIndex),
+        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics
+          ?.top_peaks?.[0]?.hz ?? null,
+      setSeriesIsolation: (seriesIndex) =>
+        this.canvas.setSeriesIsolation(seriesIndex),
       requestPlotRefresh: () => this.canvas.refreshDecorations(),
     });
     this.bindInteractionModelSignals();
@@ -106,11 +107,14 @@ export class UiSpectrumController {
   ): void {
     this.state.spectrum.chartBands.value = prepared.chartBands;
     this.state.spectrum.hasSpectrumData.value = prepared.hasData;
-    this.interaction.sync({
-      entries: prepared.entries,
-      freqAxis: prepared.freqAxis,
-      chartBands: prepared.chartBands,
-    }, { applyPlotIsolation: false });
+    this.interaction.sync(
+      {
+        entries: prepared.entries,
+        freqAxis: prepared.freqAxis,
+        chartBands: prepared.chartBands,
+      },
+      { applyPlotIsolation: false },
+    );
     if (mode === "data") {
       this.canvas.renderPreparedFrame(prepared);
     } else {
@@ -159,18 +163,21 @@ export class UiSpectrumController {
     } else if (this.state.transport.payloadError.value) {
       message = this.state.transport.payloadError.value;
     } else if (
-      !this.state.transport.hasReceivedPayload.value
-      && this.state.transport.wsState.value === "connecting"
+      !this.state.transport.hasReceivedPayload.value &&
+      this.state.transport.wsState.value === "connecting"
     ) {
       message = this.t("spectrum.loading");
     } else if (
-      this.state.transport.wsState.value === "connecting"
-      || this.state.transport.wsState.value === "reconnecting"
+      this.state.transport.wsState.value === "connecting" ||
+      this.state.transport.wsState.value === "reconnecting"
     ) {
       message = this.t("ws.connecting");
     } else if (this.state.transport.wsState.value === "stale") {
       message = this.t("spectrum.stale");
-    } else if (this.state.spectrum.chartLoading.value && this.state.spectrum.hasSpectrumData.value) {
+    } else if (
+      this.state.spectrum.chartLoading.value &&
+      this.state.spectrum.hasSpectrumData.value
+    ) {
       message = this.t("spectrum.loading");
     } else if (!this.state.spectrum.hasSpectrumData.value) {
       message = this.t("spectrum.empty");
@@ -212,7 +219,8 @@ export class UiSpectrumController {
   private bindReactiveOverlaySync(): () => void {
     const transportOverlayState = computed(() => ({
       hasReceivedPayload: this.state.transport.hasReceivedPayload.value,
-      framePrepareErrorDetail: this.state.spectrum.framePrepareErrorDetail.value,
+      framePrepareErrorDetail:
+        this.state.spectrum.framePrepareErrorDetail.value,
       payloadError: this.state.transport.payloadError.value,
       wsState: this.state.transport.wsState.value,
     }));
@@ -234,11 +242,16 @@ export class UiSpectrumController {
 
   private async preparePendingSpectrumFrames(): Promise<void> {
     try {
-      while (!this.disposed && this.processedSpectrumVersion < this.requestedSpectrumVersion) {
+      while (
+        !this.disposed &&
+        this.processedSpectrumVersion < this.requestedSpectrumVersion
+      ) {
         const version = this.requestedSpectrumVersion;
         this.state.spectrum.framePrepareErrorDetail.value = null;
         try {
-          const frameData = await this.framePreparer.prepare(this.buildFramePreparationInput());
+          const frameData = await this.framePreparer.prepare(
+            this.buildFramePreparationInput(),
+          );
           if (this.disposed) {
             return;
           }
@@ -256,13 +269,17 @@ export class UiSpectrumController {
             continue;
           }
           this.processedSpectrumVersion = version;
-          this.state.spectrum.framePrepareErrorDetail.value = getFramePrepareErrorDetail(error);
+          this.state.spectrum.framePrepareErrorDetail.value =
+            getFramePrepareErrorDetail(error);
           this.updateSpectrumOverlay();
         }
       }
     } finally {
       this.framePreparationRunning = false;
-      if (!this.disposed && this.processedSpectrumVersion < this.requestedSpectrumVersion) {
+      if (
+        !this.disposed &&
+        this.processedSpectrumVersion < this.requestedSpectrumVersion
+      ) {
         this.framePreparationRunning = true;
         void this.preparePendingSpectrumFrames();
       }

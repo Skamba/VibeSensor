@@ -5,7 +5,8 @@
     "controls";
 }
 
-.dashboard-grid:has(.realtime-logging-shell[data-layout="setup"]) .dashboard-grid__main {
+.dashboard-grid:has(.realtime-logging-shell[data-layout="setup"])
+  .dashboard-grid__main {
   display: none;
 }
 
@@ -88,15 +89,18 @@
   font-weight: 700;
 }
 
-.capture-readiness__item[data-readiness-state="pass"] .capture-readiness__state {
+.capture-readiness__item[data-readiness-state="pass"]
+  .capture-readiness__state {
   color: var(--success-700);
 }
 
-.capture-readiness__item[data-readiness-state="warn"] .capture-readiness__state {
+.capture-readiness__item[data-readiness-state="warn"]
+  .capture-readiness__state {
   color: var(--warning-text);
 }
 
-.capture-readiness__item[data-readiness-state="fail"] .capture-readiness__state {
+.capture-readiness__item[data-readiness-state="fail"]
+  .capture-readiness__state {
   color: var(--danger-700);
 }
 

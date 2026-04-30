@@ -113,7 +113,9 @@
   padding: 0;
 }
 
-.site-header__status[hidden] { display: none; }
+.site-header__status[hidden] {
+  display: none;
+}
 
 .site-header__status-pills {
   display: flex;
@@ -159,7 +161,9 @@
   border-bottom: 1px solid transparent;
 }
 
-.connection-banner[hidden] { display: none; }
+.connection-banner[hidden] {
+  display: none;
+}
 
 .connection-banner[data-variant] {
   background: var(--variant-banner-surface);
@@ -174,13 +178,24 @@
 }
 
 .connection-banner::before {
-  content: '⚠';
+  content: "⚠";
   font-size: 1rem;
 }
 
 /* Dim dashboard content when connection is degraded */
-.wrap[data-connection-state="degraded"] .view { opacity: 0.55; pointer-events: auto; transition: opacity 0.3s ease; }
-.wrap .view { transition: opacity 0.3s ease; }
+.wrap[data-connection-state="degraded"] .view {
+  opacity: 0.55;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+.wrap .view {
+  transition: opacity 0.3s ease;
+}
 
-.view { display: block; margin-top: var(--space-4); }
-.view[hidden] { display: none !important; }
+.view {
+  display: block;
+  margin-top: var(--space-4);
+}
+.view[hidden] {
+  display: none !important;
+}

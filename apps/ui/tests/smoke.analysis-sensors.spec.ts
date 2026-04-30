@@ -9,7 +9,9 @@ import {
 
 test.describe.configure({ timeout: 15_000 });
 
-test("analysis guidance can reopen and refocus after repeated invalid saves", async ({ page }) => {
+test("analysis guidance can reopen and refocus after repeated invalid saves", async ({
+  page,
+}) => {
   let analysisPutCalls = 0;
 
   await installCommonRoutes(page, {
@@ -64,7 +66,9 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   await expect(bandwidthInput).toBeFocused();
 });
 
-test("sensor row actions stay wired while live updates keep arriving", async ({ page }) => {
+test("sensor row actions stay wired while live updates keep arriving", async ({
+  page,
+}) => {
   let identifyCalls = 0;
   let locationUpdateCalls = 0;
 
@@ -106,7 +110,9 @@ test("sensor row actions stay wired while live updates keep arriving", async ({ 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="sensorsTab"]').click();
 
-  const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
+  const row = page.locator(
+    '#sensorsSettingsBody tr[data-client-id="sensor-1"]',
+  );
   const locationSelect = row.locator("select.row-location-select");
 
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");

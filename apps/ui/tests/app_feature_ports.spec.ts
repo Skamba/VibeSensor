@@ -44,7 +44,12 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     secondary,
   });
 
-  expect(Object.keys(bundle).sort()).toEqual(["dispose", "ensureViewReady", "shell", "startup"]);
+  expect(Object.keys(bundle).sort()).toEqual([
+    "dispose",
+    "ensureViewReady",
+    "shell",
+    "startup",
+  ]);
 
   await recording.onRecordingStatusChanged();
 

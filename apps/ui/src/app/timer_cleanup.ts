@@ -48,8 +48,8 @@ function createScheduledHandleStore<Handle>(
 export function createReplaceableTimeout(
   api: TimeoutApi = globalThis,
 ): ReplaceableTimer {
-  const store = createScheduledHandleStore<ReturnType<typeof setTimeout>>((handle) =>
-    api.clearTimeout(handle)
+  const store = createScheduledHandleStore<ReturnType<typeof setTimeout>>(
+    (handle) => api.clearTimeout(handle),
   );
 
   return {
@@ -57,10 +57,12 @@ export function createReplaceableTimeout(
       store.clear();
     },
     replace(callback: () => void, delayMs: number): void {
-      store.replace(api.setTimeout(() => {
-        store.release();
-        callback();
-      }, delayMs));
+      store.replace(
+        api.setTimeout(() => {
+          store.release();
+          callback();
+        }, delayMs),
+      );
     },
   };
 }
@@ -68,8 +70,8 @@ export function createReplaceableTimeout(
 export function createReplaceableInterval(
   api: IntervalApi = globalThis,
 ): ReplaceableTimer {
-  const store = createScheduledHandleStore<ReturnType<typeof setInterval>>((handle) =>
-    api.clearInterval(handle)
+  const store = createScheduledHandleStore<ReturnType<typeof setInterval>>(
+    (handle) => api.clearInterval(handle),
   );
 
   return {

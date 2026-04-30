@@ -1,11 +1,6 @@
-import type {
-  HealthStatusPayload,
-  UpdateStatusPayload,
-} from "../../api/types";
+import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { formatEpochTimestamp } from "../../format";
-import {
-  getUpdateFailureSummary,
-} from "./update_journey_builder";
+import { getUpdateFailureSummary } from "./update_journey_builder";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateIssuesSectionModel,
@@ -153,7 +148,8 @@ export function buildUpdateCurrentStatusSectionModel(
   health: HealthStatusPayload,
   deps: UpdateStatusViewDeps,
 ): UpdateCurrentStatusSectionModel {
-  const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue(status);
+  const showRuntimeAssetsCheck =
+    status.state !== "failed" || hasAssetRelatedIssue(status);
   const rows = [
     ...buildLifecycleRows(status, deps.t),
     ...buildRuntimeRows(status, showRuntimeAssetsCheck, deps.t),
@@ -163,7 +159,8 @@ export function buildUpdateCurrentStatusSectionModel(
     summaryText: buildCurrentStatusSummaryText(status, health, deps.t),
     badge: buildStateBadge(status, deps.t),
     rows,
-    emptyText: rows.length > 0 ? null : deps.t("settings.update.current_status_empty"),
+    emptyText:
+      rows.length > 0 ? null : deps.t("settings.update.current_status_empty"),
   };
 }
 

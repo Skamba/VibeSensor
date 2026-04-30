@@ -13,15 +13,9 @@ import {
   formatUsbInternetSummary,
 } from "./internet_status_view";
 import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
-import type {
-  UpdatePanelRenderModel,
-} from "./update_panel";
-import {
-  buildUpdateStatusPanelViewModel,
-} from "./update_status_builders";
-import {
-  getUpdateFailureSummary,
-} from "./update_journey_builder";
+import type { UpdatePanelRenderModel } from "./update_panel";
+import { buildUpdateStatusPanelViewModel } from "./update_status_builders";
+import { getUpdateFailureSummary } from "./update_journey_builder";
 import {
   batch,
   computed,
@@ -91,7 +85,10 @@ function selectedTransport(
   if (state.updateState === "running") {
     return state.updateTransport;
   }
-  if (state.internetStatus.usable && form.selectedTransport === "usb_internet") {
+  if (
+    state.internetStatus.usable &&
+    form.selectedTransport === "usb_internet"
+  ) {
     return "usb_internet";
   }
   return "wifi";
@@ -133,7 +130,8 @@ function buildActionSummary(
           label: t("settings.update.readiness.item.connection"),
           detail: state.internetStatus.usable
             ? t("settings.update.readiness.item.connection_usb_ready", {
-                interface: usbInterface || t("settings.update.transport.usb_title"),
+                interface:
+                  usbInterface || t("settings.update.transport.usb_title"),
               })
             : t("settings.update.readiness.item.connection_usb_blocked"),
           state: state.internetStatus.usable
@@ -155,7 +153,9 @@ function buildActionSummary(
       state: "blocked",
     });
   }
-  const hasBlockedItem = readinessItems.some((item) => item.state === "blocked");
+  const hasBlockedItem = readinessItems.some(
+    (item) => item.state === "blocked",
+  );
   const failure = state.updateStatus
     ? getUpdateFailureSummary(state.updateStatus, t)
     : null;
@@ -190,9 +190,7 @@ function buildActionSummary(
           detail: hasBlockedItem
             ? t("settings.update.recovery.item.next_step_blocked")
             : `${failure.recoveryTitle} — ${failure.recoveryDetail}`,
-          state: hasBlockedItem
-            ? ("blocked" as const)
-            : ("attention" as const),
+          state: hasBlockedItem ? ("blocked" as const) : ("attention" as const),
         },
       ]
     : readinessItems;
@@ -259,10 +257,14 @@ function buildUpdatePanelRenderModel(
   const isRunning = state.updateState === "running";
   const status =
     state.updateStatus && state.healthStatus
-      ? buildUpdateStatusPanelViewModel(state.updateStatus, state.healthStatus, {
-          t,
-          selectedTransport: actionSummary.transport,
-        })
+      ? buildUpdateStatusPanelViewModel(
+          state.updateStatus,
+          state.healthStatus,
+          {
+            t,
+            selectedTransport: actionSummary.transport,
+          },
+        )
       : null;
   return {
     cancelButtonDisabled: !isRunning,
@@ -340,7 +342,12 @@ export function buildUpdateFeaturePanelModels(
   const actionSummary = buildActionSummary(state, form, deps.t);
   return {
     canStart: actionSummary.canStart,
-    internetPanel: buildInternetPanelRenderModel(state, form, actionSummary, deps.t),
+    internetPanel: buildInternetPanelRenderModel(
+      state,
+      form,
+      actionSummary,
+      deps.t,
+    ),
     transport: actionSummary.transport,
     updatePanel: buildUpdatePanelRenderModel(state, actionSummary, deps.t),
   };
@@ -352,28 +359,35 @@ export function createUpdateFeaturePresenter(
   const { renderState, t } = ctx;
   const passwordInputValue = signal("");
   const passwordVisible = signal(false);
-  const selectedTransportInput = signal<UpdateStartRequestPayload["transport"]>("wifi");
+  const selectedTransportInput =
+    signal<UpdateStartRequestPayload["transport"]>("wifi");
   const ssidInputValue = signal("");
   let hasHydratedPersistedWifiSettings = false;
 
   function syncDerivedFormState(state: UpdateFeatureRenderState): void {
-    const currentSelectedTransport = untracked(() => selectedTransportInput.value);
+    const currentSelectedTransport = untracked(
+      () => selectedTransportInput.value,
+    );
     const currentSsid = untracked(() => ssidInputValue.value);
-    let nextSelectedTransport: UpdateStartRequestPayload["transport"] | null = null;
+    let nextSelectedTransport: UpdateStartRequestPayload["transport"] | null =
+      null;
     let nextSsid: string | null = null;
 
     if (!hasHydratedPersistedWifiSettings && state.updateStatus != null) {
       hasHydratedPersistedWifiSettings = true;
       if (
-        state.updateStatus.transport === "wifi"
-        && state.updateStatus.ssid
-        && currentSsid.trim().length === 0
+        state.updateStatus.transport === "wifi" &&
+        state.updateStatus.ssid &&
+        currentSsid.trim().length === 0
       ) {
         nextSsid = state.updateStatus.ssid;
       }
     }
 
-    if (state.updateState === "running" && currentSelectedTransport !== state.updateTransport) {
+    if (
+      state.updateState === "running" &&
+      currentSelectedTransport !== state.updateTransport
+    ) {
       nextSelectedTransport = state.updateTransport;
     }
 
@@ -404,7 +418,7 @@ export function createUpdateFeaturePresenter(
         ssidInputValue: ssidInputValue.value,
       },
       t,
-    )
+    ),
   );
   const internetPanelModel = computed(() =>
     buildInternetPanelRenderModel(
@@ -417,10 +431,10 @@ export function createUpdateFeaturePresenter(
       },
       actionSummaryModel.value,
       t,
-    )
+    ),
   );
   const updatePanelModel = computed(() =>
-    buildUpdatePanelRenderModel(renderState.value, actionSummaryModel.value, t)
+    buildUpdatePanelRenderModel(renderState.value, actionSummaryModel.value, t),
   );
 
   function readStartIntent(): UpdateFeatureStartIntent {

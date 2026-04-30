@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import type { CarLibraryGearbox, CarRecord, CarOrderReferenceStatus } from "../src/api/types";
+import type {
+  CarLibraryGearbox,
+  CarRecord,
+  CarOrderReferenceStatus,
+} from "../src/api/types";
 import {
   buildGearboxConfidenceHint,
   buildOrderReferenceConfidenceDetail,
@@ -17,11 +21,13 @@ const labels: Record<string, string> = {
   "settings.car.confidence.part_transmission": "Transmission {value}",
   "settings.car.confidence.official_exact": "official source",
   "settings.car.confidence.official_derived": "officially derived",
-  "settings.car.confidence.reputable_secondary_crosschecked": "secondary cross-check",
+  "settings.car.confidence.reputable_secondary_crosschecked":
+    "secondary cross-check",
   "settings.car.confidence.family_default": "family default",
   "settings.car.confidence.unverified": "unverified",
   "settings.car.confidence.user_confirmed": "user confirmed",
-  "settings.car.confidence.review_detail": "Review or override in Analysis before trusting driveshaft or engine order results.",
+  "settings.car.confidence.review_detail":
+    "Review or override in Analysis before trusting driveshaft or engine order results.",
   "settings.car.col_tires": "Tires",
   "settings.car.col_drive": "Drive",
   "settings.car.col_gear": "Top Gear",
@@ -31,14 +37,18 @@ const labels: Record<string, string> = {
   "settings.car.incomplete_label": "Needs specs",
   "settings.car.value_missing": "Not set",
   "settings.car.tires_missing": "Tire size not set",
-  "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+  "settings.car.incomplete_detail":
+    "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
   "settings.car.activate": "Activate",
   "settings.car.delete": "Delete",
   "settings.car.finish_setup": "Finish setup",
   "settings.car.open_analysis": "Open Analysis",
-  "settings.car.finish_choose_path": "Choose a library gearbox or edit the manual specs to finish.",
-  "settings.car.finish_manual_ready": "Manual path selected. Add Car will use the values entered below.",
-  "settings.car.finish_manual_missing": "Enter positive tire and gearbox values to finish.",
+  "settings.car.finish_choose_path":
+    "Choose a library gearbox or edit the manual specs to finish.",
+  "settings.car.finish_manual_ready":
+    "Manual path selected. Add Car will use the values entered below.",
+  "settings.car.finish_manual_missing":
+    "Enter positive tire and gearbox values to finish.",
 };
 
 function t(key: string, vars?: Record<string, unknown>): string {
@@ -67,7 +77,9 @@ function makeOrderStatus(
   };
 }
 
-function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGearbox {
+function makeGearbox(
+  overrides: Partial<CarLibraryGearbox> = {},
+): CarLibraryGearbox {
   return {
     name: "8-speed automatic",
     final_drive_ratio: 3.15,
@@ -102,26 +114,36 @@ test("buildOrderReferenceConfidenceDetail distinguishes exact and approximate st
   expect(buildOrderReferenceConfidenceDetail(makeOrderStatus(), t)).toBe(
     "Tires official source · Drive official source · Top gear official source · Transmission official source",
   );
-  expect(buildOrderReferenceConfidenceDetail(makeOrderStatus({
-    tire_dimensions_confidence: "family_default",
-    final_drive_ratio_confidence: "family_default",
-    current_gear_ratio_confidence: "family_default",
-    transmission_confidence: "family_default",
-    requires_manual_confirmation: true,
-  }), t)).toBe(
+  expect(
+    buildOrderReferenceConfidenceDetail(
+      makeOrderStatus({
+        tire_dimensions_confidence: "family_default",
+        final_drive_ratio_confidence: "family_default",
+        current_gear_ratio_confidence: "family_default",
+        transmission_confidence: "family_default",
+        requires_manual_confirmation: true,
+      }),
+      t,
+    ),
+  ).toBe(
     "Tires family default · Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
   );
 });
 
 test("buildOrderReferenceConfidenceDetail preserves user-confirmed manual values", () => {
-  expect(buildOrderReferenceConfidenceDetail(makeOrderStatus({
-    selection_source_status: "manual_entry",
-    tire_dimensions_confidence: "user_confirmed",
-    final_drive_ratio_confidence: "user_confirmed",
-    current_gear_ratio_confidence: "user_confirmed",
-    transmission_name: null,
-    transmission_confidence: null,
-  }), t)).toBe(
+  expect(
+    buildOrderReferenceConfidenceDetail(
+      makeOrderStatus({
+        selection_source_status: "manual_entry",
+        tire_dimensions_confidence: "user_confirmed",
+        final_drive_ratio_confidence: "user_confirmed",
+        current_gear_ratio_confidence: "user_confirmed",
+        transmission_name: null,
+        transmission_confidence: null,
+      }),
+      t,
+    ),
+  ).toBe(
     "Tires user confirmed · Drive user confirmed · Top gear user confirmed",
   );
 });
@@ -157,7 +179,14 @@ test("buildGearboxConfidenceHint feeds the wizard action hint for approximate li
   expect(buildGearboxConfidenceHint(state.selectedGearbox, t)).toBe(
     "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override in Analysis before trusting driveshaft or engine order results.",
   );
-  expect(getWizardActionHint(state, { fmt, manualGearbox: null, manualTire: null, t })).toBe(
+  expect(
+    getWizardActionHint(state, {
+      fmt,
+      manualGearbox: null,
+      manualTire: null,
+      t,
+    }),
+  ).toBe(
     "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override in Analysis before trusting driveshaft or engine order results.",
   );
 });

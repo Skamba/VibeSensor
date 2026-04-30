@@ -88,13 +88,20 @@ export function runDemoMode(deps: DemoDeps): void {
   ];
 
   const freqCount = 256;
-  const freqArr = Array.from({ length: freqCount }, (_, i) => (i / freqCount) * spectrumMaxHz);
+  const freqArr = Array.from(
+    { length: freqCount },
+    (_, i) => (i / freqCount) * spectrumMaxHz,
+  );
 
-  function sineSpectrum(baseAmps: number[], peakHz: number, peakAmp: number): number[] {
+  function sineSpectrum(
+    baseAmps: number[],
+    peakHz: number,
+    peakAmp: number,
+  ): number[] {
     return freqArr.map((hz, i) => {
       const base = baseAmps[i % baseAmps.length] || 0.001;
       const dist = Math.abs(hz - peakHz);
-      const peak = dist < 8 ? peakAmp * Math.exp(-dist * dist / 18) : 0;
+      const peak = dist < 8 ? peakAmp * Math.exp((-dist * dist) / 18) : 0;
       return base + peak;
     });
   }
@@ -106,22 +113,25 @@ export function runDemoMode(deps: DemoDeps): void {
     baseNoise.push(0.0008 + (seed % 100) * 0.00004);
   }
 
-  const demoSpectra: Record<string, {
-    combined_spectrum_amp_g: number[];
-    freq: number[];
-    strength_metrics: {
-      noise_floor_amp_g: number;
-      peak_amp_g: number;
-      strength_bucket: string | null;
-      top_peaks: Array<{
-        amp: number;
-        hz: number;
+  const demoSpectra: Record<
+    string,
+    {
+      combined_spectrum_amp_g: number[];
+      freq: number[];
+      strength_metrics: {
+        noise_floor_amp_g: number;
+        peak_amp_g: number;
         strength_bucket: string | null;
+        top_peaks: Array<{
+          amp: number;
+          hz: number;
+          strength_bucket: string | null;
+          vibration_strength_db: number;
+        }>;
         vibration_strength_db: number;
-      }>;
-      vibration_strength_db: number;
-    };
-  }> = {};
+      };
+    }
+  > = {};
   const peakConfigs = [
     { hz: 12.3, amp: 0.032, db: 15.1, bucket: "l2" },
     { hz: 12.1, amp: 0.025, db: 14.0, bucket: "l2" },

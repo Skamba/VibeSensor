@@ -14,8 +14,14 @@
 import { describe, expect, test } from "vitest";
 import { adaptServerPayload } from "../src/server_payload";
 import { applySpectrumTick } from "../src/app/ui_app_state";
-import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
-import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
+import {
+  areHeavyFramesCompatible,
+  interpolateHeavyFrame,
+} from "../src/app/spectrum_animation";
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type LiveWsPayload,
+} from "../src/contracts/ws_payload_types";
 
 function makeStrengthMetrics(vibrationStrengthDb: number) {
   return {
@@ -46,7 +52,12 @@ describe("adaptServerPayload spectra handling", () => {
     rotational_speeds: null,
   } satisfies Pick<
     LiveWsPayload,
-    "schema_version" | "server_time" | "clients" | "speed_mps" | "selected_client_id" | "rotational_speeds"
+    | "schema_version"
+    | "server_time"
+    | "clients"
+    | "speed_mps"
+    | "selected_client_id"
+    | "rotational_speeds"
   >;
 
   test("returns null spectra when payload has no spectra field", () => {
@@ -122,14 +133,20 @@ describe("spectrum heavy-frame animation compatibility", () => {
   const baseFrame = {
     seriesIds: ["sensor1", "sensor2"],
     freq: [10, 20, 30],
-    values: [[1, 2, 3], [4, 5, 6]],
+    values: [
+      [1, 2, 3],
+      [4, 5, 6],
+    ],
   };
 
   test("accepts compatible heavy frames for tweening", () => {
     const next = {
       seriesIds: ["sensor1", "sensor2"],
       freq: [10, 20, 30],
-      values: [[2, 3, 4], [5, 6, 7]],
+      values: [
+        [2, 3, 4],
+        [5, 6, 7],
+      ],
     };
     expect(areHeavyFramesCompatible(baseFrame, next)).toBe(true);
   });
@@ -154,10 +171,16 @@ describe("spectrum heavy-frame animation compatibility", () => {
     const next = {
       seriesIds: ["sensor1", "sensor2"],
       freq: [10, 20, 30],
-      values: [[3, 5, 7], [7, 9, 11]],
+      values: [
+        [3, 5, 7],
+        [7, 9, 11],
+      ],
     };
     const mid = interpolateHeavyFrame(baseFrame, next, 0.5);
-    expect(mid.values).toEqual([[2, 3.5, 5], [5.5, 7, 8.5]]);
+    expect(mid.values).toEqual([
+      [2, 3.5, 5],
+      [5.5, 7, 8.5],
+    ]);
     expect(mid.seriesIds).toEqual(next.seriesIds);
     expect(mid.freq).toEqual(next.freq);
   });

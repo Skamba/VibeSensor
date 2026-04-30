@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { effect } from "../src/app/ui_signals";
-import type { CreateSpectrumChartDeps, SpectrumChart } from "../src/spectrum_chart";
+import type {
+  CreateSpectrumChartDeps,
+  SpectrumChart,
+} from "../src/spectrum_chart";
 import {
   createDeferred,
   flushSignalUpdates,
@@ -27,7 +30,9 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
       seriesCount: number;
     }> = [];
 
-    function createFakeSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
+    function createFakeSpectrumChart(
+      deps: CreateSpectrumChartDeps,
+    ): SpectrumChart {
       const chartState = {
         dataSnapshots: [] as Array<readonly unknown[]>,
         seriesCount: 0,
@@ -79,7 +84,9 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
         expect(state.spectrum.chartLoadErrorDetail.value).toBeNull();
         expect(createdCharts).toHaveLength(1);
         expect(state.spectrum.spectrumPlot.value).not.toBeNull();
-        expect(createdCharts[0]?.dataSnapshots.at(-1)?.[0]).toEqual([10, 15, 20]);
+        expect(createdCharts[0]?.dataSnapshots.at(-1)?.[0]).toEqual([
+          10, 15, 20,
+        ]);
         expect(createdCharts[0]?.seriesCount).toBe(2);
       },
     );

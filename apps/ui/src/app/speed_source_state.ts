@@ -10,11 +10,16 @@ export interface SpeedSourceStateSnapshot {
 export interface SpeedSourceStateSource {
   source: ReadonlySignal<SpeedSourceKind>;
   manualSpeedKph: ReadonlySignal<number | null>;
-  resolvedSource: ReadonlySignal<SpeedSourceStatusPayload["speed_source"] | null>;
+  resolvedSource: ReadonlySignal<
+    SpeedSourceStatusPayload["speed_source"] | null
+  >;
 }
 
 export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
-export type SpeedReadoutLabelKey = "speed.gps" | "speed.override" | "speed.obd2";
+export type SpeedReadoutLabelKey =
+  | "speed.gps"
+  | "speed.override"
+  | "speed.obd2";
 
 export interface SpeedSourceDerivedState {
   displayedMode: ReadonlySignal<DisplayedSpeedSourceMode>;
@@ -23,7 +28,9 @@ export interface SpeedSourceDerivedState {
   speedReadoutLabelKey: ReadonlySignal<SpeedReadoutLabelKey>;
 }
 
-export function isManualLikeSpeedSource(source: string | null | undefined): boolean {
+export function isManualLikeSpeedSource(
+  source: string | null | undefined,
+): boolean {
   return source === "manual" || source === "fallback_manual";
 }
 
@@ -57,18 +64,25 @@ export function isManualEffectiveSpeedSource(
   settings: SpeedSourceStateSnapshot,
   runtimeSpeedSource?: string | null,
 ): boolean {
-  return isManualLikeSpeedSource(resolveEffectiveSpeedSource(settings, runtimeSpeedSource));
+  return isManualLikeSpeedSource(
+    resolveEffectiveSpeedSource(settings, runtimeSpeedSource),
+  );
 }
 
 export function deriveSpeedReadoutLabelKey(
   settings: SpeedSourceStateSnapshot,
   runtimeSpeedSource?: string | null,
 ): SpeedReadoutLabelKey {
-  const effectiveSource = resolveEffectiveSpeedSource(settings, runtimeSpeedSource);
+  const effectiveSource = resolveEffectiveSpeedSource(
+    settings,
+    runtimeSpeedSource,
+  );
   if (effectiveSource === "obd2") {
     return "speed.obd2";
   }
-  return isManualLikeSpeedSource(effectiveSource) ? "speed.override" : "speed.gps";
+  return isManualLikeSpeedSource(effectiveSource)
+    ? "speed.override"
+    : "speed.gps";
 }
 
 export function createSpeedSourceDerivedState(
@@ -81,7 +95,7 @@ export function createSpeedSourceDerivedState(
     resolvedSpeedSource: settings.resolvedSource.value,
   });
   const effectiveSource = computed(() =>
-    resolveEffectiveSpeedSource(snapshot(), runtimeSpeedSource?.value)
+    resolveEffectiveSpeedSource(snapshot(), runtimeSpeedSource?.value),
   );
   const displayedMode = computed<DisplayedSpeedSourceMode>(() => {
     const resolvedSource = effectiveSource.value;

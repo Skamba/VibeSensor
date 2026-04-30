@@ -96,7 +96,9 @@ export function resolveWizardFocusTarget(
 }
 
 export function useCarsWizardElementRefs(): CarsWizardElementRefs {
-  const elements = useRef<CarsWizardFocusElements>(createCarsWizardFocusElements());
+  const elements = useRef<CarsWizardFocusElements>(
+    createCarsWizardFocusElements(),
+  );
   const refs = useRef<CarsWizardElementRefs | null>(null);
   if (refs.current === null) {
     refs.current = {

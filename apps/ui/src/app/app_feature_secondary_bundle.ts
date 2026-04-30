@@ -1,7 +1,13 @@
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
-import { createHistoryFeature, type HistoryFeature } from "./features/history_feature";
-import { createSettingsFeature, type SettingsFeature } from "./features/settings_feature";
+import {
+  createHistoryFeature,
+  type HistoryFeature,
+} from "./features/history_feature";
+import {
+  createSettingsFeature,
+  type SettingsFeature,
+} from "./features/settings_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppFeatureBundleDeps } from "./app_feature_bundle";
 
@@ -128,7 +134,8 @@ export function createAppFeatureSecondaryBundle(
     },
     settings: {
       loadSpeedSourceFromServer: () => settings.loadSpeedSourceFromServer(),
-      loadAnalysisSettingsFromServer: () => settings.loadAnalysisSettingsFromServer(),
+      loadAnalysisSettingsFromServer: () =>
+        settings.loadAnalysisSettingsFromServer(),
       loadCarsFromServer: () => settings.loadCarsFromServer(),
     },
   };

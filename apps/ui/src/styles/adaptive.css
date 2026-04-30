@@ -31,7 +31,10 @@
     min-width: 0;
     width: 100%;
   }
-  .menu { width: 100%; overflow-x: auto; }
+  .menu {
+    width: 100%;
+    overflow-x: auto;
+  }
   .site-header__status-pills {
     width: 100%;
   }

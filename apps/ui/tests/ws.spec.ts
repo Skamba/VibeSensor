@@ -42,7 +42,10 @@ class FakeWebSocket {
   }
 
   emitClose(): void {
-    this.onclose?.call(this as unknown as WebSocket, new Event("close") as CloseEvent);
+    this.onclose?.call(
+      this as unknown as WebSocket,
+      new Event("close") as CloseEvent,
+    );
   }
 
   emitOpen(): void {
@@ -51,9 +54,12 @@ class FakeWebSocket {
   }
 
   emitMessage(payload: unknown): void {
-    this.onmessage?.call(this as unknown as WebSocket, {
-      data: JSON.stringify(payload),
-    } as MessageEvent);
+    this.onmessage?.call(
+      this as unknown as WebSocket,
+      {
+        data: JSON.stringify(payload),
+      } as MessageEvent,
+    );
   }
 }
 
@@ -61,7 +67,10 @@ function installTimeoutHarness() {
   const originalSetTimeout = globalThis.setTimeout;
   const originalClearTimeout = globalThis.clearTimeout;
   let nextId = 1;
-  const callbacks = new Map<number, { callback: () => void; delayMs: number }>();
+  const callbacks = new Map<
+    number,
+    { callback: () => void; delayMs: number }
+  >();
 
   globalThis.setTimeout = ((handler: TimerHandler, delay?: number) => {
     const timeoutId = nextId;

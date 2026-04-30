@@ -438,7 +438,8 @@ test("settings update recovery keeps Retry Update enabled even when readiness st
         {
           phase: "downloading",
           message: "GitHub release download timed out",
-          detail: "The upstream connection dropped while fetching the release package.",
+          detail:
+            "The upstream connection dropped while fetching the release package.",
         },
       ],
       log_tail: [],
@@ -456,14 +457,17 @@ test("settings update recovery keeps Retry Update enabled even when readiness st
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, createHealthyUpdateStatus({
-      status: "degraded",
-      degradation_reasons: ["disk"],
-      persistence: {
-        ...createHealthyUpdateStatus().persistence,
-        write_error: "disk full",
-      },
-    }));
+    await fulfillJson(
+      route,
+      createHealthyUpdateStatus({
+        status: "degraded",
+        degradation_reasons: ["disk"],
+        persistence: {
+          ...createHealthyUpdateStatus().persistence,
+          write_error: "disk full",
+        },
+      }),
+    );
   });
   await page.route("**/api/update/internet-status", async (route) => {
     await fulfillJson(route, {

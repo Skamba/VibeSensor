@@ -133,6 +133,18 @@ def test_ui_knip_exports_scope_and_readme_pointer() -> None:
     assert "Exported-type checks still stay out" in readme_text
 
 
+def test_ui_format_check_is_wired_to_local_and_ci_quality() -> None:
+    scripts = _package_scripts()
+    makefile_text = _MAKEFILE.read_text(encoding="utf-8")
+    workflow_text = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    readme_text = _UI_README.read_text(encoding="utf-8")
+
+    assert scripts["format:check"] == "biome check . --linter-enabled=false --assist-enabled=false"
+    assert "npm run format:check" in makefile_text
+    assert "npm run format:check" in workflow_text
+    assert "npm run format:check # Biome formatter drift check" in readme_text
+
+
 def test_docker_dev_ui_service_uses_guarded_dev_script_and_healthcheck() -> None:
     scripts = _package_scripts()
     compose = _docker_dev_config()

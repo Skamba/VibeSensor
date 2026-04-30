@@ -21,17 +21,30 @@ const strengthMetrics = {
 };
 
 function parseElapsedSeconds(value: string): number {
-  const [minutes, seconds] = value.trim().split(":").map((part) => Number(part));
-  return (minutes * 60) + seconds;
+  const [minutes, seconds] = value
+    .trim()
+    .split(":")
+    .map((part) => Number(part));
+  return minutes * 60 + seconds;
 }
 
-test("dark mode theme smoke keeps shared readiness and warning surfaces wired", async ({ page }) => {
+test("dark mode theme smoke keeps shared readiness and warning surfaces wired", async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: "dark" });
   let captureReadiness = buildCaptureReadiness({
     isReady: true,
-    sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+    sensors: {
+      state: "pass",
+      reasonKey: "sensors_ready",
+      details: { live_sensor_count: 1 },
+    },
     reference: { state: "pass", reasonKey: "reference_ready" },
-    speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+    speed: {
+      state: "pass",
+      reasonKey: "speed_stable",
+      details: { dwell_elapsed_s: 8 },
+    },
   });
   await installCommonRoutes(page, {
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
@@ -100,7 +113,9 @@ test("dark mode theme smoke keeps shared readiness and warning surfaces wired", 
   await page.goto("/");
   await expect(page.locator("#loggingChecklist")).toBeVisible();
   const passStyles = await readSemanticSurfaceStyles(
-    page.locator('.capture-readiness__item[data-readiness-state="pass"]').first(),
+    page
+      .locator('.capture-readiness__item[data-readiness-state="pass"]')
+      .first(),
     "--capture-readiness-pass-surface",
     "--capture-readiness-pass-border",
   );
@@ -109,7 +124,11 @@ test("dark mode theme smoke keeps shared readiness and warning surfaces wired", 
 
   captureReadiness = buildCaptureReadiness({
     isReady: false,
-    sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+    sensors: {
+      state: "pass",
+      reasonKey: "sensors_ready",
+      details: { live_sensor_count: 1 },
+    },
     reference: { state: "warn", reasonKey: "speed_sample_stale" },
     speed: { state: "fail", reasonKey: "speed_sample_missing" },
     overall: {
@@ -123,12 +142,16 @@ test("dark mode theme smoke keeps shared readiness and warning surfaces wired", 
 
   const expectations = [
     {
-      locator: page.locator('.capture-readiness__item[data-readiness-state="warn"]').first(),
+      locator: page
+        .locator('.capture-readiness__item[data-readiness-state="warn"]')
+        .first(),
       surfaceVar: "--capture-readiness-warn-surface",
       borderVar: "--capture-readiness-warn-border",
     },
     {
-      locator: page.locator('.capture-readiness__item[data-readiness-state="fail"]').first(),
+      locator: page
+        .locator('.capture-readiness__item[data-readiness-state="fail"]')
+        .first(),
       surfaceVar: "--capture-readiness-fail-surface",
       borderVar: "--capture-readiness-fail-border",
     },
@@ -172,12 +195,16 @@ test("dark mode theme smoke keeps shared readiness and warning surfaces wired", 
     probe.remove();
     return result;
   });
-  expect(bannerStyles.backgroundColor).toBe(bannerStyles.expectedBackgroundColor);
+  expect(bannerStyles.backgroundColor).toBe(
+    bannerStyles.expectedBackgroundColor,
+  );
   expect(bannerBorderColor.actual).toBe(bannerBorderColor.expected);
   expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
 });
 
-test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
+test("ui bootstrap smoke: tabs, ws state, recording, history", async ({
+  page,
+}) => {
   let startCalls = 0;
   let stopCalls = 0;
   const startedAt = new Date(Date.now() - 65_000).toISOString();
@@ -193,23 +220,46 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
     last_completed_run_error: null,
     capture_readiness: buildCaptureReadiness({
       isReady: true,
-      sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+      sensors: {
+        state: "pass",
+        reasonKey: "sensors_ready",
+        details: { live_sensor_count: 1 },
+      },
       reference: { state: "pass", reasonKey: "reference_ready" },
-      speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+      speed: {
+        state: "pass",
+        reasonKey: "speed_stable",
+        details: { dwell_elapsed_s: 8 },
+      },
     }),
   };
 
   await installCommonRoutes(page, {
-    runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+    runs: [
+      {
+        run_id: "run-001",
+        start_time_utc: "2026-01-01T00:00:00Z",
+        sample_count: 42,
+      },
+    ],
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
     historyHandler: async (route) => {
       const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history") || pathname.includes("/report.pdf")) {
+      if (
+        !pathname.startsWith("/api/history") ||
+        pathname.includes("/report.pdf")
+      ) {
         await route.fallback();
         return;
       }
       await fulfillJson(route, {
-        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+        runs: [
+          {
+            run_id: "run-001",
+            start_time_utc: "2026-01-01T00:00:00Z",
+            sample_count: 42,
+          },
+        ],
       });
     },
     settingsHandler: async (route) => {
@@ -294,31 +344,67 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.goto("/");
   await expect(page.locator("#appShellChromeRoot > .wrap")).toHaveCount(1);
   await expect(
-    page.locator("body > #dashboardView, body > #historyView, body > #settingsView"),
+    page.locator(
+      "body > #dashboardView, body > #historyView, body > #settingsView",
+    ),
   ).toHaveCount(0);
-  await expect(page.locator("#appShellChromeRoot #dashboardView")).toHaveCount(1);
+  await expect(page.locator("#appShellChromeRoot #dashboardView")).toHaveCount(
+    1,
+  );
   await expect(page.locator("#appShellChromeRoot #historyView")).toHaveCount(1);
-  await expect(page.locator("#appShellChromeRoot #settingsView")).toHaveCount(1);
+  await expect(page.locator("#appShellChromeRoot #settingsView")).toHaveCount(
+    1,
+  );
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator(".site-header__status")).toBeHidden();
-  await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");
-  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Test Hatch");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
-  await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
+  await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText(
+    "1 / 1",
+  );
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText(
+    "Test Hatch",
+  );
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Ready",
+  );
+  await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText(
+    "Fresh - 10 ms ago",
+  );
   await expect(page.locator("#liveRunHealth")).toBeHidden();
-  await expect(page.locator("#liveStrongestSignal")).not.toHaveClass(/stat--spotlight/);
-  await expect(page.locator("#liveStrongestSignal .stat__label")).toHaveText("Strongest signal");
-  await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
-  await expect(page.locator("#liveSensorRoster [data-strongest='true']")).toHaveText("Front Left Wheel");
+  await expect(page.locator("#liveStrongestSignal")).not.toHaveClass(
+    /stat--spotlight/,
+  );
+  await expect(page.locator("#liveStrongestSignal .stat__label")).toHaveText(
+    "Strongest signal",
+  );
+  await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText(
+    "Front Left",
+  );
+  await expect(
+    page.locator("#liveSensorRoster [data-strongest='true']"),
+  ).toHaveText("Front Left Wheel");
   await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
-  await expect(page.locator('#liveSensorRoster .live-sensor-card__status-dot[data-status="online"]')).toHaveCount(1);
-  await expect(page.locator("#liveSensorRoster article")).toHaveText("Front Left Wheel");
-  await expect(page.locator(".spectrum-controls-panel")).toContainText("Select a trace to isolate it.");
-  await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
-  await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
+  await expect(
+    page.locator(
+      '#liveSensorRoster .live-sensor-card__status-dot[data-status="online"]',
+    ),
+  ).toHaveCount(1);
+  await expect(page.locator("#liveSensorRoster article")).toHaveText(
+    "Front Left Wheel",
+  );
+  await expect(page.locator(".spectrum-controls-panel")).toContainText(
+    "Select a trace to isolate it.",
+  );
+  await expect(
+    page.locator(".spectrum-controls-panel #spectrumInspector"),
+  ).toBeVisible();
+  await expect(page.locator(".spectrum-controls-panel #legend")).toContainText(
+    "Front Left",
+  );
   await expect(page.locator("#loggingSummary")).toBeHidden();
   await expect(page.locator("#loggingChecklist")).toBeVisible();
-  await expect(page.locator("#loggingChecklist")).toContainText("Capture readiness checklist");
+  await expect(page.locator("#loggingChecklist")).toContainText(
+    "Capture readiness checklist",
+  );
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingPhase")).toBeHidden();
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
@@ -334,13 +420,19 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await historyTab.press("ArrowLeft");
-  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
   await expect(page.locator(".site-header__status")).toBeHidden();
   await dashboardTab.press("End");
   await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await settingsTab.press("Home");
-  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
   await expect(page.locator(".site-header__status")).toBeHidden();
   await historyTab.click();
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
@@ -351,35 +443,57 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Recording");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Recording",
+  );
   await expect(page.locator("#loggingPhase")).toBeHidden();
-  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
-  const activeElapsed = await page.locator("#loggingElapsed [data-value]").innerText();
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(
+    /^\d+:\d{2}$/,
+  );
+  const activeElapsed = await page
+    .locator("#loggingElapsed [data-value]")
+    .innerText();
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeHidden();
   await expect(page.locator("#stopLoggingBtn")).toBeVisible();
-  await expect(page.locator("#stopLoggingBtn")).toHaveClass(/btn--danger-quiet/);
+  await expect(page.locator("#stopLoggingBtn")).toHaveClass(
+    /btn--danger-quiet/,
+  );
   await expect.poll(() => startCalls).toBe(1);
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-001");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Processing");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Processing",
+  );
   await expect(page.locator("#loggingPhase")).toBeHidden();
-  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
-  const processingElapsed = await page.locator("#loggingElapsed [data-value]").innerText();
-  expect(parseElapsedSeconds(processingElapsed)).toBeGreaterThanOrEqual(parseElapsedSeconds(activeElapsed));
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(
+    /^\d+:\d{2}$/,
+  );
+  const processingElapsed = await page
+    .locator("#loggingElapsed [data-value]")
+    .innerText();
+  expect(parseElapsedSeconds(processingElapsed)).toBeGreaterThanOrEqual(
+    parseElapsedSeconds(activeElapsed),
+  );
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#stopLoggingBtn")).toBeHidden();
   const processingSummary = page.locator("#loggingSummary");
-  await expect(processingSummary).toContainText("Run run-001 is being analyzed.");
-  await expect(processingSummary).toContainText("Results will appear in History");
+  await expect(processingSummary).toContainText(
+    "Run run-001 is being analyzed.",
+  );
+  await expect(processingSummary).toContainText(
+    "Results will appear in History",
+  );
   await processingSummary.getByRole("button", { name: "Open History" }).click();
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
   await expect.poll(() => stopCalls).toBe(1);
 });
 
-test("dashboard bootstrap defers secondary bundle until a dependent view opens", async ({ page }) => {
+test("dashboard bootstrap defers secondary bundle until a dependent view opens", async ({
+  page,
+}) => {
   const secondaryBundleRequests: string[] = [];
   page.on("request", (request) => {
     if (request.url().includes("app_feature_secondary_bundle")) {
@@ -392,7 +506,14 @@ test("dashboard bootstrap defers secondary bundle until a dependent view opens",
       const path = requestPath(route);
       if (path === "/api/settings/cars") {
         await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Test Hatch", type: "Simulated setup", aspects: {} }],
+          cars: [
+            {
+              id: "car-1",
+              name: "Test Hatch",
+              type: "Simulated setup",
+              aspects: {},
+            },
+          ],
           active_car_id: "car-1",
         });
         return;
@@ -411,7 +532,9 @@ test("dashboard bootstrap defers secondary bundle until a dependent view opens",
   await installFakeWebSocket(page);
 
   await page.goto("/");
-  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Test Hatch");
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText(
+    "Test Hatch",
+  );
   expect(secondaryBundleRequests).toEqual([]);
 
   await page.locator("#tab-settings").click();
@@ -431,18 +554,40 @@ test("saved run state points directly to History", async ({ page }) => {
     last_completed_run_error: null,
     capture_readiness: buildCaptureReadiness({
       isReady: true,
-      sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+      sensors: {
+        state: "pass",
+        reasonKey: "sensors_ready",
+        details: { live_sensor_count: 1 },
+      },
       reference: { state: "pass", reasonKey: "reference_ready" },
-      speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+      speed: {
+        state: "pass",
+        reasonKey: "speed_stable",
+        details: { dwell_elapsed_s: 8 },
+      },
     }),
   };
 
   await installCommonRoutes(page, {
-    runs: [{ run_id: "run-002", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 24 }],
+    runs: [
+      {
+        run_id: "run-002",
+        start_time_utc: "2026-01-01T00:00:00Z",
+        sample_count: 24,
+      },
+    ],
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Test Hatch", type: "Simulated setup", variant: null, aspects: {} }],
+          cars: [
+            {
+              id: "car-1",
+              name: "Test Hatch",
+              type: "Simulated setup",
+              variant: null,
+              aspects: {},
+            },
+          ],
           active_car_id: "car-1",
         });
         return;
@@ -486,7 +631,9 @@ test("saved run state points directly to History", async ({ page }) => {
   const savedSummary = page.locator("#loggingSummary");
   await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-002");
   await expect(savedSummary).toContainText("Run run-002 is ready in History.");
-  await expect(savedSummary).toContainText("Open History to review the diagnosis");
+  await expect(savedSummary).toContainText(
+    "Open History to review the diagnosis",
+  );
   await savedSummary.getByRole("button", { name: "Open History" }).click();
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
 });

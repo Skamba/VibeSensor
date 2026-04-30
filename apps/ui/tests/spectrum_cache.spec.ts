@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { effect } from "../src/app/ui_signals";
-import type { CreateSpectrumChartDeps, SpectrumChart } from "../src/spectrum_chart";
+import type {
+  CreateSpectrumChartDeps,
+  SpectrumChart,
+} from "../src/spectrum_chart";
 import { flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
 import {
   getRequiredClientSpectrum,
@@ -16,7 +19,8 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
   });
 
   test("reuses series metadata when only spectrum values change", async () => {
-    const seriesMetaSnapshots: CreateSpectrumChartDeps["seriesMeta"]["value"][] = [];
+    const seriesMetaSnapshots: CreateSpectrumChartDeps["seriesMeta"]["value"][] =
+      [];
     const setDataSnapshots: readonly unknown[][] = [];
 
     await withSpectrumRendererHarness(
@@ -141,7 +145,10 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           installClientSpectra(state, [
             {
               client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum({ combined: sensorACombined, freq: sensorAFreq }),
+              spectrum: makeSpectrum({
+                combined: sensorACombined,
+                freq: sensorAFreq,
+              }),
             },
             {
               client: makeClient("sensor-b", "Rear Left Wheel"),
@@ -159,8 +166,12 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         const firstPrepared = prepareFrame();
         const secondPrepared = prepareFrame();
 
-        expect(secondPrepared.entries[0]?.values).toBe(firstPrepared.entries[0]?.values);
-        expect(secondPrepared.entries[1]?.values).toBe(firstPrepared.entries[1]?.values);
+        expect(secondPrepared.entries[0]?.values).toBe(
+          firstPrepared.entries[0]?.values,
+        );
+        expect(secondPrepared.entries[1]?.values).toBe(
+          firstPrepared.entries[1]?.values,
+        );
       },
     );
   });
@@ -201,8 +212,12 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
 
         const secondPrepared = prepareFrame();
 
-        expect(secondPrepared.entries[0]?.values).toBe(firstPrepared.entries[0]?.values);
-        expect(secondPrepared.entries[1]?.values).not.toBe(firstPrepared.entries[1]?.values);
+        expect(secondPrepared.entries[0]?.values).toBe(
+          firstPrepared.entries[0]?.values,
+        );
+        expect(secondPrepared.entries[1]?.values).not.toBe(
+          firstPrepared.entries[1]?.values,
+        );
       },
     );
   });

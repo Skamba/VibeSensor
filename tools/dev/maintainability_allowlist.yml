@@ -2,8 +2,8 @@ file_threshold_lines: 1200
 function_threshold_lines: 200
 files:
   tools/dev/check_hygiene.py:
-    max_lines: 3461
-    reason: Monolithic repo hygiene guard retained until checks are split by concern.
+    max_lines: 3470
+    reason: Monolithic repo hygiene guard retained until checks are split by concern; includes UI formatter validation wiring guard.
   tools/dev/verify_backend_static_guards.py:
     max_lines: 2612
     reason: Static guard collection retained as one entrypoint until guard modules are split.
@@ -21,8 +21,8 @@ functions:
     max_lines: 323
     reason: Runtime policy matrix validation stays together until runtime-policy checks are extracted.
   tools/dev/check_hygiene.py::check_contract_sync_entrypoint:
-    max_lines: 266
-    reason: Contract sync entrypoint guard stays together until workflow/config checks are split.
+    max_lines: 281
+    reason: Contract sync and UI validation entrypoint guards stay together until workflow/config checks are split.
   apps/server/vibesensor/use_cases/run/post_analysis_executor.py::run_whole_run_pipeline_stages:
     max_lines: 228
     reason: Whole-run stage orchestration retained until table-driven stage runner extraction.

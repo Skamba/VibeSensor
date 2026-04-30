@@ -178,7 +178,9 @@ describe("buildUpdateFeaturePanelModels", () => {
 
     expect(models.canStart).toBe(true);
     expect(models.transport).toBe("usb_internet");
-    expect(models.updatePanel.startButtonLabelText).toBe("settings.update.retry");
+    expect(models.updatePanel.startButtonLabelText).toBe(
+      "settings.update.retry",
+    );
     expect(models.updatePanel.status?.journey.failureNote).toEqual({
       summaryText: "downloading — GitHub release download timed out",
       detailText: "Upstream connectivity dropped during fetch.",
@@ -201,9 +203,9 @@ describe("buildUpdateFeaturePanelModels", () => {
       selected: true,
       state: "active",
     });
-    expect(models.internetPanel.transportChoices.usb_internet.summaryText).toContain(
-      "settings.update.transport.usb_summary_interface",
-    );
+    expect(
+      models.internetPanel.transportChoices.usb_internet.summaryText,
+    ).toContain("settings.update.transport.usb_summary_interface");
     expect(models.internetPanel.readiness.title).toBe(
       "settings.update.recovery.title",
     );
@@ -309,7 +311,9 @@ describe("createUpdateFeaturePresenter", () => {
       t,
     });
 
-    expect(presenter.internetPanelModel.value.ssidInputValue).toBe("persisted-ssid");
+    expect(presenter.internetPanelModel.value.ssidInputValue).toBe(
+      "persisted-ssid",
+    );
 
     renderState.value = {
       ...renderState.value,
@@ -319,7 +323,9 @@ describe("createUpdateFeaturePresenter", () => {
       }),
     };
 
-    expect(presenter.internetPanelModel.value.ssidInputValue).toBe("persisted-ssid");
+    expect(presenter.internetPanelModel.value.ssidInputValue).toBe(
+      "persisted-ssid",
+    );
   });
 
   test("reads and clears presenter-owned form state instead of DOM values", () => {
@@ -342,8 +348,10 @@ describe("createUpdateFeaturePresenter", () => {
     presenter.setSelectedTransport("wifi");
     presenter.setSsidInput("presenter-ssid");
     presenter.setPasswordInput("presenter-password");
-    const latestInternetPanel: InternetPanelRenderModel = presenter.internetPanelModel.value;
-    const latestUpdatePanel: UpdatePanelRenderModel = presenter.updatePanelModel.value;
+    const latestInternetPanel: InternetPanelRenderModel =
+      presenter.internetPanelModel.value;
+    const latestUpdatePanel: UpdatePanelRenderModel =
+      presenter.updatePanelModel.value;
 
     expect(latestInternetPanel?.ssidInputValue).toBe("presenter-ssid");
     expect(latestInternetPanel?.passwordInputValue).toBe("presenter-password");
@@ -384,7 +392,9 @@ describe("createUpdateFeaturePresenter", () => {
 
     presenter.setPasswordInput("secret");
     expect(presenter.updatePanelModel.value).toBe(initialUpdatePanel);
-    expect(presenter.internetPanelModel.value.passwordInputValue).toBe("secret");
+    expect(presenter.internetPanelModel.value.passwordInputValue).toBe(
+      "secret",
+    );
 
     presenter.togglePassword();
     expect(presenter.updatePanelModel.value).toBe(initialUpdatePanel);

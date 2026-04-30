@@ -125,7 +125,10 @@ export function createRealtimeFeature(
   const disposeLiveStatusSync = effect(() => {
     const model = viewState.liveOverviewModel.value;
     untracked(() => {
-      ports.chrome.setShellLiveStatus(model.runHealth.variant, model.runHealth.text);
+      ports.chrome.setShellLiveStatus(
+        model.runHealth.variant,
+        model.runHealth.text,
+      );
     });
   });
 

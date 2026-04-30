@@ -3,7 +3,7 @@
 ## Key locations
 
 - Server tests live under `apps/server/tests/`.
-- UI validation lives under `apps/ui/` (Vite build/typecheck plus Playwright browser checks).
+- UI validation lives under `apps/ui/` (Biome format/lint, Vite build/typecheck, and Playwright browser checks).
 - Firmware build/flash guidance lives in `firmware/esp/README.md`.
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
 - `make format` is the canonical Python formatting command for backend and tooling files; no other Python formatter is supported in the repo workflow.
@@ -115,7 +115,7 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
+Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `python3 tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. `make ui-typecheck` includes the UI Biome formatter drift check before lint/dependency/type gates. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
 
 Main local tiers:
 

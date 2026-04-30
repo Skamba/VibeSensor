@@ -10,16 +10,19 @@ import {
 
 export type { StartedUiApp, StartUiAppDeps };
 
-export function startUiApp(deps: Omit<StartUiAppDeps, "renderRoot"> = {}): StartedUiApp {
+export function startUiApp(
+  deps: Omit<StartUiAppDeps, "renderRoot"> = {},
+): StartedUiApp {
   return mountUiApp({
     ...deps,
     renderApp: deps.renderApp ?? render,
-    renderRoot: (runtime) => h(UiAppRoot, {
-      attachSettingsPanels: runtime.attachSettingsPanels,
-      bootReady: runtime.bootReady,
-      panels: runtime.panels,
-      shellChrome: runtime.shellChrome,
-      spectrumPanel: runtime.spectrumPanel,
-    }),
+    renderRoot: (runtime) =>
+      h(UiAppRoot, {
+        attachSettingsPanels: runtime.attachSettingsPanels,
+        bootReady: runtime.bootReady,
+        panels: runtime.panels,
+        shellChrome: runtime.shellChrome,
+        spectrumPanel: runtime.spectrumPanel,
+      }),
   });
 }

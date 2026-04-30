@@ -16,7 +16,9 @@ import {
 
 test.describe.configure({ timeout: 20_000 });
 
-test("routes no-car blockers to the add-car flow from Live and Cars", async ({ page }) => {
+test("routes no-car blockers to the add-car flow from Live and Cars", async ({
+  page,
+}) => {
   let analysisPutCalls = 0;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -35,9 +37,14 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
     await fulfillJson(route, {});
   });
   await bootLiveDashboard(page, { installRoutes: false });
-  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
+    "data-variant",
+    "warn",
+  );
   await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
-  await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No cars added yet");
+  await expect(page.locator("#liveActiveCar [data-value]")).toContainText(
+    "No cars added yet",
+  );
   await expect(page.locator("#loggingChecklist")).toBeHidden();
   const liveSummary = page.locator("#loggingSummary");
   await expect(liveSummary).toContainText("Add a car before recording.");
@@ -51,10 +58,14 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
-  await expect(page.locator("#carListBody .settings-table-empty-state")).toBeVisible();
+  await expect(
+    page.locator("#carListBody .settings-table-empty-state"),
+  ).toBeVisible();
   const carEmptyState = page.locator("#carListBody .empty-state");
   await expect(carEmptyState).toContainText("Add the first car profile.");
-  await expect(carEmptyState).toContainText("Cars define the setup used for recording");
+  await expect(carEmptyState).toContainText(
+    "Cars define the setup used for recording",
+  );
   await carEmptyState.getByRole("button", { name: "Add a car" }).click();
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await activateWizardCloseButton(page);
@@ -65,11 +76,16 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   expect(analysisPutCalls).toBe(0);
 });
 
-test("hides contextual car guidance when a valid selected car exists", async ({ page }) => {
+test("hides contextual car guidance when a valid selected car exists", async ({
+  page,
+}) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
         return;
       }
       await fulfillJson(route, {});
@@ -83,7 +99,9 @@ test("hides contextual car guidance when a valid selected car exists", async ({ 
   await expect(page.locator("#resetAnalysisBtn")).toBeEnabled();
 });
 
-test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
+test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({
+  page,
+}) => {
   let releaseCars: (() => void) | null = null;
   let captureReady = false;
   const waitForCars = new Promise<void>((resolve) => {
@@ -113,18 +131,20 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       if (path === "/api/settings/cars") {
         await waitForCars;
         await fulfillJson(route, {
-          cars: [{
-            id: "car-1",
-            name: "Audit Demo Car",
-            type: "sedan",
-            aspects: {
-              tire_width_mm: 285,
-              tire_aspect_pct: 30,
-              rim_in: 21,
-              final_drive_ratio: 3.08,
-              current_gear_ratio: 0.64,
+          cars: [
+            {
+              id: "car-1",
+              name: "Audit Demo Car",
+              type: "sedan",
+              aspects: {
+                tire_width_mm: 285,
+                tire_aspect_pct: 30,
+                rim_in: 21,
+                final_drive_ratio: 3.08,
+                current_gear_ratio: 0.64,
+              },
             },
-          }],
+          ],
           active_car_id: "car-1",
         });
         return;
@@ -149,22 +169,38 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       last_completed_run_error: null,
       capture_readiness: captureReady
         ? buildCaptureReadiness({
-          isReady: true,
-          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
-          reference: { state: "pass", reasonKey: "reference_ready" },
-          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
-        })
+            isReady: true,
+            sensors: {
+              state: "pass",
+              reasonKey: "sensors_ready",
+              details: { live_sensor_count: 1 },
+            },
+            reference: { state: "pass", reasonKey: "reference_ready" },
+            speed: {
+              state: "pass",
+              reasonKey: "speed_stable",
+              details: { dwell_elapsed_s: 8 },
+            },
+          })
         : buildCaptureReadiness({
-          isReady: false,
-          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
-          reference: { state: "fail", reasonKey: "active_car_missing" },
-          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
-          overall: {
-            state: "fail",
-            reasonKey: "capture_blocked",
-            details: { blocking_check: "reference_ready" },
-          },
-        }),
+            isReady: false,
+            sensors: {
+              state: "pass",
+              reasonKey: "sensors_ready",
+              details: { live_sensor_count: 1 },
+            },
+            reference: { state: "fail", reasonKey: "active_car_missing" },
+            speed: {
+              state: "pass",
+              reasonKey: "speed_stable",
+              details: { dwell_elapsed_s: 8 },
+            },
+            overall: {
+              state: "fail",
+              reasonKey: "capture_blocked",
+              details: { blocking_check: "reference_ready" },
+            },
+          }),
     });
   });
   await bootLiveDashboard(page, {
@@ -187,8 +223,12 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
     },
   });
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
-  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Loading active car...");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText(
+    "Loading active car...",
+  );
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Blocked",
+  );
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
@@ -217,17 +257,29 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(activeRow).toContainText("Audit Demo Car");
-  await expect(activeRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
+  await expect(activeRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "active",
+  );
 
   await page.locator("#tab-dashboard").click();
-  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
-  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Audit Demo Car");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
+    "data-variant",
+    "warn",
+  );
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText(
+    "Audit Demo Car",
+  );
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Ready",
+  );
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeEnabled();
 });
 
-test("shows a live warning state until an active car is selected, then clears it automatically", async ({ page }) => {
+test("shows a live warning state until an active car is selected, then clears it automatically", async ({
+  page,
+}) => {
   let activeCarId: string | null = null;
   let startCalls = 0;
   const completeAspects = {
@@ -245,8 +297,18 @@ test("shows a live warning state until an active car is selected, then clears it
       if (path === "/api/settings/cars" && method === "GET") {
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "Touring", type: "wagon", aspects: completeAspects },
-            { id: "car-2", name: "Coupe", type: "coupe", aspects: completeAspects },
+            {
+              id: "car-1",
+              name: "Touring",
+              type: "wagon",
+              aspects: completeAspects,
+            },
+            {
+              id: "car-2",
+              name: "Coupe",
+              type: "coupe",
+              aspects: completeAspects,
+            },
           ],
           active_car_id: activeCarId,
         });
@@ -256,8 +318,18 @@ test("shows a live warning state until an active car is selected, then clears it
         activeCarId = "car-2";
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "Touring", type: "wagon", aspects: completeAspects },
-            { id: "car-2", name: "Coupe", type: "coupe", aspects: completeAspects },
+            {
+              id: "car-1",
+              name: "Touring",
+              type: "wagon",
+              aspects: completeAspects,
+            },
+            {
+              id: "car-2",
+              name: "Coupe",
+              type: "coupe",
+              aspects: completeAspects,
+            },
           ],
           active_car_id: activeCarId,
         });
@@ -279,22 +351,38 @@ test("shows a live warning state until an active car is selected, then clears it
       last_completed_run_error: null,
       capture_readiness: activeCarId
         ? buildCaptureReadiness({
-          isReady: true,
-          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
-          reference: { state: "pass", reasonKey: "reference_ready" },
-          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
-        })
+            isReady: true,
+            sensors: {
+              state: "pass",
+              reasonKey: "sensors_ready",
+              details: { live_sensor_count: 1 },
+            },
+            reference: { state: "pass", reasonKey: "reference_ready" },
+            speed: {
+              state: "pass",
+              reasonKey: "speed_stable",
+              details: { dwell_elapsed_s: 8 },
+            },
+          })
         : buildCaptureReadiness({
-          isReady: false,
-          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
-          reference: { state: "fail", reasonKey: "active_car_missing" },
-          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
-          overall: {
-            state: "fail",
-            reasonKey: "capture_blocked",
-            details: { blocking_check: "reference_ready" },
-          },
-        }),
+            isReady: false,
+            sensors: {
+              state: "pass",
+              reasonKey: "sensors_ready",
+              details: { live_sensor_count: 1 },
+            },
+            reference: { state: "fail", reasonKey: "active_car_missing" },
+            speed: {
+              state: "pass",
+              reasonKey: "speed_stable",
+              details: { dwell_elapsed_s: 8 },
+            },
+            overall: {
+              state: "fail",
+              reasonKey: "capture_blocked",
+              details: { blocking_check: "reference_ready" },
+            },
+          }),
     });
   });
   await page.route("**/api/recording/start", async (route) => {
@@ -330,15 +418,24 @@ test("shows a live warning state until an active car is selected, then clears it
       ],
     },
   });
-  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
+    "data-variant",
+    "warn",
+  );
   await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
-  await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
+  await expect(page.locator("#liveActiveCar [data-value]")).toContainText(
+    "No active car selected",
+  );
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Blocked",
+  );
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingChecklist")).toBeHidden();
   const liveSummary = page.locator("#loggingSummary");
-  await expect(liveSummary).toContainText("Choose the active car before recording.");
+  await expect(liveSummary).toContainText(
+    "Choose the active car before recording.",
+  );
   await expect(liveSummary).toContainText("none is active for the next run");
   await expect(page.locator("#loggingSummary")).toHaveCSS("text-align", "left");
   await expect(page.locator("#startLoggingBtn")).toBeHidden();
@@ -348,19 +445,28 @@ test("shows a live warning state until an active car is selected, then clears it
   await liveSummary.getByRole("button", { name: "Choose active car" }).click();
   await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
   await expect(page.locator("#carTab")).toHaveJSProperty("hidden", false);
-  await page.locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn').click();
+  await page
+    .locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn')
+    .click();
 
   await page.locator("#tab-dashboard").click();
-  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
+    "data-variant",
+    "warn",
+  );
   await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Coupe");
-  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
+    "Ready",
+  );
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#startLoggingBtn")).toBeEnabled();
 });
 
-test("shows car-tab guidance for invalid persisted selection and after deleting the selected car", async ({ page }) => {
+test("shows car-tab guidance for invalid persisted selection and after deleting the selected car", async ({
+  page,
+}) => {
   let firstCarsGet = true;
   const completeAspects = {
     tire_width_mm: 245,
@@ -378,8 +484,18 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
           firstCarsGet = false;
           await fulfillJson(route, {
             cars: [
-              { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
-              { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
+              {
+                id: "car-1",
+                name: "One",
+                type: "sedan",
+                aspects: completeAspects,
+              },
+              {
+                id: "car-2",
+                name: "Two",
+                type: "suv",
+                aspects: completeAspects,
+              },
             ],
             active_car_id: "missing-car",
           });
@@ -387,7 +503,12 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
         }
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
+            {
+              id: "car-1",
+              name: "One",
+              type: "sedan",
+              aspects: completeAspects,
+            },
             { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
           ],
           active_car_id: "car-2",
@@ -397,7 +518,12 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
       if (path === "/api/settings/cars/active" && method === "PUT") {
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
+            {
+              id: "car-1",
+              name: "One",
+              type: "sedan",
+              aspects: completeAspects,
+            },
             { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
           ],
           active_car_id: "car-2",
@@ -406,7 +532,14 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
       }
       if (path === "/api/settings/cars/car-2" && method === "DELETE") {
         await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "One", type: "sedan", aspects: completeAspects }],
+          cars: [
+            {
+              id: "car-1",
+              name: "One",
+              type: "sedan",
+              aspects: completeAspects,
+            },
+          ],
           active_car_id: null,
         });
         return;
@@ -419,12 +552,16 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
   await page.locator("#carListBody .car-activate-btn").last().click();
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
-  await page.locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn').click();
+  await page
+    .locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn')
+    .click();
   await confirmPrompt(page);
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
 });
 
-test("routes incomplete cars through Finish setup instead of generic activation", async ({ page }) => {
+test("routes incomplete cars through Finish setup instead of generic activation", async ({
+  page,
+}) => {
   let activateCalls = 0;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -499,14 +636,18 @@ test("routes incomplete cars through Finish setup instead of generic activation"
   await expect(incompleteRow).toContainText("Tire size not set");
   await expect(incompleteRow).toContainText("Not set");
   await expect(incompleteRow.locator(".car-activate-btn")).toHaveCount(0);
-  await expect(incompleteRow.getByRole("button", { name: "Finish setup" })).toBeVisible();
+  await expect(
+    incompleteRow.getByRole("button", { name: "Finish setup" }),
+  ).toBeVisible();
   await incompleteRow.getByRole("button", { name: "Finish setup" }).click();
 
   await expect.poll(() => activateCalls).toBe(1);
   await expect(page.locator("#analysisTab")).toHaveJSProperty("hidden", false);
 });
 
-test("returns from the add-car flow with visible success feedback and row highlighting", async ({ page }) => {
+test("returns from the add-car flow with visible success feedback and row highlighting", async ({
+  page,
+}) => {
   let cars = [] as Array<Record<string, unknown>>;
   let activeCarId: string | null = null;
 
@@ -519,18 +660,20 @@ test("returns from the add-car flow with visible success feedback and row highli
         return;
       }
       if (path === "/api/settings/cars" && method === "POST") {
-        cars = [{
-          id: "car-1",
-          name: "Track Demo",
-          type: "Coupe",
-          aspects: {
-            tire_width_mm: 225,
-            tire_aspect_pct: 45,
-            rim_in: 18,
-            final_drive_ratio: 3.08,
-            current_gear_ratio: 0.64,
+        cars = [
+          {
+            id: "car-1",
+            name: "Track Demo",
+            type: "Coupe",
+            aspects: {
+              tire_width_mm: 225,
+              tire_aspect_pct: 45,
+              rim_in: 18,
+              final_drive_ratio: 3.08,
+              current_gear_ratio: 0.64,
+            },
           },
-        }];
+        ];
         await fulfillJson(route, { cars, active_car_id: activeCarId });
         return;
       }
@@ -559,8 +702,12 @@ test("returns from the add-car flow with visible success feedback and row highli
   await page.locator("#wizardManualAddBtn").click();
 
   await expect(page.locator("#wizardBackdrop")).toBeHidden();
-  await expect(page.locator("#carSelectionGuidance")).toContainText("Car added");
-  await expect(page.locator("#carSelectionGuidance")).toContainText("Track Demo was added and selected for this setup.");
+  await expect(page.locator("#carSelectionGuidance")).toContainText(
+    "Car added",
+  );
+  await expect(page.locator("#carSelectionGuidance")).toContainText(
+    "Track Demo was added and selected for this setup.",
+  );
   const createdRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(createdRow).toHaveAttribute("data-highlighted", "true");
   await expect(createdRow).toContainText("Active");

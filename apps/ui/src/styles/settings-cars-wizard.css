@@ -136,10 +136,23 @@
   background: var(--md-sys-color-tertiary);
   color: var(--on-fill);
 }
-.wizard-step[hidden] { display: none !important; }
-.wizard-step > h3 { margin-bottom: var(--space-2); }
-.wizard-section-title { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--md-sys-color-outline-variant); }
-.wizard-options { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; }
+.wizard-step[hidden] {
+  display: none !important;
+}
+.wizard-step > h3 {
+  margin-bottom: var(--space-2);
+}
+.wizard-section-title {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+.wizard-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
 .wizard-options .wiz-opt {
   min-width: min(260px, 100%);
   padding: var(--space-2) var(--space-3);
@@ -147,23 +160,59 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.95rem;
-  transition: border-color .15s, background .15s, box-shadow .15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
   background: var(--md-sys-color-surface-container);
   text-align: left;
 }
-.wizard-options .wiz-opt:hover { border-color: var(--brand-400); background: var(--menu-hover); }
+.wizard-options .wiz-opt:hover {
+  border-color: var(--brand-400);
+  background: var(--menu-hover);
+}
 .wizard-options .wiz-opt:focus-visible {
   outline: none;
   border-color: var(--md-sys-color-primary);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
 }
-.wizard-options .wiz-opt[data-selected="true"] { border-color: var(--md-sys-color-primary); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); font-weight: 600; }
-.wizard-options--list { flex-direction: column; }
-.wizard-options--list .wiz-opt { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
-.wizard-options--list .wiz-opt .wiz-opt-detail { font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); }
-.wizard-custom, .wizard-custom-specs { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--md-sys-color-outline-variant); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
-.wizard-custom label { flex-basis: 100%; }
-.wizard-custom input { flex: 1; min-width: 150px; }
+.wizard-options .wiz-opt[data-selected="true"] {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+.wizard-options--list {
+  flex-direction: column;
+}
+.wizard-options--list .wiz-opt {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.wizard-options--list .wiz-opt .wiz-opt-detail {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.wizard-custom,
+.wizard-custom-specs {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+.wizard-custom label {
+  flex-basis: 100%;
+}
+.wizard-custom input {
+  flex: 1;
+  min-width: 150px;
+}
 .wizard-custom--branch {
   align-items: stretch;
   padding-top: var(--space-3);
@@ -226,7 +275,9 @@
   box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
   background: var(--menu-hover);
 }
-.wizard-custom-specs__note { margin-top: 0; }
+.wizard-custom-specs__note {
+  margin-top: 0;
+}
 .wizard-nav {
   position: sticky;
   bottom: 0;
@@ -235,7 +286,11 @@
   margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--md-sys-color-outline-variant);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, var(--md-sys-color-surface-container) 28%);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0) 0%,
+    var(--md-sys-color-surface-container) 28%
+  );
   z-index: 2;
 }
 .wizard-nav__status {

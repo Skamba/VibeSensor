@@ -6,7 +6,9 @@ export interface CarsFeatureOptionsState<TOption> {
   status: CarsFeatureOptionsStatus;
 }
 
-export function createIdleOptionsState<TOption>(): CarsFeatureOptionsState<TOption> {
+export function createIdleOptionsState<
+  TOption,
+>(): CarsFeatureOptionsState<TOption> {
   return {
     message: null,
     options: [],
@@ -14,7 +16,9 @@ export function createIdleOptionsState<TOption>(): CarsFeatureOptionsState<TOpti
   };
 }
 
-export function createErrorOptionsState<TOption>(message: string): CarsFeatureOptionsState<TOption> {
+export function createErrorOptionsState<TOption>(
+  message: string,
+): CarsFeatureOptionsState<TOption> {
   return {
     message,
     options: [],
@@ -22,7 +26,9 @@ export function createErrorOptionsState<TOption>(message: string): CarsFeatureOp
   };
 }
 
-export function createLoadingOptionsState<TOption>(message: string): CarsFeatureOptionsState<TOption> {
+export function createLoadingOptionsState<TOption>(
+  message: string,
+): CarsFeatureOptionsState<TOption> {
   return {
     message,
     options: [],

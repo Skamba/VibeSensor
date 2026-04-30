@@ -17,4 +17,3 @@ export const orderBandFills = {
   engine2: "rgba(197,34,31,0.11)",
   driveshaftEngine1: "rgba(112,86,166,0.16)",
 };
-

@@ -8,7 +8,10 @@ const VENDOR_CHUNK_PACKAGE_PATHS = [
   "/@preact/signals-core/",
 ] as const;
 
-function matchesChunkPackage(id: string, packagePaths: readonly string[]): boolean {
+function matchesChunkPackage(
+  id: string,
+  packagePaths: readonly string[],
+): boolean {
   return packagePaths.some((packagePath) => id.includes(packagePath));
 }
 

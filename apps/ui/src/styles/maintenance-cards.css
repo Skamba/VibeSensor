@@ -6,10 +6,18 @@
 }
 
 .maintenance-card--hero {
-  border-color: color-mix(in srgb, var(--brand-400) 24%, var(--md-sys-color-outline-variant));
+  border-color: color-mix(
+    in srgb,
+    var(--brand-400) 24%,
+    var(--md-sys-color-outline-variant)
+  );
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--menu-hover) 42%, var(--md-sys-color-surface-container-high)),
+    color-mix(
+      in srgb,
+      var(--menu-hover) 42%,
+      var(--md-sys-color-surface-container-high)
+    ),
     var(--md-sys-color-surface-container-high)
   );
 }

@@ -23,7 +23,6 @@ export {
   type RealtimeCaptureReadinessChecklistModel,
 } from "./realtime_capture_readiness_models";
 export {
-  
   type RealtimeLoggingSummaryAction,
   type RealtimeLoggingSummaryPanelModel,
 } from "./realtime_logging_summary_models";
@@ -92,7 +91,10 @@ export function buildRealtimeLoggingPanelViewModel(
   } = params;
   const captureReadiness = status.capture_readiness ?? null;
   const recordingReady = Boolean(captureReadiness?.is_ready);
-  const readinessSummary = captureReadinessSummaryText(captureReadiness, { t, formatInt });
+  const readinessSummary = captureReadinessSummaryText(captureReadiness, {
+    t,
+    formatInt,
+  });
   function finalize(model: {
     pillVariant: "muted" | "ok" | "warn" | "bad";
     pillText: string;
@@ -112,7 +114,8 @@ export function buildRealtimeLoggingPanelViewModel(
     nextLastCompletedElapsedText: string;
   }): RealtimeLoggingPanelViewModel {
     const summaryAction = model.summaryPanel?.action ?? null;
-    const summaryHidden = model.summaryText === "" && model.summaryPanel === null;
+    const summaryHidden =
+      model.summaryText === "" && model.summaryPanel === null;
     const summaryLayout = model.summaryPanel ? "panel" : undefined;
     const runIdHidden = model.runIdText === "";
     const startHidden = !model.showStart;
@@ -191,10 +194,16 @@ export function buildRealtimeLoggingPanelViewModel(
     return finalize({
       pillVariant: status.write_error ? "bad" : "ok",
       pillText: status.write_error || t("dashboard.recording_phase.recording"),
-      phaseText: status.write_error ? t("dashboard.health.attention") : t("dashboard.recording_phase.recording"),
-      summaryText: liveHealth.variant === "ok"
-        ? t("dashboard.logging.running", { connected: connectedCountText, assigned: assignedCountText })
-        : liveHealth.summary,
+      phaseText: status.write_error
+        ? t("dashboard.health.attention")
+        : t("dashboard.recording_phase.recording"),
+      summaryText:
+        liveHealth.variant === "ok"
+          ? t("dashboard.logging.running", {
+              connected: connectedCountText,
+              assigned: assignedCountText,
+            })
+          : liveHealth.summary,
       summaryPanel: null,
       runIdText,
       elapsedText,
@@ -217,7 +226,10 @@ export function buildRealtimeLoggingPanelViewModel(
       pillText: t("dashboard.recording_phase.processing"),
       phaseText: t("dashboard.recording_phase.processing"),
       summaryText: "",
-      summaryPanel: buildPostRunSummaryPanel("processing", runId, { t, formatInt }),
+      summaryPanel: buildPostRunSummaryPanel("processing", runId, {
+        t,
+        formatInt,
+      }),
       runIdText,
       elapsedText: nextLastCompletedElapsedText,
       samplesText,
@@ -238,7 +250,11 @@ export function buildRealtimeLoggingPanelViewModel(
       pillText: t("dashboard.recording_phase.saved"),
       phaseText: t("dashboard.recording_phase.saved"),
       summaryText: "",
-      summaryPanel: buildPostRunSummaryPanel("saved", status.last_completed_run_id, { t, formatInt }),
+      summaryPanel: buildPostRunSummaryPanel(
+        "saved",
+        status.last_completed_run_id,
+        { t, formatInt },
+      ),
       runIdText,
       elapsedText: nextLastCompletedElapsedText,
       samplesText,
@@ -259,7 +275,10 @@ export function buildRealtimeLoggingPanelViewModel(
       pillText: t("dashboard.recording_phase.blocked"),
       phaseText: t("dashboard.recording_phase.blocked"),
       summaryText: readinessSummary,
-      summaryPanel: buildBlockedRecordingPanel(selectionBlockReason, { t, formatInt }),
+      summaryPanel: buildBlockedRecordingPanel(selectionBlockReason, {
+        t,
+        formatInt,
+      }),
       runIdText,
       elapsedText: "--",
       samplesText,
@@ -274,7 +293,8 @@ export function buildRealtimeLoggingPanelViewModel(
     });
   }
 
-  const waitingOnReadiness = captureReadiness !== null && !captureReadiness.is_ready;
+  const waitingOnReadiness =
+    captureReadiness !== null && !captureReadiness.is_ready;
   return finalize({
     pillVariant: waitingOnReadiness ? "muted" : "ok",
     pillText: waitingOnReadiness
@@ -283,8 +303,12 @@ export function buildRealtimeLoggingPanelViewModel(
     phaseText: waitingOnReadiness
       ? t("dashboard.recording_phase.preparing")
       : t("dashboard.recording_phase.ready"),
-    summaryText: waitingOnReadiness ? "" : readinessSummary || liveHealth.summary,
-    summaryPanel: waitingOnReadiness ? buildSetupRecordingPanel(captureReadiness, { t, formatInt }) : null,
+    summaryText: waitingOnReadiness
+      ? ""
+      : readinessSummary || liveHealth.summary,
+    summaryPanel: waitingOnReadiness
+      ? buildSetupRecordingPanel(captureReadiness, { t, formatInt })
+      : null,
     runIdText,
     elapsedText: "--",
     samplesText,

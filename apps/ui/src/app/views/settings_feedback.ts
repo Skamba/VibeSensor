@@ -14,7 +14,9 @@ export interface SettingsFeedbackAttrs {
   "data-compact"?: "true";
 }
 
-export function settingsFeedbackAttrs(message: SettingsFeedbackMessage): SettingsFeedbackAttrs {
+export function settingsFeedbackAttrs(
+  message: SettingsFeedbackMessage,
+): SettingsFeedbackAttrs {
   const tone = message.tone ?? "info";
   return {
     class: "settings-feedback",

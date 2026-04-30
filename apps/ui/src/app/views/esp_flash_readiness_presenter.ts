@@ -182,7 +182,7 @@ function recoverySummary(
   const phase =
     state.status.phase && JOURNEY_PHASES.has(state.status.phase)
       ? state.status.phase
-      : state.lastJourneyPhase ?? state.status.phase ?? "idle";
+      : (state.lastJourneyPhase ?? state.status.phase ?? "idle");
   const keyBase =
     safeState === "cancelled"
       ? "settings.esp_flash.recovery.cancelled"
@@ -196,7 +196,8 @@ function recoverySummary(
               ? "settings.esp_flash.recovery.validating"
               : "settings.esp_flash.recovery.generic";
   return {
-    message: state.status.error || t("settings.esp_flash.recovery.fallback_error"),
+    message:
+      state.status.error || t("settings.esp_flash.recovery.fallback_error"),
     phaseLabel: formatEspFlashPhase(t, phase),
     recoveryDetail: t(`${keyBase}.detail`),
     recoveryTitle: t(`${keyBase}.title`),
@@ -354,7 +355,9 @@ export function buildStatusBannerModel(
   const safeState = safeEspFlashState(state.status.state);
   const stateLabel = t(`settings.esp_flash.state.${safeState}`);
   return {
-    text: state.status.error ? `${stateLabel} — ${state.status.error}` : stateLabel,
+    text: state.status.error
+      ? `${stateLabel} — ${state.status.error}`
+      : stateLabel,
     variant: statusVariantForEspFlashState(safeState),
   };
 }

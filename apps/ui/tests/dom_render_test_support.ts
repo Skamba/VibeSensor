@@ -28,16 +28,22 @@ type MountedViewGlobals = {
 };
 
 export async function mountSignalView<TView>(
-  loadMount: () => Promise<(host: HTMLElement) => TView> | ((host: HTMLElement) => TView),
+  loadMount: () =>
+    | Promise<(host: HTMLElement) => TView>
+    | ((host: HTMLElement) => TView),
 ): Promise<MountedSignalView<TView>>;
 export async function mountSignalView<TView>(
   loadMount: () =>
-    Promise<(host: HTMLElement, view: TView) => void> | ((host: HTMLElement, view: TView) => void),
+    | Promise<(host: HTMLElement, view: TView) => void>
+    | ((host: HTMLElement, view: TView) => void),
   createView: () => TView,
 ): Promise<MountedSignalView<TView>>;
 export async function mountSignalView<TView>(
   loadMount: () =>
-    | Promise<((host: HTMLElement) => TView) | ((host: HTMLElement, view: TView) => void)>
+    | Promise<
+        | ((host: HTMLElement) => TView)
+        | ((host: HTMLElement, view: TView) => void)
+      >
     | ((host: HTMLElement) => TView)
     | ((host: HTMLElement, view: TView) => void),
   createView?: () => TView,
@@ -81,7 +87,10 @@ export function installMountedDomGlobals(): () => void {
   const { window } = parseHTML("<!doctype html><html><body></body></html>");
   const globalRef = globalThis as typeof globalThis & MountedViewGlobals;
   const requestAnimationFrameShim = ((callback: FrameRequestCallback) =>
-    setTimeout(() => callback(Date.now()), 0) as unknown as number) as typeof requestAnimationFrame;
+    setTimeout(
+      () => callback(Date.now()),
+      0,
+    ) as unknown as number) as typeof requestAnimationFrame;
   const cancelAnimationFrameShim = ((handle: number) => {
     clearTimeout(handle);
   }) as typeof cancelAnimationFrame;
@@ -108,19 +117,25 @@ export function installMountedDomGlobals(): () => void {
   globalRef.Node = window.Node as unknown as typeof Node;
   globalRef.Element = window.Element as unknown as typeof Element;
   globalRef.HTMLElement = window.HTMLElement as unknown as typeof HTMLElement;
-  globalRef.HTMLButtonElement = window.HTMLButtonElement as unknown as typeof HTMLButtonElement;
-  globalRef.HTMLInputElement = window.HTMLInputElement as unknown as typeof HTMLInputElement;
-  globalRef.DocumentFragment = window.DocumentFragment as unknown as typeof DocumentFragment;
+  globalRef.HTMLButtonElement =
+    window.HTMLButtonElement as unknown as typeof HTMLButtonElement;
+  globalRef.HTMLInputElement =
+    window.HTMLInputElement as unknown as typeof HTMLInputElement;
+  globalRef.DocumentFragment =
+    window.DocumentFragment as unknown as typeof DocumentFragment;
   globalRef.Event = window.Event as unknown as typeof Event;
   globalRef.CustomEvent = window.CustomEvent as unknown as typeof CustomEvent;
-  globalRef.KeyboardEvent = window.KeyboardEvent as unknown as typeof KeyboardEvent;
+  globalRef.KeyboardEvent =
+    window.KeyboardEvent as unknown as typeof KeyboardEvent;
   globalRef.MouseEvent = window.MouseEvent as unknown as typeof MouseEvent;
-  globalRef.getComputedStyle = (window.getComputedStyle
-    ? window.getComputedStyle.bind(window)
-    : (() =>
-      ({
-        getPropertyValue: () => "",
-      }) as CSSStyleDeclaration)) as typeof getComputedStyle;
+  globalRef.getComputedStyle = (
+    window.getComputedStyle
+      ? window.getComputedStyle.bind(window)
+      : () =>
+          ({
+            getPropertyValue: () => "",
+          }) as CSSStyleDeclaration
+  ) as typeof getComputedStyle;
   globalRef.requestAnimationFrame = requestAnimationFrameShim;
   globalRef.cancelAnimationFrame = cancelAnimationFrameShim;
 
@@ -130,14 +145,34 @@ export function installMountedDomGlobals(): () => void {
     restoreMountedViewGlobal(globalRef, "Node", original.Node);
     restoreMountedViewGlobal(globalRef, "Element", original.Element);
     restoreMountedViewGlobal(globalRef, "HTMLElement", original.HTMLElement);
-    restoreMountedViewGlobal(globalRef, "HTMLButtonElement", original.HTMLButtonElement);
-    restoreMountedViewGlobal(globalRef, "HTMLInputElement", original.HTMLInputElement);
-    restoreMountedViewGlobal(globalRef, "DocumentFragment", original.DocumentFragment);
+    restoreMountedViewGlobal(
+      globalRef,
+      "HTMLButtonElement",
+      original.HTMLButtonElement,
+    );
+    restoreMountedViewGlobal(
+      globalRef,
+      "HTMLInputElement",
+      original.HTMLInputElement,
+    );
+    restoreMountedViewGlobal(
+      globalRef,
+      "DocumentFragment",
+      original.DocumentFragment,
+    );
     restoreMountedViewGlobal(globalRef, "Event", original.Event);
     restoreMountedViewGlobal(globalRef, "CustomEvent", original.CustomEvent);
-    restoreMountedViewGlobal(globalRef, "KeyboardEvent", original.KeyboardEvent);
+    restoreMountedViewGlobal(
+      globalRef,
+      "KeyboardEvent",
+      original.KeyboardEvent,
+    );
     restoreMountedViewGlobal(globalRef, "MouseEvent", original.MouseEvent);
-    restoreMountedViewGlobal(globalRef, "getComputedStyle", original.getComputedStyle);
+    restoreMountedViewGlobal(
+      globalRef,
+      "getComputedStyle",
+      original.getComputedStyle,
+    );
     restoreMountedViewGlobal(
       globalRef,
       "requestAnimationFrame",

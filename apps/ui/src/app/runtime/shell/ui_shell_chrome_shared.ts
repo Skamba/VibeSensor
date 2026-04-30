@@ -32,7 +32,10 @@ export const SPEED_UNIT_OPTIONS = [
   { fallbackLabel: "m/s", labelKey: "speed.unit.mps", value: "mps" },
 ] as const;
 
-export const SHELL_NAVIGATION_MODEL_KEYS = ["activeViewId", "navItems"] as const;
+export const SHELL_NAVIGATION_MODEL_KEYS = [
+  "activeViewId",
+  "navItems",
+] as const;
 export const SHELL_ACTIVE_VIEW_KEY = ["activeViewId"] as const;
 export const SHELL_PREFERENCES_MODEL_KEYS = [
   "languageFeedback",
@@ -43,7 +46,10 @@ export const SHELL_PREFERENCES_MODEL_KEYS = [
   "speedUnitLabelText",
   "speedUnitOptionLabels",
 ] as const;
-export const SHELL_STATUS_MODEL_KEYS = ["shellLiveStatus", "wsLinkState"] as const;
+export const SHELL_STATUS_MODEL_KEYS = [
+  "shellLiveStatus",
+  "wsLinkState",
+] as const;
 export const SHELL_DIALOG_MODEL_KEYS = ["appErrorBanner"] as const;
 
 export interface UiShellChromeActions {
@@ -107,8 +113,12 @@ export interface UiShellChromeDialogModel {
 
 export interface UiShellChromeView {
   bindDialogModel(model: ReadonlySignal<UiShellChromeDialogModel>): void;
-  bindNavigationModel(model: ReadonlySignal<UiShellChromeNavigationModel>): void;
-  bindPreferencesModel(model: ReadonlySignal<UiShellChromePreferencesModel>): void;
+  bindNavigationModel(
+    model: ReadonlySignal<UiShellChromeNavigationModel>,
+  ): void;
+  bindPreferencesModel(
+    model: ReadonlySignal<UiShellChromePreferencesModel>,
+  ): void;
   bindStatusModel(model: ReadonlySignal<UiShellChromeStatusModel>): void;
 }
 

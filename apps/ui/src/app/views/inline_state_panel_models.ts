@@ -11,7 +11,9 @@ export interface InlineStatePanelElement {
   };
 }
 
-export function inlineStateActionClass(variant: InlineStateActionVariant | undefined): string {
+export function inlineStateActionClass(
+  variant: InlineStateActionVariant | undefined,
+): string {
   switch (variant) {
     case "success":
       return "btn btn--success";

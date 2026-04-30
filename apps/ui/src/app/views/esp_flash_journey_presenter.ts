@@ -49,7 +49,9 @@ function journeyStageIndex(phase: string | null | undefined): number {
   );
 }
 
-function resolvedJourneyPhase(state: EspFlashFeatureRenderState): string | null {
+function resolvedJourneyPhase(
+  state: EspFlashFeatureRenderState,
+): string | null {
   if (journeyStageIndex(state.status.phase) !== -1) {
     return state.status.phase || null;
   }

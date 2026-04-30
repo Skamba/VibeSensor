@@ -117,7 +117,9 @@ describe("update HTTP runtime boundary validation", () => {
 
   test("accepts a schema-valid update status response", async () => {
     mswServer.use(
-      http.get(uiTestUrl("/api/update/status"), () => HttpResponse.json(makeUpdateStatusPayload())),
+      http.get(uiTestUrl("/api/update/status"), () =>
+        HttpResponse.json(makeUpdateStatusPayload()),
+      ),
     );
 
     await expect(getUpdateStatus()).resolves.toMatchObject({
@@ -128,20 +130,20 @@ describe("update HTTP runtime boundary validation", () => {
 
   test("rejects malformed update status payloads at the API boundary", async () => {
     mswServer.use(
-      http.get(
-        uiTestUrl("/api/update/status"),
-        () => HttpResponse.json({ ...makeUpdateStatusPayload(), state: "checking" }),
+      http.get(uiTestUrl("/api/update/status"), () =>
+        HttpResponse.json({ ...makeUpdateStatusPayload(), state: "checking" }),
       ),
     );
 
-    await expect(getUpdateStatus()).rejects.toThrow(/Invalid update status response: \/state/);
+    await expect(getUpdateStatus()).rejects.toThrow(
+      /Invalid update status response: \/state/,
+    );
   });
 
   test("rejects malformed health payloads at the API boundary", async () => {
     mswServer.use(
-      http.get(
-        uiTestUrl("/api/health"),
-        () => HttpResponse.json({
+      http.get(uiTestUrl("/api/health"), () =>
+        HttpResponse.json({
           ...makeHealthPayload(),
           data_loss: {
             ...makeHealthPayload().data_loss,
@@ -151,20 +153,23 @@ describe("update HTTP runtime boundary validation", () => {
       ),
     );
 
-    await expect(getHealthStatus()).rejects.toThrow(/Invalid health status response: \/data_loss\/parse_errors/);
+    await expect(getHealthStatus()).rejects.toThrow(
+      /Invalid health status response: \/data_loss\/parse_errors/,
+    );
   });
 
   test("rejects malformed USB internet payloads at the API boundary", async () => {
     mswServer.use(
-      http.get(
-        uiTestUrl("/api/update/internet-status"),
-        () => HttpResponse.json({
+      http.get(uiTestUrl("/api/update/internet-status"), () =>
+        HttpResponse.json({
           ...makeUsbInternetStatusPayload(),
           ipv4_addresses: ["10.0.0.2", 42],
         }),
       ),
     );
 
-    await expect(getUpdateInternetStatus()).rejects.toThrow(/Invalid USB internet status response: \/ipv4_addresses\/1/);
+    await expect(getUpdateInternetStatus()).rejects.toThrow(
+      /Invalid USB internet status response: \/ipv4_addresses\/1/,
+    );
   });
 });

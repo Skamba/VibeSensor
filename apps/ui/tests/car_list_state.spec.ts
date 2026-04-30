@@ -20,8 +20,10 @@ function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
 
 const labels: Record<string, string> = {
   "settings.car.empty.title": "Add the first car profile.",
-  "settings.car.empty.body": "Cars define the setup used for recording, saved runs, and analysis settings.",
-  "settings.car.empty.detail": "Start with the add-car wizard so the next recording has the right context.",
+  "settings.car.empty.body":
+    "Cars define the setup used for recording, saved runs, and analysis settings.",
+  "settings.car.empty.detail":
+    "Start with the add-car wizard so the next recording has the right context.",
   "settings.car.empty.action": "Add a car",
   "settings.car.col_tires": "Tires",
   "settings.car.col_drive": "Drive",
@@ -37,25 +39,32 @@ const labels: Record<string, string> = {
   "settings.car.open_analysis": "Open Analysis",
   "settings.car.value_missing": "Not set",
   "settings.car.tires_missing": "Tire size not set",
-  "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
-  "settings.car.approximate_detail": "Approximate drivetrain ratios need review.",
+  "settings.car.incomplete_detail":
+    "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+  "settings.car.approximate_detail":
+    "Approximate drivetrain ratios need review.",
   "settings.car.confidence.part_tires": "Tires {value}",
   "settings.car.confidence.part_drive": "Drive {value}",
   "settings.car.confidence.part_gear": "Top gear {value}",
   "settings.car.confidence.part_transmission": "Transmission {value}",
   "settings.car.confidence.official_exact": "official source",
   "settings.car.confidence.official_derived": "officially derived",
-  "settings.car.confidence.reputable_secondary_crosschecked": "secondary cross-check",
+  "settings.car.confidence.reputable_secondary_crosschecked":
+    "secondary cross-check",
   "settings.car.confidence.family_default": "family default",
   "settings.car.confidence.unverified": "unverified",
   "settings.car.confidence.user_confirmed": "user confirmed",
-  "settings.car.confidence.review_detail": "Review or override in Analysis before trusting driveshaft or engine order results.",
+  "settings.car.confidence.review_detail":
+    "Review or override in Analysis before trusting driveshaft or engine order results.",
   "settings.car.created_title": "Car added",
   "settings.car.created_body": "{name} was added and selected for this setup.",
-  "settings.car.created_detail": "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
+  "settings.car.created_detail":
+    "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
   "settings.car.guidance.no_active_title": "Activate one car for this setup.",
-  "settings.car.guidance.no_active": "Activate a car from the list below or add a new one to unlock analysis settings.",
-  "settings.car.guidance.no_active_detail": "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
+  "settings.car.guidance.no_active":
+    "Activate a car from the list below or add a new one to unlock analysis settings.",
+  "settings.car.guidance.no_active_detail":
+    "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
 };
 
 function t(key: string, vars?: Record<string, unknown>): string {
@@ -82,21 +91,25 @@ function fmt(value: number, digits = 0): string {
 }
 
 test("getCarCompleteness reports whether the required car specs are present", () => {
-  const complete = getCarCompleteness(makeCar({
-    aspects: {
-      tire_width_mm: 245,
-      tire_aspect_pct: 40,
-      rim_in: 18,
-      final_drive_ratio: 3.91,
-      current_gear_ratio: 0.82,
-    },
-  }));
-  const incomplete = getCarCompleteness(makeCar({
-    aspects: {
-      tire_width_mm: 245,
-      rim_in: 18,
-    },
-  }));
+  const complete = getCarCompleteness(
+    makeCar({
+      aspects: {
+        tire_width_mm: 245,
+        tire_aspect_pct: 40,
+        rim_in: 18,
+        final_drive_ratio: 3.91,
+        current_gear_ratio: 0.82,
+      },
+    }),
+  );
+  const incomplete = getCarCompleteness(
+    makeCar({
+      aspects: {
+        tire_width_mm: 245,
+        rim_in: 18,
+      },
+    }),
+  );
 
   expect(complete).toEqual({ isComplete: true, missingKeys: [] });
   expect(incomplete.isComplete).toBe(false);
@@ -175,7 +188,8 @@ test("buildSettingsCarListRenderModel produces typed row state for readiness, hi
   expect(model.rows[2]).toMatchObject({
     activeState: "inactive",
     carId: "car-new",
-    completionDetailText: "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+    completionDetailText:
+      "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
     highlightedStatusText: "New",
     isComplete: false,
     isHighlighted: true,
@@ -228,7 +242,8 @@ test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance f
     throw new Error("Expected car rows");
   }
   expect(model.rows[0]).toMatchObject({
-    completionDetailText: "Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
+    completionDetailText:
+      "Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
     isComplete: true,
     readinessState: "ready",
   });
@@ -286,8 +301,10 @@ test("buildSettingsCarListRenderModel produces the actionable empty state when n
         type: "add",
         variant: "success",
       },
-      bodyText: "Cars define the setup used for recording, saved runs, and analysis settings.",
-      detailText: "Start with the add-car wizard so the next recording has the right context.",
+      bodyText:
+        "Cars define the setup used for recording, saved runs, and analysis settings.",
+      detailText:
+        "Start with the add-car wizard so the next recording has the right context.",
       titleText: "Add the first car profile.",
     },
   });
@@ -369,7 +386,8 @@ test("buildCarsGuidanceRenderModel returns success, guidance, or hidden states b
     }),
   ).toEqual({
     bodyText: "Track Demo was added and selected for this setup.",
-    detailText: "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
+    detailText:
+      "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
     titleText: "Car added",
     tone: "success",
   });
@@ -381,8 +399,10 @@ test("buildCarsGuidanceRenderModel returns success, guidance, or hidden states b
       t,
     }),
   ).toEqual({
-    bodyText: "Activate a car from the list below or add a new one to unlock analysis settings.",
-    detailText: "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
+    bodyText:
+      "Activate a car from the list below or add a new one to unlock analysis settings.",
+    detailText:
+      "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
     titleText: "Activate one car for this setup.",
     tone: "default",
   });

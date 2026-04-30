@@ -20,8 +20,8 @@ export function createDeferred<T>(): Deferred<T> {
 }
 
 export function installWindowGlobal(): void {
-  (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-    typeof globalThis;
+  (globalThis as { window?: Window & typeof globalThis }).window =
+    globalThis as unknown as Window & typeof globalThis;
 }
 
 export function jsonResponse(body: unknown, init?: ResponseInit): Response {

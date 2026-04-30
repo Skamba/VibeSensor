@@ -18,32 +18,32 @@ function createPanelStub(): {
 
   return {
     panel: {
-        chartDom: {
-          specChartWrap: createElementStub("div"),
-          specChart: createElementStub("div"),
-        },
-        bindBandToggle(handler) {
-          onBandToggle = handler;
-        },
-        bindBandToggleModel() {},
-        bindSensorLegendModel() {},
-        bindBandLegendModel() {},
-        renderHeader() {},
-        renderOverlay() {},
-        renderInspector(model) {
-          inspectorText = model.text;
-          inspectorCalls.push(model);
-        },
+      chartDom: {
+        specChartWrap: createElementStub("div"),
+        specChart: createElementStub("div"),
       },
-      get onBandToggle() {
-        return onBandToggle;
+      bindBandToggle(handler) {
+        onBandToggle = handler;
       },
-      get inspectorCalls() {
-        return inspectorCalls;
+      bindBandToggleModel() {},
+      bindSensorLegendModel() {},
+      bindBandLegendModel() {},
+      renderHeader() {},
+      renderOverlay() {},
+      renderInspector(model) {
+        inspectorText = model.text;
+        inspectorCalls.push(model);
       },
-      get inspectorText() {
-        return inspectorText;
-      },
+    },
+    get onBandToggle() {
+      return onBandToggle;
+    },
+    get inspectorCalls() {
+      return inspectorCalls;
+    },
+    get inspectorText() {
+      return inspectorText;
+    },
   };
 }
 
@@ -116,7 +116,8 @@ describe("SpectrumInteractionController", () => {
         }
         if (key === "spectrum.legend.all_series") return "All sensor traces";
         if (key === "spectrum.legend.clear_focus") return "Clear focus";
-        if (key === "spectrum.legend.focus_series") return `Focus ${String(vars?.sensor)}`;
+        if (key === "spectrum.legend.focus_series")
+          return `Focus ${String(vars?.sensor)}`;
         if (key === "spectrum.inspector_idle") return "Idle";
         if (key === "spectrum.inspector_no_band") return "No reference band";
         if (key === "spectrum.bands.show") return "Show reference bands";
@@ -133,8 +134,18 @@ describe("SpectrumInteractionController", () => {
     });
 
     const entries = [
-      { id: "sensor-a", label: "Front Right Wheel", color: "#ff5500", values: [12, 11] },
-      { id: "sensor-b", label: "Rear Left Wheel", color: "#3366ff", values: [8, 7] },
+      {
+        id: "sensor-a",
+        label: "Front Right Wheel",
+        color: "#ff5500",
+        values: [12, 11],
+      },
+      {
+        id: "sensor-b",
+        label: "Rear Left Wheel",
+        color: "#3366ff",
+        values: [8, 7],
+      },
     ];
 
     controller.sync({
@@ -151,37 +162,56 @@ describe("SpectrumInteractionController", () => {
       pressed: "false",
       text: "Show reference bands",
     });
-    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("12.0 dB");
-    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(false);
-    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe(
+      "12.0 dB",
+    );
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
+      false,
+    );
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
+      "8.0 dB",
+    );
     expect(isolatedSeries).toBeNull();
 
     controller.sensorLegendHandlersModel.value?.onSelect("sensor-a");
-    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("12.0 dB");
-    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(true);
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe(
+      "12.0 dB",
+    );
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
+      true,
+    );
     expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(true);
-    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
+      "8.0 dB",
+    );
     expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(true);
     expect(isolatedSeries).toBe(1);
 
     strengthDbById.set("sensor-a", 13);
     controller.sync({
-      entries: [
-        { ...entries[0], values: [13, 12] },
-        entries[1],
-      ],
+      entries: [{ ...entries[0], values: [13, 12] }, entries[1]],
       freqAxis: [10, 20],
       chartBands: [],
     });
 
-    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("13.0 dB");
-    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(true);
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe(
+      "13.0 dB",
+    );
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
+      true,
+    );
 
     controller.sensorLegendHandlersModel.value?.onSelect("sensor-a");
-    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("13.0 dB");
-    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(false);
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe(
+      "13.0 dB",
+    );
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
+      false,
+    );
     expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(false);
-    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
+      "8.0 dB",
+    );
     expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(false);
     expect(isolatedSeries).toBeNull();
 
@@ -199,10 +229,12 @@ describe("SpectrumInteractionController", () => {
         if (key === "spectrum.legend.state_visible") return "Visible";
         if (key === "spectrum.legend.state_isolated") return "Isolated";
         if (key === "spectrum.legend.state_inactive") return "Inactive";
-        if (key === "spectrum.legend.sensor_level") return `${String(vars?.value)} dB`;
+        if (key === "spectrum.legend.sensor_level")
+          return `${String(vars?.value)} dB`;
         if (key === "spectrum.legend.all_series") return "All sensor traces";
         if (key === "spectrum.legend.clear_focus") return "Clear focus";
-        if (key === "spectrum.legend.focus_series") return `Focus ${String(vars?.sensor)}`;
+        if (key === "spectrum.legend.focus_series")
+          return `Focus ${String(vars?.sensor)}`;
         if (key === "spectrum.inspector_idle") return "Idle";
         if (key === "spectrum.inspector_no_band") return "No reference band";
         if (key === "spectrum.inspector_hover") {
@@ -227,8 +259,18 @@ describe("SpectrumInteractionController", () => {
 
     controller.sync({
       entries: [
-        { id: "sensor-a", label: "Front Right Wheel", color: "#ff5500", values: [12, 11, 10] },
-        { id: "sensor-b", label: "Rear Left Wheel", color: "#3366ff", values: [8, 7, 6] },
+        {
+          id: "sensor-a",
+          label: "Front Right Wheel",
+          color: "#ff5500",
+          values: [12, 11, 10],
+        },
+        {
+          id: "sensor-b",
+          label: "Rear Left Wheel",
+          color: "#3366ff",
+          values: [8, 7, 6],
+        },
       ],
       freqAxis: [10, 20, 30],
       chartBands: [],

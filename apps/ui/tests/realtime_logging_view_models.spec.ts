@@ -125,7 +125,8 @@ describe("realtime logging view models", () => {
       liveHealth: {
         variant: "warn",
         text: "dashboard.health.attention",
-        summary: "dashboard.capture_readiness.reference_ready.speed_source_missing",
+        summary:
+          "dashboard.capture_readiness.reference_ready.speed_source_missing",
         showOverviewPill: true,
       },
       connectedCountText: "4",
@@ -138,21 +139,25 @@ describe("realtime logging view models", () => {
       formatInt,
     });
 
-    expect(captureReadinessSummaryText(captureReadiness, { t, formatInt }))
-      .toBe("dashboard.capture_readiness.reference_ready.speed_source_missing");
+    expect(
+      captureReadinessSummaryText(captureReadiness, { t, formatInt }),
+    ).toBe("dashboard.capture_readiness.reference_ready.speed_source_missing");
     expect(model.summaryPanel).toEqual({
       titleText: "dashboard.logging.blocked.setup.title",
-      bodyText: "dashboard.capture_readiness.reference_ready.speed_source_missing",
+      bodyText:
+        "dashboard.capture_readiness.reference_ready.speed_source_missing",
       action: {
         action: "open-speed-source",
         labelText: "dashboard.logging.blocked.setup.action.speed_source",
       },
     });
-    expect(model.checklist).toEqual(buildRealtimeCaptureReadinessChecklistModel(captureReadiness, {
-      setupMode: true,
-      t,
-      formatInt,
-    }));
+    expect(model.checklist).toEqual(
+      buildRealtimeCaptureReadinessChecklistModel(captureReadiness, {
+        setupMode: true,
+        t,
+        formatInt,
+      }),
+    );
     expect(model.checklist?.items.map((item) => item.checkKey)).toEqual([
       "reference_ready",
       "speed_stable",
@@ -178,7 +183,7 @@ describe("realtime logging view models", () => {
       },
       connectedCountText: "4",
       assignedCountText: "4",
-      runIdText: "dashboard.logging.last_run_id:{\"runId\":\"run-9\"}",
+      runIdText: 'dashboard.logging.last_run_id:{"runId":"run-9"}',
       elapsedText: "--",
       samplesText: "1200",
       lastCompletedElapsedText: "1:23",
@@ -188,7 +193,7 @@ describe("realtime logging view models", () => {
 
     expect(model.elapsedText).toBe("1:23");
     expect(model.summaryPanel).toEqual({
-      titleText: "dashboard.logging.processing.title:{\"runId\":\"run-9\"}",
+      titleText: 'dashboard.logging.processing.title:{"runId":"run-9"}',
       bodyText: "dashboard.logging.processing.body",
       detailText: "dashboard.logging.processing.detail",
       action: {

@@ -22,12 +22,16 @@ async function openSettings(page: Page): Promise<void> {
   await page.locator("#tab-settings").click();
 }
 
-test("settings shell keeps selected tabs and panels in sync on click", async ({ page }) => {
+test("settings shell keeps selected tabs and panels in sync on click", async ({
+  page,
+}) => {
   await openSettings(page);
 
   const carTabButton = page.locator('[data-settings-tab="carTab"]');
   const analysisTabButton = page.locator('[data-settings-tab="analysisTab"]');
-  const speedSourceTabButton = page.locator('[data-settings-tab="speedSourceTab"]');
+  const speedSourceTabButton = page.locator(
+    '[data-settings-tab="speedSourceTab"]',
+  );
 
   await expect(carTabButton).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#carTab")).toHaveJSProperty("hidden", false);
@@ -41,7 +45,10 @@ test("settings shell keeps selected tabs and panels in sync on click", async ({ 
   await speedSourceTabButton.click();
   await expect(speedSourceTabButton).toHaveAttribute("aria-selected", "true");
   await expect(analysisTabButton).toHaveAttribute("aria-selected", "false");
-  await expect(page.locator("#speedSourceTab")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#speedSourceTab")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
   await expect(page.locator("#analysisTab")).toHaveJSProperty("hidden", true);
 });
 

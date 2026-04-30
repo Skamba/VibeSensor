@@ -21,7 +21,9 @@ type ErrorResponse = {
   status?: number;
 };
 
-type StaticOrFactory<T extends JsonBodyType> = T | ((request: Request) => T | Promise<T>);
+type StaticOrFactory<T extends JsonBodyType> =
+  | T
+  | ((request: Request) => T | Promise<T>);
 type HandlerResult<T extends JsonBodyType> = StaticOrFactory<T> | ErrorResponse;
 
 function isErrorResponse(value: unknown): value is ErrorResponse {
@@ -32,7 +34,8 @@ async function resolveHandlerResult<T extends JsonBodyType>(
   request: Request,
   result: HandlerResult<T>,
 ): Promise<Response> {
-  const resolved = typeof result === "function" ? await result(request) : result;
+  const resolved =
+    typeof result === "function" ? await result(request) : result;
   if (isErrorResponse(resolved)) {
     return HttpResponse.json(
       { detail: resolved.detail },
@@ -116,7 +119,8 @@ function makeCarAspects(
     driveshaft_bandwidth_pct: payload.driveshaft_bandwidth_pct ?? undefined,
     engine_bandwidth_pct: payload.engine_bandwidth_pct ?? undefined,
     final_drive_ratio: payload.final_drive_ratio ?? undefined,
-    final_drive_uncertainty_pct: payload.final_drive_uncertainty_pct ?? undefined,
+    final_drive_uncertainty_pct:
+      payload.final_drive_uncertainty_pct ?? undefined,
     front_tire_width_mm: payload.front_tire_width_mm ?? undefined,
     front_tire_aspect_pct: payload.front_tire_aspect_pct ?? undefined,
     front_rim_in: payload.front_rim_in ?? undefined,
@@ -130,7 +134,8 @@ function makeCarAspects(
     speed_uncertainty_pct: payload.speed_uncertainty_pct ?? undefined,
     tire_aspect_pct: payload.tire_aspect_pct ?? undefined,
     tire_deflection_factor: payload.tire_deflection_factor ?? undefined,
-    tire_diameter_uncertainty_pct: payload.tire_diameter_uncertainty_pct ?? undefined,
+    tire_diameter_uncertainty_pct:
+      payload.tire_diameter_uncertainty_pct ?? undefined,
     tire_width_mm: payload.tire_width_mm ?? undefined,
     wheel_bandwidth_pct: payload.wheel_bandwidth_pct ?? undefined,
   };
@@ -265,86 +270,124 @@ function makeCarLibraryModelsPayload(
   };
 }
 
-export function buildAnalysisSettingsHandlers(options: {
-  load?: HandlerResult<AnalysisSettingsPayload>;
-  save?: HandlerResult<AnalysisSettingsPayload>;
-} = {}) {
+export function buildAnalysisSettingsHandlers(
+  options: {
+    load?: HandlerResult<AnalysisSettingsPayload>;
+    save?: HandlerResult<AnalysisSettingsPayload>;
+  } = {},
+) {
   const load = options.load ?? makeAnalysisSettingsPayload();
   const save = options.save ?? load;
   return [
-    http.get(uiRoutePath("/api/settings/analysis"), async ({ request }) =>
-      await resolveHandlerResult(request, load)),
-    http.put(uiRoutePath("/api/settings/analysis"), async ({ request }) =>
-      await resolveHandlerResult(request, save)),
+    http.get(
+      uiRoutePath("/api/settings/analysis"),
+      async ({ request }) => await resolveHandlerResult(request, load),
+    ),
+    http.put(
+      uiRoutePath("/api/settings/analysis"),
+      async ({ request }) => await resolveHandlerResult(request, save),
+    ),
   ];
 }
 
-export function buildCarsHandlers(options: {
-  load?: HandlerResult<CarsPayload>;
-  create?: HandlerResult<CarsPayload>;
-  update?: HandlerResult<CarsPayload>;
-  activate?: HandlerResult<CarsPayload>;
-  remove?: HandlerResult<CarsPayload>;
-} = {}) {
+export function buildCarsHandlers(
+  options: {
+    load?: HandlerResult<CarsPayload>;
+    create?: HandlerResult<CarsPayload>;
+    update?: HandlerResult<CarsPayload>;
+    activate?: HandlerResult<CarsPayload>;
+    remove?: HandlerResult<CarsPayload>;
+  } = {},
+) {
   const load = options.load ?? makeCarsPayload();
   const create = options.create ?? load;
   const update = options.update ?? create;
   const activate = options.activate ?? update;
   const remove = options.remove ?? activate;
   return [
-    http.get(uiRoutePath("/api/settings/cars"), async ({ request }) =>
-      await resolveHandlerResult(request, load)),
-    http.post(uiRoutePath("/api/settings/cars"), async ({ request }) =>
-      await resolveHandlerResult(request, create)),
-    http.put(uiRoutePath("/api/settings/cars/active"), async ({ request }) =>
-      await resolveHandlerResult(request, activate)),
-    http.put(uiRoutePath("/api/settings/cars/:carId"), async ({ request }) =>
-      await resolveHandlerResult(request, update)),
-    http.delete(uiRoutePath("/api/settings/cars/:carId"), async ({ request }) =>
-      await resolveHandlerResult(request, remove)),
+    http.get(
+      uiRoutePath("/api/settings/cars"),
+      async ({ request }) => await resolveHandlerResult(request, load),
+    ),
+    http.post(
+      uiRoutePath("/api/settings/cars"),
+      async ({ request }) => await resolveHandlerResult(request, create),
+    ),
+    http.put(
+      uiRoutePath("/api/settings/cars/active"),
+      async ({ request }) => await resolveHandlerResult(request, activate),
+    ),
+    http.put(
+      uiRoutePath("/api/settings/cars/:carId"),
+      async ({ request }) => await resolveHandlerResult(request, update),
+    ),
+    http.delete(
+      uiRoutePath("/api/settings/cars/:carId"),
+      async ({ request }) => await resolveHandlerResult(request, remove),
+    ),
   ];
 }
 
-export function buildSpeedSourceHandlers(options: {
-  load?: HandlerResult<SpeedSourcePayload>;
-  save?: HandlerResult<SpeedSourcePayload>;
-  status?: HandlerResult<SpeedSourceStatusPayload>;
-  scan?: HandlerResult<ObdScanPayload>;
-  pair?: HandlerResult<ObdPairPayload>;
-} = {}) {
+export function buildSpeedSourceHandlers(
+  options: {
+    load?: HandlerResult<SpeedSourcePayload>;
+    save?: HandlerResult<SpeedSourcePayload>;
+    status?: HandlerResult<SpeedSourceStatusPayload>;
+    scan?: HandlerResult<ObdScanPayload>;
+    pair?: HandlerResult<ObdPairPayload>;
+  } = {},
+) {
   const load = options.load ?? makeSpeedSourcePayload();
   const save = options.save ?? load;
   const status = options.status ?? makeSpeedSourceStatusPayload();
   const scan = options.scan ?? makeObdScanPayload();
   const pair = options.pair ?? makeObdPairPayload();
   return [
-    http.get(uiRoutePath("/api/settings/speed-source"), async ({ request }) =>
-      await resolveHandlerResult(request, load)),
-    http.put(uiRoutePath("/api/settings/speed-source"), async ({ request }) =>
-      await resolveHandlerResult(request, save)),
-    http.get(uiRoutePath("/api/settings/speed-source/status"), async ({ request }) =>
-      await resolveHandlerResult(request, status)),
-    http.post(uiRoutePath("/api/settings/obd/scan"), async ({ request }) =>
-      await resolveHandlerResult(request, scan)),
-    http.post(uiRoutePath("/api/settings/obd/pair"), async ({ request }) =>
-      await resolveHandlerResult(request, pair)),
+    http.get(
+      uiRoutePath("/api/settings/speed-source"),
+      async ({ request }) => await resolveHandlerResult(request, load),
+    ),
+    http.put(
+      uiRoutePath("/api/settings/speed-source"),
+      async ({ request }) => await resolveHandlerResult(request, save),
+    ),
+    http.get(
+      uiRoutePath("/api/settings/speed-source/status"),
+      async ({ request }) => await resolveHandlerResult(request, status),
+    ),
+    http.post(
+      uiRoutePath("/api/settings/obd/scan"),
+      async ({ request }) => await resolveHandlerResult(request, scan),
+    ),
+    http.post(
+      uiRoutePath("/api/settings/obd/pair"),
+      async ({ request }) => await resolveHandlerResult(request, pair),
+    ),
   ];
 }
 
-export function buildCarLibraryHandlers(options: {
-  brands?: HandlerResult<CarLibraryBrandsPayload>;
-  types?: HandlerResult<CarLibraryTypesPayload>;
-  models?: HandlerResult<CarLibraryModelsPayload>;
-} = {}) {
+export function buildCarLibraryHandlers(
+  options: {
+    brands?: HandlerResult<CarLibraryBrandsPayload>;
+    types?: HandlerResult<CarLibraryTypesPayload>;
+    models?: HandlerResult<CarLibraryModelsPayload>;
+  } = {},
+) {
   const brands = options.brands ?? makeCarLibraryBrandsPayload();
   const types = options.types ?? makeCarLibraryTypesPayload();
   const models = options.models ?? makeCarLibraryModelsPayload();
   return [
-    http.get(uiRoutePath("/api/car-library/brands"), async ({ request }) =>
-      await resolveHandlerResult(request, brands)),
-    http.get(uiRoutePath("/api/car-library/types"), async ({ request }) =>
-      await resolveHandlerResult(request, types)),
-    http.get(uiRoutePath("/api/car-library/models"), async ({ request }) =>
-      await resolveHandlerResult(request, models)),
+    http.get(
+      uiRoutePath("/api/car-library/brands"),
+      async ({ request }) => await resolveHandlerResult(request, brands),
+    ),
+    http.get(
+      uiRoutePath("/api/car-library/types"),
+      async ({ request }) => await resolveHandlerResult(request, types),
+    ),
+    http.get(
+      uiRoutePath("/api/car-library/models"),
+      async ({ request }) => await resolveHandlerResult(request, models),
+    ),
   ];
 }

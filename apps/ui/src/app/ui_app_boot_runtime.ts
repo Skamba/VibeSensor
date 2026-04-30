@@ -6,15 +6,10 @@ import {
   type AppFeatureBundleSharedDeps,
 } from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
-import type {
-  UiLazyPanels,
-  UiMountedPanels,
-} from "./ui_lazy_panels";
+import type { UiLazyPanels, UiMountedPanels } from "./ui_lazy_panels";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
-import {
-  DEFAULT_SHELL_VIEW_ID,
-} from "./runtime/ui_shell_navigation_module";
+import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { createWorkerSpectrumFramePreparer } from "./runtime/spectrum_frame_preparer_worker_client";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
