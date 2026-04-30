@@ -2,12 +2,10 @@ import preact from "@preact/preset-vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 
-const CHART_CHUNK_PACKAGE_PATHS = ["/uplot/"] as const;
 const VENDOR_CHUNK_PACKAGE_PATHS = [
   "/preact/",
   "/@preact/signals/",
   "/@preact/signals-core/",
-  "/ajv/",
 ] as const;
 
 function matchesChunkPackage(id: string, packagePaths: readonly string[]): boolean {
@@ -18,9 +16,6 @@ function resolveManualChunk(id: string): string | undefined {
   const normalizedId = id.replace(/\\/g, "/");
   if (!normalizedId.includes("/node_modules/")) {
     return undefined;
-  }
-  if (matchesChunkPackage(normalizedId, CHART_CHUNK_PACKAGE_PATHS)) {
-    return "chart";
   }
   if (matchesChunkPackage(normalizedId, VENDOR_CHUNK_PACKAGE_PATHS)) {
     return "vendor";
