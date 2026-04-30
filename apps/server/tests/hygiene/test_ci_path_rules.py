@@ -137,9 +137,49 @@ _SELECTION_CASES = (
     pytest.param(
         SelectionCase(
             changed_files=("infra/pi-image/pi-gen/templates/stage-vibesensor/prerun.sh.template",),
-            expected_jobs=frozenset({"shell_lint"}),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "shell_lint", "backend_static_guards", "backend_tests"}
+            ),
         ),
         id="pi-image-shell-template",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("infra/pi-image/pi-gen/build.sh",),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "shell_lint", "backend_static_guards", "backend_tests"}
+            ),
+        ),
+        id="pi-image-build-script",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("infra/pi-image/pi-gen/lib/app_artifacts.sh",),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "shell_lint", "backend_static_guards", "backend_tests"}
+            ),
+        ),
+        id="pi-image-app-artifacts-script",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(
+                "infra/pi-image/pi-gen/templates/stage-vibesensor/00-vibesensor/00-run.sh.template",
+            ),
+            expected_jobs=frozenset(
+                {"repo_hygiene", "shell_lint", "backend_static_guards", "backend_tests"}
+            ),
+        ),
+        id="pi-image-stage-template",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("infra/pi-image/pi-gen/README.md",),
+            expected_jobs=frozenset(
+                {"docs_lint", "repo_hygiene", "backend_static_guards", "backend_tests"}
+            ),
+        ),
+        id="pi-image-doc",
     ),
     pytest.param(
         SelectionCase(

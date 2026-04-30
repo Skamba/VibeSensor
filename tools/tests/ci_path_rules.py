@@ -28,6 +28,7 @@ FULL_STACK_TRIGGER_FILES = {
 }
 FULL_STACK_TRIGGER_PREFIXES = (".github/",)
 FIRMWARE_TRIGGER_PREFIXES = ("firmware/", "tools/firmware/")
+PI_IMAGE_TRIGGER_PREFIXES = ("infra/pi-image/",)
 FIRMWARE_NATIVE_BACKEND_TRIGGER_FILES = {
     "apps/server/vibesensor/adapters/udp/protocol.py",
     "apps/server/vibesensor/adapters/udp/protocol_validator.py",
@@ -123,8 +124,12 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
     contract_sync_changed = any(
         path in CONTRACT_SYNC_TRIGGER_FILES for path in normalized
     )
+    pi_image_changed = any(
+        any(path.startswith(prefix) for prefix in PI_IMAGE_TRIGGER_PREFIXES)
+        for path in normalized
+    )
     non_docs_paths = tuple(path for path in normalized if not is_markdown_path(path))
-    if not non_docs_paths and not contract_sync_changed:
+    if not non_docs_paths and not contract_sync_changed and not pi_image_changed:
         return WorkflowJobSelection(docs_lint=True)
 
     full_stack = any(
@@ -168,18 +173,23 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         or backend_changed
         or frontend_changed
         or python_tool_changed
-        or contract_sync_changed,
+        or contract_sync_changed
+        or pi_image_changed,
         shell_lint=full_stack or shell_lint_changed,
         backend_lint=full_stack or backend_changed or python_tool_changed,
         backend_static_guards=full_stack
         or backend_changed
-        or backend_static_guard_tool_changed,
+        or backend_static_guard_tool_changed
+        or pi_image_changed,
         backend_preflight=full_stack or backend_changed,
         backend_contract_drift=full_stack or backend_changed or contract_sync_changed,
         backend_typecheck=full_stack or backend_changed,
         frontend_typecheck=full_stack or frontend_changed,
         ui_smoke=full_stack or frontend_changed,
-        backend_tests=full_stack or backend_changed or backend_test_tool_changed,
+        backend_tests=full_stack
+        or backend_changed
+        or backend_test_tool_changed
+        or pi_image_changed,
         release_smoke=full_stack
         or backend_changed
         or frontend_changed
