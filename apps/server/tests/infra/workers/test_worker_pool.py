@@ -167,6 +167,40 @@ class TestWorkerPool:
         assert stats["rejected_tasks"] == 1
         assert stats["pending_tasks"] == 0
 
+    def test_map_unordered_cancels_partial_batch_when_later_submit_times_out(
+        self,
+        make_pool,
+    ) -> None:
+        pool = make_pool(max_workers=1, max_queue_size=1)
+        release_external, external = _submit_blocking_task(pool)
+        map_item_started = threading.Event()
+
+        _assert_wait_until(
+            "external task to occupy the only worker",
+            lambda: pool.stats()["running_tasks"] == 1,
+        )
+
+        def _work(item: int) -> int:
+            map_item_started.set()
+            return item
+
+        with pytest.raises(TimeoutError, match="saturated"):
+            pool.map_unordered(_work, [1, 2], timeout_s=0.05)
+
+        stats = pool.stats()
+        assert stats["rejected_tasks"] == 1
+        assert stats["pending_tasks"] == 1
+        assert stats["queued_tasks"] == 0
+        assert not map_item_started.is_set()
+
+        release_external.set()
+        assert external.result(timeout=1.0) is True
+        _assert_wait_until(
+            "running external task cleanup",
+            lambda: pool.stats()["pending_tasks"] == 0,
+        )
+        assert not map_item_started.is_set()
+
     def test_shutdown_wakes_blocked_submitter(self, make_pool) -> None:
         pool = make_pool(max_workers=1, max_queue_size=0)
         release_first, first = _submit_blocking_task(pool)

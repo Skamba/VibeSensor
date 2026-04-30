@@ -147,6 +147,36 @@ class WorkerPool:
                 self._queued_tasks -= 1
             self._condition.notify_all()
 
+    def _cleanup_map_pending_after_submit_failure(self, pending: dict[Future[R], T]) -> None:
+        cancelled = 0
+        completed = 0
+        running = 0
+        for future, item in pending.items():
+            if future.done():
+                completed += 1
+                if future.cancelled():
+                    continue
+                exception = future.exception()
+                if exception is not None:
+                    LOGGER.warning(
+                        "WorkerPool task failed for item %r while map_unordered() was aborting.",
+                        item,
+                        exc_info=(type(exception), exception, exception.__traceback__),
+                    )
+                continue
+            if future.cancel():
+                cancelled += 1
+                continue
+            running += 1
+        if cancelled or completed or running:
+            LOGGER.warning(
+                "WorkerPool map_unordered() submission failed; cleaned up %d completed "
+                "tasks, cancelled %d queued tasks, and left %d running tasks to finish.",
+                completed,
+                cancelled,
+                running,
+            )
+
     # -- Public API -----------------------------------------------------------
 
     def submit(
@@ -219,6 +249,9 @@ class WorkerPool:
         Submissions respect the pool's bounded outstanding-task contract.
         At most ``max_pending_tasks`` tasks are submitted at a time, so large
         batches do not create an unbounded executor backlog.
+        If a later submission fails after a partial batch was accepted, queued
+        futures are cancelled; already-running futures are allowed to finish
+        and release their counters through their normal completion callback.
 
         Raises
         ------
@@ -242,7 +275,11 @@ class WorkerPool:
                 except StopIteration:
                     exhausted = True
                     break
-                pending[self.submit(fn, item, timeout_s=timeout_s)] = item
+                try:
+                    pending[self.submit(fn, item, timeout_s=timeout_s)] = item
+                except (RuntimeError, TimeoutError):
+                    self._cleanup_map_pending_after_submit_failure(pending)
+                    raise
 
             if not pending:
                 continue
