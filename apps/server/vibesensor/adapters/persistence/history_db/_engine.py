@@ -244,7 +244,10 @@ class SQLiteHistoryEngine:
             try:
                 return cast(
                     _T,
-                    await asyncio.wait_for(asyncio.wrap_future(future), timeout=timeout_s),
+                    await asyncio.wait_for(
+                        asyncio.shield(asyncio.wrap_future(future)),
+                        timeout=timeout_s,
+                    ),
                 )
             except TimeoutError:
                 future.cancel()
