@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,31 @@ class _StaticRunner(CommandRunner):
     ) -> tuple[int, str, str]:
         self.calls.append((list(args), timeout, env))
         return (self._response.returncode, self._response.stdout, self._response.stderr)
+
+
+class _CancellableProcess:
+    def __init__(self, *, block_wait: bool = False) -> None:
+        self.returncode: int | None = None
+        self.block_wait = block_wait
+        self.communicate_started = asyncio.Event()
+        self.wait_called = asyncio.Event()
+        self.killed = False
+
+    async def communicate(self) -> tuple[bytes, bytes]:
+        self.communicate_started.set()
+        await asyncio.sleep(60)
+        return (b"", b"")
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = -9
+
+    async def wait(self) -> int:
+        self.wait_called.set()
+        if self.block_wait:
+            await asyncio.sleep(60)
+        await asyncio.sleep(0)
+        return self.returncode if self.returncode is not None else 0
 
 
 @pytest.mark.asyncio
@@ -80,3 +106,55 @@ async def test_status_command_reporter_logs_redacted_command_output_and_exit_cod
     assert any("[connecting_wifi] stdout: stdout line" in line for line in status.status.log_tail)
     assert any("[connecting_wifi] stderr: psk=***" in line for line in status.status.log_tail)
     assert any("[connecting_wifi] exit code: 7" in line for line in status.status.log_tail)
+
+
+@pytest.mark.asyncio
+async def test_command_runner_waits_for_killed_process_on_task_cancellation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    process = _CancellableProcess()
+
+    async def _fake_create_subprocess_exec(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+        return process
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.runner.asyncio.create_subprocess_exec",
+        _fake_create_subprocess_exec,
+    )
+
+    task = asyncio.create_task(CommandRunner().run(["sleep", "60"], timeout=30))
+    await asyncio.wait_for(process.communicate_started.wait(), timeout=1)
+
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.wait_for(task, timeout=1)
+
+    assert process.killed is True
+    assert process.wait_called.is_set()
+
+
+@pytest.mark.asyncio
+async def test_command_runner_bounds_wait_after_timeout_kill(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    process = _CancellableProcess(block_wait=True)
+
+    async def _fake_create_subprocess_exec(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+        return process
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.runner.COMMAND_KILL_WAIT_S",
+        0.01,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.runner.asyncio.create_subprocess_exec",
+        _fake_create_subprocess_exec,
+    )
+
+    result = await CommandRunner().run(["sleep", "60"], timeout=0.01)
+
+    assert result == (124, "", "Command timed out")
+    assert process.killed is True
+    assert process.wait_called.is_set()
