@@ -63,9 +63,17 @@ class CiWorkflowStep:
 
 
 @dataclass(frozen=True)
+class CiWorkflowSkippedAction:
+    name: str
+    uses: str
+    local_substitute: str | None = None
+
+
+@dataclass(frozen=True)
 class CiWorkflowJob:
     job_name: str
     steps: tuple[CiWorkflowStep, ...]
+    skipped_actions: tuple[CiWorkflowSkippedAction, ...] = ()
 
     def commands_named(self, names: Collection[str]) -> tuple[str, ...]:
         commands: list[str] = []
@@ -86,10 +94,15 @@ class CiWorkflowJob:
             if step.name in _INSTALL_STEP_NAMES:
                 continue
             for command in step.commands:
+                local_command = _local_command_substitute(
+                    self.job_name, step.name, command
+                )
+                if local_command is None:
+                    continue
                 specs.append(
                     RunnableCommandSpec(
                         label=step.name,
-                        command=_replace_python_placeholders(command, python_cmd),
+                        command=_replace_python_placeholders(local_command, python_cmd),
                     )
                 )
         return tuple(specs)
@@ -235,6 +248,73 @@ def _normalized_ci_steps(raw_step: Mapping[str, object]) -> tuple[CiWorkflowStep
     return tuple(normalized_steps)
 
 
+def _local_action_skipped_actions(
+    action_ref: str, raw_with: Mapping[str, object] | None
+) -> tuple[CiWorkflowSkippedAction, ...]:
+    action_file = _local_action_file(action_ref)
+    if action_file is None:
+        return ()
+    action = _load_yaml_mapping(action_file)
+    runs = action.get("runs")
+    if not isinstance(runs, Mapping):
+        return ()
+    raw_steps = runs.get("steps")
+    if not isinstance(raw_steps, list):
+        return ()
+    action_inputs = _resolved_action_inputs(action, raw_with)
+    skipped: list[CiWorkflowSkippedAction] = []
+    for action_step in raw_steps:
+        if not isinstance(action_step, Mapping):
+            continue
+        if not _action_step_enabled(action_step, action_inputs):
+            continue
+        skipped.extend(_skipped_ci_actions(action_step))
+    return tuple(skipped)
+
+
+def _skipped_ci_actions(
+    raw_step: Mapping[str, object],
+) -> tuple[CiWorkflowSkippedAction, ...]:
+    uses = raw_step.get("uses")
+    if not isinstance(uses, str):
+        return ()
+    raw_with = raw_step.get("with")
+    with_mapping = raw_with if isinstance(raw_with, Mapping) else None
+    if _local_action_file(uses) is not None:
+        return _local_action_skipped_actions(uses, with_mapping)
+    return (
+        CiWorkflowSkippedAction(
+            name=str(raw_step.get("name", "")),
+            uses=uses,
+        ),
+    )
+
+
+def _local_action_substitute(job_name: str, step_name: str, uses: str) -> str | None:
+    if job_name == "release-smoke" and uses.startswith("actions/download-artifact@"):
+        return "local release-smoke builds UI static directly by running run_release_smoke.py without --skip-ui-build"
+    if uses.startswith("actions/upload-artifact@"):
+        return "local runner writes job logs under artifacts/ai/logs/ci_local instead of uploading artifacts"
+    if uses.startswith("actions/cache@"):
+        return "local runner uses the existing workspace/cache state; cache restore/save is CI-only"
+    if uses.startswith("actions/setup-node@"):
+        return "local runner relies on the configured local Node runtime and UI bootstrap helper"
+    if uses.startswith("actions/setup-python@"):
+        return "local runner uses the current Python executable and replaces workflow python-path placeholders"
+    return None
+
+
+def _local_command_substitute(
+    job_name: str, step_name: str, command: str
+) -> str | None:
+    if job_name == "release-smoke":
+        if step_name == "Restore release-smoke UI static artifact":
+            return None
+        if step_name == "Release smoke validation":
+            return command.replace(" --skip-ui-build", "")
+    return command
+
+
 def _replace_python_placeholders(command: str, python_cmd: str) -> str:
     tokens = shlex.split(command)
     replaced: list[str] = []
@@ -301,13 +381,25 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
             if not isinstance(raw_steps, list):
                 continue
             normalized_steps: list[CiWorkflowStep] = []
+            skipped_actions: list[CiWorkflowSkippedAction] = []
             for raw_step in raw_steps:
                 if not isinstance(raw_step, Mapping):
                     continue
                 normalized_steps.extend(_normalized_ci_steps(raw_step))
+                skipped_actions.extend(
+                    CiWorkflowSkippedAction(
+                        name=action.name,
+                        uses=action.uses,
+                        local_substitute=_local_action_substitute(
+                            expanded_job_name, action.name, action.uses
+                        ),
+                    )
+                    for action in _skipped_ci_actions(raw_step)
+                )
             result[expanded_job_name] = CiWorkflowJob(
                 job_name=expanded_job_name,
                 steps=tuple(normalized_steps),
+                skipped_actions=tuple(skipped_actions),
             )
     return result
 
