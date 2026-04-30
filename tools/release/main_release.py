@@ -18,6 +18,7 @@ from urllib import error, request
 _STANDARD_ESP32_APP_OFFSET = "0x10000"
 _ENV_OFFSET_RE = re.compile(r"ESP32_APP_OFFSET[^0-9A-Fa-f]*(0x[0-9A-Fa-f]+)")
 _GITHUB_API_BASE = "https://api.github.com"
+GITHUB_API_TIMEOUT_S = 30
 
 
 @dataclass(frozen=True)
@@ -230,8 +231,9 @@ def _github_token() -> str:
 
 
 def _github_request(method: str, repo: str, path: str) -> object | None:
+    api_path = f"/repos/{repo}/{path.lstrip('/')}"
     req = request.Request(
-        f"{_GITHUB_API_BASE}/repos/{repo}/{path.lstrip('/')}",
+        f"{_GITHUB_API_BASE}{api_path}",
         method=method,
         headers={
             "Accept": "application/vnd.github+json",
@@ -239,8 +241,19 @@ def _github_request(method: str, repo: str, path: str) -> object | None:
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with request.urlopen(req) as response:
-        payload = response.read().decode("utf-8")
+    try:
+        with request.urlopen(req, timeout=GITHUB_API_TIMEOUT_S) as response:
+            payload = response.read().decode("utf-8")
+    except error.HTTPError:
+        raise
+    except TimeoutError as exc:
+        raise SystemExit(
+            f"GitHub API {method} {api_path} timed out after {GITHUB_API_TIMEOUT_S}s."
+        ) from exc
+    except error.URLError as exc:
+        raise SystemExit(
+            f"GitHub API {method} {api_path} failed: {exc.reason}"
+        ) from exc
     if not payload:
         return None
     return json.loads(payload)
