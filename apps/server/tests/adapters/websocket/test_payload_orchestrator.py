@@ -6,6 +6,7 @@ import asyncio
 import json
 import time
 
+import anyio
 import pytest
 
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
@@ -82,3 +83,49 @@ async def test_prepare_replaces_non_finite_values_with_null() -> None:
         "selected_client_id": "sensor-a",
         "value": None,
     }
+
+
+@pytest.mark.asyncio
+async def test_prepare_bounds_concurrent_serialization(monkeypatch: pytest.MonkeyPatch) -> None:
+    active = 0
+    max_active = 0
+
+    async def _fake_run_sync(func, *args, **kwargs):
+        nonlocal active, max_active
+        active += 1
+        max_active = max(max_active, active)
+        await anyio.sleep(0.01)
+        try:
+            return func(*args)
+        finally:
+            active -= 1
+
+    monkeypatch.setattr(
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
+        _fake_run_sync,
+    )
+    orchestrator = PayloadBuildOrchestrator(
+        _PayloadBuilder(),
+        capture_debug=False,
+        max_concurrent_serializations=2,
+    )
+
+    await orchestrator.prepare([f"sensor-{index}" for index in range(7)])
+
+    assert max_active == 2
+    assert orchestrator.serialized_payload_count == 7
+
+
+@pytest.mark.asyncio
+async def test_prepare_skips_payload_variants_over_budget() -> None:
+    orchestrator = PayloadBuildOrchestrator(
+        _PayloadBuilder(),
+        capture_debug=False,
+        max_payload_variants=2,
+    )
+
+    await orchestrator.prepare(["sensor-a", "sensor-b", "sensor-c"])
+
+    assert set(orchestrator.payload_cache) == {"sensor-a", "sensor-b", "sensor-c"}
+    assert orchestrator.skipped_client_ids == {"sensor-c"}
+    assert json.loads(orchestrator.payload_cache["sensor-c"]) == {"error": "payload_build_failed"}

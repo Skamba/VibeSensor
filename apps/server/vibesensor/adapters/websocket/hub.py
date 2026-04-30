@@ -40,6 +40,18 @@ _SEND_TIMEOUT_S: float = 0.5
 _SEND_ERROR_LOG_INTERVAL_S: float = 10.0
 """Minimum interval between logged send-error warnings to avoid log spam."""
 
+_MAX_CONCURRENT_SENDS: int = 16
+"""Maximum concurrent WebSocket send operations in one broadcast tick."""
+
+_MAX_SENDS_PER_TICK: int = 128
+"""Maximum connection snapshots attempted in one broadcast tick."""
+
+_MAX_CONCURRENT_PAYLOAD_SERIALIZATIONS: int = 4
+"""Maximum concurrent payload serializations in one broadcast tick."""
+
+_MAX_PAYLOAD_VARIANTS_PER_TICK: int = 32
+"""Maximum unique selected-client payload variants built in one broadcast tick."""
+
 
 class WebSocketHub:
     """Fan-out broadcaster: sends live metric payloads to all connected WebSocket clients."""
@@ -51,6 +63,10 @@ class WebSocketHub:
             self._tracker,
             send_timeout_s=_SEND_TIMEOUT_S,
             send_error_log_interval_s=_SEND_ERROR_LOG_INTERVAL_S,
+            max_concurrent_sends=_MAX_CONCURRENT_SENDS,
+            max_sends_per_tick=_MAX_SENDS_PER_TICK,
+            max_concurrent_payload_serializations=_MAX_CONCURRENT_PAYLOAD_SERIALIZATIONS,
+            max_payload_variants_per_tick=_MAX_PAYLOAD_VARIANTS_PER_TICK,
         )
 
     async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
