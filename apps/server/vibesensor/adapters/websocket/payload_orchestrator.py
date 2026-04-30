@@ -18,6 +18,8 @@ __all__ = ["PayloadBuildOrchestrator"]
 _ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
 _ERROR_PAYLOAD: str = json_text_dumps(_ERROR_PAYLOAD_BODY)
 _SELECTED_CLIENT_ID_NULL_JSON = '"selected_client_id":null'
+_DEFAULT_MAX_CONCURRENT_SERIALIZATIONS = 4
+_DEFAULT_MAX_PAYLOAD_VARIANTS = 64
 
 
 def _dump_json_text(value: object) -> str:
@@ -32,13 +34,19 @@ class PayloadBuildOrchestrator:
         payload_builder: Callable[[str | None], LiveWsPayload],
         *,
         capture_debug: bool,
+        max_concurrent_serializations: int = _DEFAULT_MAX_CONCURRENT_SERIALIZATIONS,
+        max_payload_variants: int = _DEFAULT_MAX_PAYLOAD_VARIANTS,
     ) -> None:
         self._payload_builder = payload_builder
+        self._max_concurrent_serializations = max(1, int(max_concurrent_serializations))
+        self._max_payload_variants = max(1, int(max_payload_variants))
         self._payload_cache: dict[str | None, str] = {}
         self._payload_template_cache: dict[tuple[tuple[str, object], ...], str] = {}
         self._pending_payload_events: dict[str | None, anyio.Event] = {}
         self._failed_client_ids: set[str | None] = set()
+        self._skipped_client_ids: set[str | None] = set()
         self._debug_info: dict[str | None, bool] | None = {} if capture_debug else None
+        self._serialized_payload_count = 0
 
     @property
     def payload_cache(self) -> Mapping[str | None, str]:
@@ -49,8 +57,20 @@ class PayloadBuildOrchestrator:
         return self._failed_client_ids
 
     @property
+    def skipped_client_ids(self) -> set[str | None]:
+        return self._skipped_client_ids
+
+    @property
     def debug_info(self) -> dict[str | None, bool] | None:
         return self._debug_info
+
+    @property
+    def serialized_payload_count(self) -> int:
+        return self._serialized_payload_count
+
+    @property
+    def payload_cache_bytes(self) -> int:
+        return sum(len(text.encode("utf-8")) for text in self._payload_cache.values())
 
     def _build_raw_payload(self, selected_client_id: str | None) -> LiveWsPayload | None:
         """Build the raw payload for *selected_client_id* on the event-loop thread."""
@@ -183,9 +203,14 @@ class PayloadBuildOrchestrator:
         """Prime cached payloads for the current snapshot's unique client selections."""
 
         unique_selected_ids = list(dict.fromkeys(selected_client_ids))
+        selected_ids_to_build = unique_selected_ids[: self._max_payload_variants]
+        for selected_client_id in unique_selected_ids[self._max_payload_variants :]:
+            self._payload_cache[selected_client_id] = _ERROR_PAYLOAD
+            self._skipped_client_ids.add(selected_client_id)
+
         raw_payloads: dict[str | None, LiveWsPayload] = {}
 
-        for selected_client_id in unique_selected_ids:
+        for selected_client_id in selected_ids_to_build:
             raw_payload = self._build_raw_payload(selected_client_id)
             if raw_payload is None:
                 self._payload_cache[selected_client_id] = _ERROR_PAYLOAD
@@ -206,10 +231,15 @@ class PayloadBuildOrchestrator:
                 selected_client_id,
                 raw_payload,
             )
+            self._serialized_payload_count += 1
 
-        async with anyio.create_task_group() as task_group:
-            for selected_client_id, raw_payload in raw_payloads.items():
-                task_group.start_soon(_serialize_one, selected_client_id, raw_payload)
+        raw_payload_items = list(raw_payloads.items())
+        for start in range(0, len(raw_payload_items), self._max_concurrent_serializations):
+            async with anyio.create_task_group() as task_group:
+                for selected_client_id, raw_payload in raw_payload_items[
+                    start : start + self._max_concurrent_serializations
+                ]:
+                    task_group.start_soon(_serialize_one, selected_client_id, raw_payload)
 
         for selected_client_id in raw_payloads:
             text, failed, has_freq = serialized_payloads[selected_client_id]
@@ -222,6 +252,10 @@ class PayloadBuildOrchestrator:
     async def _build_payload_text(self, selected_client_id: str | None) -> str:
         """Build and serialize payload text for *selected_client_id* once for the tick."""
 
+        if len(self._payload_cache) >= self._max_payload_variants:
+            self._payload_cache[selected_client_id] = _ERROR_PAYLOAD
+            self._skipped_client_ids.add(selected_client_id)
+            return _ERROR_PAYLOAD
         raw_payload = self._build_raw_payload(selected_client_id)
         if raw_payload is None:
             self._payload_cache[selected_client_id] = _ERROR_PAYLOAD
@@ -231,6 +265,7 @@ class PayloadBuildOrchestrator:
             selected_client_id,
             raw_payload,
         )
+        self._serialized_payload_count += 1
         self._payload_cache[selected_client_id] = text
         if failed:
             self._failed_client_ids.add(selected_client_id)
