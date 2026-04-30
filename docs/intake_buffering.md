@@ -21,19 +21,24 @@ them, updates the client registry, writes samples into the ring buffer
 (`SignalProcessor.ingest()`), and sends a UDP ACK. This runs on the main
 event loop but each call is lightweight (microseconds per packet).
 
-### 3. Live compute (`runtime/processing_loop.py` + `processing/processor.py`)
+### 3. Live compute
 
-The async processing loop in `runtime/processing_loop.py` runs on a timer,
-filters to active clients with fresh data, and calls `SignalProcessor.compute_all()`
-via `asyncio.to_thread()` so the event loop never performs FFT work directly.
+Owner files:
+
+- `apps/server/vibesensor/infra/runtime/processing_loop.py`
+- `apps/server/vibesensor/infra/processing/processor.py`
+
+The async processing loop runs on a timer, filters to active clients with fresh
+data, and calls `SignalProcessor.compute_all()` via `asyncio.to_thread()` so the
+event loop never performs FFT work directly.
 
 `SignalProcessor` is now a facade over three explicit subsystems:
 
-- `processing/buffer_store.py`: coordinator over ingest, snapshot capture, stats, and shared buffer queries
-- `processing/buffer_registry.py`: per-client buffers, epochs, eviction, and lock ordering
-- `processing/buffer_mutations.py` + `processing/ingest_preparation.py`: buffer mutation policy plus chunk normalization/overflow trimming
-- `processing/compute.py`: FFT cache ownership plus metric computation from snapshots
-- `processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
+- `apps/server/vibesensor/infra/processing/buffer_store.py`: coordinator over ingest, snapshot capture, stats, and shared buffer queries
+- `apps/server/vibesensor/infra/processing/buffer_registry.py`: per-client buffers, epochs, eviction, and lock ordering
+- `apps/server/vibesensor/infra/processing/buffer_mutations.py` + `apps/server/vibesensor/infra/processing/ingest_preparation.py`: buffer mutation policy plus chunk normalization/overflow trimming
+- `apps/server/vibesensor/infra/processing/compute.py`: FFT cache ownership plus metric computation from snapshots
+- `apps/server/vibesensor/infra/processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
 
 Inside `SignalProcessor.compute_all()`, per-client FFT work is dispatched through
 the shared `WorkerPool` when multiple clients are active. `compute_metrics()` now
@@ -74,7 +79,9 @@ then analyzes that one block.
 
 ### FFT pipeline
 
-`apps/server/vibesensor/infra/processing/compute.py` owns the cached FFT setup:
+`apps/server/vibesensor/infra/processing/compute.py` owns the live cached FFT
+setup through `SignalMetricsComputer`, which extends the shared
+`apps/server/vibesensor/shared/fft_analysis.py` spectral-analysis primitive:
 
 - `SignalMetricsComputer` precomputes a Hann window with
   `scipy.signal.windows.hann(config.fft_n)`.
@@ -83,21 +90,21 @@ then analyzes that one block.
 - `fft_params(sample_rate_hz)` caches the frequency slice and valid FFT indices
   per sample rate so repeated ticks do not rebuild them.
 
-`apps/server/vibesensor/infra/processing/compute.py` coordinates the pure DSP
-steps with shared FFT/strength helpers:
+`apps/server/vibesensor/infra/processing/compute.py` coordinates live snapshot
+handling and metric commits, while the pure DSP steps stay in shared helpers:
 
 1. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
    removes isolated transport/I2C spikes without blurring normal vibration
    content.
 2. `SignalMetricsComputer.compute()` detrends the captured windows by removing
    the per-axis mean before RMS/P2P and FFT computation.
-3. `compute_fft_spectrum()` applies the SciPy-backed Hann window, runs the
-   planned pyFFTW RFFT backend, slices the configured frequency range via
-   SciPy FFT frequency bins, and produces both per-axis spectra and a combined
-   amplitude curve.
-4. `compute_vibration_strength_db()` uses SciPy peak finding to select dominant
-   candidate bins, estimates a P20/median noise floor, and converts the
-   dominant peak band into the
+3. `apps/server/vibesensor/shared/fft_analysis.py` applies the SciPy-backed
+   Hann window, runs the planned pyFFTW RFFT backend, slices the configured
+   frequency range via SciPy FFT frequency bins, and produces both per-axis
+   spectra and a combined amplitude curve.
+4. `apps/server/vibesensor/vibration_strength.py` uses SciPy peak finding to
+   select dominant candidate bins, estimates a P20/median noise floor, and
+   converts the dominant peak band into the
    shared dB metric used by both live telemetry and post-stop analysis:
 
    ```text
@@ -112,8 +119,9 @@ steps with shared FFT/strength helpers:
 - Generation counters decide freshness. If the ingest generation has not moved,
   the compute side can reuse the cached metrics/spectrum instead of rebuilding
   them.
-- The combined vibration-strength formula lives in `vibration_strength.py`; the
-  live path does not carry a second dB implementation.
+- The combined vibration-strength formula lives in
+  `apps/server/vibesensor/vibration_strength.py`; the live path does not carry a
+  second dB implementation.
 - Payload serialization stays downstream of computation. The processing layer
   stores structured metrics and spectrum arrays first, and only later surfaces
   them to HTTP/WebSocket payload builders.

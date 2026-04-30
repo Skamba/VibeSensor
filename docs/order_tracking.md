@@ -126,8 +126,10 @@ The same reference math serves both runtime and diagnostics:
 
 The saved per-sample peak/floor inputs consumed by order matching come from the
 same canonical live-processing FFT/strength pipeline
-(`apps/server/vibesensor/infra/processing/` plus `vibration_strength.py`), so
-order analysis does not maintain a second independent DSP stack.
+(`apps/server/vibesensor/infra/processing/compute.py`,
+`apps/server/vibesensor/shared/fft_analysis.py`, and
+`apps/server/vibesensor/vibration_strength.py`), so order analysis does not
+maintain a second independent DSP stack.
 
 That shared ownership is why `shared/order_bands.py` exists outside
 `use_cases/diagnostics/`.
