@@ -61,6 +61,7 @@ def _install_fake_subprocess(
     def _fake_run(
         command: list[str],
         cwd: str | Path | None = None,
+        env: dict[str, str] | None = None,
         check: bool = False,
         capture_output: bool = False,
         text: bool = False,
@@ -68,6 +69,9 @@ def _install_fake_subprocess(
         del cwd, check, capture_output, text
         command_list = [str(part) for part in command]
         commands.append(command_list)
+        if command_list[:2] == ["npm", "run"]:
+            assert env is not None
+            assert env["PYTHON"] == sys.executable
         if command_list[:2] == ["git", "-C"]:
             return subprocess.CompletedProcess(command_list, 0, stdout=f"{git_head}\n", stderr="")
         if command_list[:2] == ["npm", "run"] and command_list[2] in {

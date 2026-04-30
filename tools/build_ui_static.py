@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 # Keep in sync with vibesensor.use_cases.updates.status.UI_BUILD_METADATA_FILE
@@ -47,8 +49,13 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
-def _run(command: list[str], cwd: Path) -> None:
-    subprocess.run(command, cwd=cwd, check=True)
+def _run(command: list[str], cwd: Path, *, env: dict[str, str] | None = None) -> None:
+    subprocess.run(
+        command,
+        cwd=cwd,
+        env={**os.environ, **env} if env is not None else None,
+        check=True,
+    )
 
 
 def _git_head_commit(repo_root: Path) -> str:
@@ -103,15 +110,16 @@ def main(argv: list[str] | None = None) -> None:
     if args.skip_npm_ci:
         bootstrap_cmd.append("--skip-npm-ci")
     _run(bootstrap_cmd, cwd=ui_dir)
-    _run(["npm", "run", "sync:generated-contracts"], cwd=ui_dir)
+    ui_contract_env = {"PYTHON": sys.executable}
+    _run(["npm", "run", "sync:generated-contracts"], cwd=ui_dir, env=ui_contract_env)
     if not args.skip_typecheck:
-        _run(["npm", "run", "typecheck"], cwd=ui_dir)
+        _run(["npm", "run", "typecheck"], cwd=ui_dir, env=ui_contract_env)
     build_script = (
         "build:prevalidated-contracts"
         if args.assume_prevalidated_contracts
         else "build"
     )
-    _run(["npm", "run", build_script], cwd=ui_dir)
+    _run(["npm", "run", build_script], cwd=ui_dir, env=ui_contract_env)
 
     shutil.rmtree(static_dir, ignore_errors=True)
     static_dir.mkdir(parents=True, exist_ok=True)

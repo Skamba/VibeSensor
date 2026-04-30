@@ -182,7 +182,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-backend
+      - id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/setup-node@v6
         with:
@@ -196,6 +197,8 @@ jobs:
 
       - name: Materialize missing UI generated contract derivatives
         working-directory: apps/ui
+        env:
+          PYTHON: ${{ steps.setup-backend.outputs.python-path }}
         run: npm run setup:generated-contracts
 
       - name: Authoritative contract sync check
@@ -270,16 +273,23 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
+      - id: setup-python
+        uses: ./.github/actions/setup-python
+
       - name: Install UI dependencies
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
       - name: Sync generated UI contract derivatives
         working-directory: apps/ui
+        env:
+          PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: npm run sync:generated-contracts
 
       - name: UI typecheck
         working-directory: apps/ui
+        env:
+          PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: npm run typecheck
 
   ui-unit:
@@ -304,12 +314,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
+      - id: setup-python
+        uses: ./.github/actions/setup-python
+
       - name: Install UI dependencies
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
       - name: UI Vitest unit suite
         working-directory: apps/ui
+        env:
+          PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: npm run test:unit
 
       - name: Upload UI unit test artifacts
@@ -343,6 +358,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
+      - id: setup-python
+        uses: ./.github/actions/setup-python
+
       - id: playwright-browser-cache
         uses: actions/cache@v5
         with:
@@ -363,6 +381,7 @@ jobs:
       - name: UI smoke tests
         working-directory: apps/ui
         env:
+          PYTHON: ${{ steps.setup-python.outputs.python-path }}
           PLAYWRIGHT_SMOKE_WORKERS: 4
         run: npm run test:smoke
 

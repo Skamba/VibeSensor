@@ -1,11 +1,12 @@
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveConfiguredPythonCommand } from './python_runtime.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, '../..');
-const pythonCmd = process.env.PYTHON || 'python3';
+const pythonCmd = resolveConfiguredPythonCommand(root);
 const contractReferenceScript = resolve(root, 'tools/config/generate_contract_reference_doc.py');
 const uiDerivativeSyncScript = resolve(root, 'tools/config/sync_shared_contracts_to_ui.mjs');
 

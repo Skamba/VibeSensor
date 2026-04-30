@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from tests._paths import REPO_ROOT
@@ -52,6 +53,7 @@ esac
     env = os.environ | {
         "PATH": f"{fake_bin}:{os.environ['PATH']}",
         "FAKE_NPM_LOG": str(command_log),
+        "VS_PYTHON_BIN": sys.executable,
     }
     subprocess.run(
         [

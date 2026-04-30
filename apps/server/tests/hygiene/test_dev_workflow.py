@@ -117,7 +117,7 @@ def test_makefile_exposes_ui_unit_test_target_and_readme_pointer() -> None:
     readme_text = _UI_README.read_text(encoding="utf-8")
 
     assert "ui-test: ## Run UI unit tests" in makefile_text
-    assert "cd $(UI_DIR) && npm run test:unit" in makefile_text
+    assert 'cd $(UI_DIR) && PYTHON="$$PYTHON" npm run test:unit' in makefile_text
     assert "make ui-test                 # same unit suite from the repo root" in readme_text
 
 

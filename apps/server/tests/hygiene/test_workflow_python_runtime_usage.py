@@ -19,6 +19,9 @@ _CI = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _APP_ARTIFACTS = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "app_artifacts.sh"
 _PI_GEN_REPO = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "pi_gen_repo.sh"
 _PREREQS = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "prereqs.sh"
+_CONTRACT_SYNC = REPO_ROOT / "tools" / "config" / "sync_contract_artifacts.mjs"
+_UI_CONTRACT_SYNC = REPO_ROOT / "tools" / "config" / "sync_shared_contracts_to_ui.mjs"
+_PYTHON_RUNTIME = REPO_ROOT / "tools" / "config" / "python_runtime.mjs"
 _BARE_PYTHON_RE = re.compile(r"(?<![\w$\"'/.-])python(?:\s|$)")
 
 
@@ -126,11 +129,28 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
         '"${{ steps.setup-python.outputs.python-path }}" tools/dev/docs_lint.py'
     )
 
+    frontend_typecheck_steps = ci["jobs"]["frontend-typecheck"]["steps"]
+    assert isinstance(frontend_typecheck_steps, list)
+    sync_step = next(
+        step
+        for step in frontend_typecheck_steps
+        if isinstance(step, dict) and step.get("name") == "Sync generated UI contract derivatives"
+    )
+    assert sync_step["env"]["PYTHON"] == "${{ steps.setup-python.outputs.python-path }}"
+    typecheck_step = next(
+        step
+        for step in frontend_typecheck_steps
+        if isinstance(step, dict) and step.get("name") == "UI typecheck"
+    )
+    assert typecheck_step["env"]["PYTHON"] == "${{ steps.setup-python.outputs.python-path }}"
+
 
 def test_pi_image_release_scripts_accept_configured_python_path() -> None:
     app_artifacts = _APP_ARTIFACTS.read_text(encoding="utf-8")
     assert '"${VS_PYTHON_BIN}" -m venv .build-venv' in app_artifacts
     assert "python3 -m venv" not in app_artifacts
+    assert 'PYTHON="${VS_PYTHON_BIN}" npm run sync:generated-contracts' in app_artifacts
+    assert 'PYTHON="${VS_PYTHON_BIN}" npm run build' in app_artifacts
 
     pi_gen_repo = _PI_GEN_REPO.read_text(encoding="utf-8")
     assert "\"${VS_PYTHON_BIN}\" - <<'PY'" in pi_gen_repo
@@ -138,3 +158,15 @@ def test_pi_image_release_scripts_accept_configured_python_path() -> None:
 
     prereqs = _PREREQS.read_text(encoding="utf-8")
     assert 'require_cmd "${VS_PYTHON_BIN}"' in prereqs
+
+
+def test_contract_sync_tools_do_not_fall_back_to_ambient_python3() -> None:
+    runtime_text = _PYTHON_RUNTIME.read_text(encoding="utf-8")
+    assert ".python-version" in runtime_text
+    assert "python${match[1]}.${match[2]}" in runtime_text
+
+    for path in (_CONTRACT_SYNC, _UI_CONTRACT_SYNC):
+        text = path.read_text(encoding="utf-8")
+        assert "resolveConfiguredPythonCommand(root)" in text
+        assert "process.env.PYTHON ||" not in text
+        assert "|| 'python3'" not in text
