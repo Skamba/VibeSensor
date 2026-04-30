@@ -99,14 +99,21 @@ class UpdateManager:
             kind=SpanKind.INTERNAL,
             attributes={"vibesensor.transport": request.transport.value},
         ) as span:
+            workflow_task = asyncio.create_task(
+                self._workflow.run(request=request),
+                name=f"{self._task_name}-workflow",
+            )
             try:
                 await asyncio.wait_for(
-                    self._workflow.run(request=request),
+                    asyncio.shield(workflow_task),
                     timeout=self._timeout_s,
                 )
             except UpdateCleanupError as exc:
                 mark_span_error(span, exc)
-                self._reporter.fail(exc, default_phase="cleanup")
+                if str(exc).startswith("Cleanup failed after cancellation:"):
+                    self._reporter.fail_cancelled_cleanup_failed(exc)
+                    return
+                self._reporter.fail_cleanup_failed(exc)
                 raise
             except UpdateError as exc:
                 mark_span_error(span, exc)
@@ -114,12 +121,39 @@ class UpdateManager:
                 return
             except TimeoutError as exc:
                 mark_span_error(span, exc)
-                self._reporter.fail_timeout(timeout_s=self._timeout_s)
+                workflow_task.cancel()
+                cleanup_error = await _await_cancelled_workflow_cleanup(workflow_task)
+                if cleanup_error is not None:
+                    mark_span_error(span, cleanup_error)
+                    self._reporter.fail_timeout_cleanup_failed(
+                        cleanup_error,
+                        timeout_s=self._timeout_s,
+                    )
+                else:
+                    self._reporter.fail_timeout(timeout_s=self._timeout_s)
             except asyncio.CancelledError:
                 span.set_attribute("vibesensor.cancelled", True)
-                self._reporter.fail_cancelled()
+                workflow_task.cancel()
+                cleanup_error = await _await_cancelled_workflow_cleanup(workflow_task)
+                if cleanup_error is not None:
+                    mark_span_error(span, cleanup_error)
+                    self._reporter.fail_cancelled_cleanup_failed(cleanup_error)
+                else:
+                    self._reporter.fail_cancelled()
                 raise
             finally:
                 span.set_attribute("vibesensor.final_state", self._status.status.state.value)
                 self._status.clear_secrets()
                 self._status.finish_cleanup()
+
+
+async def _await_cancelled_workflow_cleanup(
+    workflow_task: asyncio.Task[None],
+) -> UpdateCleanupError | None:
+    try:
+        await workflow_task
+    except UpdateCleanupError as exc:
+        return exc
+    except asyncio.CancelledError:
+        return None
+    return None
