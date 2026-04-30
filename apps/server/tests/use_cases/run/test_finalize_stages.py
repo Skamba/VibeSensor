@@ -70,9 +70,9 @@ def test_finalize_active_run_reports_successful_stage_results() -> None:
     assert result.run_id_to_analyze == "run-1"
     assert [stage.stage_name for stage in result.stage_results] == [
         "FlushPendingRowsStage",
-        "ResolvePostAnalysisCandidateStage",
         "FinalizeRawCaptureStage",
         "FinalizePersistenceStage",
+        "ResolvePostAnalysisCandidateStage",
     ]
     assert [stage.status for stage in result.stage_results] == ["ok", "ok", "ok", "ok"]
 
@@ -116,9 +116,9 @@ def test_finalize_active_run_marks_skipped_and_degraded_stages(
 
     assert [stage.status for stage in result.stage_results] == [
         "skipped",
+        "degraded",
+        "degraded",
         "skipped",
-        "degraded",
-        "degraded",
     ]
     stage_logs = {
         getattr(record, "stage_name", ""): record
@@ -128,6 +128,85 @@ def test_finalize_active_run_marks_skipped_and_degraded_stages(
     assert stage_logs["FinalizeRawCaptureStage"].stage_status == "degraded"
     assert stage_logs["FinalizeRawCaptureStage"].diagnostic_context["queue_depth"] == 3
     assert stage_logs["FinalizePersistenceStage"].stage_status == "degraded"
+    assert result.stage_results[-1].diagnostic_context["reason"] == "raw_capture_finalize_unsettled"
+
+
+def test_finalize_active_run_resolves_analysis_after_finalize_stages() -> None:
+    events: list[str] = []
+    sample_flush = SimpleNamespace(pending_flush_snapshot=lambda: None)
+    persistence = SimpleNamespace(
+        status_snapshot=lambda: PersistenceStatusSnapshot(
+            write_error=None,
+            written_sample_count=1,
+            dropped_sample_count=0,
+        ),
+        ready_for_analysis=lambda run_id: (
+            events.append("resolve")
+            or (run_id if events == ["raw_finalize", "persistence_finalize", "resolve"] else None)
+        ),
+        history_run_created=True,
+        finalize_run=lambda run_id, start_time_utc, end_time_utc: (
+            events.append("persistence_finalize") or True
+        ),
+    )
+    raw_capture = SimpleNamespace(
+        finalize_run=lambda run_id, *, sensor_losses=None: (
+            events.append("raw_finalize") or RawCaptureFinalizeResult(status="completed")
+        )
+    )
+
+    result = finalize_active_run(
+        run_id="run-ordered",
+        start_time_utc="2026-04-25T06:43:00Z",
+        stop_reason="manual",
+        ingest_drop_losses=None,
+        sample_flush=sample_flush,
+        persistence=persistence,
+        raw_capture=raw_capture,
+        record_raw_capture_finalize_result=lambda run_id, result: None,
+        logger=logging.getLogger("test.finalize.ordered"),
+    )
+
+    assert events == ["raw_finalize", "persistence_finalize", "resolve"]
+    assert result.run_id_to_analyze == "run-ordered"
+
+
+def test_finalize_active_run_defers_analysis_when_raw_capture_timeout_is_unsettled() -> None:
+    sample_flush = SimpleNamespace(pending_flush_snapshot=lambda: None)
+    persistence = SimpleNamespace(
+        status_snapshot=lambda: PersistenceStatusSnapshot(
+            write_error=None,
+            written_sample_count=1,
+            dropped_sample_count=0,
+        ),
+        ready_for_analysis=lambda run_id: run_id,
+        history_run_created=True,
+        finalize_run=lambda run_id, start_time_utc, end_time_utc: True,
+    )
+    raw_capture = SimpleNamespace(
+        finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
+            status="timeout",
+            error="raw capture finalize timed out",
+        )
+    )
+
+    result = finalize_active_run(
+        run_id="run-timeout",
+        start_time_utc="2026-04-25T06:44:00Z",
+        stop_reason="manual",
+        ingest_drop_losses=None,
+        sample_flush=sample_flush,
+        persistence=persistence,
+        raw_capture=raw_capture,
+        record_raw_capture_finalize_result=lambda run_id, result: None,
+        logger=logging.getLogger("test.finalize.timeout"),
+    )
+
+    assert result.run_id_to_analyze is None
+    resolve_stage = result.stage_results[-1]
+    assert resolve_stage.stage_name == "ResolvePostAnalysisCandidateStage"
+    assert resolve_stage.status == "skipped"
+    assert resolve_stage.diagnostic_context["reason"] == "raw_capture_finalize_unsettled"
 
 
 def test_finalize_active_run_logs_failed_stage_and_reraises(

@@ -156,6 +156,7 @@ class RunRecorder:
                 self.registry,
                 client_ids,
             ),
+            late_finalize_callback=self._handle_late_raw_capture_finalize_result,
         )
 
         self._sample_flush = SampleFlushOrchestrator(
@@ -582,6 +583,39 @@ class RunRecorder:
                 raw_capture_error=result.error,
             ),
         )
+
+    def _handle_late_raw_capture_finalize_result(
+        self,
+        run_id: str,
+        result: RawCaptureFinalizeResult,
+    ) -> None:
+        with self._lock:
+            previous = self._raw_capture_finalize_results.get(run_id)
+            if previous is not None and previous.status != "timeout":
+                return
+            self._record_raw_capture_finalize_result(run_id, result)
+            finalized = self._raw_capture_finalize_results[run_id]
+        if not self._persistence.update_raw_capture_finalize(run_id, finalized):
+            LOGGER.warning(
+                "late_raw_capture_finalize_metadata_update_failed",
+                extra=log_extra(
+                    event="late_raw_capture_finalize_metadata_update_failed",
+                    run_id=run_id,
+                    raw_capture_finalize_status=result.status,
+                    raw_capture_error=result.error,
+                ),
+            )
+            return
+        if self._history_db is not None:
+            LOGGER.info(
+                "late_raw_capture_finalize_scheduling_post_analysis",
+                extra=log_extra(
+                    event="late_raw_capture_finalize_scheduling_post_analysis",
+                    run_id=run_id,
+                    raw_capture_finalize_status=result.status,
+                ),
+            )
+            self.schedule_post_analysis(run_id)
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)

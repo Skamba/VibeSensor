@@ -59,6 +59,8 @@ class _FinalizeRequest:
     done: threading.Event = field(default_factory=threading.Event)
     manifest: RawCaptureManifest | None = None
     error: BaseException | None = None
+    timed_out: bool = False
+    late_callback_sent: bool = False
 
 
 @dataclass(slots=True)
@@ -126,6 +128,7 @@ class RunRawCaptureWriter:
         "_active_run_id",
         "_history_db",
         "_ingest_diagnostics",
+        "_late_finalize_callback",
         "_lock",
         "_logger",
         "_queue",
@@ -144,6 +147,7 @@ class RunRawCaptureWriter:
         sensor_sync_snapshotter: (
             Callable[[tuple[str, ...]], Mapping[str, RawCaptureSensorClockSync] | None] | None
         ) = None,
+        late_finalize_callback: Callable[[str, RawCaptureFinalizeResult], None] | None = None,
     ) -> None:
         self._history_db = (
             history_db
@@ -154,6 +158,7 @@ class RunRawCaptureWriter:
         )
         self._logger = logger
         self._ingest_diagnostics = ingest_diagnostics
+        self._late_finalize_callback = late_finalize_callback
         self._lock = threading.RLock()
         self._sensor_sync_snapshotter = sensor_sync_snapshotter
         self._queue: queue.Queue[
@@ -288,6 +293,9 @@ class RunRawCaptureWriter:
         finished = request.done.wait(timeout=_bounded_wait_timeout(timeout_s))
         if not finished:
             queue_depth = self._queue.qsize()
+            request.timed_out = True
+            if request.done.is_set():
+                self._notify_late_finalize(request)
             self._logger.error(
                 "Timed out waiting %.2fs for raw capture finalize for run %s; queue depth=%s",
                 max(0.0, float(timeout_s)),
@@ -387,6 +395,8 @@ class RunRawCaptureWriter:
                         )
                     finally:
                         item.done.set()
+                        if item.timed_out:
+                            self._notify_late_finalize(item)
                     continue
                 run_id, chunk, run_stats = item
                 try:
@@ -404,6 +414,33 @@ class RunRawCaptureWriter:
                     )
             finally:
                 self._queue.task_done()
+
+    def _notify_late_finalize(self, request: _FinalizeRequest) -> None:
+        callback = self._late_finalize_callback
+        if callback is None:
+            return
+        if request.late_callback_sent:
+            return
+        request.late_callback_sent = True
+        if request.error is not None:
+            result = RawCaptureFinalizeResult(
+                status="failed",
+                error=f"raw capture finalize failed for {request.run_id}: {request.error}",
+                queue_depth=self._queue.qsize(),
+            )
+        else:
+            result = RawCaptureFinalizeResult(
+                status="completed",
+                manifest=request.manifest,
+                queue_depth=self._queue.qsize(),
+            )
+        try:
+            callback(request.run_id, result)
+        except BaseException:  # noqa: BLE001
+            self._logger.exception(
+                "Late raw capture finalize callback failed for run %s",
+                request.run_id,
+            )
 
 
 def _merge_sensor_losses(
