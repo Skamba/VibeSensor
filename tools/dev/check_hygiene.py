@@ -1631,7 +1631,12 @@ def _normalize_local_step(step) -> str:
     if step.cwd != ROOT:
         cwd_prefix = f"cd {step.cwd.relative_to(ROOT).as_posix()} && "
     env_prefix = _normalize_env(step.env)
-    return f"{cwd_prefix}{env_prefix}{_normalize_tokenized_command(step.cmd)}"
+    command = (
+        step.cmd[0]
+        if getattr(step, "shell", False)
+        else _normalize_tokenized_command(step.cmd)
+    )
+    return f"{cwd_prefix}{env_prefix}{command}"
 
 
 def _local_runner_commands() -> tuple[dict[str, list[str]], list[str], list[str]]:
@@ -1789,32 +1794,28 @@ def check_ci_command_sync() -> list[str]:
     return errors
 
 
-def _makefile_ci_lite_status() -> tuple[bool, bool]:
-    text = (ROOT / "Makefile").read_text(encoding="utf-8")
-    legacy_var_present = "CI_LITE_JOBS :=" in text or "CI_LITE_JOBS:=" in text
-    uses_ci_lite_flag = "tools/tests/run_ci_parallel.py --ci-lite" in text
-    return legacy_var_present, uses_ci_lite_flag
-
-
 def check_ci_lite_job_sync() -> list[str]:
     """Verify CI-lite entrypoints derive from the shared workflow manifest."""
     manifest = _load_ci_manifest_module()
     ci_parallel = _load_ci_parallel_module()
-    expected = list(manifest.ci_lite_job_names())
-    actual = list(ci_parallel.CI_LITE_JOB_NAMES)
     errors: list[str] = []
-    if actual != expected:
-        errors.append(
-            "run_ci_parallel.py CI-lite jobs drifted from the workflow manifest: "
-            f"expected={expected!r} actual={actual!r}"
-        )
-    legacy_var_present, uses_ci_lite_flag = _makefile_ci_lite_status()
-    if legacy_var_present:
+    for name, manifest_names, runner_names in (
+        ("CI-fast", manifest.ci_fast_job_names(), ci_parallel.CI_FAST_JOB_NAMES),
+        ("CI-lite", manifest.ci_lite_job_names(), ci_parallel.CI_LITE_JOB_NAMES),
+    ):
+        expected = list(manifest_names)
+        actual = list(runner_names)
+        if actual != expected:
+            errors.append(
+                f"run_ci_parallel.py {name} jobs drifted from the workflow manifest: "
+                f"expected={expected!r} actual={actual!r}"
+            )
+    makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    if "CI_LITE_JOBS :=" in makefile_text or "CI_LITE_JOBS:=" in makefile_text:
         errors.append("Makefile must not define a mirrored CI_LITE_JOBS variable.")
-    if not uses_ci_lite_flag:
-        errors.append(
-            "Makefile test-ci-lite must invoke tools/tests/run_ci_parallel.py --ci-lite."
-        )
+    for target, flag in (("test-ci-fast", "--ci-fast"), ("test-ci-lite", "--ci-lite")):
+        if f"tools/tests/run_ci_parallel.py {flag}" not in makefile_text:
+            errors.append(f"Makefile {target} must invoke run_ci_parallel.py {flag}.")
     return errors
 
 

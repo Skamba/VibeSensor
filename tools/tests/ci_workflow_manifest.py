@@ -29,13 +29,27 @@ _repo_tooling_support = _load_repo_tooling_support()
 _CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 _INSTALL_STEP_NAMES = frozenset(
     {
+        "Configure backend virtualenv",
         "Install dependencies",
         "Install ShellCheck",
         "Install PlatformIO dependencies",
         "Install UI dependencies",
+        "Prepare retry helper",
+        "Report backend virtualenv cache hit",
+        "Report backend virtualenv cache miss",
     }
 )
 _CI_LITE_EXCLUDED_JOBS = frozenset({"e2e"})
+_CI_FAST_EXCLUDED_JOBS = frozenset(
+    {
+        "e2e",
+        "firmware-native-tests",
+        "release-smoke",
+        "ui-smoke",
+        "ui-unit",
+    }
+)
+_CI_FAST_EXCLUDED_PREFIXES = ("backend-tests-",)
 _WORKFLOW_ONLY_EXCLUDED_JOBS = frozenset({"ci-scope", "ui-build-artifact"})
 _PYTHON_PATH_TOKENS = frozenset(
     {
@@ -437,4 +451,13 @@ def ci_lite_job_names() -> tuple[str, ...]:
         job_name
         for job_name in ci_workflow_jobs()
         if job_name not in _CI_LITE_EXCLUDED_JOBS
+    )
+
+
+def ci_fast_job_names() -> tuple[str, ...]:
+    return tuple(
+        job_name
+        for job_name in ci_workflow_jobs()
+        if job_name not in _CI_FAST_EXCLUDED_JOBS
+        and not job_name.startswith(_CI_FAST_EXCLUDED_PREFIXES)
     )
