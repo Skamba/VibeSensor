@@ -520,6 +520,27 @@ def _check_firmware_guidance_validation(repo_root: Path) -> list[str]:
     return issues
 
 
+def _check_unsupported_ai_toolchain_commands(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    issues: list[str] = []
+    guidance_files = sorted(
+        path
+        for path in markdown_files
+        if path == ".github/copilot-instructions.md"
+        or path.startswith(".github/instructions/")
+        or path == "AGENTS.md"
+        or path.endswith("/AGENTS.md")
+    )
+    for path in guidance_files:
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        if "uv run" in text:
+            issues.append(f"{path}: unsupported AI guidance command: uv run")
+    return issues
+
+
 def _check_guidance_script_references(
     markdown_files: list[str], repo_root: Path
 ) -> list[str]:
@@ -682,6 +703,7 @@ def main() -> int:
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_frontend_guidance_validation(repo_root))
     issues.extend(_check_firmware_guidance_validation(repo_root))
+    issues.extend(_check_unsupported_ai_toolchain_commands(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
