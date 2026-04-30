@@ -1454,6 +1454,10 @@ def _validate_server_dockerfile(
             errors.append(
                 f"{label} UI node tag {docker_node!r} does not match .nvmrc {expected_node!r}."
             )
+        if "ENV PYTHON=/usr/bin/python3" not in dockerfile_text:
+            errors.append(
+                f"{label} UI build stage must pass an explicit Python path into npm contract sync."
+            )
     elif docker_node is not None:
         errors.append(
             f"{label} must stay backend-only and must not include a ui-build stage."
@@ -1624,7 +1628,7 @@ def _normalize_shell_command(command: str) -> str:
 def _normalize_env(env: Mapping[str, object] | None) -> str:
     if not env:
         return ""
-    parts = [f"{key}={env[key]}" for key in sorted(env)]
+    parts = [f"{key}={shlex.quote(str(env[key]))}" for key in sorted(env)]
     return f"env {' '.join(parts)} "
 
 
@@ -1865,6 +1869,20 @@ def check_contract_sync_entrypoint() -> list[str]:
             )
         if rel_path not in gitignore_text:
             errors.append(f".gitignore must ignore {rel_path}.")
+
+    for rel_path in (
+        "tools/config/sync_contract_artifacts.mjs",
+        "tools/config/sync_shared_contracts_to_ui.mjs",
+    ):
+        text = (ROOT / rel_path).read_text(encoding="utf-8")
+        if "resolveConfiguredPythonCommand(root)" not in text:
+            errors.append(
+                f"{rel_path} must resolve Python through tools/config/python_runtime.mjs."
+            )
+        if "process.env.PYTHON ||" in text or "|| 'python3'" in text:
+            errors.append(
+                f"{rel_path} must not fall back to ambient python3; use the configured Python runtime."
+            )
 
     workflow = _load_ci_workflow()
     jobs = workflow.get("jobs")
@@ -2470,7 +2488,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                 isinstance(step_name, str)
                 and step_name == "UI smoke tests"
                 and normalized_command
-                == "cd apps/ui && env PLAYWRIGHT_SMOKE_WORKERS=4 npm run test:smoke"
+                == "cd apps/ui && env PLAYWRIGHT_SMOKE_WORKERS=4 PYTHON='${{ steps.setup-python.outputs.python-path }}' npm run test:smoke"
             ):
                 ui_smoke_command_ok = True
             uses = step.get("uses")

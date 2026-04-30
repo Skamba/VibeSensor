@@ -130,7 +130,7 @@ def _normalize_shell_command(command: str) -> str:
 def _normalize_env(env: Mapping[str, object] | None) -> str:
     if not env:
         return ""
-    parts = [f"{key}={env[key]}" for key in sorted(env)]
+    parts = [f"{key}={shlex.quote(str(env[key]))}" for key in sorted(env)]
     return f"env {' '.join(parts)} "
 
 
@@ -238,9 +238,17 @@ def _normalized_ci_steps(raw_step: Mapping[str, object]) -> tuple[CiWorkflowStep
 
 def _replace_python_placeholders(command: str, python_cmd: str) -> str:
     tokens = shlex.split(command)
-    replaced = [
-        python_cmd if token in _PYTHON_PATH_TOKENS else token for token in tokens
-    ]
+    replaced: list[str] = []
+    for token in tokens:
+        if token in _PYTHON_PATH_TOKENS:
+            replaced.append(python_cmd)
+            continue
+        if "=" in token:
+            key, value = token.split("=", 1)
+            if value in _PYTHON_PATH_TOKENS:
+                replaced.append(f"{key}={python_cmd}")
+                continue
+        replaced.append(token)
     return _normalize_shell_command(" ".join(shlex.quote(token) for token in replaced))
 
 
