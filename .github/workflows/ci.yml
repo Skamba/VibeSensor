@@ -19,6 +19,7 @@ jobs:
     outputs:
       run_docs_lint: ${{ steps.scope.outputs.run_docs_lint }}
       run_repo_hygiene: ${{ steps.scope.outputs.run_repo_hygiene }}
+      run_shell_lint: ${{ steps.scope.outputs.run_shell_lint }}
       run_backend_lint: ${{ steps.scope.outputs.run_backend_lint }}
       run_backend_static_guards: ${{ steps.scope.outputs.run_backend_static_guards }}
       run_backend_preflight: ${{ steps.scope.outputs.run_backend_preflight }}
@@ -83,6 +84,25 @@ jobs:
 
       - name: Repo hygiene checks
         run: python tools/dev/check_hygiene.py
+
+  shell-lint:
+    name: Shell lint
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_shell_lint == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: ShellCheck deployment scripts
+        run: make shell-lint
 
   backend-static-guards:
     name: Backend static guards

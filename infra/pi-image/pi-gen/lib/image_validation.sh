@@ -602,7 +602,7 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   sudo grep -n 'vibesensor_.*sudo\|vibesensor_obd_admin.py' "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
 
   echo "=== Validation: vibesensor systemd units ==="
-  ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
+  find "${ROOT_MNT}/etc/systemd/system" -maxdepth 1 -iname '*vibesensor*' -print || true
 
   echo "=== Validation: first user preconfigured, wizard disabled ==="
   grep -n "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd"

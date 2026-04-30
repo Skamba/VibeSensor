@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 bootstrap_helper="$script_dir/../../tools/ui/ensure_ui_bootstrap.mjs"
 
 node "$bootstrap_helper" --log-prefix "[dev:docker]"

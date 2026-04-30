@@ -122,6 +122,27 @@ _SELECTION_CASES = (
     ),
     pytest.param(
         SelectionCase(
+            changed_files=("tools/tests/run_ci_with_act.sh",),
+            expected_jobs=frozenset({"shell_lint"}),
+        ),
+        id="shell-script-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(".githooks/pre-push",),
+            expected_jobs=frozenset({"shell_lint"}),
+        ),
+        id="githook-only",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("infra/pi-image/pi-gen/templates/stage-vibesensor/prerun.sh.template",),
+            expected_jobs=frozenset({"shell_lint"}),
+        ),
+        id="pi-image-shell-template",
+    ),
+    pytest.param(
+        SelectionCase(
             changed_files=("apps/server/Dockerfile",),
             expected_jobs=_FULL_STACK,
         ),

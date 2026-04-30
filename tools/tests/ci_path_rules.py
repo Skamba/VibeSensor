@@ -39,6 +39,8 @@ BACKEND_STATIC_GUARD_TOOL_FILES = {"tools/dev/verify_backend_static_guards.py"}
 BACKEND_TEST_TOOL_FILES = {"tools/tests/run_backend_parallel.py"}
 RELEASE_TRIGGER_FILES = {"tools/tests/run_release_smoke.py", "tools/build_ui_static.py"}
 E2E_TRIGGER_FILES = {"tools/tests/run_e2e_parallel.py", "apps/server/Dockerfile.e2e"}
+SHELL_LINT_TRIGGER_PREFIXES = (".githooks/", "infra/pi-image/")
+SHELL_LINT_EXTENSIONS = (".sh", ".sh.template")
 CONTRACT_SYNC_TRIGGER_FILES = {
     "apps/ui/package.json",
     "apps/ui/src/contracts/http_api_schema.json",
@@ -55,6 +57,7 @@ CONTRACT_SYNC_TRIGGER_FILES = {
 class WorkflowJobSelection:
     docs_lint: bool = False
     repo_hygiene: bool = False
+    shell_lint: bool = False
     backend_lint: bool = False
     backend_static_guards: bool = False
     backend_preflight: bool = False
@@ -93,6 +96,13 @@ def is_markdown_path(path: str) -> bool:
         normalized.endswith(".md")
         or normalized in DOC_FILES
         or normalized.startswith("docs/")
+    )
+
+
+def is_shell_lint_path(path: str) -> bool:
+    normalized = PurePosixPath(path).as_posix()
+    return normalized.endswith(SHELL_LINT_EXTENSIONS) or any(
+        normalized.startswith(prefix) for prefix in SHELL_LINT_TRIGGER_PREFIXES
     )
 
 
@@ -149,6 +159,7 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
     )
     release_tool_changed = any(path in RELEASE_TRIGGER_FILES for path in non_docs_paths)
     e2e_tool_changed = any(path in E2E_TRIGGER_FILES for path in non_docs_paths)
+    shell_lint_changed = any(is_shell_lint_path(path) for path in non_docs_paths)
 
     return WorkflowJobSelection(
         docs_lint=full_stack or docs_changed or docs_lint_tool_changed,
@@ -158,6 +169,7 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         or frontend_changed
         or python_tool_changed
         or contract_sync_changed,
+        shell_lint=full_stack or shell_lint_changed,
         backend_lint=full_stack or backend_changed or python_tool_changed,
         backend_static_guards=full_stack
         or backend_changed

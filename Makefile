@@ -1,9 +1,30 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
 LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/tests tools
+SHELLCHECK_TARGETS := \
+	.githooks/pre-commit \
+	.githooks/pre-push \
+	apps/server/scripts/hotspot_nmcli.sh \
+	apps/server/scripts/install_pi.sh \
+	apps/server/scripts/vibesensor_update_sudo.sh \
+	apps/ui/dev-docker.sh \
+	infra/pi-image/pi-gen/build.sh \
+	infra/pi-image/pi-gen/lib/app_artifacts.sh \
+	infra/pi-image/pi-gen/lib/artifacts.sh \
+	infra/pi-image/pi-gen/lib/common.sh \
+	infra/pi-image/pi-gen/lib/image_validation.sh \
+	infra/pi-image/pi-gen/lib/mirror.sh \
+	infra/pi-image/pi-gen/lib/pi_gen_repo.sh \
+	infra/pi-image/pi-gen/lib/prereqs.sh \
+	infra/pi-image/pi-gen/lib/stage_assembly.sh \
+	infra/pi-image/pi-gen/templates/export-image/04-vibesensor-trim/00-run.sh \
+	infra/pi-image/pi-gen/templates/stage-vibesensor/00-vibesensor/00-run.sh.template \
+	infra/pi-image/pi-gen/templates/stage-vibesensor/prerun.sh.template \
+	infra/pi-image/pi-gen/validate-image.sh \
+	tools/tests/run_ci_with_act.sh
 PYTHON_VERSION := $(strip $(shell cat .python-version))
 PYTHON_MAJOR := $(word 1,$(subst ., ,$(PYTHON_VERSION)))
 PYTHON_MINOR := $(word 2,$(subst ., ,$(PYTHON_VERSION)))
@@ -48,11 +69,16 @@ format: ## Run Ruff formatter over backend and tooling files
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff format $(LINT_TARGETS)
 
+shell-lint: ## Run ShellCheck over deployment, hook, and Pi-image shell scripts
+	@command -v shellcheck >/dev/null 2>&1 || { echo "ERROR: shellcheck is required for make shell-lint." >&2; exit 127; }
+	shellcheck --severity=warning -x -s bash $(SHELLCHECK_TARGETS)
+
 lint: ## Run repo hygiene, dependency/static guards, docs lint, and contract drift checks
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	"$$PYTHON" tools/dev/check_hygiene.py && \
+	$(MAKE) --no-print-directory shell-lint && \
 	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
