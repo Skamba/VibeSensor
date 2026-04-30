@@ -46,7 +46,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     buildCarsWizardRenderModel(workflow.renderState.value, {
       fmt: ctx.formatting.fmt,
       t: ctx.services.t,
-    })
+    }),
   );
   ctx.panel.model.value = wizardModel;
   let handlersBound = false;
@@ -55,7 +55,9 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     void workflow.openWizard();
   }
 
-  async function handleInteraction(action: CarsFeatureInteraction): Promise<void> {
+  async function handleInteraction(
+    action: CarsFeatureInteraction,
+  ): Promise<void> {
     if (action.type === "open") {
       openWizard();
       return;

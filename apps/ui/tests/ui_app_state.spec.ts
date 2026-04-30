@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { defaultAnalysisSettings } from "../src/constants";
-import {
-  createAppState,
-} from "../src/app/ui_app_state";
+import { createAppState } from "../src/app/ui_app_state";
 import { batch, effect } from "../src/app/ui_signals";
 
 describe("ui_app_state reactivity", () => {
@@ -40,7 +38,9 @@ describe("ui_app_state reactivity", () => {
     expect(state.transport.wsState).toBe(wsStateSignal);
 
     const dispose = effect(() => {
-      seenStates.push(`${state.transport.wsState.value}:${String(state.transport.payloadError.value)}`);
+      seenStates.push(
+        `${state.transport.wsState.value}:${String(state.transport.payloadError.value)}`,
+      );
     });
 
     expect(seenStates).toEqual(["connecting:null"]);
@@ -62,7 +62,9 @@ describe("ui_app_state reactivity", () => {
     const seenRatios: number[] = [];
 
     const dispose = effect(() => {
-      seenRatios.push(state.settings.car.activeVehicleSettings.value.current_gear_ratio);
+      seenRatios.push(
+        state.settings.car.activeVehicleSettings.value.current_gear_ratio,
+      );
     });
 
     expect(seenRatios).toEqual([0.64]);

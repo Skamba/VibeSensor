@@ -12,11 +12,18 @@ export async function setUiLanguage(lang: string): Promise<void> {
   currentLanguage.value = normalizedLanguage;
 }
 
-export function translateUiText(key: string, vars?: Record<string, unknown>): string {
+export function translateUiText(
+  key: string,
+  vars?: Record<string, unknown>,
+): string {
   return translate(currentLanguage.value, key, vars);
 }
 
-export function getUiText(key: string, fallback: string, vars?: Record<string, unknown>): string {
+export function getUiText(
+  key: string,
+  fallback: string,
+  vars?: Record<string, unknown>,
+): string {
   return translateUiText(key, vars) || fallback;
 }
 

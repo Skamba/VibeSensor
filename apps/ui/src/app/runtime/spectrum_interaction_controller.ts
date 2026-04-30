@@ -1,4 +1,10 @@
-import { batch, computed, effect, signal, type ReadonlySignal } from "../ui_signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { ChartBand } from "../ui_app_state";
 import type {
   SpectrumFocusMarker,
@@ -64,7 +70,10 @@ export class SpectrumInteractionController {
 
   private readonly disposeInspectorSync: () => void;
 
-  private readonly scheduleTimeout: (callback: () => void, delayMs: number) => TimeoutHandle;
+  private readonly scheduleTimeout: (
+    callback: () => void,
+    delayMs: number,
+  ) => TimeoutHandle;
 
   private readonly cancelTimeout: (handle: TimeoutHandle) => void;
 
@@ -80,11 +89,12 @@ export class SpectrumInteractionController {
 
   private lastAnnouncedInspectorText: string | null = null;
 
-  constructor(
-    private readonly deps: SpectrumInteractionControllerDeps,
-  ) {
-    this.scheduleTimeout = this.deps.scheduleTimeout ?? ((callback, delayMs) => globalThis.setTimeout(callback, delayMs));
-    this.cancelTimeout = this.deps.cancelTimeout ?? ((handle) => globalThis.clearTimeout(handle));
+  constructor(private readonly deps: SpectrumInteractionControllerDeps) {
+    this.scheduleTimeout =
+      this.deps.scheduleTimeout ??
+      ((callback, delayMs) => globalThis.setTimeout(callback, delayMs));
+    this.cancelTimeout =
+      this.deps.cancelTimeout ?? ((handle) => globalThis.clearTimeout(handle));
     this.nowMs = this.deps.nowMs ?? (() => performance.now());
     this.bandToggleModel = computed(() => {
       const bands = this.currentBands.value;
@@ -98,7 +108,9 @@ export class SpectrumInteractionController {
         disabled: !hasBands,
         hidden: !hasBands,
         pressed,
-        text: this.deps.t(visible ? "spectrum.bands.hide" : "spectrum.bands.show"),
+        text: this.deps.t(
+          visible ? "spectrum.bands.hide" : "spectrum.bands.show",
+        ),
       };
     });
 
@@ -116,7 +128,9 @@ export class SpectrumInteractionController {
           ariaLabel: [
             this.deps.t("spectrum.legend.all_series"),
             allActive ? this.legendStateText("all-visible") : null,
-          ].filter((value): value is string => Boolean(value)).join(". "),
+          ]
+            .filter((value): value is string => Boolean(value))
+            .join(". "),
           ariaPressed: allActive,
           active: allActive,
         },
@@ -129,11 +143,12 @@ export class SpectrumInteractionController {
               ? "inactive"
               : "visible";
           const metric = this.deps.getStrengthDb(entry.id);
-          const detailText = typeof metric === "number" && Number.isFinite(metric)
-            ? this.deps.t("spectrum.legend.sensor_level", {
-              value: this.formatDb(metric),
-            })
-            : this.legendStateText(legendState);
+          const detailText =
+            typeof metric === "number" && Number.isFinite(metric)
+              ? this.deps.t("spectrum.legend.sensor_level", {
+                  value: this.formatDb(metric),
+                })
+              : this.legendStateText(legendState);
           return {
             id: entry.id,
             labelText: entry.label,
@@ -141,16 +156,20 @@ export class SpectrumInteractionController {
             detailText,
             titleText: active
               ? this.deps.t("spectrum.legend.clear_focus")
-              : this.deps.t("spectrum.legend.focus_series", { sensor: entry.label }),
+              : this.deps.t("spectrum.legend.focus_series", {
+                  sensor: entry.label,
+                }),
             ariaLabel: [
               entry.label,
               this.legendStateText(legendState),
               typeof metric === "number" && Number.isFinite(metric)
                 ? this.deps.t("spectrum.legend.sensor_level", {
-                  value: this.formatDb(metric),
-                })
+                    value: this.formatDb(metric),
+                  })
                 : null,
-            ].filter((value): value is string => Boolean(value)).join(". "),
+            ]
+              .filter((value): value is string => Boolean(value))
+              .join(". "),
             ariaPressed: active,
             active,
             muted,
@@ -162,23 +181,28 @@ export class SpectrumInteractionController {
     this.sensorLegendHandlersModel = computed(() =>
       this.sensorLegendModel.value === null
         ? null
-        : {
-          onReset: () => {
-            this.pinnedSeriesId.value = null;
-            this.applyPlotSelection();
-          },
-          onSelect: (entryId: string) => {
-            this.pinnedSeriesId.value = this.pinnedSeriesId.value === entryId ? null : entryId;
-            this.applyPlotSelection();
-          },
-        } satisfies SpectrumLegendHandlers
+        : ({
+            onReset: () => {
+              this.pinnedSeriesId.value = null;
+              this.applyPlotSelection();
+            },
+            onSelect: (entryId: string) => {
+              this.pinnedSeriesId.value =
+                this.pinnedSeriesId.value === entryId ? null : entryId;
+              this.applyPlotSelection();
+            },
+          } satisfies SpectrumLegendHandlers),
     );
 
     this.bandLegendModel = computed(() => {
       const activeFreq = this.activeFrequency();
-      const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
+      const activeBands =
+        activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
       return {
-        visible: this.bandsVisible.value && this.currentBands.value.length > 0 && this.currentEntries.value.length > 0,
+        visible:
+          this.bandsVisible.value &&
+          this.currentBands.value.length > 0 &&
+          this.currentEntries.value.length > 0,
         items: activeBands.map((band) => ({
           labelText: band.label,
           color: band.color,
@@ -190,40 +214,57 @@ export class SpectrumInteractionController {
     this.deps.panel.bindBandToggle(() => this.toggleBands());
     this.disposeInspectorSync = effect(() => {
       const activeFreq = this.activeFrequency();
-      const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
+      const activeBands =
+        activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
       const focusEntry = this.focusEntry();
       if (!focusEntry) {
-        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), { announce: false });
+        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), {
+          announce: false,
+        });
         return;
       }
       const cursorIdx = this.cursorDataIdx.value;
       if (activeFreq !== null && cursorIdx !== null) {
-        const currentValue = focusEntry.values[Math.min(cursorIdx, focusEntry.values.length - 1)];
-        const valueText = typeof currentValue === "number" && Number.isFinite(currentValue)
-          ? this.formatDb(currentValue)
-          : "--";
-        this.renderInspectorText(this.deps.t("spectrum.inspector_hover", {
-          sensor: focusEntry.label,
-          freq: this.formatHz(activeFreq),
-          value: valueText,
-          bands: this.bandSummaryText(activeBands),
-        }), { announce: false, throttleHover: true });
+        const currentValue =
+          focusEntry.values[Math.min(cursorIdx, focusEntry.values.length - 1)];
+        const valueText =
+          typeof currentValue === "number" && Number.isFinite(currentValue)
+            ? this.formatDb(currentValue)
+            : "--";
+        this.renderInspectorText(
+          this.deps.t("spectrum.inspector_hover", {
+            sensor: focusEntry.label,
+            freq: this.formatHz(activeFreq),
+            value: valueText,
+            bands: this.bandSummaryText(activeBands),
+          }),
+          { announce: false, throttleHover: true },
+        );
         return;
       }
       const peak = this.focusPeakInfo(focusEntry);
       if (!peak) {
-        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), { announce: false });
+        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), {
+          announce: false,
+        });
         return;
       }
-      this.renderInspectorText(this.deps.t(
-        this.pinnedSeriesId.value ? "spectrum.inspector_focus_selected" : "spectrum.inspector_focus_strongest",
-        {
-          sensor: focusEntry.label,
-          freq: this.formatHz(peak.freq),
-          value: this.formatDb(peak.value),
-          bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
-        },
-      ), { announce: true });
+      this.renderInspectorText(
+        this.deps.t(
+          this.pinnedSeriesId.value
+            ? "spectrum.inspector_focus_selected"
+            : "spectrum.inspector_focus_strongest",
+          {
+            sensor: focusEntry.label,
+            freq: this.formatHz(peak.freq),
+            value: this.formatDb(peak.value),
+            bands: this.bandSummaryText(
+              this.activeBandsForFrequency(peak.freq),
+            ),
+          },
+        ),
+        { announce: true },
+      );
     });
   }
 
@@ -241,8 +282,9 @@ export class SpectrumInteractionController {
       this.currentFreqAxis.value = params.freqAxis;
       this.currentBands.value = params.chartBands;
       if (
-        this.cursorDataIdx.value !== null
-        && (this.cursorDataIdx.value < 0 || this.cursorDataIdx.value >= params.freqAxis.length)
+        this.cursorDataIdx.value !== null &&
+        (this.cursorDataIdx.value < 0 ||
+          this.cursorDataIdx.value >= params.freqAxis.length)
       ) {
         this.cursorDataIdx.value = null;
       }
@@ -250,7 +292,12 @@ export class SpectrumInteractionController {
         this.bandsVisible.value = false;
       }
       if (options.applyPlotIsolation === false) {
-        if (this.pinnedSeriesId.value && !params.entries.some((entry) => entry.id === this.pinnedSeriesId.value)) {
+        if (
+          this.pinnedSeriesId.value &&
+          !params.entries.some(
+            (entry) => entry.id === this.pinnedSeriesId.value,
+          )
+        ) {
           this.pinnedSeriesId.value = null;
         }
       }
@@ -261,11 +308,18 @@ export class SpectrumInteractionController {
   }
 
   applyPlotSelection(): void {
-    if (this.pinnedSeriesId.value && !this.currentEntries.value.some((entry) => entry.id === this.pinnedSeriesId.value)) {
+    if (
+      this.pinnedSeriesId.value &&
+      !this.currentEntries.value.some(
+        (entry) => entry.id === this.pinnedSeriesId.value,
+      )
+    ) {
       this.pinnedSeriesId.value = null;
     }
     const activeIndex = this.pinnedSeriesId.value
-      ? this.currentEntries.value.findIndex((entry) => entry.id === this.pinnedSeriesId.value)
+      ? this.currentEntries.value.findIndex(
+          (entry) => entry.id === this.pinnedSeriesId.value,
+        )
       : -1;
     this.deps.setSeriesIsolation(activeIndex >= 0 ? activeIndex + 1 : null);
   }
@@ -299,7 +353,9 @@ export class SpectrumInteractionController {
   }
 
   private toggleBands(): void {
-    const hasBands = this.currentBands.value.length > 0 && this.currentEntries.value.length > 0;
+    const hasBands =
+      this.currentBands.value.length > 0 &&
+      this.currentEntries.value.length > 0;
     if (!hasBands) {
       this.bandsVisible.value = false;
       return;
@@ -325,8 +381,8 @@ export class SpectrumInteractionController {
     const lastCommitAtMs = this.lastHoverInspectorCommitAtMs;
     const nowMs = this.nowMs();
     if (
-      lastCommitAtMs === null
-      || (nowMs - lastCommitAtMs) >= HOVER_INSPECTOR_THROTTLE_MS
+      lastCommitAtMs === null ||
+      nowMs - lastCommitAtMs >= HOVER_INSPECTOR_THROTTLE_MS
     ) {
       this.flushPendingHoverInspector();
       return;
@@ -375,7 +431,9 @@ export class SpectrumInteractionController {
   }
 
   private activeBandsForFrequency(freqHz: number): ChartBand[] {
-    return this.currentBands.value.filter((band) => freqHz >= band.min_hz && freqHz <= band.max_hz);
+    return this.currentBands.value.filter(
+      (band) => freqHz >= band.min_hz && freqHz <= band.max_hz,
+    );
   }
 
   private bandSummaryText(bands: ChartBand[]): string {
@@ -387,11 +445,7 @@ export class SpectrumInteractionController {
   private activeFrequency(): number | null {
     const cursorIdx = this.cursorDataIdx.value;
     const freqAxis = this.currentFreqAxis.value;
-    if (
-      cursorIdx !== null
-      && cursorIdx >= 0
-      && cursorIdx < freqAxis.length
-    ) {
+    if (cursorIdx !== null && cursorIdx >= 0 && cursorIdx < freqAxis.length) {
       return freqAxis[cursorIdx];
     }
     const focusEntry = this.focusEntry();
@@ -418,7 +472,9 @@ export class SpectrumInteractionController {
   private focusEntry(): SpectrumSeriesEntry | null {
     const pinnedId = this.pinnedSeriesId.value;
     if (pinnedId) {
-      const pinnedEntry = this.currentEntries.value.find((entry) => entry.id === pinnedId);
+      const pinnedEntry = this.currentEntries.value.find(
+        (entry) => entry.id === pinnedId,
+      );
       if (pinnedEntry) {
         return pinnedEntry;
       }
@@ -426,7 +482,9 @@ export class SpectrumInteractionController {
     return this.strongestEntry();
   }
 
-  private focusPeakInfo(entry: SpectrumSeriesEntry): { freq: number; value: number } | null {
+  private focusPeakInfo(
+    entry: SpectrumSeriesEntry,
+  ): { freq: number; value: number } | null {
     const peakHz = this.deps.getTopPeakHz(entry.id);
     if (typeof peakHz !== "number" || !Number.isFinite(peakHz)) {
       return null;

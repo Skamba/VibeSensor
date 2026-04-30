@@ -13,7 +13,12 @@ import {
   type UiShellChromeBindings,
   type UiShellChromeNavigationModel,
 } from "./runtime/ui_shell_chrome";
-import { computed, signal, type ReadonlySignal, type Signal } from "./ui_signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "./ui_signals";
 import type { UiAppBootRuntime } from "./ui_app_boot_runtime";
 import { preloadRealtimeLiveOverviewPanel } from "./views/realtime_live_overview_lazy";
 import { preloadRealtimeLoggingPanel } from "./views/realtime_logging_panel_lazy";
@@ -73,7 +78,8 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
       preloadRealtimeLiveOverviewPanel(),
       preloadRealtimeLoggingPanel(),
       preloadSpectrumPanelHost(),
-    ]).then(([, { createUiAppBootRuntime }]) => {
+    ])
+      .then(([, { createUiAppBootRuntime }]) => {
         if (disposed) {
           return null;
         }
@@ -122,7 +128,10 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
           resolvedBootRuntime?.start();
         })
         .catch((error) => {
-          uiLogger.error("[VibeSensor] Failed to start UI boot runtime.", error);
+          uiLogger.error(
+            "[VibeSensor] Failed to start UI boot runtime.",
+            error,
+          );
         });
     },
   };

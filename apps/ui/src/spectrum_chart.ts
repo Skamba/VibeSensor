@@ -82,10 +82,13 @@ type ChartState = {
   text: SpectrumText;
 };
 
-export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
+export function createSpectrumChart(
+  deps: CreateSpectrumChartDeps,
+): SpectrumChart {
   const measureEl = deps.measureEl ?? deps.hostEl;
   const height = deps.height ?? signal(DEFAULT_HEIGHT);
-  const plugins = deps.plugins ?? computed<readonly SpectrumChartPlugin[]>(() => []);
+  const plugins =
+    deps.plugins ?? computed<readonly SpectrumChartPlugin[]>(() => []);
   const width = signal(computeWidth(measureEl));
   const canvas = document.createElement("canvas");
   const cssVars = getSpectrumCssVars();
@@ -146,7 +149,12 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     },
     valToPos(value, scale) {
       if (scale === "x") {
-        return projectValue(value, currentXRange ?? { min: 0, max: 1 }, currentBbox.left, currentBbox.width);
+        return projectValue(
+          value,
+          currentXRange ?? { min: 0, max: 1 },
+          currentBbox.left,
+          currentBbox.width,
+        );
       }
       return projectValue(
         value,
@@ -157,7 +165,9 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     },
   };
 
-  function syncSeriesVisibility(seriesMeta: readonly SpectrumSeriesMeta[]): void {
+  function syncSeriesVisibility(
+    seriesMeta: readonly SpectrumSeriesMeta[],
+  ): void {
     const nextLength = seriesMeta.length + 1;
     if (seriesState.length === nextLength) {
       return;
@@ -185,7 +195,10 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     const visibleSeries = getVisibleSeriesIndexes();
     const sourceIndexes = visibleSeries.length
       ? visibleSeries
-      : Array.from({ length: Math.max(0, currentData.length - 1) }, (_, index) => index + 1);
+      : Array.from(
+          { length: Math.max(0, currentData.length - 1) },
+          (_, index) => index + 1,
+        );
     for (const seriesIndex of sourceIndexes) {
       const series = currentData[seriesIndex];
       if (!series) {
@@ -273,9 +286,13 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     ctx.fillStyle = cssVars.muted;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    ctx.fillText(chartState.text.axisHz, left + (plotWidth / 2), top + plotHeight + 28);
+    ctx.fillText(
+      chartState.text.axisHz,
+      left + plotWidth / 2,
+      top + plotHeight + 28,
+    );
     ctx.save();
-    ctx.translate(14, top + (plotHeight / 2));
+    ctx.translate(14, top + plotHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -304,7 +321,11 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
       }
       ctx.beginPath();
       let started = false;
-      for (let index = 0; index < Math.min(freqAxis.length, series.length); index += 1) {
+      for (
+        let index = 0;
+        index < Math.min(freqAxis.length, series.length);
+        index += 1
+      ) {
         const x = plotContext.valToPos(freqAxis[index] ?? 0, "x");
         const y = plotContext.valToPos(series[index] ?? 0, "y");
         if (!started) {
@@ -356,7 +377,9 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     ctx.restore();
   }
 
-  function runPluginHooks(hook: keyof NonNullable<SpectrumChartPlugin["hooks"]>): void {
+  function runPluginHooks(
+    hook: keyof NonNullable<SpectrumChartPlugin["hooks"]>,
+  ): void {
     for (const plugin of chartState.plugins) {
       for (const callback of plugin.hooks?.[hook] ?? []) {
         callback(plotContext);
@@ -399,15 +422,17 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     if (
-      x < currentBbox.left
-      || x > currentBbox.left + currentBbox.width
-      || y < currentBbox.top
-      || y > currentBbox.top + currentBbox.height
+      x < currentBbox.left ||
+      x > currentBbox.left + currentBbox.width ||
+      y < currentBbox.top ||
+      y > currentBbox.top + currentBbox.height
     ) {
       updateCursorIndex(null);
       return;
     }
-    updateCursorIndex(findClosestIndex(currentData[0] ?? [], x, currentXRange, currentBbox));
+    updateCursorIndex(
+      findClosestIndex(currentData[0] ?? [], x, currentXRange, currentBbox),
+    );
   }
 
   function handlePointerLeave(): void {
@@ -478,7 +503,10 @@ function computeWidth(measureEl: HTMLElement): number {
   return Math.max(320, Math.floor(measureEl.getBoundingClientRect().width));
 }
 
-function createChartBox(width: number, height: number): {
+function createChartBox(
+  width: number,
+  height: number,
+): {
   height: number;
   left: number;
   top: number;
@@ -500,7 +528,9 @@ function normalizeData(data: SpectrumAlignedData): SpectrumAlignedData {
   return data.length ? data : EMPTY_DATA;
 }
 
-function requireCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+function requireCanvasContext(
+  canvas: HTMLCanvasElement,
+): CanvasRenderingContext2D {
   const context = canvas.getContext("2d");
   if (context === null) {
     throw new Error("Spectrum chart requires a 2D canvas context");
@@ -508,9 +538,14 @@ function requireCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext
   return context;
 }
 
-function projectValue(value: number, range: ChartRange, start: number, span: number): number {
+function projectValue(
+  value: number,
+  range: ChartRange,
+  start: number,
+  span: number,
+): number {
   const denominator = range.max - range.min || 1;
-  return start + (((value - range.min) / denominator) * span);
+  return start + ((value - range.min) / denominator) * span;
 }
 
 function buildTickValues(range: ChartRange, count: number): number[] {
@@ -520,7 +555,7 @@ function buildTickValues(range: ChartRange, count: number): number[] {
   const step = (range.max - range.min) / (count - 1 || 1);
   const ticks: number[] = [];
   for (let index = 0; index < count; index += 1) {
-    ticks.push(range.min + (step * index));
+    ticks.push(range.min + step * index);
   }
   return ticks;
 }
@@ -542,7 +577,9 @@ function findClosestIndex(
   if (freqAxis.length === 0 || xRange === null) {
     return null;
   }
-  const freqValue = xRange.min + (((x - bbox.left) / (bbox.width || 1)) * (xRange.max - xRange.min));
+  const freqValue =
+    xRange.min +
+    ((x - bbox.left) / (bbox.width || 1)) * (xRange.max - xRange.min);
   let low = 0;
   let high = freqAxis.length - 1;
   while (low < high) {
@@ -556,7 +593,11 @@ function findClosestIndex(
   }
   const candidate = low;
   const previous = Math.max(0, candidate - 1);
-  const candidateDistance = Math.abs((freqAxis[candidate] ?? freqValue) - freqValue);
-  const previousDistance = Math.abs((freqAxis[previous] ?? freqValue) - freqValue);
+  const candidateDistance = Math.abs(
+    (freqAxis[candidate] ?? freqValue) - freqValue,
+  );
+  const previousDistance = Math.abs(
+    (freqAxis[previous] ?? freqValue) - freqValue,
+  );
   return previousDistance <= candidateDistance ? previous : candidate;
 }

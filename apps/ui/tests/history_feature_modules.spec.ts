@@ -100,14 +100,18 @@ function historyInsightsPayload(runId: string, sensorCountUsed: number) {
   };
 }
 
-function historyInsightsWithFindingsPayload(runId: string, sensorCountUsed: number) {
+function historyInsightsWithFindingsPayload(
+  runId: string,
+  sensorCountUsed: number,
+) {
   return {
     ...historyInsightsPayload(runId, sensorCountUsed),
     most_likely_origin: {
       suspected_source: "Front-right wheel imbalance",
       location: "Front-right wheel",
       speed_band: "60-90 km/h",
-      explanation: "Order content and spatial dominance agree on the front-right wheel.",
+      explanation:
+        "Order content and spatial dominance agree on the front-right wheel.",
     },
     findings: [
       {
@@ -116,7 +120,8 @@ function historyInsightsWithFindingsPayload(runId: string, sensorCountUsed: numb
         confidence: 0.92,
         confidence_pct: "92%",
         confidence_tone: "success",
-        evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
+        evidence_summary:
+          "Consistent wheel-order energy remains strongest at the front-right wheel.",
         frequency_hz_or_order: "1x wheel",
         strongest_location: "Front-right wheel",
         strongest_speed_band: "60-90 km/h",
@@ -128,7 +133,8 @@ function historyInsightsWithFindingsPayload(runId: string, sensorCountUsed: numb
         confidence: 0.67,
         confidence_pct: "67%",
         confidence_tone: "warn",
-        evidence_summary: "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
+        evidence_summary:
+          "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
         frequency_hz_or_order: "1x driveshaft",
         strongest_location: "Driveshaft tunnel",
         strongest_speed_band: "70-90 km/h",
@@ -182,7 +188,10 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
 }
 
-function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string): RunDetail {
+function ensureRunDetail(
+  state: ReturnType<typeof createAppState>,
+  runId: string,
+): RunDetail {
   if (!state.history.runDetailsById.value[runId]) {
     state.history.runDetailsById.value = {
       ...state.history.runDetailsById.value,
@@ -201,7 +210,9 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
   return state.history.runDetailsById.value[runId];
 }
 
-function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | null }) {
+function latestRowModels(panel: {
+  getLatestModel(): HistoryPanelRenderModel | null;
+}) {
   const model = panel.getLatestModel();
   expect(model?.table?.kind).toBe("rows");
   if (!model?.table || model.table.kind !== "rows") {
@@ -239,11 +250,12 @@ function createFeatureHarness(
     shell: state.shell,
     services: {
       t: testTranslation,
-      requestConfirmation:
-        overrides.requestConfirmation ?? (async () => true),
-      showError: overrides.showError ?? ((message) => {
-        errors.push(message);
-      }),
+      requestConfirmation: overrides.requestConfirmation ?? (async () => true),
+      showError:
+        overrides.showError ??
+        ((message) => {
+          errors.push(message);
+        }),
     },
     formatting: {
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -295,7 +307,8 @@ test("history feature skips deletion when confirmation is declined", async () =>
 });
 
 test("history feature refreshes runs and renders an empty-state model when no runs exist", async () => {
-  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness();
+  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } =
+    createFeatureHarness();
   mswServer.use(
     ...buildHistoryHandlers({
       list: makeHistoryListPayload({ runs: [] }),
@@ -315,7 +328,8 @@ test("history feature refreshes runs and renders an empty-state model when no ru
 
 test("history feature refreshes runs and renders table state through one owner", async () => {
   const state = createAppState();
-  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness(state);
+  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } =
+    createFeatureHarness(state);
   mswServer.use(
     ...buildHistoryHandlers({
       list: makeHistoryListPayload({
@@ -332,7 +346,9 @@ test("history feature refreshes runs and renders table state through one owner",
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.runId).toBe("run-001");
   expect(row.isExpanded).toBe(false);
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.analyzing");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.analyzing",
+  );
   expect(row.summaryHeadline).toBe("history.row_status.analyzing");
   expect(row.carName).toBe("Track Car");
   expect(row.carLabel).toBe("history.car_label");
@@ -342,7 +358,8 @@ test("history feature refreshes runs and renders table state through one owner",
 });
 
 test("history feature routes the open-live table action to dashboard navigation", () => {
-  const { feature, getLatestHandlers, primaryViewActivations } = createFeatureHarness();
+  const { feature, getLatestHandlers, primaryViewActivations } =
+    createFeatureHarness();
   feature.bindHandlers();
 
   getLatestHandlers()?.onTableInteraction({ type: "open-live" });
@@ -373,13 +390,33 @@ test("history feature reloads the expanded run when the language changes", async
   );
 
   feature.toggleRunDetails("run-001");
-  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-001"]?.preview
+          ?.sensor_count_used ?? null,
+    )
+    .toBe(1);
   await feature.onHistoryTableAction("load-insights", "run-001");
-  expect(state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used).toBe(1);
+  expect(
+    state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used,
+  ).toBe(1);
 
   state.shell.lang.value = "nl";
-  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
-  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-001"]?.preview
+          ?.sensor_count_used ?? null,
+    )
+    .toBe(2);
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-001"]?.insights
+          ?.sensor_count_used ?? null,
+    )
+    .toBe(2);
 
   expect(getRenderCount()).toBeGreaterThanOrEqual(6);
   expect(requests).toEqual([
@@ -413,7 +450,12 @@ test("history feature treats analyzing insights responses as not-yet-available",
   );
 
   feature.toggleRunDetails("run-001");
-  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.previewLoading ?? false).toBe(false);
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-001"]?.previewLoading ?? false,
+    )
+    .toBe(false);
   await feature.onHistoryTableAction("load-insights", "run-001");
 
   expect(state.history.runDetailsById.value["run-001"]?.preview).toBeNull();
@@ -434,13 +476,19 @@ test("history feature rendering promotes loaded findings ahead of supporting sta
   state.history.runDetailsById.value = {
     ...state.history.runDetailsById.value,
     "run-001": {
-      preview: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["preview"],
+      preview: historyInsightsWithFindingsPayload(
+        "run-001",
+        2,
+      ) as RunDetail["preview"],
       previewLoading: false,
       previewError: "",
-    insights: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["insights"],
-    insightsLoading: false,
-    insightsError: "",
-    pdfLoading: false,
+      insights: historyInsightsWithFindingsPayload(
+        "run-001",
+        2,
+      ) as RunDetail["insights"],
+      insightsLoading: false,
+      insightsError: "",
+      pdfLoading: false,
       pdfError: "",
     },
   };
@@ -448,17 +496,30 @@ test("history feature rendering promotes loaded findings ahead of supporting sta
 
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.details?.titleEyebrow).toBe("history.details_title");
-  expect(row.details?.insights.primary?.eyebrow).toBe("history.primary_diagnosis");
-  expect(row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")?.valueLabel)
-    .toBe("32.0 dB");
-  expect(row.details?.insights.primary?.headline).toBe("Front-right wheel imbalance");
-  expect(row.details?.insights.primary?.chips.map((chip) => chip.label)).toContain("history.findings_signature");
-  expect(row.details?.insights.secondaryTitle).toBe("history.secondary_candidates_title");
+  expect(row.details?.insights.primary?.eyebrow).toBe(
+    "history.primary_diagnosis",
+  );
+  expect(
+    row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")
+      ?.valueLabel,
+  ).toBe("32.0 dB");
+  expect(row.details?.insights.primary?.headline).toBe(
+    "Front-right wheel imbalance",
+  );
+  expect(
+    row.details?.insights.primary?.chips.map((chip) => chip.label),
+  ).toContain("history.findings_signature");
+  expect(row.details?.insights.secondaryTitle).toBe(
+    "history.secondary_candidates_title",
+  );
   expect(row.details?.insights.stateMessage).toBeNull();
-  expect(row.details?.insights.visibleSecondary.map((finding) => finding.source))
-    .toContain("Secondary driveline contribution");
+  expect(
+    row.details?.insights.visibleSecondary.map((finding) => finding.source),
+  ).toContain("Secondary driveline contribution");
   expect(row.details?.insights.emptyMessage).toBeNull();
-  expect(row.details?.insights.primary?.nextStepLabel).toBe("history.findings_next_step_label");
+  expect(row.details?.insights.primary?.nextStepLabel).toBe(
+    "history.findings_next_step_label",
+  );
   expect(row.details?.footerEyebrow).toBe("history.run_actions_title");
 });
 
@@ -489,10 +550,18 @@ test("history feature preloads collapsed row context for completed runs", async 
   );
 
   await feature.refreshHistory();
-  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-001"]?.preview
+          ?.sensor_count_used ?? null,
+    )
+    .toBe(2);
 
   const row = latestRowModels({ getLatestModel })[0];
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.complete",
+  );
   expect(row.summaryHeadline).toBe("Front-right wheel imbalance");
   expect(row.summaryMeta?.includes("report.confidence")).toBe(true);
   expect(requests).toEqual([
@@ -511,7 +580,10 @@ test("history feature prefetches collapsed run previews in parallel batches", as
       insights: async (request) => {
         const url = new URL(request.url);
         const requestPath = `${url.pathname}${url.search}`;
-        if (requestPath.startsWith("/api/history/run-") && requestPath.endsWith("/insights?lang=en")) {
+        if (
+          requestPath.startsWith("/api/history/run-") &&
+          requestPath.endsWith("/insights?lang=en")
+        ) {
           previewRequests.push(requestPath);
           return await new Promise<Response>((resolve) => {
             previewResolvers.set(requestPath, resolve);
@@ -533,19 +605,40 @@ test("history feature prefetches collapsed run previews in parallel batches", as
   await feature.refreshHistory();
   await expect.poll(() => previewRequests.length).toBe(3);
 
-  previewResolvers.get("/api/history/run-001/insights?lang=en")
-    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-001", 2)));
-  previewResolvers.get("/api/history/run-002/insights?lang=en")
-    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-002", 2)));
-  previewResolvers.get("/api/history/run-003/insights?lang=en")
-    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-003", 2)));
+  previewResolvers
+    .get("/api/history/run-001/insights?lang=en")
+    ?.call(
+      null,
+      jsonResponse(historyInsightsWithFindingsPayload("run-001", 2)),
+    );
+  previewResolvers
+    .get("/api/history/run-002/insights?lang=en")
+    ?.call(
+      null,
+      jsonResponse(historyInsightsWithFindingsPayload("run-002", 2)),
+    );
+  previewResolvers
+    .get("/api/history/run-003/insights?lang=en")
+    ?.call(
+      null,
+      jsonResponse(historyInsightsWithFindingsPayload("run-003", 2)),
+    );
 
   await expect.poll(() => previewRequests.length).toBe(4);
 
-  previewResolvers.get("/api/history/run-004/insights?lang=en")
-    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-004", 2)));
+  previewResolvers
+    .get("/api/history/run-004/insights?lang=en")
+    ?.call(
+      null,
+      jsonResponse(historyInsightsWithFindingsPayload("run-004", 2)),
+    );
 
-  await expect.poll(() => state.history.runDetailsById.value["run-004"]?.preview?.sensor_count_used ?? null)
+  await expect
+    .poll(
+      () =>
+        state.history.runDetailsById.value["run-004"]?.preview
+          ?.sensor_count_used ?? null,
+    )
     .toBe(2);
 
   expect(previewRequests).toEqual([
@@ -555,7 +648,6 @@ test("history feature prefetches collapsed run previews in parallel batches", as
     "/api/history/run-004/insights?lang=en",
   ]);
 });
-
 
 test("history feature reports partial delete failures without splitting render ownership", async () => {
   const state = createAppState();
@@ -567,7 +659,8 @@ test("history feature reports partial delete failures without splitting render o
   ensureRunDetail(state, "run-001");
   ensureRunDetail(state, "run-002");
 
-  const { feature, errors, getRenderCount, getLatestModel } = createFeatureHarness(state);
+  const { feature, errors, getRenderCount, getLatestModel } =
+    createFeatureHarness(state);
   const deleteRequests: string[] = [];
   mswServer.use(
     ...buildHistoryHandlers({
@@ -590,7 +683,10 @@ test("history feature reports partial delete failures without splitting render o
 
   await feature.deleteAllRuns();
 
-  expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
+  expect(deleteRequests).toEqual([
+    "/api/history/run-001",
+    "/api/history/run-002",
+  ]);
   expect(state.history.deleteAllRunsInFlight.value).toBe(false);
   expect(state.history.expandedRunId.value).toBeNull();
   expect(getRenderCount()).toBeGreaterThanOrEqual(2);

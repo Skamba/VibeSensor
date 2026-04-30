@@ -10,7 +10,10 @@ import type {
   ShellState,
   SpectrumState,
 } from "../ui_app_state";
-import { bindReplaceableTimerEffect, createReplaceableInterval } from "../timer_cleanup";
+import {
+  bindReplaceableTimerEffect,
+  createReplaceableInterval,
+} from "../timer_cleanup";
 import { computed, signal, type ReadonlySignal } from "../ui_signals";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
@@ -57,9 +60,11 @@ function sameLoggingElapsedTickInputs(
   left: LoggingElapsedTickInputs,
   right: LoggingElapsedTickInputs,
 ): boolean {
-  return left.handlersBound === right.handlersBound
-    && left.loggingEnabled === right.loggingEnabled
-    && left.loggingStartTimeUtc === right.loggingStartTimeUtc;
+  return (
+    left.handlersBound === right.handlersBound &&
+    left.loggingEnabled === right.loggingEnabled &&
+    left.loggingStartTimeUtc === right.loggingStartTimeUtc
+  );
 }
 
 function formatElapsed(
@@ -79,8 +84,13 @@ function formatElapsed(
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function buildLoggingRenderModel(model: ReturnType<typeof buildRealtimeLoggingPanelViewModel>) {
-  const { nextLastCompletedElapsedText: _nextLastCompletedElapsedText, ...renderModel } = model;
+function buildLoggingRenderModel(
+  model: ReturnType<typeof buildRealtimeLoggingPanelViewModel>,
+) {
+  const {
+    nextLastCompletedElapsedText: _nextLastCompletedElapsedText,
+    ...renderModel
+  } = model;
   return renderModel satisfies RealtimeLoggingPanelRenderModel;
 }
 
@@ -162,7 +172,8 @@ export function createRealtimeFeatureViewState(
     t,
     formatInt,
   });
-  const buildSensorsTableRenderModel = createRealtimeSensorTableRenderModelMemo();
+  const buildSensorsTableRenderModel =
+    createRealtimeSensorTableRenderModelMemo();
   const elapsedNowMs = signal(Date.now());
   let cachedLastCompletedElapsedText = "--";
   let cachedLoggingElapsedTickInputs: LoggingElapsedTickInputs = {
@@ -177,18 +188,20 @@ export function createRealtimeFeatureViewState(
       loggingEnabled: realtime.loggingStatus.value.enabled,
       loggingStartTimeUtc: realtime.loggingStatus.value.start_time_utc ?? null,
     } satisfies LoggingElapsedTickInputs;
-    if (sameLoggingElapsedTickInputs(cachedLoggingElapsedTickInputs, nextTickInputs)) {
+    if (
+      sameLoggingElapsedTickInputs(
+        cachedLoggingElapsedTickInputs,
+        nextTickInputs,
+      )
+    ) {
       return cachedLoggingElapsedTickInputs;
     }
     cachedLoggingElapsedTickInputs = nextTickInputs;
     return nextTickInputs;
   });
   const loggingElapsedShouldTick = computed(() => {
-    const {
-      handlersBound,
-      loggingEnabled,
-      loggingStartTimeUtc,
-    } = loggingElapsedTickInputs.value;
+    const { handlersBound, loggingEnabled, loggingStartTimeUtc } =
+      loggingElapsedTickInputs.value;
     return handlersBound && Boolean(loggingEnabled && loggingStartTimeUtc);
   });
   const loggingElapsedTimerStartTime = computed(() => {
@@ -207,8 +220,8 @@ export function createRealtimeFeatureViewState(
       return cachedLastCompletedElapsedText;
     }
     if (
-      !loggingStatus.analysis_in_progress
-      && !loggingStatus.last_completed_run_id
+      !loggingStatus.analysis_in_progress &&
+      !loggingStatus.last_completed_run_id
     ) {
       cachedLastCompletedElapsedText = "--";
     }
@@ -216,22 +229,25 @@ export function createRealtimeFeatureViewState(
   });
   const loggingElapsedTimer = createReplaceableInterval();
 
-  const disposeLoggingElapsedTimer = bindReplaceableTimerEffect(loggingElapsedTimer, () => {
-    if (!loggingElapsedShouldTick.value) {
-      return null;
-    }
-    const loggingStartTimeUtc = loggingElapsedTimerStartTime.value;
-    if (!loggingStartTimeUtc) {
-      return null;
-    }
-    return {
-      fireImmediately: true,
-      delayMs: 1_000,
-      callback: () => {
-        elapsedNowMs.value = Date.now();
-      },
-    };
-  });
+  const disposeLoggingElapsedTimer = bindReplaceableTimerEffect(
+    loggingElapsedTimer,
+    () => {
+      if (!loggingElapsedShouldTick.value) {
+        return null;
+      }
+      const loggingStartTimeUtc = loggingElapsedTimerStartTime.value;
+      if (!loggingStartTimeUtc) {
+        return null;
+      }
+      return {
+        fireImmediately: true,
+        delayMs: 1_000,
+        callback: () => {
+          elapsedNowMs.value = Date.now();
+        },
+      };
+    },
+  );
 
   function selectionBlockReason(): "no_cars" | "no_active" | null {
     const selection = sensorState.activeCarSelection.value;
@@ -263,16 +279,17 @@ export function createRealtimeFeatureViewState(
     if (!ages.length) {
       return t("dashboard.data_freshness_none");
     }
-    const captureReadiness = realtime.loggingStatus.value.capture_readiness ?? null;
+    const captureReadiness =
+      realtime.loggingStatus.value.capture_readiness ?? null;
     const referenceCheck = captureReadinessCheck(
       captureReadiness,
       "reference_ready",
     );
     const referenceReason = referenceCheck?.reason_key ?? "";
     if (
-      referenceCheck
-      && referenceCheck.state !== "pass"
-      && [
+      referenceCheck &&
+      referenceCheck.state !== "pass" &&
+      [
         "speed_source_missing",
         "speed_source_not_live",
         "speed_source_fallback_active",

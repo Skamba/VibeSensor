@@ -1,5 +1,8 @@
 import type { CarRecord } from "../../api/types";
-import { type CarSelectionState, getCarCompleteness } from "../car_selection_state";
+import {
+  type CarSelectionState,
+  getCarCompleteness,
+} from "../car_selection_state";
 import { buildOrderReferenceConfidenceDetail } from "../features/car_confidence_summary";
 import { formatSavedCarTireSummary } from "../features/cars_tire_setup";
 
@@ -79,74 +82,89 @@ function sameInlineAction(
   left: CarsInlineActionViewModel | undefined,
   right: CarsInlineActionViewModel | undefined,
 ): boolean {
-  return left?.labelText === right?.labelText
-    && left?.type === right?.type
-    && left?.variant === right?.variant;
+  return (
+    left?.labelText === right?.labelText &&
+    left?.type === right?.type &&
+    left?.variant === right?.variant
+  );
 }
 
 function sameInlineState(
   left: CarsInlineStateViewModel,
   right: CarsInlineStateViewModel,
 ): boolean {
-  return left.bodyText === right.bodyText
-    && left.detailText === right.detailText
-    && left.titleText === right.titleText
-    && left.tone === right.tone
-    && sameInlineAction(left.action, right.action);
+  return (
+    left.bodyText === right.bodyText &&
+    left.detailText === right.detailText &&
+    left.titleText === right.titleText &&
+    left.tone === right.tone &&
+    sameInlineAction(left.action, right.action)
+  );
 }
 
 function sameRowAction(
   left: CarsListRowActionViewModel | null,
   right: CarsListRowActionViewModel | null,
 ): boolean {
-  return left?.className === right?.className
-    && left?.labelText === right?.labelText
-    && left?.type === right?.type;
+  return (
+    left?.className === right?.className &&
+    left?.labelText === right?.labelText &&
+    left?.type === right?.type
+  );
 }
 
 function sameRowMetric(
   left: CarsListRowMetricViewModel,
   right: CarsListRowMetricViewModel,
 ): boolean {
-  return left.isCode === right.isCode
-    && left.labelText === right.labelText
-    && left.valueText === right.valueText;
+  return (
+    left.isCode === right.isCode &&
+    left.labelText === right.labelText &&
+    left.valueText === right.valueText
+  );
 }
 
 function sameRowMetrics(
   left: readonly CarsListRowMetricViewModel[],
   right: readonly CarsListRowMetricViewModel[],
 ): boolean {
-  return left.length === right.length
-    && left.every((metric, index) => sameRowMetric(metric, right[index]));
+  return (
+    left.length === right.length &&
+    left.every((metric, index) => sameRowMetric(metric, right[index]))
+  );
 }
 
 function sameCarRow(
   left: CarsListRowViewModel,
   right: CarsListRowViewModel,
 ): boolean {
-  return left.activeState === right.activeState
-    && left.activeStatusText === right.activeStatusText
-    && left.carId === right.carId
-    && left.completionDetailText === right.completionDetailText
-    && left.deleteLabelText === right.deleteLabelText
-    && left.displayName === right.displayName
-    && left.highlightedStatusText === right.highlightedStatusText
-    && left.isComplete === right.isComplete
-    && left.isHighlighted === right.isHighlighted
-    && left.metaTypeText === right.metaTypeText
-    && left.metaVariantText === right.metaVariantText
-    && sameRowAction(left.primaryAction, right.primaryAction)
-    && left.readinessState === right.readinessState
-    && left.readinessStatusText === right.readinessStatusText
-    && sameRowMetrics(left.setupMetrics, right.setupMetrics);
+  return (
+    left.activeState === right.activeState &&
+    left.activeStatusText === right.activeStatusText &&
+    left.carId === right.carId &&
+    left.completionDetailText === right.completionDetailText &&
+    left.deleteLabelText === right.deleteLabelText &&
+    left.displayName === right.displayName &&
+    left.highlightedStatusText === right.highlightedStatusText &&
+    left.isComplete === right.isComplete &&
+    left.isHighlighted === right.isHighlighted &&
+    left.metaTypeText === right.metaTypeText &&
+    left.metaVariantText === right.metaVariantText &&
+    sameRowAction(left.primaryAction, right.primaryAction) &&
+    left.readinessState === right.readinessState &&
+    left.readinessStatusText === right.readinessStatusText &&
+    sameRowMetrics(left.setupMetrics, right.setupMetrics)
+  );
 }
 
 function sameRowReferences(
   left: readonly CarsListRowViewModel[],
   right: readonly CarsListRowViewModel[],
 ): boolean {
-  return left.length === right.length && left.every((row, index) => row === right[index]);
+  return (
+    left.length === right.length &&
+    left.every((row, index) => row === right[index])
+  );
 }
 
 function hasConfiguredNumber(value: unknown): value is number {
@@ -158,7 +176,11 @@ function formatTireSummary(
   fmt: SettingsCarListViewParams["fmt"],
   t: SettingsCarListViewParams["t"],
 ): string {
-  return formatSavedCarTireSummary(car.aspects, fmt, t("settings.car.tires_missing"));
+  return formatSavedCarTireSummary(
+    car.aspects,
+    fmt,
+    t("settings.car.tires_missing"),
+  );
 }
 
 function formatRatioValue(
@@ -179,11 +201,10 @@ function carApproximationDetail(
 }
 
 function buildPrimaryAction(options: {
-    isActive: boolean;
-    isComplete: boolean;
-    t: SettingsCarListViewParams["t"];
-  },
-): CarsListRowActionViewModel | null {
+  isActive: boolean;
+  isComplete: boolean;
+  t: SettingsCarListViewParams["t"];
+}): CarsListRowActionViewModel | null {
   const { isActive, isComplete, t } = options;
   if (isComplete) {
     if (isActive) {
@@ -197,7 +218,9 @@ function buildPrimaryAction(options: {
   }
   return {
     className: "btn btn--primary car-complete-btn",
-    labelText: t(isActive ? "settings.car.open_analysis" : "settings.car.finish_setup"),
+    labelText: t(
+      isActive ? "settings.car.open_analysis" : "settings.car.finish_setup",
+    ),
     type: "complete",
   };
 }
@@ -209,14 +232,16 @@ export function buildCarsGuidanceRenderModel(options: {
 }): CarsInlineStateViewModel | null {
   const { carSelectionState, highlightedCarFeedback, t } = options;
   if (
-    carSelectionState.kind === "loading"
-    || carSelectionState.kind === "no_cars"
+    carSelectionState.kind === "loading" ||
+    carSelectionState.kind === "no_cars"
   ) {
     return null;
   }
   if (carSelectionState.kind === "active" && highlightedCarFeedback) {
     return {
-      bodyText: t("settings.car.created_body", { name: highlightedCarFeedback.carName }),
+      bodyText: t("settings.car.created_body", {
+        name: highlightedCarFeedback.carName,
+      }),
       detailText: t("settings.car.created_detail"),
       titleText: t("settings.car.created_title"),
       tone: "success",
@@ -236,13 +261,7 @@ export function buildCarsGuidanceRenderModel(options: {
 export function buildSettingsCarListRenderModel(
   params: SettingsCarListViewParams,
 ): SettingsCarListTableRenderModel {
-  const {
-    cars,
-    activeCarId,
-    highlightedCarId = null,
-    t,
-    fmt,
-  } = params;
+  const { cars, activeCarId, highlightedCarId = null, t, fmt } = params;
   if (cars.length === 0) {
     return {
       kind: "empty",
@@ -268,7 +287,9 @@ export function buildSettingsCarListRenderModel(
       return {
         activeState: isActive ? "active" : "inactive",
         activeStatusText: t(
-          isActive ? "settings.car.active_label" : "settings.car.inactive_label",
+          isActive
+            ? "settings.car.active_label"
+            : "settings.car.inactive_label",
         ),
         carId: car.id,
         completionDetailText: isComplete
@@ -276,7 +297,9 @@ export function buildSettingsCarListRenderModel(
           : t("settings.car.incomplete_detail"),
         deleteLabelText: t("settings.car.delete"),
         displayName: car.name,
-        highlightedStatusText: isHighlighted ? t("settings.car.just_added") : null,
+        highlightedStatusText: isHighlighted
+          ? t("settings.car.just_added")
+          : null,
         isComplete,
         isHighlighted,
         metaTypeText: car.type ?? null,
@@ -284,7 +307,9 @@ export function buildSettingsCarListRenderModel(
         primaryAction: buildPrimaryAction({ isActive, isComplete, t }),
         readinessState: isComplete ? "ready" : "incomplete",
         readinessStatusText: t(
-          isComplete ? "settings.car.ready_label" : "settings.car.incomplete_label",
+          isComplete
+            ? "settings.car.ready_label"
+            : "settings.car.incomplete_label",
         ),
         setupMetrics: [
           {
@@ -294,11 +319,17 @@ export function buildSettingsCarListRenderModel(
           },
           {
             labelText: t("settings.car.col_drive"),
-            valueText: formatRatioValue(car.aspects?.final_drive_ratio, { fmt, t }),
+            valueText: formatRatioValue(car.aspects?.final_drive_ratio, {
+              fmt,
+              t,
+            }),
           },
           {
             labelText: t("settings.car.col_gear"),
-            valueText: formatRatioValue(car.aspects?.current_gear_ratio, { fmt, t }),
+            valueText: formatRatioValue(car.aspects?.current_gear_ratio, {
+              fmt,
+              t,
+            }),
           },
         ],
       };
@@ -312,11 +343,16 @@ export function createSettingsCarListRenderModelMemo(): (
   let previousModel: SettingsCarListTableRenderModel | null = null;
   let previousRowsById = new Map<string, CarsListRowViewModel>();
 
-  return (params: SettingsCarListViewParams): SettingsCarListTableRenderModel => {
+  return (
+    params: SettingsCarListViewParams,
+  ): SettingsCarListTableRenderModel => {
     const nextModel = buildSettingsCarListRenderModel(params);
     if (nextModel.kind === "empty") {
       previousRowsById = new Map();
-      if (previousModel?.kind === "empty" && sameInlineState(previousModel.emptyState, nextModel.emptyState)) {
+      if (
+        previousModel?.kind === "empty" &&
+        sameInlineState(previousModel.emptyState, nextModel.emptyState)
+      ) {
         return previousModel;
       }
       previousModel = nextModel;
@@ -328,7 +364,10 @@ export function createSettingsCarListRenderModelMemo(): (
       return previousRow && sameCarRow(previousRow, row) ? previousRow : row;
     });
     previousRowsById = new Map(nextRows.map((row) => [row.carId, row]));
-    if (previousModel?.kind === "rows" && sameRowReferences(previousModel.rows, nextRows)) {
+    if (
+      previousModel?.kind === "rows" &&
+      sameRowReferences(previousModel.rows, nextRows)
+    ) {
       return previousModel;
     }
 

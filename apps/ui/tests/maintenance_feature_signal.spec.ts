@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import {
-  createDeferred,
-  flushAsyncWork,
-} from "./async_test_helpers";
+import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import {
   createEspFlashFeatureHarness,
   createUpdateFeatureHarness,
@@ -27,21 +24,29 @@ import {
 } from "./msw/handlers/maintenance";
 import { createUiMswTestScope } from "./msw/node";
 
-function assertContains(text: string | null | undefined, expected: string): void {
+function assertContains(
+  text: string | null | undefined,
+  expected: string,
+): void {
   assert.ok(
     (text ?? "").includes(expected),
     `Expected ${JSON.stringify(text ?? "")} to contain ${JSON.stringify(expected)}`,
   );
 }
 
-function assertNotContains(text: string | null | undefined, unexpected: string): void {
+function assertNotContains(
+  text: string | null | undefined,
+  unexpected: string,
+): void {
   assert.ok(
     !(text ?? "").includes(unexpected),
     `Expected ${JSON.stringify(text ?? "")} not to contain ${JSON.stringify(unexpected)}`,
   );
 }
 
-async function withMaintenanceScope(run: (scope: ReturnType<typeof createUiMswTestScope>) => Promise<void>) {
+async function withMaintenanceScope(
+  run: (scope: ReturnType<typeof createUiMswTestScope>) => Promise<void>,
+) {
   const restoreDomGlobals = installMaintenanceFeatureGlobals();
   const scope = createUiMswTestScope();
 
@@ -85,7 +90,8 @@ async function runEspFlashStartRefreshesStatusImmediately(): Promise<void> {
 
 async function runEspFlashManualPortSelection(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const startRequests: Array<{ auto_detect: boolean; port: string | null }> = [];
+    const startRequests: Array<{ auto_detect: boolean; port: string | null }> =
+      [];
     scope.server.use(
       ...buildEspFlashHandlers({
         ports: makeEspFlashPortsPayload({
@@ -112,14 +118,18 @@ async function runEspFlashManualPortSelection(): Promise<void> {
       await flushAsyncWork();
 
       deps.els.espFlashPortSelect.value = "/dev/ttyUSB1";
-      deps.els.espFlashPortSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      deps.els.espFlashPortSelect.dispatchEvent(
+        new Event("change", { bubbles: true }),
+      );
       deps.espFlashStartBtn.click();
       await flushAsyncWork();
 
-      assert.deepEqual(startRequests, [{
-        auto_detect: false,
-        port: "/dev/ttyUSB1",
-      }]);
+      assert.deepEqual(startRequests, [
+        {
+          auto_detect: false,
+          port: "/dev/ttyUSB1",
+        },
+      ]);
     } finally {
       feature.dispose();
     }
@@ -204,18 +214,48 @@ async function runEspFlashIdleStateRendersPanels(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
 
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.start_readiness.summary_ready");
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.start_readiness.item.connection_ready");
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.start_readiness.summary_ready",
+      );
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.start_readiness.item.connection_ready",
+      );
       assert.equal(deps.espFlashStartBtn.disabled, false);
       assert.equal(deps.espFlashCancelBtn.hidden, true);
-      assertContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.readiness.summary.ready_ports");
-      assertContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.readiness.one_port");
-      assertContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.auto_detect");
-      assertNotContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.journey_title");
-      assertNotContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.phase.validating");
-      assertContains(deps.espFlashJourneyPanel.innerHTML, "settings.esp_flash.phase.validating");
-      assertContains(deps.els.espFlashLogPanel.innerHTML, "settings.esp_flash.logs_idle_title");
-      assertContains(deps.els.espFlashHistoryPanel.innerHTML, "settings.esp_flash.history_empty_title");
+      assertContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.readiness.summary.ready_ports",
+      );
+      assertContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.readiness.one_port",
+      );
+      assertContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.auto_detect",
+      );
+      assertNotContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.journey_title",
+      );
+      assertNotContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.phase.validating",
+      );
+      assertContains(
+        deps.espFlashJourneyPanel.innerHTML,
+        "settings.esp_flash.phase.validating",
+      );
+      assertContains(
+        deps.els.espFlashLogPanel.innerHTML,
+        "settings.esp_flash.logs_idle_title",
+      );
+      assertContains(
+        deps.els.espFlashHistoryPanel.innerHTML,
+        "settings.esp_flash.history_empty_title",
+      );
     } finally {
       feature.dispose();
     }
@@ -237,8 +277,14 @@ async function runEspFlashNoPortsBlocksAction(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
 
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.start_readiness.summary_blocked");
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.start_readiness.item.connection_blocked");
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.start_readiness.summary_blocked",
+      );
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.start_readiness.item.connection_blocked",
+      );
       assert.equal(deps.espFlashStartBtn.disabled, true);
       assert.equal(deps.espFlashCancelBtn.hidden, true);
     } finally {
@@ -271,19 +317,29 @@ async function runEspFlashRunningStateHighlightsStage(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
 
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.start_readiness.summary_running");
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.start_readiness.summary_running",
+      );
       assert.equal(deps.espFlashStartBtn.hidden, true);
       assert.equal(deps.espFlashCancelBtn.hidden, false);
-      assertContains(deps.els.espFlashLogPanel.innerHTML, "settings.esp_flash.logs_running_title");
+      assertContains(
+        deps.els.espFlashLogPanel.innerHTML,
+        "settings.esp_flash.logs_running_title",
+      );
       const html = deps.espFlashJourneyPanel.innerHTML;
       assert.match(
         html,
         /<li(?=[^>]*data-stage-phase="flashing")(?=[^>]*data-stage-state="active")(?=[^>]*aria-current="step")[^>]*>/,
       );
-      assertContains(deps.espFlashReadinessPanel.innerHTML, "settings.esp_flash.readiness.current_step");
+      assertContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "settings.esp_flash.readiness.current_step",
+      );
       assert.equal(html.match(/data-stage-state="done"/g)?.length ?? 0, 3);
       assert.equal(
-        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)?.length ?? 0,
+        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)
+          ?.length ?? 0,
         3,
       );
     } finally {
@@ -332,13 +388,31 @@ async function runEspFlashFailedRefreshKeepsStoppedStage(): Promise<void> {
         html,
         /<li(?=[^>]*data-stage-phase="flashing")(?=[^>]*data-stage-state="attention")[^>]*>/,
       );
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.recovery.title");
-      assertContains(deps.espFlashStartSummary.innerHTML, "settings.esp_flash.recovery.flashing.detail");
-      assert.equal(deps.espFlashStartBtn.textContent, "settings.esp_flash.retry");
-      assertContains(deps.els.espFlashLogPanel.innerHTML, "settings.esp_flash.logs_failed_title");
-      assertContains(deps.els.espFlashHistoryPanel.innerHTML, "serial port disconnected");
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.recovery.title",
+      );
+      assertContains(
+        deps.espFlashStartSummary.innerHTML,
+        "settings.esp_flash.recovery.flashing.detail",
+      );
+      assert.equal(
+        deps.espFlashStartBtn.textContent,
+        "settings.esp_flash.retry",
+      );
+      assertContains(
+        deps.els.espFlashLogPanel.innerHTML,
+        "settings.esp_flash.logs_failed_title",
+      );
+      assertContains(
+        deps.els.espFlashHistoryPanel.innerHTML,
+        "serial port disconnected",
+      );
       assert.equal(html.match(/data-stage-state="done"/g)?.length ?? 0, 3);
-      assertContains(deps.espFlashReadinessPanel.innerHTML, "serial port disconnected");
+      assertContains(
+        deps.espFlashReadinessPanel.innerHTML,
+        "serial port disconnected",
+      );
     } finally {
       feature.dispose();
     }
@@ -377,7 +451,9 @@ async function runUpdateStartRefreshesStatusImmediately(): Promise<void> {
       await flushAsyncWork();
       const initialStatusRequests = statusRequests;
       deps.updatePasswordInput.value = "secret";
-      deps.updatePasswordInput.dispatchEvent(new Event("input", { bubbles: true }));
+      deps.updatePasswordInput.dispatchEvent(
+        new Event("input", { bubbles: true }),
+      );
       deps.updateSsidInput.value = "MyWiFi";
       deps.updateSsidInput.dispatchEvent(new Event("input", { bubbles: true }));
       await flushAsyncWork();
@@ -386,11 +462,13 @@ async function runUpdateStartRefreshesStatusImmediately(): Promise<void> {
       await flushAsyncWork();
       assert.equal(statusRequests, initialStatusRequests + 1);
       assert.equal(deps.updatePasswordInput.value, "");
-      assert.deepEqual(startRequests, [{
-        transport: "wifi",
-        ssid: "MyWiFi",
-        password: "secret",
-      }]);
+      assert.deepEqual(startRequests, [
+        {
+          transport: "wifi",
+          ssid: "MyWiFi",
+          password: "secret",
+        },
+      ]);
     } finally {
       feature.dispose();
     }
@@ -437,36 +515,75 @@ async function runUpdateUsbTransportFlow(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
       deps.updatePasswordInput.value = "secret";
-      deps.updatePasswordInput.dispatchEvent(new Event("input", { bubbles: true }));
+      deps.updatePasswordInput.dispatchEvent(
+        new Event("input", { bubbles: true }),
+      );
       await flushAsyncWork();
       deps.updateTransportWifiRadio.checked = false;
       deps.updateTransportUsbRadio.checked = true;
-      deps.updateTransportUsbRadio.dispatchEvent(new Event("change", { bubbles: true }));
+      deps.updateTransportUsbRadio.dispatchEvent(
+        new Event("change", { bubbles: true }),
+      );
       await flushAsyncWork();
 
       assert.equal(deps.updateTransportOptions.hidden, false);
       assert.equal(deps.updateWifiFields.hidden, true);
       assert.equal(deps.updateStartBtn.disabled, false);
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.readiness.item.connection_usb_ready");
-      assert.equal(deps.updateDetailsCaption.textContent, "settings.update.details_caption_usb");
-      assert.equal(deps.updateTransportNote.textContent, "settings.update.preflight_note_usb");
-      assert.equal(deps.updateUsbTransportSummary.textContent, "settings.update.transport.usb_summary_interface");
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-selected"), null);
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-choice-state"), null);
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"), null);
-      assert.equal(deps.updateTransportChoiceUsb.getAttribute("data-selected"), "true");
-      assert.equal(deps.updateTransportChoiceUsb.getAttribute("data-choice-state"), "active");
-      assert.equal(deps.updateTransportChoiceUsb.getAttribute("data-choice-badge"), "settings.update.transport.selected_badge");
-      assert.equal(deps.updateTransportChoiceUsb.getAttribute("data-disabled"), null);
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.readiness.item.connection_usb_ready",
+      );
+      assert.equal(
+        deps.updateDetailsCaption.textContent,
+        "settings.update.details_caption_usb",
+      );
+      assert.equal(
+        deps.updateTransportNote.textContent,
+        "settings.update.preflight_note_usb",
+      );
+      assert.equal(
+        deps.updateUsbTransportSummary.textContent,
+        "settings.update.transport.usb_summary_interface",
+      );
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-selected"),
+        null,
+      );
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-state"),
+        null,
+      );
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"),
+        null,
+      );
+      assert.equal(
+        deps.updateTransportChoiceUsb.getAttribute("data-selected"),
+        "true",
+      );
+      assert.equal(
+        deps.updateTransportChoiceUsb.getAttribute("data-choice-state"),
+        "active",
+      );
+      assert.equal(
+        deps.updateTransportChoiceUsb.getAttribute("data-choice-badge"),
+        "settings.update.transport.selected_badge",
+      );
+      assert.equal(
+        deps.updateTransportChoiceUsb.getAttribute("data-disabled"),
+        null,
+      );
       assertContains(deps.internetStatusPanel.innerHTML, "usb0");
 
       deps.updateStartBtn.click();
       await flushAsyncWork();
 
-      assert.deepEqual(startRequests, [{
-        transport: "usb_internet",
-        password: "",
-      }]);
+      assert.deepEqual(startRequests, [
+        {
+          transport: "usb_internet",
+          password: "",
+        },
+      ]);
     } finally {
       feature.dispose();
     }
@@ -488,27 +605,78 @@ async function runUpdateIdleStatusRendersPanels(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
 
-      assertContains(deps.els.updateStatusPanel.innerHTML, "settings.update.journey_title");
-      assertContains(deps.els.updateStatusPanel.innerHTML, "settings.update.phase.validating");
-      assertNotContains(deps.els.updateStatusPanel.innerHTML, "settings.update.issues_empty_title");
-      assertContains(deps.els.updateStatusPanel.innerHTML, "settings.update.log_empty_title");
-      assertContains(deps.els.updateOverviewPanel.innerHTML, "settings.update.current_status_title");
-      assertContains(deps.els.updateOverviewPanel.innerHTML, "settings.update.current_status_summary.ready");
+      assertContains(
+        deps.els.updateStatusPanel.innerHTML,
+        "settings.update.journey_title",
+      );
+      assertContains(
+        deps.els.updateStatusPanel.innerHTML,
+        "settings.update.phase.validating",
+      );
+      assertNotContains(
+        deps.els.updateStatusPanel.innerHTML,
+        "settings.update.issues_empty_title",
+      );
+      assertContains(
+        deps.els.updateStatusPanel.innerHTML,
+        "settings.update.log_empty_title",
+      );
+      assertContains(
+        deps.els.updateOverviewPanel.innerHTML,
+        "settings.update.current_status_title",
+      );
+      assertContains(
+        deps.els.updateOverviewPanel.innerHTML,
+        "settings.update.current_status_summary.ready",
+      );
       assertContains(deps.els.updateOverviewPanel.innerHTML, "1.2.3");
-      assertContains(deps.els.updateOverviewPanel.innerHTML, "settings.update.health_card_title");
-      assertContains(deps.internetStatusPanel.innerHTML, "settings.internet.card_title");
-      assertContains(deps.internetStatusPanel.innerHTML, "settings.internet.summary.not_detected");
+      assertContains(
+        deps.els.updateOverviewPanel.innerHTML,
+        "settings.update.health_card_title",
+      );
+      assertContains(
+        deps.internetStatusPanel.innerHTML,
+        "settings.internet.card_title",
+      );
+      assertContains(
+        deps.internetStatusPanel.innerHTML,
+        "settings.internet.summary.not_detected",
+      );
       assert.equal(deps.updateTransportOptions.hidden, false);
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-selected"), "true");
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-choice-state"), "active");
-      assert.equal(deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"), "settings.update.transport.selected_badge");
-      assert.equal(deps.updateTransportChoiceUsb.getAttribute("data-disabled"), "true");
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-selected"),
+        "true",
+      );
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-state"),
+        "active",
+      );
+      assert.equal(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"),
+        "settings.update.transport.selected_badge",
+      );
+      assert.equal(
+        deps.updateTransportChoiceUsb.getAttribute("data-disabled"),
+        "true",
+      );
       assert.equal(deps.updateTransportUsbRadio.disabled, true);
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.readiness.summary_ready");
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.readiness.item.connection_wifi_ready");
-      assert.equal(deps.updateDetailsCaption.textContent, "settings.update.details_caption_wifi");
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.readiness.summary_ready",
+      );
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.readiness.item.connection_wifi_ready",
+      );
+      assert.equal(
+        deps.updateDetailsCaption.textContent,
+        "settings.update.details_caption_wifi",
+      );
       assert.equal(deps.updateStartBtn.disabled, false);
-      assert.equal(deps.updateUsbTransportSummary.textContent, "settings.update.transport.usb_summary_unavailable");
+      assert.equal(
+        deps.updateUsbTransportSummary.textContent,
+        "settings.update.transport.usb_summary_unavailable",
+      );
     } finally {
       feature.dispose();
     }
@@ -539,7 +707,10 @@ async function runUpdateDegradedHealthBlocksStart(): Promise<void> {
       feature.startPolling();
       await flushAsyncWork();
 
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.readiness.item.health_blocked");
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.readiness.item.health_blocked",
+      );
       assert.equal(deps.updateStartBtn.disabled, true);
     } finally {
       feature.dispose();
@@ -575,7 +746,8 @@ async function runUpdateRunningStateHighlightsStage(): Promise<void> {
       );
       assert.equal(html.match(/data-stage-state="done"/g)?.length ?? 0, 5);
       assert.equal(
-        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)?.length ?? 0,
+        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)
+          ?.length ?? 0,
         5,
       );
     } finally {
@@ -605,7 +777,10 @@ async function runUpdatePersistedSsidRehydratesInput(): Promise<void> {
       await flushAsyncWork();
 
       assert.equal(deps.updateSsidInput.value, "Workshop Wi-Fi");
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.readiness.summary_ready");
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.readiness.summary_ready",
+      );
       assert.equal(deps.updateStartBtn.disabled, false);
     } finally {
       feature.dispose();
@@ -674,15 +849,27 @@ async function runUpdateFailedStateSurfacesRecovery(): Promise<void> {
       await flushAsyncWork();
 
       const html = deps.els.updateStatusPanel.innerHTML;
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.recovery.title");
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.recovery.wifi.title");
-      assertContains(deps.updateReadinessSummary.innerHTML, "settings.update.recovery.wifi.detail");
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.recovery.title",
+      );
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.recovery.wifi.title",
+      );
+      assertContains(
+        deps.updateReadinessSummary.innerHTML,
+        "settings.update.recovery.wifi.detail",
+      );
       assert.equal(deps.updateStartBtn.textContent, "settings.update.retry");
       assertContains(html, "settings.update.issues");
       assertContains(html, "settings.update.attempt_title");
       assertContains(html, "settings.update.log_failed_title");
       assertContains(html, "Hotspot restart timed out");
-      assertContains(html, "NetworkManager is still reconnecting to the uplink.");
+      assertContains(
+        html,
+        "NetworkManager is still reconnecting to the uplink.",
+      );
       assert.match(
         html,
         /<li(?=[^>]*data-stage-phase="restoring_hotspot")(?=[^>]*data-stage-state="attention")[^>]*>/,
@@ -725,7 +912,8 @@ async function runUpdateCancelRefreshesStatusImmediately(): Promise<void> {
 
 async function runUpdateLeavingPollingContextStopsFollowupRefreshes(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const deferredStatus = createDeferred<ReturnType<typeof createIdleUpdateStatus>>();
+    const deferredStatus =
+      createDeferred<ReturnType<typeof createIdleUpdateStatus>>();
     let statusRequests = 0;
     scope.server.use(
       ...buildUpdateHandlers({

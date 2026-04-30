@@ -10,6 +10,6 @@ export function normalizeUnit(value: number, min: number, max: number): number {
 
 /** Map a 0..1 norm to a blue→red heatmap HSL color. */
 export function heatColor(norm: number): string {
-  const hue = Math.round(212 - (norm * 190));
+  const hue = Math.round(212 - norm * 190);
   return `hsl(${hue} 76% 48%)`;
 }

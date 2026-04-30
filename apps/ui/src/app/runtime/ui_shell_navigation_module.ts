@@ -16,8 +16,13 @@ export interface UiShellNavigationModule {
   setActiveView(viewId: string): void;
 }
 
-function normalizeActiveViewId(viewId: string, viewIds: readonly string[]): string {
-  return viewIds.some((candidate) => candidate === viewId) ? viewId : DEFAULT_SHELL_VIEW_ID;
+function normalizeActiveViewId(
+  viewId: string,
+  viewIds: readonly string[],
+): string {
+  return viewIds.some((candidate) => candidate === viewId)
+    ? viewId
+    : DEFAULT_SHELL_VIEW_ID;
 }
 
 export function createUiShellNavigationModule(
@@ -50,17 +55,19 @@ export function createUiShellNavigationModule(
         applyActiveView(nextViewId);
         return;
       }
-      void Promise.resolve(activationResult).then(() => {
-        if (activationToken !== pendingActivationToken) {
-          return;
-        }
-        applyActiveView(nextViewId);
-      }).catch((error) => {
-        if (activationToken !== pendingActivationToken) {
-          return;
-        }
-        deps.onViewActivationFailed?.(nextViewId, error);
-      });
+      void Promise.resolve(activationResult)
+        .then(() => {
+          if (activationToken !== pendingActivationToken) {
+            return;
+          }
+          applyActiveView(nextViewId);
+        })
+        .catch((error) => {
+          if (activationToken !== pendingActivationToken) {
+            return;
+          }
+          deps.onViewActivationFailed?.(nextViewId, error);
+        });
     },
   };
 }

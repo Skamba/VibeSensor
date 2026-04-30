@@ -49,10 +49,14 @@ export function createSettingsSpeedSourceModule(
     getSpeedUnit: ctx.getSpeedUnit,
     t: services.t,
   };
-  const obdConfigVisible = computed(() =>
-    ctx.ports.activeViewId.value === "settingsView"
-    && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
-    && buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps).obdConfigVisible
+  const obdConfigVisible = computed(
+    () =>
+      ctx.ports.activeViewId.value === "settingsView" &&
+      ctx.ports.activeSettingsTabId.value === "speedSourceTab" &&
+      buildSettingsSpeedSourcePanelModel(
+        workflow.renderState.value,
+        presenterDeps,
+      ).obdConfigVisible,
   );
   workflow = createSettingsSpeedSourceWorkflow({
     obdConfigVisible,
@@ -67,10 +71,14 @@ export function createSettingsSpeedSourceModule(
     },
   });
   const panelModel = computed(() =>
-    buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps)
+    buildSettingsSpeedSourcePanelModel(
+      workflow.renderState.value,
+      presenterDeps,
+    ),
   );
   const navigationContextKey = computed(
-    () => `${ctx.ports.activeViewId.value}::${ctx.ports.activeSettingsTabId.value}`,
+    () =>
+      `${ctx.ports.activeViewId.value}::${ctx.ports.activeSettingsTabId.value}`,
   );
   ctx.panel.model.value = panelModel;
   let handlersBound = false;

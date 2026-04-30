@@ -30,7 +30,9 @@ export interface SpectrumPreparedFrameData {
 
 export interface SpectrumFramePreparer {
   dispose(): void;
-  prepare(input: SpectrumFramePreparationInput): Promise<SpectrumPreparedFrameData>;
+  prepare(
+    input: SpectrumFramePreparationInput,
+  ): Promise<SpectrumPreparedFrameData>;
 }
 
 interface PreparedSpectrumCacheEntry {
@@ -65,7 +67,9 @@ export function createSpectrumFramePreparerCore(): SpectrumFramePreparerCore {
     preparedSpectrumCache.clear();
   }
 
-  function prepare(input: SpectrumFramePreparationInput): SpectrumPreparedFrameData {
+  function prepare(
+    input: SpectrumFramePreparationInput,
+  ): SpectrumPreparedFrameData {
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
@@ -77,16 +81,20 @@ export function createSpectrumFramePreparerCore(): SpectrumFramePreparerCore {
       if (!spectrum || !Array.isArray(spectrum.combined)) {
         continue;
       }
-      const clientFreq = Array.isArray(spectrum.freq) && spectrum.freq.length
-        ? spectrum.freq
-        : EMPTY_FREQ_AXIS;
+      const clientFreq =
+        Array.isArray(spectrum.freq) && spectrum.freq.length
+          ? spectrum.freq
+          : EMPTY_FREQ_AXIS;
       const length = Math.min(clientFreq.length, spectrum.combined.length);
       if (!length) {
         continue;
       }
 
       if (!targetFreq.length) {
-        targetFreq = clientFreq.length === length ? clientFreq : clientFreq.slice(0, length);
+        targetFreq =
+          clientFreq.length === length
+            ? clientFreq
+            : clientFreq.slice(0, length);
       }
 
       const preparedValues = getPreparedSpectrumValues(
@@ -164,21 +172,20 @@ export function createSpectrumFramePreparerCore(): SpectrumFramePreparerCore {
   ): number[] {
     const cached = preparedSpectrumCache.get(clientId);
     if (
-      cached
-      && cached.sourceCombined === combined
-      && cached.sourceFreq === clientFreq
-      && cached.sourceLength === sourceLength
-      && cached.targetFreq.length === targetFreq.length
-      && (
-        cached.targetFreq === targetFreq
-        || freqGridsMatch(cached.targetFreq, targetFreq, targetFreq.length)
-      )
+      cached &&
+      cached.sourceCombined === combined &&
+      cached.sourceFreq === clientFreq &&
+      cached.sourceLength === sourceLength &&
+      cached.targetFreq.length === targetFreq.length &&
+      (cached.targetFreq === targetFreq ||
+        freqGridsMatch(cached.targetFreq, targetFreq, targetFreq.length))
     ) {
       return cached.values;
     }
 
-    const needsInterpolation = clientFreq.length !== targetFreq.length
-      || !freqGridsMatch(clientFreq, targetFreq, sourceLength);
+    const needsInterpolation =
+      clientFreq.length !== targetFreq.length ||
+      !freqGridsMatch(clientFreq, targetFreq, sourceLength);
     const preparedValues = needsInterpolation
       ? interpolateToTarget(clientFreq, combined, targetFreq, sourceLength)
       : combined.slice(0, sourceLength);
@@ -209,7 +216,10 @@ function colorForClient(index: number): string {
   return chartSeriesPalette[index % chartSeriesPalette.length];
 }
 
-function sliceSeries(values: SpectrumNumericSeries, endExclusive: number): number[] {
+function sliceSeries(
+  values: SpectrumNumericSeries,
+  endExclusive: number,
+): number[] {
   return Array.from(values.slice(0, endExclusive));
 }
 
@@ -224,9 +234,9 @@ function interpolateToTarget(
   for (let targetIndex = 0; targetIndex < targetFreq.length; targetIndex += 1) {
     const targetHz = targetFreq[targetIndex];
     while (
-      sourceIndex + 1 < sourceLength
-      && clientFreq[sourceIndex + 1] !== undefined
-      && clientFreq[sourceIndex + 1] < targetHz
+      sourceIndex + 1 < sourceLength &&
+      clientFreq[sourceIndex + 1] !== undefined &&
+      clientFreq[sourceIndex + 1] < targetHz
     ) {
       sourceIndex += 1;
     }
@@ -237,10 +247,10 @@ function interpolateToTarget(
     const upperFreq = clientFreq[upperIndex];
     const upperValue = combined[upperIndex];
     if (
-      lowerFreq === undefined
-      || lowerValue === undefined
-      || upperFreq === undefined
-      || upperValue === undefined
+      lowerFreq === undefined ||
+      lowerValue === undefined ||
+      upperFreq === undefined ||
+      upperValue === undefined
     ) {
       output[targetIndex] = Number.NaN;
       continue;
@@ -249,8 +259,11 @@ function interpolateToTarget(
       output[targetIndex] = lowerValue;
       continue;
     }
-    const alpha = Math.min(1, Math.max(0, (targetHz - lowerFreq) / (upperFreq - lowerFreq)));
-    output[targetIndex] = lowerValue + ((upperValue - lowerValue) * alpha);
+    const alpha = Math.min(
+      1,
+      Math.max(0, (targetHz - lowerFreq) / (upperFreq - lowerFreq)),
+    );
+    output[targetIndex] = lowerValue + (upperValue - lowerValue) * alpha;
   }
   return output;
 }

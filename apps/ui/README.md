@@ -29,6 +29,7 @@ npm run setup:generated-contracts  # One-time clean-checkout setup for missing U
 npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run lint:deps    # dependency-cruiser boundary checks over src/
 npm run lint:unused  # knip dead-file/dependency/export checks
+npm run format:check # Biome formatter drift check
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
 npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
@@ -89,6 +90,7 @@ The release-smoke artifact helper is the intentional narrow exception: after the
 - `npm run lint:unused` runs knip's dead-file, dependency, and cleaned-up unused
   export checks. Exported-type checks still stay out until their remaining
   signal is worth the extra noise.
+- `npm run format:check` checks Biome formatter drift without rewriting files.
 - `npm run format` rewrites the supported files when you want to apply the repo
   UI formatting locally.
 

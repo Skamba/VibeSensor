@@ -1,14 +1,43 @@
 /* Car list table */
-.car-tab-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
-.car-list-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.88rem; }
-.car-list-table th { text-align: left; padding: var(--space-2); border-bottom: 2px solid var(--md-sys-color-outline-variant); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--md-sys-color-on-surface-variant); }
-.car-list-table td { padding: var(--space-2); border-bottom: 1px solid var(--md-sys-color-outline-variant); vertical-align: middle; }
-.car-list-table tr:last-child td { border-bottom: none; }
+.car-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.car-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+  font-size: 0.88rem;
+}
+.car-list-table th {
+  text-align: left;
+  padding: var(--space-2);
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.car-list-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+}
+.car-list-table tr:last-child td {
+  border-bottom: none;
+}
 .settings-entity-table--cars td:nth-child(2) {
   min-width: 18rem;
 }
 .car-list-table tr[data-highlighted="true"] td {
-  background: linear-gradient(180deg, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.02));
+  background: linear-gradient(
+    180deg,
+    rgba(22, 163, 74, 0.08),
+    rgba(22, 163, 74, 0.02)
+  );
 }
 .car-status-stack {
   display: flex;
@@ -33,8 +62,14 @@
   padding: 0.12rem 0.5rem;
   font-size: 0.74rem;
 }
-.car-active-pill[data-state="active"] { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
-.car-active-pill[data-state="inactive"] { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
+.car-active-pill[data-state="active"] {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+.car-active-pill[data-state="inactive"] {
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+}
 .car-readiness-pill[data-state="ready"] {
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
@@ -106,7 +141,11 @@
 }
 .car-selection-feedback--success {
   border-color: rgba(22, 163, 74, 0.35);
-  background: linear-gradient(180deg, rgba(22, 163, 74, 0.08), var(--md-sys-color-surface-container-high));
+  background: linear-gradient(
+    180deg,
+    rgba(22, 163, 74, 0.08),
+    var(--md-sys-color-surface-container-high)
+  );
 }
 .car-selection-feedback--success::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23166534' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");

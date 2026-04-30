@@ -95,12 +95,8 @@ export class UiStartupCoordinator {
         ];
 
     return {
-      initialSyncTasks: [
-        () => this.shell.start(this.defaultViewId),
-      ],
-      finalSyncTasks: [
-        () => this.transport.startTransportMode(),
-      ],
+      initialSyncTasks: [() => this.shell.start(this.defaultViewId)],
+      finalSyncTasks: [() => this.transport.startTransportMode()],
       asyncTasks,
     };
   }

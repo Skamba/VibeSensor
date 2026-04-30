@@ -18,7 +18,9 @@ describe("uiLogger", () => {
   });
 
   test("error forwards message-only and message-plus-error calls", () => {
-    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const errorLog = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
     const error = new Error("error detail");
 
     uiLogger.error("message only");

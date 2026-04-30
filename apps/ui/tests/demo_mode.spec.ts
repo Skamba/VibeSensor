@@ -31,7 +31,8 @@ describe("runDemoMode", () => {
     expect(adaptedPayload.clients).toHaveLength(5);
     expect(
       adaptedPayload.clients.every(
-        (client) => client.sample_rate_hz === defaultLiveAnalysisConfig.sampleRateHz,
+        (client) =>
+          client.sample_rate_hz === defaultLiveAnalysisConfig.sampleRateHz,
       ),
     ).toBe(true);
     expect(adaptedPayload.spectra?.clients[selectedClientId]).toMatchObject({

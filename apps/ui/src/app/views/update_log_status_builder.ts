@@ -13,7 +13,9 @@ export function buildUpdateLogSectionModel(
     return {
       titleText: deps.t("settings.update.log"),
       subtitleText: deps.t(
-        isRunning ? "settings.update.log_intro_running" : "settings.update.log_intro",
+        isRunning
+          ? "settings.update.log_intro_running"
+          : "settings.update.log_intro",
       ),
       noteText: null,
       lines: [],
@@ -34,7 +36,9 @@ export function buildUpdateLogSectionModel(
   return {
     titleText: deps.t("settings.update.log"),
     subtitleText: deps.t(
-      isRunning ? "settings.update.log_intro_running" : "settings.update.log_intro",
+      isRunning
+        ? "settings.update.log_intro_running"
+        : "settings.update.log_intro",
     ),
     noteText: isRunning ? deps.t("settings.update.log_running_note") : null,
     lines: [...status.log_tail],

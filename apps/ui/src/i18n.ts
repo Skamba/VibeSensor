@@ -17,13 +17,16 @@ const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
   en: enCatalog,
 };
 const _catalogLoads = new Map<SupportedLanguage, Promise<void>>();
-const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> = {
-  nl: () => import("./i18n/catalogs/nl"),
-  en: async () => ({ default: enCatalog }),
-};
+const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> =
+  {
+    nl: () => import("./i18n/catalogs/nl"),
+    en: async () => ({ default: enCatalog }),
+  };
 
 export function normalizeLang(value: string): string {
-  const raw = String(value || "").trim().toLowerCase();
+  const raw = String(value || "")
+    .trim()
+    .toLowerCase();
   if (raw.startsWith("nl")) return "nl";
   return "en";
 }
@@ -73,7 +76,11 @@ function formatVar(lang: string, value: unknown): string {
   return String(value);
 }
 
-export function get(lang: string, key: string, vars?: Record<string, unknown>): string {
+export function get(
+  lang: string,
+  key: string,
+  vars?: Record<string, unknown>,
+): string {
   const normalized = normalizeLang(lang);
   const fallback = getLoadedCatalog("en")?.[key] || key;
   const template = getLoadedCatalog(normalized)?.[key] || fallback;

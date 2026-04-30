@@ -37,9 +37,13 @@ export function createEspFlashFeature(
 ): EspFlashFeature {
   const { panel, ports, services } = ctx;
   const handlersBound = signal(false);
-  const pollingEnabled = computed(() =>
-    handlersBound.value
-    && isEspFlashPollingContext(ports.activeViewId.value, ports.activeSettingsTabId.value)
+  const pollingEnabled = computed(
+    () =>
+      handlersBound.value &&
+      isEspFlashPollingContext(
+        ports.activeViewId.value,
+        ports.activeSettingsTabId.value,
+      ),
   );
   const workflow = createEspFlashFeatureWorkflow({
     t: services.t,
@@ -53,11 +57,14 @@ export function createEspFlashFeature(
   });
   panel.model.value = presenter.model;
 
-  const disposePollingContextSync = effectOnChange(pollingEnabled, (enabled) => {
-    if (enabled) {
-      void workflow.refreshPorts();
-    }
-  });
+  const disposePollingContextSync = effectOnChange(
+    pollingEnabled,
+    (enabled) => {
+      if (enabled) {
+        void workflow.refreshPorts();
+      }
+    },
+  );
 
   function bindHandlers(): void {
     if (handlersBound.value) {

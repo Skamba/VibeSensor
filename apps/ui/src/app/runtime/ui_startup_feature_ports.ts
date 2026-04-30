@@ -4,5 +4,8 @@ export interface UiStartupFeaturePorts {
   dashboard: {
     hydrateStartupState(): Promise<void>;
   };
-  realtime: Pick<RealtimeFeature, "refreshLocationOptions" | "refreshLoggingStatus">;
+  realtime: Pick<
+    RealtimeFeature,
+    "refreshLocationOptions" | "refreshLoggingStatus"
+  >;
 }

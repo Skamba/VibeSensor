@@ -21,12 +21,16 @@ async function fillControlledNumberInput(
   await expect(input).toHaveValue(value);
 }
 
-test("opens the add car wizard in a focused task container and restores focus when canceled", async ({ page }) => {
+test("opens the add car wizard in a focused task container and restores focus when canceled", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "/api/settings/cars": {
-        cars: [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }],
+        cars: [
+          { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
+        ],
         active_car_id: "car-1",
       },
     }),
@@ -48,12 +52,25 @@ test("opens the add car wizard in a focused task container and restores focus wh
 
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await expect(page.locator("#addCarWizard")).toBeVisible();
-  await expect(page.locator("#wizardProgressText")).toContainText("Step 1 of 5");
-  await expect(page.locator(".wizard-step-dot[aria-current='step']")).toContainText("Brand");
-  await expect(page.locator(".wizard-summary-card")).toContainText("Guided setup");
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("Not selected yet");
-  const stepDotTops = await page.locator(".wizard-step-dot").evaluateAll((dots) =>
-    dots.map((dot) => Math.round((dot as HTMLElement).getBoundingClientRect().top)));
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 1 of 5",
+  );
+  await expect(
+    page.locator(".wizard-step-dot[aria-current='step']"),
+  ).toContainText("Brand");
+  await expect(page.locator(".wizard-summary-card")).toContainText(
+    "Guided setup",
+  );
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Not selected yet",
+  );
+  const stepDotTops = await page
+    .locator(".wizard-step-dot")
+    .evaluateAll((dots) =>
+      dots.map((dot) =>
+        Math.round((dot as HTMLElement).getBoundingClientRect().top),
+      ),
+    );
   expect(new Set(stepDotTops).size).toBe(1);
 
   await activateWizardCloseButton(page);
@@ -63,12 +80,16 @@ test("opens the add car wizard in a focused task container and restores focus wh
   await expect(page.locator("#addCarBtn")).toBeFocused();
 });
 
-test("closes the add car wizard from Escape on the focused input and restores focus", async ({ page }) => {
+test("closes the add car wizard from Escape on the focused input and restores focus", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "/api/settings/cars": {
-        cars: [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }],
+        cars: [
+          { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
+        ],
         active_car_id: "car-1",
       },
     }),
@@ -98,8 +119,12 @@ test("closes the add car wizard from Escape on the focused input and restores fo
   await expect(page.locator("#addCarBtn")).toBeFocused();
 });
 
-test("keeps the manual branch deliberate while summarizing selections and activating the new car", async ({ page }) => {
-  const cars = [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }];
+test("keeps the manual branch deliberate while summarizing selections and activating the new car", async ({
+  page,
+}) => {
+  const cars = [
+    { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
+  ];
   let activeCarId = "car-1";
   let createdCarName = "";
 
@@ -148,15 +173,17 @@ test("keeps the manual branch deliberate while summarizing selections and activa
     }
     if (path === "/api/car-library/models") {
       await fulfillJson(route, {
-        models: [{
-          model: "X5",
-          tire_width_mm: 275,
-          tire_aspect_pct: 40,
-          rim_in: 21,
-          variants: [],
-          gearboxes: [],
-          tire_options: [],
-        }],
+        models: [
+          {
+            model: "X5",
+            tire_width_mm: 275,
+            tire_aspect_pct: 40,
+            rim_in: 21,
+            variants: [],
+            gearboxes: [],
+            tire_options: [],
+          },
+        ],
       });
       return;
     }
@@ -170,30 +197,52 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await page.locator("#addCarBtn").click();
 
   await page.locator("#wizardBrandList .wiz-opt").click();
-  await expect(page.locator("#wizardProgressText")).toContainText("Step 2 of 5");
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 2 of 5",
+  );
   await expect(page.locator("#wizardSummaryPanel")).toContainText("BMW");
 
   await page.locator("#wizardTypeList .wiz-opt").click();
-  await expect(page.locator("#wizardProgressText")).toContainText("Step 3 of 5");
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 3 of 5",
+  );
   await expect(page.locator("#wizardSummaryPanel")).toContainText("SUV");
 
   await page.locator("#wizardCustomModel").fill("X5 M60i");
   await page.locator("#wizardCustomModelBtn").click();
 
-  await expect(page.locator("#wizardProgressText")).toContainText("Step 5 of 5");
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("BMW X5 M60i");
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 5 of 5",
+  );
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "BMW X5 M60i",
+  );
   await expect(page.locator("#wizardSummaryPanel")).toContainText("225/45R18");
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("Final drive 3.08");
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("Top gear 0.64");
-  await expect(page.locator(".wizard-branch-card--library")).toContainText("Library-matched specs");
-  await expect(page.locator(".wizard-branch-card--manual")).toContainText("Manual specs branch");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Final drive 3.08",
+  );
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Top gear 0.64",
+  );
+  await expect(page.locator(".wizard-branch-card--library")).toContainText(
+    "Library-matched specs",
+  );
+  await expect(page.locator(".wizard-branch-card--manual")).toContainText(
+    "Manual specs branch",
+  );
   await expect(page.locator(".wizard-custom-specs__note")).toBeVisible();
-  await expect(page.locator("#wizardGearboxList")).toContainText("Enter specs manually below.");
-  await expect(page.locator("#wizardActionHint")).toContainText("Manual path selected");
+  await expect(page.locator("#wizardGearboxList")).toContainText(
+    "Enter specs manually below.",
+  );
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Manual path selected",
+  );
   await fillControlledNumberInput(page, "#wizTireWidth", "245");
   await fillControlledNumberInput(page, "#wizGearRatio", "0.68");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("245/45R18");
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("Top gear 0.68");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Top gear 0.68",
+  );
   await page.locator("#addCarWizard").evaluate((wizard) => {
     wizard.scrollTop = wizard.scrollHeight;
   });
@@ -210,12 +259,19 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(newRow).toContainText("245/45R18");
   await expect(newRow).toContainText("3.08");
   await expect(newRow).toContainText("0.68");
-  await expect(newRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
+  await expect(newRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "active",
+  );
 });
 
-test("completes the library branch on a short mobile screen without losing the final action", async ({ page }) => {
+test("completes the library branch on a short mobile screen without losing the final action", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 667 });
-  const cars = [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }];
+  const cars = [
+    { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
+  ];
   let activeCarId = "car-1";
   let createdCarName = "";
 
@@ -264,24 +320,30 @@ test("completes the library branch on a short mobile screen without losing the f
     }
     if (path === "/api/car-library/models") {
       await fulfillJson(route, {
-        models: [{
-          model: "X5",
-          tire_width_mm: 275,
-          tire_aspect_pct: 40,
-          rim_in: 21,
-          variants: [],
-          tire_options: [{
-            name: "Factory staggered",
+        models: [
+          {
+            model: "X5",
             tire_width_mm: 275,
             tire_aspect_pct: 40,
             rim_in: 21,
-          }],
-          gearboxes: [{
-            name: "8-speed automatic",
-            final_drive_ratio: 3.15,
-            top_gear_ratio: 0.67,
-          }],
-        }],
+            variants: [],
+            tire_options: [
+              {
+                name: "Factory staggered",
+                tire_width_mm: 275,
+                tire_aspect_pct: 40,
+                rim_in: 21,
+              },
+            ],
+            gearboxes: [
+              {
+                name: "8-speed automatic",
+                final_drive_ratio: 3.15,
+                top_gear_ratio: 0.67,
+              },
+            ],
+          },
+        ],
       });
       return;
     }
@@ -298,8 +360,12 @@ test("completes the library branch on a short mobile screen without losing the f
   await page.locator("#wizardModelList .wiz-opt").click();
 
   const wizard = page.locator("#addCarWizard");
-  await expect(page.locator("#wizardProgressText")).toContainText("Step 5 of 5");
-  await expect(page.locator("#wizardActionHint")).toContainText("Choose a library gearbox or edit the manual specs to finish.");
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 5 of 5",
+  );
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Choose a library gearbox or edit the manual specs to finish.",
+  );
   await expect(page.locator("#wizardManualAddBtn")).toBeDisabled();
 
   const box = await wizard.boundingBox();
@@ -324,12 +390,16 @@ test("completes the library branch on a short mobile screen without losing the f
   });
 
   expect(overflowMetrics.stepsOverflowY).toBe("auto");
-  expect(overflowMetrics.wizardScrollHeight).toBeLessThanOrEqual(overflowMetrics.wizardClientHeight + 2);
+  expect(overflowMetrics.wizardScrollHeight).toBeLessThanOrEqual(
+    overflowMetrics.wizardClientHeight + 2,
+  );
 
   await page.locator("#wizardGearboxList .wiz-opt").click();
 
   await expect(wizard).toBeVisible();
-  await expect(page.locator("#wizardActionHint")).toContainText("Library path selected");
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Library path selected",
+  );
   await expect(page.locator("#wizardManualAddBtn")).toBeEnabled();
   await wizard.evaluate((element) => {
     element.scrollTop = element.scrollHeight;
@@ -346,5 +416,8 @@ test("completes the library branch on a short mobile screen without losing the f
   await expect(newRow).toContainText("275/40R21");
   await expect(newRow).toContainText("3.15");
   await expect(newRow).toContainText("0.67");
-  await expect(newRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
+  await expect(newRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "active",
+  );
 });

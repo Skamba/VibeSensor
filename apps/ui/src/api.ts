@@ -13,7 +13,11 @@ export {
   getSpeedSourceStatus,
   getSettingsObdStatus,
 } from "./api/settings";
-export { getCarLibraryBrands, getCarLibraryTypes, getCarLibraryModels } from "./api/car_library";
+export {
+  getCarLibraryBrands,
+  getCarLibraryTypes,
+  getCarLibraryModels,
+} from "./api/car_library";
 export {
   historyExportUrl,
   historyReportPdfUrl,

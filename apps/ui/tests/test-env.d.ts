@@ -9,4 +9,7 @@ declare module "node:assert/strict" {
   export default assert;
 }
 
-declare function setImmediate(callback: (...args: unknown[]) => void, ...args: unknown[]): number;
+declare function setImmediate(
+  callback: (...args: unknown[]) => void,
+  ...args: unknown[]
+): number;

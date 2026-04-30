@@ -36,7 +36,10 @@ export interface ModelActionPanelBindings<TModel, TActions> {
   model: DeferredModelSignal<TModel>;
 }
 
-export function createModelActionPanelBindings<TModel, TActions>(): ModelActionPanelBindings<TModel, TActions> {
+export function createModelActionPanelBindings<
+  TModel,
+  TActions,
+>(): ModelActionPanelBindings<TModel, TActions> {
   return {
     actions: signal<TActions | null>(null),
     model: createDeferredModelSignal<TModel>(),

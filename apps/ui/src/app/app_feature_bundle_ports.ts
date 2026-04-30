@@ -1,6 +1,9 @@
 import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 import type { HistoryFeature } from "./features/history_feature";
-import type { RealtimeFeature, RealtimeFeatureRecordingPorts } from "./features/realtime_feature";
+import type {
+  RealtimeFeature,
+  RealtimeFeatureRecordingPorts,
+} from "./features/realtime_feature";
 
 export interface AppShellFeatureBindings {
   bindHandlers(): void;
@@ -33,9 +36,8 @@ interface AppFeatureBundlePortSources {
 export function createRealtimeFeatureRecordingPorts(
   history: Pick<HistoryFeature, "refreshHistory"> | (() => Promise<void>),
 ): RealtimeFeatureRecordingPorts {
-  const refreshHistory = typeof history === "function"
-    ? history
-    : () => history.refreshHistory();
+  const refreshHistory =
+    typeof history === "function" ? history : () => history.refreshHistory();
   return {
     onRecordingStatusChanged: () => refreshHistory(),
   };
@@ -49,7 +51,8 @@ export function createAppFeatureBundlePorts(
       features.secondary?.dispose();
       features.realtime.dispose();
     },
-    ensureViewReady: (viewId) => features.ensureViewReady?.(viewId) ?? Promise.resolve(),
+    ensureViewReady: (viewId) =>
+      features.ensureViewReady?.(viewId) ?? Promise.resolve(),
     shell: {
       bindHandlers: () => {
         features.realtime.bindHandlers();
@@ -57,10 +60,12 @@ export function createAppFeatureBundlePorts(
     },
     startup: {
       dashboard: {
-        hydrateStartupState: () => features.dashboard?.hydrateStartupState() ?? Promise.resolve(),
+        hydrateStartupState: () =>
+          features.dashboard?.hydrateStartupState() ?? Promise.resolve(),
       },
       realtime: {
-        refreshLocationOptions: () => features.realtime.refreshLocationOptions(),
+        refreshLocationOptions: () =>
+          features.realtime.refreshLocationOptions(),
         refreshLoggingStatus: () => features.realtime.refreshLoggingStatus(),
       },
     },

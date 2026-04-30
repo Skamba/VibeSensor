@@ -18,7 +18,8 @@ const REALTIME_LOGGING_SUMMARY_ACTIONS = [
   "open-speed-source",
 ] as const;
 
-export type RealtimeLoggingSummaryAction = (typeof REALTIME_LOGGING_SUMMARY_ACTIONS)[number];
+export type RealtimeLoggingSummaryAction =
+  (typeof REALTIME_LOGGING_SUMMARY_ACTIONS)[number];
 
 export interface RealtimeLoggingSummaryPanelModel
   extends Omit<InlineStatePanelElement, "action"> {
@@ -41,7 +42,10 @@ function setupRecordingAction(
     };
   }
   if (check.check_key === "reference_ready") {
-    if (check.reason_key === "active_car_missing" || check.reason_key === "order_reference_incomplete") {
+    if (
+      check.reason_key === "active_car_missing" ||
+      check.reason_key === "order_reference_incomplete"
+    ) {
       return {
         action: "open-cars",
         labelText: t("dashboard.logging.blocked.setup.action.cars"),
@@ -52,7 +56,10 @@ function setupRecordingAction(
       labelText: t("dashboard.logging.blocked.setup.action.speed_source"),
     };
   }
-  if (check.check_key === "speed_stable" && check.reason_key === "speed_sample_missing") {
+  if (
+    check.check_key === "speed_stable" &&
+    check.reason_key === "speed_sample_missing"
+  ) {
     return {
       action: "open-speed-source",
       labelText: t("dashboard.logging.blocked.setup.action.speed_source"),
@@ -96,9 +103,10 @@ export function buildSetupRecordingPanel(
   if (!readiness || readiness.is_ready) {
     return null;
   }
-  const primaryCheck = readiness.checks.find((check) => (
-    check.state === "fail" && check.check_key !== "capture_ready"
-  )) ?? captureReadinessCheck(readiness, "capture_ready");
+  const primaryCheck =
+    readiness.checks.find(
+      (check) => check.state === "fail" && check.check_key !== "capture_ready",
+    ) ?? captureReadinessCheck(readiness, "capture_ready");
   if (!primaryCheck) {
     return null;
   }

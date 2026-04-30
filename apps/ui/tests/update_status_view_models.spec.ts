@@ -3,9 +3,7 @@ import {
   buildUpdateCurrentStatusSectionModel,
   buildUpdateLogSectionModel,
 } from "../src/app/views/update_status_builders";
-import {
-  buildUpdateJourneySectionModel,
-} from "../src/app/views/update_journey_builder";
+import { buildUpdateJourneySectionModel } from "../src/app/views/update_journey_builder";
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,
@@ -84,25 +82,31 @@ describe("update status view models", () => {
       deps,
     );
 
-    expect(model.rows.find((row) => row.labelText === "settings.update.runtime_assets_check"))
-      .toEqual({
-        labelText: "settings.update.runtime_assets_check",
-        valueText: "settings.update.runtime_assets_bad",
-      });
+    expect(
+      model.rows.find(
+        (row) => row.labelText === "settings.update.runtime_assets_check",
+      ),
+    ).toEqual({
+      labelText: "settings.update.runtime_assets_check",
+      valueText: "settings.update.runtime_assets_bad",
+    });
   });
 
   test("builds journey stage models and recovery guidance for failures", () => {
-    const model = buildUpdateJourneySectionModel(makeStatus({
-      state: "failed",
-      phase: "restoring_hotspot",
-      issues: [
-        {
-          phase: "restoring_hotspot",
-          message: "Hotspot restart timed out",
-          detail: "NetworkManager is still reconnecting to the uplink.",
-        },
-      ],
-    }), deps);
+    const model = buildUpdateJourneySectionModel(
+      makeStatus({
+        state: "failed",
+        phase: "restoring_hotspot",
+        issues: [
+          {
+            phase: "restoring_hotspot",
+            message: "Hotspot restart timed out",
+            detail: "NetworkManager is still reconnecting to the uplink.",
+          },
+        ],
+      }),
+      deps,
+    );
 
     expect(model.failureNote).toEqual({
       summaryText: "restoring_hotspot — Hotspot restart timed out",
@@ -110,11 +114,12 @@ describe("update status view models", () => {
       recoveryTitleText: "settings.update.recovery.wifi.title",
       recoveryDetailText: "settings.update.recovery.wifi.detail",
     });
-    expect(model.stages.find((stage) => stage.phase === "restoring_hotspot"))
-      .toMatchObject({
-        state: "attention",
-        current: false,
-      });
+    expect(
+      model.stages.find((stage) => stage.phase === "restoring_hotspot"),
+    ).toMatchObject({
+      state: "attention",
+      current: false,
+    });
   });
 
   test("marks the running stage current for usb-internet journeys", () => {
@@ -130,23 +135,28 @@ describe("update status view models", () => {
       },
     );
 
-    expect(model.stages.find((stage) => stage.phase === "connecting_usb_internet"))
-      .toMatchObject({
-        state: "done",
-        current: false,
-      });
-    expect(model.stages.find((stage) => stage.phase === "downloading"))
-      .toMatchObject({
-        state: "active",
-        current: true,
-      });
+    expect(
+      model.stages.find((stage) => stage.phase === "connecting_usb_internet"),
+    ).toMatchObject({
+      state: "done",
+      current: false,
+    });
+    expect(
+      model.stages.find((stage) => stage.phase === "downloading"),
+    ).toMatchObject({
+      state: "active",
+      current: true,
+    });
   });
 
   test("builds the running empty-log state without forcing a log note", () => {
-    const model = buildUpdateLogSectionModel(makeStatus({
-      state: "running",
-      log_tail: [],
-    }), deps);
+    const model = buildUpdateLogSectionModel(
+      makeStatus({
+        state: "running",
+        log_tail: [],
+      }),
+      deps,
+    );
 
     expect(model.subtitleText).toBe("settings.update.log_intro_running");
     expect(model.noteText).toBeNull();

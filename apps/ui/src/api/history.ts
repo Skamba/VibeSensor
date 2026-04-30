@@ -14,14 +14,21 @@ export async function getHistory(): Promise<Local.HistoryListPayload> {
   return await apiJson<Transport.HistoryListPayload>("/api/history");
 }
 
-export async function deleteHistoryRun(runId: string): Promise<Local.DeleteHistoryRunPayload> {
-  return await apiJson<Transport.DeleteHistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`, {
-    method: "DELETE",
-  });
+export async function deleteHistoryRun(
+  runId: string,
+): Promise<Local.DeleteHistoryRunPayload> {
+  return await apiJson<Transport.DeleteHistoryRunPayload>(
+    `/api/history/${encodeURIComponent(runId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 async function getHistoryRun(runId: string): Promise<Local.HistoryRunPayload> {
-  return await apiJson<Transport.HistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`);
+  return await apiJson<Transport.HistoryRunPayload>(
+    `/api/history/${encodeURIComponent(runId)}`,
+  );
 }
 
 export async function getHistoryInsights(

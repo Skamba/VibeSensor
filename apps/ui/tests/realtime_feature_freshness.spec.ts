@@ -4,7 +4,9 @@ import {
   deriveDataFreshnessThresholds,
 } from "../src/app/features/data_freshness";
 
-function makeClient(overrides: Partial<{ sample_rate_hz: number; frame_samples: number }> = {}) {
+function makeClient(
+  overrides: Partial<{ sample_rate_hz: number; frame_samples: number }> = {},
+) {
   return {
     sample_rate_hz: 800,
     frame_samples: 200,
@@ -14,7 +16,11 @@ function makeClient(overrides: Partial<{ sample_rate_hz: number; frame_samples: 
 
 describe("realtime freshness thresholds", () => {
   test("derives thresholds directly from cadence without legacy minimums", () => {
-    expect(deriveDataFreshnessThresholds([makeClient({ sample_rate_hz: 1600, frame_samples: 100 })])).toEqual({
+    expect(
+      deriveDataFreshnessThresholds([
+        makeClient({ sample_rate_hz: 1600, frame_samples: 100 }),
+      ]),
+    ).toEqual({
       freshMs: 79,
       delayedMs: 157,
     });

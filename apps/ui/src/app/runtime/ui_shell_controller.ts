@@ -109,7 +109,9 @@ export class UiShellController {
       onViewActivated: deps.onViewActivated,
       onViewActivationFailed: (_viewId, error) => {
         this.showError(
-          error instanceof Error ? error.message : this.t("status.view_load_failed"),
+          error instanceof Error
+            ? error.message
+            : this.t("status.view_load_failed"),
         );
       },
       shell: this.state.shell,

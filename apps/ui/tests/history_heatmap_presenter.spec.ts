@@ -2,7 +2,9 @@ import { expect, test } from "vitest";
 import type { HistoryInsightsPayload } from "../src/api/types";
 import { buildHistoryHeatmapViewModel } from "../src/app/views/history_heatmap_presenter";
 
-function makeSummary(rows: HistoryInsightsPayload["sensor_intensity_by_location"]): HistoryInsightsPayload {
+function makeSummary(
+  rows: HistoryInsightsPayload["sensor_intensity_by_location"],
+): HistoryInsightsPayload {
   return {
     run_id: "run-001",
     status: "complete",
@@ -61,12 +63,16 @@ test("buildHistoryHeatmapViewModel uses the final normalized location values for
     },
   );
 
-  expect(heatmap.zones.find((zone) => zone.key === "front-left wheel")).toMatchObject({
+  expect(
+    heatmap.zones.find((zone) => zone.key === "front-left wheel"),
+  ).toMatchObject({
     label: "front_left_wheel",
     strongest: false,
     valueLabel: "10.0 dB",
   });
-  expect(heatmap.zones.find((zone) => zone.key === "front-right wheel")).toMatchObject({
+  expect(
+    heatmap.zones.find((zone) => zone.key === "front-right wheel"),
+  ).toMatchObject({
     label: "Front Right Wheel",
     strongest: true,
     valueLabel: "24.0 dB",

@@ -3,7 +3,9 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 
 import { UI_MSW_ORIGIN } from "./http";
 
-function installUiMswInterception(server: ReturnType<typeof setupServer>): () => void {
+function installUiMswInterception(
+  server: ReturnType<typeof setupServer>,
+): () => void {
   const originalFetch = globalThis.fetch;
   if (!originalFetch) {
     throw new Error("MSW test server requires global fetch");

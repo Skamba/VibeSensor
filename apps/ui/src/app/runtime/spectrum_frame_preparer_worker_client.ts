@@ -7,7 +7,9 @@ import type {
 } from "./spectrum_frame_preparer";
 
 interface SpectrumFramePreparerWorkerApi {
-  prepare(input: SpectrumFramePreparationInput): Promise<SpectrumPreparedFrameData>;
+  prepare(
+    input: SpectrumFramePreparationInput,
+  ): Promise<SpectrumPreparedFrameData>;
   [releaseProxy]?: () => void;
 }
 

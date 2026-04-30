@@ -16,10 +16,17 @@ function hasCompleteSpectrumData(
   combined: number[],
   strengthMetrics: SpectrumClientData["strength_metrics"] | null,
 ): strengthMetrics is NonNullable<SpectrumClientData["strength_metrics"]> {
-  return freq.length > 0 && combined.length > 0 && strengthMetrics !== null && freq.length === combined.length;
+  return (
+    freq.length > 0 &&
+    combined.length > 0 &&
+    strengthMetrics !== null &&
+    freq.length === combined.length
+  );
 }
 
-function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectra"] | null {
+function adaptSpectra(
+  spectra: LiveWsPayload["spectra"],
+): AdaptedPayload["spectra"] | null {
   if (!spectra?.clients) return null;
   const sharedFreq = spectra.freq ?? [];
 
@@ -55,8 +62,8 @@ function warnOnUnknownSchemaVersion(schemaVersion: string): void {
     schemaWarningLogged = true;
     uiLogger.error(
       `[VibeSensor] Unknown WS payload schema_version "${schemaVersion}" ` +
-      `(expected "${EXPECTED_SCHEMA_VERSION}"). The dashboard may not display correctly. ` +
-      "Update the UI to match the server version.",
+        `(expected "${EXPECTED_SCHEMA_VERSION}"). The dashboard may not display correctly. ` +
+        "Update the UI to match the server version.",
     );
   }
 }

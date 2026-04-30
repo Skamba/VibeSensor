@@ -7,12 +7,11 @@ import type {
   UpdateStatusRowModel,
   UpdateStatusViewDeps,
 } from "./update_status_models";
-import {
-  buildStatusRow,
-  formatDuration,
-} from "./update_status_shared";
+import { buildStatusRow, formatDuration } from "./update_status_shared";
 
-const HEALTH_VARIANT: Readonly<Record<HealthStatusPayload["status"], UpdateStatusBadgeVariant>> = {
+const HEALTH_VARIANT: Readonly<
+  Record<HealthStatusPayload["status"], UpdateStatusBadgeVariant>
+> = {
   ok: "ok",
   warn: "warn",
   degraded: "warn",
@@ -24,7 +23,8 @@ const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
   queue_overflow_drops: "settings.update.health.reason.queue_overflow_drops",
   server_queue_drops: "settings.update.health.reason.server_queue_drops",
   parse_errors: "settings.update.health.reason.parse_errors",
-  persistence_write_error: "settings.update.health.reason.persistence_write_error",
+  persistence_write_error:
+    "settings.update.health.reason.persistence_write_error",
 };
 
 function formatHealthReason(
@@ -100,16 +100,17 @@ function buildHealthPersistenceRows(
 ): UpdateStatusRowModel[] {
   const analysisQueueDepth = health.persistence.analysis_queue_depth ?? 0;
   if (
-    !health.persistence.analysis_in_progress
-    && !health.persistence.write_error
-    && analysisQueueDepth <= 0
+    !health.persistence.analysis_in_progress &&
+    !health.persistence.write_error &&
+    analysisQueueDepth <= 0
   ) {
     return [];
   }
   const rows = [
     buildStatusRow(
       t("settings.update.health.persistence"),
-      health.persistence.write_error || t("settings.update.health.persistence_ok"),
+      health.persistence.write_error ||
+        t("settings.update.health.persistence_ok"),
     ),
   ];
   if (health.persistence.analysis_in_progress) {
@@ -160,7 +161,9 @@ function buildHealthBadge(
   t: (key: string, vars?: Record<string, unknown>) => string,
 ): UpdateStatusBadgeModel {
   return {
-    variant: health.persistence.write_error ? "bad" : HEALTH_VARIANT[health.status],
+    variant: health.persistence.write_error
+      ? "bad"
+      : HEALTH_VARIANT[health.status],
     text: t(`settings.update.health.state.${health.status}`),
   };
 }
@@ -169,11 +172,12 @@ function buildHealthSummaryText(
   health: HealthStatusPayload,
   t: (key: string, vars?: Record<string, unknown>) => string,
 ): string {
-  const key = health.persistence.write_error || health.status === "degraded"
-    ? "settings.update.health_card_summary.degraded"
-    : health.status === "warn"
-      ? "settings.update.health_card_summary.warn"
-      : "settings.update.health_card_summary.ok";
+  const key =
+    health.persistence.write_error || health.status === "degraded"
+      ? "settings.update.health_card_summary.degraded"
+      : health.status === "warn"
+        ? "settings.update.health_card_summary.warn"
+        : "settings.update.health_card_summary.ok";
   return t(key);
 }
 

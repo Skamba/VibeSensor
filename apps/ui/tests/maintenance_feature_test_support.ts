@@ -3,13 +3,9 @@ import assert from "node:assert/strict";
 import { render } from "preact";
 import { expect } from "vitest";
 
-import type {
-  EspFlashFeatureDeps,
-} from "../src/app/features/esp_flash_feature";
+import type { EspFlashFeatureDeps } from "../src/app/features/esp_flash_feature";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
-import type {
-  UpdateFeatureDeps,
-} from "../src/app/features/update_feature";
+import type { UpdateFeatureDeps } from "../src/app/features/update_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type {
   EspFlashPanelActionHandlers,
@@ -30,9 +26,7 @@ import type {
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 import { flushAsyncWork } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
-import {
-  installMountedDomGlobals,
-} from "./dom_render_test_support";
+import { installMountedDomGlobals } from "./dom_render_test_support";
 import {
   createEspFlashPort,
   createHealthyUpdateStatus,
@@ -51,7 +45,9 @@ function requireElement<T extends Element = HTMLElement>(
   root: ParentNode,
   selector: string,
 ): T {
-  const element = root.querySelector<T>(selector) ?? globalThis.document?.querySelector<T>(selector);
+  const element =
+    root.querySelector<T>(selector) ??
+    globalThis.document?.querySelector<T>(selector);
   assert.ok(element, `Expected element matching ${selector}`);
   return element;
 }
@@ -60,8 +56,9 @@ function ensureMutableValueProperty<T extends Element & { value: string }>(
   element: T,
   initialValue = element.getAttribute("value") ?? "",
 ): T {
-  const descriptor = Object.getOwnPropertyDescriptor(element, "value")
-    ?? Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), "value");
+  const descriptor =
+    Object.getOwnPropertyDescriptor(element, "value") ??
+    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), "value");
   if (descriptor?.set) {
     return element;
   }
@@ -83,8 +80,9 @@ function ensureMutableCheckedProperty<T extends Element & { checked: boolean }>(
   element: T,
   initialChecked = false,
 ): T {
-  const descriptor = Object.getOwnPropertyDescriptor(element, "checked")
-    ?? Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), "checked");
+  const descriptor =
+    Object.getOwnPropertyDescriptor(element, "checked") ??
+    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), "checked");
   if (descriptor?.set) {
     return element;
   }
@@ -152,7 +150,9 @@ function createFeatureNavigationHarness(defaultTabId: string) {
 }
 
 function pendingPollDelays(timers: TimerHarness): number[] {
-  return timers.pendingDelays().filter((delay) => delay !== 10_000 && delay >= 100);
+  return timers
+    .pendingDelays()
+    .filter((delay) => delay !== 10_000 && delay >= 100);
 }
 
 function createMountedHost(): HTMLElement {
@@ -164,7 +164,9 @@ function createMountedHost(): HTMLElement {
 async function createEspFlashFeatureDeps() {
   const navigation = createFeatureNavigationHarness("espFlashTab");
   const root = createMountedHost();
-  const { mountEspFlashPanel } = await import("../src/app/views/esp_flash_panel");
+  const { mountEspFlashPanel } = await import(
+    "../src/app/views/esp_flash_panel"
+  );
   const panel: EspFlashPanelView = {
     actions: signal<EspFlashPanelActionHandlers | null>(null),
     model: signal<ReadonlySignal<EspFlashPanelRenderModel> | null>(null),
@@ -197,7 +199,10 @@ async function createEspFlashFeatureDeps() {
       return requireElement(root, "#espFlashReadinessPanel");
     },
     get espFlashRefreshPortsBtn() {
-      return requireElement<HTMLButtonElement>(root, "#espFlashRefreshPortsBtn");
+      return requireElement<HTMLButtonElement>(
+        root,
+        "#espFlashRefreshPortsBtn",
+      );
     },
     get espFlashStartBtn() {
       return requireElement<HTMLButtonElement>(root, "#espFlashStartBtn");
@@ -250,7 +255,9 @@ async function createEspFlashFeatureDeps() {
 async function createUpdateFeatureDeps() {
   const navigation = createFeatureNavigationHarness("updateTab");
   const root = createMountedHost();
-  const { mountInternetPanel } = await import("../src/app/views/internet_panel");
+  const { mountInternetPanel } = await import(
+    "../src/app/views/internet_panel"
+  );
   const { mountUpdatePanel } = await import("../src/app/views/update_panel");
   const internetHost = globalThis.document.createElement("div");
   const updateHost = globalThis.document.createElement("div");
@@ -326,7 +333,10 @@ async function createUpdateFeatureDeps() {
       return els.updateStartBtn;
     },
     get updateTogglePasswordBtn() {
-      return requireElement<HTMLButtonElement>(root, "#updateTogglePasswordBtn");
+      return requireElement<HTMLButtonElement>(
+        root,
+        "#updateTogglePasswordBtn",
+      );
     },
     get updateTransportChoiceUsb() {
       return requireElement(root, "#updateTransportChoiceUsb");
@@ -429,8 +439,6 @@ async function expectTimerDelays(
   }
   expect(timers.pendingDelays()).toEqual(expected);
 }
-
-;
 
 export async function createEspFlashFeatureHarness() {
   const deps = await createEspFlashFeatureDeps();
