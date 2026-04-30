@@ -100,6 +100,14 @@ runtime defaults from `src/runtime_config.h`, which still assume the ATOM Lite
 LED and ADXL345 pin mapping. Override those settings before treating a C3 build
 as real hardware support.
 
+CI firmware parity also checks protocol fixtures and native tests:
+
+```bash
+python tools/firmware/generate_protocol_contract_fixtures.py --check
+cd firmware/esp
+pio test -e native
+```
+
 ## Configure
 
 Default network target already matches the Pi hotspot configuration:
