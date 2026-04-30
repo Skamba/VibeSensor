@@ -163,6 +163,7 @@ Preset files ship with the repo for common environments:
 |---|---|
 | `config.dev.yaml` | Native-dev overrides (port 8000, no GPS, relative paths) |
 | `config.docker.yaml` | Docker-compose overrides |
+| `config.pi.yaml` | Raspberry Pi deployment overlay copied to `/etc/vibesensor/config.yaml` by install/image flows |
 
 **Quick start for local dev:**
 
