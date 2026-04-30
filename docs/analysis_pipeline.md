@@ -23,11 +23,12 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
-   (`infra/processing/`) must not import from `use_cases/diagnostics/`.
+   (`apps/server/vibesensor/infra/processing/`) must not import from
+   `use_cases/diagnostics/`.
 
 ## Live Processing vs Post-Stop Analysis
 
-| | Live Processing (`infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
+| | Live Processing (`apps/server/vibesensor/infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
 |-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB, plus optional raw-capture artifacts for replay |
@@ -37,9 +38,10 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 
 Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `noise_floor_amp_p20_g`) live in the `vibesensor` top-level package and the
-live-processing owners under `infra/processing/`; the canonical windowing,
-frequency-bin, and peak-detection steps are SciPy-backed and the same persisted
-peak/floor outputs are then reused by diagnostics/reporting.
+live-processing owners under `apps/server/vibesensor/infra/processing/`; the
+canonical windowing, frequency-bin, and peak-detection steps are SciPy-backed
+and the same persisted peak/floor outputs are then reused by
+diagnostics/reporting.
 
 ## Related deep dives
 
