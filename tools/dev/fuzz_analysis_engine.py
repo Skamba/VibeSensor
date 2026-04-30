@@ -9,9 +9,9 @@ script writes a JSON reproduction artifact under ``artifacts/fuzz/``.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
-import signal
 import subprocess
 import sys
 import tempfile
@@ -25,6 +25,19 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_repo_tooling_support():
+    helper_path = REPO_ROOT / "tools" / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_repo_tooling_support = _load_repo_tooling_support()
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "fuzz"
 
 SENSOR_FIXTURES: tuple[dict[str, str], ...] = (
@@ -689,22 +702,7 @@ def _build_worker_command(
 
 
 def _terminate_processes(processes: Sequence[subprocess.Popen[str]]) -> None:
-    alive = [process for process in processes if process.poll() is None]
-    for process in alive:
-        process.send_signal(signal.SIGTERM)
-    deadline = time.monotonic() + 5.0
-    while alive and time.monotonic() < deadline:
-        alive = [process for process in alive if process.poll() is None]
-        if alive:
-            time.sleep(0.1)
-    for process in alive:
-        process.kill()
-    for process in processes:
-        try:
-            process.wait(timeout=1.0)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=1.0)
+    _repo_tooling_support.terminate_processes(processes)
 
 
 def _run_worker_main(config: FuzzConfig) -> dict[str, object]:
