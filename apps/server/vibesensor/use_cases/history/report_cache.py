@@ -5,21 +5,57 @@ from __future__ import annotations
 import asyncio
 from collections import OrderedDict
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
+REPORT_PDF_CACHE_MAX_BYTES = 16 * 1024 * 1024
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryReportPdfCacheStats:
+    """Current PDF cache memory-budget state."""
+
+    entry_count: int
+    total_bytes: int
+    max_entries: int
+    max_bytes: int
 
 
 class HistoryReportPdfCache:
     """LRU PDF cache plus per-key build coordination."""
 
-    __slots__ = ("_entries", "_lock_users", "_locks")
+    __slots__ = (
+        "_entries",
+        "_lock_users",
+        "_locks",
+        "_max_bytes",
+        "_max_entries",
+        "_total_bytes",
+    )
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        max_entries: int = REPORT_PDF_CACHE_MAX_ENTRIES,
+        max_bytes: int = REPORT_PDF_CACHE_MAX_BYTES,
+    ) -> None:
         self._entries: OrderedDict[ReportPdfCacheKey, bytes] = OrderedDict()
         self._locks: dict[ReportPdfCacheKey, asyncio.Lock] = {}
         self._lock_users: dict[ReportPdfCacheKey, int] = {}
+        self._max_entries = max_entries
+        self._max_bytes = max_bytes
+        self._total_bytes = 0
+
+    def stats(self) -> HistoryReportPdfCacheStats:
+        """Return cache size statistics for telemetry and diagnostics."""
+        return HistoryReportPdfCacheStats(
+            entry_count=len(self._entries),
+            total_bytes=self._total_bytes,
+            max_entries=self._max_entries,
+            max_bytes=self._max_bytes,
+        )
 
     def get(self, cache_key: ReportPdfCacheKey) -> bytes | None:
         """Return a cached PDF and refresh its LRU position."""
@@ -55,10 +91,20 @@ class HistoryReportPdfCache:
 
     def _put(self, cache_key: ReportPdfCacheKey, pdf: bytes) -> None:
         """Insert a PDF into the LRU cache and prune related coordination state."""
+        existing_pdf = self._entries.pop(cache_key, None)
+        if existing_pdf is not None:
+            self._total_bytes -= len(existing_pdf)
+        if len(pdf) > self._max_bytes:
+            self._prune_stale_locks()
+            return
         self._entries[cache_key] = pdf
+        self._total_bytes += len(pdf)
         self._entries.move_to_end(cache_key)
-        while len(self._entries) > REPORT_PDF_CACHE_MAX_ENTRIES:
-            evicted_key, _ = self._entries.popitem(last=False)
+        while self._entries and (
+            len(self._entries) > self._max_entries or self._total_bytes > self._max_bytes
+        ):
+            evicted_key, evicted_pdf = self._entries.popitem(last=False)
+            self._total_bytes -= len(evicted_pdf)
             if self._lock_users.get(evicted_key, 0) == 0:
                 self._locks.pop(evicted_key, None)
         self._prune_stale_locks()
@@ -79,7 +125,7 @@ class HistoryReportPdfCache:
 
     def _prune_stale_locks(self) -> None:
         """Drop unlocked coordination locks whose cache entries were already evicted."""
-        if len(self._locks) > REPORT_PDF_CACHE_MAX_ENTRIES * 2:
+        if len(self._locks) > self._max_entries * 2:
             stale_keys = [
                 key
                 for key, lock in self._locks.items()

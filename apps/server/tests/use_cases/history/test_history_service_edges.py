@@ -21,6 +21,7 @@ from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.report_cache import (
+    REPORT_PDF_CACHE_MAX_BYTES,
     REPORT_PDF_CACHE_MAX_ENTRIES,
     HistoryReportPdfCache,
 )
@@ -281,6 +282,47 @@ async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
     assert keys[0] in cache._locks
     assert keys[-1] in cache._locks
     assert len(cache._locks) == REPORT_PDF_CACHE_MAX_ENTRIES
+    stats = cache.stats()
+    assert stats.entry_count == REPORT_PDF_CACHE_MAX_ENTRIES
+    assert stats.total_bytes == sum(len(cache.get(key) or b"") for key in keys)
+    assert stats.max_entries == REPORT_PDF_CACHE_MAX_ENTRIES
+    assert stats.max_bytes == REPORT_PDF_CACHE_MAX_BYTES
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_evicts_lru_entries_to_stay_within_byte_budget() -> None:
+    cache = HistoryReportPdfCache(max_entries=10, max_bytes=10)
+    keys = [
+        (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none") for index in range(3)
+    ]
+
+    for index, key in enumerate(keys):
+        assert (
+            await cache.get_or_build(key, lambda index=index: bytes([index]) * 4)
+            == bytes([index]) * 4
+        )
+
+    assert cache.get(keys[0]) is None
+    assert cache.get(keys[1]) == bytes([1]) * 4
+    assert cache.get(keys[2]) == bytes([2]) * 4
+    assert keys[0] not in cache._locks
+    assert cache.stats().entry_count == 2
+    assert cache.stats().total_bytes == 8
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_skips_oversized_single_pdf() -> None:
+    cache = HistoryReportPdfCache(max_entries=10, max_bytes=4)
+    cache_key = ("run-big", "en", None, 1, "{}", "analysis-big", "none")
+
+    pdf = await cache.get_or_build(cache_key, lambda: b"12345")
+
+    assert pdf == b"12345"
+    assert cache.get(cache_key) is None
+    assert cache.stats().entry_count == 0
+    assert cache.stats().total_bytes == 0
+    assert cache._locks == {}
+    assert cache._lock_users == {}
 
 
 @pytest.mark.asyncio
