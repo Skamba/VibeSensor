@@ -260,6 +260,26 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     }
 
 
+def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
+    jobs = _CI_MANIFEST.ci_workflow_jobs()
+    warned = False
+    for job_name in selected_jobs:
+        skipped_actions = jobs[job_name].skipped_actions
+        if not skipped_actions:
+            continue
+        if not warned:
+            _emit("[ci-local] skipped external workflow actions:")
+            warned = True
+        for action in skipped_actions:
+            action_name = f" ({action.name})" if action.name else ""
+            substitute = (
+                f"; local substitute: {action.local_substitute}"
+                if action.local_substitute
+                else "; no local substitute"
+            )
+            _emit(f"[ci-local] - {job_name}{action_name}: {action.uses}{substitute}")
+
+
 def _selected_jobs_require_platformio(selected_jobs: list[str]) -> bool:
     jobs = _CI_MANIFEST.ci_workflow_jobs()
     return any(jobs[job_name].requires_platformio for job_name in selected_jobs)
@@ -327,6 +347,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.job
         else list(CI_LITE_JOB_NAMES if args.ci_lite else ALL_JOB_NAMES)
     )
+    _emit_skipped_action_warnings(selected_jobs)
 
     if _shared_ui_workspace_would_race(
         selected_jobs,

@@ -214,3 +214,30 @@ def test_main_skips_ui_bootstrap_step_when_helper_reports_clean_workspace(
     assert module.main(["--job", "frontend-typecheck"]) == 0
 
     assert all(step.label != "ui deps: ensure bootstrap" for step in captured["bootstrap_steps"])
+
+
+def test_main_warns_about_skipped_external_workflow_actions(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    _stub_ui_bootstrap_check(monkeypatch, module, needs_npm_ci=False)
+    release_smoke_step = module.Step(
+        "Release smoke validation",
+        ["python3", "tools/tests/run_release_smoke.py"],
+    )
+    _captured, outputs = _install_main_harness(
+        module,
+        monkeypatch,
+        tmp_path,
+        {"release-smoke": [release_smoke_step]},
+    )
+
+    assert module.main(["--job", "release-smoke"]) == 0
+
+    output = "\n".join(outputs)
+    assert "[ci-local] skipped external workflow actions:" in output
+    assert "release-smoke (Download release-smoke UI static artifact)" in output
+    assert "actions/download-artifact@" in output
+    assert "without --skip-ui-build" in output
