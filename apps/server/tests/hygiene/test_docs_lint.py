@@ -210,3 +210,28 @@ def test_docs_index_lint_requires_every_docs_markdown_file(
         "docs/README.md must list docs/listed.md",
         "docs/README.md must list docs/missing.md",
     ]
+
+
+def test_frontend_guidance_lint_rejects_raw_typecheck_primary_gate(
+    tmp_path: Path,
+) -> None:
+    module = _load_docs_lint_module()
+    instructions_dir = tmp_path / ".github" / "instructions"
+    instructions_dir.mkdir(parents=True)
+    frontend_guidance = instructions_dir / "frontend.instructions.md"
+    frontend_guidance.write_text(
+        "- Validation: run `cd apps/ui && npm run typecheck && npm run build`.\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_frontend_guidance_validation(tmp_path) == [
+        ".github/instructions/frontend.instructions.md must use make ui-typecheck "
+        "as the primary frontend validation gate"
+    ]
+
+    frontend_guidance.write_text(
+        "- Validation: run `make ui-typecheck`; add `cd apps/ui && npm run build` for bundles.\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_frontend_guidance_validation(tmp_path) == []
