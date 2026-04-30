@@ -76,8 +76,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python_bin="${{ steps.setup-python.outputs.python-path }}"
           wheel_path="$(echo apps/server/dist/*.whl)"
-          PYTHONPATH=apps/server python -m vibesensor.use_cases.updates.releases.release_validation validate-wheel-metadata \
+          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.use_cases.updates.releases.release_validation validate-wheel-metadata \
             --wheel-path "${wheel_path}" \
             --expected-version "${{ steps.version.outputs.version }}"
 
@@ -98,10 +99,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install pipx
-          python -m pipx ensurepath
+          python_bin="${{ steps.setup-python.outputs.python-path }}"
+          "${python_bin}" -m pip install pipx
+          "${python_bin}" -m pipx ensurepath
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          pipx install platformio
+          "${python_bin}" -m pipx install platformio
 
       - name: Detect firmware directory
         id: firmware_dir
@@ -177,7 +179,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONPATH=apps/server python -m vibesensor.use_cases.updates.releases.release_validation validate-firmware-manifest \
+          python_bin="${{ steps.setup-python.outputs.python-path }}"
+          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.use_cases.updates.releases.release_validation validate-firmware-manifest \
             --dist-dir "${{ steps.firmware_dir.outputs.path }}/dist"
 
       - name: Create firmware bundle
