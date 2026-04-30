@@ -63,7 +63,10 @@ class HistoryReportService:
                 request = await self._loader.load_report_request(run_id, requested_lang)
                 cached_pdf = self._pdf_cache.get(request.cache_key)
                 if cached_pdf is not None:
+                    stats = self._pdf_cache.stats()
                     span.set_attribute("vibesensor.cache_hit", True)
+                    span.set_attribute("vibesensor.report_pdf_cache.entries", stats.entry_count)
+                    span.set_attribute("vibesensor.report_pdf_cache.bytes", stats.total_bytes)
                     return HistoryReportPdf(content=cached_pdf, filename=request.filename)
 
                 pdf = await self._pdf_cache.get_or_build(
@@ -73,5 +76,8 @@ class HistoryReportService:
             except Exception as exc:
                 mark_span_error(span, exc)
                 raise
+            stats = self._pdf_cache.stats()
             span.set_attribute("vibesensor.cache_hit", False)
+            span.set_attribute("vibesensor.report_pdf_cache.entries", stats.entry_count)
+            span.set_attribute("vibesensor.report_pdf_cache.bytes", stats.total_bytes)
             return HistoryReportPdf(content=pdf, filename=request.filename)
