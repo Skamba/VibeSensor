@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 from dataclasses import dataclass, fields
 from types import ModuleType
@@ -13,6 +14,18 @@ from tests._paths import REPO_ROOT
 
 _CI_PATH_RULES = REPO_ROOT / "tools" / "tests" / "ci_path_rules.py"
 _FULL_STACK = None
+_EMPTY_SELECTION_ALLOWLIST = {
+    "artifacts/.gitkeep": "Placeholder only; no CI behavior changes.",
+    "artifacts/fuzz/analysis-driveshaft-order-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/analysis-engine-order-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/analysis-known-imbalance.json": "Static fuzz fixture.",
+    "artifacts/fuzz/analysis-quiet-baseline.json": "Static fuzz fixture.",
+    "artifacts/fuzz/analysis-summary-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/analysis-wheel-order-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/fft-spike-filter-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/processor-multi-client-basic.json": "Static fuzz fixture.",
+    "artifacts/fuzz/strength-spectrum-basic.json": "Static fuzz fixture.",
+}
 
 
 def _load_ci_path_rules_module() -> ModuleType:
@@ -46,6 +59,17 @@ def _selected_jobs(module: ModuleType, changed_files: tuple[str, ...]) -> frozen
         for field in fields(module.WorkflowJobSelection)
         if getattr(selection, field.name)
     )
+
+
+def _tracked_files() -> tuple[str, ...]:
+    result = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO_ROOT,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    return tuple(path for path in result.stdout.splitlines() if path.strip())
 
 
 _SELECTION_CASES = (
@@ -151,6 +175,41 @@ _SELECTION_CASES = (
             expected_jobs=frozenset({"repo_hygiene", "shell_lint"}),
         ),
         id="generic-shell-tool",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(".dockerignore",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="root-dockerignore",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(".gitattributes",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="root-gitattributes",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=(".vscode/settings.json",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="vscode-settings",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/dev/test_marker_policy_allowlist.yml",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="tool-yaml-config",
+    ),
+    pytest.param(
+        SelectionCase(
+            changed_files=("tools/tests/act-event.json",),
+            expected_jobs=frozenset({"repo_hygiene"}),
+        ),
+        id="tool-json-config",
     ),
     pytest.param(
         SelectionCase(
@@ -299,3 +358,16 @@ def test_workflow_job_selection_matrix(ci_path_rules: ModuleType, case: Selectio
     )
     assert expected_jobs is not None
     assert _selected_jobs(ci_path_rules, case.changed_files) == expected_jobs
+
+
+def test_meaningful_tracked_files_do_not_select_empty_ci_jobs(
+    ci_path_rules: ModuleType,
+) -> None:
+    tracked_files = set(_tracked_files())
+    assert set(_EMPTY_SELECTION_ALLOWLIST) <= tracked_files
+
+    empty_selection_paths = {
+        path for path in tracked_files if not _selected_jobs(ci_path_rules, (path,))
+    }
+
+    assert empty_selection_paths == set(_EMPTY_SELECTION_ALLOWLIST)

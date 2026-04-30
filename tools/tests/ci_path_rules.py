@@ -13,6 +13,16 @@ DOC_FILES = {
     "CHANGELOG.md",
     ".github/copilot-instructions.md",
 }
+REPO_HYGIENE_TRIGGER_FILES = {
+    ".actrc",
+    ".dockerignore",
+    ".gitattributes",
+    ".gitignore",
+    ".rgignore",
+    ".secrets.act.example",
+    ".vscode/settings.json",
+    "LICENSE",
+}
 FULL_STACK_TRIGGER_FILES = {
     "Makefile",
     ".python-version",
@@ -36,6 +46,7 @@ FIRMWARE_NATIVE_BACKEND_TRIGGER_FILES = {
 PYTHON_TOOL_PREFIX = "tools/"
 NODE_TOOL_EXTENSIONS = (".mjs", ".cjs")
 SHELL_TOOL_EXTENSIONS = (".sh", ".sh.template")
+TOOL_CONFIG_EXTENSIONS = (".json", ".yml", ".yaml")
 UI_TOOL_PREFIXES = ("tools/ui/",)
 CONFIG_TOOL_PREFIXES = ("tools/config/",)
 DOCS_LINT_TOOL_FILES = {"tools/dev/docs_lint.py"}
@@ -176,6 +187,14 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
     repo_hygiene_tool_changed = any(
         path in REPO_HYGIENE_TOOL_FILES for path in non_docs_paths
     )
+    repo_hygiene_config_changed = any(
+        path in REPO_HYGIENE_TRIGGER_FILES
+        or (
+            path.startswith(PYTHON_TOOL_PREFIX)
+            and path.endswith(TOOL_CONFIG_EXTENSIONS)
+        )
+        for path in non_docs_paths
+    )
     backend_static_guard_tool_changed = any(
         path in BACKEND_STATIC_GUARD_TOOL_FILES for path in non_docs_paths
     )
@@ -189,6 +208,7 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
     return WorkflowJobSelection(
         docs_lint=full_stack or docs_changed or docs_lint_tool_changed,
         repo_hygiene=full_stack
+        or repo_hygiene_config_changed
         or repo_hygiene_tool_changed
         or backend_changed
         or frontend_changed
