@@ -67,8 +67,8 @@ This document is generated from code and shared contract files.
 - Regenerate with: `make sync-contracts`
 - Source of truth:
   - `apps/server/vibesensor/adapters/udp/protocol.py`
-  - `apps/server/vibesensor/app/settings.py`
-  - `apps/server/vibesensor/contracts.py`
+  - `apps/server/vibesensor/app/config_defaults.py`
+  - `apps/server/vibesensor/cli/contract_reference_doc.py`
 
 ## Network contract
 

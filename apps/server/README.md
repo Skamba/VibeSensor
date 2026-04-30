@@ -102,7 +102,7 @@ Backend startup is explicit rather than ambient:
 3. The runtime is only marked ready after those startup phases succeed.
 
 See `apps/server/vibesensor/infra/runtime/lifecycle.py` and
-`apps/server/tests/infra/runtime/test_runtime.py` for the executable phase
+`apps/server/tests/infra/runtime/test_lifecycle.py` for the executable phase
 contract.
 
 ## Important directories
@@ -394,7 +394,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with panel renderers grouped under `adapters/pdf/panels/`.
+The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with appendix renderers grouped under `adapters/pdf/pdf_appendices/`.
 
 ## Updates
 

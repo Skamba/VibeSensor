@@ -185,12 +185,12 @@ the raw on-disk shape, including the `definitions` / `defaults` /
 `configurations` blocks and the supported ref forms (`notes_ref`, `note_ref`,
 `evidence_refs_ref`, `default_ref`, `setup_ref`).
 
-`apps/server/tests/adapters/persistence/test_vehicle_configuration_shard_schema.py`
+`apps/server/tests/adapters/persistence/test_vehicle_configurations.py`
 runs the schema against every committed shard and checks representative
 invalid cases. Run it with the rest of the persistence suite:
 
 ```bash
-pytest -q apps/server/tests/adapters/persistence/test_vehicle_configuration_shard_schema.py
+pytest -q apps/server/tests/adapters/persistence/test_vehicle_configurations.py
 ```
 
 To get inline validation while editing shards, point your editor at the

@@ -43,6 +43,25 @@ GUIDANCE_SCRIPT_STARTS = (
     "infra/pi-image/",
     "tools/",
 )
+REPO_PATH_PREFIXES = (
+    ".github/",
+    "apps/",
+    "docs/",
+    "firmware/",
+    "infra/",
+    "tools/",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "Makefile",
+    "README.md",
+    "SECURITY.md",
+    "docker-compose.dev.yml",
+    "docker-compose.yml",
+)
+GENERATED_REPO_PATH_REFERENCES = {
+    "apps/ui/src/constants.ts",
+}
 
 
 def _walk_files(repo_root: Path) -> list[str]:
@@ -288,6 +307,41 @@ def _check_guidance_script_references(
     return issues
 
 
+def _check_backticked_repo_paths(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    """Flag exact repo-local paths in docs when the target does not exist."""
+    issues: list[str] = []
+    code_span_re = re.compile(r"`([^`\n]+)`")
+    for path in sorted(markdown_files):
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for match in code_span_re.finditer(text):
+            candidate = match.group(1).strip()
+            if not candidate.startswith(REPO_PATH_PREFIXES):
+                continue
+            if any(
+                token in candidate for token in ("*", "...", "<", ">", "$", " ", "\t")
+            ):
+                continue
+            if ":" in candidate or candidate.startswith(("http://", "https://")):
+                continue
+            candidate = candidate.split("#", 1)[0].strip("/")
+            if not candidate:
+                continue
+            if candidate in GENERATED_REPO_PATH_REFERENCES:
+                continue
+            if "/out/" in candidate:
+                continue
+            if not candidate.endswith("/") and not Path(candidate).suffix:
+                continue
+            if not (repo_root / candidate).exists():
+                issues.append(f"{path}: missing repo-local path reference: {candidate}")
+
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -303,6 +357,7 @@ def main() -> int:
     issues.extend(_check_markdown_links(markdown_files, repo_root))
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
+    issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
 
     if issues:
         print(f"❌ {len(issues)} docs issue(s):")
