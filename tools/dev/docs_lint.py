@@ -481,6 +481,23 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
     return issues
 
 
+def _check_frontend_guidance_validation(repo_root: Path) -> list[str]:
+    frontend_text = _read_text(
+        repo_root, ".github/instructions/frontend.instructions.md"
+    )
+    if frontend_text is None:
+        return ["missing .github/instructions/frontend.instructions.md"]
+
+    issues: list[str] = []
+    for line in frontend_text.splitlines():
+        if "Validation:" in line and "npm run typecheck" in line:
+            issues.append(
+                ".github/instructions/frontend.instructions.md must use make ui-typecheck "
+                "as the primary frontend validation gate"
+            )
+    return issues
+
+
 def _check_guidance_script_references(
     markdown_files: list[str], repo_root: Path
 ) -> list[str]:
@@ -641,6 +658,7 @@ def main() -> int:
     issues.extend(_check_runtime_docs_reading(source_files))
     issues.extend(_check_markdown_links(markdown_files, repo_root))
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
+    issues.extend(_check_frontend_guidance_validation(repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
