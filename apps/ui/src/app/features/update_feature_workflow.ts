@@ -21,12 +21,7 @@ import type {
   UpdateFeatureRenderState,
   UpdateFeatureStartIntent,
 } from "../views/update_feature_presenter";
-import {
-  batch,
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import {
   createHiddenTabPollingObserverOptions,
   createObservedServerStateQuery,
@@ -98,16 +93,20 @@ export function createUpdateFeatureWorkflow(
   const api: UpdateFeatureWorkflowApi = {
     cancelUpdate: deps.api?.cancelUpdate ?? cancelUpdateApi,
     getHealthStatus: deps.api?.getHealthStatus ?? getHealthStatusApi,
-    getUpdateInternetStatus: deps.api?.getUpdateInternetStatus ?? getUpdateInternetStatusApi,
+    getUpdateInternetStatus:
+      deps.api?.getUpdateInternetStatus ?? getUpdateInternetStatusApi,
     getUpdateStatus: deps.api?.getUpdateStatus ?? getUpdateStatusApi,
     startUpdate: deps.api?.startUpdate ?? startUpdateApi,
   };
 
-  const latestInternetStatus = signal<UsbInternetStatusPayload>(fallbackInternetStatus(deps.t));
+  const latestInternetStatus = signal<UsbInternetStatusPayload>(
+    fallbackInternetStatus(deps.t),
+  );
   const latestHealthStatus = signal<HealthStatusPayload | null>(null);
   const latestUpdateStatus = signal<UpdateStatusPayload | null>(null);
   const latestUpdateState = signal<UpdateStatusPayload["state"]>("idle");
-  const latestUpdateTransport = signal<UpdateStartRequestPayload["transport"]>("wifi");
+  const latestUpdateTransport =
+    signal<UpdateStartRequestPayload["transport"]>("wifi");
   const renderState = computed<UpdateFeatureRenderState>(() => ({
     internetStatus: latestInternetStatus.value,
     healthStatus: latestHealthStatus.value,
@@ -115,9 +114,22 @@ export function createUpdateFeatureWorkflow(
     updateState: latestUpdateState.value,
     updateTransport: latestUpdateTransport.value,
   }));
+  let disposed = false;
+  let statusGeneration = 0;
+  let startInFlight = false;
+  let cancelInFlight = false;
 
   function getRenderState(): UpdateFeatureRenderState {
     return renderState.value;
+  }
+
+  function nextStatusGeneration(): number {
+    statusGeneration += 1;
+    return statusGeneration;
+  }
+
+  function isCurrentStatus(generation: number): boolean {
+    return !disposed && generation === statusGeneration;
   }
 
   async function fetchStatusSnapshot(): Promise<UpdateStatusSnapshot> {
@@ -134,36 +146,78 @@ export function createUpdateFeatureWorkflow(
   }
 
   function applyStatusSnapshot(snapshot: UpdateStatusSnapshot): void {
+    if (disposed) {
+      return;
+    }
     batch(() => {
       latestUpdateStatus.value = snapshot.status;
       latestHealthStatus.value = snapshot.health;
       latestInternetStatus.value = snapshot.internet;
       latestUpdateState.value = snapshot.status.state;
-      latestUpdateTransport.value = safeUpdateTransport(snapshot.status.transport);
+      latestUpdateTransport.value = safeUpdateTransport(
+        snapshot.status.transport,
+      );
     });
   }
 
-  const statusSnapshotQuery = createObservedServerStateQuery<UpdateStatusSnapshot>({
-    enabled: deps.pollingEnabled,
-    onError: (error) => {
-      deps.showError(error instanceof Error ? error.message : deps.t("status.unavailable"));
-    },
-    observerOptions: createHiddenTabPollingObserverOptions<UpdateStatusSnapshot>(
-      (query) => query.state.data?.status.state === "running"
-        ? UPDATE_POLL_INTERVAL_RUNNING_MS
-        : UPDATE_POLL_INTERVAL_IDLE_MS,
-    ),
-    onData: applyStatusSnapshot,
-    queryClient: deps.queryClient,
-    queryFn: fetchStatusSnapshot,
-    queryKey: serverStateQueryKeys.update.statusSnapshot(),
-  });
+  const statusSnapshotQuery =
+    createObservedServerStateQuery<UpdateStatusSnapshot>({
+      enabled: deps.pollingEnabled,
+      onError: (error) => {
+        if (!disposed) {
+          deps.showError(
+            error instanceof Error
+              ? error.message
+              : deps.t("status.unavailable"),
+          );
+        }
+      },
+      observerOptions:
+        createHiddenTabPollingObserverOptions<UpdateStatusSnapshot>((query) =>
+          query.state.data?.status.state === "running"
+            ? UPDATE_POLL_INTERVAL_RUNNING_MS
+            : UPDATE_POLL_INTERVAL_IDLE_MS,
+        ),
+      onData: (snapshot) => {
+        if (!disposed) {
+          applyStatusSnapshot(snapshot);
+        }
+      },
+      queryClient: deps.queryClient,
+      queryFn: fetchStatusSnapshot,
+      queryKey: serverStateQueryKeys.update.statusSnapshot(),
+    });
+
+  async function refreshStatusForGeneration(generation: number): Promise<void> {
+    const snapshot = await fetchStatusSnapshot();
+    if (!isCurrentStatus(generation)) {
+      return;
+    }
+    statusSnapshotQuery.setData(() => snapshot);
+    applyStatusSnapshot(snapshot);
+  }
 
   async function refreshStatus(): Promise<void> {
-    await statusSnapshotQuery.fetch();
+    if (disposed) {
+      return;
+    }
+    const generation = nextStatusGeneration();
+    try {
+      await refreshStatusForGeneration(generation);
+    } catch (error) {
+      if (isCurrentStatus(generation)) {
+        deps.showError(
+          error instanceof Error ? error.message : deps.t("status.unavailable"),
+        );
+      }
+      throw error;
+    }
   }
 
   async function startUpdate(intent: UpdateFeatureStartIntent): Promise<void> {
+    if (disposed || startInFlight) {
+      return;
+    }
     if (!intent.canStart) {
       if (intent.transport === "wifi" && !intent.ssid) {
         deps.view.focusSsidInput();
@@ -180,43 +234,70 @@ export function createUpdateFeatureWorkflow(
       return;
     }
 
-    const payload: UpdateStartRequestPayload = intent.transport === "wifi"
-      ? {
-          transport: intent.transport,
-          ssid: intent.ssid,
-          password: intent.password,
-        }
-      : {
-          transport: intent.transport,
-          password: "",
-        };
+    const payload: UpdateStartRequestPayload =
+      intent.transport === "wifi"
+        ? {
+            transport: intent.transport,
+            ssid: intent.ssid,
+            password: intent.password,
+          }
+        : {
+            transport: intent.transport,
+            password: "",
+          };
 
+    startInFlight = true;
+    const generation = nextStatusGeneration();
     try {
       await api.startUpdate(payload);
+      if (!isCurrentStatus(generation)) {
+        return;
+      }
       deps.view.clearPassword();
-      await statusSnapshotQuery.fetch();
+      await refreshStatusForGeneration(generation);
     } catch (err) {
+      if (!isCurrentStatus(generation)) {
+        return;
+      }
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("409")) {
         deps.showError(deps.t("settings.update.already_running"));
       } else {
         deps.showError(`${deps.t("settings.update.start_failed")}\n${msg}`);
       }
+    } finally {
+      startInFlight = false;
     }
   }
 
   async function cancelUpdate(): Promise<void> {
+    if (disposed || cancelInFlight) {
+      return;
+    }
+    cancelInFlight = true;
+    const generation = nextStatusGeneration();
     try {
       await api.cancelUpdate();
-      await statusSnapshotQuery.fetch();
     } catch {
       /* ignore */
+    } finally {
+      try {
+        if (isCurrentStatus(generation)) {
+          await refreshStatusForGeneration(generation);
+        }
+      } finally {
+        cancelInFlight = false;
+      }
     }
   }
 
   return {
     cancelUpdate,
     dispose(): void {
+      disposed = true;
+      statusGeneration += 1;
+      startInFlight = false;
+      cancelInFlight = false;
       statusSnapshotQuery.dispose();
     },
     getRenderState,
