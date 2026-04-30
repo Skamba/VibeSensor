@@ -1,6 +1,6 @@
 compute_ui_hash() {
   (
-    cd "${REPO_ROOT}"
+    cd "${REPO_ROOT}" || exit
     git ls-files \
       apps/ui \
       tools/config/sync_shared_contracts_to_ui.mjs \
@@ -124,7 +124,7 @@ build_app_artifacts() {
   sync_dir_contents "${APP_PUBLIC_DIR}" "${build_root}/apps/server/vibesensor/static"
 
   (
-    cd "${build_root}"
+    cd "${build_root}" || exit
     "${VS_PYTHON_BIN}" -m venv .build-venv
     ./.build-venv/bin/pip install --upgrade pip build >/dev/null
     ./.build-venv/bin/python -m build --wheel apps/server
@@ -138,6 +138,7 @@ build_app_artifacts() {
   fi
   cp -f "${wheel_path}" "${APP_WHEEL_DIR}/"
   APP_WHEEL_PATH="${APP_WHEEL_DIR}/$(basename "${wheel_path}")"
+  # shellcheck disable=SC2034  # Consumed by stage_assembly.sh after this library is sourced.
   APP_WHEEL_FILE="$(basename "${APP_WHEEL_PATH}")"
 
   {
@@ -159,6 +160,7 @@ require_prebuilt_app_artifacts() {
     echo "Run BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh first."
     exit 1
   fi
+  # shellcheck disable=SC2034  # Consumed by stage_assembly.sh after this library is sourced.
   APP_WHEEL_FILE="$(basename "${APP_WHEEL_PATH}")"
   if [ ! -f "${APP_PUBLIC_DIR}/index.html" ]; then
     echo "Missing prebuilt UI assets in ${APP_PUBLIC_DIR}."
