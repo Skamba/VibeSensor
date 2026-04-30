@@ -450,10 +450,11 @@ cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing
 Coverage guidance:
 
 - Treat coverage as a risk-finding tool, not the only quality signal.
-- High-risk backend areas such as `use_cases/diagnostics/`,
+- High-risk backend areas such as `apps/server/vibesensor/use_cases/diagnostics/`,
   `apps/server/vibesensor/infra/processing/`,
-  `adapters/persistence/history_db/`, and `use_cases/updates/` should stay above the repo-wide baseline whenever
-  practical.
+  `apps/server/vibesensor/adapters/persistence/history_db/`, and
+  `apps/server/vibesensor/use_cases/updates/` should stay above the repo-wide
+  baseline whenever practical.
 
 The default CI-parity suite now derives these blocking GitHub checks from the
 workflow-backed CI manifest:

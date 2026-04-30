@@ -12,9 +12,10 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ## Current architecture
 
 ```text
-ESP32 nodes -> adapters/udp/ -> infra/processing/ + use_cases/diagnostics/
-                             -> infra/runtime/ -> adapters/http/ + adapters/websocket/ -> apps/ui
-                             -> use_cases/run/ + adapters/persistence/history_db/ -> use_cases/history/ -> adapters/pdf/
+ESP32 nodes -> apps/server/vibesensor/adapters/udp/
+             -> live-processing layer + apps/server/vibesensor/use_cases/diagnostics/
+             -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/adapters/http/ + apps/server/vibesensor/adapters/websocket/ -> apps/ui
+             -> apps/server/vibesensor/use_cases/run/ + apps/server/vibesensor/adapters/persistence/history_db/ -> apps/server/vibesensor/use_cases/history/ -> apps/server/vibesensor/adapters/pdf/
 ```
 
 Backend ownership boundaries:
