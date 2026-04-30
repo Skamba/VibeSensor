@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -58,6 +58,7 @@ lint: ## Run repo hygiene, dependency/static guards, docs lint, and contract dri
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	"$$PYTHON" tools/dev/check_hygiene.py && \
+	"$$PYTHON" tools/dev/loc_check.py && \
 	$(MAKE) --no-print-directory shell-lint && \
 	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
@@ -115,9 +116,12 @@ smoke: ## Run simulator and websocket smoke checks against a local server
 	"$$PYTHON" -m vibesensor.adapters.simulator.sim_sender --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server && \
 	"$$PYTHON" -m vibesensor.adapters.simulator.ws_smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
 
-loc: ## Run the repo lines-of-code budget check
+maintainability-check: ## Run file/function size maintainability gate
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/dev/loc_check.py
+
+loc: ## Run the repo file/function size maintainability gate
+loc: maintainability-check
 
 docs-lint: ## Run docs lint without the broader lint suite
 	@$(RESOLVE_PYTHON) \
