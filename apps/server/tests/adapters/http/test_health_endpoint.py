@@ -45,6 +45,8 @@ def test_health_endpoint_response_shape(_health_client):
     assert result["startup_error"] is None
     assert result["background_task_failures"] == {}
     assert result["db_corruption_detected"] is False
+    assert result["db_engine_unhealthy"] is False
+    assert result["db_engine_unhealthy_reason"] is None
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
     assert result["processing_failure_categories"] == {}
@@ -143,6 +145,23 @@ def test_health_endpoint_degrades_for_db_corruption(_health_client):
     assert result["status"] == "degraded"
     assert result["db_corruption_detected"] is True
     assert "db_corruption_detected" in result["degradation_reasons"]
+
+
+def test_health_endpoint_degrades_for_db_engine_failure(_health_client):
+    client, state, _app = _health_client
+    state.health_state.mark_db_engine_unhealthy(
+        "raw_capture_append_timeout",
+        "History DB engine operation timed out",
+    )
+
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "degraded"
+    assert result["db_engine_unhealthy"] is True
+    assert result["db_engine_unhealthy_reason"] == "raw_capture_append_timeout"
+    assert "db_engine_unhealthy" in result["degradation_reasons"]
 
 
 def test_health_endpoint_warns_for_buffer_overflow_drops(_health_client):

@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+import time
 from pathlib import Path
 from threading import Event, Thread
 
 import pytest
 from test_support.history_db_async import fetch_all, fetch_one
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+import vibesensor.adapters.persistence.history_db._engine as engine_module
+from vibesensor.adapters.persistence.history_db import (
+    HistoryDbEngineTimeoutError,
+    SQLiteHistoryEngine,
+    create_history_persistence_adapters,
+)
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
@@ -171,3 +177,57 @@ def test_history_db_allows_reads_during_write_transaction(tmp_path: Path) -> Non
     asyncio.run(db.aclose())
     if errors:
         raise errors[0]
+
+
+def test_history_db_sync_engine_call_times_out_and_reports_unhealthy(
+    tmp_path: Path,
+) -> None:
+    reports: list[tuple[str, str]] = []
+    engine = SQLiteHistoryEngine(
+        tmp_path / "history.db",
+        engine_failure_reporter=lambda reason, details: reports.append((reason, details)),
+    )
+
+    async def _blocked() -> None:
+        await asyncio.Event().wait()
+
+    with pytest.raises(HistoryDbEngineTimeoutError):
+        engine._run_on_engine_loop(
+            _blocked(),
+            timeout_s=0.01,
+            operation="unit_test",
+        )
+
+    engine.close()
+    assert reports
+    assert reports[0][0] == "unit_test_timeout"
+    assert "timed out after 0.01s" in reports[0][1]
+
+
+def test_history_db_close_reports_loop_shutdown_timeout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reports: list[tuple[str, str]] = []
+    engine = SQLiteHistoryEngine(
+        tmp_path / "history.db",
+        engine_failure_reporter=lambda reason, details: reports.append((reason, details)),
+    )
+    loop_thread = engine._ensure_loop_thread()
+    started = Event()
+
+    async def _block_loop() -> None:
+        started.set()
+        time.sleep(0.2)
+
+    future = asyncio.run_coroutine_threadsafe(_block_loop(), loop_thread.loop)
+    assert started.wait(timeout=1.0)
+    monkeypatch.setattr(engine_module, "_ENGINE_SHUTDOWN_TIMEOUT_S", 0.01)
+
+    engine._stop_loop_thread()
+
+    assert future.result(timeout=1.0) is None
+    monkeypatch.setattr(engine_module, "_ENGINE_SHUTDOWN_TIMEOUT_S", 1.0)
+    engine._stop_loop_thread()
+    reasons = [reason for reason, _details in reports]
+    assert "shutdown_timeout" in reasons

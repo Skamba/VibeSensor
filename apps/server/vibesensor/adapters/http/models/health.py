@@ -107,6 +107,9 @@ class HealthResponse(BaseModel):
     startup_warnings: list[str] = []
     background_task_failures: dict[str, str]
     db_corruption_detected: bool = False
+    db_engine_unhealthy: bool = False
+    db_engine_unhealthy_reason: str | None = None
+    db_engine_unhealthy_details: str | None = None
     processing_state: str
     processing_failures: int
     processing_failure_categories: dict[str, int]

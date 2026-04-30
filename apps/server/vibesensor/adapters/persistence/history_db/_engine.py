@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import logging
 import sqlite3
 import threading
@@ -24,9 +25,19 @@ from vibesensor.shared.types.json_types import is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["SQLiteHistoryEngine", "run_startup_quick_check"]
+__all__ = ["HistoryDbEngineTimeoutError", "SQLiteHistoryEngine", "run_startup_quick_check"]
 
 _T = TypeVar("_T")
+_ENGINE_OPERATION_TIMEOUT_S = 10.0
+_ENGINE_OPEN_TIMEOUT_S = 30.0
+_ENGINE_SCHEMA_MIGRATION_TIMEOUT_S = 30.0
+_ENGINE_QUICK_CHECK_TIMEOUT_S = 10.0
+_ENGINE_CLOSE_TIMEOUT_S = 5.0
+_ENGINE_SHUTDOWN_TIMEOUT_S = 5.0
+
+
+class HistoryDbEngineTimeoutError(TimeoutError):
+    """Raised when a history DB operation outlives its engine-loop budget."""
 
 
 def _extract_run_car_name(metadata_json: object) -> str | None:
@@ -65,17 +76,32 @@ class _EngineLoopThread:
     def loop(self) -> asyncio.AbstractEventLoop:
         return self._loop
 
-    def run_sync(self, coro: Awaitable[_T]) -> _T:
+    def run_sync(
+        self,
+        coro: Awaitable[_T],
+        *,
+        timeout_s: float,
+        operation: str,
+    ) -> _T:
         future = asyncio.run_coroutine_threadsafe(cast(Any, coro), self._loop)
-        return cast(_T, future.result())
+        try:
+            return cast(_T, future.result(timeout=timeout_s))
+        except concurrent.futures.TimeoutError as exc:
+            future.cancel()
+            raise HistoryDbEngineTimeoutError(
+                f"History DB engine operation '{operation}' timed out after {timeout_s:.2f}s"
+            ) from exc
 
-    def stop(self) -> None:
+    def stop(self, *, timeout_s: float) -> bool:
         if self._loop.is_closed():
-            return
+            return True
         self._loop.call_soon_threadsafe(self._loop.stop)
-        self._thread.join(timeout=5.0)
+        self._thread.join(timeout=timeout_s)
+        if self._thread.is_alive():
+            return False
         if not self._loop.is_closed():
             self._loop.close()
+        return True
 
 
 def _current_loop() -> asyncio.AbstractEventLoop | None:
@@ -141,6 +167,7 @@ class SQLiteHistoryEngine:
         "_conn",
         "_corruption_details",
         "_corruption_reporter",
+        "_engine_failure_reporter",
         "_lock",
         "_loop_thread",
         "_open_lock",
@@ -154,9 +181,11 @@ class SQLiteHistoryEngine:
         db_path: Path,
         *,
         corruption_reporter: Callable[[str], None] | None = None,
+        engine_failure_reporter: Callable[[str, str], None] | None = None,
     ) -> None:
         self.db_path = db_path
         self._corruption_reporter = corruption_reporter
+        self._engine_failure_reporter = engine_failure_reporter
         self._corruption_details: str | None = None
         self._lock = threading.Lock()
         self._open_lock = threading.Lock()
@@ -171,22 +200,64 @@ class SQLiteHistoryEngine:
             self._loop_thread = _EngineLoopThread()
         return self._loop_thread
 
-    def _run_on_engine_loop(self, coro: Awaitable[_T]) -> _T:
+    def _mark_engine_failure(self, reason: str, details: str) -> None:
+        LOGGER.critical("History DB engine %s: %s", reason, details)
+        if self._engine_failure_reporter is not None:
+            self._engine_failure_reporter(reason, details)
+
+    def _run_on_engine_loop(
+        self,
+        coro: Awaitable[_T],
+        *,
+        timeout_s: float = _ENGINE_OPERATION_TIMEOUT_S,
+        operation: str = "operation",
+    ) -> _T:
         """Run *coro* on the engine's dedicated loop; safe from any caller thread.
 
         Sync callers block on the result. Async callers on a different loop should
         await via :py:meth:`_await_on_engine_loop` instead.
         """
-        return self._ensure_loop_thread().run_sync(coro)
+        try:
+            return self._ensure_loop_thread().run_sync(
+                coro,
+                timeout_s=timeout_s,
+                operation=operation,
+            )
+        except HistoryDbEngineTimeoutError as exc:
+            self._mark_engine_failure(f"{operation}_timeout", str(exc))
+            raise
 
-    async def _await_on_engine_loop(self, coro: Awaitable[_T]) -> _T:
+    async def _await_on_engine_loop(
+        self,
+        coro: Awaitable[_T],
+        *,
+        timeout_s: float = _ENGINE_OPERATION_TIMEOUT_S,
+        operation: str = "operation",
+    ) -> _T:
         """Await *coro* from an external loop while executing it on the engine loop."""
         loop_thread = self._ensure_loop_thread()
         caller_loop = _current_loop()
-        if caller_loop is loop_thread.loop:
-            return await coro
-        future = asyncio.run_coroutine_threadsafe(cast(Any, coro), loop_thread.loop)
-        return cast(_T, await asyncio.wrap_future(future))
+        try:
+            if caller_loop is loop_thread.loop:
+                return await asyncio.wait_for(coro, timeout=timeout_s)
+            future = asyncio.run_coroutine_threadsafe(cast(Any, coro), loop_thread.loop)
+            try:
+                return cast(
+                    _T,
+                    await asyncio.wait_for(
+                        asyncio.shield(asyncio.wrap_future(future)),
+                        timeout=timeout_s,
+                    ),
+                )
+            except TimeoutError:
+                future.cancel()
+                raise
+        except TimeoutError as exc:
+            timeout_error = HistoryDbEngineTimeoutError(
+                f"History DB engine operation '{operation}' timed out after {timeout_s:.2f}s"
+            )
+            self._mark_engine_failure(f"{operation}_timeout", str(timeout_error))
+            raise timeout_error from exc
 
     @staticmethod
     async def _configure_connection(conn: aiosqlite.Connection, *, read_only: bool) -> None:
@@ -199,10 +270,18 @@ class SQLiteHistoryEngine:
             await conn.execute("PRAGMA query_only=ON")
 
     def open(self) -> None:
-        self._run_on_engine_loop(self._aopen_impl())
+        self._run_on_engine_loop(
+            self._aopen_impl(),
+            timeout_s=_ENGINE_OPEN_TIMEOUT_S,
+            operation="open",
+        )
 
     async def aopen(self) -> None:
-        await self._await_on_engine_loop(self._aopen_impl())
+        await self._await_on_engine_loop(
+            self._aopen_impl(),
+            timeout_s=_ENGINE_OPEN_TIMEOUT_S,
+            operation="open",
+        )
 
     async def _aopen_impl(self) -> None:
         async with _async_lock_context(self._open_lock):
@@ -214,8 +293,16 @@ class SQLiteHistoryEngine:
             try:
                 await self._configure_connection(conn, read_only=False)
                 self._conn = conn
-                await self._ensure_schema()
-                await self._run_startup_quick_check()
+                await self._with_engine_timeout(
+                    self._ensure_schema(),
+                    timeout_s=_ENGINE_SCHEMA_MIGRATION_TIMEOUT_S,
+                    operation="schema_migration",
+                )
+                await self._with_engine_timeout(
+                    self._run_startup_quick_check(),
+                    timeout_s=_ENGINE_QUICK_CHECK_TIMEOUT_S,
+                    operation="startup_quick_check",
+                )
                 if self._use_separate_read_conn:
                     read_conn = await aiosqlite.connect(self.db_path, check_same_thread=False)
                     await self._configure_connection(read_conn, read_only=True)
@@ -227,18 +314,56 @@ class SQLiteHistoryEngine:
                 await conn.close()
                 raise
 
+    async def _with_engine_timeout(
+        self,
+        coro: Awaitable[_T],
+        *,
+        timeout_s: float,
+        operation: str,
+    ) -> _T:
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout_s)
+        except TimeoutError as exc:
+            timeout_error = HistoryDbEngineTimeoutError(
+                f"History DB engine operation '{operation}' timed out after {timeout_s:.2f}s"
+            )
+            self._mark_engine_failure(f"{operation}_timeout", str(timeout_error))
+            raise timeout_error from exc
+
     def close(self) -> None:
-        self._run_on_engine_loop(self._aclose_impl())
-        if self._loop_thread is not None:
-            self._loop_thread.stop()
-            self._loop_thread = None
+        try:
+            self._run_on_engine_loop(
+                self._aclose_impl(),
+                timeout_s=_ENGINE_CLOSE_TIMEOUT_S,
+                operation="close",
+            )
+        finally:
+            self._stop_loop_thread()
 
     async def aclose(self) -> None:
-        await self._await_on_engine_loop(self._aclose_impl())
-        if self._loop_thread is not None:
-            loop_thread = self._loop_thread
+        try:
+            await self._await_on_engine_loop(
+                self._aclose_impl(),
+                timeout_s=_ENGINE_CLOSE_TIMEOUT_S,
+                operation="close",
+            )
+        finally:
+            await asyncio.to_thread(self._stop_loop_thread)
+
+    def _stop_loop_thread(self) -> None:
+        if self._loop_thread is None:
+            return
+        stopped = self._loop_thread.stop(timeout_s=_ENGINE_SHUTDOWN_TIMEOUT_S)
+        if stopped:
             self._loop_thread = None
-            await asyncio.to_thread(loop_thread.stop)
+            return
+        self._mark_engine_failure(
+            "shutdown_timeout",
+            (
+                "History DB engine loop did not stop within "
+                f"{_ENGINE_SHUTDOWN_TIMEOUT_S:.2f}s; leaving loop open"
+            ),
+        )
 
     async def _aclose_impl(self) -> None:
         async with _async_lock_context(self._lock):
