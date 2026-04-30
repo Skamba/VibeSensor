@@ -240,12 +240,17 @@ Use the narrowest existing validation path that matches the layer you changed:
 
 ```bash
 cd firmware/esp && pio run
+python tools/firmware/generate_protocol_contract_fixtures.py --check
+cd firmware/esp && pio test -e native
 BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
 BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
 ./infra/pi-image/pi-gen/validate-image.sh
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
 ```
 
+- Use `cd firmware/esp && pio run` for firmware compile coverage.
+- Use the protocol fixture check plus `cd firmware/esp && pio test -e native`
+  when firmware/protocol changes need CI firmware-lane parity.
 - Use `pio run -t upload` and `pio device monitor` only when hardware-backed
   firmware behavior needs confirmation.
 - Use `BUILD_MODE=app` for packaged app artifact changes, `BUILD_MODE=image` for
