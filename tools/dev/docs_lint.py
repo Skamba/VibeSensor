@@ -498,6 +498,28 @@ def _check_frontend_guidance_validation(repo_root: Path) -> list[str]:
     return issues
 
 
+def _check_firmware_guidance_validation(repo_root: Path) -> list[str]:
+    firmware_text = _read_text(
+        repo_root, ".github/instructions/firmware.instructions.md"
+    )
+    if firmware_text is None:
+        return ["missing .github/instructions/firmware.instructions.md"]
+    workflow_text = _read_text(repo_root, ".github/workflows/ci.yml") or ""
+    required_commands = [
+        "python tools/firmware/generate_protocol_contract_fixtures.py --check",
+        "cd firmware/esp && pio test -e native",
+    ]
+    issues: list[str] = []
+    for command in required_commands:
+        workflow_command = command.replace("cd firmware/esp && ", "")
+        if workflow_command in workflow_text and command not in firmware_text:
+            issues.append(
+                ".github/instructions/firmware.instructions.md must mention "
+                f"CI firmware validation command: {command}"
+            )
+    return issues
+
+
 def _check_guidance_script_references(
     markdown_files: list[str], repo_root: Path
 ) -> list[str]:
@@ -659,6 +681,7 @@ def main() -> int:
     issues.extend(_check_markdown_links(markdown_files, repo_root))
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_frontend_guidance_validation(repo_root))
+    issues.extend(_check_firmware_guidance_validation(repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
