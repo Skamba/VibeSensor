@@ -171,7 +171,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
           savedPayload = payload;
           return makeSpeedSourcePayload({
             manual_speed_kph: payload.manual_speed_kph,
-            speed_source: payload.speed_source,
+            speed_source: payload.speed_source ?? "gps",
             stale_timeout_s: payload.stale_timeout_s ?? 5,
           });
         },
@@ -485,7 +485,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const harness = createHarness();
     const appState = createAppState();
     const pair = deferred<{
-      configured_device_mac: string | null;
+      configured_device_mac: string;
       configured_device_name: string | null;
       connected: boolean;
       paired: boolean;
@@ -577,7 +577,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const harness = createHarness();
     const appState = createAppState();
     const pair = deferred<{
-      configured_device_mac: string | null;
+      configured_device_mac: string;
       configured_device_name: string | null;
       connected: boolean;
       paired: boolean;
