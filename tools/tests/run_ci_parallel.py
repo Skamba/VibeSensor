@@ -194,6 +194,26 @@ def _run_job(name: str, steps: list[Step], results: dict[str, JobResult]) -> Non
         )
 
 
+def _run_job_with_workspace_locks(
+    name: str,
+    steps: list[Step],
+    results: dict[str, JobResult],
+    workspace_write_sets: tuple[str, ...],
+    workspace_locks: dict[str, threading.Lock],
+) -> None:
+    ordered_write_sets = tuple(sorted(workspace_write_sets))
+    acquired: list[threading.Lock] = []
+    try:
+        for write_set in ordered_write_sets:
+            lock = workspace_locks[write_set]
+            lock.acquire()
+            acquired.append(lock)
+        _run_job(name, steps, results)
+    finally:
+        for lock in reversed(acquired):
+            lock.release()
+
+
 def _bootstrap_steps(
     python_cmd: str,
     run_npm_ci: bool,
@@ -260,6 +280,13 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     }
 
 
+def _job_workspace_write_sets() -> dict[str, tuple[str, ...]]:
+    return {
+        job_name: job.workspace_write_sets
+        for job_name, job in _CI_MANIFEST.ci_workflow_jobs().items()
+    }
+
+
 def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
     jobs = _CI_MANIFEST.ci_workflow_jobs()
     warned = False
@@ -278,6 +305,36 @@ def _emit_skipped_action_warnings(selected_jobs: list[str]) -> None:
                 else "; no local substitute"
             )
             _emit(f"[ci-local] - {job_name}{action_name}: {action.uses}{substitute}")
+
+
+def _overlapping_workspace_write_sets(
+    selected_jobs: list[str],
+    job_write_sets: dict[str, tuple[str, ...]],
+) -> dict[str, tuple[str, ...]]:
+    jobs_by_write_set: dict[str, list[str]] = {}
+    for job_name in selected_jobs:
+        for write_set in job_write_sets[job_name]:
+            jobs_by_write_set.setdefault(write_set, []).append(job_name)
+    return {
+        write_set: tuple(job_names)
+        for write_set, job_names in sorted(jobs_by_write_set.items())
+        if len(job_names) > 1
+    }
+
+
+def _emit_workspace_write_set_warnings(
+    selected_jobs: list[str],
+    job_write_sets: dict[str, tuple[str, ...]],
+) -> None:
+    overlaps = _overlapping_workspace_write_sets(selected_jobs, job_write_sets)
+    if not overlaps:
+        return
+    _emit("[ci-local] shared workspace write-set serialization:")
+    for write_set, job_names in overlaps.items():
+        _emit(
+            f"[ci-local] - {write_set}: {', '.join(job_names)}; serialized locally "
+            "because GitHub jobs use isolated checkouts"
+        )
 
 
 def _selected_jobs_require_platformio(selected_jobs: list[str]) -> bool:
@@ -342,12 +399,14 @@ def main(argv: list[str] | None = None) -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     all_jobs = _job_steps(python_cmd)
+    job_write_sets = _job_workspace_write_sets()
     selected_jobs = (
         args.job
         if args.job
         else list(CI_LITE_JOB_NAMES if args.ci_lite else ALL_JOB_NAMES)
     )
     _emit_skipped_action_warnings(selected_jobs)
+    _emit_workspace_write_set_warnings(selected_jobs, job_write_sets)
 
     if _shared_ui_workspace_would_race(
         selected_jobs,
@@ -384,10 +443,21 @@ def main(argv: list[str] | None = None) -> int:
     started = time.monotonic()
     results: dict[str, JobResult] = {}
     threads: list[threading.Thread] = []
+    workspace_locks = {
+        write_set: threading.Lock()
+        for job_name in selected_jobs
+        for write_set in job_write_sets[job_name]
+    }
     for job_name in selected_jobs:
         thread = threading.Thread(
-            target=_run_job,
-            args=(job_name, all_jobs[job_name], results),
+            target=_run_job_with_workspace_locks,
+            args=(
+                job_name,
+                all_jobs[job_name],
+                results,
+                job_write_sets[job_name],
+                workspace_locks,
+            ),
             daemon=False,
         )
         thread.start()
