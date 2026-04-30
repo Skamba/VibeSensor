@@ -112,6 +112,13 @@ def test_make_dev_target_wraps_docker_dev_compose() -> None:
     )
 
 
+def test_make_setup_reuses_shared_ui_bootstrap_helper() -> None:
+    makefile_text = _MAKEFILE.read_text(encoding="utf-8")
+
+    assert "cd $(UI_DIR) && node ../../tools/ui/ensure_ui_bootstrap.mjs" in makefile_text
+    assert "cd $(UI_DIR) && npm ci" not in makefile_text
+
+
 def test_makefile_exposes_ui_unit_test_target_and_readme_pointer() -> None:
     makefile_text = _MAKEFILE.read_text(encoding="utf-8")
     readme_text = _UI_README.read_text(encoding="utf-8")
