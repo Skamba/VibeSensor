@@ -19,6 +19,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD = "node ../../tools/ui/ensure_ui_bootstrap.mjs"
 _UI_DERIVATIVE_SETUP_WORKFLOW_CMD = "npm run setup:generated-contracts"
+_UI_MANUAL_CHUNK_PACKAGE_RE = re.compile(r'"/(?!node_modules/)((?:@[^/]+/)?[^/]+)/"')
 
 TEXT_EXTS = {
     ".py",
@@ -2092,6 +2093,56 @@ def check_contract_sync_entrypoint() -> list[str]:
     return errors
 
 
+def _ui_production_package_names() -> set[str]:
+    lockfile = json.loads(
+        (ROOT / "apps/ui/package-lock.json").read_text(encoding="utf-8")
+    )
+    packages = lockfile.get("packages")
+    if not isinstance(packages, Mapping):
+        return set()
+
+    root_package = packages.get("")
+    if not isinstance(root_package, Mapping):
+        return set()
+
+    dependencies = root_package.get("dependencies")
+    if not isinstance(dependencies, Mapping):
+        return set()
+
+    production_package_names: set[str] = set()
+    pending = list(dependencies)
+    while pending:
+        package_name = pending.pop()
+        if package_name in production_package_names:
+            continue
+        production_package_names.add(package_name)
+
+        package_data = packages.get(f"node_modules/{package_name}")
+        if not isinstance(package_data, Mapping):
+            continue
+        package_dependencies = package_data.get("dependencies")
+        if isinstance(package_dependencies, Mapping):
+            pending.extend(package_dependencies)
+
+    return production_package_names
+
+
+def check_frontend_manual_chunk_packages() -> list[str]:
+    errors: list[str] = []
+    vite_config = (ROOT / "apps/ui/vite.config.ts").read_text(encoding="utf-8")
+    production_package_names = _ui_production_package_names()
+    manual_chunk_package_names = set(_UI_MANUAL_CHUNK_PACKAGE_RE.findall(vite_config))
+
+    stale_package_names = sorted(manual_chunk_package_names - production_package_names)
+    for package_name in stale_package_names:
+        errors.append(
+            f"apps/ui/vite.config.ts manual chunk rule references {package_name!r}, "
+            "but it is not in the UI production dependency graph."
+        )
+
+    return errors
+
+
 def check_docker_ci_dependency_hygiene() -> list[str]:
     errors: list[str] = []
 
@@ -3312,6 +3363,11 @@ _LIST_CHECK_SPECS = (
         runner=check_frontend_generated_contract_boundaries,
         failure_heading="Frontend generated-contract boundary drift detected:",
         success_message="Frontend generated-contract boundaries passed.",
+    ),
+    ListCheckSpec(
+        runner=check_frontend_manual_chunk_packages,
+        failure_heading="Frontend manual chunk package drift detected:",
+        success_message="Frontend manual chunk package checks passed.",
     ),
     ListCheckSpec(
         runner=check_frontend_raw_html_boundaries,
