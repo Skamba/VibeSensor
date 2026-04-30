@@ -109,6 +109,20 @@ def test_data_roundtrip() -> None:
     np.testing.assert_array_equal(decoded.samples, samples)
 
 
+def test_parse_data_returns_read_only_view_over_datagram_payload() -> None:
+    client_id = bytes.fromhex("010203040506")
+    samples = np.array([[1, 2, 3], [4, 5, 6], [-2, -1, 0]], dtype=np.int16)
+    pkt = pack_data(client_id=client_id, seq=17, t0_us=123_456_789, samples=samples)
+
+    decoded = parse_data(pkt)
+
+    assert decoded.samples.flags.owndata is False
+    assert decoded.samples.flags.writeable is False
+    assert np.shares_memory(decoded.samples, np.frombuffer(pkt, dtype=np.uint8))
+    with pytest.raises(ValueError, match="read-only"):
+        decoded.samples[0, 0] = 99
+
+
 def test_parse_identify_cmd() -> None:
     client_id = bytes.fromhex("112233445566")
     cmd = pack_cmd_identify(client_id, cmd_seq=42, duration_ms=1500)

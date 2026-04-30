@@ -331,8 +331,13 @@ def parse_data(data: bytes) -> DataMessage:
         bytes_per_sample=BYTES_PER_SAMPLE,
     )
 
-    payload = memoryview(data)[DATA_HEADER_BYTES:]
-    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, ACCEL_AXES).copy()
+    samples = np.frombuffer(
+        data,
+        dtype=_SAMPLE_DTYPE,
+        count=sample_count * ACCEL_AXES,
+        offset=DATA_HEADER_BYTES,
+    ).reshape(sample_count, ACCEL_AXES)
+    samples.setflags(write=False)
     return DataMessage(
         client_id=client_id,
         seq=seq,

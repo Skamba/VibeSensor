@@ -41,6 +41,62 @@ async def test_datagram_received_queues_work_before_processing(fake_transport, d
 
 
 @pytest.mark.asyncio
+async def test_parse_to_ingest_keeps_representative_sensor_frames_as_read_only_views(
+    fake_transport,
+    drain_queue,
+) -> None:
+    registry = Mock()
+    registry.update_from_data.side_effect = [
+        DataUpdateResult(),
+        DataUpdateResult(),
+        DataUpdateResult(),
+    ]
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
+    processor = Mock()
+    raw_capture_sink = Mock()
+    proto = DataDatagramProtocol(
+        registry=registry,
+        processor=processor,
+        raw_capture_sink=raw_capture_sink,
+        queue_maxsize=8,
+    )
+    proto.connection_made(fake_transport)
+
+    frame_samples = 200
+    for sensor_index, client_id in enumerate(
+        (
+            bytes.fromhex("010203040506"),
+            bytes.fromhex("112233445566"),
+            bytes.fromhex("aabbccddeeff"),
+        )
+    ):
+        samples = (
+            np.arange(frame_samples * 3, dtype=np.int16).reshape(frame_samples, 3) + sensor_index
+        )
+        proto.datagram_received(
+            pack_data(client_id, seq=sensor_index + 1, t0_us=100_000, samples=samples),
+            ("127.0.0.1", 10001 + sensor_index),
+        )
+
+    await drain_queue(proto, timeout=1.0)
+
+    assert processor.ingest.call_count == 3
+    assert raw_capture_sink.capture_raw_samples.call_count == 3
+    for ingest_call, raw_capture_call in zip(
+        processor.ingest.call_args_list,
+        raw_capture_sink.capture_raw_samples.call_args_list,
+        strict=True,
+    ):
+        ingest_samples = ingest_call.args[1]
+        raw_capture_samples = raw_capture_call.kwargs["samples"]
+        assert ingest_samples is raw_capture_samples
+        assert ingest_samples.shape == (frame_samples, 3)
+        assert ingest_samples.dtype == np.dtype("<i2")
+        assert ingest_samples.flags.owndata is False
+        assert ingest_samples.flags.writeable is False
+
+
+@pytest.mark.asyncio
 async def test_datagram_queue_backpressure_drops_when_full(
     fake_transport,
     drain_queue,
