@@ -59,6 +59,9 @@ REPO_PATH_PREFIXES = (
     "docker-compose.dev.yml",
     "docker-compose.yml",
 )
+GENERATED_REPO_PATH_REFERENCES = {
+    "apps/ui/src/constants.ts",
+}
 
 
 def _walk_files(repo_root: Path) -> list[str]:
@@ -326,6 +329,8 @@ def _check_backticked_repo_paths(
                 continue
             candidate = candidate.split("#", 1)[0].strip("/")
             if not candidate:
+                continue
+            if candidate in GENERATED_REPO_PATH_REFERENCES:
                 continue
             if "/out/" in candidate:
                 continue
