@@ -18,6 +18,13 @@ jobs:
     timeout-minutes: 180
 
     steps:
+      - name: Validate manual release source
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
+        shell: bash
+        run: |
+          echo "Manual release workflow runs must use the main branch; got ${GITHUB_REF}." >&2
+          exit 1
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
