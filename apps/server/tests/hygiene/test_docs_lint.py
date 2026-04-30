@@ -277,3 +277,29 @@ def test_firmware_guidance_lint_requires_ci_native_validation_commands(
     )
 
     assert module._check_firmware_guidance_validation(tmp_path) == []
+
+
+def test_ai_guidance_lint_rejects_unsupported_uv_run_commands(
+    tmp_path: Path,
+) -> None:
+    module = _load_docs_lint_module()
+    instructions_dir = tmp_path / ".github" / "instructions"
+    tests_dir = tmp_path / "apps" / "server" / "tests"
+    instructions_dir.mkdir(parents=True)
+    tests_dir.mkdir(parents=True)
+    (instructions_dir / "tests.instructions.md").write_text(
+        "Run `uv run --python 3.13 --extra dev pytest tests/<module>/ -q`.\n",
+        encoding="utf-8",
+    )
+    (tests_dir / "AGENTS.md").write_text(
+        "Run `pytest -q apps/server/tests/<module>/`.\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_unsupported_ai_toolchain_commands(
+        [
+            ".github/instructions/tests.instructions.md",
+            "apps/server/tests/AGENTS.md",
+        ],
+        tmp_path,
+    ) == [".github/instructions/tests.instructions.md: unsupported AI guidance command: uv run"]
