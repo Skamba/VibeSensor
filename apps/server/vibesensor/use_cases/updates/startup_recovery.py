@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.use_cases.updates.models import UpdateState
+from vibesensor.use_cases.updates.models import UpdateState, UpdateTerminalState
 from vibesensor.use_cases.updates.status import (
     UpdateStatusTracker,
     UpdateTerminalStateReporter,
@@ -10,6 +10,14 @@ from vibesensor.use_cases.updates.status import (
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 
 __all__ = ["UpdateStartupRecoveryCoordinator"]
+
+_CLEANUP_FAILED_TERMINAL_STATES = frozenset(
+    {
+        UpdateTerminalState.cleanup_failed,
+        UpdateTerminalState.cancelled_cleanup_failed,
+        UpdateTerminalState.timeout_cleanup_failed,
+    }
+)
 
 
 class UpdateStartupRecoveryCoordinator:
@@ -30,6 +38,9 @@ class UpdateStartupRecoveryCoordinator:
 
     async def recover(self) -> None:
         status = self._status.status
+        if status.terminal_state in _CLEANUP_FAILED_TERMINAL_STATES:
+            await self._transport_coordinator.recover_interrupted(status)
+            return
         if status.state != UpdateState.running or status.finished_at is not None:
             return
         self._reporter.mark_interrupted("Update interrupted by server restart")

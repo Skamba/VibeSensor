@@ -15,6 +15,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
     UpdateState,
+    UpdateTerminalState,
     UpdateTransport,
 )
 
@@ -68,6 +69,7 @@ class UpdateJobStatusPayload(msgspec.Struct, kw_only=True):
     issues: list[UpdateIssuePayload] = msgspec.field(default_factory=list)
     log_tail: list[str] = msgspec.field(default_factory=list)
     exit_code: int | None = None
+    terminal_state: UpdateTerminalState | None = None
     runtime: UpdateRuntimeDetailsPayload = msgspec.field(
         default_factory=UpdateRuntimeDetailsPayload
     )

@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateState, UpdateTransport
+from vibesensor.use_cases.updates.models import (
+    UpdateJobStatus,
+    UpdateState,
+    UpdateTerminalState,
+    UpdateTransport,
+)
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 
 
@@ -76,3 +81,24 @@ async def test_recover_marks_interrupted_and_recovers_transport() -> None:
         ),
     )
     reporter.mark_interrupted.assert_called_once_with("Update interrupted by server restart")
+
+
+@pytest.mark.asyncio
+async def test_recover_repairs_cleanup_failed_terminal_state() -> None:
+    status = UpdateJobStatus(
+        state=UpdateState.failed,
+        finished_at=123.0,
+        terminal_state=UpdateTerminalState.timeout_cleanup_failed,
+    )
+    (
+        coordinator,
+        transport_coordinator,
+        recover,
+        reporter,
+        status_tracker,
+    ) = _make_recovery(status)
+
+    await coordinator.recover()
+
+    transport_coordinator.recover_interrupted.assert_awaited_once_with(status)
+    reporter.mark_interrupted.assert_not_called()
