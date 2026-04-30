@@ -109,6 +109,37 @@ def test_ci_job_example_lint_separates_act_and_local_job_ids(tmp_path: Path) -> 
     ]
 
 
+def test_local_logical_ci_job_id_loader_expands_matrix_names(tmp_path: Path) -> None:
+    module = _load_docs_lint_module()
+    workflow_dir = tmp_path / ".github" / "workflows"
+    workflow_dir.mkdir(parents=True)
+    (workflow_dir / "ci.yml").write_text(
+        "\n".join(
+            [
+                "jobs:",
+                "  ci-scope:",
+                "    steps: []",
+                "  backend-tests:",
+                "    strategy:",
+                "      matrix:",
+                "        include:",
+                '          - logical_job_name: "backend-tests-1"',
+                '          - logical_job_name: "backend-tests-2"',
+                "    steps: []",
+                "  docs-lint:",
+                "    steps: []",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert module._local_logical_ci_job_ids(tmp_path) == {
+        "backend-tests-1",
+        "backend-tests-2",
+        "docs-lint",
+    }
+
+
 def test_direct_shell_script_command_lint_requires_executable_script(
     tmp_path: Path,
 ) -> None:
