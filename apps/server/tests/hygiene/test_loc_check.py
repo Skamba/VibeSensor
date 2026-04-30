@@ -112,7 +112,8 @@ def test_main_fails_when_optional_loc_threshold_is_exceeded(
     assert module.main(["--fail-over", "2"]) == 1
 
     stdout = capsys.readouterr().out
-    assert "FAIL: 1 source file(s) exceed 2 lines:" in stdout
+    assert "FAIL: 1 maintainability size issue(s):" in stdout
+    assert "file exceeds threshold and is not allowlisted" in stdout
     assert "src/main.py" in stdout
     assert "scripts/helper.sh" not in stdout.split("FAIL:", 1)[1]
 
@@ -138,3 +139,108 @@ def test_main_passes_when_optional_loc_threshold_is_not_exceeded(
     monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
 
     assert module.main(["--fail-over", "2"]) == 0
+
+
+def test_main_fails_for_unallowlisted_large_python_function(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    module = _load_loc_check_module()
+    repo_root = tmp_path / "repo"
+    (repo_root / "tools" / "dev").mkdir(parents=True)
+    (repo_root / "src").mkdir()
+    (repo_root / "src" / "main.py").write_text(
+        "def too_large():\n    one = 1\n    two = 2\n    return one + two\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "__file__", str(repo_root / "tools" / "dev" / "loc_check.py"))
+
+    def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise subprocess.CalledProcessError(128, args[0])
+
+    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+
+    assert module.main(["--file-fail-over", "100", "--function-fail-over", "2"]) == 1
+
+    stdout = capsys.readouterr().out
+    assert "function exceeds threshold and is not allowlisted" in stdout
+    assert "src/main.py::too_large" in stdout
+
+
+def test_main_allows_reviewed_file_and_function_allowlist(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = _load_loc_check_module()
+    repo_root = tmp_path / "repo"
+    (repo_root / "tools" / "dev").mkdir(parents=True)
+    (repo_root / "src").mkdir()
+    (repo_root / "src" / "main.py").write_text(
+        "def reviewed_large_function():\n    one = 1\n    two = 2\n    return one + two\n",
+        encoding="utf-8",
+    )
+    (repo_root / "tools" / "dev" / "maintainability_allowlist.yml").write_text(
+        "file_threshold_lines: 2\n"
+        "function_threshold_lines: 2\n"
+        "files:\n"
+        "  src/main.py:\n"
+        "    max_lines: 4\n"
+        "    reason: Existing large fixture kept for test coverage.\n"
+        "functions:\n"
+        "  src/main.py::reviewed_large_function:\n"
+        "    max_lines: 4\n"
+        "    reason: Existing large function kept for test coverage.\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "__file__", str(repo_root / "tools" / "dev" / "loc_check.py"))
+
+    def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise subprocess.CalledProcessError(128, args[0])
+
+    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+
+    assert module.main([]) == 0
+
+
+def test_main_fails_when_allowlisted_file_or_function_grows(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    module = _load_loc_check_module()
+    repo_root = tmp_path / "repo"
+    (repo_root / "tools" / "dev").mkdir(parents=True)
+    (repo_root / "src").mkdir()
+    (repo_root / "src" / "main.py").write_text(
+        "def reviewed_large_function():\n    one = 1\n    two = 2\n    return one + two\n",
+        encoding="utf-8",
+    )
+    (repo_root / "tools" / "dev" / "maintainability_allowlist.yml").write_text(
+        "file_threshold_lines: 2\n"
+        "function_threshold_lines: 2\n"
+        "files:\n"
+        "  src/main.py:\n"
+        "    max_lines: 3\n"
+        "    reason: Existing large fixture kept for test coverage.\n"
+        "functions:\n"
+        "  src/main.py::reviewed_large_function:\n"
+        "    max_lines: 3\n"
+        "    reason: Existing large function kept for test coverage.\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "__file__", str(repo_root / "tools" / "dev" / "loc_check.py"))
+
+    def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise subprocess.CalledProcessError(128, args[0])
+
+    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+
+    assert module.main([]) == 1
+
+    stdout = capsys.readouterr().out
+    assert "allowlisted file grew past max_lines" in stdout
+    assert "allowlisted function grew past max_lines" in stdout

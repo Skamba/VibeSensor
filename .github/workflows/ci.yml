@@ -83,7 +83,9 @@ jobs:
       - uses: ./.github/actions/setup-backend
 
       - name: Repo hygiene checks
-        run: python tools/dev/check_hygiene.py
+        run: |
+          python tools/dev/check_hygiene.py
+          python tools/dev/loc_check.py
 
   shell-lint:
     name: Shell lint
