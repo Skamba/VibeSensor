@@ -8,10 +8,12 @@ from tests._paths import REPO_ROOT
 
 _STALE_MODULE = "vibesensor.use_cases.updates.release_validation"
 _LIVE_MODULE = "vibesensor.use_cases.updates.releases.release_validation"
+_MAIN_RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
+_WEEKLY_PI_IMAGE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "weekly-pi-image.yml"
 
 
 def test_main_release_workflow_fetches_full_history_and_validates_release_artifacts() -> None:
-    workflow_path = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
+    workflow_path = _MAIN_RELEASE_WORKFLOW
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
     release_job = workflow["jobs"]["release"]
     steps = release_job["steps"]
@@ -89,7 +91,7 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
 
 
 def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> None:
-    workflow_path = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
+    workflow_path = _MAIN_RELEASE_WORKFLOW
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
     release_job = workflow["jobs"]["release"]
     steps = release_job["steps"]
@@ -117,3 +119,33 @@ def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> No
 
     assert release_job["outputs"]["version"] == "${{ steps.version.outputs.version }}"
     assert release_job["outputs"]["tag"] == "${{ steps.version.outputs.tag }}"
+
+
+def test_manual_release_workflows_require_main_branch_before_publishing() -> None:
+    workflow_cases = (
+        (_MAIN_RELEASE_WORKFLOW, "release", "Create combined Wheel / ESP release"),
+        (_WEEKLY_PI_IMAGE_WORKFLOW, "build-and-release", "Publish weekly Pi image release"),
+    )
+
+    for workflow_path, job_name, publish_step_name in workflow_cases:
+        workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+        steps = workflow["jobs"][job_name]["steps"]
+        guard_index = next(
+            index
+            for index, step in enumerate(steps)
+            if isinstance(step, dict) and step.get("name") == "Validate manual release source"
+        )
+        publish_index = next(
+            index
+            for index, step in enumerate(steps)
+            if isinstance(step, dict) and step.get("name") == publish_step_name
+        )
+        guard_step = steps[guard_index]
+
+        assert guard_index < publish_index
+        assert (
+            guard_step["if"]
+            == "${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' }}"
+        )
+        assert "Manual release workflow runs must use the main branch" in guard_step["run"]
+        assert "exit 1" in guard_step["run"]
