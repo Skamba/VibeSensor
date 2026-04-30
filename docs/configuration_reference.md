@@ -53,6 +53,16 @@ For local development examples, see `apps/server/config.dev.yaml`,
 | `server.host` | `0.0.0.0` | Bind host for the FastAPI server. |
 | `server.port` | `80` | TCP port for HTTP/UI traffic. Must stay within `1`-`65535`. Dev configs typically override this to `8000`. |
 
+### Local mutation safety
+
+There is no YAML switch for the local HTTP safety boundary. The server always
+keeps read-only dashboard/API requests open, and it rejects mutating methods
+(`POST`, `PUT`, `PATCH`, `DELETE`) when a browser sends an `Origin` or `Referer`
+header for a different host than the request `Host`. Same-origin UI requests and
+non-browser local clients without those headers remain allowed. Treat this as a
+CSRF/trusted-origin guard, not login/authentication; secure deployments should
+still set `ap.psk` and restrict who can join the local appliance network.
+
 ## `udp`
 
 | Key | Default | Notes |
