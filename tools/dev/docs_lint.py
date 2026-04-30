@@ -12,6 +12,7 @@ Exit 0 if clean, 1 if violations found.
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -68,6 +69,12 @@ STALE_REPO_PATH_REFERENCES = {
 MAKE_COMMAND_RE = re.compile(r"(?<![\w./-])make\s+(?P<args>[^`#\n]*)")
 MAKE_TARGET_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 MAKE_OPTION_ARGS = {"-C", "-f", "--file", "--directory"}
+NPM_RUN_RE = re.compile(r"(?<![\w./-])npm\s+run\s+(?P<script>[A-Za-z0-9:._-]+)")
+CI_JOB_ARG_RE = re.compile(r"(?<!\S)(?:-j|--job)\s+(?P<job>[A-Za-z0-9_-]+)")
+DIRECT_SHELL_SCRIPT_RE = re.compile(
+    r"(?:^|[`;\s])(?:[A-Z_][A-Z0-9_]*=[^`\s]+\s+)*(?:sudo\s+)?\./"
+    r"(?P<path>(?:apps/server/scripts/|infra/|tools/)[A-Za-z0-9._~/-]+\.sh)\b"
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -213,6 +220,69 @@ def _makefile_targets(repo_root: Path) -> set[str]:
     return targets
 
 
+def _ui_npm_scripts(repo_root: Path) -> set[str]:
+    package_json_text = _read_text(repo_root, "apps/ui/package.json")
+    if package_json_text is None:
+        return set()
+    try:
+        payload = json.loads(package_json_text)
+    except json.JSONDecodeError:
+        return set()
+    scripts = payload.get("scripts")
+    if not isinstance(scripts, dict):
+        return set()
+    return {name for name in scripts if isinstance(name, str)}
+
+
+def _raw_workflow_job_ids(repo_root: Path) -> set[str]:
+    workflow_text = _read_text(repo_root, ".github/workflows/ci.yml")
+    if workflow_text is None:
+        return set()
+    job_ids: set[str] = set()
+    in_jobs = False
+    job_re = re.compile(r"^  (?P<job>[A-Za-z0-9_-]+):(?:\s+#.*)?$")
+    for line in workflow_text.splitlines():
+        stripped = line.strip()
+        if stripped == "jobs:":
+            in_jobs = True
+            continue
+        if not in_jobs or not stripped or stripped.startswith("#"):
+            continue
+        if not line.startswith(" "):
+            break
+        match = job_re.match(line)
+        if match:
+            job_ids.add(match.group("job"))
+    return job_ids
+
+
+def _local_logical_ci_job_ids(repo_root: Path) -> set[str]:
+    workflow_text = _read_text(repo_root, ".github/workflows/ci.yml")
+    if workflow_text is None:
+        return set()
+
+    raw_job_ids = _raw_workflow_job_ids(repo_root)
+    local_job_ids = set(raw_job_ids) - {"ci-scope", "ui-build-artifact"}
+    matrix_parent_jobs: set[str] = set()
+    current_job: str | None = None
+    job_re = re.compile(r"^  (?P<job>[A-Za-z0-9_-]+):(?:\s+#.*)?$")
+    logical_job_re = re.compile(
+        r"^\s+-?\s*logical_job_name:\s*[\"']?(?P<job>[A-Za-z0-9_-]+)"
+        r"[\"']?(?:\s+#.*)?$"
+    )
+    for line in workflow_text.splitlines():
+        job_match = job_re.match(line)
+        if job_match:
+            current_job = job_match.group("job")
+            continue
+        logical_job_match = logical_job_re.match(line)
+        if current_job and logical_job_match:
+            local_job_ids.add(logical_job_match.group("job"))
+            matrix_parent_jobs.add(current_job)
+
+    return local_job_ids - matrix_parent_jobs
+
+
 def _markdown_code_snippets(text: str) -> list[str]:
     snippets: list[str] = []
     in_fence = False
@@ -269,6 +339,67 @@ def _check_make_command_targets(
                     issues.append(
                         f"{path}: documented make target does not exist: {target}"
                     )
+    return issues
+
+
+def _check_npm_run_scripts(markdown_files: list[str], repo_root: Path) -> list[str]:
+    """Flag documented UI npm scripts that do not exist in apps/ui/package.json."""
+    scripts = _ui_npm_scripts(repo_root)
+    if not scripts:
+        return [
+            "apps/ui/package.json scripts could not be loaded for docs command lint"
+        ]
+
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for snippet in _markdown_code_snippets(text):
+            for match in NPM_RUN_RE.finditer(snippet):
+                script = match.group("script")
+                if script not in scripts:
+                    issues.append(
+                        f"{path}: documented npm script does not exist in apps/ui/package.json: {script}"
+                    )
+    return issues
+
+
+def _check_ci_job_examples(
+    markdown_files: list[str],
+    repo_root: Path,
+    *,
+    raw_workflow_job_ids: set[str] | None = None,
+    local_logical_job_ids: set[str] | None = None,
+) -> list[str]:
+    """Flag ACT/local runner job examples that use the wrong job-id namespace."""
+    raw_job_ids = raw_workflow_job_ids or _raw_workflow_job_ids(repo_root)
+    local_job_ids = local_logical_job_ids or _local_logical_ci_job_ids(repo_root)
+    if not raw_job_ids:
+        return ["CI workflow job ids could not be loaded for docs command lint"]
+    if not local_job_ids:
+        return ["local CI logical job ids could not be loaded for docs command lint"]
+
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for snippet in _markdown_code_snippets(text):
+            if "act " in snippet or "run_ci_with_act.sh" in snippet:
+                for match in CI_JOB_ARG_RE.finditer(snippet):
+                    job = match.group("job")
+                    if job not in raw_job_ids:
+                        issues.append(
+                            f"{path}: ACT job example must use raw workflow job id: {job}"
+                        )
+            if "run_ci_parallel.py" in snippet:
+                for match in CI_JOB_ARG_RE.finditer(snippet):
+                    job = match.group("job")
+                    if job not in local_job_ids:
+                        issues.append(
+                            f"{path}: local CI job example must use logical job id: {job}"
+                        )
     return issues
 
 
@@ -354,7 +485,11 @@ def _check_guidance_script_references(
     guidance_files = sorted(
         path
         for path in markdown_files
-        if path.startswith(".github/instructions/")
+        if path in {"README.md", "CONTRIBUTING.md", "SECURITY.md"}
+        or path.startswith("docs/")
+        or path.startswith(".github/ISSUE_TEMPLATE/")
+        or path.startswith(".github/instructions/")
+        or path == ".github/copilot-instructions.md"
         or path == "AGENTS.md"
         or path.endswith("/AGENTS.md")
     )
@@ -379,6 +514,29 @@ def _check_guidance_script_references(
                     f"{path}: missing repo-local script reference: {candidate}"
                 )
 
+    return issues
+
+
+def _check_direct_shell_script_commands(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for snippet in _markdown_code_snippets(text):
+            for match in DIRECT_SHELL_SCRIPT_RE.finditer(snippet):
+                candidate = match.group("path")
+                script_path = repo_root / candidate
+                if not script_path.is_file():
+                    issues.append(
+                        f"{path}: missing executable script command: {candidate}"
+                    )
+                elif script_path.stat().st_mode & 0o111 == 0:
+                    issues.append(
+                        f"{path}: documented script command is not executable: {candidate}"
+                    )
     return issues
 
 
@@ -417,10 +575,12 @@ def _check_backticked_repo_paths(
     return issues
 
 
-def _check_stale_repo_path_references(markdown_files: list[str]) -> list[str]:
+def _check_stale_repo_path_references(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
     issues: list[str] = []
     for path in sorted(markdown_files):
-        text = _read_text(REPO_ROOT, path)
+        text = _read_text(repo_root, path)
         if text is None:
             continue
         for stale_path, replacement in STALE_REPO_PATH_REFERENCES.items():
@@ -447,9 +607,12 @@ def main() -> int:
     issues.extend(_check_markdown_links(markdown_files, repo_root))
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
+    issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
-    issues.extend(_check_stale_repo_path_references(markdown_files))
+    issues.extend(_check_stale_repo_path_references(markdown_files, repo_root))
     issues.extend(_check_make_command_targets(markdown_files, repo_root))
+    issues.extend(_check_npm_run_scripts(markdown_files, repo_root))
+    issues.extend(_check_ci_job_examples(markdown_files, repo_root))
 
     if issues:
         print(f"❌ {len(issues)} docs issue(s):")
@@ -458,7 +621,7 @@ def main() -> int:
         return 1
 
     print(
-        "✅ No docs misuse, runtime docs access, broken local markdown links, stale make commands, or AI guidance stack drift detected."
+        "✅ No docs misuse, runtime docs access, broken local markdown links, stale commands, missing repo paths, or AI guidance stack drift detected."
     )
     return 0
 
