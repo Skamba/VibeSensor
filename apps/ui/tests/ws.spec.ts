@@ -14,6 +14,8 @@ class FakeWebSocket {
 
   readyState = FakeWebSocket.CONNECTING;
 
+  closeCalls = 0;
+
   onopen: WebSocket["onopen"] = null;
 
   onmessage: WebSocket["onmessage"] = null;
@@ -34,17 +36,22 @@ class FakeWebSocket {
   send(): void {}
 
   close(): void {
+    this.closeCalls += 1;
     this.readyState = FakeWebSocket.CLOSED;
-    this.onclose?.(new Event("close") as CloseEvent);
+    this.emitClose();
+  }
+
+  emitClose(): void {
+    this.onclose?.call(this as unknown as WebSocket, new Event("close") as CloseEvent);
   }
 
   emitOpen(): void {
     this.readyState = FakeWebSocket.OPEN;
-    this.onopen?.(new Event("open"));
+    this.onopen?.call(this as unknown as WebSocket, new Event("open"));
   }
 
   emitMessage(payload: unknown): void {
-    this.onmessage?.({
+    this.onmessage?.call(this as unknown as WebSocket, {
       data: JSON.stringify(payload),
     } as MessageEvent);
   }
@@ -132,6 +139,89 @@ describe("createWsClient", () => {
 
       client.close();
     } finally {
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("connect is idempotent while a socket is already opening or open", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    try {
+      const client = createWsClient({
+        url: "ws://example.test/ws",
+      });
+
+      client.connect();
+      client.connect();
+
+      const socket = FakeWebSocket.instances[0];
+      expect(FakeWebSocket.instances).toHaveLength(1);
+      expect(socket?.closeCalls).toBe(0);
+
+      socket?.emitOpen();
+      client.connect();
+
+      expect(FakeWebSocket.instances).toHaveLength(1);
+      expect(socket?.closeCalls).toBe(0);
+      client.close();
+    } finally {
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("ignores late messages and closes from stale sockets after reconnect", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    try {
+      const client = createWsClient({
+        url: "ws://example.test/ws",
+      });
+
+      client.connect();
+      const staleSocket = FakeWebSocket.instances[0];
+      staleSocket?.emitOpen();
+      staleSocket?.emitMessage({
+        spectra: {
+          clients: {
+            stale: {},
+          },
+        },
+      });
+      expect(client.uiState.value).toBe("connected");
+
+      staleSocket?.close();
+      expect(client.uiState.value).toBe("reconnecting");
+      timeouts.fireNext();
+
+      const currentSocket = FakeWebSocket.instances[1];
+      currentSocket?.emitOpen();
+      const currentPayload = {
+        spectra: {
+          clients: {
+            current: {},
+          },
+        },
+      };
+      currentSocket?.emitMessage(currentPayload);
+      expect(client.uiState.value).toBe("connected");
+      expect(client.latestPayload.value).toEqual(currentPayload);
+
+      staleSocket?.emitMessage({
+        spectra: {
+          clients: {
+            late: {},
+          },
+        },
+      });
+      staleSocket?.emitClose();
+
+      expect(client.uiState.value).toBe("connected");
+      expect(client.latestPayload.value).toEqual(currentPayload);
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+      client.close();
+    } finally {
+      timeouts.restore();
       globalThis.WebSocket = originalWebSocket;
     }
   });
