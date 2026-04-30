@@ -142,8 +142,8 @@ make test-all
 make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
 make benchmark-compare-backend
 
-# Required pre-finalization gate — real GitHub workflow via act (requires Docker)
-act -W .github/workflows/ci.yml
+# GitHub workflow via act (requires Docker); default wrapper is changed-scope
+./tools/tests/run_ci_with_act.sh
 ```
 
 Focused feature-area and fuzzing runs:
@@ -308,10 +308,14 @@ Prerequisites: Docker and [`act`](https://nektosact.com/installation/index.html)
 # List available CI jobs
 act -l -W .github/workflows/ci.yml
 
-# Run all CI jobs for the current branch as a pull_request event.
+# Run changed-scope CI jobs for the current branch as a pull_request event.
 # Generate the event first so ci-scope sees real base/head SHAs.
 python3 tools/tests/act_event.py --output /tmp/vibesensor-act-event.json
 act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
+
+# Force a full-stack workflow run through ci-scope.
+act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json \
+  --env VIBESENSOR_CI_FORCE_FULL_STACK=1
 
 # Run a single job
 act -j backend-lint -W .github/workflows/ci.yml
@@ -341,7 +345,8 @@ arguments through to `act`:
 
 ```bash
 ./tools/tests/run_ci_with_act.sh -l               # list jobs
-./tools/tests/run_ci_with_act.sh                   # run all CI jobs as pull_request
+./tools/tests/run_ci_with_act.sh                   # changed-scope ACT run as pull_request
+./tools/tests/run_ci_with_act.sh --full-stack      # forced full-stack ACT run
 ./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job as pull_request
 ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 ```
