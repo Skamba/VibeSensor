@@ -15,6 +15,7 @@ from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRequest,
     UpdateState,
+    UpdateTerminalState,
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.status import (
@@ -95,6 +96,7 @@ async def test_start_rejects_concurrent_job_and_keeps_secret_redacted(
 
     final_status = _load_status(state_store)
     assert final_status.state == UpdateState.failed
+    assert final_status.terminal_state == UpdateTerminalState.cancelled_cleanly
     assert final_status.finished_at is not None
     assert any(issue.message == "Update was cancelled" for issue in final_status.issues)
     _assert_secret_not_persisted(state_store, request.password)
@@ -116,6 +118,7 @@ async def test_timeout_marks_failure_and_persists_cleanup_state(tmp_path: Path) 
 
     status = _load_status(state_store)
     assert status.state == UpdateState.failed
+    assert status.terminal_state == UpdateTerminalState.timeout
     assert status.finished_at is not None
     assert any(issue.message == "Update timed out after 0.01s" for issue in status.issues)
     _assert_secret_not_persisted(state_store, request.password)
@@ -134,6 +137,7 @@ async def test_update_error_marks_failure_without_propagating(tmp_path: Path) ->
 
     status = _load_status(state_store)
     assert status.state == UpdateState.failed
+    assert status.terminal_state == UpdateTerminalState.workflow_failed
     assert status.finished_at is not None
     assert any(issue.message == "transport failed" for issue in status.issues)
     _assert_secret_not_persisted(state_store, request.password)
@@ -154,6 +158,7 @@ async def test_cleanup_error_propagates_explicitly_and_persists_failure(tmp_path
 
     status = _load_status(state_store)
     assert status.state == UpdateState.failed
+    assert status.terminal_state == UpdateTerminalState.cleanup_failed
     assert status.finished_at is not None
     assert any(issue.message == "transport cleanup failed" for issue in status.issues)
     _assert_secret_not_persisted(state_store, request.password)
@@ -185,3 +190,61 @@ async def test_start_exports_update_workflow_trace_span(tmp_path: Path) -> None:
     span = next(item for item in read_trace_output(trace_path) if item["name"] == "update.workflow")
     assert span["attributes"]["vibesensor.transport"] == "wifi"
     assert span["attributes"]["vibesensor.final_state"] == "success"
+
+
+@pytest.mark.asyncio
+async def test_timeout_cleanup_failure_preserves_timeout_as_primary_state(tmp_path: Path) -> None:
+    manager, state_store, _tracker, workflow_run = _build_manager(tmp_path, timeout_s=0.01)
+
+    async def cleanup_fails_after_timeout(*, request: UpdateRequest) -> None:
+        assert request == _wifi_request()
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError as exc:
+            raise UpdateCleanupError("cleanup failed after timeout") from exc
+
+    workflow_run.side_effect = cleanup_fails_after_timeout
+    request = _wifi_request()
+    manager.start(request.ssid, request.password, transport=request.transport)
+    task = manager.job_task
+    assert task is not None
+    await task
+
+    status = _load_status(state_store)
+    assert status.state == UpdateState.failed
+    assert status.terminal_state == UpdateTerminalState.timeout_cleanup_failed
+    assert [issue.phase for issue in status.issues] == ["timeout", "cleanup"]
+    assert status.issues[0].message == "Update timed out after 0.01s"
+    assert status.issues[1].message == "cleanup failed after timeout"
+
+
+@pytest.mark.asyncio
+async def test_cancel_cleanup_failure_preserves_cancelled_as_primary_state(tmp_path: Path) -> None:
+    manager, state_store, _tracker, workflow_run = _build_manager(tmp_path)
+    started = asyncio.Event()
+
+    async def cleanup_fails_after_cancel(*, request: UpdateRequest) -> None:
+        assert request == _wifi_request()
+        started.set()
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError as exc:
+            raise UpdateCleanupError("cleanup failed after cancellation") from exc
+
+    workflow_run.side_effect = cleanup_fails_after_cancel
+    request = _wifi_request()
+    manager.start(request.ssid, request.password, transport=request.transport)
+    task = manager.job_task
+    assert task is not None
+    await asyncio.wait_for(started.wait(), timeout=1.0)
+
+    assert manager.cancel() is True
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    status = _load_status(state_store)
+    assert status.state == UpdateState.failed
+    assert status.terminal_state == UpdateTerminalState.cancelled_cleanup_failed
+    assert [issue.phase for issue in status.issues] == ["cancelled", "cleanup"]
+    assert status.issues[0].message == "Update was cancelled"
+    assert status.issues[1].message == "cleanup failed after cancellation"

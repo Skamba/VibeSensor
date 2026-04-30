@@ -30,6 +30,18 @@ class UpdateState(enum.StrEnum):
     failed = "failed"
 
 
+class UpdateTerminalState(enum.StrEnum):
+    """Explicit terminal outcome for the most recent update job."""
+
+    success = "success"
+    workflow_failed = "workflow_failed"
+    cleanup_failed = "cleanup_failed"
+    cancelled_cleanly = "cancelled_cleanly"
+    cancelled_cleanup_failed = "cancelled_cleanup_failed"
+    timeout = "timeout"
+    timeout_cleanup_failed = "timeout_cleanup_failed"
+
+
 class UpdatePhase(enum.StrEnum):
     """Granular phase within an OTA update job."""
 
@@ -139,6 +151,7 @@ class UpdateJobStatus:
     issues: list[UpdateIssue] = field(default_factory=list)
     log_tail: list[str] = field(default_factory=list)
     exit_code: int | None = None
+    terminal_state: UpdateTerminalState | None = None
     runtime: UpdateRuntimeDetails = field(default_factory=lambda: UpdateRuntimeDetails())
 
     def __post_init__(self) -> None:

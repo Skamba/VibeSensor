@@ -11,6 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTerminalState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line
 
@@ -112,8 +113,8 @@ class UpdateStatusTracker:
             self._log_buffer.extend_issues(self.status, rewritten)
             self._session.touch()
 
-    def mark_failed(self) -> None:
-        self._session.mark_failed()
+    def mark_failed(self, terminal_state: UpdateTerminalState | None = None) -> None:
+        self._session.mark_failed(terminal_state)
 
     def fail(
         self,
@@ -122,11 +123,12 @@ class UpdateStatusTracker:
         detail: str = "",
         *,
         log_message: str | None = None,
+        terminal_state: UpdateTerminalState | None = None,
     ) -> None:
         self.add_issue(phase, message, detail)
         if log_message:
             self.log(log_message)
-        self.mark_failed()
+        self.mark_failed(terminal_state)
 
     def mark_interrupted(self, message: str, detail: str = "") -> None:
         self.add_issue("startup", message, detail)
