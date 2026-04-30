@@ -13,6 +13,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "strict": true,
+    // UI boundary-safety policy: ratchet strictness beyond baseline `strict`
+    // as production source and the test typecheck baseline are paid down.
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": [

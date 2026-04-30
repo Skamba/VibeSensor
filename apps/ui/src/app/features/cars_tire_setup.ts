@@ -10,6 +10,19 @@ interface TireDimensions {
 
 type AspectsRecord = Record<string, number | string | null | undefined>;
 
+interface TireSetupAspects {
+  rim_in: number;
+  tire_aspect_pct: number;
+  tire_width_mm: number;
+  front_tire_width_mm?: number;
+  front_tire_aspect_pct?: number;
+  front_rim_in?: number;
+  rear_tire_width_mm?: number;
+  rear_tire_aspect_pct?: number;
+  rear_rim_in?: number;
+  default_axle_for_speed?: string;
+}
+
 function isPositiveNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
@@ -112,13 +125,13 @@ export function formatSavedCarTireSummary(
 
 export function tireSetupAspectsFromOption(
   option: CarLibraryTireOption,
-): Record<string, number | string> {
+): TireSetupAspects | Record<string, never> {
   const front = tireOptionFront(option);
   const rear = tireOptionRear(option);
   if (!front || !rear) {
     return {};
   }
-  const payload: Record<string, number | string> = {
+  const payload: TireSetupAspects = {
     rim_in: option.rim_in,
     tire_aspect_pct: option.tire_aspect_pct,
     tire_width_mm: option.tire_width_mm,
