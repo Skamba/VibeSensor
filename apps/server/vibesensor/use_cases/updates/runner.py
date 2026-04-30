@@ -13,8 +13,10 @@ from typing import Protocol
 from vibesensor.use_cases.updates.privilege import build_sudo_args
 
 LOGGER = logging.getLogger(__name__)
+COMMAND_KILL_WAIT_S = 5.0
 
 __all__ = [
+    "COMMAND_KILL_WAIT_S",
     "CommandExecutionReporter",
     "CommandExecutionResult",
     "CommandRunner",
@@ -64,6 +66,22 @@ class CommandExecutionReporter(Protocol):
     ) -> None: ...
 
 
+async def _kill_process(
+    proc: asyncio.subprocess.Process,
+    *,
+    wait_timeout_s: float | None = None,
+) -> None:
+    with contextlib.suppress(ProcessLookupError, OSError):
+        proc.kill()
+    kill_wait_s = COMMAND_KILL_WAIT_S if wait_timeout_s is None else wait_timeout_s
+    try:
+        await asyncio.wait_for(proc.wait(), timeout=kill_wait_s)
+    except ProcessLookupError:
+        pass
+    except TimeoutError:
+        LOGGER.warning("Killed command process did not exit within %.1fs.", kill_wait_s)
+
+
 class CommandRunner:
     """Execute shell commands.  Override for testing."""
 
@@ -91,19 +109,14 @@ class CommandRunner:
                 stderr_bytes.decode(errors="replace"),
             )
         except TimeoutError:
-            try:
-                if proc is not None:
-                    proc.kill()
-                    await proc.wait()
-            except ProcessLookupError:
-                pass  # process already exited
+            if proc is not None:
+                await _kill_process(proc)
             LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))
             return (124, "", "Command timed out")
         except asyncio.CancelledError:
             # Kill the subprocess so it doesn't outlive the cancelled task.
             if proc is not None:
-                with contextlib.suppress(ProcessLookupError, OSError):
-                    proc.kill()
+                await _kill_process(proc)
             raise
         except FileNotFoundError:
             LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)
