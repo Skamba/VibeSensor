@@ -10,6 +10,7 @@ smoke:
   apps/server/tests/hygiene/test_pi_image_static_guardrails.py:
     test_pi_gen_pipeline_split_files_exist: Pi-image pipeline layout stays in the compact image guard path.
     test_server_systemd_uses_console_script_entrypoint: Packaged server startup wiring stays in the compact image guard path.
+    test_server_systemd_keeps_steady_state_privileges_narrow: Packaged service hardening stays in the compact image guard path.
     test_pi_image_validation_checks_current_packaged_static_data_layout: Pi-image validation stays in the compact static-data guard path.
   apps/server/tests/hygiene/test_runtime_smoke.py:
     test_smoke_health_route_registered: The health route stays in the minimal runtime smoke path.

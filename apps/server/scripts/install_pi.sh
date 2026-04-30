@@ -110,7 +110,7 @@ run_as_root install -d -m 0755 /var/lib/vibesensor/rollback
 run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/lib/vibesensor/rollback /var/log/vibesensor
-run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
+run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${VENV_DIR}"
 if [ ! -f "${UPDATE_SUDO_WRAPPER}" ]; then
   echo "ERROR: Missing update sudo wrapper at ${UPDATE_SUDO_WRAPPER}." >&2
   exit 1
