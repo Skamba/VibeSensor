@@ -24,7 +24,10 @@ from granian.log import LogLevels
 
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
-from vibesensor.adapters.http.middleware import install_request_logging_middleware
+from vibesensor.adapters.http.middleware import (
+    install_local_mutation_safety_middleware,
+    install_request_logging_middleware,
+)
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.container import build_runtime
@@ -93,6 +96,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
     install_http_exception_handlers(app)
+    install_local_mutation_safety_middleware(app)
     install_request_logging_middleware(app)
     app.include_router(create_router(runtime.router))
     if bootstrap_settings.serve_static:
