@@ -84,3 +84,41 @@ def test_contributing_docs_reference_focused_backend_ci_gates() -> None:
     assert focused_gate_names.issubset(job_names)
     for gate_name in focused_gate_names:
         assert gate_name in contributing_text
+
+
+def test_release_smoke_local_manifest_builds_ui_static_instead_of_downloading_artifact() -> None:
+    module = _load_ci_manifest_module()
+
+    job = module.ci_workflow_jobs()["release-smoke"]
+    runnable_commands = tuple(spec.command for spec in job.local_runnable_steps("python"))
+
+    assert any("tools/tests/run_release_smoke.py" in command for command in runnable_commands)
+    assert all("--skip-ui-build" not in command for command in runnable_commands)
+    assert all("ui-static.tar.gz" not in command for command in runnable_commands)
+
+
+def test_skipped_external_actions_are_explicit_and_substituted() -> None:
+    module = _load_ci_manifest_module()
+
+    jobs = module.ci_workflow_jobs()
+    release_smoke_downloads = [
+        action
+        for action in jobs["release-smoke"].skipped_actions
+        if action.uses.startswith("actions/download-artifact@")
+    ]
+    assert len(release_smoke_downloads) == 1
+    assert release_smoke_downloads[0].local_substitute
+    assert "without --skip-ui-build" in release_smoke_downloads[0].local_substitute
+
+    unsupported_required_artifact_actions = [
+        (job_name, action.uses)
+        for job_name, job in jobs.items()
+        for action in job.skipped_actions
+        if (
+            action.uses.startswith("actions/download-artifact@")
+            or action.uses.startswith("actions/upload-artifact@")
+            or action.uses.startswith("actions/cache@")
+        )
+        and not action.local_substitute
+    ]
+    assert unsupported_required_artifact_actions == []
