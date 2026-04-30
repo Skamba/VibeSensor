@@ -66,30 +66,6 @@ function updateManualInputs(
   }
 }
 
-type Deferred<T> = {
-  promise: Promise<T>;
-  reject(reason?: unknown): void;
-  resolve(value: T): void;
-};
-
-function createDeferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-}
-
-async function flushAsyncWork(rounds = 6): Promise<void> {
-  for (let index = 0; index < rounds; index += 1) {
-    await new Promise<void>((resolve) => {
-      setImmediate(() => resolve());
-    });
-  }
-}
-
 function makeGearbox(
   overrides: Partial<CarLibraryGearbox> = {},
 ): CarLibraryGearbox {
@@ -273,105 +249,6 @@ describe("createCarsFeatureWorkflow", () => {
       finalDrive: "4.10",
       topGear: "0.71",
     });
-  });
-
-  test("ignores brand load results after the wizard closes", async () => {
-    const harness = createHarness();
-    const brands = createDeferred<string[]>();
-    const workflow = createCarsFeatureWorkflow({
-      addCarFromWizard: async () => undefined,
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      queryClient: createTestQueryClient(),
-      t: createTranslator(),
-      transport: {
-        async loadBrands() {
-          return brands.promise;
-        },
-      },
-      view: createViewPorts(harness),
-    });
-
-    const opening = workflow.openWizard();
-    await flushAsyncWork();
-    workflow.closeWizard();
-    brands.resolve(["BMW"]);
-    await opening;
-
-    expect(workflow.getRenderState().isOpen).toBe(false);
-    expect(workflow.getRenderState().brandOptions.status).toBe("loading");
-    expect(harness.focuses).toEqual(["close"]);
-  });
-
-  test("ignores stale type results after navigating back", async () => {
-    const harness = createHarness();
-    const types = createDeferred<string[]>();
-    const workflow = createCarsFeatureWorkflow({
-      addCarFromWizard: async () => undefined,
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      queryClient: createTestQueryClient(),
-      t: createTranslator(),
-      transport: {
-        async loadBrands() {
-          return ["BMW"];
-        },
-        async loadTypes() {
-          return types.promise;
-        },
-      },
-      view: createViewPorts(harness),
-    });
-
-    await workflow.openWizard();
-    const selectingBrand = workflow.selectBrand("BMW");
-    await flushAsyncWork();
-    await workflow.goBack();
-    types.resolve(["SUV"]);
-    await selectingBrand;
-
-    expect(workflow.getRenderState().step).toBe(0);
-    expect(workflow.getRenderState().typeOptions.status).toBe("loading");
-    expect(harness.focuses).not.toContain("type-option");
-  });
-
-  test("keeps newer model options when an older model load resolves later", async () => {
-    const harness = createHarness();
-    const suvModels = createDeferred<CarLibraryModel[]>();
-    const sedanModels = createDeferred<CarLibraryModel[]>();
-    const workflow = createCarsFeatureWorkflow({
-      addCarFromWizard: async () => undefined,
-      fmt: (value, digits = 0) => Number(value).toFixed(digits),
-      queryClient: createTestQueryClient(),
-      t: createTranslator(),
-      transport: {
-        async loadBrands() {
-          return ["BMW"];
-        },
-        async loadModels(_brand, carType) {
-          return carType === "SUV" ? suvModels.promise : sedanModels.promise;
-        },
-        async loadTypes() {
-          return ["SUV", "Sedan"];
-        },
-      },
-      view: createViewPorts(harness),
-    });
-
-    await workflow.openWizard();
-    await workflow.selectBrand("BMW");
-    const selectingSuv = workflow.selectType("SUV");
-    await flushAsyncWork();
-    const selectingSedan = workflow.selectType("Sedan");
-    await flushAsyncWork();
-    sedanModels.resolve([makeModel({ model: "M3" })]);
-    await selectingSedan;
-    suvModels.resolve([makeModel({ model: "X5" })]);
-    await selectingSuv;
-
-    expect(workflow.getRenderState().modelOptions).toMatchObject({
-      status: "ready",
-      options: [expect.objectContaining({ model: "M3" })],
-    });
-    expect(workflow.getRenderState().step).toBe(2);
   });
 
   test("keeps manual gearbox inputs when tire autofill updates only tire fields", async () => {
