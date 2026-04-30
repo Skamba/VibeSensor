@@ -9,6 +9,7 @@ import type {
   UsbInternetStatusPayload,
 } from "../src/api/types";
 import { signal } from "../src/app/ui_signals";
+import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 import { createTestQueryClient } from "./query_client_test_support";
 
@@ -274,15 +275,186 @@ describe("createUpdateFeatureWorkflow", () => {
           return makeInternet();
         },
         async getUpdateStatus() {
-          throw new Error("Invalid update status response: /state Expected one of [\"idle\",\"running\",\"success\",\"failed\"]");
+          throw new Error(
+            'Invalid update status response: /state Expected one of ["idle","running","success","failed"]',
+          );
         },
       },
     });
 
-    await expect(workflow.refreshStatus()).rejects.toThrow(/Invalid update status response: \/state/);
-    expect(harness.errors).toContain(
-      "Invalid update status response: /state Expected one of [\"idle\",\"running\",\"success\",\"failed\"]",
+    await expect(workflow.refreshStatus()).rejects.toThrow(
+      /Invalid update status response: \/state/,
     );
+    expect(harness.errors).toContain(
+      'Invalid update status response: /state Expected one of ["idle","running","success","failed"]',
+    );
+    workflow.dispose();
+  });
+
+  test("ignores older refresh results when a newer status refresh finishes first", async () => {
+    const harness = createHarness();
+    const olderStatus = createDeferred<UpdateStatusPayload>();
+    const newerStatus = createDeferred<UpdateStatusPayload>();
+    const statusRequests = [olderStatus, newerStatus];
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          const request = statusRequests.shift();
+          if (!request) {
+            throw new Error("unexpected status request");
+          }
+          return request.promise;
+        },
+      },
+    });
+
+    const olderRefresh = workflow.refreshStatus();
+    await flushAsyncWork();
+    const newerRefresh = workflow.refreshStatus();
+    await flushAsyncWork();
+    newerStatus.resolve(makeStatus({ phase: "installing", state: "running" }));
+    await newerRefresh;
+    olderStatus.resolve(makeStatus({ phase: "idle", state: "idle" }));
+    await olderRefresh;
+
+    expect(workflow.getRenderState().updateState).toBe("running");
+    expect(workflow.getRenderState().updateStatus?.phase).toBe("installing");
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
+  test("does not clear password or show errors when start resolves after disposal", async () => {
+    const harness = createHarness();
+    const start = createDeferred<unknown>();
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async startUpdate() {
+          return start.promise;
+        },
+      },
+    });
+
+    const starting = workflow.startUpdate({
+      canStart: true,
+      password: "secret",
+      ssid: "Workshop Wi-Fi",
+      transport: "wifi",
+      usbAvailable: false,
+    });
+    await flushAsyncWork();
+    workflow.dispose();
+    start.resolve({});
+    await starting;
+
+    expect(harness.viewCalls).toEqual([]);
+    expect(harness.errors).toEqual([]);
+  });
+
+  test("ignores overlapping update start requests while one is in flight", async () => {
+    const harness = createHarness();
+    const start = createDeferred<unknown>();
+    let startCalls = 0;
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          return makeStatus({ phase: "installing", state: "running" });
+        },
+        async startUpdate() {
+          startCalls += 1;
+          return start.promise;
+        },
+      },
+    });
+    const intent = {
+      canStart: true,
+      password: "secret",
+      ssid: "Workshop Wi-Fi",
+      transport: "wifi" as const,
+      usbAvailable: false,
+    };
+
+    const firstStart = workflow.startUpdate(intent);
+    void workflow.startUpdate(intent);
+    await flushAsyncWork();
+    start.resolve({});
+    await firstStart;
+
+    expect(startCalls).toBe(1);
+    expect(harness.viewCalls).toEqual(["clearPassword"]);
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
+  test("ignores overlapping update cancel requests while one is in flight", async () => {
+    const harness = createHarness();
+    const cancel = createDeferred<unknown>();
+    let cancelCalls = 0;
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async cancelUpdate() {
+          cancelCalls += 1;
+          return cancel.promise;
+        },
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          return makeStatus();
+        },
+      },
+    });
+
+    const firstCancel = workflow.cancelUpdate();
+    void workflow.cancelUpdate();
+    await flushAsyncWork();
+    cancel.resolve({});
+    await firstCancel;
+
+    expect(cancelCalls).toBe(1);
+    expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
 });

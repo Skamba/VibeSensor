@@ -6,6 +6,7 @@ import type {
   EspSerialPortPayload,
 } from "../src/api/types";
 import { signal } from "../src/app/ui_signals";
+import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
@@ -216,6 +217,156 @@ describe("createEspFlashFeatureWorkflow", () => {
     });
     expect(workflow.getRenderState().logText).toBe("");
     expect(workflow.getRenderState().status.state).toBe("running");
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
+  test("ignores older status refresh results when a newer refresh finishes first", async () => {
+    const harness = createHarness();
+    const olderStatus = createDeferred<EspFlashStatusPayload>();
+    const newerStatus = createDeferred<EspFlashStatusPayload>();
+    const statusRequests = [olderStatus, newerStatus];
+    const workflow = createEspFlashFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getEspFlashStatus() {
+          const request = statusRequests.shift();
+          if (!request) {
+            throw new Error("unexpected status request");
+          }
+          return request.promise;
+        },
+        async getEspFlashHistory() {
+          return { attempts: [] };
+        },
+      },
+    });
+
+    const olderRefresh = workflow.refreshStatus();
+    await flushAsyncWork();
+    const newerRefresh = workflow.refreshStatus();
+    await flushAsyncWork();
+    newerStatus.resolve(makeStatus({ phase: "flashing", state: "running" }));
+    await newerRefresh;
+    olderStatus.resolve(makeStatus({ phase: "idle", state: "idle" }));
+    await olderRefresh;
+
+    expect(workflow.getRenderState().status.state).toBe("running");
+    expect(workflow.getRenderState().lastJourneyPhase).toBe("flashing");
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
+  test("does not update state or show errors when flash start resolves after disposal", async () => {
+    const harness = createHarness();
+    const start = createDeferred<unknown>();
+    const workflow = createEspFlashFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getEspFlashPorts() {
+          return { ports: [makePort()] };
+        },
+        async startEspFlash() {
+          return start.promise;
+        },
+      },
+    });
+
+    await workflow.refreshPorts();
+    const starting = workflow.startFlash();
+    await flushAsyncWork();
+    workflow.dispose();
+    start.resolve({});
+    await starting;
+
+    expect(workflow.getRenderState().status.state).toBe("idle");
+    expect(workflow.getRenderState().logText).toBe("");
+    expect(harness.errors).toEqual([]);
+  });
+
+  test("ignores overlapping flash starts while one is in flight", async () => {
+    const harness = createHarness();
+    const start = createDeferred<unknown>();
+    let startCalls = 0;
+    const workflow = createEspFlashFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getEspFlashHistory() {
+          return { attempts: [] };
+        },
+        async getEspFlashPorts() {
+          return { ports: [makePort()] };
+        },
+        async getEspFlashStatus() {
+          return makeStatus({ phase: "validating", state: "running" });
+        },
+        async startEspFlash() {
+          startCalls += 1;
+          return start.promise;
+        },
+      },
+    });
+
+    await workflow.refreshPorts();
+    const firstStart = workflow.startFlash();
+    void workflow.startFlash();
+    await flushAsyncWork();
+    start.resolve({});
+    await firstStart;
+
+    expect(startCalls).toBe(1);
+    expect(workflow.getRenderState().status.state).toBe("running");
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
+  test("ignores overlapping flash cancels while one is in flight", async () => {
+    const harness = createHarness();
+    const cancel = createDeferred<unknown>();
+    let cancelCalls = 0;
+    const workflow = createEspFlashFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async cancelEspFlash() {
+          cancelCalls += 1;
+          return cancel.promise;
+        },
+        async getEspFlashHistory() {
+          return { attempts: [] };
+        },
+        async getEspFlashStatus() {
+          return makeStatus();
+        },
+      },
+    });
+
+    const firstCancel = workflow.cancelFlash();
+    void workflow.cancelFlash();
+    await flushAsyncWork();
+    cancel.resolve({});
+    await firstCancel;
+
+    expect(cancelCalls).toBe(1);
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
