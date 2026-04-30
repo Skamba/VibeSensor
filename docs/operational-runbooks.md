@@ -36,6 +36,13 @@ If raw waveform storage should expire earlier, set
 startup maintenance removes raw sidecars first while keeping the run summaries
 available in history.
 
+Mutating local HTTP calls (`POST`, `PUT`, `PATCH`, `DELETE`) are protected by a
+same-origin guard. Browser requests with an `Origin` or `Referer` for a different
+host than the request `Host` return `403`; same-origin UI requests and local
+tools such as `curl` without browser origin headers continue to work. If an
+operator reports a blocked settings/update/history action, compare the browser
+URL, proxy host, and request `Host` header before changing server config.
+
 ## Enable and inspect backend traces
 
 Tracing is disabled by default. When you need end-to-end backend traces, enable

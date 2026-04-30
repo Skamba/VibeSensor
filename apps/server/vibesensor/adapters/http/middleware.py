@@ -4,10 +4,12 @@ import asyncio
 import logging
 import sys
 from time import perf_counter
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI
 from opentelemetry.trace import SpanKind
 from starlette.datastructures import Headers, MutableHeaders
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from vibesensor.shared.exceptions import VibeSensorError
@@ -22,6 +24,57 @@ from vibesensor.shared.structured_logging import (
 from vibesensor.shared.tracing import mark_span_error, start_span
 
 LOGGER = logging.getLogger(__name__)
+_UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def _same_origin_header_matches_host(value: str, host: str | None) -> bool:
+    if not value or not host:
+        return False
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return False
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return False
+    return parsed.netloc.lower() == host.lower()
+
+
+class LocalMutationSafetyMiddleware:
+    """Reject browser-triggered cross-origin mutating HTTP requests."""
+
+    __slots__ = ("app",)
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        method = str(scope.get("method") or "").upper()
+        if method not in _UNSAFE_METHODS:
+            await self.app(scope, receive, send)
+            return
+
+        headers = Headers(scope=scope)
+        host = headers.get("host")
+        origin = headers.get("origin")
+        referer = headers.get("referer")
+        if origin is not None:
+            allowed = _same_origin_header_matches_host(origin, host)
+        elif referer is not None:
+            allowed = _same_origin_header_matches_host(referer, host)
+        else:
+            allowed = True
+        if allowed:
+            await self.app(scope, receive, send)
+            return
+
+        response = JSONResponse(
+            {"detail": "Mutating local API requests must be same-origin."},
+            status_code=403,
+        )
+        await response(scope, receive, send)
 
 
 def _failure_kind_for_request_error(exc: BaseException) -> str:
@@ -137,3 +190,7 @@ class RequestLoggingMiddleware:
 
 def install_request_logging_middleware(app: FastAPI) -> None:
     app.add_middleware(RequestLoggingMiddleware)
+
+
+def install_local_mutation_safety_middleware(app: FastAPI) -> None:
+    app.add_middleware(LocalMutationSafetyMiddleware)
