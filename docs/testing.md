@@ -348,8 +348,13 @@ arguments through to `act`:
 ./tools/tests/run_ci_with_act.sh                   # changed-scope ACT run as pull_request
 ./tools/tests/run_ci_with_act.sh --full-stack      # forced full-stack ACT run
 ./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job as pull_request
+./tools/tests/run_ci_with_act.sh -j backend-tests # run backend test matrix job
 ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 ```
+
+For ACT `-j`, use raw GitHub workflow job ids from `.github/workflows/ci.yml`
+such as `backend-tests`. Do not use the local logical backend shard ids
+`backend-tests-1` through `backend-tests-5` with ACT.
 
 ### Secrets
 
