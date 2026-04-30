@@ -90,7 +90,7 @@ async function main() {
       { timeout: PAGE_TIMEOUT_MS },
     );
 
-    // Verify spectrum canvas has rendered data (uPlot creates a canvas element)
+    // Verify spectrum canvas has rendered data.
     const hasCanvas = await page.evaluate(() => {
       const canvas = document.querySelector("#specChart canvas");
       if (!canvas) return false;

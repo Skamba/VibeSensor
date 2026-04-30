@@ -238,6 +238,22 @@ def _ui_npm_scripts(repo_root: Path) -> set[str]:
     return {name for name in scripts if isinstance(name, str)}
 
 
+def _ui_dependency_names(repo_root: Path) -> set[str]:
+    package_json_text = _read_text(repo_root, "apps/ui/package.json")
+    if package_json_text is None:
+        return set()
+    try:
+        payload = json.loads(package_json_text)
+    except json.JSONDecodeError:
+        return set()
+    dependency_names: set[str] = set()
+    for section_name in ("dependencies", "devDependencies"):
+        section = payload.get(section_name)
+        if isinstance(section, dict):
+            dependency_names.update(name for name in section if isinstance(name, str))
+    return dependency_names
+
+
 def _raw_workflow_job_ids(repo_root: Path) -> set[str]:
     workflow_text = _read_text(repo_root, ".github/workflows/ci.yml")
     if workflow_text is None:
@@ -541,6 +557,35 @@ def _check_unsupported_ai_toolchain_commands(
     return issues
 
 
+def _check_stale_frontend_stack_references(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    if "uplot" in _ui_dependency_names(repo_root):
+        return []
+
+    issues: list[str] = []
+    guidance_files = sorted(
+        path
+        for path in markdown_files
+        if path in {"README.md", "CONTRIBUTING.md"}
+        or path.startswith("docs/")
+        or path.startswith(".github/instructions/")
+        or path == ".github/copilot-instructions.md"
+        or path == "AGENTS.md"
+        or path.endswith("/AGENTS.md")
+        or path == "apps/ui/README.md"
+    )
+    for path in guidance_files:
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        if "uplot" in text.lower():
+            issues.append(
+                f"{path}: stale frontend stack reference: uPlot is not an apps/ui dependency"
+            )
+    return issues
+
+
 def _check_guidance_script_references(
     markdown_files: list[str], repo_root: Path
 ) -> list[str]:
@@ -704,6 +749,7 @@ def main() -> int:
     issues.extend(_check_frontend_guidance_validation(repo_root))
     issues.extend(_check_firmware_guidance_validation(repo_root))
     issues.extend(_check_unsupported_ai_toolchain_commands(markdown_files, repo_root))
+    issues.extend(_check_stale_frontend_stack_references(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
