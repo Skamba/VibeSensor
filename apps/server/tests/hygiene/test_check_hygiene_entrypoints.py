@@ -32,6 +32,10 @@ _CHECK_ENTRYPOINTS = (
         "check_frontend_generated_contract_boundaries",
         id="frontend-generated-contract-boundaries",
     ),
+    pytest.param(
+        "check_frontend_manual_chunk_packages",
+        id="frontend-manual-chunk-packages",
+    ),
     pytest.param("check_frontend_raw_html_boundaries", id="frontend-raw-html-boundaries"),
     pytest.param("check_test_inventory_ownership", id="test-inventory-ownership"),
     pytest.param("check_test_marker_policy", id="test-marker-policy"),
