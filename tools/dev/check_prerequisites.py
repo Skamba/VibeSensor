@@ -139,6 +139,27 @@ def _check_npm() -> CheckResult:
     return CheckResult("npm", "OK", output.strip())
 
 
+def _check_shellcheck() -> CheckResult:
+    if _which("shellcheck") is None:
+        return CheckResult(
+            "shellcheck",
+            "WARN",
+            "missing (required for make shell-lint and local shell-lint CI parity)",
+        )
+    ok, output = _run(["shellcheck", "--version"])
+    if not ok:
+        return CheckResult(
+            "shellcheck",
+            "WARN",
+            f"installed but unhealthy: {_first_line(output)}",
+        )
+    version_line = next(
+        (line for line in output.splitlines() if line.startswith("version:")),
+        _first_line(output),
+    )
+    return CheckResult("shellcheck", "OK", version_line)
+
+
 def _check_docker() -> list[CheckResult]:
     results: list[CheckResult] = []
     if _which("docker") is None:
@@ -209,10 +230,13 @@ def main() -> int:
         _check_node(expected_node),
         _check_npm(),
     ]
+    local_ci_results = [_check_shellcheck()]
     docker_results = _check_docker()
     firmware_results = [_check_platformio()]
 
     _print_section("Core development prerequisites:", core_results)
+    print()
+    _print_section("Local CI parity prerequisites:", local_ci_results)
     print()
     _print_section("Docker workflow availability:", docker_results)
     print()
@@ -222,7 +246,12 @@ def main() -> int:
     core_failures = [result for result in core_results if result.status == "FAIL"]
     warnings = [
         result
-        for result in [*core_results, *docker_results, *firmware_results]
+        for result in [
+            *core_results,
+            *local_ci_results,
+            *docker_results,
+            *firmware_results,
+        ]
         if result.status == "WARN"
     ]
 

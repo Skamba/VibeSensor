@@ -245,6 +245,42 @@ def test_main_warns_about_skipped_external_workflow_actions(
     assert "without --skip-ui-build" in output
 
 
+def test_main_reports_missing_shellcheck_before_running_shell_lint(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_ci_parallel_module()
+    _configure_ui_paths(module, monkeypatch, tmp_path)
+    outputs: list[str] = []
+
+    monkeypatch.setattr(
+        module,
+        "_job_steps",
+        lambda _python_cmd: {"shell-lint": [module.Step("ShellCheck", ["make"])]},
+    )
+    monkeypatch.setattr(module, "_job_workspace_write_sets", lambda: {"shell-lint": ()})
+    monkeypatch.setattr(module, "_job_host_tools", lambda: {"shell-lint": ("shellcheck",)})
+    monkeypatch.setattr(module.shutil, "which", lambda _tool: None)
+    monkeypatch.setattr(
+        module,
+        "_run_bootstrap",
+        lambda _steps: (_ for _ in ()).throw(AssertionError("bootstrap should not run")),
+    )
+    monkeypatch.setattr(
+        module,
+        "_run_job",
+        lambda _name, _steps, _results: (_ for _ in ()).throw(AssertionError("job should not run")),
+    )
+    monkeypatch.setattr(module, "_emit", outputs.append)
+
+    assert module.main(["--job", "shell-lint"]) == 2
+
+    output = "\n".join(outputs)
+    assert "missing host prerequisites" in output
+    assert "shell-lint requires shellcheck" in output
+    assert "run the job through ACT" in output
+
+
 def test_main_serializes_jobs_with_overlapping_workspace_write_sets(
     monkeypatch,
     tmp_path: Path,
