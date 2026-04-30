@@ -11,8 +11,9 @@ from collections.abc import Callable
 from vibesensor.use_cases.updates.firmware.esp_flash_types import FlashCommandRunner
 
 LOGGER = logging.getLogger(__name__)
+FLASH_CANCELLED_RETURN_CODE = 130
 
-__all__ = ["SubprocessFlashCommandRunner"]
+__all__ = ["FLASH_CANCELLED_RETURN_CODE", "SubprocessFlashCommandRunner"]
 
 
 class SubprocessFlashCommandRunner(FlashCommandRunner):
@@ -38,8 +39,11 @@ class SubprocessFlashCommandRunner(FlashCommandRunner):
         if proc.stdout is None:  # pragma: no cover – PIPE always sets stdout
             raise RuntimeError("subprocess stdout is None despite PIPE setting")
         started_at = time.monotonic()
+        cancelled = False
         while proc.returncode is None:
             if cancel_event.is_set():
+                line_cb("Flash cancelled by request")
+                cancelled = True
                 proc.terminate()
                 break
             if timeout_s is not None and (time.monotonic() - started_at) > timeout_s:
@@ -62,4 +66,6 @@ class SubprocessFlashCommandRunner(FlashCommandRunner):
             with contextlib.suppress(ProcessLookupError):
                 proc.kill()
             await proc.wait()
+        if cancelled:
+            return FLASH_CANCELLED_RETURN_CODE
         return proc.returncode or 0
