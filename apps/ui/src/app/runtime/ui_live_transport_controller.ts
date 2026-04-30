@@ -71,6 +71,8 @@ export class UiLiveTransportController {
 
   private disposed = false;
 
+  private transportStarted = false;
+
   private adaptServerPayload: AdaptServerPayload | null = null;
 
   private queuedRenderFrameId: number | null = null;
@@ -185,20 +187,23 @@ export class UiLiveTransportController {
   }
 
   startTransportMode(): void {
-    if (this.disposed) {
+    if (this.disposed || this.transportStarted) {
       return;
     }
+    this.transportStarted = true;
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     void this.preloadPayloadAdapter().catch((error) => {
       uiLogger.error("[VibeSensor] Failed to preload live payload adapter.", error);
     });
     if (isDemoMode) {
       void this.startDemoMode().catch((error) => {
+        this.transportStarted = false;
         uiLogger.error("[VibeSensor] Failed to start demo transport mode.", error);
       });
       return;
     }
     void this.connectWs().catch((error) => {
+      this.transportStarted = false;
       uiLogger.error("[VibeSensor] Failed to load websocket transport runtime.", error);
     });
   }
@@ -335,9 +340,11 @@ export class UiLiveTransportController {
       return;
     }
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.state.transport.ws.value = createWsClient({
+    this.state.transport.ws.value?.dispose();
+    const ws = createWsClient({
       url: `${protocol}//${window.location.host}/ws`,
     });
-    this.state.transport.ws.value.connect();
+    this.state.transport.ws.value = ws;
+    ws.connect();
   }
 }
