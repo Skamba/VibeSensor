@@ -132,6 +132,7 @@ class TestBuildSystemHealthSnapshotOk:
             "startup_state",
             "startup_warnings",
             "db_corruption_detected",
+            "db_engine_unhealthy",
             "degradation_reasons",
             "data_loss",
             "persistence",
@@ -297,6 +298,22 @@ class TestBuildSystemHealthSnapshotDegraded:
         assert result["status"] == "degraded"
         assert result["db_corruption_detected"] is True
         assert "db_corruption_detected" in result["degradation_reasons"]
+
+    def test_db_engine_unhealthy_is_degraded(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = _ready_health_state()
+        health_state.mark_db_engine_unhealthy(
+            "shutdown_timeout",
+            "History DB engine loop did not stop",
+        )
+        registry, run_recorder = _make_deps()
+
+        result = _snapshot(loop_state, health_state, registry, run_recorder)
+
+        assert result["status"] == "degraded"
+        assert result["db_engine_unhealthy"] is True
+        assert result["db_engine_unhealthy_reason"] == "shutdown_timeout"
+        assert "db_engine_unhealthy" in result["degradation_reasons"]
 
 
 class TestBuildSystemHealthSnapshotWarn:

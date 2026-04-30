@@ -224,11 +224,13 @@ def create_history_db(
     config: AppConfig,
     *,
     corruption_reporter: Callable[[str], None] | None = None,
+    engine_failure_reporter: Callable[[str, str], None] | None = None,
 ) -> HistoryPersistenceAdapters:
     """Create and initialise the shared history persistence collaborators."""
     history = create_history_persistence_adapters(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
+        engine_failure_reporter=engine_failure_reporter,
     )
     if history.lifecycle.corruption_detected:
         LOGGER.error(
@@ -565,6 +567,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     history = create_history_db(
         config,
         corruption_reporter=health_state.mark_db_corrupted,
+        engine_failure_reporter=health_state.mark_db_engine_unhealthy,
     )
     speed_runtime = build_speed_runtime(config)
     settings_services = build_settings_service_bundle(
