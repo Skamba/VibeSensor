@@ -8,4 +8,4 @@ Prefer focused test modules over adding to large omnibus regression files. Test 
 
 Default focused validation:
 - `pytest -q apps/server/tests/<module>/`
-- From `apps/server`, run `uv run --python 3.13 --extra dev pytest tests/<module>/ -q` when repo-managed backend dependencies are needed.
+- From `apps/server`, run `../.venv/bin/python -m pytest tests/<module>/ -q` when you need to pin the repo-managed backend environment.
