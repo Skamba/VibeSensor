@@ -72,6 +72,9 @@ export function createWsClient(options: WsClientOptions): WsClient {
       manuallyClosed.value = false;
       reconnectDelayMs.value = null;
     });
+    if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+      return;
+    }
     open("connecting");
   }
 
@@ -81,9 +84,10 @@ export function createWsClient(options: WsClientOptions): WsClient {
       reconnectDelayMs.value = null;
       socketOpen.value = false;
     });
-    if (ws) {
-      ws.close();
-      ws = null;
+    const socket = ws;
+    ws = null;
+    if (socket) {
+      socket.close();
     }
     reconnectTimer.clear();
     staleTimer.clear();
@@ -106,6 +110,13 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function open(initialState: WsUiState): void {
+    reconnectTimer.clear();
+    staleTimer.clear();
+    if (ws) {
+      const previousSocket = ws;
+      ws = null;
+      previousSocket.close();
+    }
     batch(() => {
       commitState(initialState);
       hasReceivedData.value = false;
@@ -113,16 +124,23 @@ export function createWsClient(options: WsClientOptions): WsClient {
       latestPayload.value = null;
       socketOpen.value = false;
     });
-    ws = new WebSocket(resolvedOptions.url);
+    const socket = new WebSocket(resolvedOptions.url);
+    ws = socket;
 
-    ws.onopen = () => {
+    socket.onopen = () => {
+      if (ws !== socket) {
+        return;
+      }
       batch(() => {
         socketOpen.value = true;
         commitState("no_data");
       });
     };
 
-    ws.onmessage = (event) => {
+    socket.onmessage = (event) => {
+      if (ws !== socket) {
+        return;
+      }
       let payload: unknown;
       try {
         payload = JSON.parse(event.data);
@@ -139,7 +157,10 @@ export function createWsClient(options: WsClientOptions): WsClient {
       });
     };
 
-    ws.onclose = () => {
+    socket.onclose = () => {
+      if (ws !== socket) {
+        return;
+      }
       batch(() => {
         ws = null;
         socketOpen.value = false;
@@ -151,7 +172,10 @@ export function createWsClient(options: WsClientOptions): WsClient {
       });
     };
 
-    ws.onerror = () => {
+    socket.onerror = () => {
+      if (ws !== socket) {
+        return;
+      }
       // onclose handles reconnect transitions.
     };
   }
