@@ -4122,6 +4122,53 @@
         "title": "HistoryArtifactAvailabilityResponse",
         "type": "object"
       },
+      "HistoryFinalizationStageResponse": {
+        "description": "Response body describing one persisted run-finalization stage outcome.",
+        "properties": {
+          "artifacts_created": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Artifacts Created",
+            "type": "array"
+          },
+          "diagnostic_context": {
+            "$ref": "#/components/schemas/ApiPayloadObject"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "stage_name": {
+            "title": "Stage Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "skipped",
+              "degraded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stage_name",
+          "status",
+          "duration_ms"
+        ],
+        "title": "HistoryFinalizationStageResponse",
+        "type": "object"
+      },
       "HistoryInsightWarningResponse": {
         "description": "Response body for a localized history/run trust warning.",
         "properties": {
@@ -4621,6 +4668,20 @@
             ],
             "title": "Error Message"
           },
+          "finalization_stages": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HistoryFinalizationStageResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalization Stages"
+          },
           "lifecycle": {
             "anyOf": [
               {
@@ -4828,6 +4889,20 @@
               }
             ],
             "title": "Error Message"
+          },
+          "finalization_stages": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HistoryFinalizationStageResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalization Stages"
           },
           "lifecycle": {
             "anyOf": [

@@ -27,6 +27,8 @@ from vibesensor.shared.types.run_schema import (
     RUN_METADATA_TYPE,
     RUN_SCHEMA_VERSION,
     RawCaptureFinalizeStatus,
+    RunFinalizationStageResult,
+    RunFinalizationStageStatus,
     RunMetadata,
     RunRawCaptureFinalize,
     RunSensorMetadata,
@@ -68,6 +70,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     active_car_snapshot: object = None
     sensor_snapshots: object = None
     raw_capture_finalize: object = None
+    finalization_stages: object = None
     case_id: object = ""
     sensor_mac: object = None
     symptom: object = None
@@ -158,6 +161,16 @@ class _RunRawCaptureFinalizeState:
     error_summary: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class _RunFinalizationStageResultState:
+    stage_name: str
+    status: RunFinalizationStageStatus | None
+    duration_ms: int
+    artifacts_created: tuple[str, ...]
+    warnings: tuple[str, ...]
+    diagnostic_context: JsonObject
+
+
 def _required_text_decoder(payload_key: str, default: str = "") -> _PayloadDecoder:
     def decode(payload: Mapping[str, object]) -> object:
         return text_or_none(payload.get(payload_key)) or default
@@ -213,6 +226,34 @@ def _raw_capture_finalize_status_decoder(payload_key: str) -> _PayloadDecoder:
         if status not in {"completed", "not_configured", "enqueue_timeout", "timeout", "failed"}:
             return None
         return cast(RawCaptureFinalizeStatus, status)
+
+    return decode
+
+
+def _finalization_stage_status_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        status = text_or_none(payload.get(payload_key))
+        if status not in {"ok", "skipped", "degraded", "failed"}:
+            return None
+        return cast(RunFinalizationStageStatus, status)
+
+    return decode
+
+
+def _tuple_text_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        value = payload.get(payload_key)
+        if not isinstance(value, list):
+            return ()
+        return tuple(text for entry in value if (text := text_or_none(entry)) is not None)
+
+    return decode
+
+
+def _json_object_decoder(payload_key: str) -> _PayloadDecoder:
+    def decode(payload: Mapping[str, object]) -> object:
+        value = payload.get(payload_key)
+        return value if is_json_object(value) else {}
 
     return decode
 
@@ -375,12 +416,38 @@ _RUN_RAW_CAPTURE_FINALIZE_FIELD_SPECS: tuple[_PayloadFieldSpec, ...] = (
         include=_include_if_not_none,
     ),
 )
+_RUN_FINALIZATION_STAGE_FIELD_SPECS: tuple[_PayloadFieldSpec, ...] = (
+    _PayloadFieldSpec("stage_name", "stage_name", _required_text_decoder("stage_name")),
+    _PayloadFieldSpec("status", "status", _finalization_stage_status_decoder("status")),
+    _PayloadFieldSpec("duration_ms", "duration_ms", _int_decoder("duration_ms")),
+    _PayloadFieldSpec(
+        "artifacts_created",
+        "artifacts_created",
+        _tuple_text_decoder("artifacts_created"),
+        include=lambda value: bool(value),
+    ),
+    _PayloadFieldSpec(
+        "warnings",
+        "warnings",
+        _tuple_text_decoder("warnings"),
+        include=lambda value: bool(value),
+    ),
+    _PayloadFieldSpec(
+        "diagnostic_context",
+        "diagnostic_context",
+        _json_object_decoder("diagnostic_context"),
+        include=lambda value: bool(value),
+    ),
+)
 _RUN_METADATA_SCALAR_STATE_FACTORY: Callable[..., _RunMetadataScalarState] = _RunMetadataScalarState
 _REFERENCE_CONTEXT_STATE_FACTORY: Callable[..., _ReferenceContextState] = _ReferenceContextState
 _SYMPTOM_STATE_FACTORY: Callable[..., _SymptomState] = _SymptomState
 _RUN_SENSOR_SNAPSHOT_STATE_FACTORY: Callable[..., _RunSensorSnapshotState] = _RunSensorSnapshotState
 _RUN_RAW_CAPTURE_FINALIZE_STATE_FACTORY: Callable[..., _RunRawCaptureFinalizeState] = (
     _RunRawCaptureFinalizeState
+)
+_RUN_FINALIZATION_STAGE_RESULT_STATE_FACTORY: Callable[..., _RunFinalizationStageResultState] = (
+    _RunFinalizationStageResultState
 )
 
 
@@ -514,6 +581,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         raw_capture_finalize=_run_raw_capture_finalize_from_payload(
             data.get("raw_capture_finalize")
         ),
+        finalization_stages=_run_finalization_stages_from_payload(data.get("finalization_stages")),
         case_id=scalar_state.case_id,
         sensor_mac=scalar_state.sensor_mac,
         symptom=_symptom_from_payload(data.get("symptom")),
@@ -541,6 +609,10 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         payload["raw_capture_finalize"] = _run_raw_capture_finalize_to_json_object(
             metadata.raw_capture_finalize
         )
+    if metadata.finalization_stages:
+        payload["finalization_stages"] = [
+            _run_finalization_stage_to_json_object(stage) for stage in metadata.finalization_stages
+        ]
     if (symptom := _symptom_to_json_object(metadata.symptom)) is not None:
         payload["symptom"] = symptom
     if (
@@ -705,3 +777,43 @@ def _run_raw_capture_finalize_to_json_object(
     finalize: RunRawCaptureFinalize,
 ) -> JsonObject:
     return _project_payload_fields(finalize, _RUN_RAW_CAPTURE_FINALIZE_FIELD_SPECS)
+
+
+def _run_finalization_stages_from_payload(
+    payload: object,
+) -> tuple[RunFinalizationStageResult, ...]:
+    if not isinstance(payload, list):
+        return ()
+    stages: list[RunFinalizationStageResult] = []
+    for entry in payload:
+        stage = _run_finalization_stage_from_payload(entry)
+        if stage is not None:
+            stages.append(stage)
+    return tuple(stages)
+
+
+def _run_finalization_stage_from_payload(
+    payload: object,
+) -> RunFinalizationStageResult | None:
+    if not isinstance(payload, Mapping):
+        return None
+    state = _RUN_FINALIZATION_STAGE_RESULT_STATE_FACTORY(
+        **_decoded_values(payload, _RUN_FINALIZATION_STAGE_FIELD_SPECS)
+    )
+    if not state.stage_name or state.status is None:
+        return None
+    duration_ms = state.duration_ms if isinstance(state.duration_ms, int) else 0
+    return RunFinalizationStageResult(
+        stage_name=state.stage_name,
+        status=state.status,
+        duration_ms=max(0, duration_ms),
+        artifacts_created=state.artifacts_created,
+        warnings=state.warnings,
+        diagnostic_context=state.diagnostic_context,
+    )
+
+
+def _run_finalization_stage_to_json_object(
+    stage: RunFinalizationStageResult,
+) -> JsonObject:
+    return stage.to_json_object()

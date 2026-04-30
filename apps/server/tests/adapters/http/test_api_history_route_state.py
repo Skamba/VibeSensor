@@ -250,6 +250,57 @@ def test_history_endpoints_include_degraded_raw_capture_finalize_state() -> None
     }
 
 
+def test_history_run_detail_exposes_finalization_stage_metadata() -> None:
+    metadata = make_metadata(
+        finalization_stages=[
+            {
+                "stage_name": "FinalizeRawCaptureStage",
+                "status": "degraded",
+                "duration_ms": 7,
+                "warnings": ["raw capture finalize timed out"],
+                "diagnostic_context": {
+                    "raw_capture_status": "timeout",
+                    "queue_depth": 4,
+                },
+            },
+            {
+                "stage_name": "ResolvePostAnalysisCandidateStage",
+                "status": "skipped",
+                "duration_ms": 0,
+                "diagnostic_context": {"reason": "raw_capture_finalize_unsettled"},
+            },
+        ]
+    )
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
+
+    with TestClient(app) as client:
+        run_payload = client.get("/api/history/run-1").json()
+
+    assert "finalization_stages" not in run_payload["metadata"]
+    assert run_payload["finalization_stages"] == [
+        {
+            "stage_name": "FinalizeRawCaptureStage",
+            "status": "degraded",
+            "duration_ms": 7,
+            "warnings": ["raw capture finalize timed out"],
+            "diagnostic_context": {
+                "raw_capture_status": "timeout",
+                "queue_depth": 4,
+            },
+        },
+        {
+            "stage_name": "ResolvePostAnalysisCandidateStage",
+            "status": "skipped",
+            "duration_ms": 0,
+            "diagnostic_context": {"reason": "raw_capture_finalize_unsettled"},
+        },
+    ]
+
+
 def test_history_list_uses_nested_active_car_snapshot_name() -> None:
     metadata = make_metadata(
         active_car_snapshot={
