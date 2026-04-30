@@ -138,3 +138,9 @@ def test_common_local_jobs_declare_shared_workspace_write_sets() -> None:
         "release-smoke-artifacts",
     }
     assert set(jobs["ui-smoke"].workspace_write_sets) == {"ui-test-results"}
+
+
+def test_shell_lint_declares_host_shellcheck_prerequisite() -> None:
+    module = _load_ci_manifest_module()
+
+    assert module.ci_workflow_jobs()["shell-lint"].host_tools == ("shellcheck",)

@@ -55,6 +55,7 @@ Commands
 - `make docs-lint`
 - `make plan-validation` (primary AI/dev validation planner: changed-file CI plan, local command, ACT command, and JSON summary)
 - `python3 tools/tests/plan_validation.py --run` (run the planned non-Docker local CI jobs)
+- `make doctor` (reports local prerequisites, including host `shellcheck` for local `shell-lint` parity)
 - `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
 - `./tools/tests/run_ci_with_act.sh -j backend-lint` (run a single CI job locally via `act` with generated pull-request event data; requires Docker)
@@ -72,6 +73,7 @@ Commands
 
 Validation chooser
 - Start with `make plan-validation` for changed-file CI scope; use `python3 tools/tests/plan_validation.py --run` to execute planned non-Docker jobs, or `--act` when ACT/GitHub-workflow parity is required.
+- Local `shell-lint` parity requires host `shellcheck`; use ACT when you need CI to install ShellCheck inside the workflow job.
 - Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`.
 - Backend contracts/API payloads: add `make sync-contracts` and `make ui-typecheck`.
 - Frontend logic, contracts, or composition: `make ui-typecheck`; for bundle behavior also run `cd apps/ui && npm ci && npm run build`.

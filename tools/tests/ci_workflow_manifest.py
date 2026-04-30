@@ -61,6 +61,9 @@ _JOB_WORKSPACE_WRITE_SETS = {
         "release-smoke-artifacts",
     ),
 }
+_JOB_HOST_TOOLS = {
+    "shell-lint": ("shellcheck",),
+}
 
 
 @dataclass(frozen=True)
@@ -88,6 +91,7 @@ class CiWorkflowJob:
     steps: tuple[CiWorkflowStep, ...]
     skipped_actions: tuple[CiWorkflowSkippedAction, ...] = ()
     workspace_write_sets: tuple[str, ...] = ()
+    host_tools: tuple[str, ...] = ()
 
     def commands_named(self, names: Collection[str]) -> tuple[str, ...]:
         commands: list[str] = []
@@ -419,6 +423,7 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
                 workspace_write_sets=_JOB_WORKSPACE_WRITE_SETS.get(
                     expanded_job_name, ()
                 ),
+                host_tools=_JOB_HOST_TOOLS.get(expanded_job_name, ()),
             )
     return result
 
