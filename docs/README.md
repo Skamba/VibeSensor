@@ -29,6 +29,9 @@ links onward to the scoped instruction files and repo map below.
 | `docs/order_tracking.md` | Order-reference math, tolerance bands, and order-finding flow. |
 | `docs/report_pipeline.md` | Report generation flow from analysis to PDF. |
 | `docs/design_language.md` | Visual design decisions for report layout and UI. |
+| `docs/designs/final-report-redesign.md` | Active report/PDF design guidance for the verdict page and appendices. |
+| `docs/designs/whole-run-post-analysis-program.md` | Active whole-run post-analysis architecture guidance. |
+| `docs/designs/whole-run-post-analysis-history.md` | Historical whole-run post-analysis issue plan, branch notes, and benchmark snapshots. |
 | `docs/metrics.md` | Vibration metric definitions and unit rules. |
 | `docs/metrics_to_report_mapping.md` | How metrics map to report sections. |
 | `docs/protocol.md` | UDP and WebSocket protocol details between ESP32 and server. |

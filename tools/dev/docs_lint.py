@@ -75,6 +75,10 @@ DIRECT_SHELL_SCRIPT_RE = re.compile(
     r"(?:^|[`;\s])(?:[A-Z_][A-Z0-9_]*=[^`\s]+\s+)*(?:sudo\s+)?\./"
     r"(?P<path>(?:apps/server/scripts/|infra/|tools/)[A-Za-z0-9._~/-]+\.sh)\b"
 )
+DESIGN_DOC_STATUS_RE = re.compile(
+    r"^\s*>?\s*\*\*Status:\*\*\s*(Active|Historical|Superseded)\s*$",
+    re.MULTILINE,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -592,6 +596,21 @@ def _check_stale_repo_path_references(
     return issues
 
 
+def _check_design_doc_status(markdown_files: list[str], repo_root: Path) -> list[str]:
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        if not (path.startswith("docs/designs/") and path.endswith(".md")):
+            continue
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        if not DESIGN_DOC_STATUS_RE.search(text):
+            issues.append(
+                f"{path}: design doc must declare Status: Active, Historical, or Superseded"
+            )
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -610,6 +629,7 @@ def main() -> int:
     issues.extend(_check_direct_shell_script_commands(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
     issues.extend(_check_stale_repo_path_references(markdown_files, repo_root))
+    issues.extend(_check_design_doc_status(markdown_files, repo_root))
     issues.extend(_check_make_command_targets(markdown_files, repo_root))
     issues.extend(_check_npm_run_scripts(markdown_files, repo_root))
     issues.extend(_check_ci_job_examples(markdown_files, repo_root))

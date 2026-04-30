@@ -160,3 +160,27 @@ def test_direct_shell_script_command_lint_requires_executable_script(
         "docs/testing.md: documented script command is not executable: "
         "tools/tests/run_ci_with_act.sh"
     ]
+
+
+def test_design_doc_status_lint_requires_explicit_status(tmp_path: Path) -> None:
+    module = _load_docs_lint_module()
+    design_dir = tmp_path / "docs" / "designs"
+    design_dir.mkdir(parents=True)
+    (design_dir / "active.md").write_text(
+        "# Active design\n\n> **Status:** Active\n",
+        encoding="utf-8",
+    )
+    (design_dir / "missing.md").write_text(
+        "# Missing status\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_design_doc_status(
+        [
+            "docs/designs/active.md",
+            "docs/designs/missing.md",
+        ],
+        tmp_path,
+    ) == [
+        "docs/designs/missing.md: design doc must declare Status: Active, Historical, or Superseded"
+    ]
