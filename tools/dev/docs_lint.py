@@ -35,6 +35,14 @@ COPILOT_CANONICAL_MARKER = (
     "This file is the canonical AI guidance entrypoint and short index."
 )
 REPO_MAP_SCOPE_MARKER = "This file is the repo map, not a workflow or policy guide."
+GUIDANCE_SCRIPT_SUFFIXES = (".py", ".sh", ".mjs", ".cjs", ".js")
+GUIDANCE_SCRIPT_STARTS = (
+    ".githooks/",
+    "apps/server/scripts/",
+    "apps/ui/dev-docker.sh",
+    "infra/pi-image/",
+    "tools/",
+)
 
 
 def _walk_files(repo_root: Path) -> list[str]:
@@ -244,6 +252,42 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
     return issues
 
 
+def _check_guidance_script_references(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    """Flag repo-local script references in guidance files when the target is absent."""
+    issues: list[str] = []
+    guidance_files = sorted(
+        path
+        for path in markdown_files
+        if path.startswith(".github/instructions/")
+        or path == "AGENTS.md"
+        or path.endswith("/AGENTS.md")
+    )
+    script_re = re.compile(
+        r"(?P<path>(?:"
+        + "|".join(re.escape(prefix) for prefix in GUIDANCE_SCRIPT_STARTS)
+        + r")[A-Za-z0-9._~<>/-]+(?:"
+        + "|".join(re.escape(suffix) for suffix in GUIDANCE_SCRIPT_SUFFIXES)
+        + r"))"
+    )
+
+    for path in guidance_files:
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for match in script_re.finditer(text):
+            candidate = match.group("path")
+            if "<" in candidate or ">" in candidate:
+                continue
+            if not (repo_root / candidate).is_file():
+                issues.append(
+                    f"{path}: missing repo-local script reference: {candidate}"
+                )
+
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -258,6 +302,7 @@ def main() -> int:
     issues.extend(_check_runtime_docs_reading(source_files))
     issues.extend(_check_markdown_links(markdown_files, repo_root))
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
+    issues.extend(_check_guidance_script_references(markdown_files, repo_root))
 
     if issues:
         print(f"❌ {len(issues)} docs issue(s):")
