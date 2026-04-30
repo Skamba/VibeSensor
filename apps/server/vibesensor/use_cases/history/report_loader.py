@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from hashlib import sha256
 
@@ -18,6 +19,7 @@ from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
@@ -72,6 +74,10 @@ class HistoryReportRequestLoader:
             try:
                 run = await async_require_run(self._history_db, run_id)
                 analysis = require_analysis_ready(run)
+                analysis_for_report = self._analysis_with_report_metadata(
+                    analysis,
+                    run.metadata,
+                )
 
                 requested_lang = self._analysis_language(run, requested_lang)
                 report_language = self._report_pdf_cache_lang(run, requested_lang)
@@ -85,7 +91,7 @@ class HistoryReportRequestLoader:
                 filename = f"{safe_filename(run_id)}_report.pdf"
                 request = HistoryReportRequest(
                     prepared=prepare_persisted_report_input(
-                        analysis,
+                        analysis_for_report,
                         warnings=warnings,
                         filename=filename,
                         language=report_language,
@@ -113,6 +119,27 @@ class HistoryReportRequestLoader:
             analysis_payload = analysis
         encoded = json_text_dumps(analysis_payload, sort_keys=True).encode("utf-8")
         return sha256(encoded).hexdigest()
+
+    @staticmethod
+    def _analysis_with_report_metadata(
+        analysis: PersistedAnalysis,
+        metadata: RunMetadata,
+    ) -> PersistedAnalysis:
+        if not metadata.finalization_stages:
+            return analysis
+        payload = analysis.to_json_object()
+        metadata_payload = payload.get("metadata")
+        current_metadata = dict(metadata_payload) if isinstance(metadata_payload, Mapping) else {}
+        run_metadata_payload = run_metadata_to_json_object(metadata)
+        finalization_stages = run_metadata_payload.get("finalization_stages")
+        if finalization_stages is None:
+            return analysis
+        payload["metadata"] = {
+            **current_metadata,
+            "run_id": current_metadata.get("run_id") or metadata.run_id,
+            "finalization_stages": finalization_stages,
+        }
+        return PersistedAnalysis.from_json_object(payload)
 
     def _report_pdf_cache_key(
         self,

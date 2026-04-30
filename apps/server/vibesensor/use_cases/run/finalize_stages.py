@@ -12,6 +12,7 @@ from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.raw_capture import RawCaptureLossStats
+from vibesensor.shared.types.run_schema import RunFinalizationStageResult
 from vibesensor.use_cases.run.persistence_writer import (
     PersistenceStatusSnapshot,
     RunPersistenceWriter,
@@ -25,6 +26,7 @@ from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 type FinalizeStageStatus = Literal["ok", "skipped", "degraded", "failed"]
 
 RecordRawCaptureFinalize = Callable[[str, RawCaptureFinalizeResult], None]
+RecordFinalizationStages = Callable[[str, str, tuple[RunFinalizationStageResult, ...]], bool]
 
 __all__ = ["ActiveRunFinalizeResult", "FinalizeStageResult", "finalize_active_run"]
 
@@ -39,6 +41,16 @@ class FinalizeStageResult:
     artifacts_created: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
     diagnostic_context: JsonObject = field(default_factory=dict)
+
+    def to_run_metadata_stage(self) -> RunFinalizationStageResult:
+        return RunFinalizationStageResult(
+            stage_name=self.stage_name,
+            status=self.status,
+            duration_ms=self.duration_ms,
+            artifacts_created=self.artifacts_created,
+            warnings=self.warnings,
+            diagnostic_context=self.diagnostic_context,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +160,8 @@ def _resolve_post_analysis_candidate_stage(
         resolve_reason = "no_active_run"
     elif raw_capture_finalize_status == "timeout":
         resolve_reason = "raw_capture_finalize_unsettled"
+    elif not persistence_finalized:
+        resolve_reason = "persistence_finalize_unsettled"
     else:
         run_id_to_analyze = persistence.ready_for_analysis(run_id)
         resolve_reason = "ready" if run_id_to_analyze else "history_not_ready"
@@ -169,6 +183,31 @@ def _resolve_post_analysis_candidate_stage(
     )
 
 
+def _persist_finalization_stage_results(
+    *,
+    run_id: str | None,
+    start_time_utc: str,
+    stop_reason: str,
+    stage_results: list[FinalizeStageResult],
+    record_finalization_stage_results: RecordFinalizationStages | None,
+    logger: logging.Logger,
+) -> None:
+    if run_id is None or record_finalization_stage_results is None:
+        return
+    metadata_stage_results = tuple(stage.to_run_metadata_stage() for stage in stage_results)
+    if record_finalization_stage_results(run_id, start_time_utc, metadata_stage_results):
+        return
+    logger.warning(
+        "run_finalize_stage_results_persist_failed",
+        extra=log_extra(
+            event="run_finalize_stage_results_persist_failed",
+            run_id=run_id,
+            stop_reason=stop_reason,
+            stage_count=len(metadata_stage_results),
+        ),
+    )
+
+
 def finalize_active_run(
     *,
     run_id: str | None,
@@ -179,6 +218,7 @@ def finalize_active_run(
     persistence: RunPersistenceWriter,
     raw_capture: RunRawCaptureWriter,
     record_raw_capture_finalize_result: RecordRawCaptureFinalize,
+    record_finalization_stage_results: RecordFinalizationStages | None = None,
     logger: logging.Logger,
 ) -> ActiveRunFinalizeResult:
     stage_results: list[FinalizeStageResult] = []
@@ -347,6 +387,14 @@ def finalize_active_run(
         run_id=run_id,
         stop_reason=stop_reason,
         stage_result=resolve_stage,
+    )
+    _persist_finalization_stage_results(
+        run_id=run_id,
+        start_time_utc=resolved_start_time_utc,
+        stop_reason=stop_reason,
+        stage_results=stage_results,
+        record_finalization_stage_results=record_finalization_stage_results,
+        logger=logger,
     )
 
     return ActiveRunFinalizeResult(
