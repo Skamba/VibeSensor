@@ -27,8 +27,14 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
         ),
     )
 
-    def _fake_history_adapters(_path: Path, *, corruption_reporter=None):
+    def _fake_history_adapters(
+        _path: Path,
+        *,
+        corruption_reporter=None,
+        engine_failure_reporter=None,
+    ):
         assert corruption_reporter is not None
+        assert engine_failure_reporter is None or callable(engine_failure_reporter)
         return fake_history
 
     monkeypatch.setattr(
@@ -77,8 +83,14 @@ def test_create_history_db_prunes_old_terminal_runs_on_startup(
         ),
     )
 
-    def _fake_history_adapters(_path: Path, *, corruption_reporter=None):
+    def _fake_history_adapters(
+        _path: Path,
+        *,
+        corruption_reporter=None,
+        engine_failure_reporter=None,
+    ):
         assert corruption_reporter is not None
+        assert engine_failure_reporter is None or callable(engine_failure_reporter)
         return fake_history
 
     monkeypatch.setattr(
@@ -120,8 +132,14 @@ def test_create_history_db_prunes_raw_capture_before_summary_retention_when_conf
         ),
     )
 
-    def _fake_history_adapters(_path: Path, *, corruption_reporter=None):
+    def _fake_history_adapters(
+        _path: Path,
+        *,
+        corruption_reporter=None,
+        engine_failure_reporter=None,
+    ):
         assert corruption_reporter is not None
+        assert engine_failure_reporter is None or callable(engine_failure_reporter)
         return fake_history
 
     monkeypatch.setattr(
@@ -162,8 +180,14 @@ def test_create_history_db_continues_when_retention_prune_fails(
         ),
     )
 
-    def _fake_history_adapters(_path: Path, *, corruption_reporter=None):
+    def _fake_history_adapters(
+        _path: Path,
+        *,
+        corruption_reporter=None,
+        engine_failure_reporter=None,
+    ):
         assert corruption_reporter is not None
+        assert engine_failure_reporter is None or callable(engine_failure_reporter)
         return fake_history
 
     monkeypatch.setattr(

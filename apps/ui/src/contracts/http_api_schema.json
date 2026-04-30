@@ -3848,6 +3848,33 @@
             "title": "Db Corruption Detected",
             "type": "boolean"
           },
+          "db_engine_unhealthy": {
+            "default": false,
+            "title": "Db Engine Unhealthy",
+            "type": "boolean"
+          },
+          "db_engine_unhealthy_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Db Engine Unhealthy Details"
+          },
+          "db_engine_unhealthy_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Db Engine Unhealthy Reason"
+          },
           "db_last_write_duration_s": {
             "default": 0.0,
             "title": "Db Last Write Duration S",
