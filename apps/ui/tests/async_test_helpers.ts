@@ -6,14 +6,17 @@ export type TimerHarness = {
 export type Deferred<T> = {
   promise: Promise<T>;
   resolve(value: T): void;
+  reject(reason?: unknown): void;
 };
 
 export function createDeferred<T>(): Deferred<T> {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolvePromise) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
-  return { promise, resolve };
+  return { promise, reject, resolve };
 }
 
 export function installWindowGlobal(): void {
@@ -62,7 +65,7 @@ export function installTimerHarness(): TimerHarness {
 export async function flushAsyncWork(rounds = 12): Promise<void> {
   for (let index = 0; index < rounds; index += 1) {
     await new Promise<void>((resolve) => {
-      setImmediate(resolve);
+      setImmediate(() => resolve());
     });
   }
 }

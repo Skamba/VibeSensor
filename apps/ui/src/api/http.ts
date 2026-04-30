@@ -35,36 +35,38 @@ export async function apiJsonResponse<T = unknown>(
     timeoutMs,
   );
   const signal = composeSignal(timeoutController.signal, externalSignal ?? undefined);
-  const response = await fetch(path, { ...requestInit, signal }).finally(() => {
-    globalThis.clearTimeout(timeoutId);
-  });
-  const bodyText = await response.text();
-  if (!response.ok) {
-    let detail = `${response.status} ${response.statusText}`;
-    try {
-      const payload = bodyText ? JSON.parse(bodyText) : null;
-      if (payload && typeof payload === "object" && typeof payload.detail !== "undefined") {
-        detail = String(payload.detail);
-      }
-    } catch {
-      if (bodyText.trim()) detail = `${detail}: ${formatBodySnippet(bodyText)}`;
-    }
-    throw new Error(detail);
-  }
-  if (response.status === 204 || !bodyText.trim()) {
-    return { status: response.status, body: undefined };
-  }
-
-  const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("application/json")) {
-    return { status: response.status, body: bodyText as T };
-  }
-
   try {
-    return { status: response.status, body: JSON.parse(bodyText) as T };
-  } catch {
-    const status = `${response.status} ${response.statusText}`;
-    throw new Error(`Invalid JSON response (${status}): ${formatBodySnippet(bodyText)}`);
+    const response = await fetch(path, { ...requestInit, signal });
+    const bodyText = await response.text();
+    if (!response.ok) {
+      let detail = `${response.status} ${response.statusText}`;
+      try {
+        const payload = bodyText ? JSON.parse(bodyText) : null;
+        if (payload && typeof payload === "object" && typeof payload.detail !== "undefined") {
+          detail = String(payload.detail);
+        }
+      } catch {
+        if (bodyText.trim()) detail = `${detail}: ${formatBodySnippet(bodyText)}`;
+      }
+      throw new Error(detail);
+    }
+    if (response.status === 204 || !bodyText.trim()) {
+      return { status: response.status, body: undefined };
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return { status: response.status, body: bodyText as T };
+    }
+
+    try {
+      return { status: response.status, body: JSON.parse(bodyText) as T };
+    } catch {
+      const status = `${response.status} ${response.statusText}`;
+      throw new Error(`Invalid JSON response (${status}): ${formatBodySnippet(bodyText)}`);
+    }
+  } finally {
+    globalThis.clearTimeout(timeoutId);
   }
 }
 

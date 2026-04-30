@@ -17,8 +17,14 @@ describe("apiJson", () => {
     const externalController = new AbortController();
 
     mswServer.use(
-      http.get(uiTestUrl("/timeout/no-signal"), async () => await new Promise<HttpResponse>(() => undefined)),
-      http.get(uiTestUrl("/timeout/with-signal"), async () => await new Promise<HttpResponse>(() => undefined)),
+      http.get(
+        uiTestUrl("/timeout/no-signal"),
+        async () => await new Promise<HttpResponse<never>>(() => undefined),
+      ),
+      http.get(
+        uiTestUrl("/timeout/with-signal"),
+        async () => await new Promise<HttpResponse<never>>(() => undefined),
+      ),
     );
     globalThis.setTimeout = ((handler: TimerHandler) => {
       if (typeof handler === "function") handler();
@@ -44,7 +50,7 @@ describe("apiJson", () => {
 
   test("supports custom timeout overrides and clears their timers after a successful response", async () => {
     const timerHarness = installTimerHarness();
-    const response = createDeferred<HttpResponse>();
+    const response = createDeferred<HttpResponse<{ ok: boolean }>>();
     let requestedPath = "";
     let requestedMethod = "";
     mswServer.use(
@@ -70,6 +76,91 @@ describe("apiJson", () => {
       expect(timerHarness.pendingDelays()).toEqual([]);
     } finally {
       timerHarness.restore();
+    }
+  });
+
+  test("keeps timeout active while reading the response body", async () => {
+    const originalFetch = globalThis.fetch;
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    const bodyText = createDeferred<string>();
+    let timeoutHandler: TimerHandler | undefined;
+    let clearedTimeout = false;
+
+    globalThis.fetch = (async (_input, _init) => {
+      return {
+        headers: new Headers({ "content-type": "application/json" }),
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () => await bodyText.promise,
+      } as Response;
+    }) as typeof fetch;
+    globalThis.setTimeout = ((handler: TimerHandler) => {
+      timeoutHandler = handler;
+      return 1 as unknown as ReturnType<typeof setTimeout>;
+    }) as typeof setTimeout;
+    globalThis.clearTimeout = (() => {
+      clearedTimeout = true;
+    }) as typeof clearTimeout;
+
+    try {
+      const request = apiJson("/timeout/body", { timeoutMs: 10 });
+      await Promise.resolve();
+      expect(clearedTimeout).toBe(false);
+      if (typeof timeoutHandler === "function") timeoutHandler();
+      bodyText.reject(new DOMException("Request timed out.", "AbortError"));
+      await expect(request).rejects.toMatchObject({ name: "AbortError" });
+      expect(clearedTimeout).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    }
+  });
+
+  test("external abort wins over timeout while reading the response body", async () => {
+    const originalFetch = globalThis.fetch;
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    const externalController = new AbortController();
+    const bodyText = createDeferred<string>();
+    let timeoutHandler: TimerHandler | undefined;
+    let requestSignal: AbortSignal | undefined;
+
+    globalThis.fetch = (async (_input, init) => {
+      requestSignal = init?.signal ?? undefined;
+      requestSignal?.addEventListener("abort", () => {
+        bodyText.reject(requestSignal?.reason);
+      });
+      return {
+        headers: new Headers({ "content-type": "application/json" }),
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () => await bodyText.promise,
+      } as Response;
+    }) as typeof fetch;
+    globalThis.setTimeout = ((handler: TimerHandler) => {
+      timeoutHandler = handler;
+      return 1 as unknown as ReturnType<typeof setTimeout>;
+    }) as typeof setTimeout;
+    globalThis.clearTimeout = (() => {}) as typeof clearTimeout;
+
+    try {
+      const request = apiJson("/timeout/external-abort-body", {
+        signal: externalController.signal,
+        timeoutMs: 10,
+      });
+      await Promise.resolve();
+      externalController.abort(new DOMException("user canceled", "AbortError"));
+      await expect(request).rejects.toThrow("user canceled");
+      if (typeof timeoutHandler === "function") timeoutHandler();
+      expect(requestSignal?.reason).toMatchObject({ message: "user canceled" });
+    } finally {
+      globalThis.fetch = originalFetch;
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
     }
   });
 
