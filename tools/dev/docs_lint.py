@@ -611,6 +611,22 @@ def _check_design_doc_status(markdown_files: list[str], repo_root: Path) -> list
     return issues
 
 
+def _check_docs_index_complete(markdown_files: list[str], repo_root: Path) -> list[str]:
+    docs_index_text = _read_text(repo_root, "docs/README.md")
+    if docs_index_text is None:
+        return ["missing docs/README.md"]
+
+    issues: list[str] = []
+    for path in sorted(
+        path
+        for path in markdown_files
+        if path.startswith("docs/") and path.endswith(".md")
+    ):
+        if f"`{path}`" not in docs_index_text:
+            issues.append(f"docs/README.md must list {path}")
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -630,6 +646,7 @@ def main() -> int:
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
     issues.extend(_check_stale_repo_path_references(markdown_files, repo_root))
     issues.extend(_check_design_doc_status(markdown_files, repo_root))
+    issues.extend(_check_docs_index_complete(markdown_files, repo_root))
     issues.extend(_check_make_command_targets(markdown_files, repo_root))
     issues.extend(_check_npm_run_scripts(markdown_files, repo_root))
     issues.extend(_check_ci_job_examples(markdown_files, repo_root))
