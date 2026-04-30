@@ -1840,6 +1840,7 @@ def check_contract_sync_entrypoint() -> list[str]:
         "build": "npm run check:contracts && vite build",
         "build:prevalidated-contracts": "vite build",
         "typecheck": "npm run check:contracts && tsc --noEmit",
+        "typecheck:tests": "node tools/typecheck_tests_with_baseline.mjs",
         "pretest:smoke": "npm run sync:generated-contracts",
     }
     for script_name, expected_command in expected_scripts.items():
@@ -1853,6 +1854,16 @@ def check_contract_sync_entrypoint() -> list[str]:
             errors.append(
                 f"apps/ui/package.json must not define {removed_script!r}; build and typecheck should fail on stale derivatives instead of regenerating them automatically."
             )
+
+    ui_test_tsconfig = ROOT / "apps/ui/tsconfig.test.json"
+    if not ui_test_tsconfig.exists():
+        errors.append("apps/ui/tsconfig.test.json must define the frontend test TypeScript project.")
+    ui_test_typecheck_script = ROOT / "apps/ui/tools/typecheck_tests_with_baseline.mjs"
+    if not ui_test_typecheck_script.exists():
+        errors.append("apps/ui/tools/typecheck_tests_with_baseline.mjs must enforce the UI test typecheck baseline.")
+    ui_test_typecheck_baseline = ROOT / "apps/ui/tests/typecheck-baseline.txt"
+    if not ui_test_typecheck_baseline.exists():
+        errors.append("apps/ui/tests/typecheck-baseline.txt must track the current UI test typecheck diagnostics.")
 
     makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
     gitignore_text = (ROOT / ".gitignore").read_text(encoding="utf-8")
@@ -1983,6 +1994,13 @@ def check_contract_sync_entrypoint() -> list[str]:
                     error_message=(
                         "frontend-typecheck must explicitly sync generated UI contract derivatives before "
                         "running npm run typecheck."
+                    ),
+                ),
+                WorkflowStepRequirement(
+                    working_directory="apps/ui",
+                    run="npm run typecheck:tests",
+                    error_message=(
+                        "frontend-typecheck must run the UI test TypeScript project."
                     ),
                 ),
                 WorkflowStepRequirement(

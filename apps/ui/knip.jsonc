@@ -3,6 +3,6 @@
   // Keep the signal high with dead files, dependency drift, and the current
   // cleaned-up unused export surface. Exported-type checks stay out for now.
   "include": ["files", "dependencies", "exports"],
-  "ignore": ["public/mockServiceWorker.js"],
+  "ignore": ["public/mockServiceWorker.js", "tests/test-env.d.ts"],
   "ignoreDependencies": ["openapi-typescript"]
 }
