@@ -48,6 +48,9 @@ function installRafHarness() {
       }
       callback(Date.now());
     },
+    pendingCount(): number {
+      return callbacks.length;
+    },
     restore(): void {
       globalThis.requestAnimationFrame = originalRequestAnimationFrame;
     },
@@ -55,25 +58,64 @@ function installRafHarness() {
 }
 
 function installLocation(search: string): () => void {
-  const target = window as Window & typeof globalThis & { location?: Location };
-  const previousLocation = target.location;
-  target.location = {
-    search,
-    protocol: "http:",
-    host: "localhost",
-  } as Location;
+  const previousLocation = Object.getOwnPropertyDescriptor(window, "location");
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: {
+      search,
+      protocol: "http:",
+      host: "localhost",
+    } as Location,
+  });
   return () => {
     if (previousLocation === undefined) {
-      delete target.location;
+      Reflect.deleteProperty(window, "location");
       return;
     }
-    target.location = previousLocation;
+    Object.defineProperty(window, "location", previousLocation);
   };
+}
+
+class StartModeFakeWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
+
+  static instances: StartModeFakeWebSocket[] = [];
+
+  readonly url: string;
+
+  readyState = StartModeFakeWebSocket.CONNECTING;
+
+  onopen: WebSocket["onopen"] = null;
+
+  onmessage: WebSocket["onmessage"] = null;
+
+  onclose: WebSocket["onclose"] = null;
+
+  onerror: WebSocket["onerror"] = null;
+
+  constructor(url: string) {
+    this.url = url;
+    StartModeFakeWebSocket.instances.push(this);
+  }
+
+  static reset(): void {
+    StartModeFakeWebSocket.instances = [];
+  }
+
+  send(): void {}
+
+  close(): void {
+    this.readyState = StartModeFakeWebSocket.CLOSED;
+  }
 }
 
 describe("UiLiveTransportController", () => {
   beforeEach(async () => {
     installWindowGlobal();
+    StartModeFakeWebSocket.reset();
     await Promise.all([
       import("../src/app/demo_mode"),
       import("../src/server_payload"),
@@ -294,6 +336,65 @@ describe("UiLiveTransportController", () => {
     } finally {
       restoreLocation();
       raf.restore();
+    }
+  });
+
+  test("starts demo transport mode only once", async () => {
+    const state = createAppState();
+    const controller = new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+    const restoreLocation = installLocation("?demo=1");
+    const raf = installRafHarness();
+    try {
+      controller.startTransportMode();
+      await flushAsyncWork(30);
+      raf.flushNext();
+      await flushAsyncWork(30);
+
+      expect(state.transport.wsState.value).toBe("connected");
+      expect(state.realtime.clients.value).toHaveLength(5);
+
+      state.transport.hasReceivedPayload.value = false;
+      state.transport.pendingPayload.value = null;
+      state.realtime.clients.value = [];
+
+      controller.startTransportMode();
+      await flushAsyncWork(30);
+
+      expect(state.transport.hasReceivedPayload.value).toBe(false);
+      expect(state.transport.pendingPayload.value).toBeNull();
+      expect(state.realtime.clients.value).toEqual([]);
+      expect(raf.pendingCount()).toBe(0);
+    } finally {
+      controller.dispose();
+      restoreLocation();
+      raf.restore();
+    }
+  });
+
+  test("starts websocket transport mode only once", async () => {
+    const originalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = StartModeFakeWebSocket as unknown as typeof WebSocket;
+    const state = createAppState();
+    const controller = new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+    const restoreLocation = installLocation("");
+    try {
+      controller.startTransportMode();
+      controller.startTransportMode();
+      await flushAsyncWork(30);
+
+      expect(StartModeFakeWebSocket.instances).toHaveLength(1);
+      expect(StartModeFakeWebSocket.instances[0]?.url).toBe("ws://localhost/ws");
+      expect(state.transport.ws.value).not.toBeNull();
+    } finally {
+      controller.dispose();
+      restoreLocation();
+      globalThis.WebSocket = originalWebSocket;
     }
   });
 
