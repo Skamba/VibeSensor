@@ -63,6 +63,7 @@ Commands
 - `./tools/tests/run_ci_with_act.sh` (changed-scope ACT/GitHub workflow parity with generated pull-request event data; requires Docker)
 - `./tools/tests/run_ci_with_act.sh --full-stack` (force all CI jobs through `ci-scope`; requires Docker)
 - `./tools/tests/run_ci_with_act.sh -j backend-lint` (run a selected CI job locally via `act`; requires Docker)
+- `./tools/tests/run_ci_with_act.sh -j backend-tests` (run the backend test matrix job via `act`; ACT uses raw GitHub job ids, not local logical shard ids like `backend-tests-1`)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
 - `python3 tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)

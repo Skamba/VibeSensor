@@ -8,9 +8,12 @@
 #   ./tools/tests/run_ci_with_act.sh --full-stack # force all CI jobs through ci-scope
 #   ./tools/tests/run_ci_with_act.sh -l            # list available jobs
 #   ./tools/tests/run_ci_with_act.sh -j backend-lint      # run one job
-#   ./tools/tests/run_ci_with_act.sh -j backend-tests-1   # run one backend test shard
+#   ./tools/tests/run_ci_with_act.sh -j backend-tests     # run backend test matrix job
 #   ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 #   ./tools/tests/run_ci_with_act.sh <extra act args>     # pass-through
+#
+# ACT selects raw GitHub workflow job ids. Use backend-tests here; the
+# backend-tests-1..5 logical shard ids are only for run_ci_parallel.py.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
