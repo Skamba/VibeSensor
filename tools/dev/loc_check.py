@@ -21,14 +21,29 @@ from __future__ import annotations
 
 import argparse
 import ast
-from dataclasses import dataclass
+import importlib.util
 import os
-import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_repo_tooling_support():
+    helper_path = REPO_ROOT / "tools" / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_repo_tooling_support = _load_repo_tooling_support()
 
 TOP_N = 25
 DEFAULT_FILE_THRESHOLD_LINES = 1200
@@ -218,31 +233,11 @@ def _load_allowlist(path: Path) -> MaintainabilityAllowlist:
 
 
 def _walk_files(repo_root: Path) -> list[str]:
-    files: list[str] = []
-    for path in repo_root.rglob("*"):
-        if not path.is_file():
-            continue
-        rel = path.relative_to(repo_root)
-        if any(part in EXCLUDE_DIRS for part in rel.parts):
-            continue
-        files.append(rel.as_posix())
-    return files
+    return _repo_tooling_support.walk_files(repo_root, EXCLUDE_DIRS)
 
 
 def _tracked_files(repo_root: Path) -> list[str]:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "ls-files", "--cached"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        tracked = [line for line in result.stdout.splitlines() if line]
-        if tracked:
-            return tracked
-    except (OSError, subprocess.CalledProcessError):
-        pass
-    return _walk_files(repo_root)
+    return _repo_tooling_support.tracked_files(repo_root, EXCLUDE_DIRS)
 
 
 def _should_check(path: str) -> bool:

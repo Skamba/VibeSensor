@@ -11,8 +11,8 @@ Exit 0 if clean, 1 if violations found.
 
 from __future__ import annotations
 
+import importlib.util
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -63,33 +63,28 @@ GENERATED_REPO_PATH_REFERENCES = {
     "apps/ui/src/constants.ts",
 }
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_repo_tooling_support():
+    helper_path = REPO_ROOT / "tools" / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_repo_tooling_support = _load_repo_tooling_support()
+
 
 def _walk_files(repo_root: Path) -> list[str]:
-    files: list[str] = []
-    for path in repo_root.rglob("*"):
-        if not path.is_file():
-            continue
-        rel = path.relative_to(repo_root)
-        if any(part in EXCLUDED_DIRS for part in rel.parts):
-            continue
-        files.append(rel.as_posix())
-    return files
+    return _repo_tooling_support.walk_files(repo_root, EXCLUDED_DIRS)
 
 
 def _tracked_files(repo_root: Path) -> list[str]:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "ls-files", "--cached"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        tracked = [line for line in result.stdout.splitlines() if line]
-        if tracked:
-            return tracked
-    except (OSError, subprocess.CalledProcessError):
-        pass
-    return _walk_files(repo_root)
+    return _repo_tooling_support.tracked_files(repo_root, EXCLUDED_DIRS)
 
 
 def _check_large_code_blocks(docs_files: list[str]) -> list[str]:

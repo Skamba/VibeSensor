@@ -46,7 +46,7 @@ def test_tracked_files_prefers_git_listing(monkeypatch) -> None:
             stderr="",
         )
 
-    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _fake_run)
 
     assert module._tracked_files(repo_root) == ["apps/server/main.py", "README.md"]
 
@@ -75,7 +75,7 @@ def test_main_falls_back_to_repo_walk_outside_git_checkout(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main([]) == 0
 
@@ -107,7 +107,7 @@ def test_main_fails_when_optional_loc_threshold_is_exceeded(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main(["--fail-over", "2"]) == 1
 
@@ -136,7 +136,7 @@ def test_main_passes_when_optional_loc_threshold_is_not_exceeded(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main(["--fail-over", "2"]) == 0
 
@@ -160,7 +160,7 @@ def test_main_fails_for_unallowlisted_large_python_function(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main(["--file-fail-over", "100", "--function-fail-over", "2"]) == 1
 
@@ -200,7 +200,7 @@ def test_main_allows_reviewed_file_and_function_allowlist(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main([]) == 0
 
@@ -237,7 +237,7 @@ def test_main_fails_when_allowlisted_file_or_function_grows(
     def _raise_git_failure(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise subprocess.CalledProcessError(128, args[0])
 
-    monkeypatch.setattr(module.subprocess, "run", _raise_git_failure)
+    monkeypatch.setattr(module._repo_tooling_support.subprocess, "run", _raise_git_failure)
 
     assert module.main([]) == 1
 

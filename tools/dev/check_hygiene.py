@@ -17,6 +17,19 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_repo_tooling_support():
+    helper_path = ROOT / "tools" / "repo_tooling_support.py"
+    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_repo_tooling_support = _load_repo_tooling_support()
 _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD = "node ../../tools/ui/ensure_ui_bootstrap.mjs"
 _UI_DERIVATIVE_SETUP_WORKFLOW_CMD = "npm run setup:generated-contracts"
 _UI_MANUAL_CHUNK_PACKAGE_RE = re.compile(r'"/(?!node_modules/)((?:@[^/]+/)?[^/]+)/"')
@@ -1593,37 +1606,17 @@ def _normalize_python_token(token: str) -> str:
 
 
 def _normalize_tokenized_command(tokens: list[str]) -> str:
-    if not tokens:
-        return ""
-    normalized = list(tokens)
-    command_index = 0
-    if normalized[0] == "env":
-        command_index = 1
-        while command_index < len(normalized) and "=" in normalized[command_index]:
-            command_index += 1
-        if command_index >= len(normalized):
-            return shlex.join(normalized)
-    normalized[command_index] = _normalize_python_token(normalized[command_index])
-    return shlex.join(normalized)
+    return _repo_tooling_support.normalize_tokenized_command(
+        tokens,
+        command_token_normalizer=_normalize_python_token,
+    )
 
 
 def _normalize_shell_command(command: str) -> str:
-    tokens = shlex.split(command)
-    if "&&" not in tokens:
-        return _normalize_tokenized_command(tokens)
-
-    parts: list[str] = []
-    current: list[str] = []
-    for token in tokens:
-        if token == "&&":
-            if current:
-                parts.append(_normalize_tokenized_command(current))
-                current = []
-            continue
-        current.append(token)
-    if current:
-        parts.append(_normalize_tokenized_command(current))
-    return " && ".join(parts)
+    return _repo_tooling_support.normalize_shell_command(
+        command,
+        command_token_normalizer=_normalize_python_token,
+    )
 
 
 def _normalize_env(env: Mapping[str, object] | None) -> str:
