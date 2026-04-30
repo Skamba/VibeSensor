@@ -18,9 +18,11 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 def _load_repo_tooling_support():
-    helper_path = Path(__file__).resolve().parents[1] / "repo_tooling_support.py"
+    helper_path = ROOT / "tools" / "repo_tooling_support.py"
     spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
@@ -30,6 +32,9 @@ def _load_repo_tooling_support():
 
 
 _repo_tooling_support = _load_repo_tooling_support()
+_repo_tooling_support.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 _parallel_runner_support = _repo_tooling_support.load_parallel_runner_support(__file__)
 resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
 read_duration_cache = _parallel_runner_support.load_duration_cache
@@ -40,7 +45,6 @@ read_observed_durations_from_junit = (
 collect_normalized_test_ids = _parallel_runner_support.parse_collected_test_ids
 
 
-ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci"
 _DURATION_CACHE_ENV = "VIBESENSOR_BACKEND_DURATION_CACHE"
 _XDIST_WORKERS_ENV = "VIBESENSOR_BACKEND_XDIST_WORKERS"

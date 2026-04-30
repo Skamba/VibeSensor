@@ -12,7 +12,21 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
+_REPO_TOOLING_SUPPORT_PATH = ROOT / "tools" / "repo_tooling_support.py"
 _CI_PATH_RULES_PATH = Path(__file__).with_name("ci_path_rules.py")
+
+
+def _load_repo_tooling_support_module():
+    spec = importlib.util.spec_from_file_location(
+        "repo_tooling_support_for_run_changed",
+        _REPO_TOOLING_SUPPORT_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {_REPO_TOOLING_SUPPORT_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _load_ci_path_rules_module():
@@ -27,6 +41,10 @@ def _load_ci_path_rules_module():
     return module
 
 
+_REPO_TOOLING_SUPPORT = _load_repo_tooling_support_module()
+_REPO_TOOLING_SUPPORT.ensure_repo_python_version(
+    ROOT, script_path=Path(__file__).resolve()
+)
 _CI_PATH_RULES = _load_ci_path_rules_module()
 FULL_STACK_TRIGGER_FILES = _CI_PATH_RULES.FULL_STACK_TRIGGER_FILES
 FULL_STACK_TRIGGER_PREFIXES = _CI_PATH_RULES.FULL_STACK_TRIGGER_PREFIXES

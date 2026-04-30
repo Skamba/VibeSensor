@@ -15,6 +15,51 @@ from types import ModuleType
 CommandTokenNormalizer = Callable[[str], str]
 
 
+def _repo_python_major_minor(repo_root: Path) -> tuple[int, int]:
+    version_path = repo_root / ".python-version"
+    raw_version = version_path.read_text(encoding="utf-8").strip()
+    parts = raw_version.split(".")
+    if len(parts) < 2:
+        raise SystemExit(
+            f"{version_path} must contain at least a major.minor Python version."
+        )
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError as exc:
+        raise SystemExit(
+            f"{version_path} contains an invalid Python version: {raw_version!r}"
+        ) from exc
+
+
+def ensure_repo_python_version(
+    repo_root: Path,
+    *,
+    script_path: Path | None = None,
+    actual_version_info: Sequence[int] | None = None,
+    actual_version: str | None = None,
+    executable: str | None = None,
+) -> None:
+    """Stop direct repo tooling runs that use the wrong Python major.minor."""
+
+    expected_major, expected_minor = _repo_python_major_minor(repo_root)
+    observed = actual_version_info or sys.version_info
+    actual_major_minor = int(observed[0]), int(observed[1])
+    if actual_major_minor == (expected_major, expected_minor):
+        return
+
+    label = (
+        script_path.relative_to(repo_root).as_posix() if script_path else "this command"
+    )
+    current_version = (actual_version or sys.version).split()[0]
+    current_executable = executable or sys.executable
+    raise SystemExit(
+        f"{label} must run with Python {expected_major}.{expected_minor}.x from .python-version; "
+        f"current interpreter is Python {current_version} at {current_executable}. "
+        "Run `make setup`, then use a Makefile target or "
+        f"`{repo_root / '.venv' / 'bin' / 'python'} {label}`."
+    )
+
+
 def walk_files(repo_root: Path, excluded_dirs: Iterable[str]) -> list[str]:
     excluded = set(excluded_dirs)
     files: list[str] = []
