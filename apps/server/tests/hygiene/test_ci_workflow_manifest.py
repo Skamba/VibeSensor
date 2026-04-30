@@ -65,3 +65,22 @@ def test_backend_quality_jobs_are_split_into_focused_gates() -> None:
         "docs-lint",
         "backend-contract-drift",
     }.issubset(job_names)
+
+
+def test_contributing_docs_reference_focused_backend_ci_gates() -> None:
+    module = _load_ci_manifest_module()
+    job_names = set(module.all_job_names())
+    contributing_text = (REPO_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+
+    assert "backend-quality" not in contributing_text
+    focused_gate_names = {
+        "backend-lint",
+        "repo-hygiene",
+        "backend-static-guards",
+        "backend-preflight",
+        "docs-lint",
+        "backend-contract-drift",
+    }
+    assert focused_gate_names.issubset(job_names)
+    for gate_name in focused_gate_names:
+        assert gate_name in contributing_text
