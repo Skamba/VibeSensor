@@ -246,6 +246,48 @@ def test_raw_capture_writer_finalize_timeout_returns_degraded_result() -> None:
     assert writer.shutdown(timeout_s=1.0) is True
 
 
+def test_raw_capture_writer_notifies_late_finalize_after_timeout() -> None:
+    class HangingHistoryDb:
+        def __init__(self) -> None:
+            self.block_finalize = threading.Event()
+
+        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+            return None
+
+        async def afinalize_raw_capture(
+            self,
+            _run_id: str,
+            *,
+            run_start_monotonic_us: int | None = None,
+            sensor_clock_sync=None,
+            sensor_losses=None,
+        ):
+            del run_start_monotonic_us, sensor_clock_sync, sensor_losses
+            await asyncio.to_thread(self.block_finalize.wait)
+            return None
+
+    history_db = HangingHistoryDb()
+    completed = threading.Event()
+    late_results: list[tuple[str, str]] = []
+    writer = RunRawCaptureWriter(
+        history_db=history_db,
+        logger=logging.getLogger(__name__),
+        late_finalize_callback=lambda run_id, result: (
+            late_results.append((run_id, result.status)),
+            completed.set(),
+        ),
+    )
+    writer.start_run("run-timeout-late")
+
+    result = writer.finalize_run("run-timeout-late", timeout_s=0.1)
+    history_db.block_finalize.set()
+
+    assert result.status == "timeout"
+    assert completed.wait(timeout=2.0)
+    assert late_results == [("run-timeout-late", "completed")]
+    assert writer.shutdown(timeout_s=1.0) is True
+
+
 def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_queue_stays_full() -> None:
     class SlowHistoryDb:
         def __init__(self) -> None:

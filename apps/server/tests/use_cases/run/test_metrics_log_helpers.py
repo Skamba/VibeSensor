@@ -602,6 +602,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
 ) -> None:
     from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
 
+    scheduled: list[str] = []
     logger = make_logger(history_db=fake_history_db)
     snapshot = _started_snapshot(logger)
     logger._sample_flush.append_records(
@@ -617,7 +618,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.logger"):
         status = logger.stop_recording()
@@ -630,7 +631,81 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
     assert metadata.raw_capture_finalize.status == "timeout"
     assert metadata.raw_capture_finalize.queue_depth == 3
     assert metadata.raw_capture_finalize.error_summary == "raw capture finalize timed out"
+    assert scheduled == []
     assert "raw_capture_finalize_degraded" in caplog.text
+
+
+def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update(
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
+
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    scheduled: list[str] = []
+    logger = make_logger(history_db=history_db.run_repository)
+    snapshot = _started_snapshot(logger)
+    logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
+    logger._raw_capture = SimpleNamespace(
+        finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
+            status="timeout",
+            error="raw capture finalize timed out",
+        ),
+        shutdown=lambda timeout_s=5.0: True,
+    )
+    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+
+    logger.stop_recording()
+    logger._handle_late_raw_capture_finalize_result(
+        snapshot.run_id,
+        RawCaptureFinalizeResult(status="completed"),
+    )
+
+    assert scheduled == [snapshot.run_id]
+    stored_metadata = history_db.run_repository.get_run_metadata(snapshot.run_id)
+    assert stored_metadata is not None
+    assert stored_metadata.raw_capture_finalize is not None
+    assert stored_metadata.raw_capture_finalize.status == "completed"
+
+
+def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata(
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
+
+    scheduled: list[str] = []
+    logger = make_logger(history_db=fake_history_db)
+    snapshot = _started_snapshot(logger)
+    logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
+    logger._raw_capture = SimpleNamespace(
+        finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
+            status="failed",
+            error="raw capture finalize failed",
+            queue_depth=0,
+        ),
+        shutdown=lambda timeout_s=5.0: True,
+    )
+    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+
+    logger.stop_recording()
+
+    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
+    assert updated_run_id == snapshot.run_id
+    assert metadata.raw_capture_finalize is not None
+    assert metadata.raw_capture_finalize.status == "failed"
+    assert metadata.raw_capture_finalize.error_summary == "raw capture finalize failed"
+    assert scheduled == [snapshot.run_id]
 
 
 def test_post_analysis_uses_run_language_from_metadata(
