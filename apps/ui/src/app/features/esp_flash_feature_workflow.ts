@@ -8,24 +8,16 @@ import {
   getEspFlashStatus as getEspFlashStatusApi,
   startEspFlash as startEspFlashApi,
 } from "../../api/settings";
-import {
-  ESP_FLASH_POLL_ACTIVE_MS,
-  ESP_FLASH_POLL_IDLE_MS,
-} from "../../config";
+import { ESP_FLASH_POLL_ACTIVE_MS, ESP_FLASH_POLL_IDLE_MS } from "../../config";
 import type {
   EspFlashHistoryPayload,
   EspFlashLogsPayload,
   EspFlashPortsPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-  } from "../../api/types";
+} from "../../api/types";
 import type { EspFlashFeatureRenderState } from "../views/esp_flash_feature_presenter";
-import {
-  batch,
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import {
   createHiddenTabPollingObserverOptions,
   createObservedServerStateQuery,
@@ -103,7 +95,9 @@ export function createEspFlashFeatureWorkflow(
   const availablePorts = signal<readonly EspSerialPortPayload[]>([]);
   const selectedPortValue = signal("__auto__");
   const logText = signal("");
-  const latestAttempts = signal<readonly NonNullable<EspFlashHistoryPayload["attempts"]>[number][]>([]);
+  const latestAttempts = signal<
+    readonly NonNullable<EspFlashHistoryPayload["attempts"]>[number][]
+  >([]);
   const renderState = computed<EspFlashFeatureRenderState>(() => ({
     attempts: [...latestAttempts.value],
     availablePorts: [...availablePorts.value],
@@ -112,17 +106,47 @@ export function createEspFlashFeatureWorkflow(
     selectedPortValue: selectedPortValue.value,
     status: latestStatus.value,
   }));
+  let disposed = false;
+  let statusGeneration = 0;
+  let portsGeneration = 0;
+  let flashInFlight = false;
+  let cancelInFlight = false;
 
   function getRenderState(): EspFlashFeatureRenderState {
     return renderState.value;
   }
 
+  function nextStatusGeneration(): number {
+    statusGeneration += 1;
+    return statusGeneration;
+  }
+
+  function isCurrentStatus(generation: number): boolean {
+    return !disposed && generation === statusGeneration;
+  }
+
+  function nextPortsGeneration(): number {
+    portsGeneration += 1;
+    return portsGeneration;
+  }
+
+  function isCurrentPorts(generation: number): boolean {
+    return !disposed && generation === portsGeneration;
+  }
+
   function updateJourneyPhase(status: EspFlashStatusPayload): void {
+    if (disposed) {
+      return;
+    }
     const phase = status.phase || null;
     const safeState = safeEspFlashState(status.state);
-    const isJourneyPhase = ["validating", "preparing", "erasing", "flashing", "done"].includes(
-      phase || "",
-    );
+    const isJourneyPhase = [
+      "validating",
+      "preparing",
+      "erasing",
+      "flashing",
+      "done",
+    ].includes(phase || "");
     if (isJourneyPhase) {
       lastJourneyPhase.value = phase;
       return;
@@ -133,6 +157,9 @@ export function createEspFlashFeatureWorkflow(
   }
 
   function applyStatus(status: EspFlashStatusPayload): void {
+    if (disposed) {
+      return;
+    }
     updateJourneyPhase(status);
     latestStatus.value = status;
   }
@@ -142,8 +169,9 @@ export function createEspFlashFeatureWorkflow(
       serverStateQueryKeys.espFlash.statusSnapshot(),
     );
     const status = await api.getEspFlashStatus();
-    let logText = status.log_count === 0 ? "" : previous?.logText ?? "";
-    let nextLogIndex = status.log_count === 0 ? 0 : previous?.nextLogIndex ?? 0;
+    let logText = status.log_count === 0 ? "" : (previous?.logText ?? "");
+    let nextLogIndex =
+      status.log_count === 0 ? 0 : (previous?.nextLogIndex ?? 0);
     if (status.log_count > 0) {
       if (nextLogIndex === 0) {
         logText = "";
@@ -164,6 +192,9 @@ export function createEspFlashFeatureWorkflow(
   }
 
   function applyStatusSnapshot(snapshot: EspFlashStatusSnapshot): void {
+    if (disposed) {
+      return;
+    }
     batch(() => {
       applyStatus(snapshot.status);
       latestAttempts.value = snapshot.attempts;
@@ -171,29 +202,56 @@ export function createEspFlashFeatureWorkflow(
     });
   }
 
-  const statusSnapshotQuery = createObservedServerStateQuery<EspFlashStatusSnapshot>({
-    enabled: deps.pollingEnabled,
-    observerOptions: createHiddenTabPollingObserverOptions<EspFlashStatusSnapshot>(
-      (query) => safeEspFlashState(query.state.data?.status.state) === "running"
-        ? ESP_FLASH_POLL_ACTIVE_MS
-        : ESP_FLASH_POLL_IDLE_MS,
-    ),
-    onData: applyStatusSnapshot,
-    queryClient: deps.queryClient,
-    queryFn: fetchStatusSnapshot,
-    queryKey: serverStateQueryKeys.espFlash.statusSnapshot(),
-  });
+  const statusSnapshotQuery =
+    createObservedServerStateQuery<EspFlashStatusSnapshot>({
+      enabled: deps.pollingEnabled,
+      observerOptions:
+        createHiddenTabPollingObserverOptions<EspFlashStatusSnapshot>(
+          (query) =>
+            safeEspFlashState(query.state.data?.status.state) === "running"
+              ? ESP_FLASH_POLL_ACTIVE_MS
+              : ESP_FLASH_POLL_IDLE_MS,
+        ),
+      onData: (snapshot) => {
+        if (!disposed) {
+          applyStatusSnapshot(snapshot);
+        }
+      },
+      queryClient: deps.queryClient,
+      queryFn: fetchStatusSnapshot,
+      queryKey: serverStateQueryKeys.espFlash.statusSnapshot(),
+    });
+
+  async function refreshStatusForGeneration(generation: number): Promise<void> {
+    const snapshot = await fetchStatusSnapshot();
+    if (!isCurrentStatus(generation)) {
+      return;
+    }
+    statusSnapshotQuery.setData(() => snapshot);
+    applyStatusSnapshot(snapshot);
+  }
 
   async function refreshStatus(): Promise<void> {
-    await statusSnapshotQuery.fetch();
+    if (disposed) {
+      return;
+    }
+    const generation = nextStatusGeneration();
+    await refreshStatusForGeneration(generation);
   }
 
   async function refreshPorts(): Promise<void> {
+    if (disposed) {
+      return;
+    }
+    const generation = nextPortsGeneration();
     const payload = await deps.queryClient.fetchQuery({
       queryFn: () => api.getEspFlashPorts(),
       queryKey: serverStateQueryKeys.espFlash.ports(),
       staleTime: 0,
     });
+    if (!isCurrentPorts(generation)) {
+      return;
+    }
     const ports = payload.ports || [];
     batch(() => {
       availablePorts.value = ports;
@@ -204,41 +262,67 @@ export function createEspFlashFeatureWorkflow(
   }
 
   async function startFlash(): Promise<void> {
+    if (disposed || flashInFlight) {
+      return;
+    }
     const latestState = safeEspFlashState(latestStatus.peek().state);
     const ports = availablePorts.peek();
-    if (
-      latestState === "running"
-      || ports.length === 0
-    ) {
+    if (latestState === "running" || ports.length === 0) {
       return;
     }
     const selectedPort = selectedPortValue.peek();
     const autoDetect = selectedPort === "__auto__";
     const port = autoDetect ? null : selectedPort;
+    flashInFlight = true;
+    const generation = nextStatusGeneration();
     try {
       await api.startEspFlash(port, autoDetect);
+      if (!isCurrentStatus(generation)) {
+        return;
+      }
       logText.value = "";
       statusSnapshotQuery.setData(() => undefined);
-      await refreshStatus();
+      await refreshStatusForGeneration(generation);
     } catch (err) {
-      deps.showError(
-        `${deps.t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`,
-      );
+      if (isCurrentStatus(generation)) {
+        deps.showError(
+          `${deps.t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    } finally {
+      flashInFlight = false;
     }
   }
 
   async function cancelFlash(): Promise<void> {
+    if (disposed || cancelInFlight) {
+      return;
+    }
+    cancelInFlight = true;
+    const generation = nextStatusGeneration();
     try {
       await api.cancelEspFlash();
     } catch {
       /* cancel may race the job finishing; resync through polling */
+    } finally {
+      try {
+        if (isCurrentStatus(generation)) {
+          await refreshStatusForGeneration(generation);
+        }
+      } finally {
+        cancelInFlight = false;
+      }
     }
-    await refreshStatus();
   }
 
   return {
     cancelFlash,
     dispose(): void {
+      disposed = true;
+      statusGeneration += 1;
+      portsGeneration += 1;
+      flashInFlight = false;
+      cancelInFlight = false;
       statusSnapshotQuery.dispose();
     },
     getRenderState,
@@ -246,6 +330,9 @@ export function createEspFlashFeatureWorkflow(
     refreshPorts,
     refreshStatus,
     setSelectedPortValue(value: string) {
+      if (disposed) {
+        return;
+      }
       selectedPortValue.value = value || "__auto__";
     },
     startFlash,
