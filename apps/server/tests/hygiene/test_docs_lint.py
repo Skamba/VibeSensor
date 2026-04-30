@@ -235,3 +235,45 @@ def test_frontend_guidance_lint_rejects_raw_typecheck_primary_gate(
     )
 
     assert module._check_frontend_guidance_validation(tmp_path) == []
+
+
+def test_firmware_guidance_lint_requires_ci_native_validation_commands(
+    tmp_path: Path,
+) -> None:
+    module = _load_docs_lint_module()
+    instructions_dir = tmp_path / ".github" / "instructions"
+    workflow_dir = tmp_path / ".github" / "workflows"
+    instructions_dir.mkdir(parents=True)
+    workflow_dir.mkdir(parents=True)
+    firmware_guidance = instructions_dir / "firmware.instructions.md"
+    firmware_guidance.write_text(
+        "- Validation: run `cd firmware/esp && pio run`.\n",
+        encoding="utf-8",
+    )
+    (workflow_dir / "ci.yml").write_text(
+        "\n".join(
+            [
+                "run: python tools/firmware/generate_protocol_contract_fixtures.py --check",
+                "working-directory: firmware/esp",
+                "run: pio test -e native",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert module._check_firmware_guidance_validation(tmp_path) == [
+        ".github/instructions/firmware.instructions.md must mention "
+        "CI firmware validation command: "
+        "python tools/firmware/generate_protocol_contract_fixtures.py --check",
+        ".github/instructions/firmware.instructions.md must mention "
+        "CI firmware validation command: cd firmware/esp && pio test -e native",
+    ]
+
+    firmware_guidance.write_text(
+        "- Validation: run `cd firmware/esp && pio run`, "
+        "`python tools/firmware/generate_protocol_contract_fixtures.py --check`, "
+        "and `cd firmware/esp && pio test -e native`.\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_firmware_guidance_validation(tmp_path) == []
