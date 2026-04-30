@@ -62,6 +62,9 @@ REPO_PATH_PREFIXES = (
 GENERATED_REPO_PATH_REFERENCES = {
     "apps/ui/src/constants.ts",
 }
+MAKE_COMMAND_RE = re.compile(r"(?<![\w./-])make\s+(?P<args>[^`#\n]*)")
+MAKE_TARGET_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+MAKE_OPTION_ARGS = {"-C", "-f", "--file", "--directory"}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -190,6 +193,80 @@ def _read_text(repo_root: Path, relative_path: str) -> str | None:
         return (repo_root / relative_path).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return None
+
+
+def _makefile_targets(repo_root: Path) -> set[str]:
+    makefile_text = _read_text(repo_root, "Makefile")
+    if makefile_text is None:
+        return set()
+    targets: set[str] = set()
+    for line in makefile_text.splitlines():
+        if not line or line.startswith(("\t", " ", "#")) or ":" not in line:
+            continue
+        raw_targets = line.split(":", 1)[0].strip().split()
+        for target in raw_targets:
+            if MAKE_TARGET_RE.fullmatch(target):
+                targets.add(target)
+    return targets
+
+
+def _markdown_code_snippets(text: str) -> list[str]:
+    snippets: list[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            snippets.append(line)
+    snippets.extend(match.group(1) for match in re.finditer(r"`([^`\n]+)`", text))
+    return snippets
+
+
+def _first_make_target(args: str) -> str | None:
+    tokens = [token.strip(".,;:)") for token in args.split()]
+    skip_next = False
+    for token in tokens:
+        if not token:
+            continue
+        if skip_next:
+            skip_next = False
+            continue
+        if token in {"&&", "||", "|"}:
+            return None
+        if token in MAKE_OPTION_ARGS:
+            skip_next = True
+            continue
+        if token.startswith("-"):
+            continue
+        if "=" in token or token.startswith("$"):
+            continue
+        if MAKE_TARGET_RE.fullmatch(token):
+            return token
+    return None
+
+
+def _check_make_command_targets(
+    markdown_files: list[str], repo_root: Path
+) -> list[str]:
+    """Flag documented make targets that do not exist in the Makefile."""
+    targets = _makefile_targets(repo_root)
+    if not targets:
+        return ["Makefile targets could not be loaded for docs command lint"]
+
+    issues: list[str] = []
+    for path in sorted(markdown_files):
+        text = _read_text(repo_root, path)
+        if text is None:
+            continue
+        for snippet in _markdown_code_snippets(text):
+            for match in MAKE_COMMAND_RE.finditer(snippet):
+                target = _first_make_target(match.group("args"))
+                if target is not None and target not in targets:
+                    issues.append(
+                        f"{path}: documented make target does not exist: {target}"
+                    )
+    return issues
 
 
 def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list[str]:
@@ -353,6 +430,7 @@ def main() -> int:
     issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
     issues.extend(_check_guidance_script_references(markdown_files, repo_root))
     issues.extend(_check_backticked_repo_paths(markdown_files, repo_root))
+    issues.extend(_check_make_command_targets(markdown_files, repo_root))
 
     if issues:
         print(f"❌ {len(issues)} docs issue(s):")
@@ -361,7 +439,7 @@ def main() -> int:
         return 1
 
     print(
-        "✅ No docs misuse, runtime docs access, broken local markdown links, or AI guidance stack drift detected."
+        "✅ No docs misuse, runtime docs access, broken local markdown links, stale make commands, or AI guidance stack drift detected."
     )
     return 0
 

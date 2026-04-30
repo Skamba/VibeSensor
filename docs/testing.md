@@ -390,8 +390,10 @@ Use coverage runs to expose untested paths before they become release risk.
 
 ```bash
 make coverage
-make coverage-html
-make coverage-strict
+
+# Optional pytest-cov overrides pass through COV_OPTS.
+COV_OPTS="--cov-report=html --cov-report=term-missing:skip-covered" make coverage
+COV_OPTS="--cov-fail-under=80 --cov-report=term-missing:skip-covered" make coverage
 ```
 
 For direct control over thresholds and output:
