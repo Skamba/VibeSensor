@@ -369,6 +369,18 @@ No secrets are currently required. If needed in the future, copy
 
 ### Known limitations under `act`
 
+ACT parity is currently scoped to `.github/workflows/ci.yml`. Do not use ACT for
+the Pi-image workflows `manual-pi-image-arm.yml` or `weekly-pi-image.yml`: they
+run on GitHub's `ubuntu-24.04-arm` runner label, and `.actrc` intentionally does
+not map that ARM runner to a local container image. Validate Pi-image changes
+with the supported local path instead:
+
+```bash
+BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
+BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
+./infra/pi-image/pi-gen/validate-image.sh
+```
+
 | Job | Status | Notes |
 |---|---|---|
 | `backend-lint` | ✅ Fully supported | — |
@@ -384,6 +396,7 @@ No secrets are currently required. If needed in the future, copy
 | `release-smoke` | ✅ Fully supported | — |
 | `backend-tests` | ✅ Fully supported | This matrix job emits the `Backend tests (shard 1/5)` through `Backend tests (shard 5/5)` checks. Update-module workflow tests now patch tool lookup and privilege checks through shared fakes, so missing `nmcli` or non-root host state does not create `act`-only flakes. |
 | `e2e` | ✅ Fully supported | Runs isolated server subprocess shards directly; no Docker-in-Docker dependency. |
+| `manual-pi-image-arm.yml` / `weekly-pi-image.yml` | ❌ Not supported | ARM Pi-image workflows use `ubuntu-24.04-arm`, which is not mapped in `.actrc`; use `BUILD_MODE=app`, `BUILD_MODE=image`, and `validate-image.sh` instead. |
 
 ### Relationship to `run_ci_parallel.py`
 

@@ -88,6 +88,7 @@ Validation chooser
 - Firmware code: `cd firmware/esp && pio run`.
 - Pi app artifact changes: `BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh`.
 - Pi image-stage logic: `BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh`, then `./infra/pi-image/pi-gen/validate-image.sh [artifact]` when an artifact is available.
+- Do not use ACT for `.github/workflows/manual-pi-image-arm.yml` or `.github/workflows/weekly-pi-image.yml`; those workflows require GitHub's `ubuntu-24.04-arm` runner label, which is intentionally not mapped in `.actrc`. Use the Pi-image local build/validate commands above.
 - Docs or AI-instruction-only changes: `make docs-lint`.
 
 Command gotchas
