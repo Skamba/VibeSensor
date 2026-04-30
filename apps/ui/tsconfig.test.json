@@ -1,6 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // Production source is gated first; test fixtures still carry
+    // index-signature dot-access debt tracked by the test typecheck baseline.
+    "noPropertyAccessFromIndexSignature": false,
     "types": [
       "vite/client",
       "vitest"
