@@ -26,6 +26,12 @@ On Ubuntu runners, `qemu-user-binfmt` conflicts with `qemu-user-static`, so use
 
 ## Build
 
+ACT is not the supported local runner for Pi-image workflows. The GitHub
+workflows `manual-pi-image-arm.yml` and `weekly-pi-image.yml` use the
+`ubuntu-24.04-arm` runner label, which is intentionally not mapped in the repo
+`.actrc`. Use the local build and validation commands below for Pi-image
+changes.
+
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor

@@ -93,3 +93,20 @@ def test_manual_pi_image_workflow_reuses_shared_build_action_and_stays_artifact_
         if isinstance(step, dict) and isinstance(step.get("name"), str)
     }
     assert "Publish weekly Pi image release" not in step_names
+
+
+def test_arm_pi_image_act_limitation_stays_documented() -> None:
+    actrc = (REPO_ROOT / ".actrc").read_text(encoding="utf-8")
+    docs = (REPO_ROOT / "docs" / "testing.md").read_text(encoding="utf-8")
+    ai_guidance = (REPO_ROOT / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+    pi_readme = (REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "README.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "ubuntu-24.04-arm" not in actrc
+    for text in (docs, ai_guidance, pi_readme):
+        assert "ubuntu-24.04-arm" in text
+        assert "not mapped" in text
+        assert "BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh" in text
+        assert "BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh" in text
+        assert "./infra/pi-image/pi-gen/validate-image.sh" in text
