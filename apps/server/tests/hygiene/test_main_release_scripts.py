@@ -271,3 +271,105 @@ def test_cleanup_releases_reports_missing_tag_and_continues(
     assert "Deleting superseded Wheel / ESP release server-v2026.4.5" in output
     assert "Tag server-v2026.4.5 was already absent" in output
     assert set(deleted_paths) == {"releases/2", "git/refs/tags/server-v2026.4.5"}
+
+
+def test_github_request_uses_timeout_and_returns_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_main_release_module()
+    captured: dict[str, object] = {}
+
+    class _FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self) -> bytes:
+            return b'{"ok": true}'
+
+    def _fake_urlopen(req, *, timeout):  # type: ignore[no-untyped-def]
+        captured["method"] = req.get_method()
+        captured["url"] = req.full_url
+        captured["timeout"] = timeout
+        return _FakeResponse()
+
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.setattr(module.request, "urlopen", _fake_urlopen)
+
+    assert module._github_request("GET", "Skamba/VibeSensor", "releases") == {"ok": True}
+    assert captured == {
+        "method": "GET",
+        "url": "https://api.github.com/repos/Skamba/VibeSensor/releases",
+        "timeout": module.GITHUB_API_TIMEOUT_S,
+    }
+
+
+def test_github_request_reports_url_errors_with_method_and_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_main_release_module()
+
+    def _raise_url_error(req, *, timeout):  # type: ignore[no-untyped-def]
+        del req, timeout
+        raise error.URLError("network unavailable")
+
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.setattr(module.request, "urlopen", _raise_url_error)
+
+    with pytest.raises(SystemExit) as exc_info:
+        module._github_request("GET", "Skamba/VibeSensor", "releases")
+
+    assert str(exc_info.value) == (
+        "GitHub API GET /repos/Skamba/VibeSensor/releases failed: network unavailable"
+    )
+
+
+def test_github_request_reports_timeouts_with_method_path_and_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_main_release_module()
+
+    def _raise_timeout(req, *, timeout):  # type: ignore[no-untyped-def]
+        del req, timeout
+        raise TimeoutError("timed out")
+
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.setattr(module.request, "urlopen", _raise_timeout)
+
+    with pytest.raises(SystemExit) as exc_info:
+        module._github_request(
+            "DELETE",
+            "Skamba/VibeSensor",
+            "git/refs/tags/server-v2026.4.5",
+        )
+
+    assert str(exc_info.value) == (
+        "GitHub API DELETE "
+        "/repos/Skamba/VibeSensor/git/refs/tags/server-v2026.4.5 "
+        "timed out after 30s."
+    )
+
+
+def test_github_request_preserves_http_errors_for_delete_404_tolerance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_main_release_module()
+    http_error = error.HTTPError("https://example.invalid", 404, "missing", None, None)
+
+    def _raise_http_error(req, *, timeout):  # type: ignore[no-untyped-def]
+        del req, timeout
+        raise http_error
+
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.setattr(module.request, "urlopen", _raise_http_error)
+
+    with pytest.raises(error.HTTPError) as exc_info:
+        module._github_request(
+            "DELETE",
+            "Skamba/VibeSensor",
+            "git/refs/tags/server-v2026.4.5",
+        )
+
+    assert exc_info.value is http_error
