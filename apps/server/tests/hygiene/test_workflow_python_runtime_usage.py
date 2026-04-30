@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -18,6 +19,7 @@ _CI = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _APP_ARTIFACTS = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "app_artifacts.sh"
 _PI_GEN_REPO = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "pi_gen_repo.sh"
 _PREREQS = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "prereqs.sh"
+_BARE_PYTHON_RE = re.compile(r"(?<![\w$\"'/.-])python(?:\s|$)")
 
 
 def _load_yaml(path: Path) -> dict[str, object]:
@@ -79,6 +81,17 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
     assert "tools/release/main_release.py build-wheel" in main_release_text
     assert "tools/release/main_release.py generate-firmware-manifest" in main_release_text
     assert "tools/release/main_release.py cleanup-releases" in main_release_text
+
+    for step in release_steps[setup_index + 1 :]:
+        if not isinstance(step, dict):
+            continue
+        run_script = step.get("run")
+        if not isinstance(run_script, str):
+            continue
+        assert not _BARE_PYTHON_RE.search(run_script), (
+            f"main-release step {step.get('name')!r} uses bare python after "
+            "setup-python exposes steps.setup-python.outputs.python-path"
+        )
 
     weekly_text = _WEEKLY_PI_IMAGE.read_text(encoding="utf-8")
     assert "uses: ./.github/actions/build-pi-image" in weekly_text
