@@ -18,7 +18,9 @@ import { createTestQueryClient } from "./query_client_test_support";
 
 const mswServer = createUiMswTestServer();
 
-function lastRender(renders: AnalysisPanelRenderModel[]): AnalysisPanelRenderModel {
+function lastRender(
+  renders: AnalysisPanelRenderModel[],
+): AnalysisPanelRenderModel {
   const render = renders.at(-1);
   if (!render) {
     throw new Error("Expected analysis panel to render");
@@ -97,16 +99,18 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   module.bindHandlers();
 
-  expect(lastRender(renders).fields.wheel_bandwidth_pct.guidance.lines).toEqual([
-    {
-      label: "Recommended range",
-      value: "2-12%",
-    },
-    {
-      label: "Default",
-      value: "5%",
-    },
-  ]);
+  expect(lastRender(renders).fields.wheel_bandwidth_pct.guidance.lines).toEqual(
+    [
+      {
+        label: "Recommended range",
+        value: "2-12%",
+      },
+      {
+        label: "Default",
+        value: "5%",
+      },
+    ],
+  );
 
   actions?.onFieldInput({
     field: "wheel_bandwidth_pct",
@@ -116,11 +120,13 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   const invalidRender = lastRender(renders);
   expect(invalidRender.fields.wheel_bandwidth_pct.invalid).toBe(true);
-  expect(invalidRender.fields.wheel_bandwidth_pct.guidance.error).toMatchObject({
-    body: "Wheel bandwidth must stay between 0.1 and 100%",
-    compact: true,
-    tone: "error",
-  });
+  expect(invalidRender.fields.wheel_bandwidth_pct.guidance.error).toMatchObject(
+    {
+      body: "Wheel bandwidth must stay between 0.1 and 100%",
+      compact: true,
+      tone: "error",
+    },
+  );
   expect(focusedField).toBe("wheel_bandwidth_pct");
   expect(guidanceOpened).toBe(true);
 
@@ -212,3 +218,208 @@ test("settings analysis module keeps active-car geometry when loading server ana
   });
   expect(refreshSpectrumDecorationCalls).toBe(1);
 });
+
+test("settings analysis module ignores loaded settings after disposal", async () => {
+  const state = createAppState().settings;
+  const load = createDeferred<ReturnType<typeof makeAnalysisSettingsPayload>>();
+  let refreshSpectrumDecorationCalls = 0;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      load: () => load.promise,
+    }),
+  );
+  const module = createAnalysisModuleHarness(state, {
+    refreshSpectrumDecorations: () => {
+      refreshSpectrumDecorationCalls += 1;
+    },
+  });
+
+  const loading = module.loadAnalysisSettingsFromServer();
+  module.dispose();
+  load.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
+  await loading;
+
+  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(5);
+  expect(refreshSpectrumDecorationCalls).toBe(0);
+});
+
+test("settings analysis module ignores saved settings after disposal", async () => {
+  const state = createAppState().settings;
+  const save = createDeferred<ReturnType<typeof makeAnalysisSettingsPayload>>();
+  let refreshSpectrumDecorationCalls = 0;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      save: () => save.promise,
+    }),
+  );
+  const module = createAnalysisModuleHarness(state, {
+    refreshSpectrumDecorations: () => {
+      refreshSpectrumDecorationCalls += 1;
+    },
+  });
+
+  const saving = module.saveAnalysisFromInputs();
+  module.dispose();
+  save.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
+  await saving;
+
+  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(5);
+  expect(refreshSpectrumDecorationCalls).toBe(0);
+});
+
+test("settings analysis module ignores repeated saves while one is in flight", async () => {
+  const state = createAppState().settings;
+  const save = createDeferred<ReturnType<typeof makeAnalysisSettingsPayload>>();
+  let saveCalls = 0;
+  let refreshSpectrumDecorationCalls = 0;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      save: () => {
+        saveCalls += 1;
+        return save.promise;
+      },
+    }),
+  );
+  const module = createAnalysisModuleHarness(state, {
+    refreshSpectrumDecorations: () => {
+      refreshSpectrumDecorationCalls += 1;
+    },
+  });
+
+  const firstSave = module.saveAnalysisFromInputs();
+  const secondSave = module.saveAnalysisFromInputs();
+  await flushAsyncWork();
+
+  expect(saveCalls).toBe(1);
+  save.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
+  await Promise.all([firstSave, secondSave]);
+
+  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(9);
+  expect(refreshSpectrumDecorationCalls).toBe(1);
+});
+
+test("settings analysis module ignores repeated reset confirmations while one is in flight", async () => {
+  const state = createAppState().settings;
+  const confirmation = createDeferred<boolean>();
+  let confirmationCalls = 0;
+  let saveCalls = 0;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      save: () => {
+        saveCalls += 1;
+        return makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 5 });
+      },
+    }),
+  );
+  const module = createAnalysisModuleHarness(state, {
+    requestConfirmation: () => {
+      confirmationCalls += 1;
+      return confirmation.promise;
+    },
+  });
+  module.bindHandlers();
+  const actions = modulePanelActions(module);
+
+  actions.onReset();
+  actions.onReset();
+  expect(confirmationCalls).toBe(1);
+
+  confirmation.resolve(true);
+  await flushAsyncWork();
+
+  expect(saveCalls).toBe(1);
+});
+
+test("settings analysis module ignores reset confirmation after disposal", async () => {
+  const state = createAppState().settings;
+  const confirmation = createDeferred<boolean>();
+  let saveCalls = 0;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      save: () => {
+        saveCalls += 1;
+        return makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 5 });
+      },
+    }),
+  );
+  const module = createAnalysisModuleHarness(state, {
+    requestConfirmation: () => confirmation.promise,
+  });
+  module.bindHandlers();
+  const actions = modulePanelActions(module);
+
+  actions.onReset();
+  module.dispose();
+  confirmation.resolve(true);
+  await flushAsyncWork();
+
+  expect(saveCalls).toBe(0);
+});
+
+type Deferred<T> = {
+  promise: Promise<T>;
+  reject(reason?: unknown): void;
+  resolve(value: T): void;
+};
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
+
+async function flushAsyncWork(rounds = 6): Promise<void> {
+  for (let index = 0; index < rounds; index += 1) {
+    await new Promise<void>((resolve) => {
+      setImmediate(() => resolve());
+    });
+  }
+}
+
+type AnalysisModuleHarnessOptions = {
+  refreshSpectrumDecorations?: () => void;
+  requestConfirmation?: () => Promise<boolean>;
+};
+
+function createAnalysisModuleHarness(
+  state: ReturnType<typeof createAppState>["settings"],
+  options: AnalysisModuleHarnessOptions = {},
+) {
+  const panel: AnalysisPanelView = {
+    actions: signal(null),
+    carAvailability: signal(null),
+    model: signal(null),
+    focusField: () => undefined,
+    openGuidance: () => undefined,
+  };
+  const module = createSettingsAnalysisModule({
+    panel,
+    hasValidActiveCar: () => true,
+    onMissingActiveCar: () => undefined,
+    onSaveError: () => undefined,
+    refreshSpectrumDecorations:
+      options.refreshSpectrumDecorations ?? (() => undefined),
+    queryClient: createTestQueryClient(),
+    settings: state,
+    services: {
+      t: translate,
+      requestConfirmation: options.requestConfirmation ?? (async () => true),
+      showError: () => undefined,
+    },
+  });
+  return Object.assign(module, { __panel: panel });
+}
+
+function modulePanelActions(
+  module: ReturnType<typeof createAnalysisModuleHarness>,
+): AnalysisPanelActionHandlers {
+  const actions = module.__panel.actions.value;
+  if (!actions) {
+    throw new Error("Expected analysis panel actions to be bound");
+  }
+  return actions;
+}
