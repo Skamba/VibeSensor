@@ -17,8 +17,6 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
-
 LARGE_BLOCK_THRESHOLD = 30  # lines
 EXCLUDED_DIRS = {
     ".git",
@@ -240,10 +238,22 @@ def _raw_workflow_job_ids(repo_root: Path) -> set[str]:
     workflow_text = _read_text(repo_root, ".github/workflows/ci.yml")
     if workflow_text is None:
         return set()
-    workflow = yaml.safe_load(workflow_text)
-    if not isinstance(workflow, dict) or not isinstance(workflow.get("jobs"), dict):
-        return set()
-    return {str(job_id) for job_id in workflow["jobs"]}
+    job_ids: set[str] = set()
+    in_jobs = False
+    job_re = re.compile(r"^  (?P<job>[A-Za-z0-9_-]+):(?:\s+#.*)?$")
+    for line in workflow_text.splitlines():
+        stripped = line.strip()
+        if stripped == "jobs:":
+            in_jobs = True
+            continue
+        if not in_jobs or not stripped or stripped.startswith("#"):
+            continue
+        if not line.startswith(" "):
+            break
+        match = job_re.match(line)
+        if match:
+            job_ids.add(match.group("job"))
+    return job_ids
 
 
 def _local_logical_ci_job_ids(repo_root: Path) -> set[str]:
