@@ -12,4 +12,4 @@ Backend tests (`apps/server/tests/**`)
 - Do not create local `FakeState` or fake runtime classes in individual test files. Use the shared `FakeState` from `conftest.py` and customise it via constructor arguments.
 - Do not add private bridge/shim methods to production classes solely for test access. Test sub-components directly (e.g. `proc._store._get_or_create_unlocked`, `proc._metrics.fft_params`) instead of adding pass-through wrappers on the outer class.
 - Oversized test/spec guardrails live in `tools/dev/check_hygiene.py` with the explicit allowlist at `tools/dev/oversized_test_allowlist.yml`; split oversized files by default, and only add an allowlist entry when the file is intentionally large and the reason is documented there.
-- Optional focused backend pytest run (for faster iteration, not a CI substitute): `python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests`.
+- Optional focused backend pytest run (for faster iteration, not a CI substitute): from `apps/server`, run `uv run --python 3.13 --extra dev pytest tests/<module>/ -q`.
