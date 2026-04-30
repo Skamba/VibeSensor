@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+from dataclasses import fields
 
 import pytest
 
@@ -190,6 +191,44 @@ def test_main_dry_run_keeps_non_source_ui_changes_on_typecheck_only(
 
     assert "[test-changed] ui-typecheck: make ui-typecheck" in output
     assert "[test-changed] ui-test: make ui-test" not in output
+
+
+@pytest.mark.parametrize(
+    "changed_file,expected_command",
+    (
+        ("tools/ui/ensure_ui_bootstrap.mjs", "ui-typecheck: make ui-typecheck"),
+        (
+            "tools/tests/run_ci_with_act.sh",
+            "shell-lint: make shell-lint",
+        ),
+        (".dockerignore", f"pytest: {sys.executable} -m pytest -q apps/server/tests/hygiene"),
+        (
+            "firmware/esp/src/main.cpp",
+            (
+                "firmware-native-tests: "
+                f"{sys.executable} tools/tests/run_ci_parallel.py --job firmware-native-tests"
+            ),
+        ),
+    ),
+)
+def test_main_dry_run_reuses_shared_ci_path_rules_for_mapped_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    changed_file: str,
+    expected_command: str,
+) -> None:
+    module = _load_run_changed_module()
+    selected_jobs = {
+        field.name
+        for field in fields(module.workflow_job_selection((changed_file,)))
+        if getattr(module.workflow_job_selection((changed_file,)), field.name)
+    }
+    assert selected_jobs
+
+    output = _run_dry_run(module, monkeypatch, capsys, committed=(changed_file,))
+
+    assert "[test-changed] No mapped checks" not in output
+    assert f"[test-changed] {expected_command}" in output
 
 
 def test_main_dry_run_falls_back_to_make_test_for_unmapped_backend_changes(

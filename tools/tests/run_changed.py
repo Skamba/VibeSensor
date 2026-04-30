@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import shlex
 import subprocess
 import sys
@@ -11,22 +12,32 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
+_CI_PATH_RULES_PATH = Path(__file__).with_name("ci_path_rules.py")
+
+
+def _load_ci_path_rules_module():
+    spec = importlib.util.spec_from_file_location(
+        "ci_path_rules_for_run_changed", _CI_PATH_RULES_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {_CI_PATH_RULES_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_CI_PATH_RULES = _load_ci_path_rules_module()
+FULL_STACK_TRIGGER_FILES = _CI_PATH_RULES.FULL_STACK_TRIGGER_FILES
+FULL_STACK_TRIGGER_PREFIXES = _CI_PATH_RULES.FULL_STACK_TRIGGER_PREFIXES
+PI_IMAGE_TRIGGER_PREFIXES = _CI_PATH_RULES.PI_IMAGE_TRIGGER_PREFIXES
+PYTHON_TOOL_PREFIX = _CI_PATH_RULES.PYTHON_TOOL_PREFIX
+REPO_HYGIENE_TRIGGER_FILES = _CI_PATH_RULES.REPO_HYGIENE_TRIGGER_FILES
+TOOL_CONFIG_EXTENSIONS = _CI_PATH_RULES.TOOL_CONFIG_EXTENSIONS
+workflow_job_selection = _CI_PATH_RULES.workflow_job_selection
+
 BACKEND_TESTS_ROOT = PurePosixPath("apps/server/tests")
 BACKEND_SOURCE_ROOT = PurePosixPath("apps/server/vibesensor")
-DOC_FILES = {
-    "README.md",
-    "CONTRIBUTING.md",
-    "CHANGELOG.md",
-    ".github/copilot-instructions.md",
-}
-HYGIENE_TRIGGER_PATHS = {
-    "Makefile",
-    ".python-version",
-    ".nvmrc",
-    "docker-compose.yml",
-    "docker-compose.dev.yml",
-}
-HYGIENE_TRIGGER_PREFIXES = (".githooks/", ".github/", "tools/")
 
 
 @dataclass(frozen=True)
@@ -95,10 +106,6 @@ def _changed_files(base_ref: str) -> tuple[str, ...]:
     return tuple(sorted(committed | staged | unstaged | untracked))
 
 
-def _is_markdown_path(path: str) -> bool:
-    return path.endswith(".md") or path in DOC_FILES or path.startswith("docs/")
-
-
 def _test_target_for_changed_test(path: str) -> str:
     candidate = PurePosixPath(path)
     if (
@@ -125,17 +132,32 @@ def _mirrored_backend_test_target(path: str) -> str | None:
 
 
 def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]:
-    docs_changed = False
     ui_changed = False
     ui_unit_test_changed = False
     backend_fallback = False
+    local_hygiene_changed = False
     pytest_targets: set[str] = set()
+    selection = workflow_job_selection(changed_files)
 
     for path in changed_files:
         normalized = PurePosixPath(path).as_posix()
-        if _is_markdown_path(normalized):
-            docs_changed = True
-            continue
+        if (
+            normalized in FULL_STACK_TRIGGER_FILES
+            or normalized in REPO_HYGIENE_TRIGGER_FILES
+            or any(
+                normalized.startswith(prefix) for prefix in FULL_STACK_TRIGGER_PREFIXES
+            )
+            or any(
+                normalized.startswith(prefix) for prefix in PI_IMAGE_TRIGGER_PREFIXES
+            )
+            or (
+                normalized.startswith(PYTHON_TOOL_PREFIX)
+                and normalized.endswith(TOOL_CONFIG_EXTENSIONS)
+            )
+            or normalized.startswith(".githooks/")
+            or normalized.startswith("tools/")
+        ):
+            local_hygiene_changed = True
 
         if normalized.startswith("apps/server/tests/"):
             pytest_targets.add(_test_target_for_changed_test(normalized))
@@ -155,22 +177,20 @@ def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]
                 ui_unit_test_changed = True
             continue
 
-        if normalized in HYGIENE_TRIGGER_PATHS or normalized.startswith(
-            HYGIENE_TRIGGER_PREFIXES
-        ):
-            pytest_targets.add("apps/server/tests/hygiene")
-            continue
-
         if normalized.startswith("apps/server/"):
             backend_fallback = True
 
     commands: list[PlannedCommand] = []
-    if docs_changed:
+    if selection.docs_lint:
         commands.append(PlannedCommand("docs-lint", ("make", "docs-lint")))
+    if selection.shell_lint:
+        commands.append(PlannedCommand("shell-lint", ("make", "shell-lint")))
     if ui_unit_test_changed:
         commands.append(PlannedCommand("ui-test", ("make", "ui-test")))
-    if ui_changed:
+    if selection.frontend_typecheck or ui_changed:
         commands.append(PlannedCommand("ui-typecheck", ("make", "ui-typecheck")))
+    if local_hygiene_changed:
+        pytest_targets.add("apps/server/tests/hygiene")
     if backend_fallback:
         commands.append(PlannedCommand("backend-tests", ("make", "test")))
     elif pytest_targets:
@@ -178,6 +198,37 @@ def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]
             PlannedCommand(
                 "pytest",
                 (sys.executable, "-m", "pytest", "-q", *tuple(sorted(pytest_targets))),
+            )
+        )
+    if not commands and selection.firmware_native_tests:
+        commands.append(
+            PlannedCommand(
+                "firmware-native-tests",
+                (
+                    sys.executable,
+                    "tools/tests/run_ci_parallel.py",
+                    "--job",
+                    "firmware-native-tests",
+                ),
+            )
+        )
+    if not commands and selection.release_smoke:
+        commands.append(
+            PlannedCommand(
+                "release-smoke",
+                (
+                    sys.executable,
+                    "tools/tests/run_ci_parallel.py",
+                    "--job",
+                    "release-smoke",
+                ),
+            )
+        )
+    if not commands and selection.e2e:
+        commands.append(
+            PlannedCommand(
+                "e2e",
+                (sys.executable, "tools/tests/run_ci_parallel.py", "--job", "e2e"),
             )
         )
     return tuple(commands)
