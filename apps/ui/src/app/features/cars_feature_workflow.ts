@@ -38,12 +38,7 @@ import {
   createCarsFeatureTransport,
   type CarsFeatureTransport,
 } from "./cars_feature_transport";
-import {
-  batch,
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export type CarsFeatureFocusTarget =
@@ -131,7 +126,10 @@ export interface CarsFeatureWorkflow {
   getRenderState(): CarsFeatureRenderState;
   readonly renderState: ReadonlySignal<CarsFeatureRenderState>;
   goBack(): Promise<void>;
-  handleManualInputChanged(field: keyof CarsFeatureManualInputState, value: string): void;
+  handleManualInputChanged(
+    field: keyof CarsFeatureManualInputState,
+    value: string,
+  ): void;
   openWizard(): Promise<void>;
   selectBrand(value: string): Promise<void>;
   selectGearbox(index: number): void;
@@ -177,6 +175,37 @@ export function createCarsFeatureWorkflow(
   const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
   const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
   const noGearboxesMessage = signal<string | null>(null);
+  let wizardLoadGeneration = 0;
+
+  function nextWizardLoadGeneration(): number {
+    wizardLoadGeneration += 1;
+    return wizardLoadGeneration;
+  }
+
+  function invalidateWizardLoads(): void {
+    wizardLoadGeneration += 1;
+  }
+
+  function canApplyWizardLoad(
+    generation: number,
+    matchesState: (state: WizardState) => boolean,
+  ): boolean {
+    return (
+      isOpen.value &&
+      generation === wizardLoadGeneration &&
+      matchesState(wizardState.value)
+    );
+  }
+
+  function focusIfCurrent(
+    generation: number,
+    matchesState: (state: WizardState) => boolean,
+    target: CarsFeatureFocusTarget,
+  ): void {
+    if (canApplyWizardLoad(generation, matchesState)) {
+      deps.view.focus(target);
+    }
+  }
 
   function updateWizardState(mutator: (state: WizardState) => void): void {
     const nextState = { ...wizardState.value };
@@ -186,14 +215,16 @@ export function createCarsFeatureWorkflow(
   const manualGearbox = manualInputs.manualGearbox;
   const manualTire = manualInputs.manualTire;
 
-  const resolvedSpecBranch = computed(() => getResolvedWizardSpecBranch(wizardState.value));
+  const resolvedSpecBranch = computed(() =>
+    getResolvedWizardSpecBranch(wizardState.value),
+  );
 
   const canFinish = computed(() =>
     canFinishWizard(
       wizardState.value,
       resolvedSpecBranch.value === "manual" ? manualTire.value : null,
       resolvedSpecBranch.value === "manual" ? manualGearbox.value : null,
-    )
+    ),
   );
 
   const actionHint = computed(() => {
@@ -233,19 +264,21 @@ export function createCarsFeatureWorkflow(
 
   const manualInputRenderState = manualInputs.state;
 
-  const wizardMetaRenderState = computed<CarsFeatureWizardMetaRenderState>(() => {
-    const state = wizardState.value;
-    return {
-      actionHint: actionHint.value,
-      canFinish: canFinish.value,
-      isOpen: isOpen.value,
-      resolvedSpecBranch: resolvedSpecBranch.value,
-      selectedGearbox: state.selectedGearbox,
-      selectedTire: state.selectedTire,
-      step: state.step,
-      summaryData: summaryData.value,
-    };
-  });
+  const wizardMetaRenderState = computed<CarsFeatureWizardMetaRenderState>(
+    () => {
+      const state = wizardState.value;
+      return {
+        actionHint: actionHint.value,
+        canFinish: canFinish.value,
+        isOpen: isOpen.value,
+        resolvedSpecBranch: resolvedSpecBranch.value,
+        selectedGearbox: state.selectedGearbox,
+        selectedTire: state.selectedTire,
+        step: state.step,
+        summaryData: summaryData.value,
+      };
+    },
+  );
 
   const renderState = computed<CarsFeatureRenderState>(() => {
     const optionsState = optionsRenderState.value;
@@ -341,86 +374,153 @@ export function createCarsFeatureWorkflow(
     });
   }
 
-  async function loadBrandStep(): Promise<void> {
-    brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+  async function loadBrandStep(generation: number): Promise<void> {
+    const matchesBrandStep = (state: WizardState) => state.step === 0;
+    if (!canApplyWizardLoad(generation, matchesBrandStep)) {
+      return;
+    }
+    brandOptions.value = createLoadingOptionsState(
+      deps.t("settings.wizard.loading"),
+    );
     try {
       const brands = await deps.queryClient.fetchQuery({
         queryFn: () => transport.loadBrands(),
         queryKey: serverStateQueryKeys.carsWizard.brands(),
         staleTime: 5 * 60 * 1000,
       });
+      if (!canApplyWizardLoad(generation, matchesBrandStep)) {
+        return;
+      }
       brandOptions.value = createReadyOptionsState(brands);
-      deps.view.focus("brand-option");
+      focusIfCurrent(generation, matchesBrandStep, "brand-option");
     } catch {
-      brandOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
-      deps.view.focus("custom-brand");
+      if (!canApplyWizardLoad(generation, matchesBrandStep)) {
+        return;
+      }
+      brandOptions.value = createErrorOptionsState(
+        deps.t("settings.wizard.load_failed_brands"),
+      );
+      focusIfCurrent(generation, matchesBrandStep, "custom-brand");
     }
   }
 
-  async function loadTypeStep(): Promise<void> {
-    typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+  async function loadTypeStep(generation: number): Promise<void> {
+    const brand = wizardState.value.brand;
+    const matchesTypeStep = (state: WizardState) =>
+      state.step === 1 && state.brand === brand;
+    if (!canApplyWizardLoad(generation, matchesTypeStep)) {
+      return;
+    }
+    typeOptions.value = createLoadingOptionsState(
+      deps.t("settings.wizard.loading"),
+    );
     try {
       const types = await deps.queryClient.fetchQuery({
-        queryFn: () => transport.loadTypes(wizardState.value.brand),
-        queryKey: serverStateQueryKeys.carsWizard.types(wizardState.value.brand),
+        queryFn: () => transport.loadTypes(brand),
+        queryKey: serverStateQueryKeys.carsWizard.types(brand),
         staleTime: 5 * 60 * 1000,
       });
+      if (!canApplyWizardLoad(generation, matchesTypeStep)) {
+        return;
+      }
       typeOptions.value = createReadyOptionsState(types);
-      deps.view.focus("type-option");
+      focusIfCurrent(generation, matchesTypeStep, "type-option");
     } catch {
-      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
-      deps.view.focus("custom-type");
+      if (!canApplyWizardLoad(generation, matchesTypeStep)) {
+        return;
+      }
+      typeOptions.value = createErrorOptionsState(
+        deps.t("settings.wizard.load_failed_types"),
+      );
+      focusIfCurrent(generation, matchesTypeStep, "custom-type");
     }
   }
 
-  async function loadModelStep(): Promise<void> {
-    modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+  async function loadModelStep(generation: number): Promise<void> {
+    const brand = wizardState.value.brand;
+    const carType = wizardState.value.carType;
+    const matchesModelStep = (state: WizardState) =>
+      state.step === 2 && state.brand === brand && state.carType === carType;
+    if (!canApplyWizardLoad(generation, matchesModelStep)) {
+      return;
+    }
+    modelOptions.value = createLoadingOptionsState(
+      deps.t("settings.wizard.loading"),
+    );
     try {
       const models = await deps.queryClient.fetchQuery({
-        queryFn: () => transport.loadModels(wizardState.value.brand, wizardState.value.carType),
-        queryKey: serverStateQueryKeys.carsWizard.models(
-          wizardState.value.brand,
-          wizardState.value.carType,
-        ),
+        queryFn: () => transport.loadModels(brand, carType),
+        queryKey: serverStateQueryKeys.carsWizard.models(brand, carType),
         staleTime: 5 * 60 * 1000,
       });
+      if (!canApplyWizardLoad(generation, matchesModelStep)) {
+        return;
+      }
       modelOptions.value = createReadyOptionsState(models);
-      deps.view.focus("model-option");
+      focusIfCurrent(generation, matchesModelStep, "model-option");
     } catch {
-      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
-      deps.view.focus("custom-model");
+      if (!canApplyWizardLoad(generation, matchesModelStep)) {
+        return;
+      }
+      modelOptions.value = createErrorOptionsState(
+        deps.t("settings.wizard.load_failed_models"),
+      );
+      focusIfCurrent(generation, matchesModelStep, "custom-model");
     }
   }
 
-  function loadVariantStep(): void {
-    const nextVariantOptions = wizardState.value.selectedModel?.variants || [];
+  function loadVariantStep(generation: number): void {
+    const selectedModel = wizardState.value.selectedModel;
+    const matchesVariantStep = (state: WizardState) =>
+      state.step === 3 && state.selectedModel === selectedModel;
+    if (!canApplyWizardLoad(generation, matchesVariantStep)) {
+      return;
+    }
+    const nextVariantOptions = selectedModel?.variants || [];
     variantOptions.value = nextVariantOptions;
     if (!nextVariantOptions.length) {
       updateWizardState((state) => {
         state.step = 4;
       });
-      loadSpecsStep();
+      loadSpecsStep(generation);
       return;
     }
-    deps.view.focus("variant-option");
+    focusIfCurrent(generation, matchesVariantStep, "variant-option");
   }
 
-  function loadSpecsStep(): void {
+  function loadSpecsStep(generation: number): void {
+    const selectedModel = wizardState.value.selectedModel;
+    const selectedVariant = wizardState.value.selectedVariant;
+    const matchesSpecsStep = (state: WizardState) =>
+      state.step === 4 &&
+      state.selectedModel === selectedModel &&
+      state.selectedVariant === selectedVariant;
+    if (!canApplyWizardLoad(generation, matchesSpecsStep)) {
+      return;
+    }
     const state = wizardState.value;
     const currentManualInputs = manualInputs.state.value;
-    const nextTireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
-    const nextGearboxOptions = resolveGearboxes(state.selectedModel, state.selectedVariant);
-    const nextSelectedTire = nextTireOptions.length > 0
-      ? (state.selectedTire && nextTireOptions.includes(state.selectedTire)
-        ? state.selectedTire
-        : nextTireOptions[0])
-      : null;
+    const nextTireOptions = resolveTireOptions(
+      state.selectedModel,
+      state.selectedVariant,
+    );
+    const nextGearboxOptions = resolveGearboxes(
+      state.selectedModel,
+      state.selectedVariant,
+    );
+    const nextSelectedTire =
+      nextTireOptions.length > 0
+        ? state.selectedTire && nextTireOptions.includes(state.selectedTire)
+          ? state.selectedTire
+          : nextTireOptions[0]
+        : null;
     const nextManualInputs = nextSelectedTire
       ? tireInputsFromOption(nextSelectedTire, currentManualInputs)
       : currentManualInputs;
-    const nextNoGearboxesMessage = nextGearboxOptions.length > 0
-      ? null
-      : deps.t("settings.wizard.no_gearboxes");
+    const nextNoGearboxesMessage =
+      nextGearboxOptions.length > 0
+        ? null
+        : deps.t("settings.wizard.no_gearboxes");
 
     batch(() => {
       tireOptions.value = nextTireOptions;
@@ -439,35 +539,41 @@ export function createCarsFeatureWorkflow(
       });
     });
 
-    deps.view.focus(
+    focusIfCurrent(
+      generation,
+      matchesSpecsStep,
       nextGearboxOptions.length > 0
-        ? (nextTireOptions.length > 0 ? "spec-selection" : "gearbox-option")
+        ? nextTireOptions.length > 0
+          ? "spec-selection"
+          : "gearbox-option"
         : "manual-tire-width",
     );
   }
 
   async function loadCurrentStep(): Promise<void> {
+    const generation = nextWizardLoadGeneration();
     if (wizardState.value.step === 0) {
-      await loadBrandStep();
+      await loadBrandStep(generation);
       return;
     }
     if (wizardState.value.step === 1) {
-      await loadTypeStep();
+      await loadTypeStep(generation);
       return;
     }
     if (wizardState.value.step === 2) {
-      await loadModelStep();
+      await loadModelStep(generation);
       return;
     }
     if (wizardState.value.step === 3) {
-      loadVariantStep();
+      loadVariantStep(generation);
       return;
     }
-    loadSpecsStep();
+    loadSpecsStep(generation);
   }
 
   return {
     closeWizard(): void {
+      invalidateWizardLoads();
       isOpen.value = false;
     },
 
@@ -496,11 +602,15 @@ export function createCarsFeatureWorkflow(
           },
           {
             tire_dimensions_confidence: tire.source_confidence ?? "unverified",
-            current_gear_ratio_confidence: gearbox.top_gear_ratio_confidence ?? "unverified",
-            final_drive_ratio_confidence: gearbox.final_drive_ratio_confidence ?? "unverified",
-            requires_manual_confirmation: gearbox.requires_manual_confirmation ?? true,
+            current_gear_ratio_confidence:
+              gearbox.top_gear_ratio_confidence ?? "unverified",
+            final_drive_ratio_confidence:
+              gearbox.final_drive_ratio_confidence ?? "unverified",
+            requires_manual_confirmation:
+              gearbox.requires_manual_confirmation ?? true,
             selection_source_status: gearbox.source_status ?? "exact_row",
-            transmission_confidence: gearbox.transmission_confidence ?? "unverified",
+            transmission_confidence:
+              gearbox.transmission_confidence ?? "unverified",
             transmission_name: gearbox.name,
           },
           state.selectedVariant?.name,
@@ -515,21 +625,21 @@ export function createCarsFeatureWorkflow(
         return false;
       }
 
-        await deps.addCarFromWizard(
-          buildWizardCarName(state.brand, state.model, state.selectedVariant),
-          state.carType || "Custom",
+      await deps.addCarFromWizard(
+        buildWizardCarName(state.brand, state.model, state.selectedVariant),
+        state.carType || "Custom",
         {
           current_gear_ratio: Number(inputs.topGear),
           final_drive_ratio: Number(inputs.finalDrive),
           rim_in: Number(inputs.rim),
           tire_aspect_pct: Number(inputs.tireAspect),
           tire_width_mm: Number(inputs.tireWidth),
-          },
-          {
-            tire_dimensions_confidence: "user_confirmed",
-            current_gear_ratio_confidence: "user_confirmed",
-            final_drive_ratio_confidence: "user_confirmed",
-            requires_manual_confirmation: false,
+        },
+        {
+          tire_dimensions_confidence: "user_confirmed",
+          current_gear_ratio_confidence: "user_confirmed",
+          final_drive_ratio_confidence: "user_confirmed",
+          requires_manual_confirmation: false,
           selection_source_status: "manual_entry",
         },
         state.selectedVariant?.name,
@@ -547,7 +657,7 @@ export function createCarsFeatureWorkflow(
       }
       updateWizardState((state) => {
         state.step -= 1;
-        if (state.step === 3 && !(state.selectedModel?.variants?.length)) {
+        if (state.step === 3 && !state.selectedModel?.variants?.length) {
           state.step = 2;
         }
       });
@@ -634,7 +744,9 @@ export function createCarsFeatureWorkflow(
         updateWizardState((state) => {
           state.selectedTire = selectedTire;
         });
-        manualInputs.write(tireInputsFromOption(selectedTire, manualInputs.state.value));
+        manualInputs.write(
+          tireInputsFromOption(selectedTire, manualInputs.state.value),
+        );
       });
     },
 
