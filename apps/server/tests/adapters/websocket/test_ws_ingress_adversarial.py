@@ -58,6 +58,67 @@ async def test_broadcast_pressure_builds_one_payload_per_unique_selection() -> N
 
 
 @pytest.mark.asyncio
+async def test_broadcast_bounds_concurrent_sends_under_many_clients() -> None:
+    hub = WebSocketHub()
+    websockets = []
+    active = 0
+    max_active = 0
+
+    async def _slow_send(_payload: str) -> None:
+        nonlocal active, max_active
+        active += 1
+        max_active = max(max_active, active)
+        await anyio.sleep(0.01)
+        active -= 1
+
+    for index in range(8):
+        ws = _make_ws()
+        ws.send_text.side_effect = _slow_send
+        await hub.add(ws, f"sensor-{index}")
+        websockets.append(ws)
+    hub._runner._max_concurrent_sends = 2
+    hub._runner._max_sends_per_tick = len(websockets)
+
+    await hub.broadcast(lambda selected: {"selected": selected})
+
+    assert max_active == 2
+    assert all(ws.send_text.await_count == 1 for ws in websockets)
+
+
+@pytest.mark.asyncio
+async def test_broadcast_skips_sends_over_tick_budget(caplog) -> None:
+    hub = WebSocketHub()
+    websockets = []
+    for index in range(5):
+        ws = _make_ws()
+        await hub.add(ws, f"sensor-{index}")
+        websockets.append(ws)
+    hub._runner._max_sends_per_tick = 2
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
+        await hub.broadcast(lambda selected: {"selected": selected})
+
+    assert [_sent_json_sequence(ws) for ws in websockets] == [
+        [{"selected": "sensor-0"}],
+        [{"selected": "sensor-1"}],
+        [],
+        [],
+        [],
+    ]
+    assert hub.connection_count() == 5
+    backpressure_logs = [
+        record
+        for record in caplog.records
+        if getattr(record, "event", "") == "ws_broadcast_backpressure"
+    ]
+    assert len(backpressure_logs) == 1
+    assert backpressure_logs[0].skipped_send_count == 3
+    assert backpressure_logs[0].payload_cache_bytes > 0
+    assert backpressure_logs[0].payload_serialization_count == 2
+    assert backpressure_logs[0].tick_duration_ms >= 0
+
+
+@pytest.mark.asyncio
 async def test_tick_controller_skips_negative_sleep_when_broadcast_lags() -> None:
     controller = BroadcastTickController(
         hz=100,
