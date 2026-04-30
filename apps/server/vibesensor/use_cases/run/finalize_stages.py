@@ -134,6 +134,41 @@ def _log_failed_stage_and_raise(
     raise exc
 
 
+def _resolve_post_analysis_candidate_stage(
+    *,
+    run_id: str | None,
+    raw_capture_finalize_status: str | None,
+    persistence: RunPersistenceWriter,
+    persistence_snapshot: PersistenceStatusSnapshot | None,
+    persistence_finalized: bool,
+) -> tuple[str | None, FinalizeStageResult]:
+    resolve_stage_start = time.monotonic()
+    run_id_to_analyze: str | None = None
+    if run_id is None:
+        resolve_reason = "no_active_run"
+    elif raw_capture_finalize_status == "timeout":
+        resolve_reason = "raw_capture_finalize_unsettled"
+    else:
+        run_id_to_analyze = persistence.ready_for_analysis(run_id)
+        resolve_reason = "ready" if run_id_to_analyze else "history_not_ready"
+    return run_id_to_analyze, _make_stage_result(
+        stage_name="ResolvePostAnalysisCandidateStage",
+        status="ok" if run_id_to_analyze else "skipped",
+        stage_start=resolve_stage_start,
+        artifacts_created=("post_analysis_candidate",) if run_id_to_analyze else (),
+        diagnostic_context={
+            "run_id": run_id or "",
+            "reason": resolve_reason,
+            "history_run_created": persistence.history_run_created,
+            "written_sample_count": (
+                0 if persistence_snapshot is None else persistence_snapshot.written_sample_count
+            ),
+            "raw_capture_status": raw_capture_finalize_status,
+            "persistence_finalized": persistence_finalized,
+        },
+    )
+
+
 def finalize_active_run(
     *,
     run_id: str | None,
@@ -193,29 +228,7 @@ def finalize_active_run(
     resolved_start_time_utc = start_time_utc or utc_now_iso()
     resolved_end_time_utc = utc_now_iso()
     persistence_snapshot = persistence.status_snapshot() if run_id is not None else None
-
-    resolve_stage_start = time.monotonic()
-    run_id_to_analyze = persistence.ready_for_analysis(run_id)
-    resolve_stage = _make_stage_result(
-        stage_name="ResolvePostAnalysisCandidateStage",
-        status="ok" if run_id_to_analyze else "skipped",
-        stage_start=resolve_stage_start,
-        artifacts_created=("post_analysis_candidate",) if run_id_to_analyze else (),
-        diagnostic_context={
-            "run_id": run_id or "",
-            "history_run_created": persistence.history_run_created,
-            "written_sample_count": (
-                0 if persistence_snapshot is None else persistence_snapshot.written_sample_count
-            ),
-        },
-    )
-    stage_results.append(resolve_stage)
-    _log_stage_result(
-        logger=logger,
-        run_id=run_id,
-        stop_reason=stop_reason,
-        stage_result=resolve_stage,
-    )
+    raw_capture_finalize_status: str | None = None
 
     raw_capture_stage_start = time.monotonic()
     if run_id is None:
@@ -242,6 +255,7 @@ def finalize_active_run(
                 diagnostic_context={"run_id": run_id},
             )
         record_raw_capture_finalize_result(run_id, finalize_result)
+        raw_capture_finalize_status = finalize_result.status
         raw_capture_status: FinalizeStageStatus
         raw_capture_warnings: tuple[str, ...] = ()
         raw_capture_artifacts: tuple[str, ...] = ()
@@ -276,6 +290,7 @@ def finalize_active_run(
     )
 
     persistence_stage_start = time.monotonic()
+    persistence_finalized = False
     if run_id is None:
         persistence_stage = _make_stage_result(
             stage_name="FinalizePersistenceStage",
@@ -285,7 +300,7 @@ def finalize_active_run(
         )
     else:
         try:
-            finalized = persistence.finalize_run(
+            persistence_finalized = persistence.finalize_run(
                 run_id,
                 resolved_start_time_utc,
                 resolved_end_time_utc,
@@ -302,13 +317,13 @@ def finalize_active_run(
             )
         persistence_stage = _make_stage_result(
             stage_name="FinalizePersistenceStage",
-            status="ok" if finalized else "degraded",
+            status="ok" if persistence_finalized else "degraded",
             stage_start=persistence_stage_start,
-            artifacts_created=("history_run_finalized",) if finalized else (),
-            warnings=() if finalized else ("history_finalize_failed",),
+            artifacts_created=("history_run_finalized",) if persistence_finalized else (),
+            warnings=() if persistence_finalized else ("history_finalize_failed",),
             diagnostic_context={
                 "run_id": run_id,
-                "post_analysis_candidate": bool(run_id_to_analyze),
+                "raw_capture_status": raw_capture_finalize_status,
             },
         )
     stage_results.append(persistence_stage)
@@ -317,6 +332,21 @@ def finalize_active_run(
         run_id=run_id,
         stop_reason=stop_reason,
         stage_result=persistence_stage,
+    )
+
+    run_id_to_analyze, resolve_stage = _resolve_post_analysis_candidate_stage(
+        run_id=run_id,
+        raw_capture_finalize_status=raw_capture_finalize_status,
+        persistence=persistence,
+        persistence_snapshot=persistence_snapshot,
+        persistence_finalized=persistence_finalized,
+    )
+    stage_results.append(resolve_stage)
+    _log_stage_result(
+        logger=logger,
+        run_id=run_id,
+        stop_reason=stop_reason,
+        stage_result=resolve_stage,
     )
 
     return ActiveRunFinalizeResult(
