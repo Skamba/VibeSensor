@@ -71,6 +71,31 @@ def test_pull_request_event_outputs_match_path_rules(
     assert merge_base_calls == [("base-sha", "head-sha")]
 
 
+def test_force_full_stack_env_bypasses_changed_file_scope(
+    ci_changed_scope: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    payload_path = tmp_path / "pull_request_event.json"
+    payload_path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setenv("VIBESENSOR_CI_FORCE_FULL_STACK", "1")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(payload_path))
+    monkeypatch.setattr(
+        ci_changed_scope,
+        "_changed_files_for_merge_base",
+        lambda _base_sha, _head_sha: (_ for _ in ()).throw(
+            AssertionError("forced full-stack should not inspect changed files")
+        ),
+    )
+
+    assert (
+        ci_changed_scope._selection_for_github_event()
+        == ci_changed_scope.workflow_job_selection(()).github_outputs()
+    )
+
+
 def test_act_pull_request_event_helper_writes_non_empty_changed_scope_shas(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -125,3 +150,18 @@ def test_act_pull_request_event_helper_writes_non_empty_changed_scope_shas(
 
     ci_changed_scope._selection_for_github_event()
     assert merge_base_calls == [("base-sha", "head-sha")]
+
+
+def test_act_wrapper_distinguishes_changed_scope_and_full_stack_modes() -> None:
+    wrapper_text = (REPO_ROOT / "tools" / "tests" / "run_ci_with_act.sh").read_text(
+        encoding="utf-8"
+    )
+    docs_text = (REPO_ROOT / "docs" / "testing.md").read_text(encoding="utf-8")
+    ai_guidance = (REPO_ROOT / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+
+    assert "run changed-scope CI jobs" in wrapper_text
+    assert "--full-stack # force all CI jobs through ci-scope" in wrapper_text
+    assert "VIBESENSOR_CI_FORCE_FULL_STACK=1" in wrapper_text
+    assert "changed-scope ACT run" in docs_text
+    assert "forced full-stack ACT run" in docs_text
+    assert "--full-stack" in ai_guidance

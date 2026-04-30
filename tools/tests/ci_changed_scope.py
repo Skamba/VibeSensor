@@ -13,6 +13,7 @@ from pathlib import Path
 from ci_path_rules import workflow_job_selection
 
 ROOT = Path(__file__).resolve().parents[2]
+_FORCE_FULL_STACK_ENV = "VIBESENSOR_CI_FORCE_FULL_STACK"
 
 
 def _git_output(*args: str) -> str:
@@ -36,6 +37,13 @@ def _safe_full_stack_outputs(reason: str) -> dict[str, str]:
 
 
 def _selection_for_github_event() -> dict[str, str]:
+    if os.environ.get(_FORCE_FULL_STACK_ENV, "").strip() == "1":
+        print(
+            f"[ci-scope] {_FORCE_FULL_STACK_ENV}=1; forcing full-stack scope",
+            file=sys.stderr,
+        )
+        return workflow_job_selection(()).github_outputs()
+
     event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
     event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
     if not event_name or not event_path:
