@@ -12,6 +12,20 @@ needed for Raspberry Pi or firmware users.
 | Latest GitHub release | Supported when a fix needs a release artifact |
 | Older releases, branches, forks, or local deployments | Not supported |
 
+## Local appliance HTTP boundary
+
+VibeSensor is designed as an offline/local Raspberry Pi appliance, often served
+from its own hotspot. Read-only dashboard endpoints are open to devices that can
+reach the local server. Mutating HTTP endpoints (`POST`, `PUT`, `PATCH`, and
+`DELETE`) reject browser-style requests with an `Origin` or `Referer` header that
+does not match the request host. This is a same-origin/CSRF boundary for local UI
+use, not user authentication.
+
+Direct local clients such as `curl`, scripts, or same-origin UI requests can still
+call mutating endpoints. Secure deployments should still set a hotspot PSK,
+limit who can join the local network, and avoid exposing the server outside the
+trusted appliance network.
+
 ## Reporting a vulnerability
 
 Use GitHub private vulnerability reporting from this repository's Security tab
