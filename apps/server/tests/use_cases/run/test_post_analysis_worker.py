@@ -415,9 +415,13 @@ class TestPostAnalysisWorkerErrorHandling:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        _patch_fast_retry_delays(monkeypatch)
+        monkeypatch.setattr(
+            "vibesensor.use_cases.run.post_analysis._RETRY_DELAYS_S",
+            (0.0, 0.0, 0.0),
+        )
         errors: list[str] = []
         stored_errors: list[tuple[str, str]] = []
+        final_error_stored = threading.Event()
 
         class FakeDB:
             async def aget_run(self, run_id):
@@ -437,6 +441,7 @@ class TestPostAnalysisWorkerErrorHandling:
 
             async def astore_analysis_error(self, run_id, msg):
                 stored_errors.append((run_id, msg))
+                final_error_stored.set()
 
         worker = PostAnalysisWorker(
             history_db=FakeDB(),
@@ -445,7 +450,8 @@ class TestPostAnalysisWorkerErrorHandling:
         )
         worker.schedule("run-exhausted")
 
-        assert worker.wait(timeout_s=3.0)
+        assert final_error_stored.wait(timeout=10.0)
+        assert worker.wait(timeout_s=10.0)
         assert len(errors) > 1
         assert set(errors) == {"post-analysis failed for run run-exhausted: db locked"}
         assert stored_errors == [("run-exhausted", "db locked")]
