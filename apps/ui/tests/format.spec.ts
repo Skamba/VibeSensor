@@ -10,10 +10,13 @@ describe("timestamp formatting helpers", () => {
     expect(formatEpochTimestamp(Date.parse(iso) / 1000)).toBe(expected);
   });
 
-  test("preserves existing empty and invalid fallback text", () => {
+  test("uses fallbacks for empty and invalid timestamps", () => {
     expect(fmtTs("")).toBe("--");
-    expect(fmtTs("not-a-date")).toBe("not-a-date");
+    expect(fmtTs("not-a-date")).toBe("--");
     expect(formatEpochTimestamp(null)).toBe("—");
     expect(formatEpochTimestamp(Number.NaN)).toBe("—");
+    expect(formatEpochTimestamp(Number.POSITIVE_INFINITY)).toBe("—");
+    expect(formatEpochTimestamp(-1)).toBe("—");
+    expect(formatEpochTimestamp(Number.MAX_VALUE)).toBe("—");
   });
 });
