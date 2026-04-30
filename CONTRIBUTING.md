@@ -112,8 +112,13 @@ The blocking jobs live in
 "Commands" plus [docs/testing.md](docs/testing.md) when you need the matching
 local reproduction flow.
 
-`backend-quality` includes docs lint, so documentation drift and broken local
-markdown links fail PR validation early.
+Backend checks are split by concern. `backend-lint` covers formatting and
+linting, `repo-hygiene` covers repository policy checks,
+`backend-static-guards` covers architecture/static guardrails,
+`backend-preflight` covers config preflight, `docs-lint` covers documentation
+drift and local markdown links, and `backend-contract-drift` covers generated
+contract sync. Use those workflow job names when matching a CI failure to a
+local reproduction command.
 
 Use `release-smoke` when you need confidence in the packaged wheel and bundled
 static assets. Use `e2e` when you need confidence in the Docker/runtime path.
