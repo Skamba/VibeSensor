@@ -11,6 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTerminalState,
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.status import (
@@ -34,6 +35,7 @@ class TestUpdateJobStatusRoundTrip:
             issues=[UpdateIssue(phase="installing", message="slow pip", detail="took 90s")],
             log_tail=["line1", "line2", "line3"],
             exit_code=0,
+            terminal_state=UpdateTerminalState.success,
             runtime=UpdateRuntimeDetails(version="1.2.3"),
         )
         restored = update_status_from_builtins(update_status_to_builtins(original))
@@ -45,6 +47,7 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.last_success_at == original.last_success_at
         assert restored.ssid == original.ssid
         assert restored.exit_code == original.exit_code
+        assert restored.terminal_state == UpdateTerminalState.success
         assert restored.runtime == UpdateRuntimeDetails(version="1.2.3")
         assert len(restored.issues) == 1
         assert restored.issues[0].phase == "installing"
@@ -65,6 +68,7 @@ class TestUpdateJobStatusRoundTrip:
         assert status.issues == []
         assert status.log_tail == []
         assert status.exit_code is None
+        assert status.terminal_state is None
         assert status.runtime == UpdateRuntimeDetails()
 
     def test_from_payload_truncates_log_tail_to_50_lines(self) -> None:

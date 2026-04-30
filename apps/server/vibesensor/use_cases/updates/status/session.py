@@ -10,6 +10,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTerminalState,
 )
 
 from .state_store import UpdateStateStore
@@ -58,6 +59,7 @@ class UpdateStatusSession:
             ssid=request.ssid,
             uplink_interface=None,
             last_success_at=self._status.last_success_at,
+            terminal_state=None,
             runtime=previous_runtime,
         )
         self.persist()
@@ -76,8 +78,9 @@ class UpdateStatusSession:
         self.touch()
         self.persist()
 
-    def mark_failed(self) -> None:
+    def mark_failed(self, terminal_state: UpdateTerminalState | None = None) -> None:
         self._status.state = UpdateState.failed
+        self._status.terminal_state = terminal_state
         self.touch()
         self.persist()
 
@@ -93,6 +96,7 @@ class UpdateStatusSession:
         self._status.phase = UpdatePhase.done
         self._status.last_success_at = now
         self._status.exit_code = 0
+        self._status.terminal_state = UpdateTerminalState.success
         self._status.phase_started_at = now
         self._status.updated_at = now
 

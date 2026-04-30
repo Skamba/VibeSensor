@@ -17,10 +17,14 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
 from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
+from vibesensor.use_cases.updates.models import (
+    UpdateState,
+    UpdateTerminalState,
+    UpdateTransport,
+    UsbInternetStatus,
+)
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
 from vibesensor.use_cases.updates.status import (
@@ -520,17 +524,15 @@ class TestUpdateManagerAsync:
         ):
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
-            with pytest.raises(
-                UpdateCleanupError,
-                match="Cleanup failed after cancellation: Runtime details refresh failed",
-            ):
-                await manager.job_task
+            await manager.job_task
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
+        assert manager.status.terminal_state == UpdateTerminalState.cancelled_cleanup_failed
         persisted = state_store.load()
         assert persisted is not None
         assert persisted.state == UpdateState.failed
+        assert persisted.terminal_state == UpdateTerminalState.cancelled_cleanup_failed
         assert any(
             issue.message == "Cleanup failed after cancellation: Runtime details refresh failed"
             and issue.detail == ""
