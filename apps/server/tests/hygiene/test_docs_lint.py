@@ -303,3 +303,39 @@ def test_ai_guidance_lint_rejects_unsupported_uv_run_commands(
         ],
         tmp_path,
     ) == [".github/instructions/tests.instructions.md: unsupported AI guidance command: uv run"]
+
+
+def test_frontend_stack_lint_rejects_docs_for_missing_ui_dependencies(
+    tmp_path: Path,
+) -> None:
+    module = _load_docs_lint_module()
+    ui_dir = tmp_path / "apps" / "ui"
+    ui_dir.mkdir(parents=True)
+    (ui_dir / "package.json").write_text(
+        '{"dependencies": {"preact": "^10.0.0"}, "devDependencies": {"vite": "^8.0.0"}}',
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text(
+        "apps/ui is a TypeScript frontend (Vite + uPlot).\n",
+        encoding="utf-8",
+    )
+    (ui_dir / "README.md").write_text(
+        "- **Preact** — UI rendering\n",
+        encoding="utf-8",
+    )
+
+    assert module._check_stale_frontend_stack_references(
+        ["README.md", "apps/ui/README.md"],
+        tmp_path,
+    ) == ["README.md: stale frontend stack reference: uPlot is not an apps/ui dependency"]
+
+    package_json = '{"dependencies": {"uplot": "^1.0.0"}, "devDependencies": {}}'
+    (ui_dir / "package.json").write_text(package_json, encoding="utf-8")
+
+    assert (
+        module._check_stale_frontend_stack_references(
+            ["README.md", "apps/ui/README.md"],
+            tmp_path,
+        )
+        == []
+    )

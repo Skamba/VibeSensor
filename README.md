@@ -67,7 +67,7 @@ Sensors connect to the Pi's Wi-Fi AP, stream accelerometer data via UDP, and the
 ```
 apps/
   server/      Python backend (FastAPI + signal processing + reports)
-  ui/          TypeScript frontend (Vite + uPlot)
+  ui/          TypeScript/Vite frontend dashboard
 firmware/
   esp/         ESP32 firmware (PlatformIO, C++)
 infra/

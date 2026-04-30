@@ -11,7 +11,7 @@ server over HTTP (REST) and WebSocket (live data).
 - **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
 - **comlink** — typed Web Worker bridge for off-main-thread spectrum frame preparation
 - **Vite** — build tool and dev server
-- **uPlot** — high-performance spectrum charts
+- **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
 - **Playwright** — browser, visual regression, and smoke testing
 - **CSS custom properties** — Material Design 3 inspired theming
@@ -144,7 +144,7 @@ frame preparation does not.
   contract plus the pure preparation core reused by the worker and focused
   tests.
 - `src/app/runtime/spectrum_canvas_renderer.ts` no longer prepares frames from
-  raw AppState. It only composes chart-band metadata, owns uPlot/canvas
+  raw AppState. It only composes chart-band metadata, owns the canvas chart
   lifecycle, and renders already prepared frames.
 - Worker responses may return transferable typed arrays (`Float64Array`) for the
   prepared frequency/series payloads. Treat those series as read-only numeric
@@ -252,7 +252,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that owns Comlink worker lifecycle for heavy spectrum frame preparation, splits data refreshes from lighter settings-driven decoration refreshes, and wires overlay, canvas, interaction, and panel modules |
 | `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
-| `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable uPlot buffer reuse for same-shape frames, and canvas draw plugin orchestration |
+| `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable chart buffer reuse for same-shape frames, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_frame_preparer.ts` | Typed spectrum frame-prep contract plus pure interpolation/dB conversion core shared by worker and focused tests |
 | `app/runtime/spectrum_frame_preparer_worker.ts` | Canonical Comlink worker entrypoint for off-main-thread spectrum frame preparation plus transferable response packing |
 | `app/runtime/spectrum_frame_preparer_worker_client.ts` | Runtime-owned worker client wrapper that creates, proxies, and disposes the spectrum frame-prep worker |
@@ -323,7 +323,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | Shared spectrum math helpers such as amplitude-to-dB conversion that stay safe to import on the startup path |
-| `spectrum_chart.ts` | Lazy-loaded uPlot chart wrapper, explicit `setData`/`redraw` bridge, and stylesheet entry for interactive spectrum visualization |
+| `spectrum_chart.ts` | Lazy-loaded canvas chart wrapper, explicit `setData`/`redraw` bridge, and stylesheet entry for interactive spectrum visualization |
 | `spectrum_css_vars.ts` | Shared cached spectrum CSS-variable snapshot for chart and canvas renderer colors |
 | `server_payload.ts` | Transport-boundary WebSocket payload adaptation and schema-version guardrails around the generated WS types |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
@@ -374,7 +374,7 @@ individual page/settings panel islands own their local chrome plus typed
 bridges. The remaining
 imperative paths are deliberate runtime integrations rather than alternate UI
 renderers: the shell controller still owns app-level status/preference state,
-the spectrum controller still owns the uPlot/canvas lifecycle through
+the spectrum controller still owns the canvas chart lifecycle through
 island-owned chart refs, and a few focused bridges still move typed wizard or
 status models into island-owned hosts. Those seams should use semantic methods
 like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
@@ -423,7 +423,7 @@ instead of controller-side variant class interpolation.
   prefer `useSignalProperties()` from `app/ui_signals.ts` over repeating
   property access or per-property `useComputed(...)` adapters.
 - Use `effect()` only for narrow imperative integrations such as timers,
-  persistence, canvas/uPlot bridges, or other external-library coordination.
+  persistence, canvas chart bridges, or other external-library coordination.
 - Preact-rendered copy should come from `getUiText()` or `useUiText()`.
   Do not leave `data-i18n` attributes in JSX unless a non-Preact consumer still
   reads them.
@@ -445,7 +445,7 @@ instead of controller-side variant class interpolation.
   and its failure text now points at the exact replacement seam to use.
 - Normal UI rendering belongs in Preact owner surfaces. If code outside an
   island needs imperative DOM work, keep it narrowly scoped to non-render
-  integrations such as download anchors, canvas/uPlot lifecycles, observers, or
+  integrations such as download anchors, canvas chart lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
 - Expected feature shape is thin facade + focused workflow/transport/presenter
   or derived view-state modules. Workflow modules stay DOM-free, render-state
