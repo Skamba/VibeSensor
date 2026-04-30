@@ -6,7 +6,7 @@ export function fmt(n: number, digits = 2): string {
 }
 
 function formatDateTime(date: Date, invalidText: string): string {
-  if (Number.isNaN(date.getTime())) {
+  if (!Number.isFinite(date.getTime())) {
     return invalidText;
   }
   return date.toLocaleString();
@@ -14,11 +14,16 @@ function formatDateTime(date: Date, invalidText: string): string {
 
 export function fmtTs(iso: string): string {
   if (!iso) return "--";
-  return formatDateTime(new Date(iso), iso);
+  return formatDateTime(new Date(iso), "--");
 }
 
 export function formatEpochTimestamp(epoch: number | null | undefined): string {
-  if (epoch === null || epoch === undefined || !Number.isFinite(epoch)) {
+  if (
+    epoch === null ||
+    epoch === undefined ||
+    !Number.isFinite(epoch) ||
+    epoch < 0
+  ) {
     return "—";
   }
   return formatDateTime(new Date(epoch * 1000), "—");
