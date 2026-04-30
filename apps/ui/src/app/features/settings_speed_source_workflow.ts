@@ -13,12 +13,7 @@ import {
   type SpeedSourceStateSnapshot,
 } from "../speed_source_state";
 import type { SettingsState } from "../ui_app_state";
-import {
-  batch,
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import type { SettingsSpeedSourceRenderState } from "../views/settings_speed_source_presenter";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import {
@@ -67,7 +62,9 @@ export interface SettingsSpeedSourceWorkflow {
 }
 
 function parseManualSpeedKph(rawValue: number): number | null {
-  return Number.isFinite(rawValue) && rawValue > 0 && rawValue <= 500 ? rawValue : null;
+  return Number.isFinite(rawValue) && rawValue > 0 && rawValue <= 500
+    ? rawValue
+    : null;
 }
 
 function activeSourceLabel(
@@ -104,7 +101,10 @@ function hasHumanReadableDeviceName(device: ObdDevicePayload): boolean {
   return Boolean(value) && !looksLikeMacAlias(value);
 }
 
-function compareScannedDevices(left: ObdDevicePayload, right: ObdDevicePayload): number {
+function compareScannedDevices(
+  left: ObdDevicePayload,
+  right: ObdDevicePayload,
+): number {
   const leftConnectedRank = Number(!left.connected);
   const rightConnectedRank = Number(!right.connected);
   if (leftConnectedRank !== rightConnectedRank) {
@@ -142,8 +142,8 @@ export function createSettingsSpeedSourceWorkflow(
   const speedSourceState = createSpeedSourceDerivedState(deps.settings.speed);
   const selectedModeDraft = signal<DisplayedSpeedSourceMode | null>(null);
   const manualSpeedInputDraft = signal<string | null>(null);
-  const selectedMode = computed<DisplayedSpeedSourceMode>(() =>
-    selectedModeDraft.value ?? speedSourceState.displayedMode.value
+  const selectedMode = computed<DisplayedSpeedSourceMode>(
+    () => selectedModeDraft.value ?? speedSourceState.displayedMode.value,
   );
   const manualSpeedInputValue = computed(() => {
     const draft = manualSpeedInputDraft.value;
@@ -166,6 +166,12 @@ export function createSettingsSpeedSourceWorkflow(
   const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
   const obdSelectionError = signal(false);
   const diagnosticsOpen = signal(false);
+  let disposed = false;
+  let loadGeneration = 0;
+  let saveGeneration = 0;
+  let scanGeneration = 0;
+  let pairGeneration = 0;
+  let saveInFlight = false;
   const renderState = computed<SettingsSpeedSourceRenderState>(() => {
     const settingsSnapshot: SpeedSourceStateSnapshot & {
       gpsFallbackActive: boolean;
@@ -203,12 +209,21 @@ export function createSettingsSpeedSourceWorkflow(
     return renderState.value;
   }
 
+  function isCurrentRequest(
+    requestGeneration: number,
+    currentGeneration: number,
+  ): boolean {
+    return !disposed && requestGeneration === currentGeneration;
+  }
+
   function shouldRunBackgroundRescan(): boolean {
-    return backgroundRescanRequested.value
-      && speedSourceContextVisible.value
-      && selectedMode.value === "obd2"
-      && !scanInFlight.value
-      && pairInFlightMac.value === null;
+    return (
+      backgroundRescanRequested.value &&
+      speedSourceContextVisible.value &&
+      selectedMode.value === "obd2" &&
+      !scanInFlight.value &&
+      pairInFlightMac.value === null
+    );
   }
 
   function syncContextVisibility(): void {
@@ -223,6 +238,9 @@ export function createSettingsSpeedSourceWorkflow(
     contextSyncScheduled = true;
     queueMicrotask(() => {
       contextSyncScheduled = false;
+      if (disposed) {
+        return;
+      }
       syncContextVisibility();
     });
   }
@@ -274,7 +292,9 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function mergeScannedDevices(devices: readonly ObdDevicePayload[]): void {
-    const merged = new Map(scannedDevices.value.map((device) => [device.mac_address, device]));
+    const merged = new Map(
+      scannedDevices.value.map((device) => [device.mac_address, device]),
+    );
     devices.forEach((device) => {
       merged.set(device.mac_address, device);
     });
@@ -302,22 +322,33 @@ export function createSettingsSpeedSourceWorkflow(
     options: { preserveResolvedSource?: boolean } = {},
   ): void {
     batch(() => {
-      applySpeedSourcePayloadToSettings(
-        deps.settings.speed,
-        payload,
-        options,
-      );
+      applySpeedSourcePayloadToSettings(deps.settings.speed, payload, options);
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });
   }
 
   async function loadSpeedSourceFromServer(): Promise<void> {
-    const payload = await deps.queryClient.fetchQuery({
-      queryFn: () => transport.loadSpeedSource(),
-      queryKey: serverStateQueryKeys.settings.speedSource(),
-      staleTime: 0,
-    });
+    if (disposed) {
+      return;
+    }
+    const requestGeneration = ++loadGeneration;
+    let payload: SpeedSourcePayload;
+    try {
+      payload = await deps.queryClient.fetchQuery({
+        queryFn: () => transport.loadSpeedSource(),
+        queryKey: serverStateQueryKeys.settings.speedSource(),
+        staleTime: 0,
+      });
+    } catch (error) {
+      if (!isCurrentRequest(requestGeneration, loadGeneration)) {
+        return;
+      }
+      throw error;
+    }
+    if (!isCurrentRequest(requestGeneration, loadGeneration)) {
+      return;
+    }
     applyPayload(payload, { preserveResolvedSource: true });
   }
 
@@ -344,6 +375,9 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   async function saveSpeedSource(): Promise<void> {
+    if (disposed || saveInFlight) {
+      return;
+    }
     clearAllFeedback();
 
     const source: SpeedSourceKind =
@@ -352,15 +386,16 @@ export function createSettingsSpeedSourceWorkflow(
     const manualSpeedKph = parseManualSpeedKph(Number(manualInputValue));
     const staleValueRaw = staleTimeoutInputValue.value.trim();
     const staleValue = Number(staleValueRaw);
-    const staleTimeoutInvalid = source !== "manual" && (
-      staleValueRaw === ""
-      || Number.isNaN(staleValue)
-      || !Number.isFinite(staleValue)
-      || staleValue < 3
-      || staleValue > 120
-    );
-    const manualSpeedInvalid = (source === "manual" && manualSpeedKph == null)
-      || (manualInputValue !== "" && manualSpeedKph == null);
+    const staleTimeoutInvalid =
+      source !== "manual" &&
+      (staleValueRaw === "" ||
+        Number.isNaN(staleValue) ||
+        !Number.isFinite(staleValue) ||
+        staleValue < 3 ||
+        staleValue > 120);
+    const manualSpeedInvalid =
+      (source === "manual" && manualSpeedKph == null) ||
+      (manualInputValue !== "" && manualSpeedKph == null);
     const activeSource = activeSourceLabel(deps.settings, deps.t);
 
     if (manualSpeedInvalid) {
@@ -372,7 +407,9 @@ export function createSettingsSpeedSourceWorkflow(
         };
         showSaveFeedback(
           deps.t("settings.speed.manual_invalid"),
-          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+          deps.t("settings.speed.validation_active_detail", {
+            source: activeSource,
+          }),
         );
       });
       deps.view.focusManualSpeedInput();
@@ -388,7 +425,9 @@ export function createSettingsSpeedSourceWorkflow(
         };
         showSaveFeedback(
           deps.t("settings.speed.stale_timeout_invalid"),
-          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+          deps.t("settings.speed.validation_active_detail", {
+            source: activeSource,
+          }),
         );
       });
       deps.view.focusStaleTimeoutInput();
@@ -400,13 +439,17 @@ export function createSettingsSpeedSourceWorkflow(
         obdSelectionError.value = true;
         showSaveFeedback(
           deps.t("settings.speed.obd_missing_device_error"),
-          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+          deps.t("settings.speed.validation_active_detail", {
+            source: activeSource,
+          }),
         );
       });
       deps.view.focusScanObdDevices();
       return;
     }
 
+    saveInFlight = true;
+    const requestGeneration = ++saveGeneration;
     const payload: SpeedSourceRequest = {
       manual_speed_kph: manualSpeedKph,
       speed_source: source,
@@ -417,21 +460,42 @@ export function createSettingsSpeedSourceWorkflow(
 
     try {
       const saved = await transport.saveSpeedSource(payload);
-      deps.queryClient.setQueryData(serverStateQueryKeys.settings.speedSource(), saved);
-      await deps.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.settings.gpsStatus() });
+      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+        return;
+      }
+      deps.queryClient.setQueryData(
+        serverStateQueryKeys.settings.speedSource(),
+        saved,
+      );
+      await deps.queryClient.invalidateQueries({
+        queryKey: serverStateQueryKeys.settings.gpsStatus(),
+      });
+      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+        return;
+      }
       applyPayload(saved);
     } catch (error) {
+      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+        return;
+      }
       showSaveFeedback(
         error instanceof Error ? error.message : deps.t("settings.save_failed"),
         deps.t("settings.speed.save_failed_detail", { source: activeSource }),
       );
+    } finally {
+      if (requestGeneration === saveGeneration) {
+        saveInFlight = false;
+      }
     }
   }
 
-  async function scanObdDevices(mode: "manual" | "background" = "manual"): Promise<void> {
-    if (scanInFlight.value || pairInFlightMac.value !== null) {
+  async function scanObdDevices(
+    mode: "manual" | "background" = "manual",
+  ): Promise<void> {
+    if (disposed || scanInFlight.value || pairInFlightMac.value !== null) {
       return;
     }
+    const requestGeneration = ++scanGeneration;
     batch(() => {
       scanInFlight.value = true;
       if (mode === "manual") {
@@ -445,28 +509,47 @@ export function createSettingsSpeedSourceWorkflow(
         queryKey: serverStateQueryKeys.settings.speedSourceObdScan(),
         staleTime: 0,
       });
+      if (!isCurrentRequest(requestGeneration, scanGeneration)) {
+        return;
+      }
       if (mode === "manual") {
         backgroundRescanRequested.value = true;
         batch(() => {
           setScannedDevices(payload.devices);
-          obdScanStatusMessage.value = payload.devices.length > 0
-            ? deps.t("settings.speed.obd_scan_found", { count: payload.devices.length })
-            : deps.t("settings.speed.obd_scan_empty");
+          obdScanStatusMessage.value =
+            payload.devices.length > 0
+              ? deps.t("settings.speed.obd_scan_found", {
+                  count: payload.devices.length,
+                })
+              : deps.t("settings.speed.obd_scan_empty");
         });
       } else {
         mergeScannedDevices(payload.devices);
       }
     } catch (error) {
+      if (!isCurrentRequest(requestGeneration, scanGeneration)) {
+        return;
+      }
       if (mode === "manual") {
         obdScanStatusMessage.value = deps.t("settings.speed.obd_scan_failed");
-        deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_scan_failed"));
+        deps.showError(
+          error instanceof Error
+            ? error.message
+            : deps.t("settings.speed.obd_scan_failed"),
+        );
       }
     } finally {
-      scanInFlight.value = false;
+      if (isCurrentRequest(requestGeneration, scanGeneration)) {
+        scanInFlight.value = false;
+      }
     }
   }
 
   async function pairObdDevice(macAddress: string): Promise<void> {
+    if (disposed || pairInFlightMac.value !== null) {
+      return;
+    }
+    const requestGeneration = ++pairGeneration;
     clearObdSelectionFeedback();
     batch(() => {
       pairInFlightMac.value = macAddress;
@@ -474,27 +557,46 @@ export function createSettingsSpeedSourceWorkflow(
     });
     try {
       const payload = await transport.pairObdDevice(macAddress);
+      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+        return;
+      }
       batch(() => {
-        deps.settings.speed.obdDeviceMac.value = payload.configured_device_mac ?? null;
-        deps.settings.speed.obdDeviceName.value = payload.configured_device_name ?? null;
-        mergeScannedDevices([{
-          connected: payload.connected,
-          mac_address: payload.configured_device_mac ?? macAddress,
-          name: payload.configured_device_name ?? null,
-          paired: payload.paired,
-          rfcomm_channel: payload.rfcomm_channel,
-          trusted: payload.trusted,
-        }]);
+        deps.settings.speed.obdDeviceMac.value =
+          payload.configured_device_mac ?? null;
+        deps.settings.speed.obdDeviceName.value =
+          payload.configured_device_name ?? null;
+        mergeScannedDevices([
+          {
+            connected: payload.connected,
+            mac_address: payload.configured_device_mac ?? macAddress,
+            name: payload.configured_device_name ?? null,
+            paired: payload.paired,
+            rfcomm_channel: payload.rfcomm_channel,
+            trusted: payload.trusted,
+          },
+        ]);
         obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_success");
       });
       await deps.queryClient.invalidateQueries({
         queryKey: serverStateQueryKeys.settings.gpsStatus(),
       });
+      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+        return;
+      }
     } catch (error) {
+      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+        return;
+      }
       obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_failed");
-      deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_pair_failed"));
+      deps.showError(
+        error instanceof Error
+          ? error.message
+          : deps.t("settings.speed.obd_pair_failed"),
+      );
     } finally {
-      pairInFlightMac.value = null;
+      if (isCurrentRequest(requestGeneration, pairGeneration)) {
+        pairInFlightMac.value = null;
+      }
     }
   }
 
@@ -502,7 +604,9 @@ export function createSettingsSpeedSourceWorkflow(
     syncContextVisibility();
   }
 
-  const obdBackgroundRescanEnabled = computed(() => shouldRunBackgroundRescan());
+  const obdBackgroundRescanEnabled = computed(() =>
+    shouldRunBackgroundRescan(),
+  );
 
   const obdBackgroundRescan = createObservedServerStateQuery({
     enabled: obdBackgroundRescanEnabled,
@@ -511,6 +615,9 @@ export function createSettingsSpeedSourceWorkflow(
       ReturnType<typeof serverStateQueryKeys.settings.speedSourceObdScan>
     >(OBD_BACKGROUND_RESCAN_DELAY_MS),
     onData: (payload) => {
+      if (disposed) {
+        return;
+      }
       mergeScannedDevices(payload.devices);
     },
     queryClient: deps.queryClient,
@@ -520,6 +627,12 @@ export function createSettingsSpeedSourceWorkflow(
 
   return {
     dispose(): void {
+      disposed = true;
+      loadGeneration += 1;
+      saveGeneration += 1;
+      scanGeneration += 1;
+      pairGeneration += 1;
+      saveInFlight = false;
       obdBackgroundRescan.dispose();
     },
     getRenderState,
