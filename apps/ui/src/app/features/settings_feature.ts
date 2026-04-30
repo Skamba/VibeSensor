@@ -193,6 +193,7 @@ export function createSettingsFeature(
       gpsStatusModule.dispose();
       speedSourceModule.dispose();
       carsModule.dispose();
+      analysisModule.dispose();
     },
     syncSettingsInputs: analysisModule.syncSettingsInputs,
     loadSpeedSourceFromServer,
