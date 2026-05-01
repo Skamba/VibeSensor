@@ -6,11 +6,15 @@ from typing import Literal, Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.shared.ingest_diagnostics import (
+    IngestDiagnosticsCollector,
+    RawCaptureRuntimeSnapshot,
+)
 from vibesensor.shared.types.health_snapshot import (
     HealthSnapshotData,
     IngestClientHealthSnapshot,
     RunRecorderHealthSnapshot,
+    SubsystemHealthSnapshot,
 )
 from vibesensor.shared.types.payload_types import IntakeStatsPayload
 
@@ -131,6 +135,13 @@ def build_system_health_snapshot(
     if raw_capture_snapshot.pressure_state != "ok":
         degradation_reasons.append(f"raw_capture_pressure:{raw_capture_snapshot.pressure_state}")
     ws_publish_snapshot = ingest_diagnostics.ws_publish_snapshot()
+    subsystems = _build_subsystem_health(
+        health_state=health_state,
+        loop_state=loop_state,
+        data_loss=data_loss,
+        persistence=persistence,
+        raw_capture_snapshot=raw_capture_snapshot,
+    )
     status: Literal["ok", "warn", "degraded"] = "ok"
     if degradation_reasons:
         status = "degraded" if has_error else "warn"
@@ -208,6 +219,7 @@ def build_system_health_snapshot(
         "sample_rate_mismatch_count": sample_rate_mismatch_count,
         "frame_size_mismatch_count": frame_size_mismatch_count,
         "degradation_reasons": degradation_reasons,
+        "subsystems": subsystems,
         "data_loss": data_loss,
         "persistence": persistence,
         "intake_stats": processor.intake_stats(),
@@ -243,4 +255,109 @@ def build_system_health_snapshot(
         "tick_count": loop_state.tick_count,
         "db_last_write_duration_s": _coerce_duration(run_recorder.last_write_duration_s),
         "db_max_write_duration_s": _coerce_duration(run_recorder.max_write_duration_s),
+    }
+
+
+def _subsystem(
+    *,
+    unhealthy: list[str] | None = None,
+    degraded: list[str] | None = None,
+) -> SubsystemHealthSnapshot:
+    unhealthy_reasons = unhealthy or []
+    degraded_reasons = degraded or []
+    if unhealthy_reasons:
+        return {
+            "status": "unhealthy",
+            "reason_codes": [*unhealthy_reasons, *degraded_reasons],
+        }
+    if degraded_reasons:
+        return {"status": "degraded", "reason_codes": degraded_reasons}
+    return {"status": "ready", "reason_codes": []}
+
+
+def _build_subsystem_health(
+    *,
+    health_state: RuntimeHealthState,
+    loop_state: ProcessingLoopState,
+    data_loss: dict[str, int],
+    persistence: RunRecorderHealthSnapshot,
+    raw_capture_snapshot: RawCaptureRuntimeSnapshot,
+) -> dict[str, SubsystemHealthSnapshot]:
+    data_loss_reasons = [
+        key
+        for key in (
+            "frames_dropped",
+            "buffer_overflow_drops",
+            "queue_overflow_drops",
+            "server_queue_drops",
+            "parse_errors",
+        )
+        if data_loss[key] > 0
+    ]
+    raw_capture_degraded: list[str] = []
+    if raw_capture_snapshot.dropped_chunks > 0:
+        raw_capture_degraded.append("raw_capture_dropped_chunks")
+    if raw_capture_snapshot.pressure_state != "ok":
+        raw_capture_degraded.append("raw_capture_pressure")
+    return {
+        "runtime": _subsystem(
+            unhealthy=[
+                reason
+                for reason, active in (
+                    ("startup_not_ready", health_state.startup_state != "ready"),
+                    ("startup_error", bool(health_state.startup_error)),
+                    ("background_task_failures", bool(health_state.background_task_failures)),
+                )
+                if active
+            ],
+            degraded=["startup_warnings"] if health_state.startup_warnings else [],
+        ),
+        "database": _subsystem(
+            unhealthy=[
+                reason
+                for reason, active in (
+                    ("db_corruption_detected", health_state.db_corruption_detected),
+                    ("db_engine_unhealthy", health_state.db_engine_unhealthy),
+                )
+                if active
+            ],
+        ),
+        "processing": _subsystem(
+            unhealthy=(
+                ["processing_state_not_ok"]
+                if loop_state.processing_state != ProcessingHealth.OK
+                else []
+            ),
+            degraded=[
+                reason
+                for reason, active in (
+                    ("processing_failures", loop_state.processing_failure_count > 0),
+                    ("processing_failure_category", bool(loop_state.last_failure_category)),
+                    ("sample_rate_mismatch", bool(loop_state.sample_rate_mismatch_logged)),
+                    ("frame_size_mismatch", bool(loop_state.frame_size_mismatch_logged)),
+                )
+                if active
+            ],
+        ),
+        "ingest": _subsystem(degraded=data_loss_reasons),
+        "raw_capture": _subsystem(
+            unhealthy=(
+                ["raw_capture_write_errors"] if raw_capture_snapshot.write_error_chunks > 0 else []
+            ),
+            degraded=raw_capture_degraded,
+        ),
+        "recorder": _subsystem(
+            unhealthy=["persistence_write_error"] if persistence["write_error"] else [],
+            degraded=(
+                ["persistence_samples_dropped"] if persistence["samples_dropped"] > 0 else []
+            ),
+        ),
+        "post_analysis": _subsystem(
+            unhealthy=["last_analysis_failed"] if persistence["last_completed_run_error"] else [],
+            degraded=(["analyzing_runs_present"] if persistence["analyzing_run_count"] > 0 else []),
+        ),
+        "websocket": _subsystem(),
+        "updates": _subsystem(),
+        "firmware": _subsystem(),
+        "hotspot_network": _subsystem(),
     }

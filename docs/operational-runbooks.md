@@ -29,6 +29,10 @@ map. The response also includes operational metrics:
 - `tick_duration_s` / `max_tick_duration_s` / `tick_count` — processing loop timing
 - `db_last_write_duration_s` / `db_max_write_duration_s` — DB write latency
 
+Use `subsystems` for machine-readable triage. Each subsystem reports
+`status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
+top-level `status` and `degradation_reasons` for compatibility with older tools.
+
 Run-history retention is enforced during startup maintenance. By default the Pi
 prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
 If raw waveform storage should expire earlier, set
