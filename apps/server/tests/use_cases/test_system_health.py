@@ -119,6 +119,8 @@ class TestBuildSystemHealthSnapshotOk:
 
         assert result["status"] == "ok"
         assert result["degradation_reasons"] == []
+        assert result["subsystems"]["runtime"] == {"status": "ready", "reason_codes": []}
+        assert result["subsystems"]["recorder"] == {"status": "ready", "reason_codes": []}
 
     def test_ok_snapshot_includes_expected_keys(self) -> None:
         loop_state = ProcessingLoopState()
@@ -265,6 +267,10 @@ class TestBuildSystemHealthSnapshotDegraded:
 
         assert result["status"] == "degraded"
         assert "background_task_failures" in result["degradation_reasons"]
+        assert result["subsystems"]["runtime"] == {
+            "status": "unhealthy",
+            "reason_codes": ["background_task_failures"],
+        }
 
     def test_processing_state_not_ok_is_degraded(self) -> None:
         loop_state = ProcessingLoopState(processing_state=ProcessingHealth.FATAL)
@@ -287,6 +293,10 @@ class TestBuildSystemHealthSnapshotDegraded:
 
         assert result["status"] == "degraded"
         assert "persistence_write_error" in result["degradation_reasons"]
+        assert result["subsystems"]["recorder"] == {
+            "status": "unhealthy",
+            "reason_codes": ["persistence_write_error"],
+        }
 
     def test_db_corruption_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
@@ -335,6 +345,10 @@ class TestBuildSystemHealthSnapshotDegraded:
         assert result["ingest"]["raw_capture"]["pressure_state"] == "warn"
         assert result["ingest"]["raw_capture"]["dropped_chunks"] == 1
         assert "raw_capture_dropped_chunks" in result["degradation_reasons"]
+        assert result["subsystems"]["raw_capture"] == {
+            "status": "degraded",
+            "reason_codes": ["raw_capture_dropped_chunks", "raw_capture_pressure"],
+        }
 
 
 class TestBuildSystemHealthSnapshotWarn:
@@ -378,6 +392,10 @@ class TestBuildSystemHealthSnapshotWarn:
 
         assert result["status"] == "warn"
         assert "frames_dropped" in result["degradation_reasons"]
+        assert result["subsystems"]["ingest"] == {
+            "status": "degraded",
+            "reason_codes": ["frames_dropped"],
+        }
 
     def test_buffer_overflow_drops_add_reason(self) -> None:
         loop_state = ProcessingLoopState()

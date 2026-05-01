@@ -73,6 +73,18 @@ export function createHealthyUpdateStatus(
     sample_rate_mismatch_count: 0,
     frame_size_mismatch_count: 0,
     degradation_reasons: [],
+    subsystems: {
+      database: { reason_codes: [], status: "ready" },
+      firmware: { reason_codes: [], status: "ready" },
+      hotspot_network: { reason_codes: [], status: "ready" },
+      ingest: { reason_codes: [], status: "ready" },
+      post_analysis: { reason_codes: [], status: "ready" },
+      raw_capture: { reason_codes: [], status: "ready" },
+      recorder: { reason_codes: [], status: "ready" },
+      runtime: { reason_codes: [], status: "ready" },
+      updates: { reason_codes: [], status: "ready" },
+      websocket: { reason_codes: [], status: "ready" },
+    },
     data_loss: {
       affected_clients: 0,
       buffer_overflow_drops: 0,

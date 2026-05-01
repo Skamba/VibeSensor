@@ -54,6 +54,8 @@ def test_health_endpoint_response_shape(_health_client):
     assert result["sample_rate_mismatch_count"] == 0
     assert result["frame_size_mismatch_count"] == 0
     assert result["degradation_reasons"] == []
+    assert result["subsystems"]["runtime"] == {"status": "ready", "reason_codes": []}
+    assert result["subsystems"]["updates"] == {"status": "ready", "reason_codes": []}
     assert result["data_loss"]["tracked_clients"] == 0
     assert result["data_loss"]["buffer_overflow_drops"] == 0
     assert result["persistence"]["write_error"] is None
@@ -124,6 +126,22 @@ def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_cl
     assert result["startup_phase"] == "gps-speed"
     assert result["startup_error"] == "gpsd unavailable"
     assert result["background_task_failures"] == {"metrics-log": "disk write failed"}
+    assert result["subsystems"]["runtime"] == {
+        "status": "unhealthy",
+        "reason_codes": [
+            "startup_not_ready",
+            "startup_error",
+            "background_task_failures",
+        ],
+    }
+    assert result["subsystems"]["recorder"] == {
+        "status": "unhealthy",
+        "reason_codes": ["persistence_write_error", "persistence_samples_dropped"],
+    }
+    assert result["subsystems"]["post_analysis"] == {
+        "status": "degraded",
+        "reason_codes": ["analyzing_runs_present"],
+    }
     assert result["processing_failure_categories"] == {"compute_all": 2}
     assert result["processing_last_failure"] == "worker pool failed"
     assert result["data_loss"]["affected_clients"] == 1

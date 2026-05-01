@@ -98,6 +98,11 @@ class HealthIngestResponse(BaseModel):
     clients: list[HealthIngestClientResponse] = []
 
 
+class HealthSubsystemResponse(BaseModel):
+    status: Literal["ready", "degraded", "unhealthy"]
+    reason_codes: list[str] = []
+
+
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
@@ -119,6 +124,7 @@ class HealthResponse(BaseModel):
     frame_size_mismatch_count: int
 
     degradation_reasons: list[str]
+    subsystems: dict[str, HealthSubsystemResponse] = {}
     data_loss: HealthDataLossResponse
     persistence: HealthPersistenceResponse
     intake_stats: HealthIntakeStatsResponse
