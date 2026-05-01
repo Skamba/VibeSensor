@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 
 from _paths import SERVER_ROOT
+from pypdf import PdfReader
 from test_support.core import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
@@ -99,3 +101,38 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
 
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
     assert "(22%)" not in text
+
+
+def test_page_one_does_not_render_support_duration_as_elapsed_runtime() -> None:
+    support_row = ReportLabelValueRow(
+        label="Support",
+        value="263 supporting windows across 65.8 s",
+    )
+    pdf = build_report_pdf(
+        ReportDocument(
+            title="VibeSensor Diagnostic Report",
+            run_id="support-duration-page-one",
+            duration_text="00:20.3",
+            verdict_page=VerdictPageData(
+                suspected_source="Wheel / Tire",
+                inspect_first="Front-Left",
+                action_status="Action-ready",
+                reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
+                dominant_corner="Front-Left",
+                runner_up_corner="Front-Right",
+                dominance_ratio_label="2.8x stronger",
+                location_confidence="Strong",
+                coverage_label="4 of 4 expected positions stayed connected.",
+                proof_snapshot_rows=(support_row,),
+            ),
+            appendix_c=AppendixCData(evidence_snapshot_rows=[support_row]),
+            next_steps=[NextStep(action="Check Front-Left wheel and tire first.")],
+        )
+    )
+    reader = PdfReader(BytesIO(pdf))
+    page_one_text = " ".join((reader.pages[0].extract_text() or "").split()).lower()
+    all_text = " ".join((page.extract_text() or "") for page in reader.pages).lower()
+
+    assert "00:20.3" in page_one_text
+    assert "supporting windows across 65.8 s" not in page_one_text
+    assert "263 supporting windows across 65.8 s" in all_text
