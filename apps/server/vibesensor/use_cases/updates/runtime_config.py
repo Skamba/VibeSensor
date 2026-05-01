@@ -7,6 +7,7 @@ from pathlib import Path
 
 from vibesensor.shared.process_settings import (
     DEFAULT_UPDATE_ROLLBACK_DIR,
+    load_bootstrap_env_settings,
     load_update_env_settings,
 )
 from vibesensor.use_cases.updates.installer import UpdateInstallerConfig
@@ -56,6 +57,7 @@ def resolve_update_runtime_config(
     wifi_ifname: str,
 ) -> UpdateRuntimeConfig:
     env_settings = load_update_env_settings()
+    bootstrap_settings = load_bootstrap_env_settings()
     repo = Path(repo_path).expanduser() if repo_path else env_settings.repo_path
     resolved_rollback_dir = (
         Path(rollback_dir).expanduser() if rollback_dir else env_settings.rollback_dir
@@ -72,6 +74,8 @@ def resolve_update_runtime_config(
             repo=repo,
             rollback_dir=resolved_rollback_dir,
             reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+            smoke_config_path=bootstrap_settings.config_path
+            or (repo / "apps" / "server" / "config.pi.yaml"),
         ),
         validation_config=UpdateValidationConfig(
             rollback_dir=resolved_rollback_dir,
