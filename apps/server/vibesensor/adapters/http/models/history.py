@@ -201,6 +201,7 @@ class HistoryRunResponse(_StrictBase):
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
     finalization_stages: list[HistoryFinalizationStageResponse] | None = None
     raw_capture_quality: HistoryRawCaptureQualityResponse | None = None
+    fallback_reasons: list[str] | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):

@@ -5004,6 +5004,20 @@
             ],
             "title": "Error Message"
           },
+          "fallback_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reasons"
+          },
           "finalization_stages": {
             "anyOf": [
               {
