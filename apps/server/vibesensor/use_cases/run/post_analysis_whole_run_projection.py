@@ -5,6 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain import CarOrderReferenceStatus
+from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+    REPORT_FALLBACK_REASONS_METADATA_KEY,
+    derive_report_fallback_reasons,
+)
+from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
 from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     normalize_run_context_warnings,
@@ -323,6 +328,27 @@ def append_whole_run_diagnosis_summary_metadata(
         payload["analysis_metadata"] = analysis_metadata
     analysis_metadata["whole_run_diagnosis_summaries_available"] = True
     analysis_metadata["whole_run_diagnosis_summary_count"] = len(diagnosis_summaries)
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def refresh_report_fallback_metadata(summary: PersistedAnalysis) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    normalized = report_summary_from_mapping(payload)
+    fallback_reasons = derive_report_fallback_reasons(
+        analysis_metadata,
+        has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
+        has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
+        has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
+        has_whole_run_diagnosis_summaries=bool(normalized.whole_run_diagnosis_summaries),
+    )
+    if fallback_reasons:
+        analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(fallback_reasons)
+    else:
+        analysis_metadata.pop(REPORT_FALLBACK_REASONS_METADATA_KEY, None)
     return PersistedAnalysis.from_json_object(payload)
 
 

@@ -98,6 +98,7 @@ from vibesensor.use_cases.run.post_analysis_whole_run_projection import (
     build_diagnosis_summary_rows,
     ranked_whole_run_order_summaries,
     ranked_whole_run_spatial_summaries,
+    refresh_report_fallback_metadata,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -968,7 +969,7 @@ def run_build_report_facts_stage(
     if stored_artifact_manifest is not None:
         summary = append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
 
-    return summary, _make_stage_result(
+    return refresh_report_fallback_metadata(summary), _make_stage_result(
         stage_name=stage_name,
         status="ok",
         stage_start=stage_start,

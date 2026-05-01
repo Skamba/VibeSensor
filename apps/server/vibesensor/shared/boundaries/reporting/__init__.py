@@ -12,6 +12,11 @@ from .facts import (
     ReportRunFacts,
     prepare_report_facts,
 )
+from .fallback_reasons import (
+    REPORT_FALLBACK_REASON_VALUES,
+    REPORT_FALLBACK_REASONS_METADATA_KEY,
+    ReportFallbackReason,
+)
 from .findings import FindingPresentation, PreparedReportFindings
 from .input import PreparedReportInput, validate_prepared_report_input
 
@@ -48,10 +53,13 @@ __all__ = [
     "PreparedReportFindings",
     "PreparedReportInput",
     "PrimaryReportFacts",
+    "REPORT_FALLBACK_REASONS_METADATA_KEY",
+    "REPORT_FALLBACK_REASON_VALUES",
     "ReportConfidenceFacts",
     "ReportContextFacts",
     "ReportCoverageSummary",
     "ReportDecisionFacts",
+    "ReportFallbackReason",
     "ReportOrderHarmonicEvidenceSummary",
     "ReportOrderTracePhaseSupport",
     "ReportOrderTraceSupportInterval",
