@@ -166,8 +166,12 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
     assert prepared.report_facts.confidence.signal_keys == ("raw_backed",)
     assert prepared.report_facts.confidence.caveat_keys == ("close_alternative",)
     assert any(
-        "12" in row.value and "6.0" in row.value
+        "12" in row.value and "6.0" not in row.value
         for row in document.verdict_page.proof_snapshot_rows
+    )
+    assert any(
+        "12" in row.value and "6.0" in row.value
+        for row in document.appendix_c.evidence_snapshot_rows
     )
     assert any(
         "18.2" in row.value and "18.6" in row.value

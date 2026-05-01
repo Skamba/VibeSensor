@@ -71,8 +71,10 @@ class VerdictPageData:
     reason_sentence: str | None = None
     dominant_corner: str | None = None
     runner_up_corner: str | None = None
+    dominance_ratio_label: str | None = None
     location_confidence: str | None = None
     coverage_label: str | None = None
+    fallback_path: str | None = None
     also_consider: str | None = None
     proof_summary: str | None = None
     proof_caveat: str | None = None

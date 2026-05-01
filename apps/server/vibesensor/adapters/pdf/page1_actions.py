@@ -12,8 +12,15 @@ from vibesensor.adapters.pdf.action_cards import (
     draw_compact_action_card,
     estimate_compact_action_card_height,
 )
-from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
-from vibesensor.adapters.pdf.pdf_style import FS_BODY, FS_SMALL, PANEL_HEADER_H, SUB_CLR
+from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
+from vibesensor.adapters.pdf.pdf_style import (
+    FONT_B,
+    FS_BODY,
+    FS_SMALL,
+    PANEL_HEADER_H,
+    SUB_CLR,
+    TEXT_CLR,
+)
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
 
 if TYPE_CHECKING:
@@ -32,27 +39,24 @@ def estimate_actions_block_height(
 
     content_w = w - 8 * mm
     content_h = 0.0
+    fallback = plan.verdict_page.fallback_path
     if not plan.next_steps:
         content_h += _measure_text_height(tr("NO_NEXT_STEPS"), w=content_w, size=FS_BODY)
     else:
-        shown_steps = plan.next_steps[:2]
-        for index, step in enumerate(shown_steps):
-            content_h += estimate_compact_action_card_height(
-                title=step.action,
-                why=None,
-                width=content_w,
-            )
-            if index < len(shown_steps) - 1:
-                content_h += 2.5 * mm
-        if len(plan.next_steps) > len(shown_steps):
-            content_h += 0.5 * mm + _measure_text_height(
-                tr("REPORT_ACTIONS_PAGE1_MORE"),
+        content_h += estimate_compact_action_card_height(
+            title=plan.next_steps[0].action,
+            why=None,
+            width=content_w,
+        )
+        if fallback:
+            content_h += 7.0 * mm + _measure_text_height(
+                fallback,
                 w=content_w,
-                size=FS_SMALL,
-                leading=FS_SMALL + 1.0,
+                size=FS_BODY,
+                leading=FS_BODY + 1.0,
                 max_lines=2,
             )
-    return float(max(38 * mm, PANEL_HEADER_H + 2 * mm + content_h + 4 * mm))
+    return float(max(30 * mm, PANEL_HEADER_H + 2 * mm + content_h + 4 * mm))
 
 
 def draw_actions_block(
@@ -76,34 +80,31 @@ def draw_actions_block(
         )
         return
 
-    row_y = inner_y
-    shown_steps = plan.next_steps[:2]
-    for index, step in enumerate(shown_steps, start=1):
-        estimated_h = estimate_compact_action_card_height(
-            title=step.action,
-            why=None,
-            width=w - 8 * mm,
-        )
-        if row_y - estimated_h < y + 4 * mm:
-            break
-        row_y = draw_compact_action_card(
-            c,
-            index=index,
-            title=step.action,
-            why=None,
-            x=inner_x,
-            y_top=row_y,
-            w=w - 8 * mm,
-        )
-    if len(plan.next_steps) > len(shown_steps) and row_y > y + 10 * mm:
+    row_y = draw_compact_action_card(
+        c,
+        index=1,
+        title=plan.next_steps[0].action,
+        why=None,
+        x=inner_x,
+        y_top=inner_y,
+        w=w - 8 * mm,
+    )
+    fallback = plan.verdict_page.fallback_path
+    if fallback and row_y > y + 7 * mm:
+        c.setStrokeColor(_hex("#dcdfe6"))
+        c.line(inner_x, row_y - 0.8 * mm, inner_x + w - 8 * mm, row_y - 0.8 * mm)
+        c.setFillColor(_hex(TEXT_CLR))
+        c.setFont(FONT_B, FS_SMALL)
+        c.drawString(inner_x, row_y - 4.1 * mm, tr("REPORT_PAGE1_IF_CLEAN_LABEL"))
         _draw_text(
             c,
             inner_x,
-            row_y - 0.5 * mm,
+            row_y - 8.1 * mm,
             w - 8 * mm,
-            tr("REPORT_ACTIONS_PAGE1_MORE"),
-            size=FS_SMALL,
-            color=SUB_CLR,
-            leading=FS_SMALL + 1.0,
+            fallback,
+            font=FONT_B,
+            size=FS_BODY,
+            color=TEXT_CLR,
+            leading=FS_BODY + 1.0,
             max_lines=2,
         )
