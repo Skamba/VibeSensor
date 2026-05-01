@@ -142,6 +142,22 @@ class HistoryFinalizationStageResponse(BaseModel):
     diagnostic_context: ApiPayloadObject = Field(default_factory=dict)
 
 
+class HistoryRawCaptureQualityResponse(BaseModel):
+    """Response body describing raw-capture loss policy for one run."""
+
+    severity: Literal["ok", "warn", "degraded", "fatal"]
+    reason: str
+    gate_whole_run: bool
+    affected_sensor_count: int = 0
+    queue_overflow_sensor_count: int = 0
+    total_chunk_count: int = 0
+    total_loss_event_count: int = 0
+    total_dropped_chunk_count: int = 0
+    queue_overflow_chunk_count: int = 0
+    max_sensor_drop_ratio: float = 0.0
+    max_sensor_loss_events_per_minute: float = 0.0
+
+
 class HistoryListEntryResponse(BaseModel):
     """Response body for a single history-run list row."""
 
@@ -184,6 +200,7 @@ class HistoryRunResponse(_StrictBase):
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
     finalization_stages: list[HistoryFinalizationStageResponse] | None = None
+    raw_capture_quality: HistoryRawCaptureQualityResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):

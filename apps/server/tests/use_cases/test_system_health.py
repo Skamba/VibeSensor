@@ -204,6 +204,7 @@ class TestBuildSystemHealthSnapshotOk:
 
         assert result["ingest"]["udp"]["max_packet_queue_age_ms"] == 20.0
         assert result["ingest"]["raw_capture"]["queue_max_depth"] == 3
+        assert result["ingest"]["raw_capture"]["pressure_state"] == "warn"
         assert result["ingest"]["ws_publish"]["active_connections"] == 1
         assert result["ingest"]["ws_publish"]["max_publish_duration_ms"] == 12.0
         assert result["ingest"]["clients"] == [
@@ -314,6 +315,26 @@ class TestBuildSystemHealthSnapshotDegraded:
         assert result["db_engine_unhealthy"] is True
         assert result["db_engine_unhealthy_reason"] == "shutdown_timeout"
         assert "db_engine_unhealthy" in result["degradation_reasons"]
+
+    def test_raw_capture_queue_overflow_is_degraded(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = _ready_health_state()
+        registry, run_recorder = _make_deps()
+        ingest_diagnostics = IngestDiagnosticsCollector()
+        ingest_diagnostics.note_raw_capture_drop(depth=0)
+
+        result = _snapshot(
+            loop_state,
+            health_state,
+            registry,
+            run_recorder,
+            ingest_diagnostics=ingest_diagnostics,
+        )
+
+        assert result["status"] == "warn"
+        assert result["ingest"]["raw_capture"]["pressure_state"] == "warn"
+        assert result["ingest"]["raw_capture"]["dropped_chunks"] == 1
+        assert "raw_capture_dropped_chunks" in result["degradation_reasons"]
 
 
 class TestBuildSystemHealthSnapshotWarn:

@@ -8,8 +8,8 @@ files:
     max_lines: 2612
     reason: Static guard collection retained as one entrypoint until guard modules are split.
   apps/server/vibesensor/use_cases/run/post_analysis_executor.py:
-    max_lines: 1246
-    reason: Whole-run post-analysis orchestration retained until stage runner extraction.
+    max_lines: 1250
+    reason: Whole-run post-analysis orchestration retained until stage runner extraction; raw-capture quality gating is centralized but still adds stage wiring.
   apps/server/tests/adapters/pdf/test_report_document_projection.py:
     max_lines: 1217
     reason: High-density report projection regression matrix kept together by document-output seam.
@@ -24,8 +24,8 @@ functions:
     max_lines: 281
     reason: Contract sync and UI validation entrypoint guards stay together until workflow/config checks are split.
   apps/server/vibesensor/use_cases/run/post_analysis_executor.py::run_whole_run_pipeline_stages:
-    max_lines: 228
-    reason: Whole-run stage orchestration retained until table-driven stage runner extraction.
+    max_lines: 229
+    reason: Whole-run stage orchestration retained until table-driven stage runner extraction; raw-capture quality gating is kept at the stage prerequisite seam.
   apps/server/vibesensor/adapters/pdf/pdf_appendices/appendix_c.py::_appendix_c_page:
     max_lines: 367
     reason: Dense appendix drawing routine retained until PDF rendering is split into smaller layout helpers.

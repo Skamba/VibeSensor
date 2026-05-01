@@ -43,6 +43,7 @@ class RawCaptureQueueHealthSnapshot(TypedDict):
     queue_max_depth: int
     dropped_chunks: int
     write_error_chunks: int
+    pressure_state: Literal["ok", "warn", "degraded"]
 
 
 class WsPublishHealthSnapshot(TypedDict):

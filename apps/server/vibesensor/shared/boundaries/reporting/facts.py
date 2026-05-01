@@ -477,6 +477,12 @@ def _whole_run_diagnosis_fallback_reason(
     analysis_metadata = payload.get("analysis_metadata")
     if not isinstance(analysis_metadata, Mapping):
         return "analysis metadata missing; replayed summary-era evidence"
+    loss_policy_severity = text_or_none(analysis_metadata.get("raw_capture_loss_policy_severity"))
+    if loss_policy_severity == "fatal":
+        return (
+            text_or_none(analysis_metadata.get("raw_capture_loss_policy_reason"))
+            or "raw_capture_loss_policy_fatal"
+        )
     raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
     raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
     if raw_capture_mode == "summary_only" or raw_backed_sample_count <= 0:
