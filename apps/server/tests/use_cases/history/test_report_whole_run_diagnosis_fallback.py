@@ -116,7 +116,8 @@ def test_prepare_persisted_report_input_builds_summary_only_fallback_diagnosis_s
     assert len(diagnosis) == 1
     assert diagnosis[0].data_basis == "summary_only"
     assert diagnosis[0].uses_summary_fallback is True
-    assert diagnosis[0].fallback_reason == "summary-only legacy confidence"
+    assert diagnosis[0].fallback_reason == "legacy_summary_only"
+    assert prepared.report_facts.fallback_reasons == ("legacy_summary_only",)
     assert {factor.factor_key for factor in diagnosis[0].counterevidence_factors} >= {
         "summary_only",
         "close_alternative",
@@ -198,7 +199,11 @@ def test_prepare_persisted_report_input_uses_fatal_raw_capture_loss_policy_reaso
     diagnosis = prepared.report_facts.whole_run_diagnosis_summaries
 
     assert len(diagnosis) == 1
-    assert diagnosis[0].fallback_reason == "raw_capture_queue_overflow_fatal"
+    assert diagnosis[0].fallback_reason == "raw_capture_loss_exceeded"
+    assert prepared.report_facts.fallback_reasons == (
+        "raw_capture_loss_exceeded",
+        "whole_run_evidence_missing",
+    )
 
 
 def test_prepare_persisted_report_input_builds_raw_backed_legacy_fallback_diagnosis_summary() -> (
@@ -216,10 +221,8 @@ def test_prepare_persisted_report_input_builds_raw_backed_legacy_fallback_diagno
     assert len(diagnosis) == 1
     assert diagnosis[0].data_basis == "raw_backed"
     assert diagnosis[0].uses_summary_fallback is True
-    assert (
-        diagnosis[0].fallback_reason
-        == "whole-run artifacts unavailable; replayed summary-era evidence"
-    )
+    assert diagnosis[0].fallback_reason == "whole_run_evidence_missing"
+    assert prepared.report_facts.fallback_reasons == ("whole_run_evidence_missing",)
     assert diagnosis[0].location_proof_basis == "supporting_windows_raw_backed"
     assert "summary_only" not in {
         factor.factor_key for factor in diagnosis[0].counterevidence_factors
@@ -267,10 +270,8 @@ def test_prepare_persisted_report_input_marks_partial_whole_run_inputs_as_incomp
 
     assert len(diagnosis) == 1
     assert diagnosis[0].uses_summary_fallback is True
-    assert (
-        diagnosis[0].fallback_reason
-        == "whole-run diagnosis inputs incomplete; replayed summary-era evidence"
-    )
+    assert diagnosis[0].fallback_reason == "whole_run_evidence_incomplete"
+    assert prepared.report_facts.fallback_reasons == ("whole_run_evidence_incomplete",)
     assert diagnosis[0].exemplar_references[0].kind == "whole_run_context_interval"
     assert diagnosis[0].exemplar_references[0].context_segment_index == 0
 
@@ -317,3 +318,22 @@ def test_prepare_persisted_report_input_keeps_persisted_whole_run_diagnosis_summ
     assert len(diagnosis) == 1
     assert diagnosis[0].diagnosis_key == "wheel_1x"
     assert diagnosis[0].uses_summary_fallback is False
+    assert prepared.report_facts.fallback_reasons == ()
+
+
+def test_prepare_persisted_report_input_marks_sidecar_summary_mismatch() -> None:
+    prepared = _prepared_report_input(
+        analysis_metadata={
+            "raw_backed_sample_count": 48,
+            "raw_capture_mode": "raw_backed",
+            "whole_run_diagnosis_summaries_available": True,
+            "whole_run_diagnosis_summary_count": 1,
+        },
+    )
+
+    diagnosis = prepared.report_facts.whole_run_diagnosis_summaries
+
+    assert len(diagnosis) == 1
+    assert diagnosis[0].uses_summary_fallback is True
+    assert diagnosis[0].fallback_reason == "sidecar_summary_mismatch"
+    assert prepared.report_facts.fallback_reasons == ("sidecar_summary_mismatch",)

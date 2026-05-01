@@ -11,6 +11,7 @@ from vibesensor.shared.types.whole_run_analysis import (
 from vibesensor.use_cases.run.post_analysis_whole_run_projection import (
     append_run_context_warnings,
     append_whole_run_analysis_metadata,
+    refresh_report_fallback_metadata,
 )
 
 
@@ -108,3 +109,39 @@ def test_append_run_context_warnings_preserves_existing_warning_rows() -> None:
             "detail": "Incomplete alignment",
         },
     ]
+
+
+def test_refresh_report_fallback_metadata_clears_reason_when_diagnosis_summary_exists() -> None:
+    summary = make_persisted_analysis(
+        {
+            "run_id": "run-1",
+            "analysis_metadata": {
+                "raw_capture_mode": "raw_backed",
+                "raw_backed_sample_count": 24,
+                "fallback_reasons": ["whole_run_evidence_missing"],
+                "whole_run_diagnosis_summaries_available": True,
+                "whole_run_diagnosis_summary_count": 1,
+            },
+            "whole_run_diagnosis_summaries": [
+                {
+                    "diagnosis_key": "wheel_1x",
+                    "suspected_source": "wheel/tire",
+                    "rank": 1,
+                    "data_basis": "raw_backed",
+                    "ambiguous_diagnosis": False,
+                    "ambiguous_location": False,
+                    "suspicious": False,
+                    "weak_spatial_separation": False,
+                    "has_reference_gap": False,
+                    "uses_summary_fallback": False,
+                    "exemplar_references": [],
+                    "support_factors": [],
+                    "counterevidence_factors": [],
+                }
+            ],
+        }
+    )
+
+    result = refresh_report_fallback_metadata(summary).to_json_object()
+
+    assert "fallback_reasons" not in result["analysis_metadata"]
