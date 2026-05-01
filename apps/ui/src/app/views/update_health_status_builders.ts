@@ -27,6 +27,14 @@ const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
     "settings.update.health.reason.persistence_write_error",
 };
 
+const SUBSYSTEM_STATUS_RANK: Readonly<
+  Record<HealthStatusPayload["subsystems"][string]["status"], number>
+> = {
+  ready: 0,
+  degraded: 1,
+  unhealthy: 2,
+};
+
 function formatHealthReason(
   reason: string,
   t: (key: string, vars?: Record<string, unknown>) => string,
@@ -37,6 +45,43 @@ function formatHealthReason(
   }
   const key = HEALTH_REASON_KEYS[reason];
   return key ? t(key) : reason;
+}
+
+function formatSubsystemName(name: string): string {
+  return name.replaceAll("_", " ");
+}
+
+function buildHealthSubsystemRows(
+  health: HealthStatusPayload,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): UpdateStatusRowModel[] {
+  const affectedSubsystems = Object.entries(health.subsystems)
+    .filter(([, subsystem]) => subsystem.status !== "ready")
+    .sort(
+      ([leftName, left], [rightName, right]) =>
+        SUBSYSTEM_STATUS_RANK[right.status] -
+          SUBSYSTEM_STATUS_RANK[left.status] ||
+        leftName.localeCompare(rightName),
+    );
+  if (!affectedSubsystems.length) {
+    return [];
+  }
+  return [
+    buildStatusRow(
+      t("settings.update.health.subsystems"),
+      affectedSubsystems
+        .map(([name, subsystem]) => {
+          const status = t(
+            `settings.update.health.subsystem_state.${subsystem.status}`,
+          );
+          const reasons = subsystem.reason_codes.length
+            ? ` (${subsystem.reason_codes.join(", ")})`
+            : "";
+          return `${formatSubsystemName(name)}: ${status}${reasons}`;
+        })
+        .join("; "),
+    ),
+  ];
 }
 
 function buildHealthSummaryRows(
@@ -191,6 +236,7 @@ export function buildUpdateHealthSectionModel(
     badge: buildHealthBadge(health, deps.t),
     rows: [
       ...buildHealthSummaryRows(health, deps.t),
+      ...buildHealthSubsystemRows(health, deps.t),
       ...buildHealthDataLossRows(health, deps.t),
       ...buildHealthPersistenceRows(health, deps.t),
     ],

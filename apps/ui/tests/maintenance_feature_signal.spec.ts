@@ -692,6 +692,13 @@ async function runUpdateDegradedHealthBlocksStart(): Promise<void> {
           ...healthy,
           status: "degraded",
           degradation_reasons: ["persistence_write_error"],
+          subsystems: {
+            ...healthy.subsystems,
+            recorder: {
+              status: "unhealthy",
+              reason_codes: ["persistence_write_error"],
+            },
+          },
           persistence: {
             ...healthy.persistence,
             write_error: "database locked",
@@ -710,6 +717,14 @@ async function runUpdateDegradedHealthBlocksStart(): Promise<void> {
       assertContains(
         deps.updateReadinessSummary.innerHTML,
         "settings.update.readiness.item.health_blocked",
+      );
+      assertContains(
+        deps.els.updateOverviewPanel.innerHTML,
+        "settings.update.health.subsystems",
+      );
+      assertContains(
+        deps.els.updateOverviewPanel.innerHTML,
+        "recorder: settings.update.health.subsystem_state.unhealthy (persistence_write_error)",
       );
       assert.equal(deps.updateStartBtn.disabled, true);
     } finally {
