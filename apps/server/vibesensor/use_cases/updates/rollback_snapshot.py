@@ -22,12 +22,26 @@ _ROLLBACK_BACKUP_WHEEL_FILE = ".rollback_snapshot.previous.whl"
 class _RollbackSnapshotMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     version: str = ""
     sha256: str = ""
+    config_path: str = ""
+    repo_path: str = ""
+    static_assets_hash: str = ""
+    static_build_source_hash: str = ""
+    static_build_commit: str = ""
+    assets_verified: bool = False
+    has_packaged_static: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class RollbackSnapshotMetadata:
     version: str
     sha256: str
+    config_path: str = ""
+    repo_path: str = ""
+    static_assets_hash: str = ""
+    static_build_source_hash: str = ""
+    static_build_commit: str = ""
+    assets_verified: bool = False
+    has_packaged_static: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +60,17 @@ class RollbackSnapshotPromotion:
 def _rollback_snapshot_metadata_to_json(metadata: RollbackSnapshotMetadata) -> bytes:
     return (
         msgspec.json.encode(
-            _RollbackSnapshotMetadataRecord(version=metadata.version, sha256=metadata.sha256)
+            _RollbackSnapshotMetadataRecord(
+                version=metadata.version,
+                sha256=metadata.sha256,
+                config_path=metadata.config_path,
+                repo_path=metadata.repo_path,
+                static_assets_hash=metadata.static_assets_hash,
+                static_build_source_hash=metadata.static_build_source_hash,
+                static_build_commit=metadata.static_build_commit,
+                assets_verified=metadata.assets_verified,
+                has_packaged_static=metadata.has_packaged_static,
+            )
         )
         + b"\n"
     )
@@ -54,7 +78,7 @@ def _rollback_snapshot_metadata_to_json(metadata: RollbackSnapshotMetadata) -> b
 
 def _rollback_snapshot_metadata_from_json(raw: bytes | str) -> RollbackSnapshotMetadata:
     record = _decode_rollback_snapshot_metadata_record(raw)
-    return RollbackSnapshotMetadata(version=record.version, sha256=record.sha256)
+    return _rollback_snapshot_metadata_from_record(record)
 
 
 def _decode_rollback_snapshot_metadata_record(raw: bytes | str) -> _RollbackSnapshotMetadataRecord:
@@ -73,11 +97,36 @@ def _rollback_snapshot_metadata_record_from_object(
     return _RollbackSnapshotMetadataRecord(
         version=_rollback_snapshot_metadata_text(payload.get("version")),
         sha256=_rollback_snapshot_metadata_text(payload.get("sha256")),
+        config_path=_rollback_snapshot_metadata_text(payload.get("config_path")),
+        repo_path=_rollback_snapshot_metadata_text(payload.get("repo_path")),
+        static_assets_hash=_rollback_snapshot_metadata_text(payload.get("static_assets_hash")),
+        static_build_source_hash=_rollback_snapshot_metadata_text(
+            payload.get("static_build_source_hash")
+        ),
+        static_build_commit=_rollback_snapshot_metadata_text(payload.get("static_build_commit")),
+        assets_verified=bool(payload.get("assets_verified")),
+        has_packaged_static=bool(payload.get("has_packaged_static")),
     )
 
 
 def _rollback_snapshot_metadata_text(value: object) -> str:
     return str(value or "")
+
+
+def _rollback_snapshot_metadata_from_record(
+    record: _RollbackSnapshotMetadataRecord,
+) -> RollbackSnapshotMetadata:
+    return RollbackSnapshotMetadata(
+        version=record.version,
+        sha256=record.sha256,
+        config_path=record.config_path,
+        repo_path=record.repo_path,
+        static_assets_hash=record.static_assets_hash,
+        static_build_source_hash=record.static_build_source_hash,
+        static_build_commit=record.static_build_commit,
+        assets_verified=record.assets_verified,
+        has_packaged_static=record.has_packaged_static,
+    )
 
 
 class RollbackSnapshotStore:

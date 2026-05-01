@@ -6,12 +6,14 @@ import tempfile
 from pathlib import Path
 
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
+from vibesensor.use_cases.updates.models import UpdateRuntimeDetails
 from vibesensor.use_cases.updates.rollback_snapshot import (
     RollbackSnapshotMetadata,
     RollbackSnapshotStore,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
 
@@ -20,6 +22,7 @@ class RollbackSnapshotBuilder:
 
     __slots__ = (
         "_commands",
+        "_config_path",
         "_repo",
         "_rollback_dir",
         "_rollback_snapshots",
@@ -34,12 +37,14 @@ class RollbackSnapshotBuilder:
         repo: Path,
         rollback_dir: Path,
         rollback_snapshots: RollbackSnapshotStore,
+        config_path: Path | None,
     ) -> None:
         self._commands = commands
         self._status = status
         self._repo = repo
         self._rollback_dir = rollback_dir
         self._rollback_snapshots = rollback_snapshots
+        self._config_path = config_path
 
     def _existing_snapshot_wheel(self, *, current_version: str) -> Path | None:
         snapshot = self._rollback_snapshots.load_snapshot(report_issues=False)
@@ -166,6 +171,7 @@ class RollbackSnapshotBuilder:
         *,
         rollback_wheel: Path,
         current_version: str,
+        runtime_details: UpdateRuntimeDetails,
     ) -> bool:
         from vibesensor.use_cases.updates.artifact_validation import sha256_file
 
@@ -176,6 +182,13 @@ class RollbackSnapshotBuilder:
                 RollbackSnapshotMetadata(
                     version=current_version,
                     sha256=rollback_sha256,
+                    config_path=str(self._config_path) if self._config_path else "",
+                    repo_path=str(self._repo),
+                    static_assets_hash=runtime_details.static_assets_hash,
+                    static_build_source_hash=runtime_details.static_build_source_hash,
+                    static_build_commit=runtime_details.static_build_commit,
+                    assets_verified=runtime_details.assets_verified,
+                    has_packaged_static=runtime_details.has_packaged_static,
                 ),
             )
         except OSError as exc:
@@ -198,11 +211,14 @@ class RollbackSnapshotBuilder:
         venv_python = reinstall_python_executable(self._repo)
         from vibesensor import __version__ as current_version
 
+        runtime_details = collect_runtime_details(self._repo)
+
         self._status.log(f"Creating rollback snapshot (version={current_version})")
         if existing_wheel := self._existing_snapshot_wheel(current_version=current_version):
             return self._write_rollback_snapshot(
                 rollback_wheel=existing_wheel,
                 current_version=current_version,
+                runtime_details=runtime_details,
             )
         with tempfile.TemporaryDirectory(
             prefix="vibesensor-rollback-stage-",
@@ -225,4 +241,5 @@ class RollbackSnapshotBuilder:
             return self._write_rollback_snapshot(
                 rollback_wheel=rollback_wheel,
                 current_version=current_version,
+                runtime_details=runtime_details,
             )

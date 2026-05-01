@@ -6,6 +6,11 @@ import logging
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
+from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
+from vibesensor.use_cases.updates.rollback_verification import (
+    RollbackDeploymentVerifier,
+    RollbackVerificationConfig,
+)
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.runtime_config import resolve_update_runtime_config
 from vibesensor.use_cases.updates.runtime_core import build_update_runtime_core
@@ -43,11 +48,21 @@ def build_update_manager(
         repo=config.repo,
         state_store=active_state_store,
     )
+    rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, core.status)
+    rollback_verifier = RollbackDeploymentVerifier(
+        status=core.status,
+        config=RollbackVerificationConfig(
+            repo=config.repo,
+            source_config=config.installer_config.smoke_config_path,
+        ),
+    )
     transport = build_update_transport_runtime(
         runner=active_runner,
         commands=core.commands,
         status=core.status,
         reporter=core.reporter,
+        rollback_snapshots=rollback_snapshots,
+        rollback_verifier=rollback_verifier,
         wifi_config=config.wifi_config,
         usb_internet_service=usb_internet_service,
         logger=LOGGER,
