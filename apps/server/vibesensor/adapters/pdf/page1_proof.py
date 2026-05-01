@@ -12,15 +12,10 @@ from vibesensor.adapters.pdf.page1_common import draw_label_value
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
-    FONT_B,
     FS_BODY,
     FS_H2,
-    FS_SMALL,
     PANEL_HEADER_H,
-    SUB_CLR,
-    TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
 from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
 
 if TYPE_CHECKING:
@@ -43,7 +38,7 @@ def draw_proof_block(
     _draw_panel(c, x, y, w, h, verdict.proof_panel_title or tr("REPORT_PROOF_PANEL_TITLE"))
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
-    diagram_w = w * 0.44
+    diagram_w = w * 0.38
     left_x = inner_x
     left_w = diagram_w - 2 * mm
     left_bottom = y + 7 * mm
@@ -69,32 +64,6 @@ def draw_proof_block(
     text_x = x + diagram_w + 5 * mm
     text_w = w - diagram_w - 9 * mm
     text_y = inner_y
-    text_y = (
-        _draw_text(
-            c,
-            text_x,
-            text_y,
-            text_w,
-            verdict.proof_summary or tr("UNKNOWN"),
-            font=FONT_B,
-            size=FS_BODY,
-            color=TEXT_CLR,
-            leading=FS_BODY + 1.4,
-            max_lines=4,
-        )
-        - 1.5 * mm
-    )
-    for snapshot in verdict.proof_snapshot_rows[:3]:
-        text_y = draw_label_value(
-            c,
-            x=text_x,
-            y=text_y,
-            width=text_w,
-            label=snapshot.label,
-            value=snapshot.value or tr("UNKNOWN"),
-            value_size=FS_BODY,
-            max_lines=3,
-        )
     text_y = draw_label_value(
         c,
         x=text_x,
@@ -114,21 +83,16 @@ def draw_proof_block(
             value=verdict.runner_up_corner,
             value_size=FS_BODY,
         )
-    location_confidence = verdict.location_confidence or tr("UNKNOWN")
-    confidence_value_size = (
-        FS_BODY if len(_wrap_lines(location_confidence, text_w, FS_H2)) > 1 else FS_H2
-    )
-    confidence_max_lines = 3 if confidence_value_size == FS_BODY else 2
-    text_y = draw_label_value(
-        c,
-        x=text_x,
-        y=text_y,
-        width=text_w,
-        label=tr("REPORT_LOCATION_CONFIDENCE_LABEL"),
-        value=location_confidence,
-        value_size=confidence_value_size,
-        max_lines=confidence_max_lines,
-    )
+    if verdict.dominance_ratio_label:
+        text_y = draw_label_value(
+            c,
+            x=text_x,
+            y=text_y,
+            width=text_w,
+            label=tr("REPORT_DOMINANCE_RATIO_LABEL"),
+            value=verdict.dominance_ratio_label,
+            value_size=FS_BODY,
+        )
     text_y = draw_label_value(
         c,
         x=text_x,
@@ -139,27 +103,6 @@ def draw_proof_block(
         value_size=FS_BODY,
         max_lines=3,
     )
-    if verdict.also_consider:
-        text_y = draw_label_value(
-            c,
-            x=text_x,
-            y=text_y,
-            width=text_w,
-            label=tr("REPORT_ALTERNATIVE_SOURCE_LABEL"),
-            value=verdict.also_consider,
-            value_size=FS_BODY,
-        )
-    if verdict.proof_caveat:
-        _draw_text(
-            c,
-            text_x,
-            text_y - 1.5 * mm,
-            text_w,
-            verdict.proof_caveat,
-            size=FS_SMALL,
-            color=SUB_CLR,
-            leading=FS_SMALL + 1.2,
-        )
 
 
 def draw_timeline_block(

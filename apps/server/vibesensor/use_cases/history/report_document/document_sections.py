@@ -76,6 +76,7 @@ def build_report_document_sections(
             tr=context.tr,
         )
     )
+    verdict_page = build_verdict_page(context=context, appendix_a=appendix_a)
     return ReportDocumentSections(
         system_cards=tuple(
             build_system_cards(
@@ -106,7 +107,7 @@ def build_report_document_sections(
                 tr=context.tr,
             )
         ),
-        verdict_page=build_verdict_page(context=context),
+        verdict_page=verdict_page,
         appendix_a=appendix_a,
         appendix_b=appendix_b,
         appendix_c=build_appendix_c_data(

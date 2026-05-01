@@ -187,7 +187,7 @@ def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
     ]
     assert "Medium (" in data.verdict_page.proof_snapshot_rows[0].value
     assert "Raw-backed replay" in data.verdict_page.proof_snapshot_rows[1].value
-    assert data.verdict_page.proof_snapshot_rows[2].value == "3 supporting windows across 1.5 s"
+    assert data.verdict_page.proof_snapshot_rows[2].value == "3 supporting windows"
     assert data.verdict_page.proof_snapshot_rows[3].value == "15.1-15.4 Hz matched band"
     assert [row.label for row in data.appendix_c.evidence_snapshot_rows] == [
         "Confidence",
@@ -1107,8 +1107,8 @@ def test_build_report_document_softens_same_corner_wheel_driveline_overlap_wordi
 
     data = build_report_document(prepare_report_input(summary))
 
-    assert data.verdict_page.also_consider is not None
-    assert "Driveline" in data.verdict_page.also_consider
+    assert data.verdict_page.also_consider == "Driveline"
+    assert data.verdict_page.fallback_path == "Inspect Driveline next"
     assert data.appendix_a.why_alternative_next is not None
     alternative_reason = data.appendix_a.why_alternative_next.lower()
     assert "wheel and driveline evidence overlap" in alternative_reason

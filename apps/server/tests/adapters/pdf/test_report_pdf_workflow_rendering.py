@@ -31,6 +31,8 @@ from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     RankedCandidateRow,
     ReportDocument,
+    TimelineGraphData,
+    TimelineGraphInterval,
     VerdictPageData,
 )
 from vibesensor.use_cases.history.report_document import build_report_document
@@ -213,7 +215,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
 
     assert "inspect first — moderate confidence" in page_one_text
     assert "what to do next" in page_one_text
-    assert "potential saturation samples detected" in page_one_text
+    assert "potential saturation samples" in page_one_text
     assert "run quality and limits" in text
     assert "frame integrity" in text
 
@@ -274,7 +276,7 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
     )
 
     assert "limited by run context" not in page_one_text
-    assert "speed was not steady during measurement" in page_one_text
+    assert "potential saturation samples" in page_one_text
 
 
 def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> None:
@@ -335,8 +337,95 @@ def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
     assert "action-ready" in text
-    assert "location confidence strong" in text
+    assert "strong" in text
     assert "what to do next" in text
+
+
+def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
+    pdf = build_report_pdf(
+        ReportDocument(
+            title="VibeSensor Diagnostic Report",
+            run_id="decision-first-page-one",
+            verdict_page=VerdictPageData(
+                suspected_source="Wheel / Tire",
+                inspect_first="Front-Left",
+                action_status="Inspect first — moderate confidence",
+                action_status_note="Alternative source still in scope",
+                reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
+                dominant_corner="Front-Left",
+                runner_up_corner="Front-Right",
+                dominance_ratio_label="1.9x stronger",
+                location_confidence="Moderate",
+                coverage_label="4 of 4 expected positions stayed connected.",
+                fallback_path="Inspect Driveline next",
+                timeline_graph=TimelineGraphData(
+                    duration_s=10.0,
+                    speed_ceiling_kmh=80.0,
+                    intervals=(
+                        TimelineGraphInterval(
+                            phase_label="cruise",
+                            start_t_s=0.0,
+                            end_t_s=10.0,
+                            speed_min_kmh=60.0,
+                            speed_max_kmh=80.0,
+                            has_fault_evidence=True,
+                        ),
+                    ),
+                ),
+            ),
+            next_steps=[
+                NextStep(action="Check Front-Left for imbalance or radial/lateral runout.")
+            ],
+        )
+    )
+    page_one_text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+    page_one_lower = page_one_text.lower()
+
+    assert "wheel / tire" in page_one_lower
+    assert "inspect first" in page_one_lower
+    assert "front-left" in page_one_lower
+    assert "what to do next" in page_one_lower
+    assert "if clean" in page_one_lower
+    assert "inspect driveline next" in page_one_lower
+    assert "run timeline" not in page_one_lower
+    assert "detection windows" not in page_one_lower
+    assert "this run gives a sensible first inspection" not in page_one_lower
+    assert "alternative source still in scope" in page_one_lower
+
+
+def test_page_one_long_wheel_action_fits_primary_preview() -> None:
+    pdf = build_report_pdf(
+        ReportDocument(
+            title="VibeSensor Diagnostic Report",
+            run_id="long-action-page-one",
+            verdict_page=VerdictPageData(
+                suspected_source="Wheel / Tire",
+                inspect_first="Front-Left",
+                action_status="Inspect first — moderate confidence",
+                action_status_note="Alternative source still in scope",
+                reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
+                dominant_corner="Front-Left",
+                runner_up_corner="Front-Right",
+                dominance_ratio_label="2.1x stronger",
+                location_confidence="Moderate",
+                coverage_label="4 of 4 expected positions stayed connected.",
+                fallback_path="Inspect Driveline next",
+            ),
+            next_steps=[
+                NextStep(
+                    action=(
+                        "Check Front-Left tire damage, belt shift, flat spots, uneven wear, "
+                        "and pressure mismatch."
+                    )
+                )
+            ],
+        )
+    )
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+
+    assert "Check Front-Left tire damage" in text
+    assert "pressure mismatch" in text
+    assert "uneven wear, or" not in text
 
 
 def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_b() -> None:

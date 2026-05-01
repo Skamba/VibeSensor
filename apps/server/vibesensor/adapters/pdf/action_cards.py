@@ -45,7 +45,7 @@ def estimate_compact_action_card_height(*, title: str, why: str | None, width: f
     """Return the compact page-1 preview card height."""
 
     text_w = width - 14 * mm
-    title_lines = _wrap_lines(title, text_w, FS_BODY)[:2]
+    title_lines = _wrap_lines(title, text_w, FS_BODY)[:3]
     why_lines = _wrap_lines(why or "", text_w, FS_SMALL)[:2] if why else []
     return float(
         max(
@@ -96,7 +96,7 @@ def draw_compact_action_card(
             size=FS_SMALL,
             color=SUB_CLR,
             leading=FS_SMALL + 1.0,
-            max_lines=2,
+            max_lines=3,
         )
     return float(y_top - card_h - 2.5 * mm)
 

@@ -39,7 +39,7 @@ def build_evidence_snapshot_rows(
         ),
         ReportLabelValueRow(
             label=tr("REPORT_SUPPORT_WINDOW_SUMMARY_LABEL"),
-            value=_support_window_text(report_facts, tr=tr),
+            value=_support_window_text(report_facts, compact=compact, tr=tr),
         ),
         ReportLabelValueRow(
             label=tr("REPORT_STABLE_FREQUENCY_LABEL"),
@@ -95,14 +95,19 @@ def _data_basis_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str
     return tr("REPORT_EVIDENCE_BASIS_SUMMARY")
 
 
-def _support_window_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+def _support_window_text(
+    report_facts: PreparedReportFacts,
+    *,
+    compact: bool,
+    tr: Callable[..., str],
+) -> str:
     diagnosis = report_facts.primary_diagnosis
     if diagnosis is not None:
         count = diagnosis.supporting_window_count
         duration_s = diagnosis.supporting_duration_s
         if count is None or count <= 0:
             return tr("REPORT_SUPPORT_WINDOW_SUMMARY_NONE")
-        if duration_s is not None and duration_s > 0:
+        if not compact and duration_s is not None and duration_s > 0:
             return tr(
                 "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
                 count=str(count),
@@ -114,7 +119,7 @@ def _support_window_text(report_facts: PreparedReportFacts, *, tr: Callable[...,
     duration_s = evidence.supporting_duration_s
     if count is None or count <= 0:
         return tr("REPORT_SUPPORT_WINDOW_SUMMARY_NONE")
-    if duration_s is not None and duration_s > 0:
+    if not compact and duration_s is not None and duration_s > 0:
         return tr(
             "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
             count=str(count),
