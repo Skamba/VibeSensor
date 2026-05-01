@@ -16,6 +16,7 @@ const nullableFiniteNumberSchema = v.nullable(finiteNumberSchema);
 const updateStateSchema = v.picklist(["idle", "running", "success", "failed"]);
 const updateTransportSchema = v.picklist(["wifi", "usb_internet"]);
 const healthStatusSchema = v.picklist(["ok", "warn", "degraded"]);
+const rawCapturePressureStateSchema = v.picklist(["ok", "warn", "degraded"]);
 
 const stringMapSchema = v.record(v.string(), v.string());
 const integerMapSchema = v.record(v.string(), integerSchema);
@@ -116,6 +117,7 @@ const healthUdpIngestSchema = v.looseObject({
 
 const healthRawCaptureSchema = v.looseObject({
   dropped_chunks: integerSchema,
+  pressure_state: rawCapturePressureStateSchema,
   queue_depth: integerSchema,
   queue_max_depth: integerSchema,
   write_error_chunks: integerSchema,

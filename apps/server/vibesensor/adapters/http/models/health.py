@@ -65,6 +65,7 @@ class HealthRawCaptureResponse(BaseModel):
     queue_max_depth: int
     dropped_chunks: int
     write_error_chunks: int
+    pressure_state: Literal["ok", "warn", "degraded"] = "ok"
 
 
 class HealthWsPublishResponse(BaseModel):

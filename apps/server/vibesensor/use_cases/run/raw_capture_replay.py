@@ -13,6 +13,10 @@ from vibesensor.shared.boundaries.codecs import strength_metrics_from_mapping
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.json_utils import i18n_ref
+from vibesensor.shared.raw_capture_quality import (
+    RawCaptureLossPolicyAssessment,
+    assess_raw_capture_loss_policy,
+)
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
     RawWindowSegment,
@@ -23,6 +27,7 @@ from vibesensor.shared.raw_capture_timeline import (
     resolve_raw_window_end_time,
 )
 from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE,
@@ -85,6 +90,11 @@ class RawReplaySummary:
     high_rtt_sensor_count: int
     replay_confidence: RawReplayConfidence
     raw_capture_mode: str
+    raw_capture_loss_policy_severity: str = "ok"
+    raw_capture_loss_policy_reason: str = "raw_capture_loss_ok"
+    raw_capture_loss_policy_gate_whole_run: bool = False
+    raw_capture_loss_policy_max_sensor_drop_ratio: float = 0.0
+    raw_capture_loss_policy_max_events_per_minute: float = 0.0
     udp_ingest_queue_drop_count: int = 0
     warnings: tuple[RunContextWarning, ...] = ()
 
@@ -164,46 +174,7 @@ def build_raw_backed_samples(
         )
     fft_n = int(metadata.fft_window_size_samples or 0)
     if fft_n <= 0:
-        return RawReplayResult(
-            samples=samples,
-            summary=RawReplaySummary(
-                raw_capture_available=True,
-                raw_backed_summary_row_count=0,
-                replay_window_count=len(samples),
-                complete_window_count=0,
-                partial_window_count=0,
-                missing_window_count=len(samples),
-                gap_count=0,
-                overlap_count=0,
-                dropped_chunk_count=0,
-                late_packet_chunk_count=0,
-                queue_overflow_chunk_count=0,
-                invalid_chunk_count=0,
-                write_error_chunk_count=0,
-                timing_fallback_count=0,
-                sample_rate_mismatch_count=0,
-                fft_unusable_window_count=0,
-                sample_rate_unverified_sensor_count=0,
-                unanchored_sensor_count=0,
-                legacy_sensor_count=0,
-                sync_unverified_sensor_count=0,
-                stale_sync_sensor_count=0,
-                high_rtt_sensor_count=0,
-                replay_confidence="fallback",
-                raw_capture_mode="summary_only",
-                udp_ingest_queue_drop_count=0,
-            ),
-            window_coverages=tuple(
-                RawReplayWindowCoverage(
-                    client_id=sample.client_id,
-                    t_s=sample.t_s,
-                    coverage_state="missing",
-                    raw_backed=False,
-                    reason="fft_window_missing",
-                )
-                for sample in samples
-            ),
-        )
+        return _build_fft_unavailable_replay_result(samples=samples, raw_capture=raw_capture)
     timelines = {
         sensor.manifest.client_id: _build_sensor_timeline(
             raw_capture, sensor_id=sensor.manifest.client_id
@@ -270,6 +241,7 @@ def build_raw_backed_samples(
     )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
     late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
+    loss_policy = assess_raw_capture_loss_policy(raw_capture.manifest)
     udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
     queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
@@ -321,6 +293,13 @@ def build_raw_backed_samples(
             high_rtt_sensor_count=high_rtt_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
+            raw_capture_loss_policy_severity=loss_policy.severity,
+            raw_capture_loss_policy_reason=loss_policy.reason,
+            raw_capture_loss_policy_gate_whole_run=loss_policy.gate_whole_run,
+            raw_capture_loss_policy_max_sensor_drop_ratio=(loss_policy.max_sensor_drop_ratio),
+            raw_capture_loss_policy_max_events_per_minute=(
+                loss_policy.max_sensor_loss_events_per_minute
+            ),
             udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
             warnings=_build_replay_warnings(
                 raw_backed_summary_row_count=raw_backed_count,
@@ -343,6 +322,7 @@ def build_raw_backed_samples(
                 sync_unverified_sensor_count=sync_unverified_sensor_count,
                 stale_sync_sensor_count=stale_sync_sensor_count,
                 high_rtt_sensor_count=high_rtt_sensor_count,
+                loss_policy=loss_policy,
             ),
         ),
         window_coverages=tuple(coverages),
@@ -507,6 +487,90 @@ def _rebuild_sample(
     )
 
 
+def _build_fft_unavailable_replay_result(
+    *,
+    samples: tuple[SensorFrame, ...],
+    raw_capture: RawRunCapture,
+) -> RawReplayResult:
+    loss_policy = assess_raw_capture_loss_policy(raw_capture.manifest)
+    dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
+    udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
+    queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
+    invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
+    write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
+    return RawReplayResult(
+        samples=samples,
+        summary=RawReplaySummary(
+            raw_capture_available=True,
+            raw_backed_summary_row_count=0,
+            replay_window_count=len(samples),
+            complete_window_count=0,
+            partial_window_count=0,
+            missing_window_count=len(samples),
+            gap_count=0,
+            overlap_count=0,
+            dropped_chunk_count=dropped_chunk_count,
+            late_packet_chunk_count=late_packet_chunk_count,
+            queue_overflow_chunk_count=queue_overflow_chunk_count,
+            invalid_chunk_count=invalid_chunk_count,
+            write_error_chunk_count=write_error_chunk_count,
+            timing_fallback_count=0,
+            sample_rate_mismatch_count=0,
+            fft_unusable_window_count=0,
+            sample_rate_unverified_sensor_count=0,
+            unanchored_sensor_count=0,
+            legacy_sensor_count=0,
+            sync_unverified_sensor_count=0,
+            stale_sync_sensor_count=0,
+            high_rtt_sensor_count=0,
+            replay_confidence="fallback",
+            raw_capture_mode="summary_only",
+            raw_capture_loss_policy_severity=loss_policy.severity,
+            raw_capture_loss_policy_reason=loss_policy.reason,
+            raw_capture_loss_policy_gate_whole_run=loss_policy.gate_whole_run,
+            raw_capture_loss_policy_max_sensor_drop_ratio=loss_policy.max_sensor_drop_ratio,
+            raw_capture_loss_policy_max_events_per_minute=(
+                loss_policy.max_sensor_loss_events_per_minute
+            ),
+            udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
+            warnings=_build_replay_warnings(
+                raw_backed_summary_row_count=0,
+                timing_fallback_count=0,
+                partial_window_count=0,
+                missing_window_count=len(samples),
+                gap_count=0,
+                overlap_count=0,
+                dropped_chunk_count=dropped_chunk_count,
+                late_packet_chunk_count=late_packet_chunk_count,
+                udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
+                queue_overflow_chunk_count=queue_overflow_chunk_count,
+                invalid_chunk_count=invalid_chunk_count,
+                write_error_chunk_count=write_error_chunk_count,
+                sample_rate_mismatch_count=0,
+                fft_unusable_window_count=0,
+                sample_rate_unverified_sensor_count=0,
+                legacy_sensor_count=0,
+                unanchored_sensor_count=0,
+                sync_unverified_sensor_count=0,
+                stale_sync_sensor_count=0,
+                high_rtt_sensor_count=0,
+                loss_policy=loss_policy,
+            ),
+        ),
+        window_coverages=tuple(
+            RawReplayWindowCoverage(
+                client_id=sample.client_id,
+                t_s=sample.t_s,
+                coverage_state="missing",
+                raw_backed=False,
+                reason="fft_window_missing",
+            )
+            for sample in samples
+        ),
+    )
+
+
 def _build_fft_computer(metadata: RunMetadata) -> SpectralAnalysisComputer:
     return SpectralAnalysisComputer(
         fft_n=int(metadata.fft_window_size_samples or 0),
@@ -627,6 +691,7 @@ def _build_replay_warnings(
     sync_unverified_sensor_count: int,
     stale_sync_sensor_count: int,
     high_rtt_sensor_count: int,
+    loss_policy: RawCaptureLossPolicyAssessment | None = None,
 ) -> tuple[RunContextWarning, ...]:
     if legacy_sensor_count > 0 and raw_backed_summary_row_count <= 0:
         return (
@@ -712,6 +777,27 @@ def _build_replay_warnings(
                     queue_overflow=str(max(0, queue_overflow_chunk_count)),
                     invalid=str(max(0, invalid_chunk_count)),
                     write_errors=str(max(0, write_error_chunk_count)),
+                ),
+            )
+        )
+    if loss_policy is not None and loss_policy.severity in {"degraded", "fatal"}:
+        max_drop_percent = max(0.0, loss_policy.max_sensor_drop_ratio) * 100.0
+        max_events_per_minute = max(0.0, loss_policy.max_sensor_loss_events_per_minute)
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
+                severity="error" if loss_policy.severity == "fatal" else "warn",
+                applies_to="raw_capture",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_DETAIL",
+                    severity=loss_policy.severity,
+                    reason=loss_policy.reason,
+                    sensors=str(max(0, int(loss_policy.affected_sensor_count))),
+                    queue_overflow=str(max(0, queue_overflow_chunk_count)),
+                    dropped=str(max(0, dropped_chunk_count)),
+                    max_drop_percent=f"{max_drop_percent:.2f}",
+                    max_events_per_minute=f"{max_events_per_minute:.2f}",
                 ),
             )
         )

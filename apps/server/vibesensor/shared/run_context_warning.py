@@ -21,6 +21,7 @@ WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS = "raw_replay_dropped_chunks"
 WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK = "raw_replay_timing_fallback"
 WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE = "raw_replay_fft_unusable"
 WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED = "raw_replay_sync_unverified"
+WARNING_CODE_RAW_CAPTURE_LOSS_POLICY = "raw_capture_loss_policy"
 WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED = "raw_capture_finalize_degraded"
 WarningSeverity = Literal["warn", "error"]
 

@@ -339,6 +339,11 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_stale_sync_sensor_count": 0,
         "raw_replay_high_rtt_sensor_count": 0,
         "raw_replay_confidence": "unavailable",
+        "raw_capture_loss_policy_severity": "ok",
+        "raw_capture_loss_policy_reason": "raw_capture_loss_ok",
+        "raw_capture_loss_policy_gate_whole_run": False,
+        "raw_capture_loss_policy_max_sensor_drop_ratio": 0.0,
+        "raw_capture_loss_policy_max_events_per_minute": 0.0,
     }
 
 
@@ -453,6 +458,12 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
     assert summary["analysis_metadata"]["raw_replay_queue_overflow_chunk_count"] == 2
     assert summary["analysis_metadata"]["raw_replay_invalid_chunk_count"] == 0
     assert summary["analysis_metadata"]["raw_replay_write_error_chunk_count"] == 1
+    assert summary["analysis_metadata"]["raw_capture_loss_policy_severity"] == "fatal"
+    assert (
+        summary["analysis_metadata"]["raw_capture_loss_policy_reason"]
+        == "raw_capture_queue_overflow_fatal"
+    )
+    assert summary["analysis_metadata"]["raw_capture_loss_policy_gate_whole_run"] is True
     assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
         warning["code"] for warning in summary["warnings"]
     ]
