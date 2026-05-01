@@ -3986,6 +3986,14 @@
             "title": "Status",
             "type": "string"
           },
+          "subsystems": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HealthSubsystemResponse"
+            },
+            "default": {},
+            "title": "Subsystems",
+            "type": "object"
+          },
           "tick_count": {
             "default": 0,
             "title": "Tick Count",
@@ -4016,6 +4024,32 @@
           "ingest"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HealthSubsystemResponse": {
+        "properties": {
+          "reason_codes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "degraded",
+              "unhealthy"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthSubsystemResponse",
         "type": "object"
       },
       "HealthUdpIngestResponse": {
