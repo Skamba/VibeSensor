@@ -69,6 +69,9 @@ from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionSuccess,
     is_retryable_post_analysis_error,
 )
+from vibesensor.use_cases.run.post_analysis_raw_capture_policy import (
+    assess_whole_run_raw_capture_policy,
+)
 from vibesensor.use_cases.run.post_analysis_whole_run_builders import (
     build_whole_run_artifacts,
     build_whole_run_context_artifacts,
@@ -663,6 +666,7 @@ def run_whole_run_pipeline_stages(
     order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
     spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
     stored_artifact_manifest: WholeRunArtifactManifest | None = None
+    raw_capture_policy = assess_whole_run_raw_capture_policy(loaded)
 
     def record_stage[ResultT](
         *,
@@ -721,7 +725,7 @@ def run_whole_run_pipeline_stages(
         )
 
     def build_context_stage() -> WholeRunStageExecution[WholeRunContextArtifactBundle | None]:
-        raw_capture_manifest = loaded.raw_capture_manifest
+        raw_capture_manifest = raw_capture_policy.manifest
         assert raw_capture_manifest is not None
         if spectral_result is not None and spectral_result.window_plan is not None:
             bundle = builders.context_builder(
@@ -748,16 +752,15 @@ def run_whole_run_pipeline_stages(
 
     spectral_result = record_stage(
         stage_name="BuildWholeRunSpectraStage",
-        prerequisites_met=loaded.raw_capture is not None,
-        prerequisite_reason="raw_capture_missing",
+        prerequisites_met=raw_capture_policy.spectra_prerequisites_met(loaded.raw_capture),
+        prerequisite_reason=raw_capture_policy.spectra_prerequisite_reason(loaded.raw_capture),
         runner=build_spectral_stage,
     )
     spectral_bundle = spectral_result.bundle if spectral_result is not None else None
-
     context_bundle = record_stage(
         stage_name="BuildWholeRunContextStage",
-        prerequisites_met=loaded.raw_capture_manifest is not None,
-        prerequisite_reason="raw_capture_manifest_missing",
+        prerequisites_met=raw_capture_policy.context_prerequisites_met(),
+        prerequisite_reason=raw_capture_policy.context_prerequisite_reason(),
         runner=build_context_stage,
     )
 

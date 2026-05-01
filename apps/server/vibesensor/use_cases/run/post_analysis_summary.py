@@ -97,6 +97,17 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_queue_overflow_chunk_count": run.raw_replay.queue_overflow_chunk_count,
         "raw_replay_invalid_chunk_count": run.raw_replay.invalid_chunk_count,
         "raw_replay_write_error_chunk_count": run.raw_replay.write_error_chunk_count,
+        "raw_capture_loss_policy_severity": run.raw_replay.raw_capture_loss_policy_severity,
+        "raw_capture_loss_policy_reason": run.raw_replay.raw_capture_loss_policy_reason,
+        "raw_capture_loss_policy_gate_whole_run": (
+            run.raw_replay.raw_capture_loss_policy_gate_whole_run
+        ),
+        "raw_capture_loss_policy_max_sensor_drop_ratio": (
+            run.raw_replay.raw_capture_loss_policy_max_sensor_drop_ratio
+        ),
+        "raw_capture_loss_policy_max_events_per_minute": (
+            run.raw_replay.raw_capture_loss_policy_max_events_per_minute
+        ),
         "raw_replay_timing_fallback_count": run.raw_replay.timing_fallback_count,
         "raw_replay_sample_rate_mismatch_count": run.raw_replay.sample_rate_mismatch_count,
         "raw_replay_fft_unusable_window_count": run.raw_replay.fft_unusable_window_count,

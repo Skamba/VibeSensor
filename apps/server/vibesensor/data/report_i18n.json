@@ -1807,6 +1807,14 @@
     "en": "Raw capture timing could not be proven against the recorder clock for {sensors} sensor(s), so affected metrics used persisted summary samples. Missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}.",
     "nl": "Raw-capturetiming kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen metrieken gebruikten persistente samenvattingssamples. Ontbrekend sync-bewijs: {missing_sync}, verouderde sync-snapshots: {stale}, sync-snapshots met hoge RTT: {high_rtt}."
   },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_TITLE": {
+    "en": "Raw capture loss exceeded the run-quality policy",
+    "nl": "Raw-captureverlies overschreed het kwaliteitsbeleid voor de run"
+  },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_DETAIL": {
+    "en": "Raw capture loss policy is {severity} ({reason}). Affected sensors: {sensors}, raw-capture queue overflows: {queue_overflow}, dropped chunks: {dropped}, worst sensor drop ratio: {max_drop_percent}%, worst sensor loss rate: {max_events_per_minute}/min. Fatal loss disables whole-run raw-backed sidecar analysis for this run.",
+    "nl": "Het raw-captureverliesbeleid is {severity} ({reason}). Getroffen sensoren: {sensors}, raw-capture-wachtrijoverlopen: {queue_overflow}, gedropte chunks: {dropped}, slechtste sensor-dropverhouding: {max_drop_percent}%, slechtste sensor-verliesfrequentie: {max_events_per_minute}/min. Fataal verlies schakelt whole-run raw-backed sidecaranalyse uit voor deze run."
+  },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TITLE": {
     "en": "Raw capture finalization degraded before the run closed",
     "nl": "De raw-capturefinalisatie degradeerde voordat de run werd gesloten"

@@ -14,6 +14,7 @@ from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
+from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -109,6 +110,10 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         payload["artifact_availability"] = run.artifact_availability.to_json_object()
     if run.raw_capture_finalize is not None:
         payload["raw_capture_finalize"] = run.raw_capture_finalize.to_json_object()
+    if run.raw_capture_manifest is not None:
+        payload["raw_capture_quality"] = assess_raw_capture_loss_policy(
+            run.raw_capture_manifest
+        ).to_json_object()
     return _apply_projected_run_fields(
         payload,
         metadata=run.metadata,

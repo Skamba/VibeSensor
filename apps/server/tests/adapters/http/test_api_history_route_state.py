@@ -20,6 +20,12 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 from vibesensor.domain import CarSnapshot
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureLossStats,
+    RawCaptureManifest,
+    RawCaptureSensorLossStats,
+    RawCaptureSensorManifest,
+)
 
 
 def _app_from_state(state: FakeState) -> FastAPI:
@@ -188,6 +194,52 @@ def test_history_run_includes_sample_count() -> None:
         response = client.get("/api/history/run-1")
 
     assert response.json()["sample_count"] == 3
+
+
+def test_history_run_detail_includes_raw_capture_quality() -> None:
+    @dataclass
+    class RawManifestDB(FakeHistoryDB):
+        async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
+            run = await super().aget_run(run_id)
+            if run is None:
+                return None
+            losses = RawCaptureLossStats(queue_overflow_chunk_count=120)
+            sensor = RawCaptureSensorManifest(
+                client_id="sensor-a",
+                sample_rate_hz=800,
+                data_file="sensor-a.raw.i16le",
+                index_file="sensor-a.index.jsonl",
+                sample_count=64_000,
+                chunk_count=1000,
+                bytes_written=384_000,
+            )
+            return replace(
+                run,
+                raw_capture_manifest=RawCaptureManifest(
+                    run_id=run_id,
+                    relative_dir=f"raw-runs/{run_id}",
+                    sensors=(sensor,),
+                    total_samples=64_000,
+                    total_bytes=384_000,
+                    created_at="2026-01-01T00:00:00Z",
+                    sensor_losses=(RawCaptureSensorLossStats(client_id="sensor-a", losses=losses),),
+                    losses=losses,
+                ),
+            )
+
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    app = _app_from_state(FakeState(RawManifestDB(metadata, samples, analysis), FakeWsHub()))
+
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
+
+    quality = response.json()["raw_capture_quality"]
+    assert quality["severity"] == "fatal"
+    assert quality["reason"] == "raw_capture_queue_overflow_fatal"
+    assert quality["gate_whole_run"] is True
+    assert quality["queue_overflow_chunk_count"] == 120
 
 
 def test_history_list_includes_recorded_car_name() -> None:
