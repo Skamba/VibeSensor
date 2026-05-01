@@ -16,6 +16,11 @@ const nullableFiniteNumberSchema = v.nullable(finiteNumberSchema);
 const updateStateSchema = v.picklist(["idle", "running", "success", "failed"]);
 const updateTransportSchema = v.picklist(["wifi", "usb_internet"]);
 const healthStatusSchema = v.picklist(["ok", "warn", "degraded"]);
+const subsystemHealthStatusSchema = v.picklist([
+  "ready",
+  "degraded",
+  "unhealthy",
+]);
 const rawCapturePressureStateSchema = v.picklist(["ok", "warn", "degraded"]);
 
 const stringMapSchema = v.record(v.string(), v.string());
@@ -153,6 +158,11 @@ const healthIngestSchema = v.looseObject({
   ws_publish: healthWsPublishSchema,
 });
 
+const healthSubsystemSchema = v.looseObject({
+  reason_codes: v.array(v.string()),
+  status: subsystemHealthStatusSchema,
+});
+
 const healthStatusPayloadSchema = v.looseObject({
   background_task_failures: stringMapSchema,
   data_loss: healthDataLossSchema,
@@ -178,6 +188,7 @@ const healthStatusPayloadSchema = v.looseObject({
   startup_state: v.string(),
   startup_warnings: v.array(v.string()),
   status: healthStatusSchema,
+  subsystems: v.record(v.string(), healthSubsystemSchema),
   tick_count: integerSchema,
   tick_duration_s: finiteNumberSchema,
 });

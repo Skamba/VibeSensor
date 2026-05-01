@@ -53,6 +53,11 @@ class WsPublishHealthSnapshot(TypedDict):
     max_publish_duration_ms: float
 
 
+class SubsystemHealthSnapshot(TypedDict):
+    status: Literal["ready", "degraded", "unhealthy"]
+    reason_codes: list[str]
+
+
 class IngestClientHealthSnapshot(TypedDict):
     client_id: str
     advertised_sample_rate_hz: int
@@ -96,6 +101,7 @@ class HealthSnapshotData(TypedDict):
     sample_rate_mismatch_count: int
     frame_size_mismatch_count: int
     degradation_reasons: list[str]
+    subsystems: dict[str, SubsystemHealthSnapshot]
     data_loss: dict[str, int]
     persistence: RunRecorderHealthSnapshot
     intake_stats: IntakeStatsPayload
