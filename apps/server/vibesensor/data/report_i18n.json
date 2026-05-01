@@ -1907,6 +1907,26 @@
     "en": "Recapture before acting",
     "nl": "Eerst opnieuw meten"
   },
+  "REPORT_PAGE1_CAVEAT_ALTERNATIVE": {
+    "en": "Alternative source still in scope",
+    "nl": "Alternatieve bron blijft in beeld"
+  },
+  "REPORT_PAGE1_CAVEAT_LIMITED_RUN": {
+    "en": "Run limits affect confidence",
+    "nl": "Runbeperkingen beïnvloeden de zekerheid"
+  },
+  "REPORT_PAGE1_FALLBACK_ALTERNATIVE": {
+    "en": "Inspect {source} next",
+    "nl": "Controleer daarna {source}"
+  },
+  "REPORT_PAGE1_IF_CLEAN_LABEL": {
+    "en": "If clean",
+    "nl": "Als dit schoon is"
+  },
+  "REPORT_PAGE1_MAIN_CAVEAT_LABEL": {
+    "en": "Main caveat",
+    "nl": "Belangrijkste kanttekening"
+  },
   "REPORT_ALSO_CONSIDER_LABEL": {
     "en": "Also consider",
     "nl": "Overweeg ook"
@@ -2190,6 +2210,14 @@
   "REPORT_LOCATION_CONFIDENCE_LABEL": {
     "en": "Location confidence",
     "nl": "Locatievertrouwen"
+  },
+  "REPORT_DOMINANCE_RATIO_LABEL": {
+    "en": "Dominance ratio",
+    "nl": "Dominantieverhouding"
+  },
+  "REPORT_DOMINANCE_RATIO_VALUE": {
+    "en": "{ratio}x stronger",
+    "nl": "{ratio}x sterker"
   },
   "REPORT_LOCATION_CONFIDENCE_MIXED": {
     "en": "Mixed",

@@ -75,11 +75,12 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 
 ## PDF Report Layout
 
-The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet**:
+The generated PDF uses A4 portrait and starts with a **one-glance verdict page**:
 
 ### Page structure
-1. **Diagnostic Worksheet** (page 1) — header bar with date/car metadata, observed signature block (primary system, strength, certainty + reason), system finding cards, single next-steps section, data trust quality bar.
+1. **Verdict page** (page 1) — compact date/car/run metadata, primary source, inspect-first target, short reason, confidence/caveat cues, concise corner proof, and the first action plus fallback path. Page 1 intentionally omits the run timeline and support-duration phrasing that can be confused with elapsed runtime.
 2. **Evidence & Diagnostics** (page 2) — left column: car hotspot heat-map diagram (42 % width, aspect-ratio preserved); right column: compact pattern evidence panel + diagnostic peaks table (system-relevance oriented).
+3. **Inspection path** — full action-card detail, alternatives, confirm/falsify guidance, and longer evidence/context that does not belong on the glanceable verdict page.
 
 ### Primitives
 | Primitive | File | Purpose |
