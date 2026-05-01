@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from test_support.update_status import build_update_status_harness
@@ -17,6 +17,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher, FirmwareRefreshResult
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
+from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
@@ -115,6 +116,8 @@ def _make_installer(
         ),
         encoding="utf-8",
     )
+    config_path = server_dir / "config.pi.yaml"
+    config_path.write_text("server:\n  host: 127.0.0.1\n  port: 80\n", encoding="utf-8")
     python_path = repo / "apps" / "server" / ".venv" / "bin" / "python3"
     python_path.write_text("#!/bin/sh\n", encoding="utf-8")
     python_path.chmod(0o755)
@@ -128,6 +131,7 @@ def _make_installer(
             repo=repo,
             rollback_dir=tmp_path / "rollback",
             reinstall_timeout_s=30,
+            smoke_config_path=config_path,
         ),
     )
     return installer, commands, tracker
@@ -145,6 +149,10 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
     assert metadata["version"] == "2025.6.14"
     assert len(metadata["sha256"]) == 64
+    assert metadata["config_path"].endswith("config.pi.yaml")
+    assert metadata["repo_path"] == str(installer._config.repo)
+    assert "assets_verified" in metadata
+    assert "has_packaged_static" in metadata
     assert (rollback_dir / "rollback_snapshot.whl").is_file()
 
 
@@ -370,6 +378,62 @@ async def test_rollback_invalid_snapshot_wheel_fails(tmp_path: Path) -> None:
     assert any(
         issue.message == "Rollback snapshot wheel is corrupt" for issue in tracker.status.issues
     )
+
+
+@pytest.mark.asyncio
+async def test_rollback_verifies_deployment_after_reinstall(tmp_path: Path) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    wheel_path = rollback_dir / "rollback_snapshot.whl"
+    _build_fake_wheel(wheel_path, version="2025.6.14")
+    (rollback_dir / "rollback_snapshot.json").write_text(
+        json.dumps(
+            {
+                "version": "2025.6.14",
+                "sha256": sha256_file(wheel_path),
+                "config_path": str(installer._config.smoke_config_path),
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands.set_response("__version__", 0, "2025.6.14\n", "")
+    verify = AsyncMock(return_value=True)
+
+    with patch.object(RollbackDeploymentVerifier, "verify", verify):
+        assert await installer.rollback() is True
+
+    verify.assert_awaited_once()
+    assert any("Rolled back to rollback_snapshot.whl" in line for line in tracker.status.log_tail)
+
+
+@pytest.mark.asyncio
+async def test_rollback_fails_when_deployment_verification_fails(tmp_path: Path) -> None:
+    installer, commands, _tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    wheel_path = rollback_dir / "rollback_snapshot.whl"
+    _build_fake_wheel(wheel_path, version="2025.6.14")
+    (rollback_dir / "rollback_snapshot.json").write_text(
+        json.dumps(
+            {
+                "version": "2025.6.14",
+                "sha256": sha256_file(wheel_path),
+                "config_path": str(installer._config.smoke_config_path),
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands.set_response("__version__", 0, "2025.6.14\n", "")
+
+    with patch.object(
+        RollbackDeploymentVerifier,
+        "verify",
+        AsyncMock(return_value=False),
+    ):
+        assert await installer.rollback() is False
 
 
 def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path) -> None:

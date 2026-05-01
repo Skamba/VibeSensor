@@ -6,6 +6,8 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
+from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
@@ -43,6 +45,8 @@ def build_update_transport_runtime(
     wifi_config: UpdateWifiConfig,
     usb_internet_service: UsbInternetStatusReader | None,
     logger: logging.Logger,
+    rollback_snapshots: RollbackSnapshotStore | None = None,
+    rollback_verifier: RollbackDeploymentVerifier | None = None,
 ) -> UpdateTransportRuntime:
     status_service = usb_internet_service or UsbInternetStatusService(runner=runner)
     coordinator = UpdateTransportCoordinator(
@@ -60,6 +64,8 @@ def build_update_transport_runtime(
             status=status,
             reporter=reporter,
             transport_coordinator=coordinator,
+            rollback_snapshots=rollback_snapshots,
+            rollback_verifier=rollback_verifier,
         ),
         usb_status_service=status_service,
     )
