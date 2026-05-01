@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from threading import RLock
+from typing import Literal
 
 __all__ = [
     "ClientIngestRuntimeSnapshot",
@@ -10,6 +11,8 @@ __all__ = [
     "UdpIngestRuntimeSnapshot",
     "WsPublishRuntimeSnapshot",
 ]
+
+type RawCapturePressureState = Literal["ok", "warn", "degraded"]
 
 
 def _ms(value_s: float) -> float:
@@ -45,7 +48,7 @@ class RawCaptureRuntimeSnapshot:
     queue_max_depth: int = 0
     dropped_chunks: int = 0
     write_error_chunks: int = 0
-    pressure_state: str = "ok"
+    pressure_state: RawCapturePressureState = "ok"
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,7 +267,7 @@ def _raw_capture_pressure_state(
     queue_max_depth: int,
     dropped_chunks: int,
     write_error_chunks: int,
-) -> str:
+) -> RawCapturePressureState:
     if write_error_chunks > 0 or dropped_chunks >= 10:
         return "degraded"
     if dropped_chunks > 0 or queue_depth > 0 or queue_max_depth >= 1024:
