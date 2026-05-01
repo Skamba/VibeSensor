@@ -98,6 +98,7 @@ export function createHealthyUpdateStatus(
         queue_depth: 0,
         queue_max_depth: 0,
         dropped_chunks: 0,
+        pressure_state: "ok",
         write_error_chunks: 0,
       },
       ws_publish: {

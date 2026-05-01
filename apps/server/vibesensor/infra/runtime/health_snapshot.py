@@ -120,13 +120,20 @@ def build_system_health_snapshot(
         degradation_reasons.append("analyzing_runs_present")
     if persistence["last_completed_run_error"]:
         degradation_reasons.append("last_analysis_failed")
-    status: Literal["ok", "warn", "degraded"] = "ok"
-    if degradation_reasons:
-        status = "degraded" if has_error else "warn"
     runtime_clients = ingest_diagnostics.client_snapshots()
     udp_snapshot = ingest_diagnostics.udp_snapshot()
     raw_capture_snapshot = ingest_diagnostics.raw_capture_snapshot()
+    if raw_capture_snapshot.dropped_chunks > 0:
+        degradation_reasons.append("raw_capture_dropped_chunks")
+    if raw_capture_snapshot.write_error_chunks > 0:
+        degradation_reasons.append("raw_capture_write_errors")
+        has_error = True
+    if raw_capture_snapshot.pressure_state != "ok":
+        degradation_reasons.append(f"raw_capture_pressure:{raw_capture_snapshot.pressure_state}")
     ws_publish_snapshot = ingest_diagnostics.ws_publish_snapshot()
+    status: Literal["ok", "warn", "degraded"] = "ok"
+    if degradation_reasons:
+        status = "degraded" if has_error else "warn"
     ingest_clients: list[IngestClientHealthSnapshot] = []
     seen_client_ids: set[str] = set()
     for client_id in registry.active_client_ids():
@@ -221,6 +228,7 @@ def build_system_health_snapshot(
                 "queue_max_depth": raw_capture_snapshot.queue_max_depth,
                 "dropped_chunks": raw_capture_snapshot.dropped_chunks,
                 "write_error_chunks": raw_capture_snapshot.write_error_chunks,
+                "pressure_state": raw_capture_snapshot.pressure_state,
             },
             "ws_publish": {
                 "active_connections": ws_publish_snapshot.active_connections,

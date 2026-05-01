@@ -184,6 +184,23 @@ def test_prepare_persisted_report_input_uses_raw_not_configured_fallback_reason(
     assert diagnosis[0].fallback_reason == "raw_capture_not_configured"
 
 
+def test_prepare_persisted_report_input_uses_fatal_raw_capture_loss_policy_reason() -> None:
+    prepared = _prepared_report_input(
+        analysis_metadata={
+            "raw_backed_sample_count": 0,
+            "raw_capture_mode": "partial_raw_backed",
+            "raw_capture_loss_policy_severity": "fatal",
+            "raw_capture_loss_policy_reason": "raw_capture_queue_overflow_fatal",
+            "raw_capture_loss_policy_gate_whole_run": True,
+        }
+    )
+
+    diagnosis = prepared.report_facts.whole_run_diagnosis_summaries
+
+    assert len(diagnosis) == 1
+    assert diagnosis[0].fallback_reason == "raw_capture_queue_overflow_fatal"
+
+
 def test_prepare_persisted_report_input_builds_raw_backed_legacy_fallback_diagnosis_summary() -> (
     None
 ):

@@ -3808,6 +3808,16 @@
             "title": "Dropped Chunks",
             "type": "integer"
           },
+          "pressure_state": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "warn",
+              "degraded"
+            ],
+            "title": "Pressure State",
+            "type": "string"
+          },
           "queue_depth": {
             "title": "Queue Depth",
             "type": "integer"
@@ -4789,6 +4799,76 @@
         "title": "HistoryRawCaptureFinalizeResponse",
         "type": "object"
       },
+      "HistoryRawCaptureQualityResponse": {
+        "description": "Response body describing raw-capture loss policy for one run.",
+        "properties": {
+          "affected_sensor_count": {
+            "default": 0,
+            "title": "Affected Sensor Count",
+            "type": "integer"
+          },
+          "gate_whole_run": {
+            "title": "Gate Whole Run",
+            "type": "boolean"
+          },
+          "max_sensor_drop_ratio": {
+            "default": 0.0,
+            "title": "Max Sensor Drop Ratio",
+            "type": "number"
+          },
+          "max_sensor_loss_events_per_minute": {
+            "default": 0.0,
+            "title": "Max Sensor Loss Events Per Minute",
+            "type": "number"
+          },
+          "queue_overflow_chunk_count": {
+            "default": 0,
+            "title": "Queue Overflow Chunk Count",
+            "type": "integer"
+          },
+          "queue_overflow_sensor_count": {
+            "default": 0,
+            "title": "Queue Overflow Sensor Count",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "ok",
+              "warn",
+              "degraded",
+              "fatal"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "total_chunk_count": {
+            "default": 0,
+            "title": "Total Chunk Count",
+            "type": "integer"
+          },
+          "total_dropped_chunk_count": {
+            "default": 0,
+            "title": "Total Dropped Chunk Count",
+            "type": "integer"
+          },
+          "total_loss_event_count": {
+            "default": 0,
+            "title": "Total Loss Event Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "severity",
+          "reason",
+          "gate_whole_run"
+        ],
+        "title": "HistoryRawCaptureQualityResponse",
+        "type": "object"
+      },
       "HistoryRunLifecycleResponse": {
         "description": "Response body describing the canonical derived lifecycle for a history run.",
         "properties": {
@@ -4921,6 +5001,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/HistoryRawCaptureFinalizeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw_capture_quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryRawCaptureQualityResponse"
               },
               {
                 "type": "null"

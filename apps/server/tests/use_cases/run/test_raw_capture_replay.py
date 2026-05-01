@@ -8,6 +8,7 @@ import numpy as np
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE,
 )
@@ -223,6 +224,47 @@ def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> 
     assert result.raw_replay.replay_confidence == "partial"
     assert result.raw_replay.raw_capture_mode == "partial_raw_backed"
     assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
+        warning.code for warning in result.raw_replay.warnings
+    ]
+
+
+def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None:
+    raw_capture = _raw_capture("run-fatal-drops")
+    loss_stats = RawCaptureLossStats(queue_overflow_chunk_count=120)
+    raw_capture = RawRunCapture(
+        manifest=replace(
+            raw_capture.manifest,
+            sensor_losses=(RawCaptureSensorLossStats(client_id="sensor-a", losses=loss_stats),),
+            losses=loss_stats,
+        ),
+        sensors=raw_capture.sensors,
+    )
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-fatal-drops",
+        metadata=_metadata("run-fatal-drops"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 64 / 800,
+                    "sample_rate_hz": 800,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_summary_row_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    assert result.raw_replay.raw_capture_loss_policy_severity == "fatal"
+    assert result.raw_replay.raw_capture_loss_policy_reason == "raw_capture_queue_overflow_fatal"
+    assert result.raw_replay.raw_capture_loss_policy_gate_whole_run is True
+    assert WARNING_CODE_RAW_CAPTURE_LOSS_POLICY in [
         warning.code for warning in result.raw_replay.warnings
     ]
 
