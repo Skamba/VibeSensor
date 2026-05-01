@@ -5,11 +5,21 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import cast
 
+from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.analysis_payloads import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.shared.boundaries.reporting.summary import has_projectable_report_payload
+from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+    REPORT_FALLBACK_REASONS_METADATA_KEY,
+    dedupe_report_fallback_reasons,
+    derive_report_fallback_reasons,
+    finalization_stage_fallback_reasons,
+)
+from vibesensor.shared.boundaries.reporting.summary import (
+    has_projectable_report_payload,
+    report_summary_from_mapping,
+)
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
@@ -50,6 +60,7 @@ def _project_persisted_history_analysis(
     )
     if strip_internal:
         projected = strip_internal_fields(projected)
+    _apply_projected_analysis_fallback_reasons(projected)
     _remove_history_metadata_only_fields(projected)
     return projected
 
@@ -60,6 +71,7 @@ def _project_summary_analysis(analysis: Mapping[str, object]) -> JsonObject:
         project_projectable=lambda: project_analysis_summary(cast(JsonObject, dict(analysis)))[0],
     )
     projected = strip_internal_fields(projected)
+    _apply_projected_analysis_fallback_reasons(projected)
     _remove_history_metadata_only_fields(projected)
     return projected
 
@@ -114,6 +126,8 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         payload["raw_capture_quality"] = assess_raw_capture_loss_policy(
             run.raw_capture_manifest
         ).to_json_object()
+    if fallback_reasons := _history_run_fallback_reasons(run):
+        payload["fallback_reasons"] = list(fallback_reasons)
     return _apply_projected_run_fields(
         payload,
         metadata=run.metadata,
@@ -125,6 +139,55 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
 def project_history_insights(analysis: Mapping[str, object]) -> JsonObject:
     """Project persisted insights payloads for HTTP responses."""
     return _project_summary_analysis(analysis)
+
+
+def _apply_projected_analysis_fallback_reasons(payload: JsonObject) -> None:
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        return
+    normalized = report_summary_from_mapping(payload)
+    reasons = derive_report_fallback_reasons(
+        analysis_metadata,
+        has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
+        has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
+        has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
+        has_whole_run_diagnosis_summaries=bool(normalized.whole_run_diagnosis_summaries),
+    )
+    if reasons:
+        analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(reasons)
+    else:
+        analysis_metadata.pop(REPORT_FALLBACK_REASONS_METADATA_KEY, None)
+
+
+def _history_run_fallback_reasons(run: StoredHistoryRun) -> tuple[str, ...]:
+    reasons: list[str] = []
+    reasons.extend(finalization_stage_fallback_reasons(run.metadata.finalization_stages))
+    if run.analysis is None:
+        if run.lifecycle is not None and run.lifecycle.post_analysis in {"pending", "running"}:
+            reasons.append("whole_run_analysis_pending")
+        elif run.status in {RunStatus.RECORDING, RunStatus.ANALYZING}:
+            reasons.append("whole_run_analysis_pending")
+        elif run.status == RunStatus.ERROR or run.error_message:
+            reasons.append("whole_run_analysis_failed")
+        elif run.lifecycle is not None and run.lifecycle.post_analysis == "degraded":
+            reasons.append("whole_run_analysis_failed")
+    else:
+        payload = run.analysis.to_json_object()
+        analysis_metadata = payload.get("analysis_metadata")
+        if isinstance(analysis_metadata, dict):
+            normalized = report_summary_from_mapping(payload)
+            reasons.extend(
+                derive_report_fallback_reasons(
+                    analysis_metadata,
+                    has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
+                    has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
+                    has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
+                    has_whole_run_diagnosis_summaries=bool(
+                        normalized.whole_run_diagnosis_summaries
+                    ),
+                )
+            )
+    return tuple(dedupe_report_fallback_reasons(reasons))
 
 
 def build_projected_run_details_json(

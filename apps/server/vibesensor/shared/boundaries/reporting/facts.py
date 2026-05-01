@@ -45,6 +45,12 @@ from vibesensor.shared.boundaries.reporting.decision_facts import (
     build_report_decision_facts,
 )
 from vibesensor.shared.boundaries.reporting.evidence_facts import build_report_evidence_facts
+from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+    ReportFallbackReason,
+    dedupe_report_fallback_reasons,
+    derive_report_fallback_reasons,
+    finalization_stage_fallback_reasons,
+)
 from vibesensor.shared.boundaries.reporting.findings import (
     PreparedReportFindings,
     prepare_report_findings,
@@ -149,6 +155,7 @@ class PreparedReportFacts:
     """Canonical grouped report facts for run, sensor, and decision concerns."""
 
     run: ReportRunFacts
+    fallback_reasons: tuple[ReportFallbackReason, ...]
     context: ReportContextFacts
     sensor: ReportSensorFacts
     decision: ReportDecisionFacts
@@ -186,6 +193,7 @@ def prepare_report_facts(
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
+    fallback_reasons = _report_fallback_reasons(payload, summary=summary)
     context_facts = _build_report_context_facts(payload, summary=summary)
     sensor_facts = build_report_sensor_facts(
         test_run=test_run,
@@ -226,6 +234,7 @@ def prepare_report_facts(
         evidence_facts=evidence_facts,
         confidence_facts=provisional_confidence_facts,
         context_facts=context_facts,
+        fallback_reasons=fallback_reasons,
     )
     confidence_facts = _report_surface_confidence_facts(
         whole_run_diagnosis_summaries,
@@ -267,6 +276,7 @@ def prepare_report_facts(
             timeline_intervals=summary.timeline_intervals,
             peak_table_rows=summary.peak_table_rows,
         ),
+        fallback_reasons=fallback_reasons,
         context=context_facts,
         sensor=sensor_facts,
         decision=decision_facts,
@@ -395,13 +405,18 @@ def _report_whole_run_diagnosis_summaries(
     evidence_facts: ReportEvidenceFacts,
     confidence_facts: ReportConfidenceFacts,
     context_facts: ReportContextFacts,
+    fallback_reasons: tuple[ReportFallbackReason, ...],
 ) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
     if summary.whole_run_diagnosis_summaries:
         return summary.whole_run_diagnosis_summaries
     primary_candidate = decision_facts.primary_candidate
     if primary_candidate.domain_primary is None or primary_candidate.primary_source is None:
         return ()
-    fallback_reason = _whole_run_diagnosis_fallback_reason(payload, summary=summary)
+    fallback_reason = _whole_run_diagnosis_fallback_reason(
+        payload,
+        summary=summary,
+        fallback_reasons=fallback_reasons,
+    )
     if fallback_reason is None:
         return ()
     fallback_confidence = apply_report_confidence_fallback(
@@ -471,22 +486,20 @@ def _whole_run_diagnosis_fallback_reason(
     payload: Mapping[str, object],
     *,
     summary: NormalizedReportSummary,
+    fallback_reasons: tuple[ReportFallbackReason, ...],
 ) -> str | None:
-    if (finalization_reason := _finalization_stage_fallback_reason(summary)) is not None:
-        return finalization_reason
+    if fallback_reasons:
+        return fallback_reasons[0]
     analysis_metadata = payload.get("analysis_metadata")
     if not isinstance(analysis_metadata, Mapping):
-        return "analysis metadata missing; replayed summary-era evidence"
+        return "legacy_summary_only"
     loss_policy_severity = text_or_none(analysis_metadata.get("raw_capture_loss_policy_severity"))
     if loss_policy_severity == "fatal":
-        return (
-            text_or_none(analysis_metadata.get("raw_capture_loss_policy_reason"))
-            or "raw_capture_loss_policy_fatal"
-        )
+        return "raw_capture_loss_exceeded"
     raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
     raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
     if raw_capture_mode == "summary_only" or raw_backed_sample_count <= 0:
-        return "summary-only legacy confidence"
+        return "legacy_summary_only"
     has_partial_whole_run_inputs = bool(
         summary.whole_run_context_intervals
         or summary.whole_run_order_summaries
@@ -497,40 +510,33 @@ def _whole_run_diagnosis_fallback_reason(
         or analysis_metadata.get("whole_run_spatial_coherence_available")
     )
     if has_partial_whole_run_inputs:
-        return "whole-run diagnosis inputs incomplete; replayed summary-era evidence"
-    return "whole-run artifacts unavailable; replayed summary-era evidence"
+        return "whole_run_evidence_incomplete"
+    return "whole_run_evidence_missing"
 
 
-def _finalization_stage_fallback_reason(summary: NormalizedReportSummary) -> str | None:
+def _report_fallback_reasons(
+    payload: Mapping[str, object],
+    *,
+    summary: NormalizedReportSummary,
+) -> tuple[ReportFallbackReason, ...]:
+    reasons: list[str] = []
     metadata = summary.metadata
-    if metadata is None or not metadata.finalization_stages:
-        return None
-    stages = {stage.stage_name: stage for stage in metadata.finalization_stages}
-    raw_stage = stages.get("FinalizeRawCaptureStage")
-    resolve_stage = stages.get("ResolvePostAnalysisCandidateStage")
-    raw_status = (
-        text_or_none(raw_stage.diagnostic_context.get("raw_capture_status"))
-        if raw_stage is not None
-        else None
-    )
-    resolve_reason = (
-        text_or_none(resolve_stage.diagnostic_context.get("reason"))
-        if resolve_stage is not None
-        else None
-    )
-    if resolve_reason == "persistence_finalize_unsettled":
-        return "persistence_finalize_unsettled"
-    if raw_status == "not_configured":
-        return "raw_capture_not_configured"
-    if resolve_reason == "raw_capture_finalize_unsettled" or (
-        raw_stage is not None and raw_stage.status == "degraded"
-    ):
-        if raw_status in {"enqueue_timeout", "timeout", "failed"}:
-            return f"raw_capture_finalize_{raw_status}"
-        return "raw_capture_finalize_unsettled"
-    if resolve_reason == "history_not_ready":
-        return "history_not_ready"
-    return None
+    if metadata is not None:
+        reasons.extend(finalization_stage_fallback_reasons(metadata.finalization_stages))
+    analysis_metadata = payload.get("analysis_metadata")
+    if isinstance(analysis_metadata, Mapping):
+        reasons.extend(
+            derive_report_fallback_reasons(
+                analysis_metadata,
+                has_whole_run_context_intervals=bool(summary.whole_run_context_intervals),
+                has_whole_run_order_summaries=bool(summary.whole_run_order_summaries),
+                has_whole_run_spatial_summaries=bool(summary.whole_run_spatial_summaries),
+                has_whole_run_diagnosis_summaries=bool(summary.whole_run_diagnosis_summaries),
+            )
+        )
+    else:
+        reasons.append("legacy_summary_only")
+    return dedupe_report_fallback_reasons(reasons)
 
 
 def _report_surface_confidence_facts(

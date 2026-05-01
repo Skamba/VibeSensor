@@ -79,7 +79,7 @@ def test_project_whole_run_diagnosis_factors_maps_counterevidence_signals_to_sta
                     rpm_gap_window_count=2,
                 )
             ),
-            fallback_reason="summary-only legacy confidence",
+            fallback_reason="legacy_summary_only",
         )
     )
 
@@ -98,7 +98,7 @@ def test_project_whole_run_diagnosis_factors_maps_counterevidence_signals_to_sta
         "close_alternative",
         "incomplete_reference",
     ]
-    assert counter_factors[0]["details"]["fallback_reason"] == "summary-only legacy confidence"
+    assert counter_factors[0]["details"]["fallback_reason"] == "legacy_summary_only"
     assert counter_factors[1]["details"]["speed_gap_window_count"] == 3
     assert counter_factors[5]["details"]["frequency_span_hz"] == pytest.approx(2.2)
     assert counter_factors[10]["details"]["alternative_source"] == "driveshaft"

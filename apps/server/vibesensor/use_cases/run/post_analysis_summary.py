@@ -7,6 +7,10 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
+from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+    REPORT_FALLBACK_REASONS_METADATA_KEY,
+    derive_report_fallback_reasons,
+)
 from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
     serialize_location_intensity_rows,
@@ -169,6 +173,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         analysis_metadata["sampling_event_sample_count"] = run.event_sample_count
         analysis_metadata["sampling_evenly_spaced_row_count"] = run.evenly_spaced_sample_count
         analysis_metadata["sampling_event_row_count"] = run.event_sample_count
+    _set_initial_report_fallback_reasons(analysis_metadata)
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
     summary_warnings: list[RunContextWarning] = list(run.raw_replay.warnings)
     finalize_warning = _raw_capture_finalize_warning(raw_capture_finalize)
@@ -225,6 +230,18 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         )
 
     return PersistedAnalysis.from_json_object(summary_payload)
+
+
+def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:
+    fallback_reasons = derive_report_fallback_reasons(
+        analysis_metadata,
+        has_whole_run_context_intervals=False,
+        has_whole_run_order_summaries=False,
+        has_whole_run_spatial_summaries=False,
+        has_whole_run_diagnosis_summaries=False,
+    )
+    if fallback_reasons:
+        analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(fallback_reasons)
 
 
 def _raw_capture_finalize_warning(

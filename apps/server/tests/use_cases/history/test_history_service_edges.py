@@ -13,11 +13,13 @@ from typing import Any, cast
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
+from vibesensor.adapters.history.projection import project_history_run_record
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.run_lifecycle import RunArtifactLifecycle
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.report_cache import (
@@ -75,9 +77,55 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
         ),
         analysis_corrupt=bool(run.get("analysis_corrupt", False)),
         error_message=cast(str | None, run.get("error_message")),
+        lifecycle=cast(RunArtifactLifecycle | None, run.get("lifecycle")),
         analysis_started_at=cast(str | None, run.get("analysis_started_at")),
         analysis_completed_at=cast(str | None, run.get("analysis_completed_at")),
     )
+
+
+def test_project_history_run_record_exposes_pending_fallback_reason() -> None:
+    run = _stored_run(
+        {
+            "run_id": "pending-run",
+            "status": "analyzing",
+            "analysis": None,
+            "lifecycle": RunArtifactLifecycle(
+                stage="post_analysis_running",
+                raw_capture="ready",
+                whole_run_artifacts="pending",
+                post_analysis="running",
+                report="pending",
+            ),
+        }
+    )
+
+    payload = project_history_run_record(run)
+
+    assert payload["fallback_reasons"] == ["whole_run_analysis_pending"]
+
+
+def test_project_history_run_record_exposes_analysis_fallback_reasons() -> None:
+    run = _stored_run(
+        {
+            "run_id": "analysis-run",
+            "status": "complete",
+            "analysis": {
+                "run_id": "analysis-run",
+                "lang": "en",
+                "findings": [],
+                "top_causes": [],
+                "analysis_metadata": {
+                    "raw_capture_mode": "summary_only",
+                    "raw_backed_sample_count": 0,
+                },
+            },
+        }
+    )
+
+    payload = project_history_run_record(run)
+
+    assert payload["fallback_reasons"] == ["legacy_summary_only"]
+    assert payload["analysis"]["analysis_metadata"]["fallback_reasons"] == ["legacy_summary_only"]
 
 
 @pytest.mark.asyncio

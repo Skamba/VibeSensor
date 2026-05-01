@@ -75,7 +75,8 @@ Canonical report preparation now lives in
 `NormalizedReportSummary` decoding, domain reconstruction, filename/language
 normalization, and grouped semantic fact assembly:
 
-- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=..., evidence=..., confidence=..., findings=...)`
+- `facts.py` builds `PreparedReportFacts(run=..., fallback_reasons=..., sensor=..., decision=..., evidence=..., confidence=..., findings=...)`
+- `fallback_reasons.py` owns stable machine-readable fallback reason codes for history/report consumers (`raw_capture_not_configured`, `raw_capture_loss_exceeded`, `raw_capture_finalize_timeout`, `whole_run_analysis_pending`, `whole_run_analysis_failed`, `legacy_summary_only`, `sidecar_summary_mismatch`, `whole_run_evidence_missing`, and `whole_run_evidence_incomplete`)
 - `evidence_facts.py` builds explicit proof facts (data basis, supporting-window count/duration, stable frequency band, strongest supporting sensors, and caveats) from persisted analysis + reconstructed domain findings
 - `confidence_facts.py` converts persisted evidence quality signals into bounded report confidence (raw-backed vs summary-only basis, support count/duration, frequency stability, order-lock quality, spatial concentration, counterevidence, and reference gaps)
 - `findings.py` owns report-facing finding/top-cause presentation shaping
@@ -106,6 +107,7 @@ needs:
 - **Pattern evidence**: matched systems, certainty label, interpretation
 - **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
 - **Confidence surfaces**: observed certainty, page-1 confidence row, and proof caveats come from prepared `ReportConfidenceFacts`, not renderer-only heuristics
+- **Fallback reasons**: history and report preparation expose explicit `fallback_reasons` instead of inferring from missing fields; report confidence/caveats use the same stable codes carried in `analysis_metadata.fallback_reasons`
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
 - **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
 - **Peak rows**: top diagnostic peaks with classification
