@@ -54,7 +54,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     for text in (
         "VibeSensor Diagnostic Report",
         "Most likely source",
-        "Action status",
+        "Recapture before acting",
         "What to do next",
         "Recapture Guidance",
         "Traceability",

@@ -290,7 +290,7 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
 
     assert "why this corner wins" in text
     assert "dominant corner" in text
-    assert "location confidence" in text
+    assert "coverage" in text
 
 
 def test_pdf_diagram_render_module_no_longer_reexports_layout_helpers() -> None:

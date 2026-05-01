@@ -8,7 +8,11 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
-from vibesensor.shared.boundaries.reporting.document import PatternEvidence, VerdictPageData
+from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
+    PatternEvidence,
+    VerdictPageData,
+)
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
     action_status_text,
@@ -98,6 +102,7 @@ def build_verdict_page_data(
         ),
         dominant_corner=display_location(primary.primary_location, tr=tr),
         runner_up_corner=verdict_context.runner_up_corner,
+        dominance_ratio_label=_dominance_ratio_label(primary.dominance_ratio, tr=tr),
         location_confidence=_location_confidence_display_text(
             primary=primary,
             action_status_key=verdict_context.action_status_key,
@@ -140,7 +145,11 @@ def build_verdict_page_data(
     )
 
 
-def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
+def build_verdict_page(
+    *,
+    context: ReportDocumentContext,
+    appendix_a: AppendixAData,
+) -> VerdictPageData:
     """Build the fully assembled verdict page from shared document context."""
 
     verdict_page = build_verdict_page_data(
@@ -164,7 +173,9 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
     )
     return replace(
         verdict_page,
+        reason_sentence=_page1_reason_sentence(verdict_page.reason_sentence, proof_summary),
         proof_summary=proof_summary,
+        fallback_path=_page1_fallback_path(verdict_page, appendix_a=appendix_a, tr=context.tr),
         proof_snapshot_rows=build_evidence_snapshot_rows(
             context.report_facts,
             compact=True,
@@ -175,6 +186,35 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
             duration_s=context.run_facts.duration_s,
         ),
     )
+
+
+def _page1_reason_sentence(current: str | None, proof_summary: str | None) -> str | None:
+    summary = str(proof_summary or "").strip()
+    if "No single corner" in summary or "Geen enkele hoek" in summary:
+        return summary
+    return current
+
+
+def _dominance_ratio_label(
+    dominance_ratio: float | None,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    if dominance_ratio is None or dominance_ratio <= 0:
+        return None
+    return tr("REPORT_DOMINANCE_RATIO_VALUE", ratio=f"{dominance_ratio:.1f}")
+
+
+def _page1_fallback_path(
+    verdict_page: VerdictPageData,
+    *,
+    appendix_a: AppendixAData,
+    tr: Callable[..., str],
+) -> str | None:
+    alternative = str(verdict_page.also_consider or appendix_a.alternative_source or "").strip()
+    if not alternative:
+        return None
+    return tr("REPORT_PAGE1_FALLBACK_ALTERNATIVE", source=alternative)
 
 
 def _build_primary_reason_sentence(
@@ -220,25 +260,7 @@ def _location_confidence_display_text(
         action_status_key=action_status_key,
         location_confidence_key=location_confidence_key,
     )
-    if action_status_key != "action_ready_caution":
-        return location_confidence_text(presented_key, tr=tr)
-
-    reason = str(primary.certainty_reason or "").strip().split(";")[0].rstrip(".")
-    if reason:
-        return reason
-    if alternative_source_visible:
-        return tr("REPORT_LOCATION_CONFIDENCE_CLOSE_SCORES")
-    issue = first_nonpass_detail(
-        suitability_checks=suitability_checks,
-        warnings=warnings,
-        lang=lang,
-        tr=tr,
-    )
-    if issue:
-        return issue.rstrip(".")
-    if dominance_ratio is not None:
-        return tr("REPORT_LOCATION_CONFIDENCE_RATIO_REASON", ratio=f"{dominance_ratio:.1f}")
-    return tr("REPORT_LOCATION_CONFIDENCE_MODERATE_DETAIL")
+    return location_confidence_text(presented_key, tr=tr)
 
 
 def _action_status_note_text(
@@ -262,18 +284,9 @@ def _action_status_note_text(
         lang=lang,
         tr=tr,
     )
-    score_note: str | None = None
     if action_status_key == "action_ready_caution" and alternative_source_visible:
-        ranked_candidates = list(aggregate.effective_top_causes()[:2])
-        if len(ranked_candidates) > 1:
-            score_note = tr(
-                "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_ALTERNATIVE",
-                primary=human_source(ranked_candidates[0].suspected_source, tr=tr),
-                alternative=human_source(ranked_candidates[1].suspected_source, tr=tr),
-            )
-        else:
-            score_note = tr("REPORT_ACTION_STATUS_NOTE_GATE_CAUTION")
-    reason = score_note or proof_caveat_text(
+        return tr("REPORT_PAGE1_CAVEAT_ALTERNATIVE")
+    reason = proof_caveat_text(
         confidence_facts=report_confidence,
         action_status_key=action_status_key,
         location_confidence_key=location_confidence_key,
@@ -288,5 +301,15 @@ def _action_status_note_text(
                 issue=issue_norm,
                 reason=reason_norm,
             )
-        return issue
-    return issue or reason
+        return _brief_page1_note(issue, tr=tr)
+    return _brief_page1_note(issue or reason, tr=tr)
+
+
+def _brief_page1_note(note: str | None, *, tr: Callable[..., str]) -> str | None:
+    text = str(note or "").strip()
+    if not text:
+        return None
+    first_sentence = text.split(". ", 1)[0].rstrip(".")
+    if len(first_sentence) <= 96:
+        return first_sentence
+    return tr("REPORT_PAGE1_CAVEAT_LIMITED_RUN")
