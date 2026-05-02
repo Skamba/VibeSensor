@@ -395,6 +395,7 @@ def car_location_diagram(
     diagram_width: float | None = None,
     diagram_height: float = 252,
     vertical_align: str = "center",
+    highlight_fill: bool = False,
 ) -> Any:
     """Build and return a ReportLab car location diagram Drawing."""
     from reportlab.graphics.shapes import Drawing
@@ -449,6 +450,7 @@ def car_location_diagram(
         amp_by_location=amp_by_location,
         highlight=highlight,
         colors=REPORT_COLORS,
+        highlight_fill=highlight_fill,
     )
     _draw_markers_and_labels(drawing, markers=markers, labels=labels, hex_color=hex_color)
 

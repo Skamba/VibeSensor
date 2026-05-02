@@ -208,6 +208,16 @@ def _draw_worksheet_page(
             rows=stack_rows,
             col_widths=[0.20, 0.20, 0.18, 0.42],
             max_body_lines=2,
+            overflow_text_template=_tr(
+                lang,
+                "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+                count="{count}",
+            ),
+            overflow_singular_text_template=_tr(
+                lang,
+                "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+                count="{count}",
+            ),
         )
         matrix_top = stack_y - GAP
     else:

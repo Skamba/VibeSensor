@@ -171,11 +171,17 @@ def build_verdict_page(
         runner_up_corner=context.verdict_page_context.runner_up_corner,
         tr=context.tr,
     )
+    fallback_path = _page1_fallback_path(verdict_page, appendix_a=appendix_a, tr=context.tr)
+    action_status_note = verdict_page.action_status_note
+    if action_status_note == context.tr("REPORT_PAGE1_CAVEAT_ALTERNATIVE") and fallback_path:
+        action_status_note = context.tr("REPORT_PAGE1_CAVEAT_FALLBACK", fallback=fallback_path)
+
     return replace(
         verdict_page,
+        action_status_note=action_status_note,
         reason_sentence=_page1_reason_sentence(verdict_page.reason_sentence, proof_summary),
         proof_summary=proof_summary,
-        fallback_path=_page1_fallback_path(verdict_page, appendix_a=appendix_a, tr=context.tr),
+        fallback_path=fallback_path,
         proof_snapshot_rows=build_evidence_snapshot_rows(
             context.report_facts,
             compact=True,
@@ -225,15 +231,29 @@ def _build_primary_reason_sentence(
     tr: Callable[..., str],
 ) -> str:
     location = display_location(primary.primary_location, tr=tr)
-    duration = str(duration_text or "").strip() or tr("UNKNOWN")
+    duration = str(duration_text or "").strip()
+    has_duration = bool(duration and duration != tr("UNKNOWN"))
     sensor_count = len(active_locations) or primary.sensor_count
     speed_window = str(primary.primary_speed or "").strip()
     if speed_window and speed_window != tr("UNKNOWN"):
+        if not has_duration:
+            return tr(
+                "REPORT_REASON_RUN_SUMMARY_UNKNOWN_DURATION",
+                location=location,
+                speed=speed_window,
+                sensors=sensor_count,
+            )
         return tr(
             "REPORT_REASON_RUN_SUMMARY",
             duration=duration,
             location=location,
             speed=speed_window,
+            sensors=sensor_count,
+        )
+    if not has_duration:
+        return tr(
+            "REPORT_REASON_RUN_SUMMARY_NO_SPEED_UNKNOWN_DURATION",
+            location=location,
             sensors=sensor_count,
         )
     return tr(

@@ -1863,6 +1863,18 @@
     "en": "What to do next",
     "nl": "Wat nu te doen"
   },
+  "REPORT_PAGE1_EVIDENCE_TIMELINE_TITLE": {
+    "en": "Evidence during run",
+    "nl": "Bewijs tijdens de rit"
+  },
+  "REPORT_PAGE1_EVIDENCE_TIMELINE_SUMMARY_ONE": {
+    "en": "{count} evidence band",
+    "nl": "{count} bewijsband"
+  },
+  "REPORT_PAGE1_EVIDENCE_TIMELINE_SUMMARY_MANY": {
+    "en": "{count} evidence bands",
+    "nl": "{count} bewijsbanden"
+  },
   "REPORT_ACTION_COLUMN": {
     "en": "Action",
     "nl": "Actie"
@@ -1870,6 +1882,58 @@
   "REPORT_ACTION_MATRIX_TITLE": {
     "en": "Next inspection steps",
     "nl": "Volgende inspectiestappen"
+  },
+  "REPORT_ACTION_MATRIX_CLOSEOUT_TITLE": {
+    "en": "Close the loop",
+    "nl": "Rond de controle af"
+  },
+  "REPORT_ACTION_MATRIX_CLOSEOUT_TEXT": {
+    "en": "After a repair or clean check, repeat the same speed band and record the run id so the next report compares like-for-like.",
+    "nl": "Herhaal na reparatie of schone controle dezelfde snelheidsband en noteer de run-id zodat het volgende rapport gelijkwaardig vergelijkt."
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_REPEAT_TITLE": {
+    "en": "Repeat setup",
+    "nl": "Herhaalopzet"
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_REPEAT_TEXT": {
+    "en": "Same sensors, tire pressures, payload, and 50-70 km/h light acceleration band.",
+    "nl": "Zelfde sensoren, bandenspanning, belading en 50-70 km/u lichte acceleratieband."
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_RECORD_TITLE": {
+    "en": "Record result",
+    "nl": "Leg resultaat vast"
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_RECORD_TEXT": {
+    "en": "Log run id, inspected part, finding, changed component, and whether vibration changed.",
+    "nl": "Noteer run-id, gecontroleerd onderdeel, bevinding, vervanging en of de trilling veranderde."
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TITLE": {
+    "en": "Compare signal",
+    "nl": "Vergelijk signaal"
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TEXT": {
+    "en": "Expect the engine band to drop, proof windows to disappear, or location evidence to move.",
+    "nl": "Verwacht dat de engine-band daalt, bewijsvensters verdwijnen of locatiebewijs verschuift."
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_GATE_TITLE": {
+    "en": "Parts gate",
+    "nl": "Onderdelengrens"
+  },
+  "REPORT_ACTION_MATRIX_HANDOFF_GATE_TEXT": {
+    "en": "Replace parts only after a matching physical check or repeat-run proof; otherwise continue fallback.",
+    "nl": "Vervang pas onderdelen na passende fysieke controle of herhaalbewijs; ga anders door met fallback."
+  },
+  "REPORT_TABLE_MORE_ROWS_NOT_SHOWN": {
+    "en": "+ {count} more rows not shown",
+    "nl": "+ {count} extra rijen niet getoond"
+  },
+  "REPORT_TABLE_MORE_ROW_NOT_SHOWN": {
+    "en": "+ {count} more row not shown",
+    "nl": "+ {count} extra rij niet getoond"
+  },
+  "REPORT_CONTEXT_MORE_NOT_SHOWN": {
+    "en": "More context retained in source data.",
+    "nl": "Meer context is bewaard in de brondata."
   },
   "REPORT_ACTIONS_PAGE1_MORE": {
     "en": "Page 3 expands the fallback path if those first wheel checks are clean.",
@@ -1908,24 +1972,84 @@
     "nl": "Eerst opnieuw meten"
   },
   "REPORT_PAGE1_CAVEAT_ALTERNATIVE": {
-    "en": "Alternative source still in scope",
-    "nl": "Alternatieve bron blijft in beeld"
+    "en": "Keep the fallback path live",
+    "nl": "Houd het vervolgpad actief"
+  },
+  "REPORT_PAGE1_CAVEAT_FALLBACK": {
+    "en": "If first check is clean: {fallback}",
+    "nl": "Als de eerste controle schoon is: {fallback}"
   },
   "REPORT_PAGE1_CAVEAT_LIMITED_RUN": {
     "en": "Run limits affect confidence",
     "nl": "Runbeperkingen beïnvloeden de zekerheid"
   },
+  "REPORT_PAGE1_DERIVED_ACTION": {
+    "en": "Start with {location}: inspect the {source} path first.",
+    "nl": "Begin bij {location}: controleer eerst het pad {source}."
+  },
+  "REPORT_PAGE1_BRIEF_TITLE": {
+    "en": "Inspection brief",
+    "nl": "Inspectieoverzicht"
+  },
+  "REPORT_PAGE1_CHECK_RESULT_TITLE": {
+    "en": "Check result",
+    "nl": "Controle-uitkomst"
+  },
+  "REPORT_PAGE1_CONFIRM_GENERIC": {
+    "en": "A visible defect, looseness, runout, or repeatable fault is found at the inspect-first target.",
+    "nl": "Er is zichtbare schade, speling, slingering of een herhaalbare fout gevonden bij het eerste controlepunt."
+  },
+  "REPORT_PAGE1_CONFIRM_RECAPTURE_GENERIC": {
+    "en": "A repeat run separates one source path cleanly enough to name a stable first inspection target.",
+    "nl": "Een herhaalde meting scheidt een bronpad duidelijk genoeg om een stabiel eerste controlepunt te noemen."
+  },
+  "REPORT_PAGE1_FALSIFY_FALLBACK_GENERIC": {
+    "en": "If this check is clean, move to the fallback path named in the decision path.",
+    "nl": "Als deze controle schoon is, volg dan het vervolgpad dat in het beslispad staat."
+  },
+  "REPORT_PAGE1_FALSIFY_RECAPTURE_GENERIC": {
+    "en": "If evidence remains mixed, recapture before replacing parts.",
+    "nl": "Als het bewijs gemengd blijft, meet opnieuw voordat je onderdelen vervangt."
+  },
+  "REPORT_PAGE1_PARTS_GATE_LABEL": {
+    "en": "Parts gate",
+    "nl": "Onderdelengrens"
+  },
+  "REPORT_PAGE1_PARTS_GATE_GENERIC": {
+    "en": "Replace parts only after the physical check confirms the first target; otherwise keep the decision path open.",
+    "nl": "Vervang onderdelen pas nadat de fysieke controle het eerste doel bevestigt; houd anders het beslispad open."
+  },
+  "REPORT_PAGE1_PARTS_GATE_RECAPTURE_GENERIC": {
+    "en": "Do not replace parts from this run alone; wait for a cleaner capture or direct physical confirmation.",
+    "nl": "Vervang geen onderdelen op basis van alleen deze meting; wacht op een schonere meting of directe fysieke bevestiging."
+  },
+  "REPORT_PAGE1_PROOF_SUMMARY_TITLE": {
+    "en": "Why this is credible",
+    "nl": "Waarom dit aannemelijk is"
+  },
+  "REPORT_PAGE1_SOURCE_COMPARISON_TITLE": {
+    "en": "Source comparison",
+    "nl": "Bronvergelijking"
+  },
+  "REPORT_PAGE1_SOURCE_COMPARISON_UNRANKED": {
+    "en": "primary",
+    "nl": "primair"
+  },
+  "REPORT_PAGE1_SOURCE_COMPARISON_NOT_INDICATED": {
+    "en": "not indicated",
+    "nl": "niet aangewezen"
+  },
+  "REPORT_PAGE1_DECISION_PATH_TITLE": {
+    "en": "Decision path",
+    "nl": "Beslispad"
+  },
+  "REPORT_PAGE1_DECISION_NOTE_LABEL": {
+    "en": "Run limit",
+    "nl": "Runbeperking"
+  },
   "REPORT_PAGE1_FALLBACK_ALTERNATIVE": {
     "en": "Inspect {source} next",
     "nl": "Controleer daarna {source}"
-  },
-  "REPORT_PAGE1_IF_CLEAN_LABEL": {
-    "en": "If clean",
-    "nl": "Als dit schoon is"
-  },
-  "REPORT_PAGE1_MAIN_CAVEAT_LABEL": {
-    "en": "Main caveat",
-    "nl": "Belangrijkste kanttekening"
   },
   "REPORT_ALSO_CONSIDER_LABEL": {
     "en": "Also consider",
@@ -2479,9 +2603,17 @@
     "en": "This {duration} run showed the clearest repeatable vibration pattern near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
     "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location} in het venster {speed}, met vergelijkingsdata van {sensors} verbonden wielposities."
   },
+  "REPORT_REASON_RUN_SUMMARY_UNKNOWN_DURATION": {
+    "en": "The clearest repeatable vibration pattern stayed near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
+    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location} in het venster {speed}, met vergelijkingsdata van {sensors} verbonden wielposities."
+  },
   "REPORT_REASON_RUN_SUMMARY_NO_SPEED": {
     "en": "This {duration} run showed the clearest repeatable vibration pattern near {location}, with {sensors} connected wheel positions contributing comparison data.",
     "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location}, met vergelijkingsdata van {sensors} verbonden wielposities."
+  },
+  "REPORT_REASON_RUN_SUMMARY_NO_SPEED_UNKNOWN_DURATION": {
+    "en": "The clearest repeatable vibration pattern stayed near {location}, with {sensors} connected wheel positions contributing comparison data.",
+    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location}, met vergelijkingsdata van {sensors} verbonden wielposities."
   },
   "REPORT_ROUTE_APPENDIX_A": {
     "en": "Need the inspection sequence? See A.",

@@ -25,6 +25,9 @@ __all__ = [
     "estimate_detailed_action_card_height",
 ]
 
+COMPACT_ACTION_TITLE_SIZE = 8.4
+COMPACT_ACTION_WHY_SIZE = 6.6
+
 
 def _draw_card_shell(c: Canvas, *, x: float, y_top: float, w: float, h: float) -> None:
     c.setFillColor(_hex(REPORT_COLORS["surface"]))
@@ -37,22 +40,32 @@ def _draw_card_badge(c: Canvas, *, x: float, y_top: float, index: int) -> None:
     c.setStrokeColor(_hex(REPORT_COLORS["brand_surface"]))
     c.roundRect(x + 2 * mm, y_top - 9.5 * mm, 7 * mm, 7 * mm, 2 * mm, stroke=1, fill=1)
     c.setFillColor(_hex(REPORT_COLORS["brand"]))
-    c.setFont(FONT_B, FS_SMALL)
+    c.setFont(FONT_B, COMPACT_ACTION_WHY_SIZE)
     c.drawCentredString(x + 5.5 * mm, y_top - 6.4 * mm, str(index))
 
 
-def estimate_compact_action_card_height(*, title: str, why: str | None, width: float) -> float:
+def estimate_compact_action_card_height(
+    *,
+    title: str,
+    why: str | None,
+    width: float,
+    show_badge: bool = True,
+) -> float:
     """Return the compact page-1 preview card height."""
 
-    text_w = width - 14 * mm
-    title_lines = _wrap_lines(title, text_w, FS_BODY)[:3]
-    why_lines = _wrap_lines(why or "", text_w, FS_SMALL)[:2] if why else []
+    text_w = width - (14 * mm if show_badge else 8 * mm)
+    title_lines = _wrap_lines(title, text_w, COMPACT_ACTION_TITLE_SIZE)[:3]
+    why_lines = _wrap_lines(why or "", text_w, COMPACT_ACTION_WHY_SIZE)[:3] if why else []
     return float(
         max(
-            16 * mm,
+            20 * mm,
             7.0 * mm
-            + (len(title_lines) * (FS_BODY + 1.0))
-            + (0 if not why_lines else 1.0 * mm + (len(why_lines) * (FS_SMALL + 1.0))),
+            + (len(title_lines) * (COMPACT_ACTION_TITLE_SIZE + 1.2))
+            + (
+                0
+                if not why_lines
+                else 1.0 * mm + (len(why_lines) * (COMPACT_ACTION_WHY_SIZE + 1.0))
+            ),
         )
     )
 
@@ -60,7 +73,7 @@ def estimate_compact_action_card_height(*, title: str, why: str | None, width: f
 def draw_compact_action_card(
     c: Canvas,
     *,
-    index: int,
+    index: int | None,
     title: str,
     why: str | None,
     x: float,
@@ -69,11 +82,16 @@ def draw_compact_action_card(
 ) -> float:
     """Draw one compact action card used on page 1."""
 
-    card_h = estimate_compact_action_card_height(title=title, why=why, width=w)
+    show_badge = index is not None
+    card_h = estimate_compact_action_card_height(
+        title=title, why=why, width=w, show_badge=show_badge
+    )
     _draw_card_shell(c, x=x, y_top=y_top, w=w, h=card_h)
-    _draw_card_badge(c, x=x, y_top=y_top, index=index)
-    content_x = x + 12 * mm
-    content_w = w - 16 * mm
+    if show_badge:
+        assert index is not None
+        _draw_card_badge(c, x=x, y_top=y_top, index=index)
+    content_x = x + (12 * mm if show_badge else 4 * mm)
+    content_w = w - (16 * mm if show_badge else 8 * mm)
     cursor_y = _draw_text(
         c,
         content_x,
@@ -81,10 +99,10 @@ def draw_compact_action_card(
         content_w,
         title,
         font=FONT_B,
-        size=FS_BODY,
+        size=COMPACT_ACTION_TITLE_SIZE,
         color=TEXT_CLR,
-        leading=FS_BODY + 1.2,
-        max_lines=2,
+        leading=COMPACT_ACTION_TITLE_SIZE + 1.2,
+        max_lines=3,
     )
     if why:
         _draw_text(
@@ -93,9 +111,9 @@ def draw_compact_action_card(
             cursor_y - 0.2 * mm,
             content_w,
             why,
-            size=FS_SMALL,
+            size=COMPACT_ACTION_WHY_SIZE,
             color=SUB_CLR,
-            leading=FS_SMALL + 1.0,
+            leading=COMPACT_ACTION_WHY_SIZE + 1.0,
             max_lines=3,
         )
     return float(y_top - card_h - 2.5 * mm)

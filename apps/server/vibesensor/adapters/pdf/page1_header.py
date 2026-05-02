@@ -8,25 +8,29 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.page1_common import draw_label_value
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
     FONT_B,
     FS_BODY,
-    FS_H2,
     FS_SMALL,
     REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height, _truncate_single_line
+from vibesensor.adapters.pdf.pdf_text import _draw_text, _truncate_single_line
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import Page1RenderPlan
     from vibesensor.shared.boundaries.reporting.document import VerdictPageData
 
 __all__ = ["draw_header_strip", "draw_hero_block"]
+
+HERO_SOURCE_SIZE = 20.0
+HERO_INSPECT_SIZE = 14.5
+HERO_REASON_SIZE = 8.0
+HERO_DECISION_LABEL_SIZE = 6.6
+HERO_DECISION_VALUE_SIZE = 7.8
 
 
 def draw_header_strip(
@@ -40,7 +44,13 @@ def draw_header_strip(
     h: float,
 ) -> None:
     _draw_panel(
-        c, x, y, w, h, fill=REPORT_COLORS["brand_surface"], border=REPORT_COLORS["brand_surface"]
+        c,
+        x,
+        y,
+        w,
+        h,
+        fill=REPORT_COLORS["brand_surface_soft"],
+        border=REPORT_COLORS["brand_surface_soft"],
     )
     c.setFillColor(_hex(REPORT_COLORS["brand"]))
     c.setFont(FONT_B, FS_BODY)
@@ -59,12 +69,16 @@ def draw_header_strip(
     inner_x = x + 3 * mm
     top_y = y + h - 9.0 * mm
     col_gap = 1.5 * mm
-    col_w = (w - 6 * mm - (4 * col_gap)) / 5
+    col_weights = [1.05, 1.30, 0.78, 0.62, 1.55]
+    col_unit = (w - 6 * mm - (4 * col_gap)) / sum(col_weights)
+    col_x = inner_x
     for index, (label, value) in enumerate(values):
-        col = index
-        col_x = inner_x + (col * (col_w + col_gap))
+        col_w = col_unit * col_weights[index]
         row_y = top_y
-        value_text = _truncate_single_line(str(value), col_w, FS_SMALL)
+        value_lines = 2 if index == 4 else 1
+        value_text = (
+            str(value) if value_lines > 1 else _truncate_single_line(str(value), col_w, FS_SMALL)
+        )
         c.setFillColor(_hex(SUB_CLR))
         c.setFont(FONT, FS_SMALL)
         c.drawString(col_x, row_y, label)
@@ -80,77 +94,9 @@ def draw_header_strip(
             size=FS_SMALL,
             color=TEXT_CLR,
             leading=FS_SMALL + 1.0,
-            max_lines=1,
+            max_lines=value_lines,
         )
-
-
-def _status_palette(text: str, *, tr: Callable[..., str]) -> tuple[str, str]:
-    if text == tr("REPORT_ACTION_STATUS_READY"):
-        return (REPORT_COLORS["card_success_bg"], REPORT_COLORS["success"])
-    if text == tr("REPORT_ACTION_STATUS_READY_CAUTION"):
-        return (REPORT_COLORS["card_warn_bg"], REPORT_COLORS["warning"])
-    if text == tr("REPORT_ACTION_STATUS_RECAPTURE"):
-        return (REPORT_COLORS["card_error_bg"], REPORT_COLORS["danger"])
-    return (REPORT_COLORS["card_neutral_bg"], REPORT_COLORS["card_neutral_border"])
-
-
-def _draw_action_status_callout(
-    c: Canvas,
-    *,
-    status: str,
-    note: str | None,
-    tr: Callable[..., str],
-    x: float,
-    y_top: float,
-    w: float,
-) -> None:
-    fill, border = _status_palette(status, tr=tr)
-    content_w = w - 6 * mm
-    note_text = str(note or "").strip() or None
-    card_h = 4.0 * mm + _measure_text_height(
-        status,
-        w=content_w,
-        size=FS_SMALL,
-        leading=FS_SMALL + 1.0,
-        max_lines=2,
-    )
-    if note_text is not None:
-        card_h += 0.4 * mm + _measure_text_height(
-            note_text,
-            w=content_w,
-            size=FS_SMALL,
-            leading=FS_SMALL + 1.1,
-            max_lines=4,
-        )
-    card_h = float(max(12 * mm, card_h + 2.8 * mm))
-    c.setFillColor(_hex(fill))
-    c.setStrokeColor(_hex(border))
-    c.roundRect(x, y_top - card_h + 1.2 * mm, w, card_h, 2.5 * mm, stroke=1, fill=1)
-    c.setFillColor(_hex(TEXT_CLR))
-    text_y = _draw_text(
-        c,
-        x + 3 * mm,
-        y_top - 3.2 * mm,
-        content_w,
-        status,
-        font=FONT_B,
-        size=FS_SMALL,
-        color=TEXT_CLR,
-        leading=FS_SMALL + 1.0,
-        max_lines=2,
-    )
-    if note_text is not None:
-        _draw_text(
-            c,
-            x + 3 * mm,
-            text_y - 0.4 * mm,
-            content_w,
-            note_text,
-            size=FS_SMALL,
-            color=TEXT_CLR,
-            leading=FS_SMALL + 1.1,
-            max_lines=4,
-        )
+        col_x += col_w + col_gap
 
 
 def draw_hero_block(
@@ -166,104 +112,120 @@ def draw_hero_block(
     verdict = plan.verdict_page
     _draw_panel(c, x, y, w, h, fill="#ffffff")
     inner_x = x + 5 * mm
-    inner_y = y + h - 6.0 * mm
     content_w = w - 10 * mm
+    status = str(verdict.action_status or tr("UNKNOWN")).strip()
+    decision_w = min(66 * mm, content_w * 0.34)
+    text_w = content_w - decision_w - 7 * mm
 
-    next_y = draw_label_value(
+    c.setFillColor(_hex(SUB_CLR))
+    c.setFont(FONT, FS_SMALL)
+    c.drawString(inner_x, y + h - 8.0 * mm, tr("REPORT_SUSPECTED_SOURCE_LABEL"))
+    _draw_text(
         c,
-        x=inner_x,
-        y=inner_y,
-        width=content_w,
-        label=tr("REPORT_SUSPECTED_SOURCE_LABEL"),
-        value=verdict.suspected_source or tr("UNKNOWN"),
-        value_size=FS_H2,
+        inner_x,
+        y + h - 17.0 * mm,
+        text_w,
+        verdict.suspected_source or tr("UNKNOWN"),
+        font=FONT_B,
+        size=HERO_SOURCE_SIZE,
+        color=TEXT_CLR,
+        leading=HERO_SOURCE_SIZE + 1.0,
+        max_lines=1,
     )
     if verdict.inspect_first:
-        next_y = (
-            _draw_text(
-                c,
-                inner_x,
-                next_y - 0.2 * mm,
-                content_w,
-                f"{tr('REPORT_INSPECT_FIRST_LABEL')}: {verdict.inspect_first}",
-                font=FONT_B,
-                size=FS_BODY,
-                color=TEXT_CLR,
-                leading=FS_BODY + 1.1,
-                max_lines=2,
-            )
-            - 0.8 * mm
+        _draw_text(
+            c,
+            inner_x,
+            y + h - 31.0 * mm,
+            text_w,
+            f"{tr('REPORT_INSPECT_FIRST_LABEL')}: {verdict.inspect_first}",
+            font=FONT_B,
+            size=HERO_INSPECT_SIZE,
+            color=TEXT_CLR,
+            leading=HERO_INSPECT_SIZE + 2.0,
+            max_lines=2,
         )
     if verdict.reason_sentence:
         _draw_text(
             c,
             inner_x,
-            next_y - 0.2 * mm,
-            content_w,
+            y + h - 45.0 * mm,
+            text_w,
             verdict.reason_sentence,
-            size=FS_SMALL,
+            size=HERO_REASON_SIZE,
             color=SUB_CLR,
-            leading=FS_SMALL + 1.1,
-            max_lines=2,
+            leading=HERO_REASON_SIZE + 1.1,
+            max_lines=3,
         )
 
-    _draw_verdict_cues(c, verdict=verdict, tr=tr, x=inner_x, y=y + 22 * mm, w=content_w)
-    if verdict.action_status_note:
-        _draw_text(
-            c,
-            inner_x,
-            y + 13.0 * mm,
-            content_w,
-            f"{tr('REPORT_PAGE1_MAIN_CAVEAT_LABEL')}: {verdict.action_status_note}",
-            size=FS_SMALL,
-            color=SUB_CLR,
-            leading=FS_SMALL + 1.0,
-            max_lines=1,
-        )
+    decision_h = 45.0 * mm
+    _draw_decision_path_card(
+        c,
+        verdict=verdict,
+        status=status,
+        tr=tr,
+        x=inner_x + text_w + 7 * mm,
+        y=y + h - 8.5 * mm - decision_h,
+        w=decision_w,
+        h=decision_h,
+    )
 
 
-def _draw_verdict_cues(
+def _draw_decision_path_card(
     c: Canvas,
     *,
     verdict: VerdictPageData,
+    status: str,
     tr: Callable[..., str],
     x: float,
     y: float,
     w: float,
+    h: float,
 ) -> None:
-    status = str(verdict.action_status or tr("UNKNOWN")).strip()
-    cue_texts = [status]
-    if status == tr("REPORT_ACTION_STATUS_READY"):
-        cue_texts.append(str(verdict.location_confidence or "").strip())
-    cue_texts = [text for text in cue_texts if text]
-    if not cue_texts:
+    rows = []
+    if status:
+        rows.append((tr("REPORT_ACTION_STATUS_LABEL"), status))
+    if verdict.fallback_path:
+        rows.append((tr("REPORT_IF_PRIMARY_CLEAN_LABEL"), verdict.fallback_path))
+    elif verdict.action_status_note:
+        rows.append((tr("REPORT_PAGE1_DECISION_NOTE_LABEL"), verdict.action_status_note))
+    location_confidence = str(verdict.location_confidence or "").strip()
+    limited_confidence = tr("REPORT_LOCATION_CONFIDENCE_LIMITED")
+    if location_confidence and location_confidence != limited_confidence:
+        rows.append((tr("REPORT_LOCATION_CONFIDENCE_LABEL"), location_confidence))
+    rows = [(label, str(value).strip()) for label, value in rows if str(value).strip()]
+    if not rows:
         return
 
-    row_gap = 1.2 * mm
-    chip_h = 7.0 * mm
-    cursor_x = x
-    cursor_y = y + chip_h
-    for index, text in enumerate(cue_texts[:3]):
-        fill, border = _status_palette(text if index == 0 else "", tr=tr)
-        chip_w = min(
-            w, max(36 * mm, c.stringWidth(text, FONT_B if index == 0 else FONT, FS_SMALL) + 7 * mm)
-        )
-        if cursor_x != x and cursor_x + chip_w > x + w:
-            cursor_x = x
-            cursor_y -= chip_h + row_gap
-        c.setFillColor(_hex(fill))
-        c.setStrokeColor(_hex(border))
-        c.roundRect(cursor_x, cursor_y - chip_h, chip_w, chip_h, 2.5 * mm, stroke=1, fill=1)
+    c.setFillColor(_hex(REPORT_COLORS["surface"]))
+    c.setStrokeColor(_hex(REPORT_COLORS["table_row_border"]))
+    c.roundRect(x, y, w, h, 3 * mm, stroke=1, fill=1)
+    c.setFillColor(_hex(TEXT_CLR))
+    c.setFont(FONT_B, FS_SMALL)
+    c.drawString(x + 3 * mm, y + h - 4.5 * mm, tr("REPORT_PAGE1_DECISION_PATH_TITLE"))
+
+    row_gap = 1.0 * mm
+    row_top = y + h - 8.6 * mm
+    row_h = (h - 11.5 * mm - ((len(rows) - 1) * row_gap)) / len(rows)
+    row_h = max(8.0 * mm, min(13.2 * mm, row_h))
+    for label, value in rows[:3]:
+        row_y = row_top - row_h
+        c.setFillColor(_hex("#ffffff"))
+        c.setStrokeColor(_hex(REPORT_COLORS["table_row_border"]))
+        c.roundRect(x + 2.5 * mm, row_y, w - 5 * mm, row_h, 2.2 * mm, stroke=1, fill=1)
+        c.setFillColor(_hex(SUB_CLR))
+        c.setFont(FONT, HERO_DECISION_LABEL_SIZE)
+        c.drawString(x + 5 * mm, row_y + row_h - 3.1 * mm, label)
         _draw_text(
             c,
-            cursor_x + 3 * mm,
-            cursor_y - 2.2 * mm,
-            chip_w - 6 * mm,
-            text,
-            font=FONT_B if index == 0 else FONT,
-            size=FS_SMALL,
+            x + 5 * mm,
+            row_y + row_h - 6.0 * mm,
+            w - 10 * mm,
+            value,
+            font=FONT_B,
+            size=HERO_DECISION_VALUE_SIZE,
             color=TEXT_CLR,
-            leading=FS_SMALL + 1.0,
-            max_lines=1,
+            leading=HERO_DECISION_VALUE_SIZE + 0.8,
+            max_lines=2,
         )
-        cursor_x += chip_w + 1.8 * mm
+        row_top = row_y - row_gap

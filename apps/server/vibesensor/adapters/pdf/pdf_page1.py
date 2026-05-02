@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.page1_actions import draw_actions_block, estimate_actions_block_height
+from vibesensor.adapters.pdf.page1_actions import draw_actions_block
 from vibesensor.adapters.pdf.page1_header import draw_header_strip, draw_hero_block
 from vibesensor.adapters.pdf.page1_proof import draw_proof_block
 from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W
@@ -30,19 +30,16 @@ def _page1(
         return _tr(plan.lang, key, **kw)
 
     header_h = 18 * mm
-    hero_h = 54 * mm
-    content_bottom = MARGIN + 8 * mm
+    hero_h = 64 * mm
+    content_bottom = MARGIN + 3 * mm
     main_h = page_top - content_bottom - header_h - hero_h - (2 * GAP)
-    lower_h = min(main_h, 118 * mm)
+    lower_h = min(main_h, 176 * mm)
     lower_y = content_bottom + main_h - lower_h
-    proof_w = width * 0.52
+    proof_w = width * 0.43
     actions_w = width - proof_w - GAP
 
     header_y = page_top - header_h
     hero_y = header_y - GAP - hero_h
-
-    actions_h = min(lower_h, estimate_actions_block_height(plan, tr=tr, w=actions_w))
-    actions_y = lower_y + lower_h - actions_h
 
     draw_header_strip(c, plan, tr=tr, x=MARGIN, y=header_y, w=width, h=header_h)
     draw_hero_block(c, plan, tr=tr, x=MARGIN, y=hero_y, w=width, h=hero_h)
@@ -52,7 +49,7 @@ def _page1(
         plan,
         tr=tr,
         x=MARGIN + proof_w + GAP,
-        y=actions_y,
+        y=lower_y,
         w=actions_w,
-        h=actions_h,
+        h=lower_h,
     )

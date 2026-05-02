@@ -73,4 +73,5 @@ def test_draw_header_strip_truncates_long_car_name_to_single_line(
     assert "12.3 s" in drawn_texts
     assert "60-90 km/h" in drawn_texts
     assert any(text.endswith("...") for text in drawn_texts)
-    assert all(call["max_lines"] == 1 for call in calls)
+    assert next(call for call in calls if call["text"] == "60-90 km/h")["max_lines"] == 2
+    assert all(call["max_lines"] == 1 for call in calls if call["text"] != "60-90 km/h")

@@ -122,8 +122,8 @@ def _blend_hex(base: str, target: str, *, target_weight: float) -> str:
 
 
 def _intensity_fill(*, normalized: float, colors: Mapping[str, str]) -> str:
-    low = colors.get("axis", "#7b8da0")
-    high = colors.get("brand", "#7c3aed")
+    low = colors.get("surface_alt", "#f1f2f6")
+    high = colors.get("axis", "#7b8da0")
     return _blend_hex(low, high, target_weight=_clamp_unit(normalized))
 
 
@@ -186,6 +186,7 @@ def build_sensor_render_plan(
     amp_by_location: dict[str, float],
     highlight: dict[str, str],
     colors: dict[str, str],
+    highlight_fill: bool = False,
 ) -> tuple[list[MarkerRenderPlan], list[LabelRenderPlan], bool]:
     """Plan marker and label positions for all sensor locations.
 
@@ -240,6 +241,8 @@ def build_sensor_render_plan(
                     normalized=intensity_fill_weight(name),
                     colors=colors,
                 )
+                if highlight_fill and name in highlight:
+                    fill = highlight[name]
                 stroke = highlight.get(name, fill)
                 radius = active_radius(name, highlighted=name in highlight)
                 stroke_width = 0.9 if name in highlight else 0.75
