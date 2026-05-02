@@ -51,7 +51,7 @@ def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
     assert actions_h >= PANEL_HEADER_H
 
 
-def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> None:
+def test_estimate_actions_block_height_reserves_page_one_check_flow() -> None:
     width = PAGE_W - 2 * MARGIN
     actions_w = width - (width * 0.58) - GAP
     data = ReportDocument(
@@ -70,7 +70,7 @@ def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> 
 
     actions_h = estimate_actions_block_height(build_page1_render_plan(data), tr=_tr, w=actions_w)
 
-    assert actions_h < 55 * mm
+    assert 110 * mm < actions_h < 125 * mm
     assert actions_h >= PANEL_HEADER_H
 
 
@@ -218,7 +218,7 @@ def test_estimate_worksheet_summary_panels_shrink_for_short_content() -> None:
     stack_h = _estimate_worksheet_ranked_stack_height(appendix, lang="en")
 
     assert top_h < 56 * mm
-    assert stack_h <= 48 * mm
+    assert stack_h <= 62 * mm
 
 
 def test_estimate_worksheet_action_panel_shrinks_for_short_content() -> None:

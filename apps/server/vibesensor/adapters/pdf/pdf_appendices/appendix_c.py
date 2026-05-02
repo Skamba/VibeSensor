@@ -19,7 +19,11 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
+from vibesensor.adapters.pdf.pdf_text import (
+    _draw_section_block,
+    _draw_text,
+    _measure_section_block_height,
+)
 from vibesensor.report_i18n import tr as _tr
 
 from .layout import (
@@ -34,6 +38,7 @@ __all__ = ["_appendix_c_page"]
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan
+    from vibesensor.shared.boundaries.reporting.document import AppendixCData
 
 
 def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
@@ -46,7 +51,7 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
     appendix = plan.appendix
     width = PAGE_W - 2 * MARGIN
 
-    chain_h = 58 * mm
+    chain_h = _evidence_chain_panel_height(appendix)
     chain_y = title_y - chain_h
     _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
     chain_top = (
@@ -101,9 +106,19 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         rows=chain_rows,
         col_widths=chain_widths,
         max_body_lines=2,
+        overflow_text_template=_tr(
+            plan.lang,
+            "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+            count="{count}",
+        ),
+        overflow_singular_text_template=_tr(
+            plan.lang,
+            "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+            count="{count}",
+        ),
     )
 
-    measurement_h = 72 * mm
+    measurement_h = _measurement_panel_height(appendix)
     measurement_y = chain_y - GAP - measurement_h
     _draw_panel(
         c,
@@ -249,6 +264,16 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         rows=measurement_rows,
         col_widths=measurement_widths,
         max_body_lines=2,
+        overflow_text_template=_tr(
+            plan.lang,
+            "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+            count="{count}",
+        ),
+        overflow_singular_text_template=_tr(
+            plan.lang,
+            "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+            count="{count}",
+        ),
     )
 
     context_w = width * 0.24
@@ -285,44 +310,82 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             - 1.2 * mm
         )
     for snapshot in appendix.evidence_snapshot_rows[:5]:
-        block_y = _draw_section_block(
+        block_y, did_draw = _draw_section_block_if_room(
             c,
             block_x,
             block_y,
             context_w - 8 * mm,
             snapshot.label,
             snapshot.value or _tr(plan.lang, "UNKNOWN"),
+            bottom_y=lower_y + 4 * mm,
             max_lines=3,
         )
-    block_y = _draw_section_block(
-        c,
-        block_x,
-        block_y,
-        context_w - 8 * mm,
-        _tr(plan.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
-        appendix.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
-        max_lines=3,
+        if not did_draw:
+            block_y = _draw_context_overflow_note(
+                c,
+                x=block_x,
+                y=block_y,
+                w=context_w - 8 * mm,
+                bottom_y=lower_y + 4 * mm,
+                lang=plan.lang,
+            )
+            break
+    did_draw = True
+    show_speed_phase = bool(appendix.speed_band_summary or appendix.phase_summary) or not bool(
+        appendix.observations
     )
-    block_y = _draw_section_block(
-        c,
-        block_x,
-        block_y,
-        context_w - 8 * mm,
-        _tr(plan.lang, "REPORT_PHASE_SUMMARY_LABEL"),
-        appendix.phase_summary or _tr(plan.lang, "UNKNOWN"),
-        max_lines=3,
-    )
-    if appendix.observations:
+    if show_speed_phase:
+        block_y, did_draw = _draw_section_block_if_room(
+            c,
+            block_x,
+            block_y,
+            context_w - 8 * mm,
+            _tr(plan.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
+            appendix.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
+            bottom_y=lower_y + 4 * mm,
+            max_lines=3,
+        )
+        if did_draw:
+            block_y, did_draw = _draw_section_block_if_room(
+                c,
+                block_x,
+                block_y,
+                context_w - 8 * mm,
+                _tr(plan.lang, "REPORT_PHASE_SUMMARY_LABEL"),
+                appendix.phase_summary or _tr(plan.lang, "UNKNOWN"),
+                bottom_y=lower_y + 4 * mm,
+                max_lines=3,
+            )
+    if not did_draw:
+        block_y = _draw_context_overflow_note(
+            c,
+            x=block_x,
+            y=block_y,
+            w=context_w - 8 * mm,
+            bottom_y=lower_y + 4 * mm,
+            lang=plan.lang,
+        )
+    if appendix.observations and block_y > lower_y + 8 * mm:
         observations_text = "\n".join(f"- {item}" for item in appendix.observations[:2])
-        _draw_section_block(
+        block_y, did_draw = _draw_section_block_if_room(
             c,
             block_x,
             block_y,
             context_w - 8 * mm,
             _tr(plan.lang, "ADDITIONAL_OBSERVATIONS"),
             observations_text,
-            max_lines=6,
+            bottom_y=lower_y + 4 * mm,
+            max_lines=4,
         )
+        if not did_draw:
+            _draw_context_overflow_note(
+                c,
+                x=block_x,
+                y=block_y,
+                w=context_w - 8 * mm,
+                bottom_y=lower_y + 4 * mm,
+                lang=plan.lang,
+            )
 
     suitability_x = MARGIN + context_w + GAP
     _draw_panel(
@@ -403,3 +466,74 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         )
         if trace_y < lower_y + 4 * mm:
             break
+
+
+def _draw_section_block_if_room(
+    c: Canvas,
+    x: float,
+    y: float,
+    w: float,
+    title: str,
+    body: str,
+    *,
+    bottom_y: float,
+    max_lines: int,
+) -> tuple[float, bool]:
+    needed_h = _measure_section_block_height(body, w=w, max_lines=max_lines)
+    if y - needed_h < bottom_y:
+        return y, False
+    return (
+        _draw_section_block(
+            c,
+            x,
+            y,
+            w,
+            title,
+            body,
+            max_lines=max_lines,
+        ),
+        True,
+    )
+
+
+def _draw_context_overflow_note(
+    c: Canvas,
+    *,
+    x: float,
+    y: float,
+    w: float,
+    bottom_y: float,
+    lang: str,
+) -> float:
+    if y - 6 * mm < bottom_y:
+        return y
+    return float(
+        _draw_text(
+            c,
+            x,
+            y,
+            w,
+            _tr(lang, "REPORT_CONTEXT_MORE_NOT_SHOWN"),
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
+        )
+        - 0.8 * mm
+    )
+
+
+def _evidence_chain_panel_height(appendix: AppendixCData) -> float:
+    row_count = len(appendix.evidence_chain_rows)
+    extra_rows = max(0, row_count - 3)
+    return float(min(76 * mm, 58 * mm + (extra_rows * 12 * mm)))
+
+
+def _measurement_panel_height(appendix: AppendixCData) -> float:
+    proof_window_count = len(appendix.proof_window_rows)
+    if proof_window_count:
+        extra_rows = max(0, proof_window_count - 4)
+        return float(min(98 * mm, 72 * mm + (extra_rows * 12 * mm)))
+    measurement_count = len(appendix.measurement_rows)
+    extra_rows = max(0, measurement_count - 4)
+    return float(min(92 * mm, 72 * mm + (extra_rows * 10 * mm)))

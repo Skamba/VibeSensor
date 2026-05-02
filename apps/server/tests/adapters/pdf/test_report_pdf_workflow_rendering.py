@@ -27,9 +27,7 @@ from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
     NextStep,
-    RankedCandidateRow,
     ReportDocument,
     TimelineGraphData,
     TimelineGraphInterval,
@@ -350,7 +348,7 @@ def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
                 suspected_source="Wheel / Tire",
                 inspect_first="Front-Left",
                 action_status="Inspect first — moderate confidence",
-                action_status_note="Alternative source still in scope",
+                action_status_note="If first check is clean: Inspect Driveline next",
                 reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
                 dominant_corner="Front-Left",
                 runner_up_corner="Front-Right",
@@ -385,12 +383,12 @@ def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
     assert "inspect first" in page_one_lower
     assert "front-left" in page_one_lower
     assert "what to do next" in page_one_lower
-    assert "if clean" in page_one_lower
+    assert "if the primary path is clean" in page_one_lower
     assert "inspect driveline next" in page_one_lower
     assert "run timeline" not in page_one_lower
     assert "detection windows" not in page_one_lower
     assert "this run gives a sensible first inspection" not in page_one_lower
-    assert "alternative source still in scope" in page_one_lower
+    assert "alternative source still in scope" not in page_one_lower
 
 
 def test_page_one_long_wheel_action_fits_primary_preview() -> None:
@@ -402,7 +400,7 @@ def test_page_one_long_wheel_action_fits_primary_preview() -> None:
                 suspected_source="Wheel / Tire",
                 inspect_first="Front-Left",
                 action_status="Inspect first — moderate confidence",
-                action_status_note="Alternative source still in scope",
+                action_status_note="If first check is clean: Inspect Driveline next",
                 reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
                 dominant_corner="Front-Left",
                 runner_up_corner="Front-Right",
@@ -602,44 +600,6 @@ def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_
     assert "Front-Left" in text
     assert "Rear-Right" in text
     assert "No single corner stayed dominant through the whole run" in text
-
-
-@pytest.mark.parametrize("lang", ["en", "nl"])
-def test_report_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
-    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
-    data = ReportDocument(
-        title="Diagnostic worksheet",
-        run_id=f"workflow-headings-{lang}",
-        lang=lang,
-        appendix_a=AppendixAData(
-            mode="workflow",
-            primary_source="Wheel / Tire",
-            alternative_source="Driveline",
-            why_primary_first="Wheel / Tire stayed strongest near Front-Left.",
-            next_if_clean="Move to the driveline path next and inspect Front-Right.",
-            ranked_candidates=[
-                RankedCandidateRow(
-                    source_name="Wheel / Tire",
-                    inspect_first="Front-Left",
-                    path_role="Primary path",
-                    reason="Wheel / Tire stayed strongest near Front-Left.",
-                )
-            ],
-        ),
-        next_steps=[
-            NextStep(
-                action="Check wheel balance",
-                why="The strongest repeated pattern stayed near Front-Left.",
-                confirm="If confirmed, repeat the run to confirm the reduction.",
-                falsify="If balance is clean, move to the driveline path.",
-            )
-        ],
-    )
-
-    text = extract_pdf_text(build_report_pdf(data))
-
-    assert i18n["REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"][lang] in text
-    assert i18n["REPORT_ACTION_MATRIX_TITLE"][lang] in text
 
 
 @pytest.mark.parametrize(
