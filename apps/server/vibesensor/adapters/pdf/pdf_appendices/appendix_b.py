@@ -8,8 +8,9 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
-from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
+from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
+    FONT_B,
     FS_SMALL,
     GAP,
     MARGIN,
@@ -197,6 +198,8 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             )
             - 1.2 * mm
         )
+        show_intensity_snapshot = bool(appendix.intensity_rows) and bottom_h > 95 * mm
+        matrix_bottom = bottom_y + (58 * mm if show_intensity_snapshot else 4 * mm)
         headers = [_tr(plan.lang, "REPORT_SIGNAL_COLUMN")] + [
             cell.location for cell in appendix.sensor_observation_rows[0].sensor_levels
         ]
@@ -213,12 +216,57 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             x=MARGIN + 4 * mm,
             y=table_top,
             w=width - 8 * mm,
-            y_bottom=bottom_y + 4 * mm,
+            y_bottom=matrix_bottom,
             headers=headers,
             rows=rows,
             col_widths=[0.32] + ([0.68 / sensor_column_count] * sensor_column_count),
             max_body_lines=3,
+            overflow_text_template=_tr(
+                plan.lang,
+                "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+                count="{count}",
+            ),
+            overflow_singular_text_template=_tr(
+                plan.lang,
+                "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+                count="{count}",
+            ),
         )
+        if show_intensity_snapshot:
+            snapshot_title_y = matrix_bottom - 5 * mm
+            c.setFillColor(_hex(SUB_CLR))
+            c.setFont(FONT_B, FS_SMALL)
+            c.drawString(
+                MARGIN + 4 * mm, snapshot_title_y, _tr(plan.lang, "REPORT_INTENSITY_LADDER_TITLE")
+            )
+            intensity_rows = [
+                [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(plan.lang, "UNKNOWN")]
+                for row in appendix.intensity_rows
+            ]
+            _draw_table(
+                c,
+                x=MARGIN + 4 * mm,
+                y=snapshot_title_y - 4.0 * mm,
+                w=width - 8 * mm,
+                y_bottom=bottom_y + 4 * mm,
+                headers=[
+                    _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+                    _tr(plan.lang, "REPORT_P95_DB_COLUMN"),
+                    _tr(plan.lang, "REPORT_COVERAGE_STATE_COLUMN"),
+                ],
+                rows=intensity_rows,
+                col_widths=[0.42, 0.18, 0.40],
+                overflow_text_template=_tr(
+                    plan.lang,
+                    "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+                    count="{count}",
+                ),
+                overflow_singular_text_template=_tr(
+                    plan.lang,
+                    "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+                    count="{count}",
+                ),
+            )
     else:
         _draw_panel(
             c, MARGIN, bottom_y, width, bottom_h, _tr(plan.lang, "REPORT_INTENSITY_LADDER_TITLE")
@@ -240,6 +288,16 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             ],
             rows=rows,
             col_widths=[0.42, 0.18, 0.40],
+            overflow_text_template=_tr(
+                plan.lang,
+                "REPORT_TABLE_MORE_ROWS_NOT_SHOWN",
+                count="{count}",
+            ),
+            overflow_singular_text_template=_tr(
+                plan.lang,
+                "REPORT_TABLE_MORE_ROW_NOT_SHOWN",
+                count="{count}",
+            ),
         )
 
 

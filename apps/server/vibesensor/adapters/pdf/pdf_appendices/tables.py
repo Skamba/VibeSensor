@@ -62,8 +62,10 @@ def _fmt_relative_db(value: float | None) -> str:
     if value is None:
         return "—"
     clamped = min(0.0, float(value))
-    if clamped > -0.5:
+    if clamped > -0.05:
         return "0 dB"
+    if clamped > -1.0:
+        return f"{clamped:.1f} dB"
     return f"{clamped:.0f} dB"
 
 
@@ -78,7 +80,9 @@ def _draw_table(
     rows: list[list[str]],
     col_widths: list[float],
     max_body_lines: int = 2,
-) -> None:
+    overflow_text_template: str | None = None,
+    overflow_singular_text_template: str | None = None,
+) -> int:
     total_ratio = sum(col_widths)
     widths = [w * (ratio / total_ratio) for ratio in col_widths]
     header_lines = [
@@ -101,13 +105,35 @@ def _draw_table(
             line_y -= header_leading
         cursor_x += width_part
     current_y = y - header_h
+    rendered_count = 0
     for row_index, row in enumerate(rows):
         line_counts = []
         for cell, width_part in zip(row, widths, strict=False):
             line_counts.append(max(1, len(_wrap_lines(str(cell), width_part - 3 * mm, FS_SMALL))))
         row_h = max(9 * mm, min(max_body_lines, max(line_counts)) * (FS_SMALL + 1.2) + 3.5 * mm)
+        remaining_after_current = len(rows) - row_index - 1
+        if remaining_after_current > 0 and current_y - row_h - (3 * mm) < y_bottom:
+            _draw_table_overflow_note(
+                c,
+                x=x,
+                y_top=current_y,
+                y_bottom=y_bottom,
+                omitted_count=len(rows) - row_index,
+                template=overflow_text_template,
+                singular_template=overflow_singular_text_template,
+            )
+            return rendered_count
         if current_y - row_h < y_bottom:
-            break
+            _draw_table_overflow_note(
+                c,
+                x=x,
+                y_top=current_y,
+                y_bottom=y_bottom,
+                omitted_count=len(rows) - row_index,
+                template=overflow_text_template,
+                singular_template=overflow_singular_text_template,
+            )
+            return rendered_count
         fill = "#ffffff" if row_index % 2 == 0 else REPORT_COLORS["surface"]
         c.setFillColor(_hex(fill))
         c.setStrokeColor(_hex(REPORT_COLORS["table_row_border"]))
@@ -127,3 +153,32 @@ def _draw_table(
             )
             cursor_x += width_part
         current_y -= row_h
+        rendered_count += 1
+    return rendered_count
+
+
+def _draw_table_overflow_note(
+    c: Canvas,
+    *,
+    x: float,
+    y_top: float,
+    y_bottom: float,
+    omitted_count: int,
+    template: str | None,
+    singular_template: str | None,
+) -> None:
+    if omitted_count <= 0 or y_top - y_bottom < 3.0 * mm:
+        return
+    selected_template = (
+        singular_template if omitted_count == 1 and singular_template is not None else template
+    )
+    if selected_template is None:
+        selected_template = (
+            "+ {count} more row not shown"
+            if omitted_count == 1
+            else "+ {count} more rows not shown"
+        )
+    note = selected_template.format(count=omitted_count)
+    c.setFillColor(_hex(SUB_CLR))
+    c.setFont(FONT_B, FS_SMALL)
+    c.drawString(x + 1.5 * mm, max(y_bottom + 1.1 * mm, y_top - 2.4 * mm), note)

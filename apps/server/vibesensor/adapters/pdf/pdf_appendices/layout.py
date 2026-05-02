@@ -246,7 +246,7 @@ def _estimate_worksheet_ranked_stack_height(appendix: AppendixAData, *, lang: st
         col_widths=[0.20, 0.20, 0.18, 0.42],
         max_body_lines=2,
     )
-    return float(min(48 * mm, max(34 * mm, table_height + 17 * mm)))
+    return float(min(62 * mm, max(34 * mm, table_height + 17 * mm)))
 
 
 def _worksheet_first_actions_panel_height(appendix: AppendixAData, *, lang: str) -> float:
@@ -256,7 +256,7 @@ def _worksheet_first_actions_panel_height(appendix: AppendixAData, *, lang: str)
     stack_h = _estimate_worksheet_ranked_stack_height(appendix, lang=lang)
     if stack_h > 0.0:
         stack_y = top_y - GAP - stack_h
-        return float(stack_y - (MARGIN + 8 * mm))
+        return float(stack_y - GAP - (MARGIN + 8 * mm))
     return float(top_y - GAP - (MARGIN + 8 * mm))
 
 
