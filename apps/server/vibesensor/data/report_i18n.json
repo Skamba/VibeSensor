@@ -273,7 +273,7 @@
   },
   "REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY": {
     "en": "only summary-level evidence was available",
-    "nl": "Alleen samenvattingsgegevens beschikbaar"
+    "nl": "alleen samenvattingsgegevens beschikbaar"
   },
   "REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE": {
     "en": "raw capture coverage was incomplete for some replay windows",
@@ -329,7 +329,7 @@
   },
   "REPORT_CONFIDENCE_SIGNAL_RAW_BACKED": {
     "en": "raw-backed replay confirmed the match from {samples} retained samples",
-    "nl": "Heranalyse van ruwe meetdata bevestigde de overeenkomst in {samples} bewaarde samples"
+    "nl": "heranalyse van ruwe meetdata bevestigde de overeenkomst in {samples} bewaarde samples"
   },
   "REPORT_CONFIDENCE_SIGNAL_REPEATED_SUPPORT": {
     "en": "{count} supporting windows lined up with the diagnosis",
@@ -2609,7 +2609,7 @@
   },
   "REPORT_REASON_RECAPTURE_GENERIC": {
     "en": "This run showed vibration activity, but the combined speed, reference, and location evidence stayed too weak for an inspection-first verdict.",
-    "nl": "Deze meting liet trillingsactiviteit zien, maar het gecombineerde snelheids-, referentie- en locatiebewijs bleef te zwak voor een inspectieklare conclusie."
+    "nl": "Deze meting liet trillingsactiviteit zien, maar het gecombineerde snelheids-, referentie- en locatiebewijs bleef te zwak voor een conclusie die direct tot inspectie leidt."
   },
   "REPORT_REASON_RUN_SUMMARY": {
     "en": "This {duration} run showed the clearest repeatable vibration pattern near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
