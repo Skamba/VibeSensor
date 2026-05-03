@@ -19,6 +19,7 @@ from vibesensor.shared.types.json_types import JsonValue
 _SOURCES_BY_VALUE: dict[str, VibrationSource] = {
     str(source.value): source for source in VibrationSource
 }
+_PHASE_ONSET_KEYS = frozenset({"acceleration", "deceleration", "coast_down"})
 
 
 def location_hotspot_from_payload(payload: Mapping[str, object]) -> LocationHotspot:
@@ -138,6 +139,6 @@ def build_origin_explanation(
     ]
     if weak:
         explanation_parts.append(i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
-    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
+    if dominant_phase and dominant_phase in _PHASE_ONSET_KEYS and dominant_phase in PHASE_I18N_KEYS:
         explanation_parts.append(i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     return explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
