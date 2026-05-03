@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.diagram_layout import canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
     FS_SMALL,
@@ -21,6 +22,7 @@ from vibesensor.adapters.pdf.pdf_text import (
     _draw_section_block,
     _draw_text,
 )
+from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
@@ -38,6 +40,13 @@ from .tables import _draw_table
 from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_a_page"]
+
+_WHEEL_LOCATION_ANCHORS = {
+    "front-left wheel",
+    "front-right wheel",
+    "rear-left wheel",
+    "rear-right wheel",
+}
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import AppendixAPageRenderPlan
@@ -77,6 +86,16 @@ def _appendix_a_page(
             steps=list(plan.steps),
             start_number=plan.start_number,
         )
+
+
+def _display_inspect_target(value: object, *, lang: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return _tr(lang, "UNKNOWN")
+    canonical = canonical_location(text)
+    if canonical in _WHEEL_LOCATION_ANCHORS:
+        return human_location(canonical, lang=lang)
+    return text
 
 
 def _draw_worksheet_page(
@@ -130,7 +149,7 @@ def _draw_worksheet_page(
             left_y,
             left_col_w,
             _tr(lang, "REPORT_INSPECT_FIRST_LABEL"),
-            primary_inspect_first,
+            _display_inspect_target(primary_inspect_first, lang=lang),
             max_lines=2,
         )
     if appendix.why_primary_first:
@@ -187,7 +206,7 @@ def _draw_worksheet_page(
         stack_rows = [
             [
                 row.source_name,
-                row.inspect_first or _tr(lang, "UNKNOWN"),
+                _display_inspect_target(row.inspect_first, lang=lang),
                 row.path_role or _tr(lang, "UNKNOWN"),
                 row.reason or "",
             ]

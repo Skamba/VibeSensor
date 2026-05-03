@@ -15,6 +15,7 @@ from vibesensor.shared.report_presentation import (
     coverage_label,
     coverage_notes,
     display_location,
+    display_speed_band,
     proof_caveat_text,
     runner_up_corner,
 )
@@ -99,15 +100,27 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         tr=tr,
     )
     primary_diagnosis = report_facts.primary_diagnosis
-    runner_up = (
+    primary_location_for_display = (
+        primary_diagnosis.dominant_location
+        if primary_diagnosis is not None and primary_diagnosis.dominant_location
+        else decision_facts.primary_candidate.primary_location
+    )
+    primary_location_text = display_location(primary_location_for_display, tr=tr)
+    runner_up_candidate = (
         display_location(primary_diagnosis.runner_up_location, tr=tr)
         if primary_diagnosis is not None and primary_diagnosis.runner_up_location
         else runner_up_corner(sensor_facts.proof_intensity, tr=tr)
     )
-    speed_window_label = (
+    runner_up = (
+        runner_up_candidate
+        if runner_up_candidate and runner_up_candidate != primary_location_text
+        else None
+    )
+    speed_window_label = display_speed_band(
         str(primary_diagnosis.dominant_speed_band or "").strip()
         if primary_diagnosis is not None
-        else str(decision_facts.primary_candidate.primary_speed or "").strip()
+        else str(decision_facts.primary_candidate.primary_speed or "").strip(),
+        tr=tr,
     ) or None
     recapture = build_recapture_assessment(
         aggregate=test_run,

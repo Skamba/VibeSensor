@@ -11,6 +11,7 @@ from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report_i18n import human_location, location_candidates
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.strength_bands import BANDS
 
 __all__ = [
@@ -24,6 +25,8 @@ __all__ = [
     "coverage_label",
     "coverage_notes",
     "display_location",
+    "display_phase_label",
+    "display_speed_band",
     "first_confidence_reason_clause",
     "has_source_overlap",
     "human_source",
@@ -73,13 +76,19 @@ _STRENGTH_THRESHOLDS: tuple[tuple[float, str, str, str], ...] = tuple(
 
 _ORDER_LABEL_NAMES_NL: dict[str, str] = {
     "wheel": "wielorde",
+    "wheel order": "wielorde",
     "engine": "motororde",
+    "engine order": "motororde",
     "driveshaft": "aandrijfasorde",
+    "driveshaft order": "aandrijfasorde",
 }
 _ORDER_LABEL_NAMES_DEFAULT: dict[str, str] = {
     "wheel": "wheel order",
+    "wheel order": "wheel order",
     "engine": "engine order",
+    "engine order": "engine order",
     "driveshaft": "driveshaft order",
+    "driveshaft order": "driveshaft order",
 }
 
 _CLASSIFICATION_I18N_KEYS: dict[str, str] = {
@@ -134,23 +143,37 @@ def display_location(value: object, *, short: bool = True, tr: Callable[..., str
     text = str(value or "").strip()
     if not text:
         return tr("UNKNOWN")
+    lang = _display_lang(tr)
     candidates = location_candidates(text)
     if len(candidates) == 2:
         return tr(
             "REPORT_LOCATION_MIXED_SIGNAL_BETWEEN",
-            first_location=human_location(candidates[0], short=short),
-            second_location=human_location(candidates[1], short=short),
+            first_location=human_location(candidates[0], short=short, lang=lang),
+            second_location=human_location(candidates[1], short=short, lang=lang),
         )
     if len(candidates) > 2:
         return tr(
             "REPORT_LOCATION_MIXED_SIGNAL_LIST",
-            locations=", ".join(human_location(candidate, short=short) for candidate in candidates),
+            locations=", ".join(
+                human_location(candidate, short=short, lang=lang) for candidate in candidates
+            ),
         )
-    return human_location(text, short=short)
+    return human_location(text, short=short, lang=lang)
+
+
+def _display_lang(tr: Callable[..., str]) -> str:
+    try:
+        return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
+    except Exception:
+        return "en"
 
 
 def order_label_human(lang: str, label: str) -> str:
     """Translate a language-neutral order label like ``1x wheel``."""
+    if "," in label:
+        return ", ".join(
+            order_label_human(lang, part.strip()) for part in label.split(",") if part.strip()
+        )
     names = _ORDER_LABEL_NAMES_NL if lang == "nl" else _ORDER_LABEL_NAMES_DEFAULT
     parts = label.strip().split(" ", 1)
     if len(parts) == 2:
@@ -158,6 +181,27 @@ def order_label_human(lang: str, label: str) -> str:
         localized = names.get(base.lower(), base)
         return f"{multiplier} {localized}"
     return label
+
+
+def display_speed_band(value: object, *, tr: Callable[..., str]) -> str:
+    """Render a persisted speed-band label in the active report language."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if _display_lang(tr) == "nl":
+        return text.replace("km/h", "km/u")
+    return text
+
+
+def display_phase_label(value: object, *, tr: Callable[..., str]) -> str | None:
+    """Render a persisted driving-phase label in the active report language."""
+    normalized = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if not normalized:
+        return None
+    i18n_key = PHASE_I18N_KEYS.get(normalized)
+    if i18n_key:
+        return tr(i18n_key)
+    return normalized.replace("_", " ").title()
 
 
 def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
@@ -258,7 +302,7 @@ def confidence_reason_text(
     tr: Callable[..., str],
 ) -> str:
     if confidence_facts.uses_summary_fallback:
-        return str(confidence_facts.fallback_reason or "").strip() or (
+        return _localized_fallback_reason(confidence_facts.fallback_reason, tr=tr) or (
             tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY")
             if confidence_facts.data_basis == "summary_only"
             else ""
@@ -537,6 +581,25 @@ def _vehicle_data_scope_text(
     return tr("REPORT_CONFIDENCE_CAR_SCOPE_TIRE")
 
 
+def _localized_fallback_reason(value: object, *, tr: Callable[..., str]) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if _display_lang(tr) != "nl":
+        return text
+    replacements = {
+        "missing reference data may affect accuracy": "Referentie ontbreekt",
+        "speed was not steady during measurement": "snelheid wisselde",
+    }
+    clauses: list[str] = []
+    for clause in text.split(";"):
+        cleaned = clause.strip().rstrip(".")
+        if not cleaned:
+            continue
+        clauses.append(replacements.get(cleaned.casefold(), cleaned))
+    return "; ".join(clauses)
+
+
 def append_unique_line(lines: list[str], text: object) -> None:
     value = str(text or "").strip()
     if not value:
@@ -549,9 +612,12 @@ def append_unique_line(lines: list[str], text: object) -> None:
 
 def candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
     if finding.signature_labels:
-        return ", ".join(finding.signature_labels[:2])
+        lang = _display_lang(tr)
+        return ", ".join(
+            order_label_human(lang, str(label)) for label in finding.signature_labels[:2]
+        )
     if finding.order:
-        return finding.order
+        return order_label_human(_display_lang(tr), finding.order)
     if finding.frequency_hz is not None:
         return f"{finding.frequency_hz:.1f} Hz"
     return tr("REPORT_SIGNAL_FALLBACK")

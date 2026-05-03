@@ -9,7 +9,12 @@ from vibesensor.report_i18n import resolve_i18n
 from vibesensor.shared.boundaries.reporting.document import PatternEvidence
 from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
 from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
-from vibesensor.shared.report_presentation import display_location, human_source, order_label_human
+from vibesensor.shared.report_presentation import (
+    display_location,
+    display_speed_band,
+    human_source,
+    order_label_human,
+)
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 from vibesensor.use_cases.history.report_document.pattern_parts import why_parts_listed
 
@@ -47,7 +52,7 @@ def build_pattern_evidence(
     return PatternEvidence(
         matched_systems=systems,
         strongest_location=display_location(primary.primary_location, tr=tr),
-        speed_band=primary.primary_speed,
+        speed_band=display_speed_band(primary.primary_speed, tr=tr),
         strength_label=primary.strength_text,
         strength_peak_db=primary.strength_db,
         certainty_label=primary.certainty_label_text,
@@ -66,7 +71,7 @@ def resolve_interpretation(origin: VibrationOrigin | None, *, lang: str, tr: Cal
         return ""
     explanation = build_origin_explanation(
         source=str(origin.suspected_source),
-        speed_band=origin.speed_band or "",
+        speed_band=display_speed_band(origin.speed_band or "", tr=tr),
         location=origin.summary_location,
         dominance=origin.dominance_ratio,
         weak=origin.weak_spatial_separation,

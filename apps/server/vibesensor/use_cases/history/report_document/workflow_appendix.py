@@ -15,6 +15,7 @@ from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     confidence_pct_text,
     display_location,
+    display_speed_band,
     has_source_overlap,
     human_source,
     is_transient_primary,
@@ -317,6 +318,7 @@ def _candidate_reason_text(
         ).strip()
         or str(finding.strongest_speed_band or "").strip()
     )
+    speed_window = display_speed_band(speed_window, tr=tr)
     location = display_location(finding.strongest_location, tr=tr)
     signal = candidate_signal_text(finding, tr=tr)
     if use_shared_overlap_wording:
