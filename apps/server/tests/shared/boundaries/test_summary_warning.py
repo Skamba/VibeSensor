@@ -26,12 +26,12 @@ _LOCALIZED_WARNING_NL = {
     "code": "reference_context_incomplete",
     "severity": "warn",
     "applies_to": "order_analysis",
-    "title": "De referentiecontext voor ordeanalyse was onvolledig voor deze run",
+    "title": "De referentiecontext voor ordeanalyse was onvolledig voor deze meting",
     "detail": (
-        "Voor deze run ontbreekt een deel van de wiel-/motorreferentie die "
-        "nodig is voor betrouwbare ordeanalyse. Ordegebaseerde bevindingen "
+        "Voor deze meting ontbreekt een deel van de wiel-/motorreferenties die "
+        "nodig zijn voor betrouwbare ordeanalyse. Ordegebaseerde bevindingen "
         "kunnen nog steeds worden getoond, maar behandel ze als voorlopig "
-        "totdat de run met volledige voertuigreferentiegegevens wordt "
+        "totdat de meting met volledige voertuigreferentiegegevens wordt "
         "herhaald."
     ),
 }

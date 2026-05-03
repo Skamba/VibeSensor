@@ -477,8 +477,8 @@ def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     assert isinstance(warnings, list)
     assert len(warnings) == 2
     titles = {str(item.get("title")) for item in warnings if isinstance(item, dict)}
-    assert "De referentiecontext voor ordeanalyse was onvolledig voor deze run" in titles
-    assert "Voertuigprofielinstellingen zijn na deze run gewijzigd" in titles
+    assert "De referentiecontext voor ordeanalyse was onvolledig voor deze meting" in titles
+    assert "Voertuigprofielinstellingen zijn na deze meting gewijzigd" in titles
 
 
 def test_history_run_strips_internal_analysis_fields() -> None:
