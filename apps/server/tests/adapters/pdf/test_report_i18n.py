@@ -104,8 +104,6 @@ def test_variants_returns_both_languages() -> None:
 
 def test_dutch_translations_complete() -> None:
     """All Dutch translation assertions consolidated from audit rounds 1-5."""
-    ui = _load_ui_nl()
-
     # --- Corrections ---
     assert report_i18n.tr("nl", "HEAT_LEGEND_MORE") == "Meer trilling"
     assert report_i18n.tr("nl", "RUN_TRIAGE") == "Meetrun-triage"
@@ -211,6 +209,11 @@ def test_dutch_translations_complete() -> None:
     assert "snelheidsbereik waarin de klacht optreedt" in _nl("ACTION_TIRE_CONDITION_CONFIRM")
     assert "Verbrandingskwaliteitsindicatoren" in _nl("ACTION_ENGINE_COMBUSTION_FALSIFY")
     assert "de {phase}fase" in _nl("ORIGIN_PHASE_ONSET_NOTE")
+
+
+def test_dutch_ui_and_recent_translations_complete() -> None:
+    """Dutch UI and latest audit assertions stay separate from report-only checks."""
+    ui = _load_ui_nl()
 
     # --- Round 4: UI + Python ---
     assert ui["chart.auto_scale"] == "Automatisch schalen"

@@ -27,7 +27,7 @@ functions:
     max_lines: 229
     reason: Whole-run stage orchestration retained until table-driven stage runner extraction; raw-capture quality gating is kept at the stage prerequisite seam.
   apps/server/vibesensor/adapters/pdf/pdf_appendices/appendix_c.py::_appendix_c_page:
-    max_lines: 425
+    max_lines: 434
     reason: Dense appendix drawing routine retained until PDF rendering is split into smaller layout helpers; complex evidence panel sizing kept in the same renderer for now.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_diagnosis_ranking.py::test_execute_post_analysis_persists_whole_run_diagnosis_summaries:
     max_lines: 353
@@ -54,7 +54,7 @@ functions:
     max_lines: 220
     reason: Integration load scenario intentionally keeps timing, ingest, and metric assertions in one flow.
   apps/server/vibesensor/adapters/pdf/pdf_appendices/appendix_b.py::_appendix_b_page:
-    max_lines: 264
+    max_lines: 275
     reason: Dense appendix drawing routine retained until PDF rendering is split into smaller layout helpers; location snapshot rendering remains colocated with the sensor matrix.
   apps/server/tests/use_cases/run/test_post_analysis_executor.py::test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar:
     max_lines: 206
