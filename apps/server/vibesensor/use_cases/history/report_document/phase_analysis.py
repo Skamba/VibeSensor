@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun, speed_band_sort_key
+from vibesensor.report_i18n import is_composite_location
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.report_presentation import display_location
@@ -24,7 +25,7 @@ __all__ = [
 
 
 def _normalized_phase_key(value: object) -> str:
-    return str(value or "").strip().lower()
+    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
 
 
 def _ordered_timeline_phase_keys(
@@ -161,6 +162,7 @@ def _same_source_temporal_pair(
         finding
         for finding in aggregate.effective_top_causes()[:3]
         if str(finding.strongest_location or "").strip()
+        and not is_composite_location(finding.strongest_location)
     ]
     if len(candidates) < 2:
         return None

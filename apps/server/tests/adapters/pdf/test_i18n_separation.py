@@ -23,7 +23,7 @@ from vibesensor.use_cases.history.report_document import build_report_document
 _TRANSLATED_MARKERS = [
     # Dutch markers
     "Onbekend",
-    "Wiel / Band",
+    "Wiel/band",
     "Wielorde",
     "wielorde",
     "motororde",
@@ -295,7 +295,7 @@ def test_resolve_i18n_source_translation() -> None:
     en_result = _resolve_i18n("en", ref)
     nl_result = _resolve_i18n("nl", ref)
     assert "Wheel / Tire" in en_result or "wheel" in en_result.lower()
-    assert "Wiel / Band" in nl_result or "wiel" in nl_result.lower()
+    assert "Wiel/band" in nl_result or "wiel" in nl_result.lower()
 
 
 @pytest.mark.parametrize(

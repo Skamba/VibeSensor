@@ -16,6 +16,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     MeasurementRow,
     NextStep,
     PatternEvidence,
+    ProofWindowRow,
     RankedCandidateRow,
     ReportDocument,
     ReportLabelValueRow,
@@ -101,6 +102,58 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
 
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
     assert "(22%)" not in text
+
+
+def test_dutch_proof_window_speed_uses_km_u_unit() -> None:
+    data = ReportDocument(
+        title="VibeSensor-diagnoserapport",
+        run_id="dutch-proof-window-speed",
+        lang="nl",
+        appendix_c=AppendixCData(
+            proof_window_rows=[
+                ProofWindowRow(
+                    window_id="P1",
+                    time_s=12.0,
+                    speed_kmh=67.0,
+                    matched_hz=14.3,
+                    dominant_location="Front-Left",
+                    phase="constant",
+                )
+            ]
+        ),
+    )
+
+    text = extract_pdf_text(build_report_pdf(data))
+
+    assert "67 km/u" in text
+    assert "67 km/h" not in text
+
+
+def test_worksheet_keeps_freeform_inspect_targets_verbatim() -> None:
+    data = ReportDocument(
+        title="Diagnostic worksheet",
+        run_id="freeform-inspect-target",
+        lang="en",
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Engine",
+            why_primary_first="Engine-order evidence leads the workflow.",
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Engine",
+                    inspect_first="Front-Right engine mount/accessory area",
+                    path_role="Primary path",
+                    reason="Best RPM lock.",
+                )
+            ],
+        ),
+        next_steps=[NextStep(action="Inspect the front-right engine mount.")],
+    )
+
+    text = " ".join(extract_pdf_text(build_report_pdf(data)).split())
+
+    assert "Front-Right engine mount/accessory area" in text
+    assert "Front Right Engine Mount/accessory Area" not in text
 
 
 def test_page_one_does_not_render_support_duration_as_elapsed_runtime() -> None:

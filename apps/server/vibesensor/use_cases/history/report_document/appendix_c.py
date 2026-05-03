@@ -12,6 +12,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     MeasurementRow,
     ProofWindowRow,
 )
+from vibesensor.shared.report_presentation import display_phase_label, display_speed_band
 
 from ._candidate_resolver import PrimaryCandidateContext
 from .evidence_snapshot import build_evidence_snapshot_rows
@@ -39,7 +40,7 @@ def build_appendix_c_data(
     tr: Callable[..., str],
 ) -> AppendixCData:
     evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)[:1]
-    proof_window_rows = _build_proof_window_rows(primary)
+    proof_window_rows = _build_proof_window_rows(primary, tr=tr)
     speed_windows = [row.speed_window for row in evidence_rows if row.speed_window]
     speed_summary = (
         ", ".join(dict.fromkeys(speed_windows))
@@ -62,7 +63,7 @@ def build_appendix_c_data(
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
         limits_summary=_run_limits_summary_text(
             report_facts,
-            speed_window_label=appendix_context.speed_window_label,
+        speed_window_label=display_speed_band(appendix_context.speed_window_label, tr=tr),
             proof_caveat=appendix_context.proof_caveat,
             tr=tr,
         ),
@@ -73,7 +74,11 @@ def build_appendix_c_data(
     )
 
 
-def _build_proof_window_rows(primary: PrimaryCandidateContext) -> list[ProofWindowRow]:
+def _build_proof_window_rows(
+    primary: PrimaryCandidateContext,
+    *,
+    tr: Callable[..., str],
+) -> list[ProofWindowRow]:
     finding = primary.primary_candidate
     if finding is None or not finding.matched_points:
         return []
@@ -86,7 +91,7 @@ def _build_proof_window_rows(primary: PrimaryCandidateContext) -> list[ProofWind
                 speed_kmh=observation.speed_kmh,
                 matched_hz=observation.matched_hz,
                 dominant_location=str(observation.location or "").strip() or None,
-                phase=(str(observation.phase or "").replace("_", " ").title() or None),
+                phase=display_phase_label(observation.phase, tr=tr),
             )
         )
     return rows
