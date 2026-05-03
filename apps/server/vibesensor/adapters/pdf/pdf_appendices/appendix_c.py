@@ -168,7 +168,9 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
                     source=next(iter(measurement_source_values)),
                     signal=next(iter(measurement_signal_values)),
                     speed=next(iter(measurement_speed_values)),
-                    location=human_location(next(iter(measurement_location_values)), lang=plan.lang),
+                    location=human_location(
+                        next(iter(measurement_location_values)), lang=plan.lang
+                    ),
                 ),
                 size=FS_SMALL,
                 color=TEXT_CLR,

@@ -63,7 +63,7 @@ def build_appendix_c_data(
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
         limits_summary=_run_limits_summary_text(
             report_facts,
-        speed_window_label=display_speed_band(appendix_context.speed_window_label, tr=tr),
+            speed_window_label=display_speed_band(appendix_context.speed_window_label, tr=tr),
             proof_caveat=appendix_context.proof_caveat,
             tr=tr,
         ),
