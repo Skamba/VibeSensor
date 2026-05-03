@@ -99,6 +99,5 @@ def test_weak_location_report_does_not_repeat_same_runner_up_corner() -> None:
         "Sommige ordereferenties ontbreken of zijn onzeker afgeleid"
     )
     assert document.verdict_page.proof_summary == (
-        "Locatiebewijs bleef verdeeld; gebruik vooral de bron als richting, "
-        "niet één exacte hoek."
+        "Locatiebewijs bleef verdeeld; gebruik vooral de bron als richting, niet één exacte hoek."
     )

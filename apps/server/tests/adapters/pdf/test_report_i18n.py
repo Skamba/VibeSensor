@@ -362,8 +362,7 @@ def test_dutch_report_presentation_localizes_data_shaped_labels() -> None:
         car_data_confidence=None,
         uses_summary_fallback=True,
         fallback_reason=(
-            "Missing reference data may affect accuracy; "
-            "Speed was not steady during measurement"
+            "Missing reference data may affect accuracy; Speed was not steady during measurement"
         ),
         signal_keys=(),
         caveat_keys=(),

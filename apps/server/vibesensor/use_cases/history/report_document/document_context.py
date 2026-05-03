@@ -116,12 +116,15 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         if runner_up_candidate and runner_up_candidate != primary_location_text
         else None
     )
-    speed_window_label = display_speed_band(
-        str(primary_diagnosis.dominant_speed_band or "").strip()
-        if primary_diagnosis is not None
-        else str(decision_facts.primary_candidate.primary_speed or "").strip(),
-        tr=tr,
-    ) or None
+    speed_window_label = (
+        display_speed_band(
+            str(primary_diagnosis.dominant_speed_band or "").strip()
+            if primary_diagnosis is not None
+            else str(decision_facts.primary_candidate.primary_speed or "").strip(),
+            tr=tr,
+        )
+        or None
+    )
     recapture = build_recapture_assessment(
         aggregate=test_run,
         primary_candidate_facts=decision_facts.primary_candidate,
