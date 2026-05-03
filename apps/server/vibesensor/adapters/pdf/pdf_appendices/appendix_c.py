@@ -24,6 +24,7 @@ from vibesensor.adapters.pdf.pdf_text import (
     _draw_text,
     _measure_section_block_height,
 )
+from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
 
 from .layout import (
@@ -88,7 +89,9 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             ", ".join(row.measurement_refs) or _tr(plan.lang, "REPORT_MEASUREMENT_REFS_NONE"),
             str(row.matched_evidence_window_count or 0),
             row.speed_window or _tr(plan.lang, "UNKNOWN"),
-            row.dominant_location or _tr(plan.lang, "UNKNOWN"),
+            human_location(row.dominant_location, lang=plan.lang)
+            if row.dominant_location
+            else _tr(plan.lang, "UNKNOWN"),
         ]
         if show_ambiguity:
             current.append(row.ambiguity_note or "—")
@@ -165,7 +168,9 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
                     source=next(iter(measurement_source_values)),
                     signal=next(iter(measurement_signal_values)),
                     speed=next(iter(measurement_speed_values)),
-                    location=next(iter(measurement_location_values)),
+                    location=human_location(
+                        next(iter(measurement_location_values)), lang=plan.lang
+                    ),
                 ),
                 size=FS_SMALL,
                 color=TEXT_CLR,
@@ -190,6 +195,7 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             - 0.8 * mm
         )
     if appendix.proof_window_rows:
+        speed_unit = "km/u" if plan.lang == "nl" else "km/h"
         measurement_headers = [
             _tr(plan.lang, "REPORT_WINDOW_ID_COLUMN"),
             _tr(plan.lang, "REPORT_TIME_COLUMN"),
@@ -203,12 +209,14 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
                 row.window_id,
                 f"{row.time_s:.1f} s" if row.time_s is not None else _tr(plan.lang, "UNKNOWN"),
                 (
-                    f"{row.speed_kmh:.0f} km/h"
+                    f"{row.speed_kmh:.0f} {speed_unit}"
                     if row.speed_kmh is not None
                     else _tr(plan.lang, "UNKNOWN")
                 ),
                 _fmt_hz(row.matched_hz),
-                row.dominant_location or _tr(plan.lang, "UNKNOWN"),
+                human_location(row.dominant_location, lang=plan.lang)
+                if row.dominant_location
+                else _tr(plan.lang, "UNKNOWN"),
                 row.phase or _tr(plan.lang, "UNKNOWN"),
             ]
             for row in appendix.proof_window_rows
@@ -249,7 +257,9 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
                 _fmt_db(row.peak_db),
                 _fmt_db(row.strength_db),
                 row.speed_window or _tr(plan.lang, "UNKNOWN"),
-                row.dominant_location or _tr(plan.lang, "UNKNOWN"),
+                human_location(row.dominant_location, lang=plan.lang)
+                if row.dominant_location
+                else _tr(plan.lang, "UNKNOWN"),
             ]
             for row in appendix.measurement_rows
         ]

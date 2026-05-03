@@ -9,6 +9,14 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor import report_i18n
+from vibesensor.adapters.pdf.diagram_layout import canonical_location
+from vibesensor.domain import DiagnosisAssessment
+from vibesensor.shared.report_presentation import (
+    confidence_reason_text,
+    display_location,
+    display_speed_band,
+    order_label_human,
+)
 from vibesensor.use_cases.history.report_document.pattern_parts import (
     _DEFAULT_PARTS,
     why_parts_listed,
@@ -96,11 +104,9 @@ def test_variants_returns_both_languages() -> None:
 
 def test_dutch_translations_complete() -> None:
     """All Dutch translation assertions consolidated from audit rounds 1-5."""
-    ui = _load_ui_nl()
-
     # --- Corrections ---
     assert report_i18n.tr("nl", "HEAT_LEGEND_MORE") == "Meer trilling"
-    assert report_i18n.tr("nl", "RUN_TRIAGE") == "Run triage"
+    assert report_i18n.tr("nl", "RUN_TRIAGE") == "Meetrun-triage"
     assert (
         report_i18n.tr("nl", "COVERAGE_RISES_ABOVE_THRESHOLD_AND_WHEEL_ORDER_CHECKS")
         == "Dekking stijgt boven de drempel en wielorde-controles komen beschikbaar."
@@ -123,18 +129,21 @@ def test_dutch_translations_complete() -> None:
     )
     assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
     assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_WARN")
-    assert "locatiedata" in report_i18n.tr("nl", "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND")
-    assert "aanvullende data" in report_i18n.tr("nl", "NO_NEXT_STEPS")
+    assert "locatiegegevens" in report_i18n.tr(
+        "nl",
+        "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND",
+    )
+    assert "aanvullende gegevens" in report_i18n.tr("nl", "NO_NEXT_STEPS")
     assert report_i18n.tr("nl", "METRIC_LABEL") == "Meetwaarde"
-    assert "Snelheidsdata" in report_i18n.tr(
+    assert "Snelheidsgegevens" in report_i18n.tr(
         "nl",
         "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
     )
 
     # --- Round 3 ---
     assert _nl("TIRE_WIDTH_MM_LABEL") == "Bandenbreedte (mm)"
-    assert "gemonitorde locatie" in _nl("DETECTED_AT_ONE_MONITORED_LOCATION")
-    assert "gemonitorde locaties" in _nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB")
+    assert "gemeten locatie" in _nl("DETECTED_AT_ONE_MONITORED_LOCATION")
+    assert "gemeten locaties" in _nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB")
     assert "overeenkomende piekamplitude" in _nl("METRIC_MEAN_MATCHED_PEAK_AMPLITUDE")
     assert "overeenkomende samples" in _nl("METRIC_P95_PEAK_AMPLITUDE")
     assert _nl("MATCHED_SYSTEMS") == "Overeenkomende systemen"
@@ -166,7 +175,7 @@ def test_dutch_translations_complete() -> None:
     assert "aandrijflijnprobleem" in _nl("ACTION_DRIVELINE_INSPECTION_FALSIFY")
     assert "ordefout" in _nl("FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST")
     assert "ordefout" in _nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
-    assert "hotspotsamenvatting" in _nl("HOTSPOT_SUMMARY").lower()
+    assert "probleemgebieden" in _nl("HOTSPOT_SUMMARY").lower()
     assert "lokale intensiteit" in _nl("HOTSPOT_MARKER_SIZE_HINT").lower()
     assert "ondersteunende meetwaarden" in _nl("DIAGNOSTIC_PEAKS").lower()
     assert "ondersteunende observaties" in _nl("ADDITIONAL_OBSERVATIONS").lower()
@@ -184,7 +193,7 @@ def test_dutch_translations_complete() -> None:
     assert "beschikbaar" in _nl("SPEED_COVERAGE_LINE")
     assert "niet-null" not in _nl("SPEED_COVERAGE_LINE")
     assert "de voertuigsnelheid" in _nl("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR")
-    assert "trefkans" in _nl("EVIDENCE_ORDER_TRACKED")
+    assert "matchpercentage" in _nl("EVIDENCE_ORDER_TRACKED")
     assert _nl("VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF").startswith("Controleer")
     assert "brandstof-/ontstekingsadaptaties" in _nl("ACTION_ENGINE_COMBUSTION_WHAT")
     assert "snelheidsmetingen" in _nl("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED")
@@ -194,12 +203,17 @@ def test_dutch_translations_complete() -> None:
     assert "worden meestal veroorzaakt door" in _nl("ACTION_WHEEL_BALANCE_WHY")
     assert "een patroongebaseerde" in _nl("PATTERN_SUGGESTION_DISCLAIMER")
     assert "motorsnelheidsreferentie" in _nl("ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON")
-    assert "referentiedata" in _nl("STATUS_REFERENCE_GAPS")
+    assert "referentiegegevens" in _nl("STATUS_REFERENCE_GAPS")
     assert "definitieve diagnose" in _nl("STATUS_REFERENCE_GAPS")
     assert "ongewijzigd" in _nl("ACTION_WHEEL_BALANCE_FALSIFY")
-    assert "klachtsnelheidsband" in _nl("ACTION_TIRE_CONDITION_CONFIRM")
+    assert "snelheidsbereik waarin de klacht optreedt" in _nl("ACTION_TIRE_CONDITION_CONFIRM")
     assert "Verbrandingskwaliteitsindicatoren" in _nl("ACTION_ENGINE_COMBUSTION_FALSIFY")
     assert "de {phase}fase" in _nl("ORIGIN_PHASE_ONSET_NOTE")
+
+
+def test_dutch_ui_and_recent_translations_complete() -> None:
+    """Dutch UI and latest audit assertions stay separate from report-only checks."""
+    ui = _load_ui_nl()
 
     # --- Round 4: UI + Python ---
     assert ui["chart.auto_scale"] == "Automatisch schalen"
@@ -214,13 +228,13 @@ def test_dutch_translations_complete() -> None:
     assert ui["history.loading_preview"] == "Voorvertoning laden..."
     assert "Voorvertoning" in ui["history.preview_unavailable"]
     assert "Voorvertoning" in ui["history.preview_heatmap_title"]
-    assert ui["matrix.source.wheel"] == "Wiel / Band"
+    assert ui["matrix.source.wheel"] == "Wiel/band"
     assert ui["matrix.source.other"] == "Overig / Weg"
     default_nl = [entry[2] for entry in _DEFAULT_PARTS]
     assert any("rubberbus" in label for label in default_nl)
 
     # --- Round 5: Python ---
-    assert _nl("TIRE_ASPECT_PCT_LABEL") == "Bandenprofiel (%)"
+    assert _nl("TIRE_ASPECT_PCT_LABEL") == "Zijwanghoogte (%)"
     assert "beste overeenkomst" in _nl("FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST")
     assert "beste overeenkomst" in _nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
     assert "ordespecifieke" in _nl("REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED")
@@ -228,9 +242,26 @@ def test_dutch_translations_complete() -> None:
     assert _nl("REFERENCE_COMPLETENESS") == "Referentievolledigheid"
     assert _nl("SUITABILITY_CHECK_REFERENCE_COMPLETENESS") == "Referentievolledigheid"
     assert _nl("DRIVING_PHASE_DECELERATION") == "vertraging"
+    assert _nl("DRIVING_PHASE_CRUISE") == "constante snelheid"
     assert "van de sterkste" in _nl("REL_0F_OF_STRONGEST")
     assert _nl("SAMPLE_COUNT_LABEL") == "Aantal metingen"
     assert _nl("NONE_LISTED") == "Niets vermeld"
+    assert _nl("RUN_DATE") == "Meetdatum"
+    assert _nl("SPEED_BAND") == "Snelheidsbereik"
+    assert _nl("REPORT_FALSIFY_COLUMN") == "Als dit niets oplevert"
+    assert _nl("REPORT_PAGE1_PARTS_GATE_LABEL") == "Wanneer vervangen"
+    assert _nl("REPORT_ACTION_MATRIX_HANDOFF_GATE_TITLE") == "Wanneer vervangen"
+    assert "engine-band" not in _nl("REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TEXT")
+    assert "gekozen trillingssignaal" in _nl("REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TEXT")
+    assert "50-70" not in _nl("REPORT_ACTION_MATRIX_HANDOFF_REPEAT_TEXT")
+    assert _nl("REPORT_DOMINANT_CORNER_LABEL") == "Sterkste hoek"
+    assert _nl("REPORT_RUNNER_UP_CORNER_LABEL") == "Tweede sterkste hoek"
+    assert _nl("REPORT_DOMINANCE_RATIO_LABEL") == "Sterkteverhouding"
+    assert _nl("REPORT_LOCATION_CONFIDENCE_LABEL") == "Locatiezekerheid"
+    assert _nl("REPORT_COVERAGE_LABEL") == "Sensordekking"
+    assert _nl("REPORT_PAGE1_SOURCE_COMPARISON_NOT_INDICATED") == "geen aanwijzing"
+    assert _nl("REPORT_PAGE1_PROOF_SUMMARY_TITLE") == "Waarom dit aannemelijk is"
+    assert _nl("REPORT_TIMELINE_DETECTIONS_LABEL") == "Signaalvensters"
     assert "motortoerental" in _nl("TIER_A_CAPTURE_REFERENCE_DATA")
     assert "voordat onderdelen worden vervangen" in _nl("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
     assert "ordelabeling" in _nl("THIS_REPORT_IS_GENERATED_FROM_EXPLICIT_REFERENCES_ONLY")
@@ -241,9 +272,9 @@ def test_dutch_translations_complete() -> None:
     assert _nl("PEAK_DB") == "Piek (dB)"
     assert _nl("SPEED_BINNED_ANALYSIS") == "Analyse per snelheidsband"
     assert "met nadruk op" in _nl("SPEED_HINT_FOCUS")
-    assert _nl("RECORD_ADDITIONAL_DATA") == "Verzamel aanvullende data"
+    assert _nl("RECORD_ADDITIONAL_DATA") == "Verzamel aanvullende gegevens"
     assert "locatievergelijking is minder betrouwbaar" in _nl("SUITABILITY_SENSOR_COVERAGE_WARN")
-    assert "buiten specificatie" in _nl("ACTION_DRIVELINE_INSPECTION_CONFIRM")
+    assert "te veel slingering/speling" in _nl("ACTION_DRIVELINE_INSPECTION_CONFIRM")
 
     # --- Round 5: UI + Python ---
     assert ui["dashboard.vibration_count_live"] == "Actuele trillingsteller"
@@ -253,6 +284,17 @@ def test_dutch_translations_complete() -> None:
     assert ui["dashboard.rotational.source.fallback_manual"] == "Terugval naar handmatig"
     assert ui["history.refresh"] == "Geschiedenis herladen"
     assert ui["history.pdf_failed"] == "PDF genereren mislukt."
+    assert ui["dashboard.logging.run_id"] == "Meetrun-ID: {runId}"
+    assert ui["dashboard.logging.last_run_id"] == "Laatste meetrun: {runId}"
+    assert ui["history.preview_unavailable"] == (
+        "Voorvertoning is niet beschikbaar voor deze meetrun."
+    )
+    assert ui["report.run_id"] == "Meetrun-ID"
+    assert ui["settings.update.log_intro"].endswith("meest recente uitvoering.")
+    assert ui["settings.update.log_intro_running"].endswith("actieve uitvoering.")
+    assert ui["settings.update.health.analysis_run"] == "Actieve analyse"
+    assert ui["settings.update.health.analysis_queue_depth"] == "Wachtrij analyses"
+    assert ui["settings.tire_aspect"] == "Zijwanghoogte (%)"
     assert ui["settings.wheel_bandwidth"] == "Wielorde-bandbreedte (%)"
     assert ui["settings.driveshaft_bandwidth"] == "Aandrijfasorde-bandbreedte (%)"
     assert ui["settings.engine_bandwidth"] == "Motororde-bandbreedte (%)"
@@ -278,3 +320,56 @@ def test_dutch_translations_complete() -> None:
     assert "aandrijflijntrillingspatronen" in result
     result = why_parts_listed("engine", lang="nl")
     assert "motortrillingspatronen" in result
+
+
+def test_dutch_location_labels_are_used_for_report_display() -> None:
+    def tr_nl(key: str, **kwargs: object) -> str:
+        return report_i18n.tr("nl", key, **kwargs)
+
+    assert report_i18n.human_location("Front Left", lang="nl") == "Linksvoor"
+    assert report_i18n.human_location("front-right wheel", lang="nl") == "Rechtsvoor"
+    assert report_i18n.human_location("Cabine linksvoor", lang="nl") == "Cabine linksvoor"
+    assert display_location("rear-left wheel", tr=tr_nl) == "Linksachter"
+    assert canonical_location("Linksvoor") == "front-left wheel"
+    assert canonical_location("rechterachterwiel") == "rear-right wheel"
+
+
+def test_dutch_report_presentation_localizes_data_shaped_labels() -> None:
+    def tr_nl(key: str, **kwargs: object) -> str:
+        return report_i18n.tr("nl", key, **kwargs)
+
+    assert display_speed_band("60-80 km/h", tr=tr_nl) == "60-80 km/u"
+    assert order_label_human("nl", "1x wheel, 2x wheel") == "1x wielorde, 2x wielorde"
+
+    fallback = DiagnosisAssessment(
+        score_0_to_1=0.42,
+        label_key="CONFIDENCE_LOW",
+        pct_text="42%",
+        tier="A",
+        data_basis="summary_only",
+        raw_backed_sample_count=0,
+        supporting_window_count=None,
+        supporting_duration_s=None,
+        stable_frequency_min_hz=None,
+        stable_frequency_max_hz=None,
+        supporting_location_count=0,
+        top_support_location=None,
+        top_support_share=None,
+        mean_relative_error=None,
+        snr_db=None,
+        alternative_source=None,
+        has_reference_gap=True,
+        speed_gap_window_count=0,
+        rpm_gap_window_count=0,
+        car_data_reference_scope=None,
+        car_data_confidence=None,
+        uses_summary_fallback=True,
+        fallback_reason=(
+            "Missing reference data may affect accuracy; Speed was not steady during measurement"
+        ),
+        signal_keys=(),
+        caveat_keys=(),
+    )
+    reason = confidence_reason_text(fallback, tr=tr_nl)
+    assert "Referentie ontbreekt" in reason
+    assert "snelheid wisselde" in reason

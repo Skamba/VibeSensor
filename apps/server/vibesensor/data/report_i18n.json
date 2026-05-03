@@ -1,7 +1,7 @@
 {
   "ACTION_DRIVELINE_INSPECTION_CONFIRM": {
     "en": "Mechanical defect or out-of-spec runout/play is found in driveline components.",
-    "nl": "Mechanisch defect of buiten specificatie slingering/speling wordt gevonden in aandrijflijncomponenten."
+    "nl": "Er is een mechanisch defect of te veel slingering/speling gevonden in de aandrijflijn."
   },
   "ACTION_DRIVELINE_INSPECTION_FALSIFY": {
     "en": "No driveline play/runout/balance issue is found.",
@@ -9,11 +9,11 @@
   },
   "ACTION_DRIVELINE_INSPECTION_WHAT": {
     "en": "Inspect propshaft runout/balance, center support bearing, and CV/guibo joints.",
-    "nl": "Controleer cardanas slingering/balans, middenlager en homokineten/flexschijf."
+    "nl": "Controleer de cardanas op slingering/onbalans, plus middenlager, homokineten en flexschijf."
   },
   "ACTION_DRIVELINE_INSPECTION_WHY": {
     "en": "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
-    "nl": "Aandrijflijnorde-trillingen komen vaak door onbalans van de as, slijtage van koppelingen of problemen met het middenlager."
+    "nl": "Trillingen op aandrijflijnorde komen vaak door onbalans in de as, versleten homokineten of problemen met het middenlager."
   },
   "ACTION_DRIVELINE_MOUNTS_CONFIRM": {
     "en": "Loose mount/fastener or cracked rubber support is found.",
@@ -21,11 +21,11 @@
   },
   "ACTION_DRIVELINE_MOUNTS_FALSIFY": {
     "en": "All inspected mounts and fasteners are within condition/torque spec.",
-    "nl": "Alle gecontroleerde steunen en bevestigingen zijn binnen conditie-/koppelspecificatie."
+    "nl": "Alle gecontroleerde steunen en bevestigingen zijn in goede staat en met het juiste aanhaalmoment vastgezet."
   },
   "ACTION_DRIVELINE_MOUNTS_WHAT": {
     "en": "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
-    "nl": "Controleer aandrijflijnsteunen en aanhaalmomenten (diff-steunen, askoppelingen, draagbeugels)."
+    "nl": "Controleer aandrijflijnsteunen en aanhaalmomenten (differentieelsteunen, askoppelingen, draagbeugels)."
   },
   "ACTION_DRIVELINE_MOUNTS_WHY": {
     "en": "Loose or degraded mounts can amplify normal order content into cabin vibration.",
@@ -49,19 +49,19 @@
   },
   "ACTION_ENGINE_MOUNTS_CONFIRM": {
     "en": "A worn mount or accessory imbalance is identified.",
-    "nl": "Een versleten steun of onbalans in hulpaandrijving wordt vastgesteld."
+    "nl": "Een versleten steun of onbalans in de hulpaandrijving wordt vastgesteld."
   },
   "ACTION_ENGINE_MOUNTS_FALSIFY": {
     "en": "Mounts and accessory drive are within acceptable condition.",
-    "nl": "Steunen en hulpaandrijving zijn binnen acceptabele conditie."
+    "nl": "Steunen en hulpaandrijving zijn in acceptabele staat."
   },
   "ACTION_ENGINE_MOUNTS_WHAT": {
     "en": "Inspect engine mounts and accessory drive (idler, tensioner, pulleys) for play or resonance.",
-    "nl": "Controleer motorsteunen en hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie."
+    "nl": "Controleer motorsteunen en de hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie."
   },
   "ACTION_ENGINE_MOUNTS_WHY": {
     "en": "Engine-order vibration often transfers through weakened mounts or accessory imbalance.",
-    "nl": "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in hulpaandrijving."
+    "nl": "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in de hulpaandrijving."
   },
   "ACTION_GENERAL_FALLBACK_WHY": {
     "en": "Use direct mechanical checks first because source classification is not specific enough yet.",
@@ -69,7 +69,7 @@
   },
   "ACTION_GENERAL_INSPECTION_CONFIRM": {
     "en": "A clear mechanical issue is found at or near the hotspot.",
-    "nl": "Een duidelijke mechanische afwijking wordt bij of nabij de hotspot gevonden."
+    "nl": "Een duidelijke mechanische afwijking wordt in of bij het probleemgebied gevonden."
   },
   "ACTION_GENERAL_INSPECTION_FALSIFY": {
     "en": "No abnormal wear, play, or looseness is found.",
@@ -77,7 +77,7 @@
   },
   "ACTION_GENERAL_INSPECTION_WHAT": {
     "en": "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the hotspot area.",
-    "nl": "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in de hotspot-zone."
+    "nl": "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in het probleemgebied."
   },
   "ACTION_GENERAL_WEAK_SPATIAL_WHY": {
     "en": "Spatial separation is weak, so prioritize broad underbody and mount checks before part replacement.",
@@ -85,15 +85,15 @@
   },
   "ACTION_TIRE_CONDITION_CONFIRM": {
     "en": "Visible/measureable tire defect aligns with complaint speed band.",
-    "nl": "Zichtbaar/meetbaar banddefect sluit aan op de klachtsnelheidsband."
+    "nl": "Zichtbare of meetbare bandschade sluit aan op het snelheidsbereik waarin de klacht optreedt."
   },
   "ACTION_TIRE_CONDITION_FALSIFY": {
     "en": "No tire condition anomaly is found on inspected wheels.",
-    "nl": "Er wordt geen bandtoestandsafwijking gevonden op de gecontroleerde wielen."
+    "nl": "Er wordt geen afwijking aan de band gevonden op de gecontroleerde wielen."
   },
   "ACTION_TIRE_CONDITION_WHAT": {
     "en": "Inspect the relevant wheel/tire assemblies for tire defects: flat spots, belt shift, uneven wear, and pressure mismatch.",
-    "nl": "Controleer de relevante wiel-/bandsets op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld en drukverschillen."
+    "nl": "Controleer de relevante wiel-bandcombinaties op bandschade: vlakke plekken, karkasschade, ongelijkmatige slijtage en afwijkende bandenspanning."
   },
   "ACTION_TIRE_CONDITION_WHY": {
     "en": "Tire structural issues often create strong 1x/2x wheel-order vibration.",
@@ -101,19 +101,19 @@
   },
   "ACTION_WHEEL_BALANCE_CONFIRM": {
     "en": "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
-    "nl": "Er wordt duidelijke onbalans of slingering gevonden en gecorrigeerd, waarna de trillingsklacht afneemt."
+    "nl": "Er wordt duidelijke onbalans of hoogte-/zijslag gevonden en gecorrigeerd, waarna de trillingsklacht afneemt."
   },
   "ACTION_WHEEL_BALANCE_FALSIFY": {
     "en": "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
-    "nl": "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft ongewijzigd."
+    "nl": "Balans en hoogte-/zijslag zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft ongewijzigd."
   },
   "ACTION_WHEEL_BALANCE_WHAT": {
     "en": "Inspect and balance the relevant wheel/tire assemblies; measure radial/lateral runout on the wheel and tire.",
-    "nl": "Controleer en balanceer de relevante wiel-/bandsets; meet radiale/laterale slingering op wiel en band."
+    "nl": "Controleer en balanceer de relevante wiel-bandcombinaties; meet hoogte- en zijslag van wiel en band."
   },
   "ACTION_WHEEL_BALANCE_WHY": {
     "en": "Wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
-    "nl": "Wielorde-signaturen worden meestal veroorzaakt door onbalans, slingering of banddeformatie."
+    "nl": "Wielorde-signaturen worden meestal veroorzaakt door onbalans, hoogte-/zijslag of bandvervorming."
   },
   "ADDITIONAL_OBSERVATIONS": {
     "en": "Supporting Observations",
@@ -121,7 +121,7 @@
   },
   "ADD_TEMPORARY_DAMPING_MASS_AND_REPEAT_THE_RUN": {
     "en": "Add temporary damping mass and repeat the run.",
-    "nl": "Voeg tijdelijke dempingsmassa toe en herhaal de run."
+    "nl": "Voeg tijdelijke dempingsmassa toe en herhaal de meting."
   },
   "AMPLITUDE_SUMMARY": {
     "en": "Amplitude Summary",
@@ -137,7 +137,7 @@
   },
   "APPENDIX_B_FULL_RUN_METADATA": {
     "en": "Appendix B: Full Run Metadata",
-    "nl": "Bijlage B: Volledige run-metadata"
+    "nl": "Bijlage B: Volledige meetrun-metadata"
   },
   "APPENDIX_C_DETAILED_FINDINGS_TABLE": {
     "en": "Appendix C: Detailed Findings Table",
@@ -181,7 +181,7 @@
   },
   "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER": {
     "en": "Check driveshaft runout and joint condition for higher orders.",
-    "nl": "Controleer aandrijfas-slingering en koppelingstoestand voor hogere orden."
+    "nl": "Controleer de aandrijfas op slingering en de homokineten op slijtage bij hogere orden."
   },
   "CLASSIFICATION_BASELINE_NOISE": {
     "en": "noise floor",
@@ -201,7 +201,7 @@
   },
   "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS": {
     "en": "Collect a longer run with stable driving conditions.",
-    "nl": "Neem een langere run op met stabiele rijomstandigheden."
+    "nl": "Neem een langere meting op met stabiele rijomstandigheden."
   },
   "COMMON_PARTS": {
     "en": "Common associated parts",
@@ -229,7 +229,7 @@
   },
   "REPORT_CONFIDENCE_CAVEAT_BRIEF_SUPPORT": {
     "en": "support only held for {duration} s",
-    "nl": "de steun hield maar {duration} s aan"
+    "nl": "de onderbouwing hield maar {duration} s stand"
   },
   "REPORT_CONFIDENCE_CAVEAT_CLOSE_ALTERNATIVE": {
     "en": "{source} stayed close as an alternative path",
@@ -237,15 +237,15 @@
   },
   "REPORT_CONFIDENCE_CAVEAT_DRIFTING_FREQUENCY": {
     "en": "matched frequency drifted across {low}-{high} Hz",
-    "nl": "de gematchte frequentie verschoof over {low}-{high} Hz"
+    "nl": "de overeenkomende frequentie verschoof over {low}-{high} Hz"
   },
   "REPORT_CONFIDENCE_CAVEAT_LOOSE_ORDER_LOCK": {
     "en": "order tracking stayed loose around the prediction",
-    "nl": "de ordevolging bleef los rond de voorspelling"
+    "nl": "de ordevolging sloot onvoldoende strak aan op de voorspelling"
   },
   "REPORT_CONFIDENCE_CAVEAT_MIXED_LOCATIONS": {
     "en": "support stayed split across multiple sensor locations",
-    "nl": "de steun bleef verdeeld over meerdere sensorlocaties"
+    "nl": "de onderbouwing bleef verdeeld over meerdere sensorlocaties"
   },
   "REPORT_CONFIDENCE_CAVEAT_NOISY_SIGNAL": {
     "en": "the signal stayed close to the noise floor",
@@ -253,47 +253,47 @@
   },
   "REPORT_CONFIDENCE_CAVEAT_SECONDARY_VEHICLE_DATA": {
     "en": "this {scope} reference depends on secondary vehicle data",
-    "nl": "deze {scope}-referentie steunt op secundaire voertuigdata"
+    "nl": "deze {scope}-referentie steunt op secundaire voertuiggegevens"
   },
   "REPORT_CONFIDENCE_CAVEAT_APPROXIMATE_VEHICLE_DATA": {
     "en": "this {scope} reference depends on approximate vehicle data",
-    "nl": "deze {scope}-referentie steunt op benaderde voertuigdata"
+    "nl": "deze {scope}-referentie steunt op benaderde voertuiggegevens"
   },
   "REPORT_CONFIDENCE_CAVEAT_UNVERIFIED_VEHICLE_DATA": {
     "en": "this {scope} reference depends on unverifiable vehicle data",
-    "nl": "deze {scope}-referentie steunt op niet-geverifieerde voertuigdata"
+    "nl": "deze {scope}-referentie steunt op niet-geverifieerde voertuiggegevens"
   },
   "REPORT_CONFIDENCE_CAVEAT_REFERENCE_GAP": {
     "en": "reference data was incomplete for this path",
-    "nl": "referentiedata was onvolledig voor dit pad"
+    "nl": "referentiegegevens waren onvolledig voor dit pad"
   },
   "REPORT_CONFIDENCE_CAVEAT_SPARSE_SUPPORT": {
     "en": "only {count} supporting window matched",
-    "nl": "slechts {count} ondersteunend venster matchte"
+    "nl": "slechts {count} ondersteunend venster kwam overeen"
   },
   "REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY": {
     "en": "only summary-level evidence was available",
-    "nl": "alleen samenvattingsniveau-bewijs was beschikbaar"
+    "nl": "Alleen samenvattingsgegevens beschikbaar"
   },
   "REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE": {
     "en": "raw capture coverage was incomplete for some replay windows",
-    "nl": "de raw-capturedekking was onvolledig voor sommige replayvensters"
+    "nl": "de dekking van de ruwe opname was onvolledig voor sommige heranalysevensters"
   },
   "REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT": {
     "en": "this run predates whole-run context coverage tracking",
-    "nl": "deze run is ouder dan de whole-run contextdekkingsregistratie"
+    "nl": "deze meting is ouder dan de contextdekkingsregistratie over de hele meting"
   },
   "REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS": {
     "en": "speed context was missing or stale for part of the run",
-    "nl": "snelheidscontext ontbrak of was verouderd voor een deel van de run"
+    "nl": "snelheidscontext ontbrak of was verouderd voor een deel van de meting"
   },
   "REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS": {
     "en": "RPM context was missing or stale for part of the run",
-    "nl": "toerentalcontext ontbrak of was verouderd voor een deel van de run"
+    "nl": "toerentalcontext ontbrak of was verouderd voor een deel van de meting"
   },
   "REPORT_CONFIDENCE_CAVEAT_WEAK_SPATIAL": {
     "en": "support spread too widely across the car",
-    "nl": "de steun verspreidde zich te breed over de auto"
+    "nl": "de onderbouwing was te breed verspreid over de auto"
   },
   "REPORT_CONFIDENCE_REASON_LIMITED_SUPPORT": {
     "en": "{caveat}; limited positive signal: {strength}",
@@ -305,15 +305,15 @@
   },
   "REPORT_CONFIDENCE_SIGNAL_CLEAN_SIGNAL": {
     "en": "the matched signal stood clear of the noise floor",
-    "nl": "het gematchte signaal stond duidelijk boven de ruisvloer"
+    "nl": "het overeenkomende signaal stond duidelijk boven de ruisvloer"
   },
   "REPORT_CONFIDENCE_SIGNAL_USER_CONFIRMED_VEHICLE_DATA": {
     "en": "user-confirmed vehicle data backs this {scope} reference",
-    "nl": "door de gebruiker bevestigde voertuigdata ondersteunt deze {scope}-referentie"
+    "nl": "door de gebruiker bevestigde voertuiggegevens ondersteunen deze {scope}-referentie"
   },
   "REPORT_CONFIDENCE_SIGNAL_LOCALIZED_SUPPORT": {
     "en": "support stayed concentrated at {location}",
-    "nl": "de steun bleef geconcentreerd bij {location}"
+    "nl": "de onderbouwing bleef geconcentreerd bij {location}"
   },
   "REPORT_CONFIDENCE_CAR_SCOPE_TIRE": {
     "en": "wheel-speed",
@@ -329,7 +329,7 @@
   },
   "REPORT_CONFIDENCE_SIGNAL_RAW_BACKED": {
     "en": "raw-backed replay confirmed the match from {samples} retained samples",
-    "nl": "raw-backed replay bevestigde de match uit {samples} bewaarde samples"
+    "nl": "Heranalyse van ruwe meetdata bevestigde de overeenkomst in {samples} bewaarde samples"
   },
   "REPORT_CONFIDENCE_SIGNAL_REPEATED_SUPPORT": {
     "en": "{count} supporting windows lined up with the diagnosis",
@@ -337,11 +337,11 @@
   },
   "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_BAND": {
     "en": "the matched band stayed tight at {low}-{high} Hz",
-    "nl": "de gematchte band bleef strak op {low}-{high} Hz"
+    "nl": "de overeenkomende band bleef strak op {low}-{high} Hz"
   },
   "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_SINGLE": {
     "en": "the matched band stayed tight around {hz} Hz",
-    "nl": "de gematchte band bleef strak rond {hz} Hz"
+    "nl": "de overeenkomende band bleef strak rond {hz} Hz"
   },
   "REPORT_CONFIDENCE_SIGNAL_SUSTAINED_SUPPORT": {
     "en": "support held for {duration} s",
@@ -361,11 +361,11 @@
   },
   "DATA_TRUST_EFFECT_HIGH": {
     "en": "Current data supports the diagnosis.",
-    "nl": "De huidige data ondersteunt de diagnose."
+    "nl": "De huidige gegevens ondersteunen de diagnose."
   },
   "DATA_TRUST_EFFECT_LOW": {
     "en": "Rerun with better data before treating the diagnosis as final.",
-    "nl": "Herhaal met betere data voordat je de diagnose als definitief behandelt."
+    "nl": "Herhaal met betere gegevens voordat je de diagnose als definitief behandelt."
   },
   "DATA_TRUST_EFFECT_MEDIUM": {
     "en": "Use the diagnosis directionally until the caveats below are checked.",
@@ -377,7 +377,7 @@
   },
   "CONFIRM": {
     "en": "Confirm",
-    "nl": "Bevestig"
+    "nl": "Bevestiging"
   },
   "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED": {
     "en": "A concrete mechanical issue is identified.",
@@ -461,11 +461,11 @@
   },
   "DATA_READINESS": {
     "en": "Data readiness",
-    "nl": "Datagereedheid"
+    "nl": "Gereedheid van gegevens"
   },
   "DATA_TRUST": {
     "en": "Data trust",
-    "nl": "Datavertrouwen"
+    "nl": "Gegevensbetrouwbaarheid"
   },
   "DERIVED_ENGINE_REFERENCE": {
     "en": "Derived engine reference",
@@ -481,7 +481,7 @@
   },
   "DETECTED_AT_ONE_MONITORED_LOCATION": {
     "en": "detected at one monitored location",
-    "nl": "gedetecteerd op een gemonitorde locatie"
+    "nl": "gedetecteerd op één gemeten locatie"
   },
   "DIAGNOSTIC_PEAKS": {
     "en": "Supporting Measurements",
@@ -527,9 +527,21 @@
     "en": "coast-down",
     "nl": "uitrollen"
   },
+  "DRIVING_PHASE_CRUISE": {
+    "en": "cruise",
+    "nl": "constante snelheid"
+  },
   "DRIVING_PHASE_DECELERATION": {
     "en": "deceleration",
     "nl": "vertraging"
+  },
+  "DRIVING_PHASE_IDLE": {
+    "en": "idle",
+    "nl": "stationair"
+  },
+  "DRIVING_PHASE_SPEED_UNKNOWN": {
+    "en": "unknown speed",
+    "nl": "onbekende snelheid"
   },
   "DURATION": {
     "en": "Duration",
@@ -569,15 +581,15 @@
   },
   "EVIDENCE_AND_HOTSPOTS": {
     "en": "Evidence and Hotspots",
-    "nl": "Bewijs en hotspots"
+    "nl": "Bewijs en probleemgebieden"
   },
   "EVIDENCE_DIAGNOSTICS": {
     "en": "Evidence & Diagnostics",
-    "nl": "Bewijs & Diagnostiek"
+    "nl": "Bewijs en diagnostiek"
   },
   "EVIDENCE_ORDER_TRACKED": {
     "en": "{order_label} tracked over {matched}/{possible} samples (match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, reference {ref_text}).",
-    "nl": "{order_label} gevolgd over {matched}/{possible} samples (trefkans {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
+    "nl": "{order_label} gevolgd over {matched}/{possible} samples (matchpercentage {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
   },
   "EVIDENCE_PEAK_PRESENT": {
     "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.1f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
@@ -593,7 +605,7 @@
   },
   "HOTSPOT_SUMMARY": {
     "en": "Hotspot summary",
-    "nl": "Hotspotsamenvatting"
+    "nl": "Samenvatting probleemgebieden"
   },
   "FALSIFY": {
     "en": "Falsify",
@@ -713,15 +725,15 @@
   },
   "INSPECT_ENGINE_MOUNTS_AND_ACCESSORY_DRIVE": {
     "en": "Inspect engine mounts and accessory drive.",
-    "nl": "Controleer motorsteunen en hulpaandrijving."
+    "nl": "Controleer motorsteunen en de hulpaandrijving."
   },
   "INSPECT_WHEEL_BALANCE_AND_RADIAL_LATERAL_RUNOUT": {
     "en": "Inspect wheel balance and radial/lateral runout.",
-    "nl": "Controleer wielbalans en radiale/laterale slingering."
+    "nl": "Controleer wielbalans en hoogte-/zijslag."
   },
   "INSUFFICIENT_CONFIDENCE_GUIDANCE": {
     "en": "The available data does not support a specific diagnosis. Follow the capture guidance below to improve results.",
-    "nl": "De beschikbare data ondersteunt geen specifieke diagnose. Volg de onderstaande opnamerichtlijnen om resultaten te verbeteren."
+    "nl": "De beschikbare gegevens ondersteunen geen specifieke diagnose. Volg de onderstaande opnamerichtlijnen om resultaten te verbeteren."
   },
   "INSUFFICIENT_CONFIDENCE_TITLE": {
     "en": "Insufficient confidence to identify specific faults",
@@ -793,7 +805,7 @@
   },
   "LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE": {
     "en": "Log engine RPM from CAN/OBD for the full run, or provide drivetrain ratios.",
-    "nl": "Log motortoerental via CAN/OBD voor de hele run, of geef aandrijflijnverhoudingen op."
+    "nl": "Log motortoerental via CAN/OBD voor de hele meting, of geef aandrijflijnverhoudingen op."
   },
   "LOW": {
     "en": "Low",
@@ -889,7 +901,7 @@
   },
   "NEXT_SENSOR_MOVE_DEFAULT": {
     "en": "Inspect the highest-ranked hotspot path first.",
-    "nl": "Controleer eerst het pad met de hoogst gerangschikte hotspot."
+    "nl": "Controleer eerst het hoogst gerangschikte probleemgebied."
   },
   "NEXT_STEPS": {
     "en": "Next steps",
@@ -913,7 +925,7 @@
   },
   "NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA": {
     "en": "No actionable findings were generated from current data.",
-    "nl": "Er zijn geen direct uitvoerbare bevindingen uit de huidige data."
+    "nl": "Er zijn geen direct uitvoerbare bevindingen uit de huidige gegevens."
   },
   "NO_DIAGNOSTIC_FINDINGS": {
     "en": "No diagnostic findings",
@@ -921,19 +933,19 @@
   },
   "NO_FINDINGS_WERE_GENERATED_FROM_THE_AVAILABLE_DATA": {
     "en": "No findings were generated from the available data.",
-    "nl": "Er zijn geen bevindingen gegenereerd uit de beschikbare data."
+    "nl": "Er zijn geen bevindingen gegenereerd uit de beschikbare gegevens."
   },
   "NO_NEXT_STEPS": {
     "en": "Collect additional data with a wider speed sweep to enable pattern analysis.",
-    "nl": "Verzamel aanvullende data met een bredere snelheidsvariatie voor patroonanalyse."
+    "nl": "Verzamel aanvullende gegevens met een bredere snelheidsvariatie voor patroonanalyse."
   },
   "NO_SYSTEMS_WITH_FINDINGS": {
     "en": "No systems showed significant vibration patterns in this run.",
-    "nl": "Geen systemen toonden significante trillingspatronen in deze run."
+    "nl": "Geen systemen toonden significante trillingspatronen in deze meting."
   },
   "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND": {
     "en": "No usable amplitude-by-location data was found for this run.",
-    "nl": "Geen bruikbare locatiedata voor amplitude gevonden voor deze run."
+    "nl": "Geen bruikbare locatiegegevens voor amplitude gevonden voor deze meting."
   },
   "NVH_DIAGNOSTIC_REPORT": {
     "en": "NVH Diagnostic Report",
@@ -1061,7 +1073,7 @@
   },
   "PLOT_NO_DATA_AVAILABLE": {
     "en": "No data available for this plot",
-    "nl": "Geen data beschikbaar voor deze grafiek"
+    "nl": "Geen gegevens beschikbaar voor deze grafiek"
   },
   "PLOT_PER_AXIS_ACCEL_OVER_TIME": {
     "en": "Per-Axis Acceleration Over Time",
@@ -1089,7 +1101,7 @@
   },
   "PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT": {
     "en": "Provide tire circumference or tire size (width/aspect/rim) in run metadata.",
-    "nl": "Geef bandenomtrek of bandenmaat (breedte/profiel/velg) op in run-metadata."
+    "nl": "Geef bandenomtrek of bandenmaat (breedte/zijwanghoogte/velg) op in de meetrun-metadata."
   },
   "QUICK_CHECKS": {
     "en": "Quick checks",
@@ -1125,11 +1137,11 @@
   },
   "RECORD_ADDITIONAL_DATA": {
     "en": "Record additional data",
-    "nl": "Verzamel aanvullende data"
+    "nl": "Verzamel aanvullende gegevens"
   },
   "RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN": {
     "en": "Record the true accelerometer sample rate in run metadata.",
-    "nl": "Leg de werkelijke bemonsteringsfrequentie van de accelerometer vast in de run-metadata."
+    "nl": "Leg de werkelijke bemonsteringsfrequentie van de accelerometer vast in de meetrun-metadata."
   },
   "RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR": {
     "en": "Record vehicle speed for most samples (GPS or CAN source).",
@@ -1173,11 +1185,11 @@
   },
   "REPEAT_RUN_AFTER_CHECKING_SENSOR_MOUNTING_AND_ROUTING": {
     "en": "Repeat the run after checking sensor mounting and routing.",
-    "nl": "Herhaal de run na controle van sensorbevestiging en bekabeling."
+    "nl": "Herhaal de meting na controle van sensorbevestiging en bekabeling."
   },
   "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK": {
     "en": "Repeat run with stable route and verify peak repeatability.",
-    "nl": "Herhaal de run met een stabiele route en controleer piekherhaalbaarheid."
+    "nl": "Herhaal de meting met een stabiele route en controleer piekherhaalbaarheid."
   },
   "REPORT_DATE": {
     "en": "Report Date",
@@ -1201,19 +1213,19 @@
   },
   "REPORT_NEXT_STEP_ENGINE_MOUNTS_WHAT": {
     "en": "Check engine mounts and accessory drive for play or resonance.",
-    "nl": "Controleer motorsteunen en hulpaandrijving op speling of resonantie."
+    "nl": "Controleer motorsteunen en de hulpaandrijving op speling of resonantie."
   },
   "REPORT_NEXT_STEP_GENERAL_INSPECTION_WHAT": {
     "en": "Check the hotspot near {location} for loose fasteners, worn bushings, bearing play, or mount movement.",
-    "nl": "Controleer de hotspot bij {location} op losse bevestigingen, versleten rubbers, lagerspeling of bewegende steunen."
+    "nl": "Controleer het probleemgebied bij {location} op losse bevestigingen, versleten rubbers, lagerspeling of bewegende steunen."
   },
   "REPORT_NEXT_STEP_TIRE_CONDITION_WHAT": {
     "en": "Check {location} for tire damage, flat spots, belt shift, uneven wear, or pressure mismatch.",
-    "nl": "Controleer {location} op bandschade, vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld of drukverschil."
+    "nl": "Controleer {location} op bandschade, vlakke plekken, karkasschade, ongelijkmatige slijtage of afwijkende bandenspanning."
   },
   "REPORT_NEXT_STEP_WHEEL_BALANCE_WHAT": {
     "en": "Check {location} for imbalance or radial/lateral runout.",
-    "nl": "Controleer {location} op onbalans of radiale/laterale slingering."
+    "nl": "Controleer {location} op onbalans of hoogte-/zijslag."
   },
   "REQUIRED_COLUMN": {
     "en": "Required Column",
@@ -1237,23 +1249,23 @@
   },
   "RUN_DATE": {
     "en": "Run date",
-    "nl": "Run-datum"
+    "nl": "Meetdatum"
   },
   "RUN_FILE": {
     "en": "Run File",
-    "nl": "Run-bestand"
+    "nl": "Meetrun-bestand"
   },
   "RUN_FILE_NAME": {
     "en": "Run file: {name}",
-    "nl": "Run-bestand: {name}"
+    "nl": "Meetrun-bestand: {name}"
   },
   "RUN_ID": {
     "en": "Run ID",
-    "nl": "Run-ID"
+    "nl": "Meetrun-ID"
   },
   "RUN_TRIAGE": {
     "en": "Run Triage",
-    "nl": "Run triage"
+    "nl": "Meetrun-triage"
   },
   "SAMPLES": {
     "en": "Samples",
@@ -1285,7 +1297,7 @@
   },
   "SENSOR_PLACEMENT_AND_HOTSPOTS": {
     "en": "Sensor placement and hotspots",
-    "nl": "Sensorplaatsing en hotspots"
+    "nl": "Sensorplaatsing en probleemgebieden"
   },
   "SIGNATURES_OBSERVED_LABEL": {
     "en": "Signatures observed",
@@ -1293,7 +1305,7 @@
   },
   "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST": {
     "en": " Since all sensors saw the signature but {strongest_loc} is strongest, that location is the most likely fault origin.",
-    "nl": " Omdat alle sensoren de signatuur zagen maar {strongest_loc} het sterkst is, is die locatie de meest waarschijnlijke foutbron."
+    "nl": "Omdat alle sensoren de signatuur zagen maar {strongest_loc} het sterkst is, is die locatie de meest waarschijnlijke foutbron."
   },
   "SOURCE_BASELINE_NOISE": {
     "en": "No significant pattern",
@@ -1329,7 +1341,7 @@
   },
   "SOURCE_WHEEL_TIRE": {
     "en": "Wheel / Tire",
-    "nl": "Wiel / Band"
+    "nl": "Wiel/band"
   },
   "SPEED": {
     "en": "Speed",
@@ -1337,7 +1349,7 @@
   },
   "SPEED_BAND": {
     "en": "Speed Band",
-    "nl": "Snelheidsband"
+    "nl": "Snelheidsbereik"
   },
   "SPEED_BINNED_ANALYSIS": {
     "en": "Speed-Binned Analysis",
@@ -1349,7 +1361,7 @@
   },
   "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND": {
     "en": "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped.",
-    "nl": "Snelheidsdata ontbreken of zijn onvoldoende; snelheidsgroepering en wielorde-analyse zijn overgeslagen."
+    "nl": "Snelheidsgegevens ontbreken of zijn onvoldoende; snelheidsgroepering en wielorde-analyse zijn overgeslagen."
   },
   "SPEED_HINT_FOCUS": {
     "en": " with focus around {speed_band}",
@@ -1373,11 +1385,11 @@
   },
   "STATUS_PRELIMINARY": {
     "en": "Preliminary finding only. Collect additional data for stronger confidence.",
-    "nl": "Voorlopige bevinding. Verzamel extra data voor hogere betrouwbaarheid."
+    "nl": "Voorlopige bevinding. Verzamel extra gegevens voor hogere betrouwbaarheid."
   },
   "STATUS_REFERENCE_GAPS": {
     "en": "Reference gaps detected. Complete reference inputs before final diagnosis.",
-    "nl": "Ontbrekende referenties gedetecteerd. Vul eerst alle referentiedata aan voor een definitieve diagnose."
+    "nl": "Ontbrekende referenties gedetecteerd. Vul eerst alle referentiegegevens aan voor een definitieve diagnose."
   },
   "STRENGTH": {
     "en": "Strength",
@@ -1409,7 +1421,7 @@
   },
   "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING": {
     "en": "Long run analyzed with event-preserving reduction using base stride {stride}. High-energy brief events were retained where possible.",
-    "nl": "Lange run geanalyseerd met event-behoudende reductie met basis-stride {stride}. Korte events met hoge energie zijn waar mogelijk behouden."
+    "nl": "Lange meting geanalyseerd met gebeurtenisbehoudende reductie met basisstap {stride}. Korte gebeurtenissen met hoge energie zijn waar mogelijk behouden."
   },
   "SUITABILITY_CHECK_ANALYSIS_SAMPLING": {
     "en": "Analysis sampling",
@@ -1449,7 +1461,7 @@
   },
   "SUITABILITY_RAW_SAMPLE_DURATION_WARNING": {
     "en": "Raw capture only preserved {raw_samples} raw sample(s) per sensor; at least {required_raw_samples} are needed for the minimum analysis duration.",
-    "nl": "De raw-capture bewaarde slechts {raw_samples} raw sample(s) per sensor; minstens {required_raw_samples} zijn nodig voor de minimale analyseduur."
+    "nl": "De ruwe opname bewaarde slechts {raw_samples} ruwe sample(s) per sensor; minstens {required_raw_samples} zijn nodig voor de minimale analyseduur."
   },
   "SUITABILITY_FRAME_INTEGRITY_PASS": {
     "en": "No dropped frames or queue overflows detected.",
@@ -1485,7 +1497,7 @@
   },
   "SUITABILITY_SPEED_VARIATION_PASS": {
     "en": "Speed range stayed in a usable diagnostic band for steady-state diagnosis and order tracking.",
-    "nl": "Snelheidsbereik bleef tijdens deze run binnen een bruikbaar diagnostisch bereik voor steady-state diagnose en ordetracking."
+    "nl": "Snelheidsbereik bleef tijdens deze meting binnen een bruikbaar diagnostisch bereik voor diagnose bij constante snelheid en ordetracking."
   },
   "SUITABILITY_SPEED_VARIATION_WARN": {
     "en": "Speed range never settled into a usable diagnostic band; repeat at a steady cruise above 20 km/h.",
@@ -1497,7 +1509,7 @@
   },
   "SWAP_FRONT_REAR_WHEEL_POSITIONS_AND_REPEAT_THE": {
     "en": "Swap front/rear wheel positions and repeat the run.",
-    "nl": "Wissel voor-/achterwielen en herhaal de run."
+    "nl": "Wissel voor-/achterwielen en herhaal de meting."
   },
   "SYSTEM": {
     "en": "System",
@@ -1513,7 +1525,7 @@
   },
   "THIS_MOST_STRONGLY_INDICATES_A_FAULT_NEAR_THE": {
     "en": " This most strongly indicates a fault near the {strongest_location} location.",
-    "nl": " Dit wijst het sterkst op een fout nabij de locatie {strongest_location}."
+    "nl": "Dit wijst het sterkst op een fout nabij {strongest_location}."
   },
   "THIS_REPORT_IS_GENERATED_FROM_EXPLICIT_REFERENCES_ONLY": {
     "en": "This report is generated from explicit references only. When speed, RPM, or sample-rate metadata is missing, order labeling is skipped.",
@@ -1529,11 +1541,11 @@
   },
   "TIER_A_CAPTURE_WIDER_SPEED": {
     "en": "Repeat the run with a broader speed sweep (e.g. 30-120 km/h) to improve pattern tracking.",
-    "nl": "Herhaal de run met een bredere snelheidsvariatie (bijv. 30-120 km/u) om patroonherkenning te verbeteren."
+    "nl": "Herhaal de meting met een bredere snelheidsvariatie (bijv. 30-120 km/u) om patroonherkenning te verbeteren."
   },
   "TIER_A_NO_SYSTEMS": {
     "en": "Confidence is too low to attribute vibration to specific systems. Improve data quality and re-run.",
-    "nl": "Betrouwbaarheid is te laag om trillingen aan specifieke systemen toe te schrijven. Verbeter datakwaliteit en run opnieuw."
+    "nl": "Betrouwbaarheid is te laag om trillingen aan specifieke systemen toe te schrijven. Verbeter de gegevenskwaliteit en meet opnieuw."
   },
   "TIER_B_HYPOTHESIS_LABEL": {
     "en": "Possible source",
@@ -1549,11 +1561,11 @@
   },
   "TIRE_ASPECT_PCT_LABEL": {
     "en": "Tire Aspect (%)",
-    "nl": "Bandenprofiel (%)"
+    "nl": "Zijwanghoogte (%)"
   },
   "TIRE_SIZE": {
     "en": "tire size",
-    "nl": "bandenmaat"
+    "nl": "Bandenmaat"
   },
   "TIRE_WIDTH_MM_LABEL": {
     "en": "Tire Width (mm)",
@@ -1625,7 +1637,7 @@
   },
   "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": {
     "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest intensity was at {strongest_loc} ({strongest_peak:.1f} dB).",
-    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemonitorde locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
+    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemeten locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
   },
   "WARNING_LABEL": {
     "en": "Warning",
@@ -1709,19 +1721,19 @@
   },
   "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL": {
     "en": "This run was analyzed with {run_car}, but the current active vehicle profile is {current_car}. Order-based findings and suggested components should be checked against the captured run profile before acting on them.",
-    "nl": "Deze run is geanalyseerd met {run_car}, maar het momenteel actieve voertuigprofiel is {current_car}. Controleer ordegebaseerde bevindingen en voorgestelde onderdelen eerst tegen het vastgelegde runprofiel voordat je erop handelt."
+    "nl": "Deze meting is geanalyseerd met {run_car}, maar het momenteel actieve voertuigprofiel is {current_car}. Controleer ordegebaseerde bevindingen en voorgestelde onderdelen eerst tegen het vastgelegde meetrun-profiel voordat je erop handelt."
   },
   "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE": {
     "en": "Vehicle profile settings changed after this run",
-    "nl": "Voertuigprofielinstellingen zijn na deze run gewijzigd"
+    "nl": "Voertuigprofielinstellingen zijn na deze meting gewijzigd"
   },
   "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL": {
     "en": "This run is missing part of the wheel/engine reference context needed for confident order analysis. Order-based findings may still be shown, but they should be treated as provisional until the run is repeated with complete vehicle reference data.",
-    "nl": "Voor deze run ontbreekt een deel van de wiel-/motorreferentie die nodig is voor betrouwbare ordeanalyse. Ordegebaseerde bevindingen kunnen nog steeds worden getoond, maar behandel ze als voorlopig totdat de run met volledige voertuigreferentiegegevens wordt herhaald."
+    "nl": "Voor deze meting ontbreekt een deel van de wiel-/motorreferenties die nodig zijn voor betrouwbare ordeanalyse. Ordegebaseerde bevindingen kunnen nog steeds worden getoond, maar behandel ze als voorlopig totdat de meting met volledige voertuigreferentiegegevens wordt herhaald."
   },
   "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE": {
     "en": "Order-analysis reference context was incomplete for this run",
-    "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze run"
+    "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze meting"
   },
   "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_TITLE": {
     "en": "Vehicle-state context was not aligned for some vibration windows",
@@ -1729,107 +1741,107 @@
   },
   "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_DETAIL": {
     "en": "Vehicle speed or RPM context could not be aligned to some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
-    "nl": "De voertuig-snelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijdsgematchte ordecontext. Niet-uitgelijnde snelheidsamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
+    "nl": "De voertuigsnelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijd-uitgelijnde ordecontext. Niet-uitgelijnde snelheidssamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_DETAIL": {
     "en": "Whole-run context was persisted for this run, but {partial_windows} windows had partial context and {missing_windows} windows had none. Speed context gaps affected {speed_gap_windows} windows and RPM context gaps affected {rpm_gap_windows} windows.",
-    "nl": "Whole-run context is voor deze run bewaard, maar {partial_windows} vensters hadden slechts gedeeltelijke context en {missing_windows} vensters helemaal geen. Snelheidscontext-hiaten raakten {speed_gap_windows} vensters en toerentalcontext-hiaten raakten {rpm_gap_windows} vensters."
+    "nl": "Context over de hele meting is bewaard, maar {partial_windows} vensters hadden slechts gedeeltelijke context en {missing_windows} vensters helemaal geen. Hiaten in snelheidscontext raakten {speed_gap_windows} vensters en hiaten in toerentalcontext raakten {rpm_gap_windows} vensters."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_TITLE": {
     "en": "Whole-run context coverage was incomplete for this run",
-    "nl": "De whole-run contextdekking was onvolledig voor deze run"
+    "nl": "De contextdekking over de hele meting was onvolledig"
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_DETAIL": {
     "en": "This persisted run predates whole-run context coverage tracking, so report caveats fall back to older summary-era context signals.",
-    "nl": "Deze bewaarde run dateert van voor de whole-run contextdekkingsregistratie, dus rapportkanttekeningen vallen terug op oudere signalen uit het samenvattingstijdperk."
+    "nl": "Deze bewaarde meting dateert van voor de contextdekkingsregistratie over de hele meting. Rapportnotities gebruiken daarom oudere samenvattingssignalen."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_TITLE": {
     "en": "Whole-run context coverage was not captured for this persisted run",
-    "nl": "Whole-run contextdekking is niet vastgelegd voor deze bewaarde run"
+    "nl": "Contextdekking over de hele meting is niet vastgelegd voor deze bewaarde meting"
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE": {
     "en": "Whole-run raw alignment was incomplete",
-    "nl": "De whole-run raw-uitlijning was onvolledig"
+    "nl": "De uitlijning van ruwe meetdata over de hele meting was onvolledig"
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL": {
     "en": "Whole-run raw coverage was incomplete for some time-aligned windows; affected order and spatial diagnostics used only fully covered windows. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, dropped chunks: {dropped}, late or out-of-order packets quarantined from live processing: {late}, UDP ingest queue drops: {udp_ingest}, raw-capture queue overflows: {queue_overflow}, invalid chunks: {invalid}, write errors: {write_errors}, sample-rate mismatches: {mismatches}, sample-rate-unverified sensors: {unverified_rates}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}.",
-    "nl": "De whole-run raw-dekking was onvolledig voor sommige tijd-uitgelijnde vensters; getroffen orde- en ruimtelijke diagnostiek gebruikte alleen volledig gedekte vensters. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, verloren chunks: {dropped}, late of niet-op-volgorde pakketten die uit live-verwerking zijn gehouden: {late}, UDP-ingestwachtrij-drops: {udp_ingest}, raw-capture-wachtrijoverlopen: {queue_overflow}, ongeldige chunks: {invalid}, schrijffouten: {write_errors}, samplefrequentiemismatches: {mismatches}, sensoren met onbewezen samplefrequentie: {unverified_rates}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen sync: {sync_unverified}."
+    "nl": "De dekking van ruwe meetdata over de hele meting was onvolledig voor sommige tijd-uitgelijnde vensters; getroffen orde- en ruimtelijke diagnostiek gebruikte alleen volledig gedekte vensters. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappingen: {overlaps}, verloren chunks: {dropped}, late of niet-op-volgorde pakketten die uit live-verwerking zijn gehouden: {late}, drops in de UDP-ingestwachtrij: {udp_ingest}, wachtrijoverlopen voor ruwe opname: {queue_overflow}, ongeldige chunks: {invalid}, schrijffouten: {write_errors}, samplefrequentiemismatches: {mismatches}, sensoren met onbewezen samplefrequentie: {unverified_rates}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen synchronisatie: {sync_unverified}."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_UNAVAILABLE_DETAIL": {
     "en": "Whole-run raw timing could not be proven for the recorded sensors, so time-aligned order and spatial diagnostics were skipped. Legacy sensors: {legacy}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}, missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}, sample-rate mismatches: {mismatches}.",
-    "nl": "Whole-run raw-timing kon niet worden bewezen voor de opgenomen sensoren, dus tijd-uitgelijnde orde- en ruimtelijke diagnostiek is overgeslagen. Legacy-sensoren: {legacy}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen sync: {sync_unverified}, ontbrekend sync-bewijs: {missing_sync}, verouderde sync-snapshots: {stale}, sync-snapshots met hoge RTT: {high_rtt}, samplefrequentiemismatches: {mismatches}."
+    "nl": "Timing van ruwe meetdata over de hele meting kon niet worden bewezen voor de opgenomen sensoren, dus tijd-uitgelijnde orde- en ruimtelijke diagnostiek is overgeslagen. Oudere sensoren: {legacy}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen synchronisatie: {sync_unverified}, ontbrekend synchronisatiebewijs: {missing_sync}, verouderde synchronisatiesnapshots: {stale}, synchronisatiesnapshots met hoge RTT: {high_rtt}, samplefrequentiemismatches: {mismatches}."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE": {
     "en": "Raw replay coverage was incomplete",
-    "nl": "De dekking van raw replay was onvolledig"
+    "nl": "De dekking van heranalyse op ruwe meetdata was onvolledig"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_DETAIL": {
     "en": "Raw capture coverage was incomplete for some replay windows; affected metrics used persisted summary samples. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, sample-rate mismatches: {mismatches}, sample-rate-unverified sensors: {unverified_rates}.",
-    "nl": "De raw-capturedekking was onvolledig voor sommige replayvensters; getroffen metrieken gebruikten persistente samenvattingssamples. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, samplefrequentiemismatches: {mismatches}, sensoren met onbewezen samplefrequentie: {unverified_rates}."
+    "nl": "De dekking van de ruwe opname was onvolledig voor sommige heranalysevensters; getroffen meetwaarden gebruikten opgeslagen samenvattingssamples. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappingen: {overlaps}, samplefrequentiemismatches: {mismatches}, sensoren met onbewezen samplefrequentie: {unverified_rates}."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE": {
     "en": "UDP ingest or raw capture recorded chunk loss events",
-    "nl": "UDP-ingest of raw capture registreerde chunk-verliesgebeurtenissen"
+    "nl": "UDP-ingest of ruwe opname registreerde chunkverlies"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL": {
     "en": "UDP ingest or raw capture recorded {count} chunk loss event(s) ({late} late or out-of-order packets quarantined from live processing, {udp_ingest} UDP ingest queue drops, {queue_overflow} raw-capture queue overflows, {invalid} invalid chunks, {write_errors} write errors); affected metrics used persisted summary samples where needed.",
-    "nl": "UDP-ingest of raw capture registreerde {count} chunk-verliesgebeurtenis(sen) ({late} late of niet-op-volgorde pakketten die uit live-verwerking zijn gehouden, {udp_ingest} UDP-ingestwachtrij-drops, {queue_overflow} raw-capture-wachtrijoverlopen, {invalid} ongeldige chunks, {write_errors} schrijffouten); getroffen metrieken gebruikten waar nodig persistente samenvattingssamples."
+    "nl": "UDP-ingest of ruwe opname registreerde {count} chunkverliesgebeurtenis(sen) ({late} late of niet-op-volgorde pakketten die uit live-verwerking zijn gehouden, {udp_ingest} drops in de UDP-ingestwachtrij, {queue_overflow} wachtrijoverlopen voor ruwe opname, {invalid} ongeldige chunks, {write_errors} schrijffouten); getroffen meetwaarden gebruikten waar nodig opgeslagen samenvattingssamples."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE": {
     "en": "Raw replay used persisted sample timing for some windows",
-    "nl": "Raw replay gebruikte persistente sampletiming voor sommige vensters"
+    "nl": "Heranalyse van ruwe meetdata gebruikte opgeslagen sampletiming voor sommige vensters"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_DETAIL": {
     "en": "Some persisted samples did not include explicit analysis-window timing metadata, so replay aligned {count} window(s) using legacy sample timestamps.",
-    "nl": "Sommige persistente samples bevatten geen expliciete analysevenster-timingmetadata, dus replay lijnde {count} venster(s) uit met legacy-sampletijdstempels."
+    "nl": "Sommige opgeslagen samples bevatten geen expliciete timingmetadata voor analysevensters, dus de heranalyse lijnde {count} venster(s) uit met oudere sampletijdstempels."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_TITLE": {
     "en": "Raw replay found windows with no analyzable FFT band",
-    "nl": "Raw replay vond vensters zonder analyseerbare FFT-band"
+    "nl": "Heranalyse van ruwe meetdata vond vensters zonder analyseerbare FFT-band"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_DETAIL": {
     "en": "Replay rebuilt {count} window(s) with complete raw coverage but no valid in-band FFT bins, so those windows stayed reduced-confidence instead of being marked raw-backed.",
-    "nl": "Replay herbouwde {count} venster(s) met volledige raw-dekking maar zonder geldige in-band FFT-bins, dus die vensters bleven verlaagde-confidence in plaats van raw-backed te worden gemarkeerd."
+    "nl": "De heranalyse bouwde {count} venster(s) met volledige dekking in de ruwe meetdata opnieuw op, maar vond geen geldige FFT-bins binnen de band. Daarom hielden die vensters verminderde betrouwbaarheid."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_TITLE": {
     "en": "Raw replay fell back to persisted summary metrics",
-    "nl": "Raw replay viel terug op persistente samenvattingsmetrieken"
+    "nl": "Heranalyse van ruwe meetdata gebruikte opgeslagen samenvattingsmetingen"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_DETAIL": {
     "en": "Raw capture timing metadata was unavailable for this run, so replay used persisted summary samples instead of guessing raw alignment.",
-    "nl": "Raw-capturetimingmetadata was niet beschikbaar voor deze run, dus replay gebruikte persistente samenvattingssamples in plaats van raw-uitlijning te raden."
+    "nl": "Timingmetadata voor de ruwe opname was niet beschikbaar voor deze meting. Daarom gebruikte de heranalyse opgeslagen samenvattingssamples in plaats van ruwe uitlijning te raden."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_TITLE": {
     "en": "Raw replay could not prove clock alignment for some sensors",
-    "nl": "Raw replay kon voor sommige sensoren de klokuitlijning niet bewijzen"
+    "nl": "Heranalyse van ruwe meetdata kon voor sommige sensoren de klokuitlijning niet bewijzen"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_DETAIL": {
     "en": "Raw capture timing could not be proven against the recorder clock for {sensors} sensor(s), so affected metrics used persisted summary samples. Missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}.",
-    "nl": "Raw-capturetiming kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen metrieken gebruikten persistente samenvattingssamples. Ontbrekend sync-bewijs: {missing_sync}, verouderde sync-snapshots: {stale}, sync-snapshots met hoge RTT: {high_rtt}."
+    "nl": "Timing van de ruwe opname kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen meetwaarden gebruikten opgeslagen samenvattingssamples. Ontbrekend synchronisatiebewijs: {missing_sync}, verouderde synchronisatiesnapshots: {stale}, synchronisatiesnapshots met hoge RTT: {high_rtt}."
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_TITLE": {
     "en": "Raw capture loss exceeded the run-quality policy",
-    "nl": "Raw-captureverlies overschreed het kwaliteitsbeleid voor de run"
+    "nl": "Verlies in de ruwe opname overschreed het kwaliteitsbeleid"
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_LOSS_POLICY_DETAIL": {
     "en": "Raw capture loss policy is {severity} ({reason}). Affected sensors: {sensors}, raw-capture queue overflows: {queue_overflow}, dropped chunks: {dropped}, worst sensor drop ratio: {max_drop_percent}%, worst sensor loss rate: {max_events_per_minute}/min. Fatal loss disables whole-run raw-backed sidecar analysis for this run.",
-    "nl": "Het raw-captureverliesbeleid is {severity} ({reason}). Getroffen sensoren: {sensors}, raw-capture-wachtrijoverlopen: {queue_overflow}, gedropte chunks: {dropped}, slechtste sensor-dropverhouding: {max_drop_percent}%, slechtste sensor-verliesfrequentie: {max_events_per_minute}/min. Fataal verlies schakelt whole-run raw-backed sidecaranalyse uit voor deze run."
+    "nl": "Het beleid voor verlies in de ruwe opname is {severity} ({reason}). Getroffen sensoren: {sensors}, wachtrijoverlopen: {queue_overflow}, gedropte chunks: {dropped}, hoogste sensor-dropverhouding: {max_drop_percent}%, hoogste sensorverliesfrequentie: {max_events_per_minute}/min. Fataal verlies schakelt de analyse op ruwe meetdata voor de hele meting uit."
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TITLE": {
     "en": "Raw capture finalization degraded before the run closed",
-    "nl": "De raw-capturefinalisatie degradeerde voordat de run werd gesloten"
+    "nl": "De ruwe opname werd niet volledig afgerond voordat de meting werd gesloten"
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_ENQUEUE_TIMEOUT_DETAIL": {
     "en": "Raw capture finalization could not be queued before stop completed. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
-    "nl": "De raw-capturefinalisatie kon niet meer in de wachtrij worden gezet voordat stoppen was voltooid. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+    "nl": "De ruwe-opnamefinalisatie kon niet meer in de wachtrij worden gezet voordat stoppen was voltooid. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TIMEOUT_DETAIL": {
     "en": "Raw capture finalization did not finish before the bounded stop timeout. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
-    "nl": "De raw-capturefinalisatie werd niet voltooid voordat de begrensde stop-time-out afliep. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+    "nl": "De ruwe-opnamefinalisatie werd niet voltooid voordat de begrensde stop-time-out afliep. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
   },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_FAILED_DETAIL": {
     "en": "Raw capture finalization failed before the run closed. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
-    "nl": "De raw-capturefinalisatie faalde voordat de run werd gesloten. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+    "nl": "De ruwe-opnamefinalisatie faalde voordat de meting werd gesloten. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
   },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
@@ -1869,11 +1881,11 @@
   },
   "REPORT_PAGE1_EVIDENCE_TIMELINE_SUMMARY_ONE": {
     "en": "{count} evidence band",
-    "nl": "{count} bewijsband"
+    "nl": "{count} bewijssegment"
   },
   "REPORT_PAGE1_EVIDENCE_TIMELINE_SUMMARY_MANY": {
     "en": "{count} evidence bands",
-    "nl": "{count} bewijsbanden"
+    "nl": "{count} bewijssegmenten"
   },
   "REPORT_ACTION_COLUMN": {
     "en": "Action",
@@ -1889,15 +1901,15 @@
   },
   "REPORT_ACTION_MATRIX_CLOSEOUT_TEXT": {
     "en": "After a repair or clean check, repeat the same speed band and record the run id so the next report compares like-for-like.",
-    "nl": "Herhaal na reparatie of schone controle dezelfde snelheidsband en noteer de run-id zodat het volgende rapport gelijkwaardig vergelijkt."
+    "nl": "Herhaal na reparatie of controle zonder afwijking hetzelfde snelheidsbereik en noteer de meetrun-ID, zodat het volgende rapport goed vergelijkbaar is."
   },
   "REPORT_ACTION_MATRIX_HANDOFF_REPEAT_TITLE": {
     "en": "Repeat setup",
     "nl": "Herhaalopzet"
   },
   "REPORT_ACTION_MATRIX_HANDOFF_REPEAT_TEXT": {
-    "en": "Same sensors, tire pressures, payload, and 50-70 km/h light acceleration band.",
-    "nl": "Zelfde sensoren, bandenspanning, belading en 50-70 km/u lichte acceleratieband."
+    "en": "Same sensors, tire pressures, payload, and the same complaint speed band.",
+    "nl": "Gebruik dezelfde sensoren, bandenspanning, belading en hetzelfde snelheidsbereik waarin de klacht optreedt."
   },
   "REPORT_ACTION_MATRIX_HANDOFF_RECORD_TITLE": {
     "en": "Record result",
@@ -1905,23 +1917,23 @@
   },
   "REPORT_ACTION_MATRIX_HANDOFF_RECORD_TEXT": {
     "en": "Log run id, inspected part, finding, changed component, and whether vibration changed.",
-    "nl": "Noteer run-id, gecontroleerd onderdeel, bevinding, vervanging en of de trilling veranderde."
+    "nl": "Noteer meetrun-ID, gecontroleerd onderdeel, bevinding, vervanging en of de trilling veranderde."
   },
   "REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TITLE": {
     "en": "Compare signal",
     "nl": "Vergelijk signaal"
   },
   "REPORT_ACTION_MATRIX_HANDOFF_COMPARE_TEXT": {
-    "en": "Expect the engine band to drop, proof windows to disappear, or location evidence to move.",
-    "nl": "Verwacht dat de engine-band daalt, bewijsvensters verdwijnen of locatiebewijs verschuift."
+    "en": "Expect the selected vibration signal to drop, proof windows to disappear, or location evidence to move.",
+    "nl": "Verwacht dat het gekozen trillingssignaal afneemt, bewijsvensters verdwijnen of locatiebewijs verschuift."
   },
   "REPORT_ACTION_MATRIX_HANDOFF_GATE_TITLE": {
     "en": "Parts gate",
-    "nl": "Onderdelengrens"
+    "nl": "Wanneer vervangen"
   },
   "REPORT_ACTION_MATRIX_HANDOFF_GATE_TEXT": {
     "en": "Replace parts only after a matching physical check or repeat-run proof; otherwise continue fallback.",
-    "nl": "Vervang pas onderdelen na passende fysieke controle of herhaalbewijs; ga anders door met fallback."
+    "nl": "Vervang onderdelen pas na passende fysieke controle of herhaalbewijs; volg anders het alternatieve pad."
   },
   "REPORT_TABLE_MORE_ROWS_NOT_SHOWN": {
     "en": "+ {count} more rows not shown",
@@ -1933,7 +1945,7 @@
   },
   "REPORT_CONTEXT_MORE_NOT_SHOWN": {
     "en": "More context retained in source data.",
-    "nl": "Meer context is bewaard in de brondata."
+    "nl": "Meer context is bewaard in de brongegevens."
   },
   "REPORT_ACTIONS_PAGE1_MORE": {
     "en": "Page 3 expands the fallback path if those first wheel checks are clean.",
@@ -1957,15 +1969,15 @@
   },
   "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION": {
     "en": "This run gives a sensible first inspection, but the source scores stayed close. If the primary path is clean, move to the alternative path rather than treating this as a final call.",
-    "nl": "Deze run geeft een zinvolle eerste inspectie, maar de bronscores bleven dicht bij elkaar. Als het primaire pad niets oplevert, ga dan naar het alternatieve pad in plaats van dit als definitieve conclusie te zien."
+    "nl": "Deze meting geeft een zinvolle eerste inspectie, maar de bronscores lagen dicht bij elkaar. Als het primaire pad niets oplevert, ga dan naar het alternatieve pad in plaats van dit als definitieve conclusie te zien."
   },
   "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_ALTERNATIVE": {
     "en": "This run gives a sensible first inspection, but {alternative} stayed close to {primary}. Start with the primary path, then move to the alternative if the first check is clean.",
-    "nl": "Deze run geeft een zinvolle eerste inspectie, maar {alternative} bleef dicht bij {primary}. Begin met het primaire pad en ga daarna naar het alternatief als de eerste controle niets oplevert."
+    "nl": "Deze meting geeft een zinvolle eerste inspectie, maar {alternative} bleef dicht bij {primary}. Begin met het primaire pad en ga daarna naar het alternatief als de eerste controle niets oplevert."
   },
   "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES": {
     "en": "This run is a close call: {primary} {primary_confidence} vs {alternative} {alternative_confidence}. Start with the first path, but keep the alternative live if the primary check is clean.",
-    "nl": "Deze run is een close call: {primary} {primary_confidence} versus {alternative} {alternative_confidence}. Begin met het eerste pad, maar houd het alternatief actief als de eerste controle niets oplevert."
+    "nl": "Deze meting is niet eenduidig: {primary} {primary_confidence} versus {alternative} {alternative_confidence}. Begin met het eerste pad, maar houd het alternatief actief als de eerste controle niets oplevert."
   },
   "REPORT_ACTION_STATUS_RECAPTURE": {
     "en": "Recapture before acting",
@@ -1977,15 +1989,15 @@
   },
   "REPORT_PAGE1_CAVEAT_FALLBACK": {
     "en": "If first check is clean: {fallback}",
-    "nl": "Als de eerste controle schoon is: {fallback}"
+    "nl": "Als de eerste controle niets oplevert: {fallback}"
   },
   "REPORT_PAGE1_CAVEAT_LIMITED_RUN": {
     "en": "Run limits affect confidence",
-    "nl": "Runbeperkingen beïnvloeden de zekerheid"
+    "nl": "Meetbeperkingen beïnvloeden de zekerheid"
   },
   "REPORT_PAGE1_DERIVED_ACTION": {
     "en": "Start with {location}: inspect the {source} path first.",
-    "nl": "Begin bij {location}: controleer eerst het pad {source}."
+    "nl": "Begin bij {location}: controleer eerst {source}."
   },
   "REPORT_PAGE1_BRIEF_TITLE": {
     "en": "Inspection brief",
@@ -2005,7 +2017,7 @@
   },
   "REPORT_PAGE1_FALSIFY_FALLBACK_GENERIC": {
     "en": "If this check is clean, move to the fallback path named in the decision path.",
-    "nl": "Als deze controle schoon is, volg dan het vervolgpad dat in het beslispad staat."
+    "nl": "Als deze controle niets oplevert, volg dan het vervolgpad uit het beslispad."
   },
   "REPORT_PAGE1_FALSIFY_RECAPTURE_GENERIC": {
     "en": "If evidence remains mixed, recapture before replacing parts.",
@@ -2013,15 +2025,15 @@
   },
   "REPORT_PAGE1_PARTS_GATE_LABEL": {
     "en": "Parts gate",
-    "nl": "Onderdelengrens"
+    "nl": "Wanneer vervangen"
   },
   "REPORT_PAGE1_PARTS_GATE_GENERIC": {
     "en": "Replace parts only after the physical check confirms the first target; otherwise keep the decision path open.",
-    "nl": "Vervang onderdelen pas nadat de fysieke controle het eerste doel bevestigt; houd anders het beslispad open."
+    "nl": "Vervang onderdelen pas nadat de fysieke controle het eerste controlepunt bevestigt; houd anders het beslispad open."
   },
   "REPORT_PAGE1_PARTS_GATE_RECAPTURE_GENERIC": {
     "en": "Do not replace parts from this run alone; wait for a cleaner capture or direct physical confirmation.",
-    "nl": "Vervang geen onderdelen op basis van alleen deze meting; wacht op een schonere meting of directe fysieke bevestiging."
+    "nl": "Vervang geen onderdelen op basis van alleen deze meting; wacht op een duidelijkere herhaalmeting of directe fysieke bevestiging."
   },
   "REPORT_PAGE1_PROOF_SUMMARY_TITLE": {
     "en": "Why this is credible",
@@ -2037,7 +2049,7 @@
   },
   "REPORT_PAGE1_SOURCE_COMPARISON_NOT_INDICATED": {
     "en": "not indicated",
-    "nl": "niet aangewezen"
+    "nl": "geen aanwijzing"
   },
   "REPORT_PAGE1_DECISION_PATH_TITLE": {
     "en": "Decision path",
@@ -2045,7 +2057,7 @@
   },
   "REPORT_PAGE1_DECISION_NOTE_LABEL": {
     "en": "Run limit",
-    "nl": "Runbeperking"
+    "nl": "Meetbeperking"
   },
   "REPORT_PAGE1_FALLBACK_ALTERNATIVE": {
     "en": "Inspect {source} next",
@@ -2077,7 +2089,7 @@
   },
   "REPORT_APPENDIX_C_TITLE": {
     "en": "Evidence and Run Context",
-    "nl": "Bewijs en runcontext"
+    "nl": "Bewijs en meetcontext"
   },
   "REPORT_ANALYSIS_ROWS_LABEL": {
     "en": "Analysis rows",
@@ -2105,11 +2117,11 @@
   },
   "REPORT_CAPTURE_CONDITION_FULL_COVERAGE": {
     "en": "Keep all {expected} expected positions connected throughout the run.",
-    "nl": "Houd alle {expected} verwachte posities gedurende de hele run verbonden."
+    "nl": "Houd alle {expected} verwachte posities gedurende de hele meting verbonden."
   },
   "REPORT_CAPTURE_CONDITION_REFERENCE": {
     "en": "Capture the same speed range with reference-quality speed input when possible.",
-    "nl": "Meet hetzelfde snelheidsbereik met referentie-kwaliteit van de snelheidsinput waar mogelijk."
+    "nl": "Meet hetzelfde snelheidsbereik waar mogelijk met een betrouwbare snelheidsreferentie."
   },
   "REPORT_CAPTURE_CONDITION_STEADY": {
     "en": "Capture a longer steady-speed window before treating the corner call as final.",
@@ -2117,11 +2129,11 @@
   },
   "REPORT_RECAPTURE_CONDITION_COMPARE_PATHS": {
     "en": "Cover the same speed band in separate drive/coast or load-change passes so competing sources separate cleanly.",
-    "nl": "Dek dezelfde snelheidsband af in aparte aangedreven/uitrollende of belastingswissel-passes zodat concurrerende bronnen schoner uit elkaar vallen."
+    "nl": "Dek hetzelfde snelheidsbereik af in aparte stukken onder aandrijving, tijdens uitrollen of met wisselende belasting, zodat concurrerende bronnen duidelijker uit elkaar vallen."
   },
   "REPORT_RECAPTURE_CONDITION_REPEAT_EVENT": {
     "en": "Repeat the same trigger with enough before/after baseline so the transient event can recur cleanly.",
-    "nl": "Herhaal dezelfde trigger met genoeg basislijn voor en na het event zodat de tijdelijke gebeurtenis schoon kan terugkomen."
+    "nl": "Herhaal dezelfde trigger met genoeg basislijn voor en na de gebeurtenis, zodat het tijdelijke signaal duidelijk kan terugkomen."
   },
   "REPORT_RECAPTURE_CONDITION_STEADY_HOLD": {
     "en": "Hold a repeatable steady-speed window through the problem band before changing throttle or load.",
@@ -2129,7 +2141,7 @@
   },
   "REPORT_CAPTURE_ISSUES_TITLE": {
     "en": "What was insufficient in this run",
-    "nl": "Wat onvoldoende was in deze run"
+    "nl": "Wat onvoldoende was in deze meting"
   },
   "REPORT_CAPTURE_ISSUE_GENERIC": {
     "en": "Current evidence is not strong enough to support an action-ready verdict.",
@@ -2141,11 +2153,11 @@
   },
   "REPORT_RECAPTURE_ISSUE_SOURCE_OVERLAP": {
     "en": "{primary} and {alternative} evidence overlapped in the same window, so this run did not separate one inspection path cleanly.",
-    "nl": "Bewijs voor {primary} en {alternative} overlapte in hetzelfde venster, waardoor deze run geen enkel inspectiepad schoon scheidde."
+    "nl": "Bewijs voor {primary} en {alternative} overlapte in hetzelfde venster, waardoor deze meting geen enkel inspectiepad duidelijk scheidde."
   },
   "REPORT_RECAPTURE_ISSUE_TRANSIENT": {
     "en": "The strongest signal was transient or intermittent, so it did not repeat cleanly enough for an inspection-first verdict.",
-    "nl": "Het sterkste signaal was tijdelijk of intermitterend en herhaalde zich daardoor niet schoon genoeg voor een inspectie-eerste conclusie."
+    "nl": "Het sterkste signaal was tijdelijk of intermitterend en herhaalde zich daardoor niet duidelijk genoeg voor een eerste inspectieadvies."
   },
   "REPORT_RECAPTURE_ISSUE_WEAK_LOCATION": {
     "en": "Location evidence stayed spread across multiple positions instead of separating one inspect-first area.",
@@ -2153,15 +2165,15 @@
   },
   "REPORT_RECAPTURE_ACTION_COMPARE_PATHS": {
     "en": "Repeat the same speed band with separate drive/coast or load-change passes to separate the overlapping source paths.",
-    "nl": "Herhaal dezelfde snelheidsband met aparte aangedreven/uitrollende of belastingswissel-passes om overlappende bronpaden te scheiden."
+    "nl": "Herhaal hetzelfde snelheidsbereik in aparte stukken onder aandrijving, tijdens uitrollen of met wisselende belasting om overlappende bronpaden te scheiden."
   },
   "REPORT_RECAPTURE_ACTION_REPEAT_EVENT": {
     "en": "Repeat the same trigger several times and capture before/during/after the event so the transient signal can recur cleanly.",
-    "nl": "Herhaal dezelfde trigger meerdere keren en meet voor/tijdens/na het event zodat het tijdelijke signaal schoon kan terugkomen."
+    "nl": "Herhaal dezelfde trigger meerdere keren en meet voor, tijdens en na de gebeurtenis zodat het tijdelijke signaal duidelijk kan terugkomen."
   },
   "REPORT_RECAPTURE_ACTION_STEADY_HOLD": {
     "en": "Repeat the same speed band with a longer steady hold before adding accel/decel transitions.",
-    "nl": "Herhaal dezelfde snelheidsband met een langere stabiele fase voordat accel/decel-overgangen worden toegevoegd."
+    "nl": "Herhaal hetzelfde snelheidsbereik met een langere stabiele fase voordat acceleratie- of vertragingsfases worden toegevoegd."
   },
   "REPORT_COVERAGE_ACTIVE_OF_EXPECTED": {
     "en": "{active} of {expected} expected positions stayed connected.",
@@ -2169,23 +2181,23 @@
   },
   "REPORT_COVERAGE_ALL_SEEN": {
     "en": "{active} of {expected} wheel positions seen throughout run.",
-    "nl": "{active} van {expected} wielposities waren de hele run zichtbaar."
+    "nl": "{active} van {expected} wielposities waren de hele meting zichtbaar."
   },
   "REPORT_COVERAGE_LABEL": {
     "en": "Coverage",
-    "nl": "Dekking"
+    "nl": "Sensordekking"
   },
   "REPORT_COVERAGE_NOTE_COMPLETE": {
     "en": "All expected positions remained connected throughout the run.",
-    "nl": "Alle verwachte posities bleven gedurende de hele run verbonden."
+    "nl": "Alle verwachte posities bleven gedurende de hele meting verbonden."
   },
   "REPORT_COVERAGE_NOTE_MISSING": {
     "en": "Missing throughout run: {locations}.",
-    "nl": "Ontbraken gedurende de run: {locations}."
+    "nl": "Ontbraken gedurende de meting: {locations}."
   },
   "REPORT_COVERAGE_NOTE_PARTIAL": {
     "en": "Lost full coverage during the run: {locations}.",
-    "nl": "Verloren volledige dekking tijdens de run: {locations}."
+    "nl": "Verloren volledige dekking tijdens de meting: {locations}."
   },
   "REPORT_COVERAGE_PARTIAL": {
     "en": "{active} of {expected} positions stayed connected; some coverage was partial.",
@@ -2209,63 +2221,63 @@
   },
   "REPORT_DOMINANCE_RATIO_LABEL": {
     "en": "Dominance ratio",
-    "nl": "Dominantieratio"
+    "nl": "Sterkteverhouding"
   },
   "REPORT_DOMINANCE_RATIO_TEXT": {
     "en": "{ratio}x matched-window linear intensity (not raw dB delta)",
-    "nl": "{ratio}x matched-window lineaire intensiteit (geen ruwe dB-delta)"
+    "nl": "{ratio}x lineaire intensiteit in overeenkomende meetvensters (geen ruwe dB-delta)"
   },
   "REPORT_DOMINANCE_RATIO_NOTE": {
     "en": "Computed from matched-window evidence; compare separately from the p95 dB snapshot below.",
-    "nl": "Berekend uit matched-window bewijs; vergelijk dit los van de p95 dB-snapshot hieronder."
+    "nl": "Berekend uit overeenkomende bewijsvensters; vergelijk dit los van de p95 dB-snapshot hieronder."
   },
   "REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_RAW": {
     "en": "Location proof uses retained diagnosis-supporting windows rebuilt from raw-backed replay.",
-    "nl": "Het locatiebewijs gebruikt bewaarde diagnose-ondersteunende vensters die opnieuw zijn opgebouwd uit raw-backed replay."
+    "nl": "Het locatiebewijs gebruikt bewaarde diagnosevensters die via heranalyse uit ruwe meetdata zijn opgebouwd."
   },
   "REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_SUMMARY": {
     "en": "Location proof uses retained diagnosis-supporting windows from persisted summary evidence.",
-    "nl": "Het locatiebewijs gebruikt bewaarde diagnose-ondersteunende vensters uit persistente samenvattingsbewijzen."
+    "nl": "Het locatiebewijs gebruikt bewaarde diagnosevensters uit opgeslagen samenvattingsgegevens."
   },
   "REPORT_LOCATION_PROOF_BASIS_WHOLE_RUN": {
     "en": "No retained diagnosis-supporting windows were available, so location proof falls back to whole-run summary intensity.",
-    "nl": "Er waren geen bewaarde diagnose-ondersteunende vensters beschikbaar, dus het locatiebewijs valt terug op de samenvattingsintensiteit van de hele run."
+    "nl": "Er waren geen bewaarde diagnosevensters beschikbaar, dus het locatiebewijs valt terug op de samenvattingsintensiteit van de hele meting."
   },
   "REPORT_DOMINANCE_RATIO_UNKNOWN": {
     "en": "Not enough location-separation data",
-    "nl": "Onvoldoende locatie-scheidingsdata"
+    "nl": "Onvoldoende gegevens voor locatiescheiding"
   },
   "REPORT_DOMINANCE_SUMMARY_TITLE": {
     "en": "Dominance summary",
-    "nl": "Dominantie-overzicht"
+    "nl": "Sterkte-overzicht"
   },
   "REPORT_DOMINANT_CORNER_LABEL": {
     "en": "Dominant corner",
-    "nl": "Dominante hoek"
+    "nl": "Sterkste hoek"
   },
   "REPORT_EVIDENCE_CHAIN_TITLE": {
     "en": "Evidence chain",
-    "nl": "Bewijsketen"
+    "nl": "Bewijsopbouw"
   },
   "REPORT_EVIDENCE_CHAIN_NOTE": {
     "en": "Each row shows which source matched, how many evidence windows supported it, and where that evidence stayed strongest.",
-    "nl": "Elke regel toont welke bron matchte, hoeveel bewijsvensters die bron ondersteunden en waar dat bewijs het sterkst bleef."
+    "nl": "Elke regel toont welke bron overeenkwam, hoeveel bewijsvensters die bron ondersteunden en waar dat bewijs het sterkst bleef."
   },
   "REPORT_EVIDENCE_SUMMARY_ALT": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. {alternative} remained close enough to inspect next if the primary path is clean.",
-    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative} bleef dichtbij genoeg om als volgende te inspecteren als het primaire pad niets oplevert."
+    "nl": "{source} kwam overeen met {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative} bleef dichtbij genoeg om als volgende te inspecteren als het primaire pad niets oplevert."
   },
   "REPORT_EVIDENCE_SUMMARY_ALT_DETAILED": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. {alternative_signal} also stayed strongest near {alternative_location} in the {alternative_speed} band, so {alternative} remains the next path if the primary inspection is clean.",
-    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative_signal} bleef ook het sterkst bij {alternative_location} in de band {alternative_speed}, dus {alternative} blijft het volgende pad als de eerste inspectie niets oplevert."
+    "nl": "{source} kwam overeen met {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative_signal} bleef ook het sterkst bij {alternative_location} in de band {alternative_speed}, dus {alternative} blijft het volgende pad als de eerste inspectie niets oplevert."
   },
   "REPORT_EVIDENCE_SUMMARY_ALT_OVERLAP": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. Wheel and driveline evidence overlap in that same band, so {alternative} remains the next path only if the primary inspection is clean.",
-    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. Wiel- en aandrijflijnbewijs overlappen in diezelfde band, dus {alternative} blijft alleen het volgende pad als de eerste inspectie niets oplevert."
+    "nl": "{source} kwam overeen met {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. Wiel- en aandrijflijnbewijs overlappen in diezelfde band, dus {alternative} blijft alleen het volgende pad als de eerste inspectie niets oplevert."
   },
   "REPORT_EVIDENCE_SUMMARY_SIMPLE": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}.",
-    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}."
+    "nl": "{source} kwam overeen met {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}."
   },
   "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_PHASES": {
     "en": "{source} evidence did not stay on one corner: {first_location} led during {first_phase}, then {second_location} became strongest during {second_phase}.",
@@ -2273,7 +2285,7 @@
   },
   "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_GENERIC": {
     "en": "{source} evidence shifted between {first_location} and {second_location} across the run.",
-    "nl": "Het {source}-bewijs verschoof tijdens de run tussen {first_location} en {second_location}."
+    "nl": "Het {source}-bewijs verschoof tijdens de meting tussen {first_location} en {second_location}."
   },
   "REPORT_EVIDENCE_NOTE_WEAK": {
     "en": "Spatial separation stayed weak.",
@@ -2281,19 +2293,19 @@
   },
   "REPORT_EVIDENCE_BASIS_LABEL": {
     "en": "Evidence basis",
-    "nl": "Bewijsbasis"
+    "nl": "Gebruikte gegevens"
   },
   "REPORT_EVIDENCE_BASIS_RAW": {
     "en": "Raw-backed replay ({samples} analyzed samples)",
-    "nl": "Raw-ondersteunde replay ({samples} geanalyseerde samples)"
+    "nl": "Heranalyse van ruwe meetdata ({samples} geanalyseerde samples)"
   },
   "REPORT_EVIDENCE_BASIS_PARTIAL_RAW": {
     "en": "Partially raw-backed replay ({samples} raw-backed samples; summary fallback used where coverage was incomplete)",
-    "nl": "Gedeeltelijk raw-ondersteunde replay ({samples} raw-ondersteunde samples; samenvattingsfallback gebruikt waar de dekking onvolledig was)"
+    "nl": "Gedeeltelijke heranalyse van ruwe meetdata ({samples} samples uit ruwe meetdata; samenvatting gebruikt waar de dekking onvolledig was)"
   },
   "REPORT_EVIDENCE_BASIS_SUMMARY": {
     "en": "Summary-only fallback",
-    "nl": "Alleen samenvattingsfallback"
+    "nl": "Alleen samenvattingsgegevens"
   },
   "REPORT_EXPORT_REFERENCE": {
     "en": "Export package",
@@ -2301,7 +2313,7 @@
   },
   "REPORT_FALSIFY_COLUMN": {
     "en": "If still clean",
-    "nl": "Als het nog schoon is"
+    "nl": "Als dit niets oplevert"
   },
   "REPORT_IF_PRIMARY_CLEAN_LABEL": {
     "en": "If the primary path is clean",
@@ -2325,7 +2337,7 @@
   },
   "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE": {
     "en": "Cells show each sensor's matched p95 level for that signal relative to the strongest sensor in the row. 0 dB = strongest sensor; lower values mean weaker observation; — = no matched observation retained.",
-    "nl": "Cellen tonen per signaal het gematchte p95-niveau van elke sensor ten opzichte van de sterkste sensor in die regel. 0 dB = sterkste sensor; lagere waarden betekenen zwakkere waarneming; — = geen bewaarde matchwaarneming."
+    "nl": "Cellen tonen per signaal het overeenkomende p95-niveau van elke sensor ten opzichte van de sterkste sensor in die regel. 0 dB = sterkste sensor; lagere waarden betekenen zwakkere waarneming; — = geen bewaarde waarneming."
   },
   "REPORT_LOCATION_COLUMN": {
     "en": "Location",
@@ -2333,11 +2345,7 @@
   },
   "REPORT_LOCATION_CONFIDENCE_LABEL": {
     "en": "Location confidence",
-    "nl": "Locatievertrouwen"
-  },
-  "REPORT_DOMINANCE_RATIO_LABEL": {
-    "en": "Dominance ratio",
-    "nl": "Dominantieverhouding"
+    "nl": "Locatiezekerheid"
   },
   "REPORT_DOMINANCE_RATIO_VALUE": {
     "en": "{ratio}x stronger",
@@ -2349,7 +2357,7 @@
   },
   "REPORT_LOCATION_CONFIDENCE_LIMITED": {
     "en": "Limited by run context",
-    "nl": "Beperkt door runcontext"
+    "nl": "Beperkt door meetcontext"
   },
   "REPORT_LOCATION_CONFIDENCE_CLOSE_SCORES": {
     "en": "Top causes stayed too close to separate cleanly",
@@ -2361,7 +2369,7 @@
   },
   "REPORT_LOCATION_CONFIDENCE_MODERATE_DETAIL": {
     "en": "Evidence separation stayed moderate in this run",
-    "nl": "De scheiding in het bewijs bleef in deze run gematigd"
+    "nl": "De scheiding in het bewijs bleef in deze meting gematigd"
   },
   "REPORT_LOCATION_CONFIDENCE_STRONG": {
     "en": "Strong",
@@ -2381,7 +2389,7 @@
   },
   "REPORT_MATCHED_WINDOWS_COLUMN": {
     "en": "Sensor matches",
-    "nl": "Sensormatches"
+    "nl": "Vensters"
   },
   "REPORT_SUPPORT_WINDOW_SUMMARY_LABEL": {
     "en": "Support",
@@ -2449,15 +2457,15 @@
   },
   "REPORT_STABLE_FREQUENCY_BAND": {
     "en": "{low}-{high} Hz matched band",
-    "nl": "{low}-{high} Hz gematchte band"
+    "nl": "{low}-{high} Hz overeenkomende band"
   },
   "REPORT_STABLE_FREQUENCY_SINGLE": {
     "en": "{hz} Hz matched center",
-    "nl": "{hz} Hz gematcht centrum"
+    "nl": "{hz} Hz overeenkomend centrum"
   },
   "REPORT_STABLE_FREQUENCY_UNKNOWN": {
     "en": "No retained matched-frequency band",
-    "nl": "Geen bewaarde gematchte frequentieband"
+    "nl": "Geen bewaarde overeenkomende frequentieband"
   },
   "REPORT_PHASE_SUMMARY_NONE": {
     "en": "No dominant phase breakdown available.",
@@ -2469,15 +2477,15 @@
   },
   "REPORT_PHASE_SUMMARY_SEQUENTIAL_GENERIC": {
     "en": "Strongest locations shifted between {first_location} and {second_location} across the run.",
-    "nl": "De sterkste locaties verschoven tijdens de run tussen {first_location} en {second_location}."
+    "nl": "De sterkste locaties verschoven tijdens de meting tussen {first_location} en {second_location}."
   },
   "REPORT_PRIMARY_CLEAN_ALT": {
     "en": "Move to the {source} path next and inspect {location}.",
-    "nl": "Ga daarna naar het pad {source} en controleer {location}."
+    "nl": "Controleer daarna {source} bij {location}."
   },
   "REPORT_PRIMARY_CLEAN_GENERIC": {
     "en": "Continue with the next ranked source if the primary path is clean.",
-    "nl": "Ga verder met de volgende gerangschikte bron als het primaire pad niets oplevert."
+    "nl": "Ga verder met de volgende bron in de rangschikking als het primaire pad niets oplevert."
   },
   "REPORT_PRIMARY_SOURCE_LABEL": {
     "en": "Primary source",
@@ -2489,7 +2497,7 @@
   },
   "REPORT_SOURCE_CONFIDENCE_NOTE": {
     "en": "The percentages below rank how strongly each source fits this run. They are source-confidence scores for this report, not repair probabilities.",
-    "nl": "De percentages hieronder rangschikken hoe sterk elke bron bij deze run past. Het zijn bron-zekerheidsscores voor dit rapport, geen reparatiekansen."
+    "nl": "De percentages hieronder laten zien hoe sterk elke bron bij deze meting past. Het zijn bronscores voor dit rapport, geen reparatiekansen."
   },
   "REPORT_SUPPORTING_SENSORS_LABEL": {
     "en": "Strongest sensors",
@@ -2525,7 +2533,7 @@
   },
   "REPORT_PROOF_CAVEAT_MIXED": {
     "en": "Localization is mixed because either dominance or coverage was not fully clean.",
-    "nl": "De lokalisatie is gemengd omdat dominantie of dekking niet volledig schoon was."
+    "nl": "De lokalisatie is gemengd omdat sterkteverschil of dekking niet eenduidig genoeg was."
   },
   "REPORT_PROOF_CAVEAT_WEAK": {
     "en": "Localization is weak; capture another run before treating this corner as final.",
@@ -2533,31 +2541,35 @@
   },
   "REPORT_PROOF_PANEL_TITLE": {
     "en": "Why this corner wins",
-    "nl": "Waarom deze hoek wint"
+    "nl": "Waarom deze hoek bovenaan staat"
   },
   "REPORT_PROOF_SUMMARY_RATIO_NO_RUNNER_UP": {
     "en": "{location} stayed strongest across the connected sensors, with matched-window evidence about {ratio}x higher than the next location.",
-    "nl": "{location} bleef het sterkst over de verbonden sensoren, met matched-window bewijs dat ongeveer {ratio}x hoger lag dan op de volgende locatie."
+    "nl": "{location} bleef het sterkst over de verbonden sensoren, met bewijs uit overeenkomende vensters dat ongeveer {ratio}x hoger lag dan op de volgende locatie."
   },
   "REPORT_PROOF_SUMMARY_RATIO_RUNNER_UP": {
     "en": "{location} stayed strongest across the connected sensors, with matched-window evidence about {ratio}x higher than {runner_up}.",
-    "nl": "{location} bleef het sterkst over de verbonden sensoren, met matched-window bewijs dat ongeveer {ratio}x hoger lag dan bij {runner_up}."
+    "nl": "{location} bleef het sterkst over de verbonden sensoren, met bewijs uit overeenkomende vensters dat ongeveer {ratio}x hoger lag dan bij {runner_up}."
   },
   "REPORT_PROOF_SUMMARY_SIMPLE_PLAIN": {
     "en": "{location} remained the strongest connected location on the evidence map for this run.",
-    "nl": "{location} bleef de sterkste verbonden locatie op de bewijskaart van deze run."
+    "nl": "{location} bleef de sterkste verbonden locatie op de bewijskaart van deze meting."
+  },
+  "REPORT_PROOF_SUMMARY_WEAK_LOCATION": {
+    "en": "Location evidence stayed split; use the source call as the main lead, not one exact corner.",
+    "nl": "Locatiebewijs bleef verdeeld; gebruik vooral de bron als richting, niet één exacte hoek."
   },
   "REPORT_PROOF_SUMMARY_SEQUENTIAL_PHASES": {
     "en": "No single corner stayed dominant through the whole run: {first_location} was strongest during {first_phase}, then {second_location} took over during {second_phase}.",
-    "nl": "Geen enkele hoek bleef de hele run dominant: {first_location} was het sterkst tijdens {first_phase}, daarna nam {second_location} het over tijdens {second_phase}."
+    "nl": "Geen enkele hoek bleef de hele meting dominant: {first_location} was het sterkst tijdens {first_phase}, daarna nam {second_location} het over tijdens {second_phase}."
   },
   "REPORT_PROOF_SUMMARY_SEQUENTIAL_GENERIC": {
     "en": "No single corner stayed dominant through the whole run; strongest evidence shifted between {first_location} and {second_location}.",
-    "nl": "Geen enkele hoek bleef de hele run dominant; het sterkste bewijs verschoof tussen {first_location} en {second_location}."
+    "nl": "Geen enkele hoek bleef de hele meting dominant; het sterkste bewijs verschoof tussen {first_location} en {second_location}."
   },
   "REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE": {
     "en": "Best available location signal",
-    "nl": "Best beschikbare locatiesignaal"
+    "nl": "Beste beschikbare locatie-indicatie"
   },
   "REPORT_TIMELINE_TITLE": {
     "en": "Run timeline",
@@ -2569,11 +2581,11 @@
   },
   "REPORT_TIMELINE_DETECTIONS_LABEL": {
     "en": "Detection windows",
-    "nl": "Detectievensters"
+    "nl": "Signaalvensters"
   },
   "REPORT_PROOF_SUMMARY_RATIO": {
     "en": "{location} outranked the next location by {ratio}x on matched-window linear intensity evidence.",
-    "nl": "{location} was {ratio}x sterker dan de volgende locatie op basis van matched-window lineaire intensiteitsbewijzen."
+    "nl": "{location} was {ratio}x sterker dan de volgende locatie op basis van lineair intensiteitsbewijs uit overeenkomende vensters."
   },
   "REPORT_PROOF_SUMMARY_SIMPLE": {
     "en": "{location} remained the strongest connected location on the p95 intensity map.",
@@ -2581,7 +2593,7 @@
   },
   "REPORT_RANKED_SOURCE_STACK_TITLE": {
     "en": "Ranked source stack",
-    "nl": "Gerangschikte bronstapel"
+    "nl": "Bronrangschikking"
   },
   "REPORT_REASON_COLUMN": {
     "en": "Reason",
@@ -2597,23 +2609,23 @@
   },
   "REPORT_REASON_RECAPTURE_GENERIC": {
     "en": "This run showed vibration activity, but the combined speed, reference, and location evidence stayed too weak for an inspection-first verdict.",
-    "nl": "Deze run liet trillingsactiviteit zien, maar het gecombineerde snelheids-, referentie- en locatiebewijs bleef te zwak voor een inspectieklare conclusie."
+    "nl": "Deze meting liet trillingsactiviteit zien, maar het gecombineerde snelheids-, referentie- en locatiebewijs bleef te zwak voor een inspectieklare conclusie."
   },
   "REPORT_REASON_RUN_SUMMARY": {
     "en": "This {duration} run showed the clearest repeatable vibration pattern near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
-    "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location} in het venster {speed}, met vergelijkingsdata van {sensors} verbonden wielposities."
+    "nl": "Deze meting van {duration} liet bij {location} het duidelijkste herhaalbare trillingspatroon zien in het venster {speed}, vergeleken over {sensors} aangesloten wielposities."
   },
   "REPORT_REASON_RUN_SUMMARY_UNKNOWN_DURATION": {
     "en": "The clearest repeatable vibration pattern stayed near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
-    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location} in het venster {speed}, met vergelijkingsdata van {sensors} verbonden wielposities."
+    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location} in het venster {speed}, vergeleken over {sensors} aangesloten wielposities."
   },
   "REPORT_REASON_RUN_SUMMARY_NO_SPEED": {
     "en": "This {duration} run showed the clearest repeatable vibration pattern near {location}, with {sensors} connected wheel positions contributing comparison data.",
-    "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location}, met vergelijkingsdata van {sensors} verbonden wielposities."
+    "nl": "Deze meting van {duration} liet bij {location} het duidelijkste herhaalbare trillingspatroon zien, vergeleken over {sensors} aangesloten wielposities."
   },
   "REPORT_REASON_RUN_SUMMARY_NO_SPEED_UNKNOWN_DURATION": {
     "en": "The clearest repeatable vibration pattern stayed near {location}, with {sensors} connected wheel positions contributing comparison data.",
-    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location}, met vergelijkingsdata van {sensors} verbonden wielposities."
+    "nl": "Het duidelijkste herhaalbare trillingspatroon bleef bij {location}, vergeleken over {sensors} aangesloten wielposities."
   },
   "REPORT_ROUTE_APPENDIX_A": {
     "en": "Need the inspection sequence? See A.",
@@ -2629,11 +2641,11 @@
   },
   "REPORT_ROUTE_APPENDIX_D": {
     "en": "Need run details? See C.",
-    "nl": "Run-details nodig? Zie C."
+    "nl": "Meetdetails nodig? Zie C."
   },
   "REPORT_RUNNER_UP_CORNER_LABEL": {
     "en": "Next strongest corner",
-    "nl": "Volgende sterkste hoek"
+    "nl": "Tweede sterkste hoek"
   },
   "REPORT_SIGNAL_COLUMN": {
     "en": "Signal",
@@ -2653,11 +2665,11 @@
   },
   "REPORT_SPEED_BAND_SUMMARY_LABEL": {
     "en": "Speed-band summary",
-    "nl": "Snelheidsband-overzicht"
+    "nl": "Overzicht snelheidsbereik"
   },
   "REPORT_SPEED_SUMMARY_NONE": {
     "en": "No focused speed-band summary available.",
-    "nl": "Geen gericht snelheidsband-overzicht beschikbaar."
+    "nl": "Geen gericht snelheidsbereik-overzicht beschikbaar."
   },
   "REPORT_SPEED_WINDOW_COLUMN": {
     "en": "Speed window",
@@ -2669,7 +2681,7 @@
   },
   "REPORT_SUITABILITY_DETAIL_TITLE": {
     "en": "Run quality and limits",
-    "nl": "Runkwaliteit en beperkingen"
+    "nl": "Meetkwaliteit en beperkingen"
   },
   "REPORT_SUPPORTING_CONTEXT_TITLE": {
     "en": "Supporting context",
@@ -2677,15 +2689,15 @@
   },
   "REPORT_CONTEXT_SUMMARY_COMPLETE": {
     "en": "A steady {speed} capture with {active} of {expected} expected wheel positions connected makes this run usable for source comparison.",
-    "nl": "Een stabiele opname bij {speed} met {active} van {expected} verwachte wielposities verbonden maakt deze run bruikbaar voor bronvergelijking."
+    "nl": "Een stabiele opname bij {speed} met {active} van {expected} verwachte wielposities verbonden maakt deze meting bruikbaar voor bronvergelijking."
   },
   "REPORT_CONTEXT_SUMMARY_PARTIAL": {
     "en": "This {speed} capture still points directionally at the leading source, but coverage or continuity limits how cleanly the comparison separates alternatives.",
-    "nl": "Deze opname bij {speed} wijst nog steeds richting de leidende bron, maar dekking of continuïteit beperkt hoe schoon de vergelijking alternatieven scheidt."
+    "nl": "Deze opname bij {speed} wijst nog steeds richting de sterkste bron, maar dekking of continuïteit beperkt hoe duidelijk de vergelijking alternatieven scheidt."
   },
   "REPORT_MEASUREMENT_GUIDE": {
     "en": "M01-M04 are ranked peak rows from this run, not sensor IDs. Frequency shows where the peak sat; peak dB is the strongest single peak in that row; strength dB is the sustained ranking value used by the report.",
-    "nl": "M01-M04 zijn gerangschikte piekregels uit deze run, geen sensor-ID's. Frequentie toont waar de piek lag; piek dB is de sterkste enkele piek in die regel; sterkte dB is de blijvende rangschikkingswaarde die het rapport gebruikt."
+    "nl": "M01-M04 zijn gerangschikte piekregels uit deze meting, geen sensor-ID's. Frequentie toont waar de piek lag; piek dB is de sterkste enkele piek in die regel; sterkte dB is de aanhoudende rangschikkingswaarde die het rapport gebruikt."
   },
   "REPORT_PHASE_COLUMN": {
     "en": "Phase",
@@ -2701,7 +2713,7 @@
   },
   "REPORT_SUPPORTING_WINDOWS_GUIDE": {
     "en": "W01-W04 are retained supporting windows for the selected diagnosis. They show when the match held, at what speed, which frequency was retained, and where the strongest supporting location sat.",
-    "nl": "W01-W04 zijn bewaarde ondersteunende vensters voor de geselecteerde diagnose. Ze tonen wanneer de match standhield, bij welke snelheid, welke frequentie behouden bleef en waar de sterkste ondersteunende locatie lag."
+    "nl": "W01-W04 zijn bewaarde ondersteunende vensters voor de geselecteerde diagnose. Ze tonen wanneer de overeenkomst standhield, bij welke snelheid, welke frequentie behouden bleef en waar de sterkste ondersteunende locatie lag."
   },
   "REPORT_SUPPORTING_WINDOWS_TITLE": {
     "en": "Supporting windows",
@@ -2709,7 +2721,7 @@
   },
   "REPORT_SUPPORTING_MEASUREMENTS_NOTE": {
     "en": "M01-M04 are ranked peak rows from this run, not one row per sensor.",
-    "nl": "M01-M04 zijn gerangschikte piekregels uit deze run, niet één regel per sensor."
+    "nl": "M01-M04 zijn gerangschikte piekregels uit deze meting, niet één regel per sensor."
   },
   "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT": {
     "en": "Ranked peak rows: {source} · {signal} · {location} · {speed}",
@@ -2757,6 +2769,6 @@
   },
   "REPORT_RUN_LIMITS_RECAPTURE_RECIPE": {
     "en": "Treat this run as directional, not final. If the first inspection is clean, rerun with a longer steady hold plus accel/decel and drive/coast comparison through the {speed} band.",
-    "nl": "Behandel deze run als richtinggevend, niet als definitief. Als de eerste inspectie niets oplevert, meet dan opnieuw met een langere stabiele fase plus accel/decel en een aangedreven/uitrollende vergelijking door de band {speed}."
+    "nl": "Behandel deze meting als richtinggevend, niet als definitief. Als de eerste inspectie niets oplevert, meet dan opnieuw met een langere stabiele fase plus acceleratie, vertraging en vergelijking onder aandrijving/uitrollen door het bereik {speed}."
   }
 }

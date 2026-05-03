@@ -93,4 +93,4 @@ class TestPdfContentForDiagnosedScenario:
         ).lower()
         assert "vibesensor-diagnoserapport" in text_lower
         assert "wat nu te doen" in text_lower
-        assert "km/h" in text_lower
+        assert "km/u" in text_lower

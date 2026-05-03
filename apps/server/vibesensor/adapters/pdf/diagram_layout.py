@@ -289,10 +289,54 @@ def build_sensor_render_plan(
 
 # ── Location canonicalization ────────────────────────────────────────────────
 
-_FL_COMPACTS: frozenset[str] = frozenset({"frontleft", "frontleftwheel", "fl", "flwheel"})
-_FR_COMPACTS: frozenset[str] = frozenset({"frontright", "frontrightwheel", "fr", "frwheel"})
-_RL_COMPACTS: frozenset[str] = frozenset({"rearleft", "rearleftwheel", "rl", "rlwheel"})
-_RR_COMPACTS: frozenset[str] = frozenset({"rearright", "rearrightwheel", "rr", "rrwheel"})
+_FL_COMPACTS: frozenset[str] = frozenset(
+    {
+        "frontleft",
+        "frontleftwheel",
+        "fl",
+        "flwheel",
+        "linksvoor",
+        "voorlinks",
+        "linkervoorwiel",
+        "voorwiellinks",
+    }
+)
+_FR_COMPACTS: frozenset[str] = frozenset(
+    {
+        "frontright",
+        "frontrightwheel",
+        "fr",
+        "frwheel",
+        "rechtsvoor",
+        "voorrechts",
+        "rechtervoorwiel",
+        "voorwielrechts",
+    }
+)
+_RL_COMPACTS: frozenset[str] = frozenset(
+    {
+        "rearleft",
+        "rearleftwheel",
+        "rl",
+        "rlwheel",
+        "linksachter",
+        "achterlinks",
+        "linkerachterwiel",
+        "achterwiellinks",
+    }
+)
+_RR_COMPACTS: frozenset[str] = frozenset(
+    {
+        "rearright",
+        "rearrightwheel",
+        "rr",
+        "rrwheel",
+        "rechtsachter",
+        "achterrechts",
+        "rechterachterwiel",
+        "achterwielrechts",
+    }
+)
 
 
 def canonical_location(raw: object) -> str:
@@ -306,6 +350,14 @@ def canonical_location(raw: object) -> str:
     if ("rear" in token and "left" in token and "wheel" in token) or compact in _RL_COMPACTS:
         return "rear-left wheel"
     if ("rear" in token and "right" in token and "wheel" in token) or compact in _RR_COMPACTS:
+        return "rear-right wheel"
+    if "voor" in token and "links" in token and "wiel" in token:
+        return "front-left wheel"
+    if "voor" in token and "rechts" in token and "wiel" in token:
+        return "front-right wheel"
+    if "achter" in token and "links" in token and "wiel" in token:
+        return "rear-left wheel"
+    if "achter" in token and "rechts" in token and "wiel" in token:
         return "rear-right wheel"
     if "trunk" in token:
         return "trunk"

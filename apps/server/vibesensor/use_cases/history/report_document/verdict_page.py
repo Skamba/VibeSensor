@@ -17,6 +17,7 @@ from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
     action_status_text,
     display_location,
+    display_speed_band,
     human_source,
     location_confidence_text,
     presented_location_confidence_key,
@@ -46,7 +47,7 @@ def build_observed_signature(
     return PatternEvidence(
         primary_system=primary.primary_system,
         strongest_location=display_location(primary.primary_location, tr=tr),
-        speed_band=primary.primary_speed,
+        speed_band=display_speed_band(primary.primary_speed, tr=tr),
         strength_label=primary.strength_text,
         strength_peak_db=primary.strength_db,
         certainty_label=primary.certainty_label_text,
@@ -206,7 +207,7 @@ def _dominance_ratio_label(
     *,
     tr: Callable[..., str],
 ) -> str | None:
-    if dominance_ratio is None or dominance_ratio <= 0:
+    if dominance_ratio is None or dominance_ratio <= 1.05:
         return None
     return tr("REPORT_DOMINANCE_RATIO_VALUE", ratio=f"{dominance_ratio:.1f}")
 
@@ -234,7 +235,7 @@ def _build_primary_reason_sentence(
     duration = str(duration_text or "").strip()
     has_duration = bool(duration and duration != tr("UNKNOWN"))
     sensor_count = len(active_locations) or primary.sensor_count
-    speed_window = str(primary.primary_speed or "").strip()
+    speed_window = display_speed_band(primary.primary_speed, tr=tr)
     if speed_window and speed_window != tr("UNKNOWN"):
         if not has_duration:
             return tr(
@@ -312,6 +313,8 @@ def _action_status_note_text(
         location_confidence_key=location_confidence_key,
         tr=tr,
     )
+    if action_status_key == "recapture_before_acting":
+        return _brief_page1_note(issue or reason, tr=tr)
     if issue and reason:
         issue_norm = issue.rstrip(".")
         reason_norm = reason.rstrip(".")

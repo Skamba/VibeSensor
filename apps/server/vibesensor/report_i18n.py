@@ -14,32 +14,79 @@ from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")
-_SHORT_LOCATION_LABELS: dict[str, str] = {
-    "front left": "Front-Left",
-    "front left wheel": "Front-Left",
-    "front_left": "Front-Left",
-    "front_left_wheel": "Front-Left",
-    "front-left": "Front-Left",
-    "front-left wheel": "Front-Left",
-    "front right": "Front-Right",
-    "front right wheel": "Front-Right",
-    "front_right": "Front-Right",
-    "front_right_wheel": "Front-Right",
-    "front-right": "Front-Right",
-    "front-right wheel": "Front-Right",
-    "rear left": "Rear-Left",
-    "rear left wheel": "Rear-Left",
-    "rear_left": "Rear-Left",
-    "rear_left_wheel": "Rear-Left",
-    "rear-left": "Rear-Left",
-    "rear-left wheel": "Rear-Left",
-    "rear right": "Rear-Right",
-    "rear right wheel": "Rear-Right",
-    "rear_right": "Rear-Right",
-    "rear_right_wheel": "Rear-Right",
-    "rear-right": "Rear-Right",
-    "rear-right wheel": "Rear-Right",
-}
+type _LocationLabels = tuple[str, str, str, str]
+_LOCATION_LABEL_DEFS: tuple[tuple[tuple[str, ...], _LocationLabels], ...] = (
+    (
+        (
+            "front left",
+            "front left wheel",
+            "front_left",
+            "front_left_wheel",
+            "front-left",
+            "front-left wheel",
+            "linksvoor",
+            "voor links",
+            "linkervoorwiel",
+            "voorwiel links",
+        ),
+        ("Front-Left", "Front Left", "Linksvoor", "wiel linksvoor"),
+    ),
+    (
+        (
+            "front right",
+            "front right wheel",
+            "front_right",
+            "front_right_wheel",
+            "front-right",
+            "front-right wheel",
+            "rechtsvoor",
+            "voor rechts",
+            "rechtervoorwiel",
+            "voorwiel rechts",
+        ),
+        ("Front-Right", "Front Right", "Rechtsvoor", "wiel rechtsvoor"),
+    ),
+    (
+        (
+            "rear left",
+            "rear left wheel",
+            "rear_left",
+            "rear_left_wheel",
+            "rear-left",
+            "rear-left wheel",
+            "linksachter",
+            "achter links",
+            "linkerachterwiel",
+            "achterwiel links",
+        ),
+        ("Rear-Left", "Rear Left", "Linksachter", "wiel linksachter"),
+    ),
+    (
+        (
+            "rear right",
+            "rear right wheel",
+            "rear_right",
+            "rear_right_wheel",
+            "rear-right",
+            "rear-right wheel",
+            "rechtsachter",
+            "achter rechts",
+            "rechterachterwiel",
+            "achterwiel rechts",
+        ),
+        ("Rear-Right", "Rear Right", "Rechtsachter", "wiel rechtsachter"),
+    ),
+)
+
+
+def _location_label_key(value: object) -> str:
+    return str(value or "").strip().lower().replace("_", " ").replace("-", " ")
+
+
+_LOCATION_LABELS: dict[str, _LocationLabels] = {}
+for aliases, labels in _LOCATION_LABEL_DEFS:
+    for alias in aliases:
+        _LOCATION_LABELS[_location_label_key(alias)] = labels
 
 _AMBIGUOUS_LOCATION_PREFIX = "ambiguous location:"
 _BODY_LIKE_LOCATION_TOKENS = {"body", "cabin", "trunk"}
@@ -83,18 +130,23 @@ def is_i18n_ref(value: object) -> bool:
     return isinstance(value, dict) and "_i18n_key" in value
 
 
-def human_location(location: object, *, short: bool = True) -> str:
+def human_location(location: object, *, short: bool = True, lang: object = "en") -> str:
     """Resolve a location value to a stable human-facing label."""
     raw = str(location or "").strip()
     if not raw:
-        return "Unknown"
-    normalized = raw.lower().replace("_", " ").replace("-", " ")
-    if short:
-        short_label = _SHORT_LOCATION_LABELS.get(normalized)
-        if short_label is not None:
-            return short_label
-    title = " ".join(part for part in normalized.split() if part)
-    return title.title() if title else "Unknown"
+        return "Onbekend" if normalize_lang(lang) == "nl" else "Unknown"
+    labels = _LOCATION_LABELS.get(_location_label_key(raw))
+    if labels is not None:
+        en_short, en_full, nl_short, nl_full = labels
+        if normalize_lang(lang) == "nl":
+            return nl_short if short else nl_full
+        return en_short if short else en_full
+    title = " ".join(part for part in _location_label_key(raw).split() if part)
+    if not title:
+        return "Onbekend" if normalize_lang(lang) == "nl" else "Unknown"
+    if normalize_lang(lang) == "nl":
+        return title[:1].upper() + title[1:]
+    return title.title()
 
 
 def location_candidates(location: object) -> tuple[str, ...]:
@@ -150,7 +202,8 @@ def resolve_i18n(
 
             resolved_params[param_key] = human_source(param_value, tr=tr)
         elif param_key == "phase" and isinstance(param_value, str):
-            i18n_key = PHASE_I18N_KEYS.get(param_value)
+            phase_key = param_value.strip().lower().replace("-", "_").replace(" ", "_")
+            i18n_key = PHASE_I18N_KEYS.get(phase_key)
             resolved_params[param_key] = tr(i18n_key) if i18n_key else param_value
         else:
             resolved_params[param_key] = param_value

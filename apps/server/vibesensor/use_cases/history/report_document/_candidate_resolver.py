@@ -10,6 +10,7 @@ from vibesensor.domain import Finding, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.report_presentation import (
     confidence_reason_text,
+    display_speed_band,
     human_source,
     strength_label,
     strength_text,
@@ -69,10 +70,11 @@ def resolve_primary_report_candidate(
         if diagnosis_summary and diagnosis_summary.dominant_location
         else facts.primary_location or tr("UNKNOWN")
     )
-    primary_speed = str(
+    primary_speed = display_speed_band(
         diagnosis_summary.dominant_speed_band
         if diagnosis_summary and diagnosis_summary.dominant_speed_band
-        else facts.primary_speed or tr("UNKNOWN")
+        else facts.primary_speed or tr("UNKNOWN"),
+        tr=tr,
     )
     strength_text_value = strength_text(facts.strength_db, lang=lang)
     strength_band_key = (

@@ -204,9 +204,9 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "{speed_hint}" not in text_blob
     assert "{location_hint}" not in text_blob
     assert "{driveline_focus}" not in text_blob
-    assert "Check front-left wheel for imbalance or" in text_blob
+    assert "Check Front-Left for imbalance or" in text_blob
     assert "runout" in text_blob
-    assert "Check front-left wheel for tire damage," in text_blob
+    assert "Check Front-Left for tire damage," in text_blob
     assert "pressure mismatch." in " ".join(text_blob.split())
     assert "Inspect propshaft runout/balance" not in text_blob
     assert "ETA:" not in text_blob

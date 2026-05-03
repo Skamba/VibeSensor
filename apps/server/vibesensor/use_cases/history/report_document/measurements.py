@@ -13,7 +13,9 @@ from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
+    display_speed_band,
     human_source,
+    order_label_human,
     source_with_confidence,
 )
 
@@ -27,7 +29,7 @@ def _measurement_signal_label(row: dict[str, object] | object, *, tr: Callable[.
     if isinstance(row, dict):
         order_label = str(row.get("order_label") or "").strip()
         if order_label:
-            return order_label
+            return order_label_human(_report_lang(tr), order_label)
         frequency = row.get("frequency_hz")
         if isinstance(frequency, (int, float)):
             return f"{float(frequency):.1f} Hz"
@@ -85,7 +87,7 @@ def _measurement_rows(
                     if isinstance(strength_db_value, (int, float))
                     else None
                 ),
-                speed_window=str(row.get("typical_speed_band") or "").strip() or None,
+                speed_window=display_speed_band(row.get("typical_speed_band"), tr=tr) or None,
                 dominant_location=(
                     display_location(matched_finding.strongest_location, tr=tr)
                     if matched_finding is not None
@@ -140,16 +142,22 @@ def _evidence_chain_rows(
                 supporting_signal_label=candidate_signal_text(finding, tr=tr),
                 measurement_refs=refs,
                 matched_evidence_window_count=_matched_evidence_window_count(finding),
-                speed_window=(
-                    str(
-                        finding.evidence.focused_speed_band
-                        if finding.evidence and finding.evidence.focused_speed_band
-                        else finding.strongest_speed_band or ""
-                    ).strip()
-                    or None
-                ),
+                speed_window=display_speed_band(
+                    finding.evidence.focused_speed_band
+                    if finding.evidence and finding.evidence.focused_speed_band
+                    else finding.strongest_speed_band,
+                    tr=tr,
+                )
+                or None,
                 dominant_location=display_location(finding.strongest_location, tr=tr),
                 ambiguity_note=ambiguity_note,
             ),
         )
     return rows
+
+
+def _report_lang(tr: Callable[..., str]) -> str:
+    try:
+        return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
+    except Exception:
+        return "en"

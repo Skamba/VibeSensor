@@ -456,7 +456,7 @@ def test_build_report_document_next_steps_do_not_leak_placeholder_tokens() -> No
     data = build_report_document(prepare_report_input(summary))
     assert len(data.next_steps) == 2
     assert all(step.eta is None for step in data.next_steps)
-    assert all("front-left wheel" in step.action.lower() for step in data.next_steps)
+    assert all("front-left" in step.action.lower() for step in data.next_steps)
     rendered = " ".join(
         part
         for step in data.next_steps
