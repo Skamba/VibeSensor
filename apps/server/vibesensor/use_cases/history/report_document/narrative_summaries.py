@@ -9,6 +9,8 @@ from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
+    display_phase_label,
+    display_speed_band,
     human_source,
     uses_shared_overlap_wording,
 )
@@ -47,6 +49,12 @@ def _proof_summary_text(
     ratio = report_facts.decision.primary_candidate.dominance_ratio
     location = display_location(primary.primary_location, tr=tr)
     runner_up = runner_up_corner
+    if (
+        primary.weak_spatial
+        or report_facts.decision.location_confidence_key == "weak"
+        or (ratio is not None and ratio <= 1.05)
+    ):
+        return tr("REPORT_PROOF_SUMMARY_WEAK_LOCATION")
     if ratio is not None:
         if runner_up is not None:
             return tr(
@@ -70,7 +78,7 @@ def _run_limits_summary_text(
     proof_caveat: str | None,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(speed_window_label or "").strip() or tr("UNKNOWN")
+    speed_window = display_speed_band(speed_window_label, tr=tr) or tr("UNKNOWN")
     if (
         report_facts.decision.action_status_key == "action_ready_caution"
         and report_facts.decision.alternative_source_visible
@@ -88,7 +96,7 @@ def _evidence_summary_text(
 ) -> str:
     effective_causes = aggregate.effective_top_causes()
     matched_windows = report_facts.decision.primary_candidate.matched_evidence_window_count
-    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    speed_window = display_speed_band(primary.primary_speed, tr=tr) or tr("UNKNOWN")
     source = primary.primary_system
     location = display_location(primary.primary_location, tr=tr)
     sequential_summary = _same_source_temporal_evidence_summary(
@@ -123,12 +131,13 @@ def _evidence_summary_text(
             alternative_signal = candidate_signal_text(alternative_finding, tr=tr)
             alternative_location = display_location(alternative_finding.strongest_location, tr=tr)
             alternative_speed = (
-                str(
+                display_speed_band(
                     alternative_finding.evidence.focused_speed_band
                     if alternative_finding.evidence
                     and alternative_finding.evidence.focused_speed_band
-                    else alternative_finding.strongest_speed_band or speed_window
-                ).strip()
+                    else alternative_finding.strongest_speed_band,
+                    tr=tr,
+                )
                 or speed_window
             )
             return tr(
@@ -170,7 +179,7 @@ def _context_summary_text(
     *,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    speed_window = display_speed_band(primary.primary_speed, tr=tr) or tr("UNKNOWN")
     coverage = report_facts.sensor.coverage
     expected = (
         len(coverage.expected_locations) or len(coverage.active_locations) or primary.sensor_count
@@ -207,7 +216,7 @@ def _phase_summary_text(
     phases: list[str] = []
     for finding in aggregate.effective_top_causes():
         for phase in finding.phases_detected:
-            title = str(phase).replace("_", " ").title()
+            title = display_phase_label(phase, tr=tr)
             if title and title not in phases:
                 phases.append(title)
     if not phases:

@@ -20,6 +20,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
+from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document import AppendixBData
 
@@ -91,7 +92,9 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
         text_y,
         right_w - 8 * mm,
         _tr(plan.lang, "REPORT_DOMINANT_CORNER_LABEL"),
-        appendix.dominant_corner or _tr(plan.lang, "UNKNOWN"),
+        human_location(appendix.dominant_corner, lang=plan.lang)
+        if appendix.dominant_corner
+        else _tr(plan.lang, "UNKNOWN"),
     )
     if appendix.runner_up_corner:
         text_y = _draw_section_block(
@@ -100,7 +103,7 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             text_y,
             right_w - 8 * mm,
             _tr(plan.lang, "REPORT_RUNNER_UP_CORNER_LABEL"),
-            appendix.runner_up_corner,
+            human_location(appendix.runner_up_corner, lang=plan.lang),
         )
     text_y = _draw_section_block(
         c,
@@ -201,7 +204,8 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
         show_intensity_snapshot = bool(appendix.intensity_rows) and bottom_h > 95 * mm
         matrix_bottom = bottom_y + (58 * mm if show_intensity_snapshot else 4 * mm)
         headers = [_tr(plan.lang, "REPORT_SIGNAL_COLUMN")] + [
-            cell.location for cell in appendix.sensor_observation_rows[0].sensor_levels
+            human_location(cell.location, lang=plan.lang)
+            for cell in appendix.sensor_observation_rows[0].sensor_levels
         ]
         sensor_column_count = max(1, len(headers) - 1)
         rows = [
@@ -240,7 +244,11 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
                 MARGIN + 4 * mm, snapshot_title_y, _tr(plan.lang, "REPORT_INTENSITY_LADDER_TITLE")
             )
             intensity_rows = [
-                [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(plan.lang, "UNKNOWN")]
+                [
+                    human_location(row.location, lang=plan.lang),
+                    _fmt_db(row.p95_db),
+                    row.coverage_state or _tr(plan.lang, "UNKNOWN"),
+                ]
                 for row in appendix.intensity_rows
             ]
             _draw_table(
@@ -272,7 +280,11 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             c, MARGIN, bottom_y, width, bottom_h, _tr(plan.lang, "REPORT_INTENSITY_LADDER_TITLE")
         )
         rows = [
-            [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(plan.lang, "UNKNOWN")]
+            [
+                human_location(row.location, lang=plan.lang),
+                _fmt_db(row.p95_db),
+                row.coverage_state or _tr(plan.lang, "UNKNOWN"),
+            ]
             for row in appendix.intensity_rows
         ]
         _draw_table(

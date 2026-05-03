@@ -13,6 +13,7 @@ from vibesensor.report_i18n import (
 )
 from vibesensor.shared.boundaries.reporting.document import DataTrustItem, NextStep
 from vibesensor.shared.report_diagnostics import localized_diagnostics
+from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 __all__ = [
@@ -159,7 +160,7 @@ def _usable_primary_location(
         return None
     if is_composite_location(location) or is_body_like_location(location):
         return None
-    return location
+    return display_location(location, tr=tr)
 
 
 def _normalized_action_id(value: object) -> str:

@@ -8,7 +8,11 @@ from vibesensor.domain import VibrationSource
 from vibesensor.shared.boundaries.reporting import FindingPresentation
 from vibesensor.shared.boundaries.reporting.document import PeakRow
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.report_presentation import order_label_human, peak_classification_text
+from vibesensor.shared.report_presentation import (
+    display_speed_band,
+    order_label_human,
+    peak_classification_text,
+)
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [
@@ -59,7 +63,7 @@ def build_peak_row(
     peak_db = f"{peak_db_val:.1f}" if peak_db_val is not None else "—"
     strength_db_val = _as_float(row.get("strength_db"))
     strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
-    speed = str(row.get("typical_speed_band") or "—")
+    speed = display_speed_band(row.get("typical_speed_band") or "—", tr=tr)
     return PeakRow(
         rank=rank,
         system=peak_row_system_label(row, findings=findings, tr=tr),

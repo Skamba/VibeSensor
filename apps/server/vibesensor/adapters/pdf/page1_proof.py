@@ -108,7 +108,8 @@ def draw_proof_block(
         width=text_w,
         label=tr("REPORT_DOMINANT_CORNER_LABEL"),
         value=verdict.dominant_corner or tr("UNKNOWN"),
-        value_size=FS_H2,
+        value_size=_location_value_size(verdict.dominant_corner, default=FS_H2),
+        max_lines=_location_value_lines(verdict.dominant_corner),
     )
     if verdict.runner_up_corner:
         text_y = draw_label_value(
@@ -118,7 +119,8 @@ def draw_proof_block(
             width=text_w,
             label=tr("REPORT_RUNNER_UP_CORNER_LABEL"),
             value=verdict.runner_up_corner,
-            value_size=FS_BODY,
+            value_size=_location_value_size(verdict.runner_up_corner, default=FS_BODY),
+            max_lines=_location_value_lines(verdict.runner_up_corner),
         )
     if verdict.dominance_ratio_label:
         text_y = draw_label_value(
@@ -152,6 +154,15 @@ def draw_proof_block(
         w=w - 8 * mm,
         h=40 * mm,
     )
+
+
+def _location_value_size(value: str | None, *, default: float) -> float:
+    text = str(value or "").strip()
+    return min(default, FS_BODY) if len(text) > 28 else default
+
+
+def _location_value_lines(value: str | None) -> int:
+    return 3 if len(str(value or "").strip()) > 28 else 2
 
 
 def _draw_proof_summary(
