@@ -72,6 +72,14 @@ compact debug rows for synthetic runs. Frequency masks live at this layer so
 later episode/order/finding logic can ignore unusable bands without recomputing
 the dense spectra.
 
+`use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
+and final-drive references onto the same window grid. It uses conservative
+interpolation only across short, same-source gaps; rejects ambiguous source,
+gear, or final-drive changes; and records explicit unavailable reasons such as
+missing speed/RPM/gear, stale samples, inconsistent sample rate, and missing
+vehicle configuration. Wheel, driveshaft, and engine frequencies are derived via
+the shared `OrderReferenceSpec` math instead of diagnostics-local formulas.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -152,6 +160,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `post_run_raw_windows.py` | ~300 | Manifest-aware streaming raw waveform reader and configurable overlapping-window iterator for dense post-run stages |
 | `post_run_stft.py` | ~350 | In-memory dense STFT engine over POSTRUN-01 raw-window DTOs |
 | `post_run_window_features.py` | ~300 | Window-level feature extraction over POSTRUN-02 STFT frames |
+| `post_run_vehicle_reference.py` | ~350 | Per-window vehicle speed/RPM/gear/final-drive reference normalization for dense order stages |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
