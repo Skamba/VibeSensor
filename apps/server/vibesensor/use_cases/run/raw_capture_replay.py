@@ -11,7 +11,7 @@ import numpy as np
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.boundaries.codecs import strength_metrics_from_mapping
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
+from vibesensor.shared.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
@@ -847,7 +847,7 @@ def _compute_strength_metrics(
             analytically_valid=False,
         )
     fft_result = fft_computer.compute_fft_spectrum(
-        medfilt3(window_f32.T),
+        window_f32.T,
         sample_rate_hz,
         spike_filter_enabled=False,
     )

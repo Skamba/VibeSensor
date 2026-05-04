@@ -150,6 +150,8 @@ def test_compute_reuses_single_square_call_for_rms_and_combined_metrics(
     assert square_calls == 1
     assert result.metrics["x"]["rms"] > 0.0
     assert result.metrics["combined"]["vib_mag_rms"] > 0.0
+    assert result.metrics["combined"]["processing_profile"] == "live_display"
+    assert result.metrics["combined"]["filter_chain"] == ["median_3_sample_time_domain"]
 
 
 def test_compute_fft_spectrum_reuses_cached_strength_range_mask(monkeypatch) -> None:

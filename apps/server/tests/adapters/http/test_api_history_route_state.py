@@ -533,3 +533,30 @@ def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     assert "samples" not in payload
     assert "plots" not in payload
     assert "analysis_metadata" not in payload
+
+
+def test_history_run_allows_nested_processing_profile_metadata() -> None:
+    metadata = make_metadata()
+    samples = [sample(0)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis["analysis_metadata"] = {
+        "processing_profile": "diagnostic_filtered",
+        "diagnostic_filter_chain": ["median_3_sample_time_domain"],
+        "processing_profiles": [
+            {
+                "processing_profile": "diagnostic_filtered",
+                "applies_to": "summary_fallback_or_optional_comparison",
+                "filter_chain": ["median_3_sample_time_domain"],
+                "enabled": True,
+                "raw_evidence_preserved": False,
+            }
+        ],
+    }
+    app = _app_from_state(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    with TestClient(app) as client:
+        response = client.get("/api/history/run-1")
+
+    assert response.status_code == 200
+    payload = response.json()["analysis"]["analysis_metadata"]
+    assert payload["processing_profiles"][0]["filter_chain"] == ["median_3_sample_time_domain"]

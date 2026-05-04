@@ -1859,12 +1859,22 @@
       },
       "CombinedMetrics": {
         "properties": {
+          "filter_chain": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingFilterId"
+            },
+            "title": "Filter Chain",
+            "type": "array"
+          },
           "peaks": {
             "items": {
               "$ref": "#/components/schemas/StrengthPeak"
             },
             "title": "Peaks",
             "type": "array"
+          },
+          "processing_profile": {
+            "$ref": "#/components/schemas/ProcessingProfile"
           },
           "strength_metrics": {
             "$ref": "#/components/schemas/VibrationStrengthMetrics"
@@ -5131,6 +5141,12 @@
         },
         "type": "object"
       },
+      "JsonSchemaNestedObject": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/JsonSchemaNestedValue"
+        },
+        "type": "object"
+      },
       "JsonSchemaNestedValue": {
         "anyOf": [
           {
@@ -5179,14 +5195,18 @@
             "$ref": "#/components/schemas/JsonSchemaNestedValue"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
-            },
-            "type": "object"
+            "$ref": "#/components/schemas/JsonSchemaNestedObject"
           },
           {
             "items": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedValue"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedObject"
+                }
+              ]
             },
             "type": "array"
           }
@@ -6507,14 +6527,18 @@
             "$ref": "#/components/schemas/JsonSchemaNestedValue"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
-            },
-            "type": "object"
+            "$ref": "#/components/schemas/JsonSchemaNestedObject"
           },
           {
             "items": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedValue"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedObject"
+                }
+              ]
             },
             "type": "array"
           }
@@ -7238,6 +7262,18 @@
         ],
         "title": "PlotDataResult",
         "type": "object"
+      },
+      "ProcessingFilterId": {
+        "const": "median_3_sample_time_domain",
+        "type": "string"
+      },
+      "ProcessingProfile": {
+        "enum": [
+          "live_display",
+          "diagnostic_raw",
+          "diagnostic_filtered"
+        ],
+        "type": "string"
       },
       "RecordingCaptureReadinessCheckResponse": {
         "description": "One capture-readiness checklist item returned by the recording status route.",

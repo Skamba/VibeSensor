@@ -4,6 +4,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 from pydantic import ConfigDict
 
+from vibesensor.shared.types.processing_profile import ProcessingFilterId, ProcessingProfile
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
 # Bump this when the payload shape changes in a backwards-incompatible way.
@@ -53,6 +54,8 @@ class CombinedMetrics(TypedDict, total=False):
     vib_mag_p2p: float
     peaks: list[StrengthPeak]
     strength_metrics: VibrationStrengthMetrics
+    processing_profile: ProcessingProfile
+    filter_chain: list[ProcessingFilterId]
 
 
 class ClientMetrics(TypedDict, total=False):
