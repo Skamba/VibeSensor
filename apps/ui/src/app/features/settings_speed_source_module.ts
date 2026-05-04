@@ -6,7 +6,7 @@ import {
   type SettingsSpeedSourcePresenterDeps,
 } from "../views/settings_speed_source_presenter";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import {
   computed,
   effectOnChange,

@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import type { SpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
-import {
-  applyLivePayloadUpdate,
-  createAppState,
-} from "../src/app/ui_app_state";
+import { applyLivePayloadUpdate } from "../src/app/realtime_state";
+import { createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
 import type { AdaptedPayload } from "../src/transport/live_models";
 import {

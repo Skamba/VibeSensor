@@ -1,4 +1,4 @@
-import type { ShellState } from "../ui_app_state";
+import type { ShellState } from "../shell_state";
 import { signal, type ReadonlySignal } from "../ui_signals";
 
 export const DEFAULT_SHELL_VIEW_ID = "dashboardView";

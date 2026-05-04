@@ -10,7 +10,7 @@ import {
   defaultVehicleSettings,
   mergeAnalysisTuningSettings,
   type SettingsState,
-} from "../ui_app_state";
+} from "../settings_state";
 import { batch, computed, signal } from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
