@@ -676,7 +676,9 @@ def main(argv: list[str] | None = None) -> None:
     if missing:
         missing_text = ", ".join(missing)
         raise SystemExit(
-            f"missing expected screenshot files in output dir: {missing_text}"
+            "missing expected screenshot files in output dir: "
+            f"{missing_text}. Run `npm --prefix apps/ui run wiki:screenshots -- "
+            f"{output_dir / 'images'}` first."
         )
 
     release_note = _release_label(args.release_version, args.commit_sha)

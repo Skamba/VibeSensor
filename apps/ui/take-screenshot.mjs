@@ -4,74 +4,31 @@
  * Usage: node take-screenshot.mjs [output-path]
  * Exits with code 1 on failure (timeout, no graph data, etc.)
  */
-import { chromium } from "@playwright/test";
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+import {
+  launchChromiumBrowser,
+  startPreviewServer,
+} from "./playwright-preview-helpers.mjs";
 
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;
 const SERVER_TIMEOUT_MS = 20_000;
 const PAGE_TIMEOUT_MS = 15_000;
 
-async function startServer(cwd) {
-  return new Promise((resolve, reject) => {
-    const server = spawn(
-      "node",
-      [
-        "node_modules/.bin/vite",
-        "preview",
-        "--host",
-        "0.0.0.0",
-        "--strictPort",
-        "--port",
-        String(SERVER_PORT),
-      ],
-      { cwd, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    let started = false;
-    const timeout = setTimeout(() => {
-      if (!started) {
-        server.kill();
-        reject(new Error("Server start timeout"));
-      }
-    }, SERVER_TIMEOUT_MS);
-    server.stdout.on("data", (data) => {
-      if (!started && data.toString().includes(String(SERVER_PORT))) {
-        started = true;
-        clearTimeout(timeout);
-        setTimeout(() => resolve(server), 300);
-      }
-    });
-    server.on("error", reject);
-  });
-}
-
 async function main() {
   const cwd = fileURLToPath(new URL(".", import.meta.url));
   let server;
   let browser;
   try {
-    server = await startServer(cwd);
+    server = await startPreviewServer(cwd, {
+      port: SERVER_PORT,
+      timeoutMs: SERVER_TIMEOUT_MS,
+    });
     console.log("Preview server started on port", SERVER_PORT);
 
-    try {
-      browser = await chromium.launch({
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-        ],
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.toLowerCase().includes("executable doesn't exist")) {
-        throw new Error(
-          "Playwright browser not installed. Run: npx playwright install chromium",
-        );
-      }
-      throw error;
-    }
+    browser = await launchChromiumBrowser();
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -79,44 +36,50 @@ async function main() {
       timeout: PAGE_TIMEOUT_MS,
     });
 
-    // Wait for car map dots (confirms demo data applied)
-    await page.waitForSelector(".car-map-dot--visible", {
-      timeout: PAGE_TIMEOUT_MS,
-    });
-
-    // Wait for vibration event log entry (confirms event payload applied)
     await page.waitForFunction(
-      () => document.querySelector(".log-row .log-time") !== null,
+      () => {
+        const connected = document.querySelector(
+          "#liveConnectedSensors [data-value]",
+        );
+        const activeCar = document.querySelector("#liveActiveCar [data-value]");
+        return Boolean(
+          connected?.textContent?.trim() && activeCar?.textContent?.trim(),
+        );
+      },
       { timeout: PAGE_TIMEOUT_MS },
     );
 
-    // Verify spectrum canvas has rendered data.
-    const hasCanvas = await page.evaluate(() => {
-      const canvas = document.querySelector("#specChart canvas");
-      if (!canvas) return false;
-      const ctx = /** @type {HTMLCanvasElement} */ (canvas).getContext("2d");
-      if (!ctx) return false;
-      // Sample pixels in the chart area to check for non-background color
-      const imageData = ctx.getImageData(
-        50,
-        10,
-        canvas.clientWidth - 100,
-        canvas.clientHeight - 20,
-      );
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i],
-          g = data[i + 1],
-          b = data[i + 2];
-        // Look for any non-white, non-light-gray pixel (spectrum line color)
-        if (r < 200 && (r !== g || g !== b)) return true;
-      }
-      return false;
-    });
-
-    if (!hasCanvas) {
-      throw new Error("FAIL: Spectrum chart canvas has no visible graph data");
-    }
+    await page.waitForFunction(
+      () => {
+        const canvas = document.querySelector("#specChart canvas");
+        if (!(canvas instanceof HTMLCanvasElement)) return false;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
+        const width = canvas.width;
+        const height = canvas.height;
+        if (!width || !height) return false;
+        const margin = Math.floor(Math.min(width, height) * 0.1);
+        const imageData = ctx.getImageData(
+          margin,
+          margin,
+          width - margin * 2,
+          height - margin * 2,
+        );
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a < 128) continue;
+          if (r < 200 && (Math.abs(r - g) > 15 || Math.abs(g - b) > 15)) {
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: PAGE_TIMEOUT_MS },
+    );
     console.log("Graph data verified in canvas");
 
     const screenshot = await page.screenshot({ fullPage: true });
