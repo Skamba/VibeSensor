@@ -64,6 +64,12 @@ def test_build_whole_run_context_artifact_bundle_round_trips_labels_and_interval
             }
         ],
         "created_at": "2025-01-01T00:00:01Z",
+        "generated_artifact_paths": {
+            WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY: "context/window-labels.jsonl",
+        },
+        "algorithm_versions": {},
+        "configuration": {},
+        "source_raw_manifests": [],
     }
     assert len(bundle.labels) == 4
     assert len(bundle.intervals) >= 1

@@ -61,9 +61,33 @@ def test_append_whole_run_analysis_metadata_records_sensor_and_artifact_counts()
 
     assert result["analysis_metadata"] == {
         "whole_run_artifacts_available": True,
+        "whole_run_artifacts_status": "available",
+        "whole_run_artifact_manifest_path": "whole-run-artifacts/run-1/manifest.json",
+        "whole_run_artifact_generated_at": "2025-01-01T00:00:00Z",
+        "whole_run_artifact_schema_version": manifest.schema_version,
+        "whole_run_artifact_storage_type": manifest.storage_type,
         "whole_run_window_count": 4,
         "whole_run_sensor_count": 2,
         "whole_run_artifact_count": 3,
+        "whole_run_artifact_keys": [
+            "spectral-summary:sensor-a",
+            "spectral-summary:sensor-b",
+            "context-labels",
+        ],
+        "whole_run_artifact_formats": {
+            "spectral-summary:sensor-a": "jsonl",
+            "spectral-summary:sensor-b": "jsonl",
+            "context-labels": "jsonl",
+        },
+        "whole_run_artifact_paths": {
+            "spectral-summary:sensor-a": "spectra/sensor-a/windows.jsonl",
+            "spectral-summary:sensor-b": "spectra/sensor-b/windows.jsonl",
+            "context-labels": "context/window-labels.jsonl",
+        },
+        "whole_run_algorithm_versions": {},
+        "whole_run_artifact_configuration": {},
+        "whole_run_source_raw_manifest_count": 0,
+        "whole_run_artifact_warnings": [],
     }
 
 

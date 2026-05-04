@@ -164,7 +164,16 @@ class _HistoryDBQueryMixin(Protocol):
                     type(parsed).__name__,
                 )
             return None
-        return WholeRunArtifactManifest.from_mapping(parsed)
+        try:
+            return WholeRunArtifactManifest.from_mapping(parsed)
+        except (TypeError, ValueError):
+            LOGGER.warning(
+                "%s: run %s whole_run_artifact_manifest_json is corrupt or unsupported",
+                source,
+                run_id,
+                exc_info=True,
+            )
+            return None
 
     def _coerce_raw_capture_finalize(
         self,
@@ -218,7 +227,7 @@ class _HistoryDBQueryMixin(Protocol):
         run_id: str,
         status: RunStatus,
         has_raw_capture_manifest: bool,
-        has_whole_run_artifact_manifest: bool,
+        whole_run_artifact_manifest: WholeRunArtifactManifest | None,
         raw_capture_finalize: RunRawCaptureFinalize | None,
         has_analysis: bool,
         analysis_corrupt: bool,
@@ -229,10 +238,12 @@ class _HistoryDBQueryMixin(Protocol):
             raw_capture_artifacts_present=(
                 has_raw_capture_manifest and self._raw_capture_store.has_run_artifacts(run_id)
             ),
-            has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+            has_whole_run_artifact_manifest=whole_run_artifact_manifest is not None,
             whole_run_artifacts_present=(
-                has_whole_run_artifact_manifest
-                and self._whole_run_artifact_store.has_run_artifacts(run_id)
+                whole_run_artifact_manifest is not None
+                and self._whole_run_artifact_store.has_manifest_artifacts(
+                    whole_run_artifact_manifest
+                )
             ),
             raw_capture_finalize=raw_capture_finalize,
             has_analysis=has_analysis,
@@ -293,11 +304,18 @@ class _HistoryDBQueryMixin(Protocol):
                 analysis_json=str(analysis_json) if analysis_json is not None else None,
                 source="list_runs",
             )
+            whole_run_artifact_manifest = self._coerce_whole_run_artifact_manifest(
+                run_id=normalized_run_id,
+                manifest_json=str(whole_run_artifact_manifest_json)
+                if whole_run_artifact_manifest_json is not None
+                else None,
+                source="list_runs",
+            )
             lifecycle = self._run_lifecycle(
                 run_id=normalized_run_id,
                 status=status,
                 has_raw_capture_manifest=raw_capture_manifest_json is not None,
-                has_whole_run_artifact_manifest=whole_run_artifact_manifest_json is not None,
+                whole_run_artifact_manifest=whole_run_artifact_manifest,
                 raw_capture_finalize=raw_capture_finalize,
                 has_analysis=analysis is not None,
                 analysis_corrupt=analysis_corrupt,
@@ -371,7 +389,6 @@ class _HistoryDBQueryMixin(Protocol):
             else None,
             source="get_run",
         )
-        has_whole_run_artifact_manifest = whole_run_artifact_manifest_json is not None
         whole_run_artifact_manifest = self._coerce_whole_run_artifact_manifest(
             run_id=normalized_run_id,
             manifest_json=str(whole_run_artifact_manifest_json)
@@ -388,7 +405,7 @@ class _HistoryDBQueryMixin(Protocol):
             run_id=normalized_run_id,
             status=status,
             has_raw_capture_manifest=has_raw_capture_manifest,
-            has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+            whole_run_artifact_manifest=whole_run_artifact_manifest,
             raw_capture_finalize=metadata.raw_capture_finalize,
             has_analysis=analysis is not None,
             analysis_corrupt=analysis_corrupt,

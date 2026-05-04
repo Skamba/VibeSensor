@@ -30,9 +30,11 @@ from vibesensor.shared.types.raw_capture import (
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
+    WHOLE_RUN_ALGORITHM_VERSIONS,
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
+    WholeRunSourceRawManifest,
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
@@ -182,6 +184,7 @@ def build_whole_run_spectral_artifact_bundle(
         bundle=_build_artifact_bundle(
             run_id=run_id,
             plan=plan,
+            raw_capture=raw_capture,
             sensors=tuple(sensor.manifest for sensor in sensors),
             chunk_results=chunk_results,
             created_at=created_at or utc_now_iso(),
@@ -656,6 +659,7 @@ def _build_artifact_bundle(
     *,
     run_id: str,
     plan: WholeRunWindowPlan,
+    raw_capture: RawRunCapture,
     sensors: Sequence[RawCaptureSensorManifest],
     chunk_results: Sequence[_SpectralChunkResult],
     created_at: str,
@@ -713,6 +717,22 @@ def _build_artifact_bundle(
         total_window_count=plan.total_window_count,
         artifacts=tuple(artifact_files),
         created_at=created_at,
+        algorithm_versions=dict(WHOLE_RUN_ALGORITHM_VERSIONS),
+        configuration={
+            "sample_rate_hz": plan.policy.sample_rate_hz,
+            "window_size_samples": plan.policy.window_size_samples,
+            "stride_samples": plan.policy.stride_samples,
+            "overlap_samples": plan.policy.overlap_samples,
+            "feature_interval_s": plan.policy.feature_interval_s,
+            "spectrum_min_hz": SPECTRUM_MIN_HZ,
+            "spectrum_max_hz": SPECTRUM_MAX_HZ,
+            "sensor_count": len(sensors),
+            "spectrum_storage_format": "npy-f32",
+            "summary_storage_format": "jsonl",
+        },
+        source_raw_manifests=(
+            WholeRunSourceRawManifest.from_raw_capture_manifest(raw_capture.manifest),
+        ),
     )
     return WholeRunSpectralArtifactBundle(
         manifest=manifest,

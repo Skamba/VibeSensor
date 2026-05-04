@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import isclose
 from typing import Literal, cast
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_json_helpers import (
     coerce_float_or_default as _float_from_json,
@@ -31,6 +32,7 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 __all__ = [
     "WHOLE_RUN_ARTIFACT_SCHEMA_VERSION",
     "WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME",
+    "WHOLE_RUN_ALGORITHM_VERSIONS",
     "WHOLE_RUN_CONTEXT_COVERAGE_VALUES",
     "WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES",
     "WHOLE_RUN_RPM_VALIDITY_VALUES",
@@ -43,6 +45,8 @@ __all__ = [
     "WholeRunContextWindowLabel",
     "WholeRunRpmValidity",
     "WholeRunSpeedValidity",
+    "WholeRunSourceRawManifest",
+    "WholeRunSourceRawSensorManifest",
     "WholeRunWindowDescriptor",
     "WholeRunWindowPolicy",
 ]
@@ -50,6 +54,16 @@ __all__ = [
 WHOLE_RUN_ARTIFACT_SCHEMA_VERSION = 1
 WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME = "whole-run-artifacts"
 _WHOLE_RUN_ARTIFACT_STORAGE_TYPE = "run-directory-v1"
+WHOLE_RUN_ALGORITHM_VERSIONS: JsonObject = {
+    "whole_run_artifact_manifest": 1,
+    "whole_run_spectra": 1,
+    "whole_run_context": 1,
+    "whole_run_order_traces": 1,
+    "whole_run_order_trace_summaries": 1,
+    "whole_run_order_family_summaries": 1,
+    "whole_run_spatial_coherence": 1,
+    "whole_run_diagnosis_summaries": 1,
+}
 
 type WholeRunContextCoverage = Literal["full", "partial", "missing"]
 type WholeRunSpeedValidity = Literal["measured", "assumed", "missing"]
@@ -242,6 +256,107 @@ class WholeRunArtifactFile:
 
 
 @dataclass(frozen=True, slots=True)
+class WholeRunSourceRawSensorManifest:
+    """Compact source raw-capture sensor manifest recorded for artifact provenance."""
+
+    client_id: str
+    sample_rate_hz: int
+    sample_count: int
+    chunk_count: int
+    bytes_written: int
+    sample_rate_proof_state: str
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "client_id": self.client_id,
+            "sample_rate_hz": self.sample_rate_hz,
+            "sample_count": self.sample_count,
+            "chunk_count": self.chunk_count,
+            "bytes_written": self.bytes_written,
+            "sample_rate_proof_state": self.sample_rate_proof_state,
+        }
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> WholeRunSourceRawSensorManifest:
+        return cls(
+            client_id=_str_from_json(data.get("client_id")),
+            sample_rate_hz=_int_from_json(data.get("sample_rate_hz")),
+            sample_count=_int_from_json(data.get("sample_count")),
+            chunk_count=_int_from_json(data.get("chunk_count")),
+            bytes_written=_int_from_json(data.get("bytes_written")),
+            sample_rate_proof_state=_str_from_json(data.get("sample_rate_proof_state")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunSourceRawManifest:
+    """Compact source raw-capture manifest recorded by whole-run artifacts."""
+
+    run_id: str
+    relative_dir: str
+    total_samples: int
+    total_bytes: int
+    sensor_count: int
+    created_at: str
+    sensors: tuple[WholeRunSourceRawSensorManifest, ...] = ()
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "run_id": self.run_id,
+            "relative_dir": self.relative_dir,
+            "total_samples": self.total_samples,
+            "total_bytes": self.total_bytes,
+            "sensor_count": self.sensor_count,
+            "created_at": self.created_at,
+            "sensors": [sensor.to_json_object() for sensor in self.sensors],
+        }
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> WholeRunSourceRawManifest:
+        sensors_raw = data.get("sensors")
+        sensors: list[WholeRunSourceRawSensorManifest] = []
+        if isinstance(sensors_raw, list):
+            for item in sensors_raw:
+                if is_json_object(item):
+                    sensors.append(WholeRunSourceRawSensorManifest.from_mapping(item))
+        return cls(
+            run_id=_str_from_json(data.get("run_id")),
+            relative_dir=_str_from_json(data.get("relative_dir")),
+            total_samples=_int_from_json(data.get("total_samples")),
+            total_bytes=_int_from_json(data.get("total_bytes")),
+            sensor_count=_int_from_json(data.get("sensor_count")),
+            created_at=_str_from_json(data.get("created_at")),
+            sensors=tuple(sensors),
+        )
+
+    @classmethod
+    def from_raw_capture_manifest(
+        cls,
+        manifest: RawCaptureManifest,
+    ) -> WholeRunSourceRawManifest:
+        sensors = tuple(
+            WholeRunSourceRawSensorManifest(
+                client_id=sensor.client_id,
+                sample_rate_hz=int(sensor.sample_rate_hz),
+                sample_count=int(sensor.sample_count),
+                chunk_count=int(sensor.chunk_count),
+                bytes_written=int(sensor.bytes_written),
+                sample_rate_proof_state=str(sensor.sample_rate_proof_state),
+            )
+            for sensor in sorted(manifest.sensors, key=lambda item: item.client_id)
+        )
+        return cls(
+            run_id=manifest.run_id,
+            relative_dir=manifest.relative_dir,
+            total_samples=int(manifest.total_samples),
+            total_bytes=int(manifest.total_bytes),
+            sensor_count=len(sensors),
+            created_at=manifest.created_at,
+            sensors=sensors,
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class WholeRunArtifactManifest:
     """Run-level manifest for dense whole-run artifacts stored outside analysis_json."""
 
@@ -253,6 +368,9 @@ class WholeRunArtifactManifest:
     created_at: str
     schema_version: int = WHOLE_RUN_ARTIFACT_SCHEMA_VERSION
     storage_type: str = _WHOLE_RUN_ARTIFACT_STORAGE_TYPE
+    algorithm_versions: JsonObject = field(default_factory=dict)
+    configuration: JsonObject = field(default_factory=dict)
+    source_raw_manifests: tuple[WholeRunSourceRawManifest, ...] = ()
 
     def to_json_object(self) -> JsonObject:
         return {
@@ -263,7 +381,15 @@ class WholeRunArtifactManifest:
             "window_policy": self.window_policy.to_json_object(),
             "total_window_count": self.total_window_count,
             "artifacts": [artifact.to_json_object() for artifact in self.artifacts],
+            "generated_artifact_paths": {
+                artifact.artifact_key: artifact.relative_path for artifact in self.artifacts
+            },
             "created_at": self.created_at,
+            "algorithm_versions": dict(self.algorithm_versions),
+            "configuration": dict(self.configuration),
+            "source_raw_manifests": [
+                manifest.to_json_object() for manifest in self.source_raw_manifests
+            ],
         }
 
     @classmethod
@@ -277,6 +403,14 @@ class WholeRunArtifactManifest:
             for item in artifacts_raw:
                 if is_json_object(item):
                     artifacts.append(WholeRunArtifactFile.from_mapping(item))
+        source_manifests_raw = data.get("source_raw_manifests")
+        source_manifests: list[WholeRunSourceRawManifest] = []
+        if isinstance(source_manifests_raw, list):
+            for item in source_manifests_raw:
+                if is_json_object(item):
+                    source_manifests.append(WholeRunSourceRawManifest.from_mapping(item))
+        algorithm_versions_raw = data.get("algorithm_versions")
+        configuration_raw = data.get("configuration")
         return cls(
             schema_version=_int_from_json(
                 data.get("schema_version"),
@@ -289,6 +423,11 @@ class WholeRunArtifactManifest:
             total_window_count=_int_from_json(data.get("total_window_count")),
             artifacts=tuple(artifacts),
             created_at=_str_from_json(data.get("created_at")),
+            algorithm_versions=(
+                dict(algorithm_versions_raw) if is_json_object(algorithm_versions_raw) else {}
+            ),
+            configuration=dict(configuration_raw) if is_json_object(configuration_raw) else {},
+            source_raw_manifests=tuple(source_manifests),
         )
 
     def artifact(self, artifact_key: str) -> WholeRunArtifactFile | None:
@@ -296,6 +435,10 @@ class WholeRunArtifactManifest:
             if artifact.artifact_key == artifact_key:
                 return artifact
         return None
+
+    @property
+    def generated_artifact_paths(self) -> dict[str, str]:
+        return {artifact.artifact_key: artifact.relative_path for artifact in self.artifacts}
 
 
 @dataclass(frozen=True, slots=True)

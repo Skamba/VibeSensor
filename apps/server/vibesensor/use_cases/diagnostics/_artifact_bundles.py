@@ -71,6 +71,9 @@ def build_single_artifact_bundle_parts(
             created_at=created_at,
             schema_version=source_manifest.schema_version,
             storage_type=source_manifest.storage_type,
+            algorithm_versions=dict(source_manifest.algorithm_versions),
+            configuration=dict(source_manifest.configuration),
+            source_raw_manifests=source_manifest.source_raw_manifests,
         )
     else:
         manifest = WholeRunArtifactManifest(

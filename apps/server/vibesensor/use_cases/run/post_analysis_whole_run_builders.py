@@ -188,6 +188,9 @@ def merge_whole_run_artifact_bundles(
             created_at=base_manifest.created_at,
             schema_version=base_manifest.schema_version,
             storage_type=base_manifest.storage_type,
+            algorithm_versions=dict(base_manifest.algorithm_versions),
+            configuration=dict(base_manifest.configuration),
+            source_raw_manifests=base_manifest.source_raw_manifests,
         ),
         artifact_contents=merged_contents,
     )
