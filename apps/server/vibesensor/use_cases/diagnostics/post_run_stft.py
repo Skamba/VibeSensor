@@ -70,6 +70,8 @@ class PostRunStftFrame:
     freq_hz: FloatArray
     spectrum_by_axis_amp_g: dict[Axis, FloatArray]
     combined_amp_g: FloatArray
+    rms_by_axis_g: dict[Axis, float]
+    p2p_by_axis_g: dict[Axis, float]
     dominant_freq_hz: float | None = None
     vibration_strength_db: float | None = None
     strength_peak_amp_g: float | None = None
@@ -224,6 +226,7 @@ def _compute_sensor_frame(
         return None
     if config.accel_scale_g_per_lsb is not None:
         prepared_samples = prepared_samples * np.float32(config.accel_scale_g_per_lsb)
+    rms_by_axis_g, p2p_by_axis_g = _time_domain_metrics_by_axis(prepared_samples)
     fft_result = compute_fft_spectrum(
         prepared_samples,
         sensor_window.sample_rate_hz,
@@ -261,6 +264,8 @@ def _compute_sensor_frame(
         freq_hz=np.asarray(fft_result["freq_slice"], dtype=np.float32, copy=True),
         spectrum_by_axis_amp_g=spectrum_by_axis,
         combined_amp_g=np.asarray(fft_result["combined_amp"], dtype=np.float32, copy=True),
+        rms_by_axis_g=rms_by_axis_g,
+        p2p_by_axis_g=p2p_by_axis_g,
         dominant_freq_hz=dominant_freq_hz,
         vibration_strength_db=_float_or_none(strength_metrics.get("vibration_strength_db")),
         strength_peak_amp_g=_float_or_none(strength_metrics.get("peak_amp_g")),
@@ -301,6 +306,27 @@ def _sensor_window_axis_matrix(sensor_window: PostRunRawSensorWindow) -> FloatAr
         ],
         axis=0,
     ).astype(np.float32, copy=False)
+
+
+def _time_domain_metrics_by_axis(
+    axis_samples: FloatArray,
+) -> tuple[dict[Axis, float], dict[Axis, float]]:
+    if axis_samples.ndim != 2 or axis_samples.shape[0] != len(AXES) or axis_samples.shape[1] == 0:
+        zeros = {axis: 0.0 for axis in AXES}
+        return zeros.copy(), zeros.copy()
+    clean = np.nan_to_num(
+        axis_samples,
+        copy=True,
+        nan=0.0,
+        posinf=0.0,
+        neginf=0.0,
+    ).astype(np.float32, copy=False)
+    rms_values = np.sqrt(np.mean(np.square(clean, dtype=np.float64), axis=1))
+    p2p_values = np.ptp(clean, axis=1)
+    return (
+        {axis: float(rms_values[index]) for index, axis in enumerate(AXES)},
+        {axis: float(p2p_values[index]) for index, axis in enumerate(AXES)},
+    )
 
 
 def _prepare_fft_samples(
@@ -351,6 +377,8 @@ def _empty_frame(
         freq_hz=context.freq_hz.copy(),
         spectrum_by_axis_amp_g={axis: empty.copy() for axis in AXES},
         combined_amp_g=empty.copy(),
+        rms_by_axis_g={axis: 0.0 for axis in AXES},
+        p2p_by_axis_g={axis: 0.0 for axis in AXES},
     )
 
 

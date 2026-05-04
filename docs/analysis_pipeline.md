@@ -58,10 +58,19 @@ low sample count, invalid axis data, sample-rate mismatch, and missing sidecars.
 The first dense analysis consumer is
 `use_cases/diagnostics/post_run_stft.py`. It consumes those POSTRUN-01 window
 DTOs and produces in-memory STFT frames with per-axis spectra, combined spectra,
-window timing, sensor metadata, dominant frequency, top peaks, and dB strength
-facts. The STFT layer is deliberately post-run only: callers configure FFT size,
-window function, frequency range, and partial-window behavior independently from
-the live UI cadence, while still reusing the shared FFT/strength primitives.
+window timing, sensor metadata, per-axis RMS/P2P, dominant frequency, top peaks,
+and dB strength facts. The STFT layer is deliberately post-run only: callers
+configure FFT size, window function, frequency range, and partial-window behavior
+independently from the live UI cadence, while still reusing the shared
+FFT/strength primitives.
+
+`use_cases/diagnostics/post_run_window_features.py` is the next reduction layer.
+It consumes POSTRUN-02 STFT frames and emits per-window/per-sensor feature DTOs:
+dominant and top peaks, canonical `vibration_strength_db`, peak amplitude, noise
+floor, strength bucket, axis dominance, RMS/P2P, structured quality flags, and
+compact debug rows for synthetic runs. Frequency masks live at this layer so
+later episode/order/finding logic can ignore unusable bands without recomputing
+the dense spectra.
 
 ## Related deep dives
 
@@ -142,6 +151,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
 | `post_run_raw_windows.py` | ~300 | Manifest-aware streaming raw waveform reader and configurable overlapping-window iterator for dense post-run stages |
 | `post_run_stft.py` | ~350 | In-memory dense STFT engine over POSTRUN-01 raw-window DTOs |
+| `post_run_window_features.py` | ~300 | Window-level feature extraction over POSTRUN-02 STFT frames |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
