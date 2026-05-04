@@ -286,9 +286,7 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["history.pdf_failed"] == "PDF genereren mislukt."
     assert ui["dashboard.logging.run_id"] == "Meetrun-ID: {runId}"
     assert ui["dashboard.logging.last_run_id"] == "Laatste meetrun: {runId}"
-    assert ui["history.preview_unavailable"] == (
-        "Voorbeeld is niet beschikbaar voor deze meetrun."
-    )
+    assert ui["history.preview_unavailable"] == ("Voorbeeld is niet beschikbaar voor deze meetrun.")
     assert ui["report.run_id"] == "Meetrun-ID"
     assert ui["settings.update.log_intro"].endswith("meest recente uitvoering.")
     assert ui["settings.update.log_intro_running"].endswith("actieve uitvoering.")
