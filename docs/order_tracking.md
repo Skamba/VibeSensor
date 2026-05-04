@@ -18,6 +18,7 @@ lives in `apps/server/vibesensor/use_cases/diagnostics/orders/`.
 | `OrderReferenceSpec` | `domain/order_reference.py` | Tire geometry, final-drive ratio, gear ratio, and uncertainty settings for order analysis. |
 | `vehicle_orders_hz()` | `shared/order_bands.py` | Resolve wheel / driveshaft / engine reference frequencies for one speed sample. |
 | `build_order_bands()` | `shared/order_bands.py` | Precompute live order-band payloads so the frontend does not duplicate tolerance math. |
+| `build_post_run_vehicle_reference_timeline()` | `use_cases/diagnostics/post_run_vehicle_reference.py` | Normalize speed/RPM/gear/final-drive references onto whole-run windows for dense post-run order stages. |
 | `OrderHypothesis` | `use_cases/diagnostics/orders/physics.py` | One named order candidate such as `wheel_1x` or `engine_2x`. |
 | `OrderAnalysisSession` | `use_cases/diagnostics/orders/pipeline.py` | Run all eligible hypotheses across stored samples and return ranked findings. |
 
@@ -40,6 +41,28 @@ The spec exposes capability checks before any of that math is used:
 
 If the required tire or driveline data is missing, VibeSensor omits the order
 reference instead of inventing one.
+
+## Per-window post-run references
+
+Dense post-run order work first maps vehicle context onto the deterministic
+window grid with
+`build_post_run_vehicle_reference_timeline()` in
+`use_cases/diagnostics/post_run_vehicle_reference.py`.
+
+The timeline keeps interpolation deliberately narrow:
+
+- speed and RPM interpolate only across short gaps from the same source
+- stale nearest samples remain unavailable instead of being stretched across long
+  gaps
+- gear and final-drive values are never interpolated across changed values
+- source switches, missing speed/RPM/gear, inconsistent sample rates, and missing
+  vehicle configuration are recorded as explicit unavailable reasons
+
+When inputs are valid, wheel/driveshaft/engine Hz are derived through
+`OrderReferenceSpec`; diagnostics does not duplicate the tire or driveline
+formulas. Missing RPM can still produce an engine reference only when speed,
+final drive, and gear ratio are available from aligned samples or settings, and
+the missing-RPM reason remains visible to downstream coverage scoring.
 
 ## Uncertainty and tolerance bands
 
@@ -140,6 +163,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
 | `apps/server/vibesensor/shared/order_bands.py` | Shared uncertainty, tolerance-band, and live band-payload helpers. |
+| `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py` | Dense per-window vehicle reference normalization and debug fixtures. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
