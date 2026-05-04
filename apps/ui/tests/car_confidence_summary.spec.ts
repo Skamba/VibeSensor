@@ -27,7 +27,7 @@ const labels: Record<string, string> = {
   "settings.car.confidence.unverified": "unverified",
   "settings.car.confidence.user_confirmed": "user confirmed",
   "settings.car.confidence.review_detail":
-    "Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Review or override these values in Analysis before trusting driveshaft or engine-order results.",
   "settings.car.col_tires": "Tires",
   "settings.car.col_drive": "Drive",
   "settings.car.col_gear": "Top Gear",
@@ -126,7 +126,7 @@ test("buildOrderReferenceConfidenceDetail distinguishes exact and approximate st
       t,
     ),
   ).toBe(
-    "Tires family default · Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Tires family default · Drive family default · Top gear family default · Transmission family default. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
   );
 });
 
@@ -177,7 +177,7 @@ test("buildGearboxConfidenceHint feeds the wizard action hint for approximate li
   };
 
   expect(buildGearboxConfidenceHint(state.selectedGearbox, t)).toBe(
-    "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
   );
   expect(
     getWizardActionHint(state, {
@@ -187,7 +187,7 @@ test("buildGearboxConfidenceHint feeds the wizard action hint for approximate li
       t,
     }),
   ).toBe(
-    "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Drive secondary cross-check · Top gear family default · Transmission unverified. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
   );
 });
 
