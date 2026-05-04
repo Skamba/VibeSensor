@@ -2,14 +2,16 @@
  * Regenerates Playwright snapshot baselines using the available chromium binary.
  * Run with: node update-snapshots.mjs
  */
-import { chromium } from "@playwright/test";
-import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CHROME_EXEC =
-  "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
+import {
+  launchChromiumBrowser,
+  startPreviewServer,
+} from "./playwright-preview-helpers.mjs";
+
+const CHROME_EXEC = process.env.CHROME_EXECUTABLE_PATH;
 const SERVER_PORT = 4176;
 const SERVER_TIMEOUT_MS = 25_000;
 const PAGE_TIMEOUT_MS = 15_000;
@@ -21,39 +23,6 @@ const VIEWPORT_CONFIGS = [
   ["tablet-light", { width: 810, height: 1080 }, "light"],
   ["tablet-dark", { width: 810, height: 1080 }, "dark"],
 ];
-
-async function startServer(cwd) {
-  return new Promise((resolve, reject) => {
-    const server = spawn(
-      "node",
-      [
-        "node_modules/.bin/vite",
-        "preview",
-        "--host",
-        "0.0.0.0",
-        "--strictPort",
-        "--port",
-        String(SERVER_PORT),
-      ],
-      { cwd, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    let started = false;
-    const timer = setTimeout(() => {
-      if (!started) {
-        server.kill();
-        reject(new Error("Server start timeout"));
-      }
-    }, SERVER_TIMEOUT_MS);
-    server.stdout.on("data", (d) => {
-      if (!started && d.toString().includes(String(SERVER_PORT))) {
-        started = true;
-        clearTimeout(timer);
-        setTimeout(() => resolve(server), 300);
-      }
-    });
-    server.on("error", reject);
-  });
-}
 
 function savePng(path, buf) {
   mkdirSync(dirname(path), { recursive: true });
@@ -67,17 +36,15 @@ async function main() {
   let browser;
 
   try {
-    server = await startServer(cwd);
+    server = await startPreviewServer(cwd, {
+      port: SERVER_PORT,
+      timeoutMs: SERVER_TIMEOUT_MS,
+    });
     console.log("Preview server up on port", SERVER_PORT);
 
-    browser = await chromium.launch({
-      executablePath: CHROME_EXEC,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
-    });
+    browser = await launchChromiumBrowser(
+      CHROME_EXEC ? { executablePath: CHROME_EXEC } : undefined,
+    );
 
     // ----- Snapshot: live-view (laptop-light) -----
     console.log("\nCapturing live-view snapshots...");
@@ -87,11 +54,18 @@ async function main() {
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
         timeout: PAGE_TIMEOUT_MS,
       });
-      await page.waitForSelector(".car-map-dot--visible", {
-        timeout: PAGE_TIMEOUT_MS,
-      });
       await page.waitForFunction(
-        () => document.querySelector(".log-row .log-time") !== null,
+        () => {
+          const connected = document.querySelector(
+            "#liveConnectedSensors [data-value]",
+          );
+          const activeCar = document.querySelector(
+            "#liveActiveCar [data-value]",
+          );
+          return Boolean(
+            connected?.textContent?.trim() && activeCar?.textContent?.trim(),
+          );
+        },
         { timeout: PAGE_TIMEOUT_MS },
       );
       const buf = await page.screenshot({
@@ -110,7 +84,7 @@ async function main() {
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
         timeout: PAGE_TIMEOUT_MS,
       });
-      await page.click('[data-view="settingsView"]');
+      await page.click("#tab-settings");
       await page.click('[data-settings-tab="analysisTab"]');
       await page.waitForSelector("#analysisTab.active", { timeout: 8_000 });
       const buf = await page.screenshot({
