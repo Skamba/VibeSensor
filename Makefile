@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -82,6 +82,10 @@ test-changed: ## Run heuristic checks for files changed vs origin/main
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_changed.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
 
+test-golden-replay: ## Run fast generated dense post-run golden replay tests
+	@$(RESOLVE_PYTHON) \
+	"$$PYTHON" -m pytest -q apps/server/tests/use_cases/run/test_post_analysis_golden_replay.py
+
 plan-validation: ## Plan changed-file validation from CI path rules
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/plan_validation.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
@@ -105,6 +109,10 @@ test-full-suite: ## Run the full end-to-end suite locally
 benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS / BACKEND_BENCHMARK_TARGETS as needed)
 	@$(RESOLVE_PYTHON) \
 	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only $(BACKEND_BENCHMARK_TARGETS) $(BENCHMARK_OPTS)
+
+benchmark-golden-replay: ## Run the opt-in 30-minute dense golden replay benchmark
+	@$(RESOLVE_PYTHON) \
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' tests/use_cases/run/benchmark_post_analysis_golden_replay.py $(BENCHMARK_OPTS)
 
 benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/server/.benchmarks
 	@$(RESOLVE_PYTHON) \
