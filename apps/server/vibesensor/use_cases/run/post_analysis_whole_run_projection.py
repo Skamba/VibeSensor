@@ -64,10 +64,43 @@ def append_whole_run_analysis_metadata(
         {artifact.sensor_id for artifact in manifest.artifacts if artifact.sensor_id is not None}
     )
     analysis_metadata["whole_run_artifacts_available"] = True
+    analysis_metadata["whole_run_artifacts_status"] = "available"
+    analysis_metadata["whole_run_artifact_manifest_path"] = f"{manifest.relative_dir}/manifest.json"
+    analysis_metadata["whole_run_artifact_generated_at"] = manifest.created_at
+    analysis_metadata["whole_run_artifact_schema_version"] = manifest.schema_version
+    analysis_metadata["whole_run_artifact_storage_type"] = manifest.storage_type
     analysis_metadata["whole_run_window_count"] = int(manifest.total_window_count)
     analysis_metadata["whole_run_sensor_count"] = len(sensor_ids)
     analysis_metadata["whole_run_artifact_count"] = len(manifest.artifacts)
+    analysis_metadata["whole_run_artifact_keys"] = [
+        artifact.artifact_key for artifact in manifest.artifacts
+    ]
+    analysis_metadata["whole_run_artifact_formats"] = {
+        artifact.artifact_key: artifact.file_format for artifact in manifest.artifacts
+    }
+    analysis_metadata["whole_run_artifact_paths"] = {
+        artifact.artifact_key: artifact.relative_path for artifact in manifest.artifacts
+    }
+    analysis_metadata["whole_run_algorithm_versions"] = dict(manifest.algorithm_versions)
+    analysis_metadata["whole_run_artifact_configuration"] = dict(manifest.configuration)
+    analysis_metadata["whole_run_source_raw_manifest_count"] = len(manifest.source_raw_manifests)
+    analysis_metadata["whole_run_artifact_warnings"] = _warning_codes_from_payload(
+        payload.get("warnings")
+    )
     return PersistedAnalysis.from_json_object(payload)
+
+
+def _warning_codes_from_payload(warnings: JsonValue | object) -> list[JsonValue]:
+    if not isinstance(warnings, list):
+        return []
+    codes: list[JsonValue] = []
+    for warning in warnings:
+        if not is_json_object(warning):
+            continue
+        code = warning.get("code")
+        if isinstance(code, str) and code:
+            codes.append(code)
+    return codes
 
 
 def append_whole_run_spectral_metadata(

@@ -379,6 +379,8 @@ def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata()
             feature_interval_s=0.25,
         ),
         total_window_count=3,
+        algorithm_versions={"whole_run_spectra": 1},
+        configuration={"spectrum_storage_format": "npy-f32"},
         artifacts=(
             WholeRunArtifactFile(
                 artifact_key="spectral-grid:sensor-a",
@@ -456,6 +458,26 @@ def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata()
     assert stored["analysis"]["analysis_metadata"]["whole_run_window_count"] == 3
     assert stored["analysis"]["analysis_metadata"]["whole_run_sensor_count"] == 1
     assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 2
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_artifact_manifest_path"]
+        == "whole-run-artifacts/run-whole-run/manifest.json"
+    )
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_artifact_generated_at"]
+        == "2025-01-01T00:00:00Z"
+    )
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifacts_status"] == "available"
+    assert stored["analysis"]["analysis_metadata"]["whole_run_algorithm_versions"] == {
+        "whole_run_spectra": 1,
+    }
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_configuration"] == {
+        "spectrum_storage_format": "npy-f32",
+    }
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_paths"] == {
+        "spectral-grid:sensor-a": "spectra/sensor-a/freq.f32.npy",
+        "spectral-summary:sensor-a": "spectra/sensor-a/windows.jsonl",
+    }
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_warnings"] == []
 
 
 def test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar() -> None:

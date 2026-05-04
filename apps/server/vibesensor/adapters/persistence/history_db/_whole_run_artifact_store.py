@@ -69,7 +69,10 @@ class HistoryWholeRunArtifactStore:
         artifact_path = self._data_dir / manifest.relative_dir / artifact.relative_path
         if not artifact_path.exists():
             return None
-        return artifact_path.read_bytes()
+        try:
+            return artifact_path.read_bytes()
+        except OSError:
+            return None
 
     def delete_run_artifacts(self, run_id: str) -> None:
         with self._lock:
@@ -77,6 +80,12 @@ class HistoryWholeRunArtifactStore:
 
     def has_run_artifacts(self, run_id: str) -> bool:
         return self.run_dir(run_id).exists()
+
+    def has_manifest_artifacts(self, manifest: WholeRunArtifactManifest) -> bool:
+        run_dir = self._data_dir / manifest.relative_dir
+        if not (run_dir / _MANIFEST_FILE_NAME).is_file():
+            return False
+        return all((run_dir / artifact.relative_path).is_file() for artifact in manifest.artifacts)
 
     def run_dir(self, run_id: str) -> Path:
         return self._base_dir / run_id
