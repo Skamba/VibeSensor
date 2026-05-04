@@ -63,6 +63,11 @@ does not track implementation status or old branch plans.
   `apps/server/vibesensor/use_cases/diagnostics/post_run_stft.py`: an in-memory
   STFT engine over those raw-window DTOs. Persistence of dense arrays remains
   owned by POSTRUN-08.
+- POSTRUN-03 adds
+  `apps/server/vibesensor/use_cases/diagnostics/post_run_window_features.py`:
+  a deterministic reduction from STFT frames to per-window/per-sensor diagnostic
+  features, including canonical dB strength, top peaks, axis dominance, RMS/P2P,
+  frequency masking, and propagated quality flags.
 
 ### Persisted analysis and reporting
 
@@ -119,7 +124,7 @@ raw capture manifest/files (#3065)
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `post_run_raw_windows.py` owns raw-window iteration for dense stages |
-| Whole-run spectra | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py` owns the in-memory DTO-first STFT engine |
+| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py` owns the in-memory DTO-first STFT engine and `post_run_window_features.py` owns the compact per-window feature reduction |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
