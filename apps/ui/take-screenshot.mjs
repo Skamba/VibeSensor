@@ -38,40 +38,48 @@ async function main() {
 
     await page.waitForFunction(
       () => {
-        const connected = document.querySelector("#liveConnectedSensors [data-value]");
+        const connected = document.querySelector(
+          "#liveConnectedSensors [data-value]",
+        );
         const activeCar = document.querySelector("#liveActiveCar [data-value]");
-        return Boolean(connected?.textContent?.trim() && activeCar?.textContent?.trim());
+        return Boolean(
+          connected?.textContent?.trim() && activeCar?.textContent?.trim(),
+        );
       },
       { timeout: PAGE_TIMEOUT_MS },
     );
 
-    // Verify spectrum canvas has rendered data.
-    const hasCanvas = await page.evaluate(() => {
-      const canvas = document.querySelector("#specChart canvas");
-      if (!canvas) return false;
-      const ctx = /** @type {HTMLCanvasElement} */ (canvas).getContext("2d");
-      if (!ctx) return false;
-      // Sample pixels in the chart area to check for non-background color
-      const imageData = ctx.getImageData(
-        50,
-        10,
-        canvas.clientWidth - 100,
-        canvas.clientHeight - 20,
-      );
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i],
-          g = data[i + 1],
-          b = data[i + 2];
-        // Look for any non-white, non-light-gray pixel (spectrum line color)
-        if (r < 200 && (r !== g || g !== b)) return true;
-      }
-      return false;
-    });
-
-    if (!hasCanvas) {
-      throw new Error("FAIL: Spectrum chart canvas has no visible graph data");
-    }
+    await page.waitForFunction(
+      () => {
+        const canvas = document.querySelector("#specChart canvas");
+        if (!(canvas instanceof HTMLCanvasElement)) return false;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
+        const width = canvas.width;
+        const height = canvas.height;
+        if (!width || !height) return false;
+        const margin = Math.floor(Math.min(width, height) * 0.1);
+        const imageData = ctx.getImageData(
+          margin,
+          margin,
+          width - margin * 2,
+          height - margin * 2,
+        );
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a < 128) continue;
+          if (r < 200 && (Math.abs(r - g) > 15 || Math.abs(g - b) > 15)) {
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: PAGE_TIMEOUT_MS },
+    );
     console.log("Graph data verified in canvas");
 
     const screenshot = await page.screenshot({ fullPage: true });

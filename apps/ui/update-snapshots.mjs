@@ -11,8 +11,7 @@ import {
   startPreviewServer,
 } from "./playwright-preview-helpers.mjs";
 
-const CHROME_EXEC =
-  "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
+const CHROME_EXEC = process.env.CHROME_EXECUTABLE_PATH;
 const SERVER_PORT = 4176;
 const SERVER_TIMEOUT_MS = 25_000;
 const PAGE_TIMEOUT_MS = 15_000;
@@ -43,7 +42,9 @@ async function main() {
     });
     console.log("Preview server up on port", SERVER_PORT);
 
-    browser = await launchChromiumBrowser({ executablePath: CHROME_EXEC });
+    browser = await launchChromiumBrowser(
+      CHROME_EXEC ? { executablePath: CHROME_EXEC } : undefined,
+    );
 
     // ----- Snapshot: live-view (laptop-light) -----
     console.log("\nCapturing live-view snapshots...");
@@ -55,9 +56,15 @@ async function main() {
       });
       await page.waitForFunction(
         () => {
-          const connected = document.querySelector("#liveConnectedSensors [data-value]");
-          const activeCar = document.querySelector("#liveActiveCar [data-value]");
-          return Boolean(connected?.textContent?.trim() && activeCar?.textContent?.trim());
+          const connected = document.querySelector(
+            "#liveConnectedSensors [data-value]",
+          );
+          const activeCar = document.querySelector(
+            "#liveActiveCar [data-value]",
+          );
+          return Boolean(
+            connected?.textContent?.trim() && activeCar?.textContent?.trim(),
+          );
         },
         { timeout: PAGE_TIMEOUT_MS },
       );
