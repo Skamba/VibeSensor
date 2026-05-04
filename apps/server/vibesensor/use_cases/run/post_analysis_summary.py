@@ -24,6 +24,16 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonArray, JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.processing_profile import (
+    MEDIAN_FILTER_WINDOW_SAMPLES,
+    PROCESSING_FILTER_MEDIAN_3_SAMPLE,
+    PROCESSING_PROFILE_DIAGNOSTIC_FILTERED,
+    PROCESSING_PROFILE_DIAGNOSTIC_RAW,
+    PROCESSING_PROFILE_LIVE_DISPLAY,
+    PROCESSING_PROFILE_VERSION,
+    ProcessingFilterId,
+    processing_profile_row,
+)
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 
@@ -125,6 +135,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    analysis_metadata.update(_processing_profile_metadata(run))
     raw_capture_finalize = run.context.raw_capture_finalize
     if raw_capture_finalize is not None:
         analysis_metadata["raw_capture_finalize_status"] = raw_capture_finalize.status
@@ -242,6 +253,47 @@ def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:
     )
     if fallback_reasons:
         analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(fallback_reasons)
+
+
+def _processing_profile_metadata(run: PostAnalysisRunInput) -> JsonObject:
+    raw_backed = run.raw_replay.raw_backed_summary_row_count > 0
+    active_profile = (
+        PROCESSING_PROFILE_DIAGNOSTIC_RAW if raw_backed else PROCESSING_PROFILE_DIAGNOSTIC_FILTERED
+    )
+    diagnostic_filter_chain: tuple[ProcessingFilterId, ...] = (
+        () if raw_backed else (PROCESSING_FILTER_MEDIAN_3_SAMPLE,)
+    )
+    return {
+        "processing_profile_version": PROCESSING_PROFILE_VERSION,
+        "processing_profile": active_profile,
+        "raw_diagnostic_evidence_preserved": raw_backed,
+        "diagnostic_filter_chain": list(diagnostic_filter_chain),
+        "live_display_filter_chain": [PROCESSING_FILTER_MEDIAN_3_SAMPLE],
+        "median_filter_window_samples": MEDIAN_FILTER_WINDOW_SAMPLES,
+        "processing_profiles": [
+            processing_profile_row(
+                profile=PROCESSING_PROFILE_LIVE_DISPLAY,
+                applies_to="live_metrics",
+                filter_chain=(PROCESSING_FILTER_MEDIAN_3_SAMPLE,),
+                enabled=True,
+                raw_evidence_preserved=False,
+            ),
+            processing_profile_row(
+                profile=PROCESSING_PROFILE_DIAGNOSTIC_RAW,
+                applies_to="raw_replay_strength_metrics",
+                filter_chain=(),
+                enabled=raw_backed,
+                raw_evidence_preserved=raw_backed,
+            ),
+            processing_profile_row(
+                profile=PROCESSING_PROFILE_DIAGNOSTIC_FILTERED,
+                applies_to="summary_fallback_or_optional_comparison",
+                filter_chain=(PROCESSING_FILTER_MEDIAN_3_SAMPLE,),
+                enabled=not raw_backed,
+                raw_evidence_preserved=False,
+            ),
+        ],
+    }
 
 
 def _raw_capture_finalize_warning(

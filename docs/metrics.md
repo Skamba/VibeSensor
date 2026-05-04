@@ -37,6 +37,29 @@ persisted analysis envelopes, localized report-facing strength/intensity fields)
 expose dB-only strength values. Raw ingest/sample fields may still carry g-based
 units.
 
+## Processing profiles
+
+Filtering choices are explicit because live display smoothing must not silently
+change report or forensic diagnostics.
+
+| Profile | Owner | Filter chain | Use |
+|---------|-------|--------------|-----|
+| `live_display` | `apps/server/vibesensor/infra/processing/compute.py` | `median_3_sample_time_domain` | Operator-facing live metrics and spectra. |
+| `diagnostic_raw` | post-run raw replay and dense raw-window stages | none | Report/post-run truth when raw capture is available. |
+| `diagnostic_filtered` | persisted-summary fallback or optional comparisons | `median_3_sample_time_domain` | Clearly labeled fallback/comparison data, not raw truth. |
+
+The shared identifiers live in
+`apps/server/vibesensor/shared/types/processing_profile.py`. Live combined
+metrics carry `processing_profile = "live_display"` and their filter chain.
+Persisted analysis metadata records the active diagnostic `processing_profile`,
+available profile rows, the live filter chain, the diagnostic filter chain, and
+whether raw diagnostic evidence was preserved.
+
+Raw replay and whole-run spectra use unfiltered raw windows for diagnostic
+strength/spectrum computation. If no raw-backed replay is available, report
+metadata marks the active profile as `diagnostic_filtered` so downstream report
+code can treat summary-derived evidence as a fallback instead of raw evidence.
+
 ## Severity Bands (l1–l5)
 
 Severity classification is performed solely by `bucket_for_strength(vibration_strength_db)` in
