@@ -54,8 +54,6 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
 def append_whole_run_analysis_metadata(
     summary: PersistedAnalysis,
     manifest: WholeRunArtifactManifest,
-    *,
-    warnings: tuple[str, ...] = (),
 ) -> PersistedAnalysis:
     payload = summary.to_json_object()
     analysis_metadata = payload.get("analysis_metadata")
@@ -86,8 +84,23 @@ def append_whole_run_analysis_metadata(
     analysis_metadata["whole_run_algorithm_versions"] = dict(manifest.algorithm_versions)
     analysis_metadata["whole_run_artifact_configuration"] = dict(manifest.configuration)
     analysis_metadata["whole_run_source_raw_manifest_count"] = len(manifest.source_raw_manifests)
-    analysis_metadata["whole_run_artifact_warnings"] = list(warnings)
+    analysis_metadata["whole_run_artifact_warnings"] = _warning_codes_from_payload(
+        payload.get("warnings")
+    )
     return PersistedAnalysis.from_json_object(payload)
+
+
+def _warning_codes_from_payload(warnings: JsonValue | object) -> list[JsonValue]:
+    if not isinstance(warnings, list):
+        return []
+    codes: list[JsonValue] = []
+    for warning in warnings:
+        if not is_json_object(warning):
+            continue
+        code = warning.get("code")
+        if isinstance(code, str) and code:
+            codes.append(code)
+    return codes
 
 
 def append_whole_run_spectral_metadata(
