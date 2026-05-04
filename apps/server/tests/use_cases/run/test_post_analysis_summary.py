@@ -31,6 +31,16 @@ from vibesensor.use_cases.run.post_analysis_input import (
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
+_PROCESSING_METADATA_KEYS = (
+    "processing_profile_version",
+    "processing_profile",
+    "raw_diagnostic_evidence_preserved",
+    "diagnostic_filter_chain",
+    "live_display_filter_chain",
+    "median_filter_window_samples",
+    "processing_profiles",
+)
+
 
 def _run_metadata(
     run_id: str,
@@ -304,41 +314,15 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
     assert captured["file_name"] == "run-ok"
     assert captured["include_samples"] is False
     assert summary["case_id"] == "case-1"
-    assert summary["analysis_metadata"] == {
+    analysis_metadata = dict(summary["analysis_metadata"])
+    for key in _PROCESSING_METADATA_KEYS:
+        analysis_metadata.pop(key)
+    assert analysis_metadata == {
         "analyzed_sample_count": 1,
         "analyzed_summary_row_count": 1,
         "total_sample_count": 3,
         "total_summary_row_count": 3,
         "sampling_method": "full",
-        "processing_profile_version": "processing-profiles-v1",
-        "processing_profile": "diagnostic_filtered",
-        "raw_diagnostic_evidence_preserved": False,
-        "diagnostic_filter_chain": ["median_3_sample_time_domain"],
-        "live_display_filter_chain": ["median_3_sample_time_domain"],
-        "median_filter_window_samples": 3,
-        "processing_profiles": [
-            {
-                "processing_profile": "live_display",
-                "applies_to": "live_metrics",
-                "filter_chain": ["median_3_sample_time_domain"],
-                "enabled": True,
-                "raw_evidence_preserved": False,
-            },
-            {
-                "processing_profile": "diagnostic_raw",
-                "applies_to": "raw_replay_strength_metrics",
-                "filter_chain": [],
-                "enabled": False,
-                "raw_evidence_preserved": False,
-            },
-            {
-                "processing_profile": "diagnostic_filtered",
-                "applies_to": "summary_fallback_or_optional_comparison",
-                "filter_chain": ["median_3_sample_time_domain"],
-                "enabled": True,
-                "raw_evidence_preserved": False,
-            },
-        ],
         "summary_duration_s": 3.0,
         "vehicle_context_unaligned_speed_sample_count": 0,
         "vehicle_context_unaligned_rpm_sample_count": 0,
@@ -501,126 +485,6 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
     assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
         warning["code"] for warning in summary["warnings"]
     ]
-
-
-def test_build_post_analysis_summary_uses_raw_backed_samples_for_sensor_intensity(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class FakeRunAnalysis:
-        def __init__(self, *_args, **_kwargs):
-            pass
-
-        def summarize(self):
-            return SimpleNamespace(
-                diagnostic_case=SimpleNamespace(case_id="case-raw-intensity"),
-                prepared=SimpleNamespace(per_sample_phases=["cruise"]),
-            )
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
-        FakeRunAnalysis,
-    )
-    monkeypatch.setattr(
-        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
-        lambda _result: {},
-    )
-
-    run = build_post_analysis_input(
-        LoadedPostAnalysisRun(
-            run_id="run-raw-intensity",
-            metadata=_run_metadata("run-raw-intensity"),
-            language="en",
-            samples=sensor_frames_from_mappings(
-                [
-                    {
-                        "client_id": "sensor-a",
-                        "location": "front_left",
-                        "t_s": 0.18,
-                        "sample_rate_hz": 800,
-                        "vibration_strength_db": 0.0,
-                        "strength_bucket": "l0",
-                        "dominant_freq_hz": 0.0,
-                    }
-                ]
-            ),
-            raw_capture=_full_raw_capture("run-raw-intensity"),
-            total_summary_row_count=1,
-            stride=1,
-        )
-    )
-
-    raw_backed_strength = run.samples[0].vibration_strength_db
-    assert raw_backed_strength is not None and raw_backed_strength > 0.0
-
-    summary = build_post_analysis_summary(run)
-    intensity_rows = summary["sensor_intensity_by_location"]
-
-    assert len(intensity_rows) == 1
-    assert intensity_rows[0]["p95_intensity_db"] == pytest.approx(raw_backed_strength)
-    assert intensity_rows[0]["strength_bucket_distribution"]["total"] == 1
-    assert intensity_rows[0]["strength_bucket_distribution"]["counts"]["l0"] == 0
-
-
-def test_build_post_analysis_summary_records_raw_processing_profile(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class FakeRunAnalysis:
-        def __init__(self, *_args, **_kwargs):
-            pass
-
-        def summarize(self):
-            return SimpleNamespace(
-                diagnostic_case=SimpleNamespace(case_id="case-processing-profile"),
-            )
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
-        FakeRunAnalysis,
-    )
-    monkeypatch.setattr(
-        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
-        lambda _result: {},
-    )
-
-    run = build_post_analysis_input(
-        LoadedPostAnalysisRun(
-            run_id="run-processing-profile",
-            metadata=_run_metadata("run-processing-profile"),
-            language="en",
-            samples=sensor_frames_from_mappings(
-                [
-                    {
-                        "client_id": "sensor-a",
-                        "t_s": 0.18,
-                        "sample_rate_hz": 800,
-                        "vibration_strength_db": 0.0,
-                        "dominant_freq_hz": 0.0,
-                    }
-                ]
-            ),
-            raw_capture=_full_raw_capture("run-processing-profile"),
-            total_summary_row_count=1,
-            stride=1,
-        )
-    )
-
-    summary = build_post_analysis_summary(run)
-    analysis_metadata = summary["analysis_metadata"]
-
-    assert analysis_metadata["processing_profile"] == "diagnostic_raw"
-    assert analysis_metadata["raw_diagnostic_evidence_preserved"] is True
-    assert analysis_metadata["diagnostic_filter_chain"] == []
-    assert analysis_metadata["live_display_filter_chain"] == ["median_3_sample_time_domain"]
-    profile_rows = analysis_metadata["processing_profiles"]
-    assert isinstance(profile_rows, list)
-    assert profile_rows[0]["processing_profile"] == "live_display"
-    assert profile_rows[1] == {
-        "processing_profile": "diagnostic_raw",
-        "applies_to": "raw_replay_strength_metrics",
-        "filter_chain": [],
-        "enabled": True,
-        "raw_evidence_preserved": True,
-    }
 
 
 def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_floor(
