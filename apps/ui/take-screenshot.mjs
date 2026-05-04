@@ -7,7 +7,10 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { launchChromiumBrowser, startPreviewServer } from "./playwright-preview-helpers.mjs";
+import {
+  launchChromiumBrowser,
+  startPreviewServer,
+} from "./playwright-preview-helpers.mjs";
 
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;
@@ -19,7 +22,10 @@ async function main() {
   let server;
   let browser;
   try {
-    server = await startPreviewServer(cwd, { port: SERVER_PORT, timeoutMs: SERVER_TIMEOUT_MS });
+    server = await startPreviewServer(cwd, {
+      port: SERVER_PORT,
+      timeoutMs: SERVER_TIMEOUT_MS,
+    });
     console.log("Preview server started on port", SERVER_PORT);
 
     browser = await launchChromiumBrowser();
@@ -30,14 +36,12 @@ async function main() {
       timeout: PAGE_TIMEOUT_MS,
     });
 
-    // Wait for car map dots (confirms demo data applied)
-    await page.waitForSelector(".car-map-dot--visible", {
-      timeout: PAGE_TIMEOUT_MS,
-    });
-
-    // Wait for vibration event log entry (confirms event payload applied)
     await page.waitForFunction(
-      () => document.querySelector(".log-row .log-time") !== null,
+      () => {
+        const connected = document.querySelector("#liveConnectedSensors [data-value]");
+        const activeCar = document.querySelector("#liveActiveCar [data-value]");
+        return Boolean(connected?.textContent?.trim() && activeCar?.textContent?.trim());
+      },
       { timeout: PAGE_TIMEOUT_MS },
     );
 

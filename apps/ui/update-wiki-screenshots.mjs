@@ -3,7 +3,10 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { launchChromiumBrowser, startPreviewServer } from "./playwright-preview-helpers.mjs";
+import {
+  launchChromiumBrowser,
+  startPreviewServer,
+} from "./playwright-preview-helpers.mjs";
 import {
   wikiAnalysisSettings,
   wikiClientLocations,
@@ -35,7 +38,11 @@ function withCanonicalClientCadence(payload) {
   return {
     ...payload,
     clients: rawClients.map((client) => {
-      if (typeof client !== "object" || client === null || Array.isArray(client)) {
+      if (
+        typeof client !== "object" ||
+        client === null ||
+        Array.isArray(client)
+      ) {
         return client;
       }
       if ("frame_samples" in client) {
@@ -320,7 +327,11 @@ async function installWikiRoutes(page) {
       last_completed_run_error: null,
       capture_readiness: buildCaptureReadiness({
         isReady: true,
-        sensors: { state: "pass", reasonKey: "ready", details: { connected: 5, assigned: 5 } },
+        sensors: {
+          state: "pass",
+          reasonKey: "ready",
+          details: { connected: 5, assigned: 5 },
+        },
         reference: { state: "pass", reasonKey: "ready" },
         speed: { state: "pass", reasonKey: "ready" },
         overall: { state: "pass", reasonKey: "capture_ready" },
@@ -375,7 +386,9 @@ async function installWikiRoutes(page) {
   });
 
   await page.route("**/api/history/**/insights**", async (route) => {
-    const match = /^\/api\/history\/([^/]+)\/insights$/.exec(requestPath(route));
+    const match = /^\/api\/history\/([^/]+)\/insights$/.exec(
+      requestPath(route),
+    );
     if (!match) {
       await route.fallback();
       return;
@@ -462,7 +475,11 @@ async function captureScenario(browser, label, fileName, capture) {
       timeout: PAGE_TIMEOUT_MS,
     });
     await capture(page);
-    await page.screenshot({ fullPage: true, path: filePath, animations: "disabled" });
+    await page.screenshot({
+      fullPage: true,
+      path: filePath,
+      animations: "disabled",
+    });
     console.log(`Captured ${label}: ${filePath}`);
   } finally {
     await context.close();
@@ -474,14 +491,18 @@ const CAPTURES = [
     label: "live dashboard",
     fileName: "live-dashboard.png",
     capture: async (page) => {
-      await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("5 / 5");
+      await expect(
+        page.locator("#liveConnectedSensors [data-value]"),
+      ).toHaveText("5 / 5");
       await expect(page.locator("#liveActiveCar [data-value]")).toHaveText(
         "BMW 330d Touring",
       );
       await expect(page.locator(".site-header__status")).toBeHidden();
       await expect(page.locator("#liveRunHealth")).toBeHidden();
       await expect(page.locator("#loggingStatus")).toBeHidden();
-      await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
+      await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(
+        0,
+      );
       await expect(
         page.locator(
           '#liveSensorRoster .live-sensor-card__status-dot[data-status="online"]',
@@ -496,12 +517,18 @@ const CAPTURES = [
     fileName: "history-overview.png",
     capture: async (page) => {
       await page.locator("#tab-history").click();
-      await expect(page.locator('#historyTableBody tr[data-run-row="1"]')).toHaveCount(3);
       await expect(
-        page.locator('[data-run-row="1"][data-run="run-bmw-front-right-balance"]'),
+        page.locator('#historyTableBody tr[data-run-row="1"]'),
+      ).toHaveCount(3);
+      await expect(
+        page.locator(
+          '[data-run-row="1"][data-run="run-bmw-front-right-balance"]',
+        ),
       ).toContainText("Front-right wheel imbalance");
       await expect(
-        page.locator('[data-run-row="1"][data-run="run-volvo-driveshaft-rumble"]'),
+        page.locator(
+          '[data-run-row="1"][data-run="run-volvo-driveshaft-rumble"]',
+        ),
       ).toContainText("Driveshaft rumble");
       await expect(
         page.locator('[data-run-row="1"][data-run="run-mx5-engine-order"]'),
@@ -515,7 +542,9 @@ const CAPTURES = [
       await openSettingsTab(page, "carTab");
       await expect(page.locator("#carListBody tr")).toHaveCount(3);
       await expect(
-        page.locator('#carListBody tr[data-car-id="car-bmw-330d"] .car-active-pill'),
+        page.locator(
+          '#carListBody tr[data-car-id="car-bmw-330d"] .car-active-pill',
+        ),
       ).toContainText("Active");
     },
   },
@@ -536,7 +565,9 @@ const CAPTURES = [
     capture: async (page) => {
       await openSettingsTab(page, "speedSourceTab");
       await expect(page.locator("#speedSourceCurrentSource")).toHaveText("GPS");
-      await expect(page.locator("#gpsStatusRawSpeed")).toContainText("74.0 km/h");
+      await expect(page.locator("#gpsStatusRawSpeed")).toContainText(
+        "74.0 km/h",
+      );
       await expect(page.locator("#gpsStatusEffectiveSpeed")).toContainText(
         "72.0 km/h",
       );
@@ -557,7 +588,12 @@ async function main() {
     browser = await launchChromiumBrowser();
 
     for (const entry of CAPTURES) {
-      await captureScenario(browser, entry.label, entry.fileName, entry.capture);
+      await captureScenario(
+        browser,
+        entry.label,
+        entry.fileName,
+        entry.capture,
+      );
     }
   } finally {
     if (browser) {

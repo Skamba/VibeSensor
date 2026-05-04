@@ -1,4 +1,3 @@
-
 export const wikiCarsPayload = {
   active_car_id: "car-bmw-330d",
   cars: [
@@ -156,7 +155,7 @@ export const wikiHistoryRuns = [
   },
 ];
 
-export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>> = {
+export const wikiHistoryInsightsByRunId = {
   "run-bmw-front-right-balance": {
     run_id: "run-bmw-front-right-balance",
     status: "complete",
@@ -213,7 +212,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
       summary: "Good",
     },
     most_likely_origin: {
-      explanation: "Wheel-order energy and location dominance agree on the front-right corner.",
+      explanation:
+        "Wheel-order energy and location dominance agree on the front-right corner.",
       location: "Front-right wheel",
       speed_band: "60-90 km/h",
       suspected_source: "Front-right wheel imbalance",
@@ -224,7 +224,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
         confidence: 0.93,
         confidence_pct: "93%",
         confidence_tone: "success",
-        evidence_summary: "Strong repeatable wheel-order energy stays highest at the front-right wheel.",
+        evidence_summary:
+          "Strong repeatable wheel-order energy stays highest at the front-right wheel.",
         finding_id: "finding-bmw-1",
         frequency_hz_or_order: "1x wheel",
         strongest_location: "Front-right wheel",
@@ -277,8 +278,18 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
     raw_sample_rate_hz: 800,
     run_noise_baseline_db: 7.9,
     run_suitability: [],
-    sensor_locations: ["Front Left Wheel", "Front Right Wheel", "Rear Left Wheel", "Rear Right Wheel"],
-    sensor_locations_connected_throughout: ["Front Left Wheel", "Front Right Wheel", "Rear Left Wheel", "Rear Right Wheel"],
+    sensor_locations: [
+      "Front Left Wheel",
+      "Front Right Wheel",
+      "Rear Left Wheel",
+      "Rear Right Wheel",
+    ],
+    sensor_locations_connected_throughout: [
+      "Front Left Wheel",
+      "Front Right Wheel",
+      "Rear Left Wheel",
+      "Rear Right Wheel",
+    ],
     speed_breakdown: [],
     speed_breakdown_skipped_reason: null,
     speed_stats: {
@@ -299,7 +310,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
       summary: "Good",
     },
     most_likely_origin: {
-      explanation: "Driveshaft-order content rises together through the tunnel and rear floor locations.",
+      explanation:
+        "Driveshaft-order content rises together through the tunnel and rear floor locations.",
       location: "Driveshaft tunnel",
       speed_band: "70-100 km/h",
       suspected_source: "Driveshaft rumble",
@@ -310,7 +322,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
         confidence: 0.86,
         confidence_pct: "86%",
         confidence_tone: "success",
-        evidence_summary: "Repeated driveline-order energy peaks around the tunnel and rear floor.",
+        evidence_summary:
+          "Repeated driveline-order energy peaks around the tunnel and rear floor.",
         finding_id: "finding-volvo-1",
         frequency_hz_or_order: "1x driveshaft",
         strongest_location: "Driveshaft tunnel",
@@ -355,7 +368,11 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
     run_noise_baseline_db: 8.1,
     run_suitability: [],
     sensor_locations: ["Engine Bay", "Front Left Wheel", "Front Right Wheel"],
-    sensor_locations_connected_throughout: ["Engine Bay", "Front Left Wheel", "Front Right Wheel"],
+    sensor_locations_connected_throughout: [
+      "Engine Bay",
+      "Front Left Wheel",
+      "Front Right Wheel",
+    ],
     speed_breakdown: [],
     speed_breakdown_skipped_reason: null,
     speed_stats: {
@@ -376,7 +393,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
       summary: "Good",
     },
     most_likely_origin: {
-      explanation: "Engine-order harmonics stay strongest at the engine bay and rise with RPM.",
+      explanation:
+        "Engine-order harmonics stay strongest at the engine bay and rise with RPM.",
       location: "Engine bay",
       speed_band: "50-80 km/h",
       suspected_source: "Engine harmonic resonance",
@@ -387,7 +405,8 @@ export const wikiHistoryInsightsByRunId: Record<string, Record<string, unknown>>
         confidence: 0.81,
         confidence_pct: "81%",
         confidence_tone: "success",
-        evidence_summary: "Engine-order energy dominates the engine-bay sensor and tracks RPM changes.",
+        evidence_summary:
+          "Engine-order energy dominates the engine-bay sensor and tracks RPM changes.",
         finding_id: "finding-mx5-1",
         frequency_hz_or_order: "1x engine",
         strongest_location: "Engine bay",
@@ -417,8 +436,8 @@ const wikiFrequencyAxis = Array.from(
   (_, index) => (index / wikiFrequencyBinCount) * 250,
 );
 
-function buildBaseNoise(): number[] {
-  const noise: number[] = [];
+function buildBaseNoise() {
+  const noise = [];
   let seed = 84;
   for (let index = 0; index < wikiFrequencyBinCount; index += 1) {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
@@ -427,11 +446,12 @@ function buildBaseNoise(): number[] {
   return noise;
 }
 
-function buildSpectrum(baseNoise: number[], peakHz: number, peakAmp: number): number[] {
+function buildSpectrum(baseNoise, peakHz, peakAmp) {
   return wikiFrequencyAxis.map((hz, index) => {
     const base = baseNoise[index % baseNoise.length] ?? 0.001;
     const distance = Math.abs(hz - peakHz);
-    const peak = distance < 8 ? peakAmp * Math.exp(-(distance * distance) / 18) : 0;
+    const peak =
+      distance < 8 ? peakAmp * Math.exp(-(distance * distance) / 18) : 0;
     return base + peak;
   });
 }
@@ -496,7 +516,11 @@ const wikiSpectra = Object.fromEntries(
     sensor.id,
     {
       freq: wikiFrequencyAxis,
-      combined_spectrum_amp_g: buildSpectrum(wikiBaseNoise, sensor.peakHz, sensor.peakAmp),
+      combined_spectrum_amp_g: buildSpectrum(
+        wikiBaseNoise,
+        sensor.peakHz,
+        sensor.peakAmp,
+      ),
       strength_metrics: {
         vibration_strength_db: sensor.strengthDb,
         peak_amp_g: sensor.peakAmp,

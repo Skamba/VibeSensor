@@ -6,7 +6,10 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { launchChromiumBrowser, startPreviewServer } from "./playwright-preview-helpers.mjs";
+import {
+  launchChromiumBrowser,
+  startPreviewServer,
+} from "./playwright-preview-helpers.mjs";
 
 const CHROME_EXEC =
   "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
@@ -34,7 +37,10 @@ async function main() {
   let browser;
 
   try {
-    server = await startPreviewServer(cwd, { port: SERVER_PORT, timeoutMs: SERVER_TIMEOUT_MS });
+    server = await startPreviewServer(cwd, {
+      port: SERVER_PORT,
+      timeoutMs: SERVER_TIMEOUT_MS,
+    });
     console.log("Preview server up on port", SERVER_PORT);
 
     browser = await launchChromiumBrowser({ executablePath: CHROME_EXEC });
@@ -47,11 +53,12 @@ async function main() {
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
         timeout: PAGE_TIMEOUT_MS,
       });
-      await page.waitForSelector(".car-map-dot--visible", {
-        timeout: PAGE_TIMEOUT_MS,
-      });
       await page.waitForFunction(
-        () => document.querySelector(".log-row .log-time") !== null,
+        () => {
+          const connected = document.querySelector("#liveConnectedSensors [data-value]");
+          const activeCar = document.querySelector("#liveActiveCar [data-value]");
+          return Boolean(connected?.textContent?.trim() && activeCar?.textContent?.trim());
+        },
         { timeout: PAGE_TIMEOUT_MS },
       );
       const buf = await page.screenshot({
@@ -70,7 +77,7 @@ async function main() {
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, {
         timeout: PAGE_TIMEOUT_MS,
       });
-      await page.click('[data-view="settingsView"]');
+      await page.click("#tab-settings");
       await page.click('[data-settings-tab="analysisTab"]');
       await page.waitForSelector("#analysisTab.active", { timeout: 8_000 });
       const buf = await page.screenshot({
