@@ -41,8 +41,13 @@ Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `apps/server/vibesensor/vibration_strength.py`; canonical windowing,
 frequency-bin, and peak-detection steps live in
 `apps/server/vibesensor/shared/fft_analysis.py`; and live snapshot/metric
-coordination stays under `apps/server/vibesensor/infra/processing/`. The same
-persisted peak/floor outputs are then reused by diagnostics/reporting.
+coordination stays under `apps/server/vibesensor/infra/processing/`. Live
+metrics use the `live_display` processing profile and a three-sample median
+filter for operator-friendly display. Post-stop raw replay and dense whole-run
+spectra use `diagnostic_raw` when raw capture is available; summary-only
+fallbacks are marked `diagnostic_filtered`. Persisted analysis metadata records
+the active profile, filter chains, and whether raw diagnostic evidence was
+preserved.
 
 Full-run dense analysis stages use
 `use_cases/diagnostics/post_run_raw_windows.py` as the raw waveform access
@@ -105,9 +110,9 @@ source hypotheses by match ratio, reference completeness, persistence, and
 strength, then emits compact dense findings. Each finding carries the likely
 origin, alternative hypotheses, confidence score/label, evidence windows, and
 caveats for ambiguity, missing references, quality penalties, short/transient
-events, conflicting multi-sensor evidence, or strong unmatched resonance. The DTO can project back to the existing
-domain `Finding` shape for report/history compatibility without persisting dense
-spectra.
+events, conflicting multi-sensor evidence, or strong unmatched resonance. The DTO
+can project back to the existing domain `Finding` shape for report/history
+compatibility without persisting dense spectra.
 
 ## Related deep dives
 

@@ -100,6 +100,58 @@ def _raw_capture(run_id: str, *, sample_rate_hz: int = 800, wave_hz: float = 50.
     )
 
 
+def _transient_raw_capture(run_id: str, *, sample_rate_hz: int = 800) -> RawRunCapture:
+    fft_n = 64
+    samples_i16 = np.zeros((fft_n, 3), dtype=np.int16)
+    samples_i16[(fft_n // 2) - 1, 0] = 1000
+    samples_i16[fft_n // 2, 0] = -1000
+    sensor_manifest = RawCaptureSensorManifest(
+        client_id="sensor-a",
+        sample_rate_hz=sample_rate_hz,
+        data_file="sensor-a.raw.i16le",
+        index_file="sensor-a.index.jsonl",
+        sample_count=fft_n,
+        chunk_count=1,
+        bytes_written=int(samples_i16.nbytes),
+        first_t0_us=1,
+        last_t0_us=1,
+        clock_sync=RawCaptureSensorClockSync(
+            clock_domain="server_monotonic",
+            proof_state="verified",
+            observed_monotonic_us=1_010_000,
+            last_sync_monotonic_us=1_009_000,
+            sync_offset_us=5_000,
+            sync_rtt_us=4_000,
+        ),
+    )
+    manifest = RawCaptureManifest(
+        run_id=run_id,
+        relative_dir=f"raw-runs/{run_id}",
+        sensors=(sensor_manifest,),
+        total_samples=fft_n,
+        total_bytes=int(samples_i16.nbytes),
+        created_at="2025-01-01T00:00:01Z",
+        run_start_monotonic_us=1_000_000,
+    )
+    return RawRunCapture(
+        manifest=manifest,
+        sensors=(
+            RawCaptureSensorData(
+                manifest=sensor_manifest,
+                samples_i16=samples_i16,
+                chunks=(
+                    RawCaptureChunkIndex(
+                        sample_start=0,
+                        sample_count=fft_n,
+                        t0_us=1_000_000,
+                        byte_offset=0,
+                    ),
+                ),
+            ),
+        ),
+    )
+
+
 def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None:
     loaded = LoadedPostAnalysisRun(
         run_id="run-raw",
@@ -131,6 +183,35 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
     assert rebuilt.dominant_freq_hz is not None
     assert 30.0 <= rebuilt.dominant_freq_hz <= 70.0
     assert rebuilt.top_peaks
+
+
+def test_build_post_analysis_input_preserves_raw_transient_spike() -> None:
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-transient",
+        metadata=_metadata("run-transient"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 64 / 800,
+                    "sample_rate_hz": 800,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=_transient_raw_capture("run-transient"),
+        total_summary_row_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    rebuilt = result.diagnostics_run.samples[0]
+    assert result.raw_backed_summary_row_count == 1
+    assert rebuilt.top_peaks
+    assert rebuilt.dominant_freq_hz is not None
 
 
 def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> None:

@@ -185,12 +185,22 @@
     },
     "CombinedMetrics": {
       "properties": {
+        "filter_chain": {
+          "items": {
+            "$ref": "#/$defs/ProcessingFilterId"
+          },
+          "title": "Filter Chain",
+          "type": "array"
+        },
         "peaks": {
           "items": {
             "$ref": "#/$defs/StrengthPeak"
           },
           "title": "Peaks",
           "type": "array"
+        },
+        "processing_profile": {
+          "$ref": "#/$defs/ProcessingProfile"
         },
         "strength_metrics": {
           "$ref": "#/$defs/VibrationStrengthMetrics"
@@ -255,6 +265,18 @@
       ],
       "title": "OrderBandPayload",
       "type": "object"
+    },
+    "ProcessingFilterId": {
+      "const": "median_3_sample_time_domain",
+      "type": "string"
+    },
+    "ProcessingProfile": {
+      "enum": [
+        "live_display",
+        "diagnostic_raw",
+        "diagnostic_filtered"
+      ],
+      "type": "string"
     },
     "RotationalSpeedValuePayload": {
       "properties": {

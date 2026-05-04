@@ -13,7 +13,7 @@ from typing import cast
 import numpy as np
 
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list, medfilt3
+from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
     assemble_raw_window_samples,
@@ -619,7 +619,7 @@ def _compute_window_spectrum(
     window_f32 = samples_i16.astype(np.float32, copy=True)
     if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
         window_f32 *= np.float32(accel_scale_g_per_lsb)
-    axes_by_time = medfilt3(window_f32.T)
+    axes_by_time = window_f32.T
     detrended = axes_by_time - np.mean(axes_by_time, axis=1, keepdims=True)
     fft_result = fft_computer.compute_fft_spectrum(
         detrended,

@@ -13,6 +13,10 @@ from vibesensor.infra.processing.models import (
 )
 from vibesensor.shared.fft_analysis import AXES, SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.types.payload_types import AxisMetrics, ClientMetrics
+from vibesensor.shared.types.processing_profile import (
+    PROCESSING_FILTER_MEDIAN_3_SAMPLE,
+    PROCESSING_PROFILE_LIVE_DISPLAY,
+)
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 
@@ -76,6 +80,8 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
             "vib_mag_rms": vib_mag_rms,
             "vib_mag_p2p": vib_mag_p2p,
             "peaks": [],
+            "processing_profile": PROCESSING_PROFILE_LIVE_DISPLAY,
+            "filter_chain": [PROCESSING_FILTER_MEDIAN_3_SAMPLE],
         }
 
         spectrum_by_axis: SpectrumByAxis = {}

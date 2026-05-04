@@ -7,7 +7,7 @@ import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
+from vibesensor.shared.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
@@ -162,7 +162,7 @@ def _shared_strength_metrics(window_i16: np.ndarray) -> dict[str, object]:
         spectrum_max_hz=200.0,
     )
     return computer.compute_fft_spectrum(
-        medfilt3(window_f32.T),
+        window_f32.T,
         _SAMPLE_RATE_HZ,
         spike_filter_enabled=False,
     )["strength_metrics"]
