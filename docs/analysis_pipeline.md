@@ -44,6 +44,17 @@ frequency-bin, and peak-detection steps live in
 coordination stays under `apps/server/vibesensor/infra/processing/`. The same
 persisted peak/floor outputs are then reused by diagnostics/reporting.
 
+Full-run dense analysis stages use
+`use_cases/diagnostics/post_run_raw_windows.py` as the raw waveform access
+boundary. It prepares a manifest-backed, deterministic window graph from run
+metadata and raw-capture manifests, then reads each sensor/window through the
+history raw range-read API. That keeps long runs streaming: downstream dense
+stages consume bounded axis arrays per window instead of materializing the full
+raw artifact bundle. Each emitted sensor window carries run ID, sensor ID,
+location snapshot, start/end timing, sample rate, x/y/z `int16` arrays, and
+data-quality flags such as partial windows, timestamp gaps, missing samples,
+low sample count, invalid axis data, sample-rate mismatch, and missing sidecars.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -121,6 +132,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `_reference_resolution.py` | ~80 | Engine/tire/reference resolution helpers reused by order analysis |
 | `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
+| `post_run_raw_windows.py` | ~300 | Manifest-aware streaming raw waveform reader and configurable overlapping-window iterator for dense post-run stages |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |

@@ -13,6 +13,10 @@ one big state-machine class:
   artifact finalization for the active run.
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
+- `post_run_raw_windows.py` owns post-stop raw artifact window access for dense
+  diagnostics. It reads finalized raw sidecars by bounded ranges and emits
+  structured window warnings instead of reusing live buffers or loading full
+  runs into memory.
 - `CaptureReadinessTracker` owns the backend pre-record readiness checklist for
   idle/live states.
 - `RunRecorder` coordinates those helpers without re-owning their internals.

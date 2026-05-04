@@ -55,6 +55,10 @@ does not track implementation status or old branch plans.
   `RunPersistence.aload_raw_capture_sensor_range(...)`, but there is still no
   canonical offline executor that walks the full run as a deterministic window
   graph.
+- POSTRUN-01 adds that diagnostics-layer access boundary in
+  `apps/server/vibesensor/use_cases/diagnostics/post_run_raw_windows.py`: it
+  validates raw manifests, derives configurable overlapping windows, filters
+  sensors, and streams each window through range reads with structured warnings.
 
 ### Persisted analysis and reporting
 
@@ -110,7 +114,7 @@ raw capture manifest/files (#3065)
 | Layer | Owner area | Responsibility |
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
-| Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata |
+| Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `post_run_raw_windows.py` owns raw-window iteration for dense stages |
 | Whole-run spectra | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
