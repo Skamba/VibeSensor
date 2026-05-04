@@ -156,7 +156,7 @@ export function CarsWizardPanel(props: {
               <div class="subtle">
                 {t(
                   "settings.car.wizard_intro",
-                  "Use the library when it fits, or branch into manual specs without losing your place.",
+                  "Use the library when it fits, or switch to manual specs without losing your place.",
                 )}
               </div>
               <div id="wizardProgressText" class="wizard-progress-text">

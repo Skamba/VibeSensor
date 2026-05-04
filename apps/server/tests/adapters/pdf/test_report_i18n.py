@@ -225,9 +225,9 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["settings.esp_flash.hint"].startswith("Compileer en flash de firmware")
     assert "wachten op" in ui["spectrum.stale"]
     assert "geen snelheid beschikbaar" in ui["dashboard.rotational.reason.speed_unavailable"]
-    assert ui["history.loading_preview"] == "Voorvertoning laden..."
-    assert "Voorvertoning" in ui["history.preview_unavailable"]
-    assert "Voorvertoning" in ui["history.preview_heatmap_title"]
+    assert ui["history.loading_preview"] == "Voorbeeld laden..."
+    assert "Voorbeeld" in ui["history.preview_unavailable"]
+    assert "Voorbeeld" in ui["history.preview_heatmap_title"]
     assert ui["matrix.source.wheel"] == "Wiel/band"
     assert ui["matrix.source.other"] == "Overig / Weg"
     default_nl = [entry[2] for entry in _DEFAULT_PARTS]
@@ -287,7 +287,7 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["dashboard.logging.run_id"] == "Meetrun-ID: {runId}"
     assert ui["dashboard.logging.last_run_id"] == "Laatste meetrun: {runId}"
     assert ui["history.preview_unavailable"] == (
-        "Voorvertoning is niet beschikbaar voor deze meetrun."
+        "Voorbeeld is niet beschikbaar voor deze meetrun."
     )
     assert ui["report.run_id"] == "Meetrun-ID"
     assert ui["settings.update.log_intro"].endswith("meest recente uitvoering.")

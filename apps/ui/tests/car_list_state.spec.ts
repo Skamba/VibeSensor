@@ -55,7 +55,7 @@ const labels: Record<string, string> = {
   "settings.car.confidence.unverified": "unverified",
   "settings.car.confidence.user_confirmed": "user confirmed",
   "settings.car.confidence.review_detail":
-    "Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Review or override these values in Analysis before trusting driveshaft or engine-order results.",
   "settings.car.created_title": "Car added",
   "settings.car.created_body": "{name} was added and selected for this setup.",
   "settings.car.created_detail":
@@ -243,7 +243,7 @@ test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance f
   }
   expect(model.rows[0]).toMatchObject({
     completionDetailText:
-      "Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
+      "Drive family default · Top gear family default · Transmission family default. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
     isComplete: true,
     readinessState: "ready",
   });
