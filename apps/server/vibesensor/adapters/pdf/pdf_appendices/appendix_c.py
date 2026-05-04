@@ -131,16 +131,7 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         measurement_y,
         width,
         measurement_h,
-        _tr(
-            plan.lang,
-            "REPORT_DENSE_EVIDENCE_TITLE"
-            if appendix.dense_evidence_rows
-            else (
-                "REPORT_SUPPORTING_WINDOWS_TITLE"
-                if appendix.proof_window_rows
-                else "REPORT_SUPPORTING_MEASUREMENTS_TITLE"
-            ),
-        ),
+        _measurement_panel_title(appendix, lang=plan.lang),
     )
     measurement_source_values = {
         row.source_name for row in appendix.measurement_rows if row.source_name
@@ -185,144 +176,18 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             )
             - 0.8 * mm
         )
-    if appendix.dense_evidence_rows:
-        measurement_top = (
-            _draw_text(
-                c,
-                MARGIN + 4 * mm,
-                measurement_top,
-                width - 8 * mm,
-                _tr(plan.lang, "REPORT_DENSE_EVIDENCE_GUIDE"),
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=2,
-            )
-            - 0.8 * mm
-        )
-        measurement_top = (
-            _draw_dense_evidence_charts(
-                c,
-                x=MARGIN + 4 * mm,
-                y=measurement_top,
-                w=width - 8 * mm,
-                rows=appendix.dense_evidence_rows,
-                lang=plan.lang,
-            )
-            - 1.0 * mm
-        )
-    elif appendix.measurement_guide:
-        measurement_top = (
-            _draw_text(
-                c,
-                MARGIN + 4 * mm,
-                measurement_top,
-                width - 8 * mm,
-                appendix.measurement_guide,
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=2,
-            )
-            - 0.8 * mm
-        )
-    if appendix.dense_evidence_rows:
-        measurement_headers = [
-            _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
-            _tr(plan.lang, "ORDER_LABEL"),
-            _tr(plan.lang, "CONFIDENCE_LABEL"),
-            _tr(plan.lang, "REPORT_DENSE_EVIDENCE_SUPPORT_COLUMN"),
-            _tr(plan.lang, "FREQUENCY_HZ"),
-            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
-            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
-            _tr(plan.lang, "REPORT_DENSE_EVIDENCE_CAVEAT_COLUMN"),
-        ]
-        measurement_rows = [
-            [
-                row.source_name,
-                row.order_label,
-                row.confidence_label,
-                row.support,
-                row.frequency_band,
-                _fmt_db(row.peak_db),
-                human_location(row.strongest_location, lang=plan.lang)
-                if row.strongest_location
-                else _tr(plan.lang, "UNKNOWN"),
-                row.caveat or "—",
-            ]
-            for row in appendix.dense_evidence_rows
-        ]
-        measurement_widths = [0.12, 0.13, 0.13, 0.14, 0.13, 0.09, 0.12, 0.14]
-    elif appendix.proof_window_rows:
-        speed_unit = "km/u" if plan.lang == "nl" else "km/h"
-        measurement_headers = [
-            _tr(plan.lang, "REPORT_WINDOW_ID_COLUMN"),
-            _tr(plan.lang, "REPORT_TIME_COLUMN"),
-            _tr(plan.lang, "REPORT_SPEED_COLUMN"),
-            _tr(plan.lang, "FREQUENCY_HZ"),
-            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
-            _tr(plan.lang, "REPORT_PHASE_COLUMN"),
-        ]
-        measurement_rows = [
-            [
-                row.window_id,
-                f"{row.time_s:.1f} s" if row.time_s is not None else _tr(plan.lang, "UNKNOWN"),
-                (
-                    f"{row.speed_kmh:.0f} {speed_unit}"
-                    if row.speed_kmh is not None
-                    else _tr(plan.lang, "UNKNOWN")
-                ),
-                _fmt_hz(row.matched_hz),
-                human_location(row.dominant_location, lang=plan.lang)
-                if row.dominant_location
-                else _tr(plan.lang, "UNKNOWN"),
-                row.phase or _tr(plan.lang, "UNKNOWN"),
-            ]
-            for row in appendix.proof_window_rows
-        ]
-        measurement_widths = [0.11, 0.14, 0.16, 0.18, 0.20, 0.21]
-    elif shared_measurement_context:
-        measurement_headers = [
-            _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
-            _tr(plan.lang, "FREQUENCY_HZ"),
-            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
-            _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
-        ]
-        measurement_rows = [
-            [
-                row.measurement_id,
-                _fmt_hz(row.frequency_hz),
-                _fmt_db(row.peak_db),
-                _fmt_db(row.strength_db),
-            ]
-            for row in appendix.measurement_rows
-        ]
-        measurement_widths = [0.18, 0.22, 0.30, 0.30]
-    else:
-        measurement_headers = [
-            _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
-            _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
-            _tr(plan.lang, "REPORT_SIGNAL_COLUMN"),
-            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
-            _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
-            _tr(plan.lang, "REPORT_SPEED_WINDOW_COLUMN"),
-            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
-        ]
-        measurement_rows = [
-            [
-                row.measurement_id,
-                row.source_name,
-                row.signal_label,
-                _fmt_db(row.peak_db),
-                _fmt_db(row.strength_db),
-                row.speed_window or _tr(plan.lang, "UNKNOWN"),
-                human_location(row.dominant_location, lang=plan.lang)
-                if row.dominant_location
-                else _tr(plan.lang, "UNKNOWN"),
-            ]
-            for row in appendix.measurement_rows
-        ]
-        measurement_widths = [0.10, 0.16, 0.18, 0.10, 0.10, 0.17, 0.19]
+    measurement_top = _draw_measurement_panel_guide(
+        c,
+        plan=plan,
+        appendix=appendix,
+        y=measurement_top,
+        width=width,
+    )
+    measurement_headers, measurement_rows, measurement_widths = _measurement_table_content(
+        plan,
+        appendix=appendix,
+        shared_measurement_context=shared_measurement_context,
+    )
     _draw_table(
         c,
         x=MARGIN + 4 * mm,
@@ -590,6 +455,202 @@ def _draw_context_overflow_note(
         )
         - 0.8 * mm
     )
+
+
+def _measurement_panel_title(appendix: AppendixCData, *, lang: str) -> str:
+    if appendix.dense_evidence_rows:
+        return _tr(lang, "REPORT_DENSE_EVIDENCE_TITLE")
+    if appendix.proof_window_rows:
+        return _tr(lang, "REPORT_SUPPORTING_WINDOWS_TITLE")
+    return _tr(lang, "REPORT_SUPPORTING_MEASUREMENTS_TITLE")
+
+
+def _draw_measurement_panel_guide(
+    c: Canvas,
+    *,
+    plan: AppendixCRenderPlan,
+    appendix: AppendixCData,
+    y: float,
+    width: float,
+) -> float:
+    if appendix.dense_evidence_rows:
+        top = (
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                y,
+                width - 8 * mm,
+                _tr(plan.lang, "REPORT_DENSE_EVIDENCE_GUIDE"),
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            )
+            - 0.8 * mm
+        )
+        return float(
+            _draw_dense_evidence_charts(
+                c,
+                x=MARGIN + 4 * mm,
+                y=top,
+                w=width - 8 * mm,
+                rows=appendix.dense_evidence_rows,
+                lang=plan.lang,
+            )
+            - 1.0 * mm
+        )
+    if appendix.measurement_guide:
+        return float(
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                y,
+                width - 8 * mm,
+                appendix.measurement_guide,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            )
+            - 0.8 * mm
+        )
+    return y
+
+
+def _measurement_table_content(
+    plan: AppendixCRenderPlan,
+    *,
+    appendix: AppendixCData,
+    shared_measurement_context: bool,
+) -> tuple[list[str], list[list[str]], list[float]]:
+    if appendix.dense_evidence_rows:
+        return _dense_measurement_table_content(plan, appendix=appendix)
+    if appendix.proof_window_rows:
+        return _proof_window_table_content(plan, appendix=appendix)
+    if shared_measurement_context:
+        return _shared_measurement_table_content(plan, appendix=appendix)
+    return _measurement_table_with_context_content(plan, appendix=appendix)
+
+
+def _dense_measurement_table_content(
+    plan: AppendixCRenderPlan,
+    *,
+    appendix: AppendixCData,
+) -> tuple[list[str], list[list[str]], list[float]]:
+    headers = [
+        _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
+        _tr(plan.lang, "ORDER_LABEL"),
+        _tr(plan.lang, "CONFIDENCE_LABEL"),
+        _tr(plan.lang, "REPORT_DENSE_EVIDENCE_SUPPORT_COLUMN"),
+        _tr(plan.lang, "FREQUENCY_HZ"),
+        _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+        _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+        _tr(plan.lang, "REPORT_DENSE_EVIDENCE_CAVEAT_COLUMN"),
+    ]
+    rows = [
+        [
+            row.source_name,
+            row.order_label,
+            row.confidence_label,
+            row.support,
+            row.frequency_band,
+            _fmt_db(row.peak_db),
+            human_location(row.strongest_location, lang=plan.lang)
+            if row.strongest_location
+            else _tr(plan.lang, "UNKNOWN"),
+            row.caveat or "—",
+        ]
+        for row in appendix.dense_evidence_rows
+    ]
+    return headers, rows, [0.12, 0.13, 0.13, 0.14, 0.13, 0.09, 0.12, 0.14]
+
+
+def _proof_window_table_content(
+    plan: AppendixCRenderPlan,
+    *,
+    appendix: AppendixCData,
+) -> tuple[list[str], list[list[str]], list[float]]:
+    speed_unit = "km/u" if plan.lang == "nl" else "km/h"
+    headers = [
+        _tr(plan.lang, "REPORT_WINDOW_ID_COLUMN"),
+        _tr(plan.lang, "REPORT_TIME_COLUMN"),
+        _tr(plan.lang, "REPORT_SPEED_COLUMN"),
+        _tr(plan.lang, "FREQUENCY_HZ"),
+        _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+        _tr(plan.lang, "REPORT_PHASE_COLUMN"),
+    ]
+    rows = [
+        [
+            row.window_id,
+            f"{row.time_s:.1f} s" if row.time_s is not None else _tr(plan.lang, "UNKNOWN"),
+            (
+                f"{row.speed_kmh:.0f} {speed_unit}"
+                if row.speed_kmh is not None
+                else _tr(plan.lang, "UNKNOWN")
+            ),
+            _fmt_hz(row.matched_hz),
+            human_location(row.dominant_location, lang=plan.lang)
+            if row.dominant_location
+            else _tr(plan.lang, "UNKNOWN"),
+            row.phase or _tr(plan.lang, "UNKNOWN"),
+        ]
+        for row in appendix.proof_window_rows
+    ]
+    return headers, rows, [0.11, 0.14, 0.16, 0.18, 0.20, 0.21]
+
+
+def _shared_measurement_table_content(
+    plan: AppendixCRenderPlan,
+    *,
+    appendix: AppendixCData,
+) -> tuple[list[str], list[list[str]], list[float]]:
+    headers = [
+        _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
+        _tr(plan.lang, "FREQUENCY_HZ"),
+        _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+        _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
+    ]
+    rows = [
+        [
+            row.measurement_id,
+            _fmt_hz(row.frequency_hz),
+            _fmt_db(row.peak_db),
+            _fmt_db(row.strength_db),
+        ]
+        for row in appendix.measurement_rows
+    ]
+    return headers, rows, [0.18, 0.22, 0.30, 0.30]
+
+
+def _measurement_table_with_context_content(
+    plan: AppendixCRenderPlan,
+    *,
+    appendix: AppendixCData,
+) -> tuple[list[str], list[list[str]], list[float]]:
+    headers = [
+        _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
+        _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
+        _tr(plan.lang, "REPORT_SIGNAL_COLUMN"),
+        _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+        _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
+        _tr(plan.lang, "REPORT_SPEED_WINDOW_COLUMN"),
+        _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+    ]
+    rows = [
+        [
+            row.measurement_id,
+            row.source_name,
+            row.signal_label,
+            _fmt_db(row.peak_db),
+            _fmt_db(row.strength_db),
+            row.speed_window or _tr(plan.lang, "UNKNOWN"),
+            human_location(row.dominant_location, lang=plan.lang)
+            if row.dominant_location
+            else _tr(plan.lang, "UNKNOWN"),
+        ]
+        for row in appendix.measurement_rows
+    ]
+    return headers, rows, [0.10, 0.16, 0.18, 0.10, 0.10, 0.17, 0.19]
 
 
 def _evidence_chain_panel_height(appendix: AppendixCData) -> float:
