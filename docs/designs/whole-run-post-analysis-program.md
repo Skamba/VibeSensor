@@ -85,6 +85,16 @@ does not track implementation status or old branch plans.
   deterministic grouping of POSTRUN-03 feature peaks into sustained vibration
   episodes, with explicit transient-spike handling, dropout/drift/noise quality
   penalties, and debug rows for inspection.
+- POSTRUN-07 adds
+  `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py`:
+  deterministic classification of dense episodes against POSTRUN-05 order bands.
+  It ranks wheel, driveshaft, and engine hypotheses by per-window band matches,
+  reference completeness, persistence, and strength; preserves strong unmatched
+  episodes as unknown resonance; records caveats for ambiguity, missing
+  references, poor quality, short duration, transients, and conflicting
+  multi-sensor evidence; and maps compact
+  dense findings back into the existing domain `Finding` contract for
+  report/history compatibility.
 
 ### Persisted analysis and reporting
 
@@ -145,7 +155,7 @@ raw capture manifest/files (#3065)
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments; `post_run_vehicle_reference.py` owns the conservative vehicle-reference timeline for dense stages |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability; `post_run_order_bands.py` owns the pre-classification per-window expected band grid |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
-| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts |
+| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts; `post_run_dense_findings.py` owns the first compact episode/order fusion DTO and compatibility projection |
 
 ## Early design decisions
 

@@ -98,6 +98,17 @@ supporting window IDs, affected sensors, and explainable quality penalties for
 dropout gaps, broad drift, noisy feature flags, short duration, and transient
 extremes.
 
+`use_cases/diagnostics/post_run_dense_findings.py` fuses POSTRUN-06 episodes with
+POSTRUN-05 order bands. It compares each episode frequency path against the
+available wheel, driveshaft, and engine bands for the same `window_index`, ranks
+source hypotheses by match ratio, reference completeness, persistence, and
+strength, then emits compact dense findings. Each finding carries the likely
+origin, alternative hypotheses, confidence score/label, evidence windows, and
+caveats for ambiguity, missing references, quality penalties, short/transient
+events, conflicting multi-sensor evidence, or strong unmatched resonance. The DTO can project back to the existing
+domain `Finding` shape for report/history compatibility without persisting dense
+spectra.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -181,6 +192,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `post_run_vehicle_reference.py` | ~350 | Per-window vehicle speed/RPM/gear/final-drive reference normalization for dense order stages |
 | `post_run_order_bands.py` | ~400 | Per-window wheel/driveshaft/engine order-band generation over POSTRUN-04 vehicle references |
 | `post_run_vibration_episodes.py` | ~450 | Deterministic grouping of dense window peaks into persistent or intentional transient vibration episodes |
+| `post_run_dense_findings.py` | ~500 | Dense episode classification into likely origins, alternatives, confidence, caveats, evidence windows, and domain-finding compatibility |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
