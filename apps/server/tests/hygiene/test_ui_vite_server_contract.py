@@ -9,8 +9,10 @@ from tests._paths import REPO_ROOT
 _UI_PACKAGE_JSON = REPO_ROOT / "apps" / "ui" / "package.json"
 _VITE_CONFIG = REPO_ROOT / "apps" / "ui" / "vite.config.ts"
 _SMOKE_CONFIG = REPO_ROOT / "apps" / "ui" / "playwright.smoke.config.ts"
+_PREVIEW_HELPER = REPO_ROOT / "apps" / "ui" / "playwright-preview-helpers.mjs"
 _SCREENSHOT_SCRIPT = REPO_ROOT / "apps" / "ui" / "take-screenshot.mjs"
 _SNAPSHOT_UPDATE_SCRIPT = REPO_ROOT / "apps" / "ui" / "update-snapshots.mjs"
+_WIKI_SCREENSHOT_SCRIPT = REPO_ROOT / "apps" / "ui" / "update-wiki-screenshots.mjs"
 
 
 def _package_scripts() -> dict[str, str]:
@@ -40,5 +42,15 @@ def test_ui_smoke_webserver_fails_fast_on_port_conflicts() -> None:
 
 
 def test_ui_preview_helpers_fail_fast_on_port_conflicts() -> None:
-    assert "--strictPort" in _SCREENSHOT_SCRIPT.read_text()
-    assert "--strictPort" in _SNAPSHOT_UPDATE_SCRIPT.read_text()
+    helper_text = _PREVIEW_HELPER.read_text()
+
+    assert "--strictPort" in helper_text
+    assert "./playwright-preview-helpers.mjs" in _SCREENSHOT_SCRIPT.read_text()
+    assert "./playwright-preview-helpers.mjs" in _SNAPSHOT_UPDATE_SCRIPT.read_text()
+    assert "./playwright-preview-helpers.mjs" in _WIKI_SCREENSHOT_SCRIPT.read_text()
+
+
+def test_ui_package_exposes_opt_in_wiki_screenshot_updater() -> None:
+    scripts = _package_scripts()
+
+    assert scripts["wiki:screenshots"] == "node update-wiki-screenshots.mjs"

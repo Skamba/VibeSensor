@@ -550,12 +550,26 @@ npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
 npm run test:visual:audit         # run wider multi-viewport audit on purpose
+npm run wiki:screenshots          # capture curated wiki screenshots (build dist first)
 ```
 
 Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
 payloads. The default lane stays on `laptop-light`; the audit command keeps the
 older multi-viewport sweep available when broader visual review is worth the
 cost. Both visual commands only run `tests/visual.spec.ts`.
+
+To refresh the curated GitHub wiki screenshots intentionally, build the preview
+bundle first, then capture the screenshots into the wiki bundle's `images/`
+directory before running the wiki seed generator:
+
+```bash
+cd apps/ui
+npm run build:prevalidated-contracts
+npx playwright install chromium   # first time only
+npm run wiki:screenshots -- /tmp/vibesensor-wiki/images
+cd ../..
+python3 tools/wiki/generate_wiki.py --output-dir /tmp/vibesensor-wiki
+```
 
 ## Signal-driven island tests
 

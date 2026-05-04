@@ -4,74 +4,25 @@
  * Usage: node take-screenshot.mjs [output-path]
  * Exits with code 1 on failure (timeout, no graph data, etc.)
  */
-import { chromium } from "@playwright/test";
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+import { launchChromiumBrowser, startPreviewServer } from "./playwright-preview-helpers.mjs";
 
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;
 const SERVER_TIMEOUT_MS = 20_000;
 const PAGE_TIMEOUT_MS = 15_000;
 
-async function startServer(cwd) {
-  return new Promise((resolve, reject) => {
-    const server = spawn(
-      "node",
-      [
-        "node_modules/.bin/vite",
-        "preview",
-        "--host",
-        "0.0.0.0",
-        "--strictPort",
-        "--port",
-        String(SERVER_PORT),
-      ],
-      { cwd, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    let started = false;
-    const timeout = setTimeout(() => {
-      if (!started) {
-        server.kill();
-        reject(new Error("Server start timeout"));
-      }
-    }, SERVER_TIMEOUT_MS);
-    server.stdout.on("data", (data) => {
-      if (!started && data.toString().includes(String(SERVER_PORT))) {
-        started = true;
-        clearTimeout(timeout);
-        setTimeout(() => resolve(server), 300);
-      }
-    });
-    server.on("error", reject);
-  });
-}
-
 async function main() {
   const cwd = fileURLToPath(new URL(".", import.meta.url));
   let server;
   let browser;
   try {
-    server = await startServer(cwd);
+    server = await startPreviewServer(cwd, { port: SERVER_PORT, timeoutMs: SERVER_TIMEOUT_MS });
     console.log("Preview server started on port", SERVER_PORT);
 
-    try {
-      browser = await chromium.launch({
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-        ],
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.toLowerCase().includes("executable doesn't exist")) {
-        throw new Error(
-          "Playwright browser not installed. Run: npx playwright install chromium",
-        );
-      }
-      throw error;
-    }
+    browser = await launchChromiumBrowser();
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1280, height: 800 });
 

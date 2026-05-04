@@ -2,11 +2,11 @@
  * Regenerates Playwright snapshot baselines using the available chromium binary.
  * Run with: node update-snapshots.mjs
  */
-import { chromium } from "@playwright/test";
-import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { launchChromiumBrowser, startPreviewServer } from "./playwright-preview-helpers.mjs";
 
 const CHROME_EXEC =
   "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
@@ -22,39 +22,6 @@ const VIEWPORT_CONFIGS = [
   ["tablet-dark", { width: 810, height: 1080 }, "dark"],
 ];
 
-async function startServer(cwd) {
-  return new Promise((resolve, reject) => {
-    const server = spawn(
-      "node",
-      [
-        "node_modules/.bin/vite",
-        "preview",
-        "--host",
-        "0.0.0.0",
-        "--strictPort",
-        "--port",
-        String(SERVER_PORT),
-      ],
-      { cwd, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    let started = false;
-    const timer = setTimeout(() => {
-      if (!started) {
-        server.kill();
-        reject(new Error("Server start timeout"));
-      }
-    }, SERVER_TIMEOUT_MS);
-    server.stdout.on("data", (d) => {
-      if (!started && d.toString().includes(String(SERVER_PORT))) {
-        started = true;
-        clearTimeout(timer);
-        setTimeout(() => resolve(server), 300);
-      }
-    });
-    server.on("error", reject);
-  });
-}
-
 function savePng(path, buf) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, buf);
@@ -67,17 +34,10 @@ async function main() {
   let browser;
 
   try {
-    server = await startServer(cwd);
+    server = await startPreviewServer(cwd, { port: SERVER_PORT, timeoutMs: SERVER_TIMEOUT_MS });
     console.log("Preview server up on port", SERVER_PORT);
 
-    browser = await chromium.launch({
-      executablePath: CHROME_EXEC,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
-    });
+    browser = await launchChromiumBrowser({ executablePath: CHROME_EXEC });
 
     // ----- Snapshot: live-view (laptop-light) -----
     console.log("\nCapturing live-view snapshots...");
