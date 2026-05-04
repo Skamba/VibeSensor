@@ -374,7 +374,7 @@ function WizardModelStep(props: {
         intro={(
           <>
             <strong class="wizard-branch-label">
-              {t("settings.car.manual_branch_title", "Manual specs branch")}
+              {t("settings.car.manual_branch_title", "Manual specs")}
             </strong>
             <div class="subtle wizard-branch-note">
               {t(
@@ -487,13 +487,13 @@ function WizardSpecsStep(props: {
       </div>
       <div class="wizard-branch-divider">
         <span>
-          {t("settings.car.branch_divider", "Or switch to the manual branch")}
+          {t("settings.car.branch_divider", "Or switch to manual specs")}
         </span>
       </div>
       <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
         <div class="wizard-branch-card__header">
           <strong class="wizard-branch-label">
-            {t("settings.car.manual_branch_title", "Manual specs branch")}
+            {t("settings.car.manual_branch_title", "Manual specs")}
           </strong>
           <div class="subtle wizard-custom-specs__note">
             {t(

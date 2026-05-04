@@ -228,7 +228,7 @@ test("keeps the manual branch deliberate while summarizing selections and activa
     "Library-matched specs",
   );
   await expect(page.locator(".wizard-branch-card--manual")).toContainText(
-    "Manual specs branch",
+    "Manual specs",
   );
   await expect(page.locator(".wizard-custom-specs__note")).toBeVisible();
   await expect(page.locator("#wizardGearboxList")).toContainText(

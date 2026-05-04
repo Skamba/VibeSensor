@@ -1740,7 +1740,7 @@
     "nl": "De voertuigstatuscontext was voor sommige trillingsvensters niet uitgelijnd"
   },
   "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_DETAIL": {
-    "en": "Vehicle speed or RPM context could not be aligned to some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
+    "en": "Vehicle speed or RPM context could not be aligned with some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
     "nl": "De voertuigsnelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijd-uitgelijnde ordecontext. Niet-uitgelijnde snelheidssamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_DETAIL": {
@@ -2016,7 +2016,7 @@
     "nl": "Een herhaalde meting scheidt een bronpad duidelijk genoeg om een stabiel eerste controlepunt te noemen."
   },
   "REPORT_PAGE1_FALSIFY_FALLBACK_GENERIC": {
-    "en": "If this check is clean, move to the fallback path named in the decision path.",
+    "en": "If this check is clean, move to the fallback option listed in the decision path.",
     "nl": "Als deze controle niets oplevert, volg dan het vervolgpad uit het beslispad."
   },
   "REPORT_PAGE1_FALSIFY_RECAPTURE_GENERIC": {
@@ -2149,7 +2149,7 @@
   },
   "REPORT_RECAPTURE_ISSUE_MIXED_LOCATION": {
     "en": "Location evidence stayed mixed between multiple positions instead of narrowing to one inspect-first area.",
-    "nl": "Het locatiebewijs bleef gemengd tussen meerdere posities in plaats van te vernauwen naar één eerste inspectiegebied."
+    "nl": "Het locatiebewijs bleef gemengd tussen meerdere posities in plaats van zich toe te spitsen op één locatie voor inspectie."
   },
   "REPORT_RECAPTURE_ISSUE_SOURCE_OVERLAP": {
     "en": "{primary} and {alternative} evidence overlapped in the same window, so this run did not separate one inspection path cleanly.",
@@ -2157,11 +2157,11 @@
   },
   "REPORT_RECAPTURE_ISSUE_TRANSIENT": {
     "en": "The strongest signal was transient or intermittent, so it did not repeat cleanly enough for an inspection-first verdict.",
-    "nl": "Het sterkste signaal was tijdelijk of intermitterend en herhaalde zich daardoor niet duidelijk genoeg voor een eerste inspectieadvies."
+    "nl": "Het sterkste signaal was tijdelijk of intermitterend en herhaalde zich daardoor niet duidelijk genoeg voor een diagnose die direct tot inspectie leidt."
   },
   "REPORT_RECAPTURE_ISSUE_WEAK_LOCATION": {
     "en": "Location evidence stayed spread across multiple positions instead of separating one inspect-first area.",
-    "nl": "Het locatiebewijs bleef verspreid over meerdere posities in plaats van één eerste inspectiegebied te scheiden."
+    "nl": "Het locatiebewijs bleef verspreid over meerdere posities in plaats van één locatie uit te lichten voor inspectie."
   },
   "REPORT_RECAPTURE_ACTION_COMPARE_PATHS": {
     "en": "Repeat the same speed band with separate drive/coast or load-change passes to separate the overlapping source paths.",
@@ -2584,7 +2584,7 @@
     "nl": "Signaalvensters"
   },
   "REPORT_PROOF_SUMMARY_RATIO": {
-    "en": "{location} outranked the next location by {ratio}x on matched-window linear intensity evidence.",
+    "en": "{location} was {ratio}x stronger than the next location in matched-window linear intensity.",
     "nl": "{location} was {ratio}x sterker dan de volgende locatie op basis van lineair intensiteitsbewijs uit overeenkomende vensters."
   },
   "REPORT_PROOF_SUMMARY_SIMPLE": {
