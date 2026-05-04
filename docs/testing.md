@@ -13,7 +13,7 @@
 - Use `make test-ci-fast` for lint, docs, static guards, and type checks without browser, release, firmware, e2e, or backend test suites.
 - Use `make test-ci-lite` for the larger non-Docker workflow surface except e2e; it still includes backend shards, UI smoke, release smoke, and firmware native tests.
 - Local `shell-lint` parity requires host `shellcheck`; `make doctor` reports it, and ACT/GitHub CI install it inside the workflow job.
-- Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
+- Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. Use `make benchmark-golden-replay` for the opt-in 30-minute dense post-run golden replay runtime/memory check. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
 - Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
 - The full end-to-end verification runner is `make test-full-suite` (`./.venv/bin/python tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time. It also accepts `--xdist-workers` / `VIBESENSOR_BACKEND_XDIST_WORKERS` for controlled intra-shard xdist; CI currently pins that to `3` because the current five-shard benchmark beat the nearby `5x2`, `4x3`, `4x2`, and `6x2` alternatives without changing shard count or the failure/JUnit surface. Retune only from fresh measurements, not guesswork.
@@ -128,6 +128,9 @@ make plan-validation
 # Changed-file heuristic (current branch vs origin/main, fallback to main)
 make test-changed
 
+# Generated dense post-run golden replay subset
+make test-golden-replay
+
 # Fast iteration — backend unit tests
 make test
 
@@ -140,6 +143,7 @@ make test-all
 
 # Explicit backend benchmarks
 make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
+make benchmark-golden-replay BENCHMARK_OPTS="--benchmark-save=golden-replay"
 make benchmark-compare-backend
 
 # GitHub workflow via act (requires Docker); default wrapper is changed-scope
@@ -160,6 +164,14 @@ Explicit backend benchmark files stay out of default CI and normal pytest
 discovery so the blocking lanes do not turn noisy or hardware-sensitive.
 Run them on demand when you need regression evidence and save comparison data
 for later runs with `make benchmark-backend` / `make benchmark-compare-backend`.
+The generated dense post-run golden replay fixtures live in
+`apps/server/tests/test_support/golden_replay.py`; they avoid binary payloads by
+building deterministic raw waveforms and summary context from fixture seeds. Add
+new cases by extending the fixture catalog with expected source, confidence
+range, unavailable context reasons, and tolerance bands, then run
+`make test-golden-replay`. Use `make benchmark-golden-replay` for the opt-in
+30-minute dense replay benchmark. Failed golden runs write compact JSON
+snapshots under the pytest temp directory for debugging.
 
 Focused CI job groups and full-stack validation:
 
