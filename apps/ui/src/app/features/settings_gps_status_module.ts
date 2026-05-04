@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/query-core";
 import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "../views/speed_source_panel_defaults";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";

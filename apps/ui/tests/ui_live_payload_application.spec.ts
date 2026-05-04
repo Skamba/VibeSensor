@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  createAppState,
-  applyLivePayloadUpdate,
-} from "../src/app/ui_app_state";
+import { applyLivePayloadUpdate } from "../src/app/realtime_state";
+import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedPayload } from "../src/transport/live_models";
 
 function makeAdaptedPayload(

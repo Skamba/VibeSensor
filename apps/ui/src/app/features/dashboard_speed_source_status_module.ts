@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import { getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import { computed, signal, type ReadonlySignal } from "../ui_signals";
 import {
   createHiddenTabPollingObserverOptions,
