@@ -9,6 +9,7 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
+    FONT,
     FONT_B,
     FS_SMALL,
     GAP,
@@ -16,6 +17,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     PAGE_H,
     PAGE_W,
     PANEL_HEADER_H,
+    REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
 )
@@ -39,7 +41,7 @@ __all__ = ["_appendix_c_page"]
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan
-    from vibesensor.shared.boundaries.reporting.document import AppendixCData
+    from vibesensor.shared.boundaries.reporting.document import AppendixCData, DenseEvidenceRow
 
 
 def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
@@ -131,9 +133,13 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         measurement_h,
         _tr(
             plan.lang,
-            "REPORT_SUPPORTING_WINDOWS_TITLE"
-            if appendix.proof_window_rows
-            else "REPORT_SUPPORTING_MEASUREMENTS_TITLE",
+            "REPORT_DENSE_EVIDENCE_TITLE"
+            if appendix.dense_evidence_rows
+            else (
+                "REPORT_SUPPORTING_WINDOWS_TITLE"
+                if appendix.proof_window_rows
+                else "REPORT_SUPPORTING_MEASUREMENTS_TITLE"
+            ),
         ),
     )
     measurement_source_values = {
@@ -179,7 +185,33 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             )
             - 0.8 * mm
         )
-    if appendix.measurement_guide:
+    if appendix.dense_evidence_rows:
+        measurement_top = (
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                measurement_top,
+                width - 8 * mm,
+                _tr(plan.lang, "REPORT_DENSE_EVIDENCE_GUIDE"),
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            )
+            - 0.8 * mm
+        )
+        measurement_top = (
+            _draw_dense_evidence_charts(
+                c,
+                x=MARGIN + 4 * mm,
+                y=measurement_top,
+                w=width - 8 * mm,
+                rows=appendix.dense_evidence_rows,
+                lang=plan.lang,
+            )
+            - 1.0 * mm
+        )
+    elif appendix.measurement_guide:
         measurement_top = (
             _draw_text(
                 c,
@@ -194,7 +226,34 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             )
             - 0.8 * mm
         )
-    if appendix.proof_window_rows:
+    if appendix.dense_evidence_rows:
+        measurement_headers = [
+            _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
+            _tr(plan.lang, "ORDER_LABEL"),
+            _tr(plan.lang, "CONFIDENCE_LABEL"),
+            _tr(plan.lang, "REPORT_DENSE_EVIDENCE_SUPPORT_COLUMN"),
+            _tr(plan.lang, "FREQUENCY_HZ"),
+            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+            _tr(plan.lang, "REPORT_DENSE_EVIDENCE_CAVEAT_COLUMN"),
+        ]
+        measurement_rows = [
+            [
+                row.source_name,
+                row.order_label,
+                row.confidence_label,
+                row.support,
+                row.frequency_band,
+                _fmt_db(row.peak_db),
+                human_location(row.strongest_location, lang=plan.lang)
+                if row.strongest_location
+                else _tr(plan.lang, "UNKNOWN"),
+                row.caveat or "—",
+            ]
+            for row in appendix.dense_evidence_rows
+        ]
+        measurement_widths = [0.12, 0.13, 0.13, 0.14, 0.13, 0.09, 0.12, 0.14]
+    elif appendix.proof_window_rows:
         speed_unit = "km/u" if plan.lang == "nl" else "km/h"
         measurement_headers = [
             _tr(plan.lang, "REPORT_WINDOW_ID_COLUMN"),
@@ -539,7 +598,63 @@ def _evidence_chain_panel_height(appendix: AppendixCData) -> float:
     return float(min(76 * mm, 58 * mm + (extra_rows * 12 * mm)))
 
 
+def _draw_dense_evidence_charts(
+    c: Canvas,
+    *,
+    x: float,
+    y: float,
+    w: float,
+    rows: list[DenseEvidenceRow],
+    lang: str,
+) -> float:
+    chart_rows = rows[:3]
+    if not chart_rows:
+        return y
+    c.setFont(FONT_B, FS_SMALL)
+    c.setFillColor(SUB_CLR)
+    c.drawString(x, y, _tr(lang, "REPORT_DENSE_EVIDENCE_CHART_LABEL"))
+    cursor = float(y - 3.5 * mm)
+    label_w = float(w * 0.26)
+    bar_x = float(x + label_w + 2 * mm)
+    bar_w = float(w * 0.48)
+    value_x = float(bar_x + bar_w + 3 * mm)
+    bar_h = float(2.2 * mm)
+    for row in chart_rows:
+        support_ratio = max(0.0, min(1.0, row.support_ratio))
+        reference_ratio = row.reference_coverage_ratio
+        if reference_ratio is None:
+            reference_ratio = 1.0
+        reference_ratio = max(0.0, min(1.0, reference_ratio))
+        label = f"{row.source_name} {row.order_label}".strip()
+        c.setFont(FONT, FS_SMALL)
+        c.setFillColor(TEXT_CLR)
+        c.drawString(x, cursor + 0.1 * mm, label[:30])
+        c.setFillColor(REPORT_COLORS["surface_alt"])
+        c.rect(bar_x, cursor, bar_w, bar_h, fill=1, stroke=0)
+        c.setFillColor(REPORT_COLORS["brand_surface"])
+        c.rect(bar_x, cursor, bar_w * reference_ratio, bar_h, fill=1, stroke=0)
+        c.setFillColor(REPORT_COLORS["brand"])
+        c.rect(bar_x, cursor, bar_w * support_ratio, bar_h, fill=1, stroke=0)
+        c.setFillColor(SUB_CLR)
+        c.drawString(
+            value_x,
+            cursor + 0.1 * mm,
+            _tr(
+                lang,
+                "REPORT_DENSE_EVIDENCE_CHART_VALUE",
+                support=f"{support_ratio * 100:.0f}%",
+                reference=f"{reference_ratio * 100:.0f}%",
+            ),
+        )
+        cursor = float(cursor - 4.4 * mm)
+    return cursor
+
+
 def _measurement_panel_height(appendix: AppendixCData) -> float:
+    dense_row_count = len(appendix.dense_evidence_rows)
+    if dense_row_count:
+        extra_rows = max(0, dense_row_count - 3)
+        return float(min(104 * mm, 88 * mm + (extra_rows * 12 * mm)))
     proof_window_count = len(appendix.proof_window_rows)
     if proof_window_count:
         extra_rows = max(0, proof_window_count - 4)
