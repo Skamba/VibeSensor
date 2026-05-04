@@ -74,6 +74,12 @@ does not track implementation status or old branch plans.
   It normalizes speed, RPM, gear, and final-drive inputs, rejects ambiguous or
   stale references, and derives wheel/driveshaft/engine Hz through
   `OrderReferenceSpec`.
+- POSTRUN-05 adds
+  `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py`:
+  a deterministic per-window order-band timeline for wheel, driveshaft, and
+  engine harmonics. It reuses shared tolerance math, clamps to the configured
+  dense spectrum range, and carries explicit unavailable reasons for missing
+  references.
 
 ### Persisted analysis and reporting
 
@@ -132,7 +138,7 @@ raw capture manifest/files (#3065)
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `post_run_raw_windows.py` owns raw-window iteration for dense stages |
 | Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py` owns the in-memory DTO-first STFT engine and `post_run_window_features.py` owns the compact per-window feature reduction |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments; `post_run_vehicle_reference.py` owns the conservative vehicle-reference timeline for dense stages |
-| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
+| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability; `post_run_order_bands.py` owns the pre-classification per-window expected band grid |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
 | Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts |
 
