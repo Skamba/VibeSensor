@@ -87,6 +87,17 @@ bandwidth settings, optional harmonic lists, and an explicit output spectrum
 clamp. Unavailable reference inputs become unavailable band rows with reasons
 instead of being dropped or guessed.
 
+`use_cases/diagnostics/post_run_vibration_episodes.py` groups POSTRUN-03
+window-feature peaks into deterministic, time-bounded episodes. Grouping is by
+sensor/location, adjacent time windows, allowed per-step frequency drift, and a
+minimum strength threshold. Defaults require at least three supporting windows
+and 0.75 seconds of duration; isolated spikes are suppressed unless they exceed
+the extreme-transient threshold and are marked as transient. Episode rows carry
+frequency path, median/peak strength, median frequency, slope, dominant axis,
+supporting window IDs, affected sensors, and explainable quality penalties for
+dropout gaps, broad drift, noisy feature flags, short duration, and transient
+extremes.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -169,6 +180,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `post_run_window_features.py` | ~300 | Window-level feature extraction over POSTRUN-02 STFT frames |
 | `post_run_vehicle_reference.py` | ~350 | Per-window vehicle speed/RPM/gear/final-drive reference normalization for dense order stages |
 | `post_run_order_bands.py` | ~400 | Per-window wheel/driveshaft/engine order-band generation over POSTRUN-04 vehicle references |
+| `post_run_vibration_episodes.py` | ~450 | Deterministic grouping of dense window peaks into persistent or intentional transient vibration episodes |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
