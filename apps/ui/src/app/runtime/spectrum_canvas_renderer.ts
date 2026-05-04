@@ -17,7 +17,8 @@ import {
   resolveSpectrumTweenDurationMs,
   type SpectrumHeavyFrame,
 } from "../spectrum_animation";
-import type { AppState, ChartBand } from "../ui_app_state";
+import type { ChartBand } from "../spectrum_state";
+import type { AppState } from "../ui_app_state";
 import {
   computed,
   effect,

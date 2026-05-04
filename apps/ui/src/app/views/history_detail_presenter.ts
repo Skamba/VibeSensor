@@ -1,5 +1,5 @@
 import type { HistoryEntry, HistoryInsightsPayload } from "../../api/types";
-import type { RunDetail } from "../ui_app_state";
+import type { RunDetail } from "../history_state";
 import { buildHistoryHeatmapViewModel } from "./history_heatmap_presenter";
 import {
   confidenceText,

@@ -1,5 +1,5 @@
 import type { HistoryEntry } from "../../api/types";
-import type { RunDetail } from "../ui_app_state";
+import type { RunDetail } from "../history_state";
 import type { Signal } from "../ui_signals";
 import type { HistoryRowViewModel } from "./history_table_models";
 import type { DeferredModelSignal } from "./view_model_binding";

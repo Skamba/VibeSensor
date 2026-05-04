@@ -1,5 +1,5 @@
 import type { HistoryEntry } from "../../api/types";
-import type { RunDetail } from "../ui_app_state";
+import type { RunDetail } from "../history_state";
 import { buildHistoryDetailsViewModel } from "./history_detail_presenter";
 import {
   EMPTY_RUN_DETAIL,

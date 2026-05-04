@@ -9,7 +9,7 @@ import {
 import { uiLogger } from "../../ui_logger";
 import { serverStateQueryKeys } from "../features/server_state_query_keys";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
-import type { ShellState } from "../ui_app_state";
+import type { ShellState } from "../shell_state";
 import { signal, type ReadonlySignal } from "../ui_signals";
 
 export interface UiShellPreferencesModule {

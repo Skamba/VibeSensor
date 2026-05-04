@@ -244,7 +244,8 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
 | `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles |
 | `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator, then exposes one composed runtime `dispose()` |
-| `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable, preserve light-tick spectrum frames, and dedupe unchanged heavy frames before redraws |
+| `app/ui_app_state.ts` | Thin AppState composition root and compatibility export surface for feature-owned state modules |
+| `app/{shell,transport,realtime,history,settings,spectrum}_state.ts` | Feature-owned state types, defaults, factories, and pure update helpers for the top-level AppState slices |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
@@ -334,7 +335,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
 | `styles/{tokens,shell,components,maintenance-*,realtime-*,history-*,settings-*,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
 
-- AppState top-level slices returned by `createAppState()` are reactive proxy stores. Existing feature/runtime code can keep object-style reads and writes, but any `computed()`/`effect()` that depends on a slice should call `trackAppStateSlice(slice)` (or read `getAppStateSliceSignal(slice).value`) and bulk multi-field writes should use `batchAppStateUpdates()`.
+- AppState top-level slices returned by `createAppState()` are stable signal-field objects composed from feature-owned state modules. Keep new slice defaults and pure update helpers in `app/{shell,transport,realtime,history,settings,spectrum}_state.ts`, and keep `ui_app_state.ts` as the thin composition/compatibility surface.
 
 ## Features
 
@@ -429,6 +430,11 @@ instead of controller-side variant class interpolation.
   reads them.
 - Existing mutable app-state objects and manual bridge rerenders are follow-up
   migration residue, not the default pattern for new frontend work.
+- Top-level AppState slices are owned by focused modules:
+  `shell_state.ts`, `transport_state.ts`, `realtime_state.ts`,
+  `history_state.ts`, `settings_state.ts`, and `spectrum_state.ts`.
+  Add new slice fields, defaults, and pure update helpers there instead of
+  growing `ui_app_state.ts`.
 
 ## Architecture guardrails
 

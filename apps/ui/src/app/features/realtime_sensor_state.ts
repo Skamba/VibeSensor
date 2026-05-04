@@ -5,12 +5,10 @@ import {
   createCarSelectionDerivedState,
   type CarSelectionState,
 } from "../car_selection_state";
-import type {
-  RealtimeState,
-  SettingsState,
-  ShellState,
-  SpectrumState,
-} from "../ui_app_state";
+import type { RealtimeState } from "../realtime_state";
+import type { SettingsState } from "../settings_state";
+import type { ShellState } from "../shell_state";
+import type { SpectrumState } from "../spectrum_state";
 import { computed, type ReadonlySignal } from "../ui_signals";
 
 export type ActiveCarDisplayState = {

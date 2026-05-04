@@ -1,6 +1,7 @@
 import type { AdaptedPayload } from "../../transport/live_models";
 import { uiLogger } from "../../ui_logger";
-import { applyLivePayloadUpdate, type AppState } from "../ui_app_state";
+import { applyLivePayloadUpdate } from "../realtime_state";
+import type { AppState } from "../ui_app_state";
 import { batch, computed, effectOnChange, untracked } from "../ui_signals";
 
 type AdaptServerPayload =

@@ -5,7 +5,7 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import type { ChartBand } from "../ui_app_state";
+import type { ChartBand } from "../spectrum_state";
 import type {
   SpectrumFocusMarker,
   SpectrumNumericSeries,

@@ -8,7 +8,8 @@ import {
   historyReportPdfUrl,
 } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import type { HistoryState, RunDetail, ShellState } from "../ui_app_state";
+import type { HistoryState, RunDetail } from "../history_state";
+import type { ShellState } from "../shell_state";
 import { computed, effectOnChange, untracked } from "../ui_signals";
 import type {
   HistoryPanelRenderModel,

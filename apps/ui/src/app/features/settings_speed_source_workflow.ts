@@ -12,7 +12,7 @@ import {
   type DisplayedSpeedSourceMode,
   type SpeedSourceStateSnapshot,
 } from "../speed_source_state";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import type { SettingsSpeedSourceRenderState } from "../views/settings_speed_source_presenter";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";

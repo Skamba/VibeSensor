@@ -1,5 +1,5 @@
 import type { SpeedSourceStatusPayload } from "../../api/types";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import { batch } from "../ui_signals";
 
 export function applySpeedSourceStatusToSettings(

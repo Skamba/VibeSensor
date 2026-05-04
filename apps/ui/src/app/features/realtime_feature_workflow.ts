@@ -19,7 +19,7 @@ import type {
 import {
   syncSelectedRealtimeClient,
   type RealtimeState,
-} from "../ui_app_state";
+} from "../realtime_state";
 import {
   batch,
   computed,

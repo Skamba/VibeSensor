@@ -10,7 +10,7 @@ import {
   composeVehicleSettings,
   mergeCarAspectSettings,
   type SettingsState,
-} from "../ui_app_state";
+} from "../settings_state";
 import type {
   CarOrderReferenceStatus,
   CarRecord,

@@ -3,7 +3,7 @@ import type {
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
 } from "../../api/types";
-import type { RunDetail } from "../ui_app_state";
+import type { RunDetail } from "../history_state";
 import type {
   HistoryFindingTone,
   HistorySummaryChipTone,

@@ -1,5 +1,5 @@
 import type { CarRecord } from "../api/types";
-import type { SettingsState } from "./ui_app_state";
+import type { SettingsState } from "./settings_state";
 import { computed, type ReadonlySignal } from "./ui_signals";
 
 const REQUIRED_CAR_ASPECT_KEYS = [

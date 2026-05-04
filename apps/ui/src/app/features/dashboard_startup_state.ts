@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { CarsPayload, SpeedSourcePayload } from "../../api/types";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
 import { batch } from "../ui_signals";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 import { createSettingsCarsTransport } from "./settings_cars_transport";

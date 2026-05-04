@@ -3,7 +3,8 @@ import type { QueryClient } from "@tanstack/query-core";
 import type { CarOrderReferenceStatus, CarsPayload } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
-import type { SettingsState, ShellState } from "../ui_app_state";
+import type { SettingsState } from "../settings_state";
+import type { ShellState } from "../shell_state";
 import { effectOnChange, untracked, type ReadonlySignal } from "../ui_signals";
 import {
   createSettingsAnalysisModule,

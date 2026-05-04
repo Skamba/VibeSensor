@@ -13,7 +13,7 @@
 
 import { describe, expect, test } from "vitest";
 import { adaptServerPayload } from "../src/server_payload";
-import { applySpectrumTick } from "../src/app/ui_app_state";
+import { applySpectrumTick } from "../src/app/spectrum_state";
 import {
   areHeavyFramesCompatible,
   interpolateHeavyFrame,

@@ -1,11 +1,9 @@
 import { fmt } from "../../format";
 import { createSpeedSourceDerivedState } from "../speed_source_state";
-import type {
-  RealtimeState,
-  SettingsState,
-  ShellState,
-  TransportState,
-} from "../ui_app_state";
+import type { RealtimeState } from "../realtime_state";
+import type { SettingsState } from "../settings_state";
+import type { ShellState } from "../shell_state";
+import type { TransportState } from "../transport_state";
 import { computed, type ReadonlySignal } from "../ui_signals";
 import type { VisualVariant } from "../visual_variant";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
