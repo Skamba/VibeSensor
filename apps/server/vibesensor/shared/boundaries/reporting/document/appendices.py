@@ -10,6 +10,7 @@ __all__ = [
     "AppendixAData",
     "AppendixBData",
     "AppendixCData",
+    "DenseEvidenceRow",
     "EvidenceChainRow",
     "MeasurementRow",
     "ProofWindowRow",
@@ -107,6 +108,22 @@ class EvidenceChainRow:
 
 
 @dataclass
+class DenseEvidenceRow:
+    """One dense whole-run evidence row for Appendix C."""
+
+    source_name: str = ""
+    order_label: str = ""
+    confidence_label: str = ""
+    support: str = ""
+    support_ratio: float = 0.0
+    reference_coverage_ratio: float | None = None
+    frequency_band: str = ""
+    peak_db: float | None = None
+    strongest_location: str | None = None
+    caveat: str | None = None
+
+
+@dataclass
 class AppendixAData:
     """Technician worksheet or capture-guidance appendix data."""
 
@@ -142,6 +159,7 @@ class AppendixCData:
     """Evidence appendix content."""
 
     evidence_chain_rows: list[EvidenceChainRow] = field(default_factory=list)
+    dense_evidence_rows: list[DenseEvidenceRow] = field(default_factory=list)
     measurement_rows: list[MeasurementRow] = field(default_factory=list)
     proof_window_rows: list[ProofWindowRow] = field(default_factory=list)
     evidence_snapshot_rows: list[ReportLabelValueRow] = field(default_factory=list)

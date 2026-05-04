@@ -4,15 +4,22 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import TestRun
+from vibesensor.domain import Finding, TestRun
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
     DataTrustItem,
+    DenseEvidenceRow,
     MeasurementRow,
     ProofWindowRow,
 )
-from vibesensor.shared.report_presentation import display_phase_label, display_speed_band
+from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunOrderSummary
+from vibesensor.shared.report_presentation import (
+    display_phase_label,
+    display_speed_band,
+    human_source,
+    order_label_human,
+)
 
 from ._candidate_resolver import PrimaryCandidateContext
 from .evidence_snapshot import build_evidence_snapshot_rows
@@ -40,6 +47,7 @@ def build_appendix_c_data(
     tr: Callable[..., str],
 ) -> AppendixCData:
     evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)[:1]
+    dense_evidence_rows = _build_dense_evidence_rows(report_facts, tr=tr)
     proof_window_rows = _build_proof_window_rows(primary, tr=tr)
     speed_windows = [row.speed_window for row in evidence_rows if row.speed_window]
     speed_summary = (
@@ -49,6 +57,7 @@ def build_appendix_c_data(
     )
     return AppendixCData(
         evidence_chain_rows=evidence_rows,
+        dense_evidence_rows=dense_evidence_rows,
         measurement_rows=measurements if not proof_window_rows else [],
         proof_window_rows=proof_window_rows,
         evidence_snapshot_rows=list(
@@ -72,6 +81,112 @@ def build_appendix_c_data(
         observations=_observation_texts(aggregate, tr=tr),
         suitability_items=data_trust,
     )
+
+
+def _build_dense_evidence_rows(
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> list[DenseEvidenceRow]:
+    rows: list[DenseEvidenceRow] = []
+    for summary in report_facts.whole_run_order_summaries[:4]:
+        rows.append(
+            DenseEvidenceRow(
+                source_name=human_source(summary.suspected_source, tr=tr),
+                order_label=order_label_human(_display_lang(tr), summary.order_label),
+                confidence_label=_dense_confidence_label(report_facts, summary, tr=tr),
+                support=_dense_support_text(summary, tr=tr),
+                support_ratio=summary.support_ratio,
+                reference_coverage_ratio=summary.reference_coverage_ratio,
+                frequency_band=_dense_frequency_band(summary, tr=tr),
+                peak_db=(
+                    summary.peak_intensity_db
+                    if summary.peak_intensity_db is not None
+                    else summary.mean_vibration_strength_db
+                ),
+                strongest_location=summary.strongest_location,
+                caveat=_dense_caveat_text(summary, tr=tr),
+            )
+        )
+    return rows
+
+
+def _dense_confidence_label(
+    report_facts: PreparedReportFacts,
+    summary: ReportWholeRunOrderSummary,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    finding = next(
+        (
+            candidate
+            for candidate in report_facts.findings.all_findings
+            if candidate.suspected_source == summary.suspected_source
+            and candidate.order == summary.order_label
+        ),
+        None,
+    )
+    if finding is None:
+        finding = next(
+            (
+                candidate
+                for candidate in report_facts.findings.all_findings
+                if candidate.suspected_source == summary.suspected_source
+            ),
+            None,
+        )
+    if finding is None:
+        return tr("UNKNOWN")
+    label_key, _tone, pct_text = Finding.classify_confidence(finding.effective_confidence)
+    return f"{tr(label_key)} ({pct_text})"
+
+
+def _display_lang(tr: Callable[..., str]) -> str:
+    return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
+
+
+def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+    return tr(
+        "REPORT_DENSE_EVIDENCE_SUPPORT_VALUE",
+        matched=summary.matched_window_count,
+        eligible=summary.eligible_window_count,
+        pct=f"{summary.support_ratio * 100:.0f}%",
+    )
+
+
+def _dense_frequency_band(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+    low = summary.stable_frequency_min_hz
+    high = summary.stable_frequency_max_hz
+    if low is not None and high is not None:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_FREQUENCY_BAND",
+            low=f"{low:.1f}",
+            high=f"{high:.1f}",
+        )
+    if low is not None:
+        return f"{low:.1f} Hz"
+    if high is not None:
+        return f"{high:.1f} Hz"
+    return tr("UNKNOWN")
+
+
+def _dense_caveat_text(
+    summary: ReportWholeRunOrderSummary,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    if summary.reference_coverage_ratio <= 0.0:
+        return tr("REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_MISSING")
+    if summary.reference_coverage_ratio < 0.95:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL",
+            pct=f"{summary.reference_coverage_ratio * 100:.0f}%",
+        )
+    if summary.support_ratio < 0.5:
+        return tr("REPORT_DENSE_EVIDENCE_CAVEAT_LIMITED_SUPPORT")
+    if summary.drift_score > 0.25:
+        return tr("REPORT_DENSE_EVIDENCE_CAVEAT_DRIFT")
+    return None
 
 
 def _build_proof_window_rows(

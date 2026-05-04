@@ -9,7 +9,7 @@ import sys
 from tests._paths import REPO_ROOT
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
-_UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
+_UI_SETTINGS_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "settings_state.ts"
 _GENERATOR = REPO_ROOT / "tools" / "config" / "generate_ui_shared_constants.py"
 
 
@@ -45,19 +45,19 @@ def _parse_ui_vehicle_defaults() -> dict[str, float]:
 
 
 def _parse_ts_string_array(name: str) -> list[str]:
-    """Extract a string array constant from ui_app_state.ts."""
-    text = _UI_APP_STATE_TS.read_text()
+    """Extract a string array constant from the UI settings state owner."""
+    text = _UI_SETTINGS_STATE_TS.read_text()
     match = re.search(
         rf"{name}\s*=\s*\[([^\]]+)\]",
         text,
         re.DOTALL,
     )
-    assert match, f"Could not find {name} in ui_app_state.ts"
+    assert match, f"Could not find {name} in settings_state.ts"
     return re.findall(r'"(\w+)"', match.group(1))
 
 
 def _parse_ui_setting_keys() -> list[str]:
-    """Extract the composed vehicle-setting key set from ui_app_state.ts."""
+    """Extract the composed vehicle-setting key set from settings_state.ts."""
     return [
         *_parse_ts_string_array("carAspectSettingKeys"),
         *_parse_ts_string_array("analysisTuningSettingKeys"),

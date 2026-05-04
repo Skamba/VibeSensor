@@ -2255,6 +2255,54 @@
     "en": "Dominant corner",
     "nl": "Sterkste hoek"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_COLUMN": {
+    "en": "Caveat",
+    "nl": "Kanttekening"
+  },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_DRIFT": {
+    "en": "Frequency drift across the run",
+    "nl": "Frequentie verschoof tijdens de meting"
+  },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_LIMITED_SUPPORT": {
+    "en": "Limited supporting windows",
+    "nl": "Beperkt aantal ondersteunende vensters"
+  },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_MISSING": {
+    "en": "Reference data unavailable",
+    "nl": "Referentiegegevens niet beschikbaar"
+  },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL": {
+    "en": "Reference coverage {pct}",
+    "nl": "Referentiedekking {pct}"
+  },
+  "REPORT_DENSE_EVIDENCE_CHART_LABEL": {
+    "en": "Support / reference coverage",
+    "nl": "Ondersteuning / referentiedekking"
+  },
+  "REPORT_DENSE_EVIDENCE_CHART_VALUE": {
+    "en": "support {support} / reference {reference}",
+    "nl": "ondersteuning {support} / referentie {reference}"
+  },
+  "REPORT_DENSE_EVIDENCE_FREQUENCY_BAND": {
+    "en": "{low}-{high} Hz",
+    "nl": "{low}-{high} Hz"
+  },
+  "REPORT_DENSE_EVIDENCE_GUIDE": {
+    "en": "Dense rows summarize whole-run order-track evidence: support windows, stable frequency band, strongest location, and caveats when reference or support is limited.",
+    "nl": "Dichte regels vatten orderbewijs over de hele meting samen: ondersteunende vensters, stabiele frequentieband, sterkste locatie en kanttekeningen bij beperkte referentie of ondersteuning."
+  },
+  "REPORT_DENSE_EVIDENCE_SUPPORT_COLUMN": {
+    "en": "Support",
+    "nl": "Ondersteuning"
+  },
+  "REPORT_DENSE_EVIDENCE_SUPPORT_VALUE": {
+    "en": "{matched}/{eligible} ({pct})",
+    "nl": "{matched}/{eligible} ({pct})"
+  },
+  "REPORT_DENSE_EVIDENCE_TITLE": {
+    "en": "Dense evidence charts",
+    "nl": "Dichte bewijsgrafieken"
+  },
   "REPORT_EVIDENCE_CHAIN_TITLE": {
     "en": "Evidence chain",
     "nl": "Bewijsopbouw"

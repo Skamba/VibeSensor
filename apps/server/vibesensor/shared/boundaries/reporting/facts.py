@@ -30,6 +30,7 @@ if TYPE_CHECKING:
         ReportTimelineInterval,
         ReportWholeRunContextInterval,
         ReportWholeRunDiagnosisSummary,
+        ReportWholeRunOrderSummary,
     )
     from vibesensor.shared.types.analysis_views import PeakTableRow
 
@@ -161,6 +162,7 @@ class PreparedReportFacts:
     decision: ReportDecisionFacts
     evidence: ReportEvidenceFacts
     confidence: ReportConfidenceFacts
+    whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
     whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
     findings: PreparedReportFindings
 
@@ -282,6 +284,7 @@ def prepare_report_facts(
         decision=decision_facts,
         evidence=evidence_facts,
         confidence=confidence_facts,
+        whole_run_order_summaries=summary.whole_run_order_summaries,
         whole_run_diagnosis_summaries=whole_run_diagnosis_summaries,
         findings=prepare_report_findings(test_run),
     )
