@@ -188,3 +188,20 @@ Both cutoffs use the run's terminal timestamp (`analysis_completed_at`, then
 never deleted by the automatic policy. Full run deletion still removes sample
 rows through the existing `ON DELETE CASCADE` foreign key on `samples_v2`, plus
 raw/whole-run sidecar directories.
+
+## Dense whole-run sidecars
+
+Dense post-run arrays stay outside SQLite under
+`whole-run-artifacts/<run_id>/`. The `runs.whole_run_artifact_manifest_json`
+column stores only a compact manifest: schema/storage versions, input `run_id`,
+window policy, algorithm versions, source raw-capture manifest summaries,
+configuration, generated artifact paths, and per-artifact record counts/formats.
+The same manifest is also written to `whole-run-artifacts/<run_id>/manifest.json`.
+
+`analysis_json.analysis_metadata` keeps the query-friendly run summary:
+availability/status, manifest path, generated timestamp, algorithm versions,
+configuration, artifact count/keys/paths/formats, window/sensor counts, warning
+codes, and compact top findings/summaries. Dense spectra use `.npy` float32
+sidecars; window labels, order traces, summary rows, and spatial coherence rows
+use JSONL sidecars. History reads treat missing artifact files as `missing` and
+ignore corrupt manifest JSON instead of failing the whole run detail/list path.

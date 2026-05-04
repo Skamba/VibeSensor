@@ -967,7 +967,15 @@ def run_build_report_facts_stage(
                 diagnosis_summaries,
             )
     if stored_artifact_manifest is not None:
-        summary = append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
+        summary = append_whole_run_analysis_metadata(
+            summary,
+            stored_artifact_manifest,
+            warnings=tuple(
+                warning
+                for stage_result in whole_run_output.stage_results
+                for warning in stage_result.warnings
+            ),
+        )
 
     return refresh_report_fallback_metadata(summary), _make_stage_result(
         stage_name=stage_name,
