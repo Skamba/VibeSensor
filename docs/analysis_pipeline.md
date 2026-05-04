@@ -80,6 +80,13 @@ missing speed/RPM/gear, stale samples, inconsistent sample rate, and missing
 vehicle configuration. Wheel, driveshaft, and engine frequencies are derived via
 the shared `OrderReferenceSpec` math instead of diagnostics-local formulas.
 
+`use_cases/diagnostics/post_run_order_bands.py` consumes that vehicle-reference
+timeline and emits per-window wheel, driveshaft, and engine order bands. It uses
+the existing `tolerance_for_order()` math, the run's configured uncertainty and
+bandwidth settings, optional harmonic lists, and an explicit output spectrum
+clamp. Unavailable reference inputs become unavailable band rows with reasons
+instead of being dropped or guessed.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -161,6 +168,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `post_run_stft.py` | ~350 | In-memory dense STFT engine over POSTRUN-01 raw-window DTOs |
 | `post_run_window_features.py` | ~300 | Window-level feature extraction over POSTRUN-02 STFT frames |
 | `post_run_vehicle_reference.py` | ~350 | Per-window vehicle speed/RPM/gear/final-drive reference normalization for dense order stages |
+| `post_run_order_bands.py` | ~400 | Per-window wheel/driveshaft/engine order-band generation over POSTRUN-04 vehicle references |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
