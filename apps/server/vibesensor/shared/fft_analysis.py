@@ -25,6 +25,7 @@ __all__ = [
     "AXES",
     "Axis",
     "BoolArray",
+    "FftWindowFunction",
     "FftSpectrumResult",
     "FloatArray",
     "IntIndexArray",
@@ -32,6 +33,8 @@ __all__ = [
     "SpectrumAxisData",
     "SpectrumByAxis",
     "compute_fft_spectrum",
+    "fft_frequency_slice",
+    "fft_window_values",
     "float_list",
     "medfilt3",
     "noise_floor",
@@ -40,6 +43,7 @@ __all__ = [
 type FloatArray = npt.NDArray[np.float32]
 type IntIndexArray = npt.NDArray[np.intp]
 type BoolArray = npt.NDArray[np.bool_]
+type FftWindowFunction = Literal["hann", "boxcar"]
 
 Axis = Literal["x", "y", "z"]
 
@@ -113,6 +117,39 @@ def _sanitize_float_array(values: FloatArray) -> FloatArray:
         posinf=0.0,
         neginf=0.0,
     ).astype(np.float32, copy=False)
+
+
+def fft_window_values(
+    *,
+    fft_n: int,
+    window_function: FftWindowFunction = "hann",
+) -> FloatArray:
+    """Return FFT window coefficients for supported shared analysis windows."""
+
+    if window_function == "hann":
+        return np.asarray(signal_windows.hann(fft_n, sym=True), dtype=np.float32)
+    if window_function == "boxcar":
+        return np.ones(fft_n, dtype=np.float32)
+    raise ValueError(f"unsupported FFT window_function={window_function!r}")
+
+
+def fft_frequency_slice(
+    *,
+    fft_n: int,
+    sample_rate_hz: int,
+    spectrum_min_hz: float,
+    spectrum_max_hz: float,
+) -> tuple[FloatArray, IntIndexArray, BoolArray]:
+    """Return shared frequency bins, valid indices, and strength mask."""
+
+    if sample_rate_hz <= 0 or fft_n <= 0:
+        return _EMPTY_F32, np.empty(0, dtype=np.intp), _EMPTY_BOOL
+    freqs = scipy_fft.rfftfreq(fft_n, d=1.0 / float(sample_rate_hz))
+    valid = (freqs >= spectrum_min_hz) & (freqs <= spectrum_max_hz)
+    freq_slice = freqs[valid].astype(np.float32)
+    valid_idx = np.flatnonzero(valid)
+    strength_range_mask = np.ones(freq_slice.shape, dtype=np.bool_)
+    return freq_slice, valid_idx, strength_range_mask
 
 
 def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
@@ -338,10 +375,7 @@ class SpectralAnalysisComputer:
         self._fft_n = int(fft_n)
         self._spectrum_min_hz = float(spectrum_min_hz)
         self._spectrum_max_hz = float(spectrum_max_hz)
-        self.fft_window: FloatArray = np.asarray(
-            signal_windows.hann(self._fft_n, sym=True),
-            dtype=np.float32,
-        )
+        self.fft_window = fft_window_values(fft_n=self._fft_n)
         self.fft_scale = float(2.0 / max(1.0, float(np.sum(self.fft_window))))
         self.fft_cache: OrderedDict[int, tuple[FloatArray, IntIndexArray, BoolArray]] = (
             OrderedDict()
@@ -354,13 +388,12 @@ class SpectralAnalysisComputer:
             if cached is not None:
                 self.fft_cache.move_to_end(sample_rate_hz)
                 return cached
-            if sample_rate_hz <= 0:
-                return _EMPTY_F32, np.empty(0, dtype=np.intp), _EMPTY_BOOL
-            freqs = scipy_fft.rfftfreq(self._fft_n, d=1.0 / sample_rate_hz)
-            valid = (freqs >= self._spectrum_min_hz) & (freqs <= self._spectrum_max_hz)
-            freq_slice = freqs[valid].astype(np.float32)
-            valid_idx = np.flatnonzero(valid)
-            strength_range_mask = np.ones(freq_slice.shape, dtype=np.bool_)
+            freq_slice, valid_idx, strength_range_mask = fft_frequency_slice(
+                fft_n=self._fft_n,
+                sample_rate_hz=sample_rate_hz,
+                spectrum_min_hz=self._spectrum_min_hz,
+                spectrum_max_hz=self._spectrum_max_hz,
+            )
             self.fft_cache[sample_rate_hz] = (freq_slice, valid_idx, strength_range_mask)
             if len(self.fft_cache) > _FFT_CACHE_MAXSIZE:
                 self.fft_cache.popitem(last=False)

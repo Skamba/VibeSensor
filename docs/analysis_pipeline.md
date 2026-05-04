@@ -55,6 +55,14 @@ location snapshot, start/end timing, sample rate, x/y/z `int16` arrays, and
 data-quality flags such as partial windows, timestamp gaps, missing samples,
 low sample count, invalid axis data, sample-rate mismatch, and missing sidecars.
 
+The first dense analysis consumer is
+`use_cases/diagnostics/post_run_stft.py`. It consumes those POSTRUN-01 window
+DTOs and produces in-memory STFT frames with per-axis spectra, combined spectra,
+window timing, sensor metadata, dominant frequency, top peaks, and dB strength
+facts. The STFT layer is deliberately post-run only: callers configure FFT size,
+window function, frequency range, and partial-window behavior independently from
+the live UI cadence, while still reusing the shared FFT/strength primitives.
+
 ## Related deep dives
 
 - `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
@@ -133,6 +141,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
 | `post_run_raw_windows.py` | ~300 | Manifest-aware streaming raw waveform reader and configurable overlapping-window iterator for dense post-run stages |
+| `post_run_stft.py` | ~350 | In-memory dense STFT engine over POSTRUN-01 raw-window DTOs |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
