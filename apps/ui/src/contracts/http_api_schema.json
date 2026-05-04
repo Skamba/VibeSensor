@@ -5141,6 +5141,12 @@
         },
         "type": "object"
       },
+      "JsonSchemaNestedObject": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/JsonSchemaNestedValue"
+        },
+        "type": "object"
+      },
       "JsonSchemaNestedValue": {
         "anyOf": [
           {
@@ -5189,14 +5195,18 @@
             "$ref": "#/components/schemas/JsonSchemaNestedValue"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
-            },
-            "type": "object"
+            "$ref": "#/components/schemas/JsonSchemaNestedObject"
           },
           {
             "items": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedValue"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedObject"
+                }
+              ]
             },
             "type": "array"
           }
@@ -6517,14 +6527,18 @@
             "$ref": "#/components/schemas/JsonSchemaNestedValue"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
-            },
-            "type": "object"
+            "$ref": "#/components/schemas/JsonSchemaNestedObject"
           },
           {
             "items": {
-              "$ref": "#/components/schemas/JsonSchemaNestedValue"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedValue"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonSchemaNestedObject"
+                }
+              ]
             },
             "type": "array"
           }

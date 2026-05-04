@@ -17,8 +17,11 @@ type JsonSchemaLeafObject = dict[str, JsonSchemaScalar]
 type JsonSchemaNestedValue = (
     JsonSchemaScalar | JsonSchemaLeafObject | list[JsonSchemaScalar | JsonSchemaLeafObject]
 )
+type JsonSchemaNestedObject = dict[str, JsonSchemaNestedValue]
 type JsonSchemaValue = (
-    JsonSchemaNestedValue | dict[str, JsonSchemaNestedValue] | list[JsonSchemaNestedValue]
+    JsonSchemaNestedValue
+    | JsonSchemaNestedObject
+    | list[JsonSchemaNestedValue | JsonSchemaNestedObject]
 )
 type JsonSchemaObject = dict[str, JsonSchemaValue]
 
@@ -26,6 +29,7 @@ __all__ = [
     "JsonArray",
     "JsonObject",
     "JsonSchemaLeafObject",
+    "JsonSchemaNestedObject",
     "JsonSchemaNestedValue",
     "JsonSchemaObject",
     "JsonSchemaScalar",
