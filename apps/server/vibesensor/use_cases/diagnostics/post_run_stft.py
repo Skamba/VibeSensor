@@ -7,12 +7,19 @@ from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
-import numpy.typing as npt
-from scipy import fft as scipy_fft
-from scipy.signal import windows as signal_windows
 
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.shared.fft_analysis import AXES, Axis, FloatArray, compute_fft_spectrum
+from vibesensor.shared.fft_analysis import (
+    AXES,
+    Axis,
+    BoolArray,
+    FftWindowFunction,
+    FloatArray,
+    IntIndexArray,
+    compute_fft_spectrum,
+    fft_frequency_slice,
+    fft_window_values,
+)
 from vibesensor.use_cases.diagnostics.post_run_raw_windows import (
     PostRunRawSensorWindow,
     PostRunRawWindow,
@@ -20,7 +27,6 @@ from vibesensor.use_cases.diagnostics.post_run_raw_windows import (
 )
 from vibesensor.vibration_strength import StrengthPeak
 
-type PostRunStftWindowFunction = Literal["hann", "boxcar"]
 type PostRunStftPartialWindowPolicy = Literal["mark", "skip", "zero_pad"]
 type PostRunStftCoverageState = Literal["full", "partial", "missing", "invalid"]
 
@@ -35,7 +41,7 @@ class PostRunStftConfig:
     """
 
     fft_size_samples: int | None = None
-    window_function: PostRunStftWindowFunction = "hann"
+    window_function: FftWindowFunction = "hann"
     spectrum_min_hz: float = SPECTRUM_MIN_HZ
     spectrum_max_hz: float = SPECTRUM_MAX_HZ
     partial_window_policy: PostRunStftPartialWindowPolicy = "mark"
@@ -128,8 +134,8 @@ def compute_post_run_dense_stft(
 class _FftContext:
     fft_size_samples: int
     freq_hz: FloatArray
-    valid_idx: npt.NDArray[np.intp]
-    strength_range_mask: npt.NDArray[np.bool_]
+    valid_idx: IntIndexArray
+    strength_range_mask: BoolArray
     fft_window: FloatArray
     fft_scale: float
 
@@ -160,34 +166,24 @@ def _build_fft_context(
             fft_window=np.empty(0, dtype=np.float32),
             fft_scale=1.0,
         )
-    fft_window = _window_values(
+    fft_window = fft_window_values(
+        fft_n=fft_size_samples,
         window_function=config.window_function,
-        fft_size_samples=fft_size_samples,
     )
-    freqs = scipy_fft.rfftfreq(fft_size_samples, d=1.0 / float(sample_rate_hz))
-    valid = (freqs >= config.spectrum_min_hz) & (freqs <= config.spectrum_max_hz)
-    freq_hz = freqs[valid].astype(np.float32)
-    valid_idx = np.flatnonzero(valid)
+    freq_hz, valid_idx, strength_range_mask = fft_frequency_slice(
+        fft_n=fft_size_samples,
+        sample_rate_hz=sample_rate_hz,
+        spectrum_min_hz=config.spectrum_min_hz,
+        spectrum_max_hz=config.spectrum_max_hz,
+    )
     return _FftContext(
         fft_size_samples=fft_size_samples,
         freq_hz=freq_hz,
         valid_idx=valid_idx,
-        strength_range_mask=np.ones(freq_hz.shape, dtype=np.bool_),
+        strength_range_mask=strength_range_mask,
         fft_window=fft_window,
         fft_scale=float(2.0 / max(1.0, float(np.sum(fft_window)))),
     )
-
-
-def _window_values(
-    *,
-    window_function: PostRunStftWindowFunction,
-    fft_size_samples: int,
-) -> FloatArray:
-    if window_function == "hann":
-        return np.asarray(signal_windows.hann(fft_size_samples, sym=True), dtype=np.float32)
-    if window_function == "boxcar":
-        return np.ones(fft_size_samples, dtype=np.float32)
-    raise ValueError(f"unsupported post-run STFT window_function={window_function!r}")
 
 
 def _compute_sensor_frame(
