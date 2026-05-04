@@ -92,6 +92,32 @@ final-drive, gear, RPM, or whole order-reference settings also stay explicit on
 the affected rows. Engine bands can remain available from RPM even when
 speed-derived wheel/driveshaft bands are unavailable.
 
+## Dense episode classification
+
+`use_cases/diagnostics/post_run_dense_findings.py` consumes POSTRUN-06
+`VibrationEpisode` rows and the POSTRUN-05 `PostRunOrderBandTimeline`. For each
+episode it checks the episode frequency at each supporting `window_index` against
+available order bands for wheel, driveshaft, and engine. A source hypothesis is
+scored from:
+
+- match ratio across eligible windows
+- reference completeness across all episode support windows
+- episode persistence and duration
+- peak vibration strength
+- sensor localization quality
+
+The highest-ranked source becomes the likely origin only when its match ratio
+meets the classifier threshold. Otherwise strong persistent episodes stay
+reportable as `unknown_resonance` instead of being forced into a weak mechanical
+order. Close competing scores add an `ambiguous_origin` caveat and reduce
+confidence. Missing bands/reference data, episode quality penalties, short
+usable duration, transient-only evidence, and conflicting multi-sensor evidence
+are also carried as caveats.
+
+Dense findings keep compact evidence windows plus alternatives and can project
+to the existing domain `Finding` model, preserving report/history compatibility
+while leaving dense spectra and traces outside persisted summary JSON.
+
 ## Uncertainty and tolerance bands
 
 Order matching is not based on a single exact frequency bin. Each reference
@@ -193,6 +219,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | `apps/server/vibesensor/shared/order_bands.py` | Shared uncertainty, tolerance-band, and live band-payload helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py` | Dense per-window vehicle reference normalization and debug fixtures. |
 | `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py` | Dense per-window order-band DTOs, clamping, unavailable reasons, and serializer rows. |
+| `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py` | Classify dense vibration episodes against per-window order bands into compact findings with alternatives, caveats, and domain `Finding` projection. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
