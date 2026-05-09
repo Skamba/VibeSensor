@@ -41,6 +41,7 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     _lock_score,
     _longest_contiguous_match_run,
     _mounting_adjusted_lock_score,
+    _timing_adjusted_lock_score,
     whole_run_order_trace_summaries_to_jsonl_bytes,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
@@ -50,6 +51,9 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
 WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY = "order-family-summaries"
 _WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_PATH = "orders/family-summaries.jsonl"
 _FAMILY_ORDER = ("wheel", "driveshaft", "engine")
+_TIMING_QUALITY_REASONS = frozenset(
+    {"timing_gap", "late_packet_loss", "server_queue_drop", "sensor_reset"}
+)
 
 __all__ = [
     "WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY",
@@ -228,6 +232,12 @@ def _family_summary(
             if "mounting_artifact" in point.window_quality_reasons
         }
     )
+    sensor_timing_integrity_window_count = len(
+        {point.window_index for point in points if _has_timing_quality_reason(point)}
+    )
+    matched_timing_integrity_window_count = len(
+        {point.window_index for point in matched_points if _has_timing_quality_reason(point)}
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -245,6 +255,11 @@ def _family_summary(
         lock_score,
         matched_window_count=matched_window_count,
         matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
+    )
+    lock_score = _timing_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_timing_integrity_window_count=matched_timing_integrity_window_count,
     )
     support_intervals, exemplar_interval_index = _support_intervals(
         eligible_windows=eligible_windows,
@@ -314,6 +329,7 @@ def _family_summary(
         shock_transient_window_count=shock_transient_window_count,
         sensor_clipping_window_count=sensor_clipping_window_count,
         sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
+        sensor_timing_integrity_window_count=sensor_timing_integrity_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
@@ -332,6 +348,10 @@ def _family_summary(
         mean_vibration_strength_db=mean_vibration_strength_db,
         ref_sources=ref_sources,
     )
+
+
+def _has_timing_quality_reason(point: OrderTracePoint) -> bool:
+    return any(reason in _TIMING_QUALITY_REASONS for reason in point.window_quality_reasons)
 
 
 def _selected_family_matches_by_window(

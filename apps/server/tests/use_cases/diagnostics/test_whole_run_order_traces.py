@@ -214,6 +214,7 @@ def _summary_rows(
                     state="usable",
                     sample_completeness_score=1.0,
                     packet_integrity_score=1.0,
+                    timing_integrity_score=1.0,
                     clipping_score=1.0,
                     transient_score=1.0,
                     mounting_score=1.0,

@@ -2291,6 +2291,10 @@
     "en": "Sensor mounting artifact windows limited diagnosis: {count}",
     "nl": "Sensorbevestigingsartefacten beperken diagnose: {count}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_TIMING_INTEGRITY_WINDOWS": {
+    "en": "Sensor timing integrity windows limited diagnosis: {count}",
+    "nl": "Sensortimingintegriteit beperkt diagnose: {count}"
+  },
   "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
     "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
     "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"

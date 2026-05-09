@@ -592,6 +592,10 @@
           "title": "State",
           "type": "string"
         },
+        "timing_integrity_score": {
+          "title": "Timing Integrity Score",
+          "type": "number"
+        },
         "transient_score": {
           "title": "Transient Score",
           "type": "number"
@@ -602,6 +606,7 @@
         "state",
         "sample_completeness_score",
         "packet_integrity_score",
+        "timing_integrity_score",
         "clipping_score",
         "clipping_sample_count",
         "clipping_sample_ratio",

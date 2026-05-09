@@ -24,6 +24,7 @@ from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
+    RawCaptureLossStats,
     RawCaptureSensorData,
     RawCaptureSensorManifest,
     RawRunCapture,
@@ -88,6 +89,7 @@ class WholeRunSpectralBuildResult:
 class _SpectralChunk:
     sensor_data: RawCaptureSensorData
     timeline: RawSensorTimeline
+    loss_stats: RawCaptureLossStats
     chunk_index: int
     windows: tuple[WholeRunWindowDescriptor, ...]
 
@@ -160,6 +162,7 @@ def build_whole_run_spectral_artifact_bundle(
             window_plan=None,
         )
     chunks = _build_chunks(
+        raw_capture=raw_capture,
         sensors=sensors,
         timelines=timelines,
         plan=plan,
@@ -329,6 +332,7 @@ def _build_time_windows(
 
 def _build_chunks(
     *,
+    raw_capture: RawRunCapture,
     sensors: Sequence[RawCaptureSensorData],
     timelines: Mapping[str, RawSensorTimeline],
     plan: WholeRunWindowPlan,
@@ -339,6 +343,8 @@ def _build_chunks(
     for sensor_data in sensors:
         windows = plan.windows
         timeline = timelines[sensor_data.manifest.client_id]
+        sensor_loss = raw_capture.manifest.sensor_loss(sensor_data.manifest.client_id)
+        loss_stats = sensor_loss.losses if sensor_loss is not None else RawCaptureLossStats()
         for chunk_index, start in enumerate(range(0, len(windows), normalized_chunk_size)):
             chunk_windows = windows[start : start + normalized_chunk_size]
             if not chunk_windows:
@@ -347,6 +353,7 @@ def _build_chunks(
                 _SpectralChunk(
                     sensor_data=sensor_data,
                     timeline=timeline,
+                    loss_stats=loss_stats,
                     chunk_index=chunk_index,
                     windows=chunk_windows,
                 )
@@ -483,6 +490,7 @@ def _process_chunk(
             row_index=row_index,
             metadata=metadata,
             sensor_manifest=sensor_manifest,
+            loss_stats=chunk.loss_stats,
             fft_computer=fft_computer,
         )
         for row_index, window in enumerate(chunk.windows)
@@ -505,6 +513,7 @@ def _build_window_summary(
     row_index: int,
     metadata: RunMetadata,
     sensor_manifest: RawCaptureSensorManifest,
+    loss_stats: RawCaptureLossStats,
     fft_computer: SpectralAnalysisComputer,
 ) -> WholeRunWindowSpectralSummary:
     if int(sensor_manifest.sample_rate_hz or 0) <= 0:
@@ -512,12 +521,14 @@ def _build_window_summary(
             window=window,
             coverage_state="missing",
             coverage_reason="sample_rate_missing",
+            loss_stats=loss_stats,
         )
     if sensor_manifest.sample_rate_proof_state == "timing_inconsistent":
         return _coverage_only_summary(
             window=window,
             coverage_state="missing",
             coverage_reason="sample_rate_unverified",
+            loss_stats=loss_stats,
         )
     requested_end_us = float(timeline.run_start_monotonic_us or 0) + (window.end_t_s * 1_000_000.0)
     resolved = resolve_raw_window_end_time(
@@ -530,6 +541,7 @@ def _build_window_summary(
             window=window,
             coverage_state=_summary_coverage_state(resolved.coverage_state),
             coverage_reason=resolved.reason,
+            loss_stats=loss_stats,
         )
     samples_i16 = np.asarray(
         assemble_raw_window_samples(
@@ -544,6 +556,7 @@ def _build_window_summary(
             window=window,
             coverage_state="partial",
             coverage_reason="assembled_window_short",
+            loss_stats=loss_stats,
             returned_sample_start=(
                 resolved.segments[0].sample_start if resolved.segments else None
             ),
@@ -588,6 +601,8 @@ def _build_window_summary(
             sample_rate_hz=sensor_manifest.sample_rate_hz,
             peak_amp_g=peak_amp_g,
             noise_floor_amp_g=floor_amp_g,
+            late_packet_chunk_count=loss_stats.late_packet_chunk_count,
+            server_queue_drop_count=_server_queue_drop_count(loss_stats),
         ),
     )
 
@@ -597,9 +612,11 @@ def _coverage_only_summary(
     window: WholeRunWindowDescriptor,
     coverage_state: RawCaptureCoverageState,
     coverage_reason: str | None,
+    loss_stats: RawCaptureLossStats | None = None,
     returned_sample_start: int | None = None,
     returned_sample_count: int = 0,
 ) -> WholeRunWindowSpectralSummary:
+    loss_stats = loss_stats or RawCaptureLossStats()
     return WholeRunWindowSpectralSummary(
         window_index=window.window_index,
         coverage_state=coverage_state,
@@ -613,7 +630,18 @@ def _coverage_only_summary(
             returned_sample_count=returned_sample_count,
             coverage_state=coverage_state,
             coverage_reason=coverage_reason,
+            late_packet_chunk_count=loss_stats.late_packet_chunk_count,
+            server_queue_drop_count=_server_queue_drop_count(loss_stats),
         ),
+    )
+
+
+def _server_queue_drop_count(loss_stats: RawCaptureLossStats) -> int:
+    return (
+        max(0, loss_stats.udp_ingest_queue_drop_count)
+        + max(0, loss_stats.queue_overflow_chunk_count)
+        + max(0, loss_stats.invalid_chunk_count)
+        + max(0, loss_stats.write_error_chunk_count)
     )
 
 

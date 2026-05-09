@@ -151,6 +151,7 @@ class ReportWholeRunOrderSummary:
     shock_transient_window_count: int
     sensor_clipping_window_count: int
     sensor_mounting_artifact_window_count: int
+    sensor_timing_integrity_window_count: int
     mean_quality_score: float | None
     support_intervals: tuple[ReportOrderTraceSupportInterval, ...]
     phase_support: tuple[ReportOrderTracePhaseSupport, ...]
@@ -675,6 +676,7 @@ _WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
         _count_field("shock_transient_window_count"),
         _count_field("sensor_clipping_window_count"),
         _count_field("sensor_mounting_artifact_window_count"),
+        _count_field("sensor_timing_integrity_window_count"),
         _float_field("mean_quality_score"),
         _rows_field("support_intervals", _ORDER_SUPPORT_INTERVAL_DECODER),
         _rows_field("phase_support", _ORDER_PHASE_SUPPORT_DECODER),
