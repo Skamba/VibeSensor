@@ -2283,6 +2283,10 @@
     "en": "Road-shock windows filtered: {count}",
     "nl": "Wegschokvensters gefilterd: {count}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_CLIPPING_WINDOWS": {
+    "en": "Sensor clipping windows filtered: {count}",
+    "nl": "Sensorclippingvensters gefilterd: {count}"
+  },
   "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
     "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
     "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"
