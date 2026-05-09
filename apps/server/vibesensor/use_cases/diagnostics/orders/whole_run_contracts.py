@@ -10,7 +10,7 @@ harmonic evidence rows.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import Literal
 
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.whole_run_json_helpers import (
@@ -469,7 +469,7 @@ def _order_family(value: object) -> OrderTraceFamily:
     family = _optional_text(value)
     if family not in ORDER_TRACE_FAMILY_VALUES:
         raise ValueError(f"Unsupported order_family {value!r}")
-    return cast(OrderTraceFamily, family)
+    return family
 
 
 def _require_nonnegative(value: int, *, field_name: str) -> None:
