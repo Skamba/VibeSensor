@@ -112,10 +112,12 @@ class PeakBin:
         "_presence_ratio",
         "_ranking_score",
         "_raw_snr",
+        "_sample_count",
         "_spatial_concentration",
         "_spatial_uniformity",
         "_speed_amp_pairs",
         "_speed_uniformity",
+        "_total_sample_count",
     )
 
     def __init__(
@@ -183,10 +185,12 @@ class PeakBin:
             p95_amp=stats.p95_amp,
         )
         self._raw_snr = raw_snr
+        self._sample_count = count
         self._spatial_concentration = spatial_concentration
         self._spatial_uniformity = spatial_uniformity
         self._speed_amp_pairs = list(speed_amp_pairs)
         self._speed_uniformity = speed_uniformity
+        self._total_sample_count = n_samples
         self._confidence = _compute_peak_confidence(
             peak_type=peak_type,
             presence_ratio=presence_ratio,
@@ -204,6 +208,14 @@ class PeakBin:
     @property
     def presence_ratio(self) -> float:
         return self._presence_ratio
+
+    @property
+    def sample_count(self) -> int:
+        return self._sample_count
+
+    @property
+    def total_sample_count(self) -> int:
+        return self._total_sample_count
 
     @property
     def burstiness(self) -> float:
