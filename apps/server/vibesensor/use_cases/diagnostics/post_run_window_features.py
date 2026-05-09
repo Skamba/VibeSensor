@@ -9,6 +9,7 @@ from typing import Literal
 import numpy as np
 
 from vibesensor.shared.fft_analysis import AXES, Axis, BoolArray, FloatArray
+from vibesensor.shared.sensor_orientation import AxisFrame, SignedAxis
 from vibesensor.use_cases.diagnostics.post_run_raw_windows import (
     PostRunRawWindowDataQualityFlag,
 )
@@ -31,6 +32,7 @@ type PostRunWindowFeatureQualityFlag = (
         "frequency_mask_empty",
         "invalid_spectrum_values",
         "no_dominant_peak",
+        "sensor_orientation_unknown",
     ]
 )
 
@@ -50,6 +52,7 @@ class PostRunWindowAxisDominance:
     """Dominant-axis evidence at the selected feature peak."""
 
     axis: Axis | None
+    axis_frame: AxisFrame
     axis_amp_g: float
     combined_amp_g: float
     ratio: float | None
@@ -70,6 +73,9 @@ class PostRunWindowFeature:
     coverage_state: PostRunStftCoverageState
     data_quality_flags: tuple[PostRunRawWindowDataQualityFlag, ...]
     feature_quality_flags: tuple[PostRunWindowFeatureQualityFlag, ...]
+    mount_orientation: str | None
+    axis_frame: AxisFrame
+    gravity_axis: SignedAxis | None
     dominant_freq_hz: float | None
     vibration_strength_db: float | None
     peak_amp_g: float | None
@@ -128,6 +134,8 @@ def post_run_window_feature_debug_rows(
                 "vibration_strength_db": feature.vibration_strength_db,
                 "strength_bucket": feature.strength_bucket,
                 "axis": feature.axis_dominance.axis,
+                "axis_frame": feature.axis_frame,
+                "gravity_axis": feature.gravity_axis,
                 "coverage_state": feature.coverage_state,
                 "quality_flags": list(feature.feature_quality_flags),
             }
@@ -178,11 +186,14 @@ def _feature_from_frame(
     if not top_peaks:
         _append_unique_flag(quality_flags, "no_dominant_peak")
     dominant_freq_hz = top_peaks[0]["hz"] if top_peaks else None
+    if frame.axis_frame != "vehicle":
+        _append_unique_flag(quality_flags, "sensor_orientation_unknown")
     axis_dominance = _axis_dominance(
         freq_hz=masked_freq,
         axis_spectra=masked_axis_spectra,
         combined_amp_g=masked_combined,
         dominant_freq_hz=dominant_freq_hz,
+        axis_frame=frame.axis_frame,
     )
     rms_by_axis = _axis_float_map(frame.rms_by_axis_g)
     p2p_by_axis = _axis_float_map(frame.p2p_by_axis_g)
@@ -198,6 +209,9 @@ def _feature_from_frame(
         coverage_state=frame.coverage_state,
         data_quality_flags=frame.data_quality_flags,
         feature_quality_flags=tuple(quality_flags),
+        mount_orientation=frame.mount_orientation,
+        axis_frame=frame.axis_frame,
+        gravity_axis=frame.gravity_axis,
         dominant_freq_hz=dominant_freq_hz,
         vibration_strength_db=_positive_peak_metric(
             strength_metrics,
@@ -289,9 +303,16 @@ def _axis_dominance(
     axis_spectra: dict[Axis, FloatArray],
     combined_amp_g: FloatArray,
     dominant_freq_hz: float | None,
+    axis_frame: AxisFrame,
 ) -> PostRunWindowAxisDominance:
-    if dominant_freq_hz is None or freq_hz.size == 0:
-        return PostRunWindowAxisDominance(axis=None, axis_amp_g=0.0, combined_amp_g=0.0, ratio=None)
+    if axis_frame != "vehicle" or dominant_freq_hz is None or freq_hz.size == 0:
+        return PostRunWindowAxisDominance(
+            axis=None,
+            axis_frame=axis_frame,
+            axis_amp_g=0.0,
+            combined_amp_g=0.0,
+            ratio=None,
+        )
     peak_idx = int(np.argmin(np.abs(freq_hz - np.float32(dominant_freq_hz))))
     axis_amps = {axis: float(axis_spectra[axis][peak_idx]) for axis in AXES}
     dominant_axis, dominant_amp = max(axis_amps.items(), key=lambda item: item[1])
@@ -299,6 +320,7 @@ def _axis_dominance(
     ratio = dominant_amp / combined_amp if combined_amp > 0.0 else None
     return PostRunWindowAxisDominance(
         axis=dominant_axis if dominant_amp > 0.0 else None,
+        axis_frame=axis_frame,
         axis_amp_g=dominant_amp,
         combined_amp_g=combined_amp,
         ratio=ratio,

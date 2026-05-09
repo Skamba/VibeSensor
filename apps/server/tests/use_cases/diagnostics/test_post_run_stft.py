@@ -54,6 +54,7 @@ def _raw_window(
     window_index: int = 0,
     flags: tuple[PostRunRawWindowDataQualityFlag, ...] = (),
     returned_sample_count: int | None = None,
+    mount_orientation: str | None = "+x,+y,+z",
 ) -> PostRunRawWindow:
     descriptor = _window_descriptor(window_index)
     sensor = PostRunRawSensorWindow(
@@ -72,6 +73,7 @@ def _raw_window(
             int(samples.shape[0]) if returned_sample_count is None else returned_sample_count
         ),
         data_quality_flags=flags,
+        mount_orientation=mount_orientation,
     )
     return PostRunRawWindow(run_id=_RUN_ID, window=descriptor, sensors=(sensor,))
 
@@ -217,3 +219,53 @@ def test_dense_stft_rejects_invalid_config() -> None:
             (),
             config=PostRunStftConfig(spectrum_min_hz=20.0, spectrum_max_hz=10.0),
         )
+
+
+def test_dense_stft_rotates_known_mount_orientation_to_vehicle_axes() -> None:
+    samples = _tone(8.0, amplitude=1000.0)
+
+    result = compute_post_run_dense_stft(
+        (_raw_window(samples, mount_orientation="+y,-x,+z"),),
+        config=PostRunStftConfig(
+            fft_size_samples=_FFT_N,
+            spectrum_min_hz=1.0,
+            spectrum_max_hz=30.0,
+            accel_scale_g_per_lsb=0.001,
+        ),
+    )
+
+    frame = result.frames[0]
+    assert frame.axis_frame == "vehicle"
+    assert frame.rms_by_axis_g["y"] == pytest.approx(0.707, abs=0.04)
+    assert frame.rms_by_axis_g["x"] == pytest.approx(0.0, abs=0.01)
+
+
+def test_dense_stft_keeps_unknown_mount_orientation_in_sensor_local_frame() -> None:
+    result = compute_post_run_dense_stft(
+        (_raw_window(_tone(8.0), mount_orientation=None),),
+        config=PostRunStftConfig(
+            fft_size_samples=_FFT_N,
+            spectrum_min_hz=1.0,
+            spectrum_max_hz=30.0,
+            accel_scale_g_per_lsb=0.001,
+        ),
+    )
+
+    assert result.frames[0].axis_frame == "sensor_local"
+
+
+def test_dense_stft_estimates_static_gravity_axis_before_spectral_analysis() -> None:
+    samples = _tone(8.0, amplitude=200.0)
+    samples[:, 2] += 1000
+
+    result = compute_post_run_dense_stft(
+        (_raw_window(samples, mount_orientation="+x,+y,+z"),),
+        config=PostRunStftConfig(
+            fft_size_samples=_FFT_N,
+            spectrum_min_hz=1.0,
+            spectrum_max_hz=30.0,
+            accel_scale_g_per_lsb=0.001,
+        ),
+    )
+
+    assert result.frames[0].gravity_axis == "+z"
