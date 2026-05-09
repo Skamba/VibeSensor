@@ -141,6 +141,7 @@ class PostRunRawSensorWindow:
     returned_sample_start: int | None
     returned_sample_count: int
     data_quality_flags: tuple[PostRunRawWindowDataQualityFlag, ...]
+    mount_orientation: str | None = None
 
     @property
     def start_t_s(self) -> float:
@@ -614,6 +615,7 @@ def _build_sensor_window(
         returned_sample_start=returned_sample_start,
         returned_sample_count=int(axis_x.shape[0]),
         data_quality_flags=tuple(flags),
+        mount_orientation=_sensor_mount_orientation(metadata, sensor.client_id),
     )
     return sensor_window, tuple(warnings)
 
@@ -697,6 +699,16 @@ def _sensor_location(metadata: RunMetadata | None, sensor_id: str) -> str:
         metadata.sensor_snapshot_for(sensor_id) if metadata is not None else None
     )
     return snapshot.location_code.strip() if snapshot is not None else ""
+
+
+def _sensor_mount_orientation(metadata: RunMetadata | None, sensor_id: str) -> str | None:
+    snapshot: RunSensorMetadata | None = (
+        metadata.sensor_snapshot_for(sensor_id) if metadata is not None else None
+    )
+    if snapshot is None:
+        return None
+    orientation = (snapshot.mount_orientation or "").strip()
+    return orientation if orientation else None
 
 
 def _has_timestamp_gap(

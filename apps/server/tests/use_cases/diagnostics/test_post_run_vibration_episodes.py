@@ -53,6 +53,9 @@ def _feature(
         coverage_state=coverage_state,
         data_quality_flags=(),
         feature_quality_flags=quality_flags,
+        mount_orientation="+x,+y,+z",
+        axis_frame="vehicle",
+        gravity_axis=None,
         dominant_freq_hz=freq_hz,
         vibration_strength_db=strength_db,
         peak_amp_g=1.0,
@@ -61,6 +64,7 @@ def _feature(
         top_peaks=peaks,
         axis_dominance=PostRunWindowAxisDominance(
             axis="x",
+            axis_frame="vehicle",
             axis_amp_g=1.0,
             combined_amp_g=1.0,
             ratio=1.0,
