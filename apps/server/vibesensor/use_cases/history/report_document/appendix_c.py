@@ -182,6 +182,11 @@ def _dense_caveat_text(
             "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL",
             pct=f"{summary.reference_coverage_ratio * 100:.0f}%",
         )
+    if summary.shock_transient_window_count > 0:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS",
+            count=str(summary.shock_transient_window_count),
+        )
     if summary.mean_quality_score is not None and (
         summary.mean_quality_score < 0.75
         or summary.limited_window_count > 0

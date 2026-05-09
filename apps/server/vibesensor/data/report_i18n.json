@@ -2275,6 +2275,10 @@
     "en": "Reference coverage {pct}",
     "nl": "Referentiedekking {pct}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS": {
+    "en": "Road-shock windows filtered: {count}",
+    "nl": "Wegschokvensters gefilterd: {count}"
+  },
   "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
     "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
     "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"

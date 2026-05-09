@@ -66,6 +66,8 @@ class WindowQualityPayload(TypedDict):
     packet_integrity_score: float
     clipping_score: float
     transient_score: float
+    shock_crest_factor: float | None
+    shock_broadband_ratio: float | None
     context_score: float
     frequency_stability_score: float
     reasons: list[str]

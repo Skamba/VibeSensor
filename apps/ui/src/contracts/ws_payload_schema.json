@@ -536,6 +536,28 @@
           "title": "Score",
           "type": "number"
         },
+        "shock_broadband_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Shock Broadband Ratio"
+        },
+        "shock_crest_factor": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Shock Crest Factor"
+        },
         "state": {
           "title": "State",
           "type": "string"
@@ -552,6 +574,8 @@
         "packet_integrity_score",
         "clipping_score",
         "transient_score",
+        "shock_crest_factor",
+        "shock_broadband_ratio",
         "context_score",
         "frequency_stability_score",
         "reasons"

@@ -148,6 +148,7 @@ class ReportWholeRunOrderSummary:
     usable_window_count: int
     limited_window_count: int
     excluded_window_count: int
+    shock_transient_window_count: int
     mean_quality_score: float | None
     support_intervals: tuple[ReportOrderTraceSupportInterval, ...]
     phase_support: tuple[ReportOrderTracePhaseSupport, ...]
@@ -669,6 +670,7 @@ _WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
         _count_field("usable_window_count"),
         _count_field("limited_window_count"),
         _count_field("excluded_window_count"),
+        _count_field("shock_transient_window_count"),
         _float_field("mean_quality_score"),
         _rows_field("support_intervals", _ORDER_SUPPORT_INTERVAL_DECODER),
         _rows_field("phase_support", _ORDER_PHASE_SUPPORT_DECODER),
