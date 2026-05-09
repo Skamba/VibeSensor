@@ -220,6 +220,10 @@ async def test_whole_run_order_summaries_survive_persistence_and_http_layers() -
             "reference_coverage_ratio": 0.8,
             "longest_contiguous_support_window_count": 3,
             "contiguous_support_ratio": 0.375,
+            "usable_window_count": 5,
+            "limited_window_count": 1,
+            "excluded_window_count": 0,
+            "mean_quality_score": 0.92,
             "support_intervals": [
                 {
                     "interval_index": 0,

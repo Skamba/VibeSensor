@@ -77,6 +77,9 @@ class OrderTracePoint:
     vibration_strength_db: float | None = None
     ref_source: str | None = None
     strongest_location: str | None = None
+    window_quality_score: float | None = None
+    window_quality_state: str | None = None
+    window_quality_reasons: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _require_nonnegative(self.window_index, field_name="window_index")
@@ -103,6 +106,10 @@ class OrderTracePoint:
         _set_optional(payload, "vibration_strength_db", self.vibration_strength_db)
         _set_optional(payload, "ref_source", self.ref_source)
         _set_optional(payload, "strongest_location", self.strongest_location)
+        _set_optional(payload, "window_quality_score", self.window_quality_score)
+        _set_optional(payload, "window_quality_state", self.window_quality_state)
+        if self.window_quality_reasons:
+            payload["window_quality_reasons"] = list(self.window_quality_reasons)
         return payload
 
     @classmethod
@@ -123,6 +130,9 @@ class OrderTracePoint:
             vibration_strength_db=_optional_float(data.get("vibration_strength_db")),
             ref_source=_optional_text(data.get("ref_source")),
             strongest_location=_optional_text(data.get("strongest_location")),
+            window_quality_score=_optional_float(data.get("window_quality_score")),
+            window_quality_state=_optional_text(data.get("window_quality_state")),
+            window_quality_reasons=_text_tuple(data.get("window_quality_reasons")),
         )
 
 
@@ -298,6 +308,10 @@ class OrderTraceSummary:
     reference_coverage_ratio: float
     longest_contiguous_support_window_count: int
     contiguous_support_ratio: float
+    usable_window_count: int = 0
+    limited_window_count: int = 0
+    excluded_window_count: int = 0
+    mean_quality_score: float | None = None
     support_intervals: tuple[OrderTraceSupportInterval, ...] = ()
     phase_support: tuple[OrderTracePhaseSupport, ...] = ()
     harmonic_summaries: tuple[OrderHarmonicEvidenceSummary, ...] = ()
@@ -326,6 +340,9 @@ class OrderTraceSummary:
             self.longest_contiguous_support_window_count,
             field_name="longest_contiguous_support_window_count",
         )
+        _require_nonnegative(self.usable_window_count, field_name="usable_window_count")
+        _require_nonnegative(self.limited_window_count, field_name="limited_window_count")
+        _require_nonnegative(self.excluded_window_count, field_name="excluded_window_count")
         _require_ratio(self.support_ratio, field_name="support_ratio")
         _require_ratio(self.reference_coverage_ratio, field_name="reference_coverage_ratio")
         _require_ratio(self.contiguous_support_ratio, field_name="contiguous_support_ratio")
@@ -347,6 +364,9 @@ class OrderTraceSummary:
             "reference_coverage_ratio": self.reference_coverage_ratio,
             "longest_contiguous_support_window_count": self.longest_contiguous_support_window_count,
             "contiguous_support_ratio": self.contiguous_support_ratio,
+            "usable_window_count": self.usable_window_count,
+            "limited_window_count": self.limited_window_count,
+            "excluded_window_count": self.excluded_window_count,
             "support_intervals": [interval.to_json_object() for interval in self.support_intervals],
             "phase_support": [row.to_json_object() for row in self.phase_support],
             "harmonic_summaries": [summary.to_json_object() for summary in self.harmonic_summaries],
@@ -363,6 +383,7 @@ class OrderTraceSummary:
         _set_optional(payload, "strongest_location", self.strongest_location)
         _set_optional(payload, "mean_relative_error", self.mean_relative_error)
         _set_optional(payload, "relative_error_stddev", self.relative_error_stddev)
+        _set_optional(payload, "mean_quality_score", self.mean_quality_score)
         _set_optional(payload, "peak_intensity_db", self.peak_intensity_db)
         _set_optional(payload, "mean_vibration_strength_db", self.mean_vibration_strength_db)
         return payload
@@ -384,6 +405,10 @@ class OrderTraceSummary:
                 "longest_contiguous_support_window_count",
             ),
             contiguous_support_ratio=_required_float(data, "contiguous_support_ratio"),
+            usable_window_count=_optional_int(data.get("usable_window_count")) or 0,
+            limited_window_count=_optional_int(data.get("limited_window_count")) or 0,
+            excluded_window_count=_optional_int(data.get("excluded_window_count")) or 0,
+            mean_quality_score=_optional_float(data.get("mean_quality_score")),
             support_intervals=_tuple_from_mapping_list_field(
                 data,
                 "support_intervals",
@@ -467,9 +492,13 @@ def _optional_float(value: object) -> float | None:
 
 def _order_family(value: object) -> OrderTraceFamily:
     family = _optional_text(value)
-    if family not in ORDER_TRACE_FAMILY_VALUES:
-        raise ValueError(f"Unsupported order_family {value!r}")
-    return family
+    if family == "wheel":
+        return "wheel"
+    if family == "driveshaft":
+        return "driveshaft"
+    if family == "engine":
+        return "engine"
+    raise ValueError(f"Unsupported order_family {value!r}")
 
 
 def _require_nonnegative(value: int, *, field_name: str) -> None:

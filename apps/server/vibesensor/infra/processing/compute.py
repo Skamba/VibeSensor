@@ -17,6 +17,7 @@ from vibesensor.shared.types.processing_profile import (
     PROCESSING_FILTER_MEDIAN_3_SAMPLE,
     PROCESSING_PROFILE_LIVE_DISPLAY,
 )
+from vibesensor.shared.window_quality import score_window_quality
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 
@@ -107,6 +108,14 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
                 combined_metrics = metrics["combined"]
                 combined_metrics["peaks"] = list(strength_metrics["top_peaks"])
                 combined_metrics["strength_metrics"] = strength_metrics
+                combined_metrics["window_quality"] = score_window_quality(
+                    expected_sample_count=int(fft_input.shape[1]),
+                    returned_sample_count=int(fft_input.shape[1]),
+                    coverage_state="full",
+                    samples_g=fft_input,
+                    peak_amp_g=strength_metrics.get("peak_amp_g"),
+                    noise_floor_amp_g=strength_metrics.get("noise_floor_amp_g"),
+                ).to_payload()
                 spectrum_by_axis["combined"] = {
                     "freq": freq_slice,
                     "amp": combined_amp,
