@@ -317,6 +317,7 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     limited_window_count: Required[int]
     excluded_window_count: Required[int]
     shock_transient_window_count: Required[int]
+    sensor_clipping_window_count: Required[int]
     mean_quality_score: float | None
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]

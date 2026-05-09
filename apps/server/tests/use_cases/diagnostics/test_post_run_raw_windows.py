@@ -110,6 +110,30 @@ def test_post_run_raw_window_iterator_streams_configured_sensor_ranges(tmp_path:
     assert "low_sample_count" in windows[2].sensors[1].data_quality_flags
 
 
+def test_post_run_raw_window_iterator_flags_sensor_clipping(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    _create_run_with_sensor_metadata(db, "run-clipping")
+    samples = _samples(4)
+    samples[:3, 0] = 32767
+    _append_chunk(db, run_id="run-clipping", client_id="sensor-a", t0_us=0, samples=samples)
+    assert _finalize_raw_capture(db, "run-clipping") is not None
+
+    iterator = db.run_repository._run_sync(
+        prepare_post_run_raw_window_iterator(
+            db.run_repository,
+            "run-clipping",
+            config=PostRunRawWindowIteratorConfig(
+                window_size_s=1.0,
+                overlap_pct=0.0,
+                min_valid_samples_pct=0.5,
+            ),
+        )
+    )
+    windows = db.run_repository._run_sync(_collect_windows(iterator))
+
+    assert "sensor_clipping" in windows[0].sensors[0].data_quality_flags
+
+
 def test_post_run_raw_window_iterator_uses_manifest_range_reads_not_full_capture(
     tmp_path: Path,
 ) -> None:

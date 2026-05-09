@@ -196,6 +196,9 @@ def _summarize_hypothesis_trace(
     shock_transient_window_count = sum(
         1 for point in points if "shock_transient" in point.window_quality_reasons
     )
+    sensor_clipping_window_count = sum(
+        1 for point in points if "sensor_clipping" in point.window_quality_reasons
+    )
     support_intervals = _support_intervals(
         matched_points=matched_points,
         context_by_window=context_by_window,
@@ -285,6 +288,7 @@ def _summarize_hypothesis_trace(
         limited_window_count=limited_window_count,
         excluded_window_count=excluded_window_count,
         shock_transient_window_count=shock_transient_window_count,
+        sensor_clipping_window_count=sensor_clipping_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,

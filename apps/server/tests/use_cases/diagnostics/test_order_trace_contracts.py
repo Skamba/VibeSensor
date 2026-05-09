@@ -262,6 +262,7 @@ def test_history_order_trace_response_contracts_expose_named_summary_fields() ->
         "limited_window_count",
         "excluded_window_count",
         "shock_transient_window_count",
+        "sensor_clipping_window_count",
         "mean_quality_score",
         "support_intervals",
         "phase_support",
