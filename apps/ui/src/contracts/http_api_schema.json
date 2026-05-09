@@ -6314,6 +6314,10 @@
             ],
             "title": "Relative Error Stddev"
           },
+          "sensor_clipping_window_count": {
+            "title": "Sensor Clipping Window Count",
+            "type": "integer"
+          },
           "shock_transient_window_count": {
             "title": "Shock Transient Window Count",
             "type": "integer"
@@ -6391,6 +6395,7 @@
           "limited_window_count",
           "excluded_window_count",
           "shock_transient_window_count",
+          "sensor_clipping_window_count",
           "support_intervals",
           "phase_support",
           "harmonic_summaries",
@@ -9453,6 +9458,21 @@
       },
       "WindowQualityPayload": {
         "properties": {
+          "clipping_axis_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Clipping Axis Counts",
+            "type": "object"
+          },
+          "clipping_sample_count": {
+            "title": "Clipping Sample Count",
+            "type": "integer"
+          },
+          "clipping_sample_ratio": {
+            "title": "Clipping Sample Ratio",
+            "type": "number"
+          },
           "clipping_score": {
             "title": "Clipping Score",
             "type": "number"
@@ -9521,6 +9541,9 @@
           "sample_completeness_score",
           "packet_integrity_score",
           "clipping_score",
+          "clipping_sample_count",
+          "clipping_sample_ratio",
+          "clipping_axis_counts",
           "transient_score",
           "shock_crest_factor",
           "shock_broadband_ratio",
