@@ -151,6 +151,7 @@ def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[...
         matched=summary.matched_window_count,
         eligible=summary.eligible_window_count,
         pct=f"{summary.support_ratio * 100:.0f}%",
+        lock=f"{summary.lock_score * 100:.0f}%",
     )
 
 
@@ -200,6 +201,8 @@ def _dense_caveat_text(
         )
     if summary.support_ratio < 0.5:
         return tr("REPORT_DENSE_EVIDENCE_CAVEAT_LIMITED_SUPPORT")
+    if summary.lock_score < 0.5:
+        return tr("REPORT_DENSE_EVIDENCE_CAVEAT_LOW_LOCK")
     if summary.drift_score > 0.25:
         return tr("REPORT_DENSE_EVIDENCE_CAVEAT_DRIFT")
     return None

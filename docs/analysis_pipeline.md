@@ -98,6 +98,12 @@ bandwidth settings, optional harmonic lists, and an explicit output spectrum
 clamp. Unavailable reference inputs become unavailable band rows with reasons
 instead of being dropped or guessed.
 
+Whole-run order traces score the same speed/RPM-synchronous hypotheses across
+consecutive analysis windows. Summaries persist matched support intervals,
+phase-level support, contiguous support, drift/error, and an order-lock score, so
+fixed-frequency resonances during speed changes stay weak unless they follow the
+expected wheel, driveshaft, or engine trajectory.
+
 `use_cases/diagnostics/post_run_vibration_episodes.py` groups POSTRUN-03
 window-feature peaks into deterministic, time-bounded episodes. Grouping is by
 sensor/location, adjacent time windows, allowed per-step frequency drift, and a

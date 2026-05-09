@@ -13,6 +13,9 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowPolicy,
 )
 from vibesensor.shared.window_quality import WindowQuality, score_window_quality
+from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
+    build_whole_run_order_trace_summary_artifact_bundle,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     build_whole_run_order_trace_artifact_bundle,
@@ -46,9 +49,11 @@ def _window_policy() -> WholeRunWindowPolicy:
     )
 
 
-def _context_labels() -> tuple[WholeRunContextWindowLabel, ...]:
-    speeds = (40.0, 60.0, 80.0)
-    rpm_values = (1000.0, 1500.0, 2000.0)
+def _context_labels(
+    *,
+    speeds: tuple[float, float, float] = (40.0, 60.0, 80.0),
+    rpm_values: tuple[float, float, float] = (1000.0, 1500.0, 2000.0),
+) -> tuple[WholeRunContextWindowLabel, ...]:
     return tuple(
         WholeRunContextWindowLabel(
             window_index=index,
@@ -122,11 +127,14 @@ def _shock_window_quality() -> WindowQuality:
 def _summary_rows(
     *,
     sensor_scale: float,
+    context_labels: tuple[WholeRunContextWindowLabel, ...] | None = None,
+    include_predicted_peaks: bool = True,
+    fixed_peak_hz: float | None = None,
     window_quality_by_index: dict[int, WindowQuality] | None = None,
 ) -> tuple[WholeRunWindowSpectralSummary, ...]:
     metadata = _metadata()
     rows: list[WholeRunWindowSpectralSummary] = []
-    for label in _context_labels():
+    for label in context_labels or _context_labels():
         context_sample = _context_sample(
             label.window_index,
             speed_kmh=float(label.speed_kmh or 0.0),
@@ -162,15 +170,25 @@ def _summary_rows(
             engine_hz,
             engine_hz * 2.0 if engine_hz is not None else None,
         )
-        for index, predicted_hz in enumerate(predicted_frequencies, start=1):
-            if predicted_hz is None or predicted_hz <= 0:
-                continue
-            amplitude = sensor_scale / float(index)
+        if include_predicted_peaks:
+            for index, predicted_hz in enumerate(predicted_frequencies, start=1):
+                if predicted_hz is None or predicted_hz <= 0:
+                    continue
+                amplitude = sensor_scale / float(index)
+                peaks.append(
+                    {
+                        "hz": float(predicted_hz),
+                        "amp": amplitude,
+                        "vibration_strength_db": 30.0 + amplitude * 50.0,
+                        "strength_bucket": "l3",
+                    }
+                )
+        if fixed_peak_hz is not None:
             peaks.append(
                 {
-                    "hz": float(predicted_hz),
-                    "amp": amplitude,
-                    "vibration_strength_db": 30.0 + amplitude * 50.0,
+                    "hz": fixed_peak_hz,
+                    "amp": sensor_scale * 1.5,
+                    "vibration_strength_db": 30.0 + sensor_scale * 75.0,
                     "strength_bucket": "l3",
                 }
             )
@@ -206,15 +224,79 @@ def _summary_rows(
     return tuple(rows)
 
 
-def _artifact_contents() -> dict[str, bytes]:
+def _artifact_contents_for(
+    *,
+    context_labels: tuple[WholeRunContextWindowLabel, ...] | None = None,
+    include_predicted_peaks: bool = True,
+    fixed_peak_hz: float | None = None,
+) -> dict[str, bytes]:
     return {
         "spectral-summary:sensor-front": whole_run_window_spectral_summaries_to_jsonl_bytes(
-            _summary_rows(sensor_scale=0.14)
+            _summary_rows(
+                sensor_scale=0.14,
+                context_labels=context_labels,
+                include_predicted_peaks=include_predicted_peaks,
+                fixed_peak_hz=fixed_peak_hz,
+            )
         ),
         "spectral-summary:sensor-rear": whole_run_window_spectral_summaries_to_jsonl_bytes(
-            _summary_rows(sensor_scale=0.08)
+            _summary_rows(
+                sensor_scale=0.08,
+                context_labels=context_labels,
+                include_predicted_peaks=include_predicted_peaks,
+                fixed_peak_hz=fixed_peak_hz,
+            )
         ),
     }
+
+
+def _artifact_contents() -> dict[str, bytes]:
+    return _artifact_contents_for()
+
+
+def _trace_bundle_for(
+    *,
+    context_labels: tuple[WholeRunContextWindowLabel, ...] | None = None,
+    include_predicted_peaks: bool = True,
+    fixed_peak_hz: float | None = None,
+):
+    labels = context_labels or _context_labels()
+    return build_whole_run_order_trace_artifact_bundle(
+        run_id="run-order-traces",
+        metadata=_metadata(),
+        spectral_manifest=_spectral_manifest(),
+        spectral_artifact_contents=_artifact_contents_for(
+            context_labels=labels,
+            include_predicted_peaks=include_predicted_peaks,
+            fixed_peak_hz=fixed_peak_hz,
+        ),
+        context_labels=labels,
+        samples=_samples(),
+    )
+
+
+def _summary_bundle_for(
+    *,
+    context_labels: tuple[WholeRunContextWindowLabel, ...] | None = None,
+    include_predicted_peaks: bool = True,
+    fixed_peak_hz: float | None = None,
+):
+    labels = context_labels or _context_labels()
+    trace_bundle = _trace_bundle_for(
+        context_labels=labels,
+        include_predicted_peaks=include_predicted_peaks,
+        fixed_peak_hz=fixed_peak_hz,
+    )
+    return build_whole_run_order_trace_summary_artifact_bundle(
+        order_trace_bundle=trace_bundle,
+        context_labels=labels,
+    )
+
+
+def _wheel_1x_summary(summary_bundle):
+    return next(
+        summary for summary in summary_bundle.summaries if summary.hypothesis_key == "wheel_1x"
+    )
 
 
 def _artifact_contents_with_shock_window(window_index: int) -> dict[str, bytes]:
@@ -318,3 +400,62 @@ def test_build_whole_run_order_trace_artifact_bundle_is_deterministic() -> None:
     assert first.manifest == second.manifest
     assert first.artifact_contents == second.artifact_contents
     assert first.points == second.points
+
+
+def test_whole_run_order_summary_tracks_constant_speed_order_lock() -> None:
+    labels = _context_labels(speeds=(60.0, 60.0, 60.0), rpm_values=(1500.0, 1500.0, 1500.0))
+    summary = _wheel_1x_summary(_summary_bundle_for(context_labels=labels))
+
+    assert summary.support_ratio == 1.0
+    assert summary.lock_score > 0.95
+    assert summary.stable_frequency_min_hz == summary.stable_frequency_max_hz
+    assert summary.exemplar_interval_index == 0
+    assert [
+        (interval.start_window_index, interval.end_window_index)
+        for interval in summary.support_intervals
+    ] == [(0, 2)]
+    assert summary.phase_support[0].phase == DrivingPhase.CRUISE.value
+    assert summary.phase_support[0].support_ratio == 1.0
+
+
+def test_whole_run_order_summary_tracks_acceleration_sweep_order_lock() -> None:
+    summary = _wheel_1x_summary(_summary_bundle_for())
+
+    assert summary.support_ratio == 1.0
+    assert summary.lock_score > 0.95
+    assert summary.stable_frequency_min_hz is not None
+    assert summary.stable_frequency_max_hz is not None
+    assert summary.stable_frequency_min_hz < summary.stable_frequency_max_hz
+    assert summary.support_intervals[0].matched_window_count == 3
+
+
+def test_whole_run_order_summary_does_not_lock_fixed_resonance_to_speed_sweep() -> None:
+    fixed_resonance_hz = 8.185985592665357
+    summary = _wheel_1x_summary(
+        _summary_bundle_for(include_predicted_peaks=False, fixed_peak_hz=fixed_resonance_hz)
+    )
+
+    assert summary.matched_window_count == 1
+    assert summary.support_ratio < 0.5
+    assert summary.lock_score < 0.5
+    assert [
+        (interval.start_window_index, interval.end_window_index)
+        for interval in summary.support_intervals
+    ] == [(1, 1)]
+
+
+def test_whole_run_order_trace_prefers_synchronous_peak_over_fixed_resonance() -> None:
+    fixed_resonance_hz = 8.185985592665357
+    trace_bundle = _trace_bundle_for(fixed_peak_hz=fixed_resonance_hz)
+    summary = _wheel_1x_summary(_summary_bundle_for(fixed_peak_hz=fixed_resonance_hz))
+    wheel_1x = [
+        point
+        for point in trace_bundle.points
+        if point.hypothesis_key == "wheel_1x" and point.harmonic == 1
+    ]
+
+    assert all(point.matched for point in wheel_1x)
+    assert wheel_1x[0].matched_hz != fixed_resonance_hz
+    assert wheel_1x[2].matched_hz != fixed_resonance_hz
+    assert summary.support_ratio == 1.0
+    assert summary.lock_score > 0.95
