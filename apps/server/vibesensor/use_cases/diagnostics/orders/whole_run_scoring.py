@@ -39,8 +39,10 @@ from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderHarmonicEvidenceSummary,
+    OrderTracePhaseSupport,
     OrderTracePoint,
     OrderTraceSummary,
+    OrderTraceSupportInterval,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
@@ -194,6 +196,14 @@ def _summarize_hypothesis_trace(
     shock_transient_window_count = sum(
         1 for point in points if "shock_transient" in point.window_quality_reasons
     )
+    support_intervals = _support_intervals(
+        matched_points=matched_points,
+        context_by_window=context_by_window,
+    )
+    phase_support = _phase_support(
+        eligible_points=eligible_points,
+        context_by_window=context_by_window,
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
@@ -276,12 +286,12 @@ def _summarize_hypothesis_trace(
         excluded_window_count=excluded_window_count,
         shock_transient_window_count=shock_transient_window_count,
         mean_quality_score=mean_quality_score,
-        support_intervals=(),
-        phase_support=(),
+        support_intervals=support_intervals,
+        phase_support=phase_support,
         harmonic_summaries=(harmonic_summary,),
         stable_frequency_min_hz=stable_frequency_min_hz,
         stable_frequency_max_hz=stable_frequency_max_hz,
-        exemplar_interval_index=None,
+        exemplar_interval_index=_exemplar_interval_index(support_intervals),
         dominant_phase=dominant_phase,
         dominant_speed_band=dominant_speed_band,
         strongest_location=strongest_location,
@@ -320,6 +330,8 @@ def _lock_score(
             + (_LOCK_SCORE_DRIFT_WEIGHT * drift_score),
         ),
     )
+    if support_ratio < 0.5:
+        base_score = min(base_score, support_ratio)
     if mean_quality_score is None:
         return base_score
     quality_factor = 0.85 + (0.15 * max(0.0, min(1.0, mean_quality_score)))
@@ -352,6 +364,123 @@ def _longest_contiguous_match_run(points: Sequence[OrderTracePoint]) -> int:
         previous_window_index = point.window_index
         longest = max(longest, current)
     return longest
+
+
+def _support_intervals(
+    *,
+    matched_points: Sequence[OrderTracePoint],
+    context_by_window: Mapping[int, WholeRunContextWindowLabel],
+) -> tuple[OrderTraceSupportInterval, ...]:
+    if not matched_points:
+        return ()
+    sorted_points = sorted(matched_points, key=lambda point: point.window_index)
+    grouped_points: list[list[OrderTracePoint]] = []
+    current_group: list[OrderTracePoint] = []
+    previous_window_index: int | None = None
+    for point in sorted_points:
+        if previous_window_index is None or point.window_index == previous_window_index + 1:
+            current_group.append(point)
+        else:
+            grouped_points.append(current_group)
+            current_group = [point]
+        previous_window_index = point.window_index
+    if current_group:
+        grouped_points.append(current_group)
+
+    return tuple(
+        OrderTraceSupportInterval(
+            interval_index=index,
+            start_window_index=group[0].window_index,
+            end_window_index=group[-1].window_index,
+            matched_window_count=len(group),
+            support_ratio=_ratio(
+                len(group),
+                group[-1].window_index - group[0].window_index + 1,
+            ),
+            phase=_dominant_context_for_points(
+                points=group,
+                context_by_window=context_by_window,
+                attribute_name="phase",
+            ),
+            load_state=_dominant_context_for_points(
+                points=group,
+                context_by_window=context_by_window,
+                attribute_name="load_state",
+            ),
+            speed_band=_dominant_context_for_points(
+                points=group,
+                context_by_window=context_by_window,
+                attribute_name="speed_band",
+            ),
+            mean_relative_error=_mean(
+                point.relative_error for point in group if point.relative_error is not None
+            ),
+        )
+        for index, group in enumerate(grouped_points)
+    )
+
+
+def _phase_support(
+    *,
+    eligible_points: Sequence[OrderTracePoint],
+    context_by_window: Mapping[int, WholeRunContextWindowLabel],
+) -> tuple[OrderTracePhaseSupport, ...]:
+    points_by_phase: dict[str, list[OrderTracePoint]] = {}
+    for point in eligible_points:
+        label = context_by_window.get(point.window_index)
+        if label is None:
+            continue
+        points_by_phase.setdefault(label.phase.value, []).append(point)
+    return tuple(
+        OrderTracePhaseSupport(
+            phase=phase,
+            eligible_window_count=len(points),
+            matched_window_count=sum(1 for point in points if point.matched),
+            support_ratio=_ratio(
+                sum(1 for point in points if point.matched),
+                len(points),
+            ),
+        )
+        for phase, points in sorted(points_by_phase.items())
+    )
+
+
+def _dominant_context_for_points(
+    *,
+    points: Sequence[OrderTracePoint],
+    context_by_window: Mapping[int, WholeRunContextWindowLabel],
+    attribute_name: str,
+) -> str | None:
+    counts: dict[str, int] = {}
+    for point in points:
+        label = context_by_window.get(point.window_index)
+        if label is None:
+            continue
+        raw_value = getattr(label, attribute_name)
+        value = raw_value.value if hasattr(raw_value, "value") else raw_value
+        if not isinstance(value, str) or not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    if not counts:
+        return None
+    return max(counts.items(), key=lambda item: (item[1], item[0]))[0]
+
+
+def _exemplar_interval_index(
+    intervals: Sequence[OrderTraceSupportInterval],
+) -> int | None:
+    if not intervals:
+        return None
+    exemplar = max(
+        intervals,
+        key=lambda interval: (
+            interval.matched_window_count,
+            interval.support_ratio,
+            -(interval.mean_relative_error or 0.0),
+            -interval.interval_index,
+        ),
+    )
+    return exemplar.interval_index
 
 
 def _dominant_context_value(
