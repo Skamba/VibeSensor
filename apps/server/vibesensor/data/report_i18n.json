@@ -2275,6 +2275,10 @@
     "en": "Reference coverage {pct}",
     "nl": "Referentiedekking {pct}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
+    "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
+    "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"
+  },
   "REPORT_DENSE_EVIDENCE_CHART_LABEL": {
     "en": "Support / reference coverage",
     "nl": "Ondersteuning / referentiedekking"

@@ -184,6 +184,21 @@ def _family_summary(
     ]
     mean_relative_error = _mean(relative_errors)
     relative_error_stddev = _stddev(relative_errors)
+    quality_scores = [
+        point.window_quality_score
+        for point in matched_points
+        if point.window_quality_score is not None
+    ]
+    mean_quality_score = _mean(quality_scores)
+    usable_window_count = sum(
+        1 for point in matched_points if point.window_quality_state == "usable"
+    )
+    limited_window_count = sum(
+        1 for point in matched_points if point.window_quality_state == "limited"
+    )
+    excluded_window_count = sum(
+        summary.excluded_window_count for summary in ordered_candidate_summaries
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -195,6 +210,7 @@ def _family_summary(
         mean_relative_error=mean_relative_error,
         drift_score=drift_score,
         path_compliance=1.0,
+        mean_quality_score=mean_quality_score,
     )
     support_intervals, exemplar_interval_index = _support_intervals(
         eligible_windows=eligible_windows,
@@ -258,6 +274,10 @@ def _family_summary(
         reference_coverage_ratio=reference_coverage_ratio,
         longest_contiguous_support_window_count=longest_contiguous_support_window_count,
         contiguous_support_ratio=contiguous_support_ratio,
+        usable_window_count=usable_window_count,
+        limited_window_count=limited_window_count,
+        excluded_window_count=excluded_window_count,
+        mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
         harmonic_summaries=harmonic_summaries,

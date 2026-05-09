@@ -263,7 +263,11 @@ def _candidate_window_rows(
 ) -> tuple[SpatialEvidenceWindow, ...]:
     support_by_sensor: dict[str, _CandidateSensorSupport] = {}
     for sensor_window in alignment_window.sensor_windows:
-        if sensor_window.coverage_state != "full" or point.predicted_hz is None:
+        if (
+            sensor_window.coverage_state != "full"
+            or sensor_window.window_quality.state == "excluded"
+            or point.predicted_hz is None
+        ):
             continue
         peak_indexes, peak_pairs = filtered_peak_pairs(sensor_window.top_peaks)
         peak_match = best_order_peak_match(
