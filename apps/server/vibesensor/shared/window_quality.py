@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 
+from vibesensor.shared.fft_analysis import broadband_energy_ratio
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import WindowQualityPayload
 
@@ -335,7 +336,7 @@ def _transient_analysis(samples_g: np.ndarray | None) -> _TransientAnalysis:
     peak = float(np.max(np.abs(magnitude)))
     crest = peak / rms
     crest_score = _crest_factor_score(crest)
-    broadband_ratio = _broadband_energy_ratio(detrended)
+    broadband_ratio = broadband_energy_ratio(detrended.T.astype(np.float32, copy=False))
     broadband_score = _broadband_ratio_score(broadband_ratio)
     return _TransientAnalysis(
         score=min(crest_score, broadband_score),
@@ -351,25 +352,6 @@ def _crest_factor_score(crest: float) -> float:
         return 0.0
     transient_range = _CREST_FACTOR_EXCLUDED - _CREST_FACTOR_CLEAN
     return _clamp01((_CREST_FACTOR_EXCLUDED - crest) / transient_range)
-
-
-def _broadband_energy_ratio(samples: np.ndarray) -> float | None:
-    if samples.shape[0] < 8:
-        return None
-    spectrum = np.fft.rfft(samples, axis=0)
-    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
-    power_by_bin = np.sum(magnitude * magnitude, axis=1)
-    if power_by_bin.size <= 1:
-        return None
-    power = power_by_bin[1:]
-    total_power = float(np.sum(power))
-    if not isfinite(total_power) or total_power <= 1e-18:
-        return None
-    top_count = min(3, power.size)
-    top_power = float(np.sum(np.partition(power, -top_count)[-top_count:]))
-    if not isfinite(top_power):
-        return None
-    return _clamp01(1.0 - (top_power / total_power))
 
 
 def _broadband_ratio_score(ratio: float | None) -> float:
