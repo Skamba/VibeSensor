@@ -38,6 +38,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
+from vibesensor.shared.window_quality import score_window_quality
 from vibesensor.use_cases.diagnostics.whole_run_spectral_projection import (
     WholeRunSpectralCoverageSummary,
     WholeRunWindowSpectralSummary,
@@ -575,6 +576,18 @@ def _build_window_summary(
         strength_floor_amp_g=floor_amp_g,
         strength_bucket=strength_bucket,
         top_peaks=top_peaks,
+        window_quality=score_window_quality(
+            expected_sample_count=window.sample_count,
+            returned_sample_count=returned_sample_count,
+            coverage_state="full",
+            samples_i16=samples_i16,
+            samples_g=_scale_samples_to_g(
+                samples_i16=samples_i16,
+                accel_scale_g_per_lsb=metadata.accel_scale_g_per_lsb,
+            ),
+            peak_amp_g=peak_amp_g,
+            noise_floor_amp_g=floor_amp_g,
+        ),
     )
 
 
@@ -594,6 +607,12 @@ def _coverage_only_summary(
         window_start_t_s=window.start_t_s,
         window_end_t_s=window.end_t_s,
         coverage_reason=coverage_reason,
+        window_quality=score_window_quality(
+            expected_sample_count=window.sample_count,
+            returned_sample_count=returned_sample_count,
+            coverage_state=coverage_state,
+            coverage_reason=coverage_reason,
+        ),
     )
 
 
@@ -619,9 +638,10 @@ def _compute_window_spectrum(
     float | None,
     str | None,
 ]:
-    window_f32 = samples_i16.astype(np.float32, copy=True)
-    if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
-        window_f32 *= np.float32(accel_scale_g_per_lsb)
+    window_f32 = _scale_samples_to_g(
+        samples_i16=samples_i16,
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+    )
     axes_by_time = window_f32.T
     detrended = axes_by_time - np.mean(axes_by_time, axis=1, keepdims=True)
     fft_result = fft_computer.compute_fft_spectrum(
@@ -641,6 +661,17 @@ def _compute_window_spectrum(
         _float_or_none(strength_metrics.get("noise_floor_amp_g")),
         strength_metrics.get("strength_bucket"),
     )
+
+
+def _scale_samples_to_g(
+    *,
+    samples_i16: np.ndarray,
+    accel_scale_g_per_lsb: float | None,
+) -> np.ndarray:
+    window_f32 = samples_i16.astype(np.float32, copy=True)
+    if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
+        window_f32 *= np.float32(accel_scale_g_per_lsb)
+    return window_f32
 
 
 def _build_fft_computer(

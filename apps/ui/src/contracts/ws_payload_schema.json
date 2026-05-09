@@ -212,6 +212,9 @@
         "vib_mag_rms": {
           "title": "Vib Mag Rms",
           "type": "number"
+        },
+        "window_quality": {
+          "$ref": "#/$defs/WindowQualityPayload"
         }
       },
       "title": "CombinedMetrics",
@@ -498,6 +501,62 @@
         "top_peaks"
       ],
       "title": "VibrationStrengthMetrics",
+      "type": "object"
+    },
+    "WindowQualityPayload": {
+      "properties": {
+        "clipping_score": {
+          "title": "Clipping Score",
+          "type": "number"
+        },
+        "context_score": {
+          "title": "Context Score",
+          "type": "number"
+        },
+        "frequency_stability_score": {
+          "title": "Frequency Stability Score",
+          "type": "number"
+        },
+        "packet_integrity_score": {
+          "title": "Packet Integrity Score",
+          "type": "number"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "sample_completeness_score": {
+          "title": "Sample Completeness Score",
+          "type": "number"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "transient_score": {
+          "title": "Transient Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "score",
+        "state",
+        "sample_completeness_score",
+        "packet_integrity_score",
+        "clipping_score",
+        "transient_score",
+        "context_score",
+        "frequency_stability_score",
+        "reasons"
+      ],
+      "title": "WindowQualityPayload",
       "type": "object"
     }
   },

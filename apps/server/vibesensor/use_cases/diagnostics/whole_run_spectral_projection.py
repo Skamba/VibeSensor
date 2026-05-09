@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from vibesensor.shared.json_utils import i18n_ref
@@ -23,6 +23,7 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.shared.window_quality import WindowQuality, clean_window_quality
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,
@@ -50,6 +51,7 @@ class WholeRunWindowSpectralSummary:
     strength_floor_amp_g: float | None = None
     strength_bucket: str | None = None
     top_peaks: tuple[StrengthPeak, ...] = ()
+    window_quality: WindowQuality = field(default_factory=clean_window_quality)
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -84,6 +86,7 @@ class WholeRunWindowSpectralSummary:
             payload["strength_floor_amp_g"] = self.strength_floor_amp_g
         if self.strength_bucket is not None:
             payload["strength_bucket"] = self.strength_bucket
+        payload["window_quality"] = self.window_quality.to_json_object()
         return payload
 
     @classmethod
@@ -121,6 +124,11 @@ class WholeRunWindowSpectralSummary:
             strength_floor_amp_g=_float_or_none(data.get("strength_floor_amp_g")),
             strength_bucket=_text_or_none(data.get("strength_bucket")),
             top_peaks=tuple(top_peaks),
+            window_quality=(
+                WindowQuality.from_mapping(window_quality_raw)
+                if is_json_object(window_quality_raw := data.get("window_quality"))
+                else clean_window_quality()
+            ),
         )
 
 
@@ -149,6 +157,10 @@ class WholeRunSpectralCoverageSummary:
     high_rtt_sensor_count: int
     coverage_confidence: WholeRunCoverageConfidence
     udp_ingest_queue_drop_count: int = 0
+    usable_window_count: int = 0
+    limited_window_count: int = 0
+    excluded_window_count: int = 0
+    mean_quality_score: float | None = None
     warnings: tuple[RunContextWarning, ...] = ()
 
 
@@ -165,6 +177,10 @@ def build_coverage_summary(
     partial_sensor_window_count = 0
     missing_sensor_window_count = 0
     empty_sensor_window_count = 0
+    quality_scores: list[float] = []
+    usable_window_count = 0
+    limited_window_count = 0
+    excluded_window_count = 0
     for sensor in sensors:
         summaries = summaries_by_sensor.get(sensor.manifest.client_id, ())
         if not summaries and plan is not None:
@@ -173,6 +189,14 @@ def build_coverage_summary(
             continue
         for summary in summaries:
             total_sensor_window_count += 1
+            quality = summary.window_quality
+            quality_scores.append(quality.score)
+            if quality.state == "usable":
+                usable_window_count += 1
+            elif quality.state == "limited":
+                limited_window_count += 1
+            else:
+                excluded_window_count += 1
             if summary.coverage_state == "full":
                 full_sensor_window_count += 1
             elif summary.coverage_state == "partial":
@@ -272,6 +296,10 @@ def build_coverage_summary(
         stale_sync_sensor_count=stale_sync_sensor_count,
         high_rtt_sensor_count=high_rtt_sensor_count,
         coverage_confidence=coverage_confidence,
+        usable_window_count=usable_window_count,
+        limited_window_count=limited_window_count,
+        excluded_window_count=excluded_window_count,
+        mean_quality_score=(sum(quality_scores) / len(quality_scores) if quality_scores else None),
         warnings=warnings,
     )
 

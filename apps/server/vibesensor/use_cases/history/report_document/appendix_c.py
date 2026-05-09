@@ -182,6 +182,17 @@ def _dense_caveat_text(
             "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL",
             pct=f"{summary.reference_coverage_ratio * 100:.0f}%",
         )
+    if summary.mean_quality_score is not None and (
+        summary.mean_quality_score < 0.75
+        or summary.limited_window_count > 0
+        or summary.excluded_window_count > 0
+    ):
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED",
+            pct=f"{summary.mean_quality_score * 100:.0f}%",
+            limited=str(summary.limited_window_count),
+            excluded=str(summary.excluded_window_count),
+        )
     if summary.support_ratio < 0.5:
         return tr("REPORT_DENSE_EVIDENCE_CAVEAT_LIMITED_SUPPORT")
     if summary.drift_score > 0.25:

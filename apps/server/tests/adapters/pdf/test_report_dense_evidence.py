@@ -143,6 +143,22 @@ def test_build_report_document_projects_dense_quality_caveat() -> None:
     assert document.appendix_c.dense_evidence_rows[0].caveat == ("Frequency drift across the run")
 
 
+def test_build_report_document_projects_limited_window_quality_caveat() -> None:
+    summary = _dense_summary(
+        order_summary_overrides={
+            "reference_coverage_ratio": 1.0,
+            "mean_quality_score": 0.62,
+            "limited_window_count": 3,
+            "excluded_window_count": 2,
+        }
+    )
+    document = build_report_document(prepare_report_input(summary))
+
+    assert document.appendix_c.dense_evidence_rows[0].caveat == (
+        "Usable window quality 62%; limited 3, excluded 2"
+    )
+
+
 def test_build_report_document_skips_dense_evidence_when_artifacts_are_unavailable() -> None:
     document = build_report_document(prepare_report_input(minimal_summary()))
 

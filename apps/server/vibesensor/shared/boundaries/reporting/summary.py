@@ -145,6 +145,10 @@ class ReportWholeRunOrderSummary:
     reference_coverage_ratio: float
     longest_contiguous_support_window_count: int
     contiguous_support_ratio: float
+    usable_window_count: int
+    limited_window_count: int
+    excluded_window_count: int
+    mean_quality_score: float | None
     support_intervals: tuple[ReportOrderTraceSupportInterval, ...]
     phase_support: tuple[ReportOrderTracePhaseSupport, ...]
     harmonic_summaries: tuple[ReportOrderHarmonicEvidenceSummary, ...]
@@ -662,6 +666,10 @@ _WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
         _float_or_field("reference_coverage_ratio"),
         _count_field("longest_contiguous_support_window_count"),
         _float_or_field("contiguous_support_ratio"),
+        _count_field("usable_window_count"),
+        _count_field("limited_window_count"),
+        _count_field("excluded_window_count"),
+        _float_field("mean_quality_score"),
         _rows_field("support_intervals", _ORDER_SUPPORT_INTERVAL_DECODER),
         _rows_field("phase_support", _ORDER_PHASE_SUPPORT_DECODER),
         _rows_field("harmonic_summaries", _ORDER_HARMONIC_SUMMARY_DECODER),

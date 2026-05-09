@@ -54,8 +54,21 @@ class CombinedMetrics(TypedDict, total=False):
     vib_mag_p2p: float
     peaks: list[StrengthPeak]
     strength_metrics: VibrationStrengthMetrics
+    window_quality: WindowQualityPayload
     processing_profile: ProcessingProfile
     filter_chain: list[ProcessingFilterId]
+
+
+class WindowQualityPayload(TypedDict):
+    score: float
+    state: str
+    sample_completeness_score: float
+    packet_integrity_score: float
+    clipping_score: float
+    transient_score: float
+    context_score: float
+    frequency_stability_score: float
+    reasons: list[str]
 
 
 class ClientMetrics(TypedDict, total=False):

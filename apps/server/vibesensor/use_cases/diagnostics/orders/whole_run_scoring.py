@@ -184,6 +184,15 @@ def _summarize_hypothesis_trace(
     ]
     mean_relative_error = _mean(relative_errors)
     relative_error_stddev = _stddev(relative_errors)
+    quality_scores = [
+        point.window_quality_score
+        for point in matched_points
+        if point.window_quality_score is not None
+    ]
+    mean_quality_score = _mean(quality_scores)
+    usable_window_count = sum(1 for point in points if point.window_quality_state == "usable")
+    limited_window_count = sum(1 for point in points if point.window_quality_state == "limited")
+    excluded_window_count = sum(1 for point in points if point.window_quality_state == "excluded")
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
@@ -195,6 +204,7 @@ def _summarize_hypothesis_trace(
         mean_relative_error=mean_relative_error,
         drift_score=drift_score,
         path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
+        mean_quality_score=mean_quality_score,
     )
     peak_intensity_db = _max_or_none(
         point.peak_intensity_db for point in matched_points if point.peak_intensity_db is not None
@@ -260,6 +270,10 @@ def _summarize_hypothesis_trace(
         reference_coverage_ratio=reference_coverage_ratio,
         longest_contiguous_support_window_count=longest_contiguous_support_window_count,
         contiguous_support_ratio=contiguous_support_ratio,
+        usable_window_count=usable_window_count,
+        limited_window_count=limited_window_count,
+        excluded_window_count=excluded_window_count,
+        mean_quality_score=mean_quality_score,
         support_intervals=(),
         phase_support=(),
         harmonic_summaries=(harmonic_summary,),
@@ -287,12 +301,13 @@ def _lock_score(
     mean_relative_error: float | None,
     drift_score: float,
     path_compliance: float,
+    mean_quality_score: float | None,
 ) -> float:
     error_score = _relative_error_score(
         mean_relative_error=mean_relative_error,
         path_compliance=path_compliance,
     )
-    return max(
+    base_score = max(
         0.0,
         min(
             1.0,
@@ -303,6 +318,10 @@ def _lock_score(
             + (_LOCK_SCORE_DRIFT_WEIGHT * drift_score),
         ),
     )
+    if mean_quality_score is None:
+        return base_score
+    quality_factor = 0.85 + (0.15 * max(0.0, min(1.0, mean_quality_score)))
+    return max(0.0, min(1.0, base_score * quality_factor))
 
 
 def _relative_error_score(*, mean_relative_error: float | None, path_compliance: float) -> float:
