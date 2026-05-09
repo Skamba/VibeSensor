@@ -79,6 +79,29 @@ def test_metrics_computer_operates_on_snapshot_without_shared_state() -> None:
     assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in result.metrics["combined"]["peaks"])
 
 
+def test_metrics_computer_exposes_clipping_quality_in_live_payload() -> None:
+    config = _config(sample_rate_hz=400, fft_n=256, spectrum_max_hz=150.0)
+    computer = SignalMetricsComputer(config)
+    t = np.arange(config.fft_n, dtype=np.float32) / np.float32(config.sample_rate_hz)
+    clipped_tone = np.clip(2.0 * np.sin(2.0 * np.pi * 20.0 * t), -1.0, 1.0).astype(np.float32)
+    block = np.stack([clipped_tone, np.zeros_like(t), np.zeros_like(t)], axis=0)
+    snapshot = MetricsSnapshot(
+        client_id="client-clipped",
+        sample_rate_hz=config.sample_rate_hz,
+        ingest_generation=8,
+        time_window=block.copy(),
+        fft_block=block.copy(),
+    )
+
+    result = computer.compute(snapshot)
+    quality = result.metrics["combined"]["window_quality"]
+
+    assert quality["state"] == "excluded"
+    assert "sensor_clipping" in quality["reasons"]
+    assert quality["clipping_sample_count"] > 0
+    assert quality["clipping_axis_counts"]["x"] == quality["clipping_sample_count"]
+
+
 def test_buffer_store_reuses_fft_snapshot_for_short_time_window() -> None:
     store = SignalBufferStore(_config(sample_rate_hz=8, waveform_seconds=1, fft_n=4))
     client_id = "client-short-window"

@@ -79,6 +79,24 @@ def _shock_point(window_index: int) -> OrderTracePoint:
     )
 
 
+def _clipped_point(window_index: int) -> OrderTracePoint:
+    return OrderTracePoint(
+        hypothesis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        order_family="wheel",
+        harmonic=1,
+        order_label="1x wheel",
+        window_index=window_index,
+        eligible=True,
+        matched=False,
+        predicted_hz=8.0 + window_index,
+        ref_source="speed+tire",
+        window_quality_score=0.10,
+        window_quality_state="excluded",
+        window_quality_reasons=("sensor_clipping",),
+    )
+
+
 def test_order_trace_scoring_records_and_downweights_limited_window_quality() -> None:
     context_labels = _context_labels()
     clean_summary = summarize_whole_run_order_traces(
@@ -115,3 +133,18 @@ def test_order_trace_scoring_counts_unmatched_shock_windows() -> None:
     assert summary.excluded_window_count == 1
     assert summary.shock_transient_window_count == 1
     assert summary.mean_quality_score == 0.56
+
+
+def test_order_trace_scoring_counts_unmatched_clipped_windows() -> None:
+    summary = summarize_whole_run_order_traces(
+        points=(
+            _point(0, quality_score=1.0, quality_state="usable"),
+            _clipped_point(1),
+        ),
+        context_labels=_context_labels(),
+    )[0]
+
+    assert summary.matched_window_count == 1
+    assert summary.excluded_window_count == 1
+    assert summary.sensor_clipping_window_count == 1
+    assert summary.mean_quality_score == 0.55

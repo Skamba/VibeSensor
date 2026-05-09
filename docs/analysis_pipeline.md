@@ -58,8 +58,8 @@ stages consume bounded axis arrays per window instead of materializing the full
 raw artifact bundle. Each emitted sensor window carries run ID, sensor ID,
 location snapshot, mount orientation, start/end timing, sample rate, x/y/z
 `int16` arrays, and data-quality flags such as partial windows, timestamp gaps,
-missing samples, low sample count, invalid axis data, sample-rate mismatch, and
-missing sidecars.
+missing samples, low sample count, invalid axis data, sample-rate mismatch,
+sensor clipping, and missing sidecars.
 
 The first dense analysis consumer is
 `use_cases/diagnostics/post_run_stft.py`. It consumes those POSTRUN-01 window
@@ -82,6 +82,11 @@ Axis dominance is only emitted for vehicle-relative frames; sensor-local frames
 carry a `sensor_orientation_unknown` quality flag instead. Frequency masks live
 at this layer so later episode/order/finding logic can ignore unusable bands
 without recomputing the dense spectra.
+
+Shared per-window quality scoring detects repeated accelerometer rail hits and
+flat-topped waveforms, exposes clipping counts/ratios by axis in live payloads,
+and marks clipped windows as limited or excluded evidence rather than treating
+high clipped amplitudes as trustworthy vibration strength.
 
 `use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
 and final-drive references onto the same window grid. It uses conservative

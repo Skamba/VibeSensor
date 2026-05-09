@@ -9,7 +9,7 @@ from typing import Literal
 import numpy as np
 
 from vibesensor.shared.fft_analysis import broadband_energy_ratio
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.payload_types import WindowQualityPayload
 
 type WindowQualityState = Literal["usable", "limited", "excluded"]
@@ -44,10 +44,17 @@ _WEIGHT_CONTEXT = 0.15
 _WEIGHT_FREQUENCY = 0.15
 _CLIPPING_FULL_SCALE_I16 = 32760
 _CLIPPING_EXCLUDED_RATIO = 0.01
+_CLIPPING_MIN_REPEATED_RAIL_SAMPLES = 3
+_CLIPPING_MIN_FLAT_TOP_RUN = 2
+_FLAT_TOP_MIN_PEAK_G = 0.5
+_FLAT_TOP_MIN_P2P_G = 0.25
+_FLAT_TOP_REL_TOLERANCE = 0.002
+_FLAT_TOP_ABS_TOLERANCE_G = 0.02
 _CREST_FACTOR_CLEAN = 6.0
 _CREST_FACTOR_EXCLUDED = 12.0
 _BROADBAND_RATIO_CLEAN = 0.55
 _BROADBAND_RATIO_EXCLUDED = 0.82
+_AXIS_NAMES = ("x", "y", "z")
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +62,19 @@ class _TransientAnalysis:
     score: float
     crest_factor: float | None
     broadband_ratio: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class WindowClippingAnalysis:
+    """Clipping/saturation evidence for one raw or scaled sample window."""
+
+    score: float
+    sample_count: int
+    sample_ratio: float
+    axis_counts: tuple[int, int, int] = (0, 0, 0)
+
+    def axis_counts_payload(self) -> dict[str, int]:
+        return dict(zip(_AXIS_NAMES, self.axis_counts, strict=True))
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +91,9 @@ class WindowQuality:
     frequency_stability_score: float
     shock_crest_factor: float | None = None
     shock_broadband_ratio: float | None = None
+    clipping_sample_count: int = 0
+    clipping_sample_ratio: float = 0.0
+    clipping_axis_counts: tuple[int, int, int] = (0, 0, 0)
     reasons: tuple[WindowQualityReason, ...] = ()
 
     def to_payload(self) -> WindowQualityPayload:
@@ -80,6 +103,9 @@ class WindowQuality:
             "sample_completeness_score": self.sample_completeness_score,
             "packet_integrity_score": self.packet_integrity_score,
             "clipping_score": self.clipping_score,
+            "clipping_sample_count": self.clipping_sample_count,
+            "clipping_sample_ratio": self.clipping_sample_ratio,
+            "clipping_axis_counts": self._clipping_axis_counts_payload(),
             "transient_score": self.transient_score,
             "shock_crest_factor": self.shock_crest_factor,
             "shock_broadband_ratio": self.shock_broadband_ratio,
@@ -95,6 +121,9 @@ class WindowQuality:
             "sample_completeness_score": self.sample_completeness_score,
             "packet_integrity_score": self.packet_integrity_score,
             "clipping_score": self.clipping_score,
+            "clipping_sample_count": self.clipping_sample_count,
+            "clipping_sample_ratio": self.clipping_sample_ratio,
+            "clipping_axis_counts": self._clipping_axis_counts_json(),
             "transient_score": self.transient_score,
             "shock_crest_factor": self.shock_crest_factor,
             "shock_broadband_ratio": self.shock_broadband_ratio,
@@ -128,6 +157,12 @@ class WindowQuality:
                 default=1.0,
             ),
             clipping_score=_score_from_json(data.get("clipping_score"), default=1.0),
+            clipping_sample_count=max(0, _int_from_json(data.get("clipping_sample_count")) or 0),
+            clipping_sample_ratio=_score_from_json(
+                data.get("clipping_sample_ratio"),
+                default=0.0,
+            ),
+            clipping_axis_counts=_axis_counts_from_json(data.get("clipping_axis_counts")),
             transient_score=_score_from_json(data.get("transient_score"), default=1.0),
             shock_crest_factor=_nonnegative_float_from_json(data.get("shock_crest_factor")),
             shock_broadband_ratio=_optional_score_from_json(data.get("shock_broadband_ratio")),
@@ -139,6 +174,15 @@ class WindowQuality:
             reasons=reasons,
         )
 
+    def _clipping_axis_counts_payload(self) -> dict[str, int]:
+        return dict(zip(_AXIS_NAMES, self.clipping_axis_counts, strict=True))
+
+    def _clipping_axis_counts_json(self) -> dict[str, JsonValue]:
+        return {
+            axis_name: count
+            for axis_name, count in zip(_AXIS_NAMES, self.clipping_axis_counts, strict=True)
+        }
+
 
 def clean_window_quality() -> WindowQuality:
     return WindowQuality(
@@ -147,6 +191,9 @@ def clean_window_quality() -> WindowQuality:
         sample_completeness_score=1.0,
         packet_integrity_score=1.0,
         clipping_score=1.0,
+        clipping_sample_count=0,
+        clipping_sample_ratio=0.0,
+        clipping_axis_counts=(0, 0, 0),
         transient_score=1.0,
         context_score=1.0,
         frequency_stability_score=1.0,
@@ -177,7 +224,7 @@ def score_window_quality(
         coverage_state=coverage_state,
         coverage_reason=coverage_reason,
     )
-    clipping_score = _clipping_score(samples_i16)
+    clipping_analysis = analyze_window_clipping(samples_i16=samples_i16, samples_g=samples_g)
     transient_analysis = _transient_analysis(samples_g)
     context_score = _context_score(
         context_coverage=context_coverage,
@@ -191,7 +238,10 @@ def score_window_quality(
     return _quality_from_component_scores(
         sample_completeness_score=sample_score,
         packet_integrity_score=packet_score,
-        clipping_score=clipping_score,
+        clipping_score=clipping_analysis.score,
+        clipping_sample_count=clipping_analysis.sample_count,
+        clipping_sample_ratio=clipping_analysis.sample_ratio,
+        clipping_axis_counts=clipping_analysis.axis_counts,
         transient_score=transient_analysis.score,
         shock_crest_factor=transient_analysis.crest_factor,
         shock_broadband_ratio=transient_analysis.broadband_ratio,
@@ -213,6 +263,9 @@ def window_quality_with_context(
         sample_completeness_score=quality.sample_completeness_score,
         packet_integrity_score=quality.packet_integrity_score,
         clipping_score=quality.clipping_score,
+        clipping_sample_count=quality.clipping_sample_count,
+        clipping_sample_ratio=quality.clipping_sample_ratio,
+        clipping_axis_counts=quality.clipping_axis_counts,
         transient_score=quality.transient_score,
         shock_crest_factor=quality.shock_crest_factor,
         shock_broadband_ratio=quality.shock_broadband_ratio,
@@ -231,14 +284,20 @@ def _quality_from_component_scores(
     packet_integrity_score: float,
     clipping_score: float,
     transient_score: float,
-    shock_crest_factor: float | None = None,
-    shock_broadband_ratio: float | None = None,
     context_score: float,
     frequency_stability_score: float,
+    clipping_sample_count: int = 0,
+    clipping_sample_ratio: float = 0.0,
+    clipping_axis_counts: tuple[int, int, int] = (0, 0, 0),
+    shock_crest_factor: float | None = None,
+    shock_broadband_ratio: float | None = None,
 ) -> WindowQuality:
     sample_completeness_score = _clamp01(sample_completeness_score)
     packet_integrity_score = _clamp01(packet_integrity_score)
     clipping_score = _clamp01(clipping_score)
+    clipping_sample_count = max(0, int(clipping_sample_count))
+    clipping_sample_ratio = _clamp01(clipping_sample_ratio)
+    clipping_axis_counts = _normalized_axis_counts(clipping_axis_counts)
     transient_score = _clamp01(transient_score)
     context_score = _clamp01(context_score)
     frequency_stability_score = _clamp01(frequency_stability_score)
@@ -280,6 +339,9 @@ def _quality_from_component_scores(
         sample_completeness_score=sample_completeness_score,
         packet_integrity_score=packet_integrity_score,
         clipping_score=clipping_score,
+        clipping_sample_count=clipping_sample_count,
+        clipping_sample_ratio=clipping_sample_ratio,
+        clipping_axis_counts=clipping_axis_counts,
         transient_score=transient_score,
         context_score=context_score,
         frequency_stability_score=frequency_stability_score,
@@ -311,15 +373,103 @@ def _packet_integrity_score(*, coverage_state: str, coverage_reason: str | None)
     return 0.0
 
 
-def _clipping_score(samples_i16: np.ndarray | None) -> float:
-    if samples_i16 is None or samples_i16.size == 0:
-        return 1.0
-    clipped_mask = np.abs(samples_i16.astype(np.int32)) >= _CLIPPING_FULL_SCALE_I16
-    clipped_count = int(np.count_nonzero(clipped_mask))
-    if clipped_count <= 0:
-        return 1.0
-    ratio = float(clipped_count) / float(samples_i16.size)
-    return _clamp01(1.0 - (ratio / _CLIPPING_EXCLUDED_RATIO))
+def analyze_window_clipping(
+    *,
+    samples_i16: np.ndarray | None = None,
+    samples_g: np.ndarray | None = None,
+) -> WindowClippingAnalysis:
+    """Detect repeated rail hits and flat-topped waveforms in one sample window."""
+
+    raw_samples = _time_axis_samples_any(samples_i16)
+    scaled_samples = _time_axis_samples_any(samples_g)
+    raw_axis_counts = _raw_rail_axis_counts(raw_samples)
+    flat_top_axis_counts = _flat_top_axis_counts(scaled_samples)
+    axis_counts = (
+        max(raw_axis_counts[0], flat_top_axis_counts[0]),
+        max(raw_axis_counts[1], flat_top_axis_counts[1]),
+        max(raw_axis_counts[2], flat_top_axis_counts[2]),
+    )
+    total_slots = max(
+        int(raw_samples.size) if raw_samples is not None else 0,
+        int(scaled_samples.size) if scaled_samples is not None else 0,
+    )
+    sample_count = sum(axis_counts)
+    if sample_count <= 0 or total_slots <= 0:
+        return WindowClippingAnalysis(score=1.0, sample_count=0, sample_ratio=0.0)
+    sample_ratio = _clamp01(float(sample_count) / float(total_slots))
+    score = _clamp01(1.0 - (sample_ratio / _CLIPPING_EXCLUDED_RATIO))
+    return WindowClippingAnalysis(
+        score=score,
+        sample_count=sample_count,
+        sample_ratio=sample_ratio,
+        axis_counts=axis_counts,
+    )
+
+
+def _raw_rail_axis_counts(samples: np.ndarray | None) -> tuple[int, int, int]:
+    if samples is None or samples.size == 0:
+        return (0, 0, 0)
+    raw = samples.astype(np.int32, copy=False)
+    counts: list[int] = []
+    for axis_index in range(3):
+        axis = raw[:, axis_index]
+        rail_mask = np.abs(axis) >= _CLIPPING_FULL_SCALE_I16
+        count = int(np.count_nonzero(rail_mask))
+        counts.append(count if count >= _CLIPPING_MIN_REPEATED_RAIL_SAMPLES else 0)
+    return _normalized_axis_counts(tuple(counts))
+
+
+def _flat_top_axis_counts(samples: np.ndarray | None) -> tuple[int, int, int]:
+    if samples is None or samples.size == 0:
+        return (0, 0, 0)
+    arr = samples.astype(np.float64, copy=False)
+    counts: list[int] = []
+    for axis_index in range(3):
+        axis_values = arr[:, axis_index]
+        finite_axis = axis_values[np.isfinite(axis_values)]
+        if finite_axis.size == 0:
+            counts.append(0)
+            continue
+        upper = float(np.max(finite_axis))
+        lower = float(np.min(finite_axis))
+        peak = max(abs(upper), abs(lower))
+        p2p = upper - lower
+        if peak < _FLAT_TOP_MIN_PEAK_G or p2p < _FLAT_TOP_MIN_P2P_G:
+            counts.append(0)
+            continue
+        tolerance = max(_FLAT_TOP_ABS_TOLERANCE_G, peak * _FLAT_TOP_REL_TOLERANCE)
+        upper_mask = (
+            finite_axis >= upper - tolerance
+            if upper > 0.0
+            else np.zeros_like(
+                finite_axis,
+                dtype=np.bool_,
+            )
+        )
+        lower_mask = (
+            finite_axis <= lower + tolerance
+            if lower < 0.0
+            else np.zeros_like(
+                finite_axis,
+                dtype=np.bool_,
+            )
+        )
+        flat_mask = np.logical_or(upper_mask, lower_mask)
+        count = int(np.count_nonzero(flat_mask))
+        counts.append(count if _longest_true_run(flat_mask) >= _CLIPPING_MIN_FLAT_TOP_RUN else 0)
+    return _normalized_axis_counts(tuple(counts))
+
+
+def _longest_true_run(mask: np.ndarray) -> int:
+    longest = 0
+    current = 0
+    for value in mask:
+        if bool(value):
+            current += 1
+            longest = max(longest, current)
+        else:
+            current = 0
+    return longest
 
 
 def _transient_analysis(samples_g: np.ndarray | None) -> _TransientAnalysis:
@@ -376,6 +526,19 @@ def _time_axis_samples(samples: np.ndarray) -> np.ndarray:
     return np.empty((0, 3), dtype=np.float32)
 
 
+def _time_axis_samples_any(samples: np.ndarray | None) -> np.ndarray | None:
+    if samples is None:
+        return None
+    arr = np.asarray(samples)
+    if arr.ndim != 2:
+        return None
+    if arr.shape[1] == 3:
+        return arr
+    if arr.shape[0] == 3:
+        return arr.T
+    return None
+
+
 def _context_score(
     *,
     context_coverage: str | None,
@@ -420,6 +583,33 @@ def _score_from_json(value: object, *, default: float) -> float:
     if isinstance(value, int | float) and not isinstance(value, bool) and isfinite(float(value)):
         return _clamp01(float(value))
     return default
+
+
+def _int_from_json(value: object) -> int | None:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return None
+
+
+def _axis_counts_from_json(value: object) -> tuple[int, int, int]:
+    if isinstance(value, dict):
+        return _normalized_axis_counts(
+            tuple(_int_from_json(value.get(axis_name)) or 0 for axis_name in _AXIS_NAMES)
+        )
+    if isinstance(value, list | tuple):
+        return _normalized_axis_counts(tuple(_int_from_json(raw) or 0 for raw in value[:3]))
+    return (0, 0, 0)
+
+
+def _normalized_axis_counts(values: tuple[int, ...]) -> tuple[int, int, int]:
+    padded = (*values, 0, 0, 0)
+    return (
+        max(0, int(padded[0])),
+        max(0, int(padded[1])),
+        max(0, int(padded[2])),
+    )
 
 
 def _optional_score_from_json(value: object) -> float | None:

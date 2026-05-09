@@ -5,7 +5,11 @@ from math import pi
 import numpy as np
 import pytest
 
-from vibesensor.shared.window_quality import score_window_quality, window_quality_with_context
+from vibesensor.shared.window_quality import (
+    analyze_window_clipping,
+    score_window_quality,
+    window_quality_with_context,
+)
 
 
 def _sine_samples(*, sample_count: int = 256, amplitude: float = 0.05) -> np.ndarray:
@@ -78,6 +82,68 @@ def test_window_quality_marks_dropped_clipped_and_shock_windows_low_quality() ->
     assert "sensor_clipping" in clipped_quality.reasons
     assert shock.state == "excluded"
     assert "shock_transient" in shock.reasons
+
+
+def test_window_clipping_analysis_distinguishes_clipped_and_clean_sine() -> None:
+    clean = _sine_samples(sample_count=256, amplitude=0.4)
+    clipped = np.clip(_sine_samples(sample_count=256, amplitude=2.0), -1.0, 1.0)
+
+    clean_quality = score_window_quality(
+        expected_sample_count=clean.shape[0],
+        returned_sample_count=clean.shape[0],
+        coverage_state="full",
+        samples_g=clean,
+        peak_amp_g=0.4,
+        noise_floor_amp_g=0.01,
+    )
+    clipped_quality = score_window_quality(
+        expected_sample_count=clipped.shape[0],
+        returned_sample_count=clipped.shape[0],
+        coverage_state="full",
+        samples_g=clipped,
+        peak_amp_g=1.0,
+        noise_floor_amp_g=0.01,
+    )
+
+    assert clean_quality.state == "usable"
+    assert "sensor_clipping" not in clean_quality.reasons
+    assert clipped_quality.state == "excluded"
+    assert "sensor_clipping" in clipped_quality.reasons
+    assert clipped_quality.clipping_sample_count > 0
+    assert clipped_quality.clipping_axis_counts[0] == clipped_quality.clipping_sample_count
+    assert clipped_quality.to_payload()["clipping_axis_counts"]["x"] > 0
+
+
+def test_window_clipping_analysis_flags_shock_clipping_not_single_sample_outlier() -> None:
+    single_outlier = np.zeros((256, 3), dtype=np.int16)
+    single_outlier[128, 0] = 32767
+    shock_clip = np.zeros((256, 3), dtype=np.int16)
+    shock_clip[126:130, 0] = 32767
+
+    outlier_quality = score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=256,
+        coverage_state="full",
+        samples_i16=single_outlier,
+        samples_g=single_outlier.astype(np.float32) * 0.001,
+        peak_amp_g=0.1,
+        noise_floor_amp_g=0.01,
+    )
+    shock_quality = score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=256,
+        coverage_state="full",
+        samples_i16=shock_clip,
+        samples_g=shock_clip.astype(np.float32) * 0.001,
+        peak_amp_g=0.1,
+        noise_floor_amp_g=0.01,
+    )
+
+    assert analyze_window_clipping(samples_i16=single_outlier).sample_count == 0
+    assert "sensor_clipping" not in outlier_quality.reasons
+    assert shock_quality.clipping_sample_count == 4
+    assert "sensor_clipping" in shock_quality.reasons
+    assert shock_quality.state == "excluded"
 
 
 def test_window_quality_context_downgrades_missing_speed_and_rpm() -> None:

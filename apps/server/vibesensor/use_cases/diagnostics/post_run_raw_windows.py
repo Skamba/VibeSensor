@@ -21,6 +21,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
+from vibesensor.shared.window_quality import analyze_window_clipping
 
 _SUPPORTED_RAW_CAPTURE_SCHEMA_VERSION = 7
 _SUPPORTED_RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
@@ -56,6 +57,7 @@ type PostRunRawWindowDataQualityFlag = Literal[
     "sample_rate_unverified",
     "missing_sensor_location",
     "missing_sidecar",
+    "sensor_clipping",
 ]
 
 
@@ -674,6 +676,8 @@ def _quality_flags(
                 window_index=window_index,
             )
         )
+    elif analyze_window_clipping(samples_i16=raw_range.samples_i16).sample_count > 0:
+        _append_unique_flag(flags, "sensor_clipping")
     return flags
 
 
