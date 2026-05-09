@@ -65,6 +65,9 @@ class WindowQualityPayload(TypedDict):
     sample_completeness_score: float
     packet_integrity_score: float
     clipping_score: float
+    clipping_sample_count: int
+    clipping_sample_ratio: float
+    clipping_axis_counts: dict[str, int]
     transient_score: float
     shock_crest_factor: float | None
     shock_broadband_ratio: float | None

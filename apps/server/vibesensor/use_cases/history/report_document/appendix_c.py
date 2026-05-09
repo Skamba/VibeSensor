@@ -183,6 +183,11 @@ def _dense_caveat_text(
             "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL",
             pct=f"{summary.reference_coverage_ratio * 100:.0f}%",
         )
+    if summary.sensor_clipping_window_count > 0:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_CLIPPING_WINDOWS",
+            count=str(summary.sensor_clipping_window_count),
+        )
     if summary.shock_transient_window_count > 0:
         return tr(
             "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS",

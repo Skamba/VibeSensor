@@ -206,6 +206,13 @@ def _family_summary(
             if "shock_transient" in point.window_quality_reasons
         }
     )
+    sensor_clipping_window_count = len(
+        {
+            point.window_index
+            for point in points
+            if "sensor_clipping" in point.window_quality_reasons
+        }
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -285,6 +292,7 @@ def _family_summary(
         limited_window_count=limited_window_count,
         excluded_window_count=excluded_window_count,
         shock_transient_window_count=shock_transient_window_count,
+        sensor_clipping_window_count=sensor_clipping_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
