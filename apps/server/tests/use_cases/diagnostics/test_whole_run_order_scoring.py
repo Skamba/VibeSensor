@@ -168,7 +168,16 @@ def test_summarize_whole_run_order_traces_distinguishes_strong_and_weak_lock() -
     assert strong.reference_coverage_ratio == 1.0
     assert strong.stable_frequency_min_hz == 12.0
     assert strong.stable_frequency_max_hz == 12.0
-    assert strong.exemplar_interval_index is None
+    assert strong.exemplar_interval_index == 0
+    assert [
+        (interval.start_window_index, interval.end_window_index)
+        for interval in strong.support_intervals
+    ] == [(0, 5)]
+    assert strong.support_intervals[0].phase == DrivingPhase.CRUISE.value
+    assert {support.phase: support.support_ratio for support in strong.phase_support} == {
+        DrivingPhase.ACCELERATION.value: 0.5,
+        DrivingPhase.CRUISE.value: 1.0,
+    }
     assert strong.dominant_phase == DrivingPhase.CRUISE.value
     assert strong.dominant_speed_band == "50-60 km/h"
     assert strong.strongest_location == "Front Left"
