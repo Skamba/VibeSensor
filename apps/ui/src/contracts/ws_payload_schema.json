@@ -505,6 +505,21 @@
     },
     "WindowQualityPayload": {
       "properties": {
+        "clipping_axis_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Clipping Axis Counts",
+          "type": "object"
+        },
+        "clipping_sample_count": {
+          "title": "Clipping Sample Count",
+          "type": "integer"
+        },
+        "clipping_sample_ratio": {
+          "title": "Clipping Sample Ratio",
+          "type": "number"
+        },
         "clipping_score": {
           "title": "Clipping Score",
           "type": "number"
@@ -573,6 +588,9 @@
         "sample_completeness_score",
         "packet_integrity_score",
         "clipping_score",
+        "clipping_sample_count",
+        "clipping_sample_ratio",
+        "clipping_axis_counts",
         "transient_score",
         "shock_crest_factor",
         "shock_broadband_ratio",
