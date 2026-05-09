@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 from test_support.report_helpers import diagnostics_context, wheel_metadata
 from test_support.sample_scenarios import make_analysis_sample
 
@@ -11,6 +12,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
+from vibesensor.shared.window_quality import WindowQuality, score_window_quality
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     build_whole_run_order_trace_artifact_bundle,
@@ -104,7 +106,24 @@ def _context_sample(window_index: int, *, speed_kmh: float, engine_rpm: float):
     )
 
 
-def _summary_rows(*, sensor_scale: float) -> tuple[WholeRunWindowSpectralSummary, ...]:
+def _shock_window_quality() -> WindowQuality:
+    samples_g = np.zeros((256, 3), dtype=np.float32)
+    samples_g[128, 0] = 18.0
+    return score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=256,
+        coverage_state="full",
+        samples_g=samples_g,
+        peak_amp_g=0.2,
+        noise_floor_amp_g=0.01,
+    )
+
+
+def _summary_rows(
+    *,
+    sensor_scale: float,
+    window_quality_by_index: dict[int, WindowQuality] | None = None,
+) -> tuple[WholeRunWindowSpectralSummary, ...]:
     metadata = _metadata()
     rows: list[WholeRunWindowSpectralSummary] = []
     for label in _context_labels():
@@ -167,6 +186,21 @@ def _summary_rows(*, sensor_scale: float) -> tuple[WholeRunWindowSpectralSummary
                 strength_floor_amp_g=0.01,
                 strength_bucket="l3",
                 top_peaks=tuple(peaks),
+                window_quality=(
+                    window_quality_by_index.get(label.window_index)
+                    if window_quality_by_index is not None
+                    else None
+                )
+                or WindowQuality(
+                    score=1.0,
+                    state="usable",
+                    sample_completeness_score=1.0,
+                    packet_integrity_score=1.0,
+                    clipping_score=1.0,
+                    transient_score=1.0,
+                    context_score=1.0,
+                    frequency_stability_score=1.0,
+                ),
             )
         )
     return tuple(rows)
@@ -179,6 +213,18 @@ def _artifact_contents() -> dict[str, bytes]:
         ),
         "spectral-summary:sensor-rear": whole_run_window_spectral_summaries_to_jsonl_bytes(
             _summary_rows(sensor_scale=0.08)
+        ),
+    }
+
+
+def _artifact_contents_with_shock_window(window_index: int) -> dict[str, bytes]:
+    quality = _shock_window_quality()
+    return {
+        "spectral-summary:sensor-front": whole_run_window_spectral_summaries_to_jsonl_bytes(
+            _summary_rows(sensor_scale=0.14, window_quality_by_index={window_index: quality})
+        ),
+        "spectral-summary:sensor-rear": whole_run_window_spectral_summaries_to_jsonl_bytes(
+            _summary_rows(sensor_scale=0.08, window_quality_by_index={window_index: quality})
         ),
     }
 
@@ -229,6 +275,31 @@ def test_build_whole_run_order_trace_artifact_bundle_emits_supported_candidate_t
     assert all(point.eligible for point in wheel_1x)
     assert all(point.matched for point in wheel_1x)
     assert all(point.strongest_location == "front-left" for point in wheel_1x)
+
+
+def test_build_whole_run_order_trace_artifact_bundle_suppresses_shock_windows() -> None:
+    bundle = build_whole_run_order_trace_artifact_bundle(
+        run_id="run-order-traces",
+        metadata=_metadata(),
+        spectral_manifest=_spectral_manifest(),
+        spectral_artifact_contents=_artifact_contents_with_shock_window(1),
+        context_labels=_context_labels(),
+        samples=_samples(),
+    )
+
+    wheel_1x_by_window = {
+        point.window_index: point
+        for point in bundle.points
+        if point.hypothesis_key == "wheel_1x" and point.harmonic == 1
+    }
+
+    shock_point = wheel_1x_by_window[1]
+    assert shock_point.eligible
+    assert not shock_point.matched
+    assert shock_point.window_quality_state == "excluded"
+    assert "shock_transient" in shock_point.window_quality_reasons
+    assert wheel_1x_by_window[0].matched
+    assert wheel_1x_by_window[2].matched
 
 
 def test_build_whole_run_order_trace_artifact_bundle_is_deterministic() -> None:
