@@ -225,6 +225,7 @@ async def test_whole_run_order_summaries_survive_persistence_and_http_layers() -
             "excluded_window_count": 0,
             "shock_transient_window_count": 0,
             "sensor_clipping_window_count": 0,
+            "sensor_mounting_artifact_window_count": 0,
             "mean_quality_score": 0.92,
             "support_intervals": [
                 {

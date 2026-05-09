@@ -532,6 +532,21 @@
           "title": "Frequency Stability Score",
           "type": "number"
         },
+        "mounting_high_frequency_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mounting High Frequency Ratio"
+        },
+        "mounting_score": {
+          "title": "Mounting Score",
+          "type": "number"
+        },
         "packet_integrity_score": {
           "title": "Packet Integrity Score",
           "type": "number"
@@ -594,6 +609,8 @@
         "transient_score",
         "shock_crest_factor",
         "shock_broadband_ratio",
+        "mounting_score",
+        "mounting_high_frequency_ratio",
         "context_score",
         "frequency_stability_score",
         "reasons"

@@ -100,6 +100,8 @@ def test_metrics_computer_exposes_clipping_quality_in_live_payload() -> None:
     assert "sensor_clipping" in quality["reasons"]
     assert quality["clipping_sample_count"] > 0
     assert quality["clipping_axis_counts"]["x"] == quality["clipping_sample_count"]
+    assert quality["mounting_score"] >= 0.0
+    assert "mounting_high_frequency_ratio" in quality
 
 
 def test_buffer_store_reuses_fft_snapshot_for_short_time_window() -> None:

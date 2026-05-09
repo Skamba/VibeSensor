@@ -37,6 +37,7 @@ __all__ = [
     "fft_frequency_slice",
     "fft_window_values",
     "float_list",
+    "high_frequency_energy_ratio",
     "medfilt3",
     "noise_floor",
 ]
@@ -307,6 +308,38 @@ def broadband_energy_ratio(
     if not math.isfinite(top_power):
         return None
     return max(0.0, min(1.0, 1.0 - (top_power / total_power)))
+
+
+def high_frequency_energy_ratio(
+    fft_block: FloatArray,
+    *,
+    sample_rate_hz: int,
+    high_frequency_start_hz: float,
+) -> float | None:
+    """Return energy share at or above a high-frequency threshold."""
+
+    if (
+        fft_block.ndim != 2
+        or fft_block.shape[1] < 8
+        or sample_rate_hz <= 0
+        or high_frequency_start_hz <= 0.0
+    ):
+        return None
+    sanitized = _sanitize_float_array(fft_block)
+    spectrum = scipy_fft.rfft(sanitized, axis=1)
+    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
+    power_by_bin = np.sum(magnitude * magnitude, axis=0)
+    if power_by_bin.size <= 1:
+        return None
+    freqs = scipy_fft.rfftfreq(fft_block.shape[1], d=1.0 / float(sample_rate_hz))
+    analysis_mask = freqs > 0.0
+    total_power = float(np.sum(power_by_bin[analysis_mask]))
+    if not math.isfinite(total_power) or total_power <= 1e-18:
+        return None
+    high_frequency_power = float(np.sum(power_by_bin[freqs >= high_frequency_start_hz]))
+    if not math.isfinite(high_frequency_power):
+        return None
+    return max(0.0, min(1.0, high_frequency_power / total_power))
 
 
 def compute_fft_spectrum(
