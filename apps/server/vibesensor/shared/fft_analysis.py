@@ -32,6 +32,7 @@ __all__ = [
     "SpectralAnalysisComputer",
     "SpectrumAxisData",
     "SpectrumByAxis",
+    "broadband_energy_ratio",
     "compute_fft_spectrum",
     "fft_frequency_slice",
     "fft_window_values",
@@ -279,6 +280,33 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
         )
         return sanitized.ravel().tolist()
     return [float(v) if _isfinite(v) else 0.0 for v in values]
+
+
+def broadband_energy_ratio(
+    fft_block: FloatArray,
+    *,
+    top_bin_count: int = 3,
+) -> float | None:
+    """Return broadband energy share outside the strongest spectral bins."""
+
+    if fft_block.ndim != 2 or fft_block.shape[1] < 8:
+        return None
+    sanitized = _sanitize_float_array(fft_block)
+    centered = sanitized - np.mean(sanitized, axis=1, keepdims=True)
+    spectrum = scipy_fft.rfft(centered, axis=1)
+    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
+    power_by_bin = np.sum(magnitude * magnitude, axis=0)
+    if power_by_bin.size <= 1:
+        return None
+    power = power_by_bin[1:]
+    total_power = float(np.sum(power))
+    if not math.isfinite(total_power) or total_power <= 1e-18:
+        return None
+    top_count = min(max(1, top_bin_count), power.size)
+    top_power = float(np.sum(np.partition(power, -top_count)[-top_count:]))
+    if not math.isfinite(top_power):
+        return None
+    return max(0.0, min(1.0, 1.0 - (top_power / total_power)))
 
 
 def compute_fft_spectrum(

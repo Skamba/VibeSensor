@@ -199,6 +199,13 @@ def _family_summary(
     excluded_window_count = sum(
         summary.excluded_window_count for summary in ordered_candidate_summaries
     )
+    shock_transient_window_count = len(
+        {
+            point.window_index
+            for point in points
+            if "shock_transient" in point.window_quality_reasons
+        }
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -277,6 +284,7 @@ def _family_summary(
         usable_window_count=usable_window_count,
         limited_window_count=limited_window_count,
         excluded_window_count=excluded_window_count,
+        shock_transient_window_count=shock_transient_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
