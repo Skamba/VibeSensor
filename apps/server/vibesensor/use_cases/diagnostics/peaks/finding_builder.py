@@ -50,10 +50,14 @@ def assemble_peak_finding(peak_bin: PeakBin) -> DomainFinding:
         vibration_strength_db=peak_bin.peak_strength_db,
         cruise_fraction=cruise_fraction,
         evidence=FindingEvidence(
+            match_rate=peak_bin.presence_ratio,
+            possible_samples=peak_bin.total_sample_count,
+            matched_samples=peak_bin.sample_count,
             presence_ratio=peak_bin.presence_ratio,
             burstiness=peak_bin.burstiness,
             spatial_concentration=peak_bin.spatial_concentration,
             spatial_uniformity=peak_bin.spatial_uniformity or 0.0,
             speed_uniformity=peak_bin.speed_uniformity or 0.0,
+            vibration_strength_db=max(0.0, peak_bin.peak_strength_db),
         ),
     )
