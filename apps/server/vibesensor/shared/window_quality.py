@@ -45,6 +45,15 @@ _CLIPPING_FULL_SCALE_I16 = 32760
 _CLIPPING_EXCLUDED_RATIO = 0.01
 _CREST_FACTOR_CLEAN = 6.0
 _CREST_FACTOR_EXCLUDED = 12.0
+_BROADBAND_RATIO_CLEAN = 0.55
+_BROADBAND_RATIO_EXCLUDED = 0.82
+
+
+@dataclass(frozen=True, slots=True)
+class _TransientAnalysis:
+    score: float
+    crest_factor: float | None
+    broadband_ratio: float | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +68,8 @@ class WindowQuality:
     transient_score: float
     context_score: float
     frequency_stability_score: float
+    shock_crest_factor: float | None = None
+    shock_broadband_ratio: float | None = None
     reasons: tuple[WindowQualityReason, ...] = ()
 
     def to_payload(self) -> WindowQualityPayload:
@@ -69,6 +80,8 @@ class WindowQuality:
             "packet_integrity_score": self.packet_integrity_score,
             "clipping_score": self.clipping_score,
             "transient_score": self.transient_score,
+            "shock_crest_factor": self.shock_crest_factor,
+            "shock_broadband_ratio": self.shock_broadband_ratio,
             "context_score": self.context_score,
             "frequency_stability_score": self.frequency_stability_score,
             "reasons": list(self.reasons),
@@ -82,6 +95,8 @@ class WindowQuality:
             "packet_integrity_score": self.packet_integrity_score,
             "clipping_score": self.clipping_score,
             "transient_score": self.transient_score,
+            "shock_crest_factor": self.shock_crest_factor,
+            "shock_broadband_ratio": self.shock_broadband_ratio,
             "context_score": self.context_score,
             "frequency_stability_score": self.frequency_stability_score,
             "reasons": list(self.reasons),
@@ -113,6 +128,8 @@ class WindowQuality:
             ),
             clipping_score=_score_from_json(data.get("clipping_score"), default=1.0),
             transient_score=_score_from_json(data.get("transient_score"), default=1.0),
+            shock_crest_factor=_nonnegative_float_from_json(data.get("shock_crest_factor")),
+            shock_broadband_ratio=_optional_score_from_json(data.get("shock_broadband_ratio")),
             context_score=_score_from_json(data.get("context_score"), default=1.0),
             frequency_stability_score=_score_from_json(
                 data.get("frequency_stability_score"),
@@ -160,7 +177,7 @@ def score_window_quality(
         coverage_reason=coverage_reason,
     )
     clipping_score = _clipping_score(samples_i16)
-    transient_score = _transient_score(samples_g)
+    transient_analysis = _transient_analysis(samples_g)
     context_score = _context_score(
         context_coverage=context_coverage,
         speed_validity=speed_validity,
@@ -174,7 +191,9 @@ def score_window_quality(
         sample_completeness_score=sample_score,
         packet_integrity_score=packet_score,
         clipping_score=clipping_score,
-        transient_score=transient_score,
+        transient_score=transient_analysis.score,
+        shock_crest_factor=transient_analysis.crest_factor,
+        shock_broadband_ratio=transient_analysis.broadband_ratio,
         context_score=context_score,
         frequency_stability_score=frequency_score,
     )
@@ -194,6 +213,8 @@ def window_quality_with_context(
         packet_integrity_score=quality.packet_integrity_score,
         clipping_score=quality.clipping_score,
         transient_score=quality.transient_score,
+        shock_crest_factor=quality.shock_crest_factor,
+        shock_broadband_ratio=quality.shock_broadband_ratio,
         context_score=_context_score(
             context_coverage=context_coverage,
             speed_validity=speed_validity,
@@ -209,6 +230,8 @@ def _quality_from_component_scores(
     packet_integrity_score: float,
     clipping_score: float,
     transient_score: float,
+    shock_crest_factor: float | None = None,
+    shock_broadband_ratio: float | None = None,
     context_score: float,
     frequency_stability_score: float,
 ) -> WindowQuality:
@@ -259,6 +282,8 @@ def _quality_from_component_scores(
         transient_score=transient_score,
         context_score=context_score,
         frequency_stability_score=frequency_stability_score,
+        shock_crest_factor=shock_crest_factor,
+        shock_broadband_ratio=shock_broadband_ratio,
         reasons=tuple(dict.fromkeys(reasons)),
     )
 
@@ -296,25 +321,66 @@ def _clipping_score(samples_i16: np.ndarray | None) -> float:
     return _clamp01(1.0 - (ratio / _CLIPPING_EXCLUDED_RATIO))
 
 
-def _transient_score(samples_g: np.ndarray | None) -> float:
+def _transient_analysis(samples_g: np.ndarray | None) -> _TransientAnalysis:
     if samples_g is None or samples_g.size == 0:
-        return 1.0
+        return _TransientAnalysis(score=1.0, crest_factor=None, broadband_ratio=None)
     samples = _time_axis_samples(samples_g)
     if samples.size == 0:
-        return 1.0
+        return _TransientAnalysis(score=1.0, crest_factor=None, broadband_ratio=None)
     detrended = samples - np.mean(samples, axis=0, keepdims=True)
     magnitude = np.linalg.norm(detrended, axis=1)
     rms = float(np.sqrt(np.mean(np.square(magnitude, dtype=np.float64))))
     if not isfinite(rms) or rms <= 1e-12:
-        return 1.0
+        return _TransientAnalysis(score=1.0, crest_factor=None, broadband_ratio=None)
     peak = float(np.max(np.abs(magnitude)))
     crest = peak / rms
+    crest_score = _crest_factor_score(crest)
+    broadband_ratio = _broadband_energy_ratio(detrended)
+    broadband_score = _broadband_ratio_score(broadband_ratio)
+    return _TransientAnalysis(
+        score=min(crest_score, broadband_score),
+        crest_factor=crest,
+        broadband_ratio=broadband_ratio,
+    )
+
+
+def _crest_factor_score(crest: float) -> float:
     if crest <= _CREST_FACTOR_CLEAN:
         return 1.0
     if crest >= _CREST_FACTOR_EXCLUDED:
         return 0.0
     transient_range = _CREST_FACTOR_EXCLUDED - _CREST_FACTOR_CLEAN
     return _clamp01((_CREST_FACTOR_EXCLUDED - crest) / transient_range)
+
+
+def _broadband_energy_ratio(samples: np.ndarray) -> float | None:
+    if samples.shape[0] < 8:
+        return None
+    spectrum = np.fft.rfft(samples, axis=0)
+    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
+    power_by_bin = np.sum(magnitude * magnitude, axis=1)
+    if power_by_bin.size <= 1:
+        return None
+    power = power_by_bin[1:]
+    total_power = float(np.sum(power))
+    if not isfinite(total_power) or total_power <= 1e-18:
+        return None
+    top_count = min(3, power.size)
+    top_power = float(np.sum(np.partition(power, -top_count)[-top_count:]))
+    if not isfinite(top_power):
+        return None
+    return _clamp01(1.0 - (top_power / total_power))
+
+
+def _broadband_ratio_score(ratio: float | None) -> float:
+    if ratio is None:
+        return 1.0
+    if ratio <= _BROADBAND_RATIO_CLEAN:
+        return 1.0
+    if ratio >= _BROADBAND_RATIO_EXCLUDED:
+        return 0.0
+    transient_range = _BROADBAND_RATIO_EXCLUDED - _BROADBAND_RATIO_CLEAN
+    return _clamp01((_BROADBAND_RATIO_EXCLUDED - ratio) / transient_range)
 
 
 def _time_axis_samples(samples: np.ndarray) -> np.ndarray:
@@ -372,6 +438,18 @@ def _score_from_json(value: object, *, default: float) -> float:
     if isinstance(value, int | float) and not isinstance(value, bool) and isfinite(float(value)):
         return _clamp01(float(value))
     return default
+
+
+def _optional_score_from_json(value: object) -> float | None:
+    if isinstance(value, int | float) and not isinstance(value, bool) and isfinite(float(value)):
+        return _clamp01(float(value))
+    return None
+
+
+def _nonnegative_float_from_json(value: object) -> float | None:
+    if isinstance(value, int | float) and not isinstance(value, bool) and isfinite(float(value)):
+        return max(0.0, float(value))
+    return None
 
 
 def _state_or_default(value: object, *, default: WindowQualityState) -> WindowQualityState:

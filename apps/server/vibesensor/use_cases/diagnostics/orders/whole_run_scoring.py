@@ -185,14 +185,15 @@ def _summarize_hypothesis_trace(
     mean_relative_error = _mean(relative_errors)
     relative_error_stddev = _stddev(relative_errors)
     quality_scores = [
-        point.window_quality_score
-        for point in matched_points
-        if point.window_quality_score is not None
+        point.window_quality_score for point in points if point.window_quality_score is not None
     ]
     mean_quality_score = _mean(quality_scores)
     usable_window_count = sum(1 for point in points if point.window_quality_state == "usable")
     limited_window_count = sum(1 for point in points if point.window_quality_state == "limited")
     excluded_window_count = sum(1 for point in points if point.window_quality_state == "excluded")
+    shock_transient_window_count = sum(
+        1 for point in points if "shock_transient" in point.window_quality_reasons
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
@@ -273,6 +274,7 @@ def _summarize_hypothesis_trace(
         usable_window_count=usable_window_count,
         limited_window_count=limited_window_count,
         excluded_window_count=excluded_window_count,
+        shock_transient_window_count=shock_transient_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=(),
         phase_support=(),

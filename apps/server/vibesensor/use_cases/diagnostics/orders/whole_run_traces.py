@@ -157,6 +157,11 @@ def _hypothesis_trace_points(
     for sample, label in zip(window_inputs, context_labels, strict=True):
         predicted_hz, ref_source = hypothesis.predicted_hz(sample, metadata, tire_circumference_m)
         eligible = predicted_hz is not None and predicted_hz > 0
+        window_quality = _representative_window_quality(
+            summaries_by_sensor=summaries_by_sensor,
+            window_index=label.window_index,
+            context_label=label,
+        )
         sensor_match = (
             _best_sensor_peak_match(
                 summaries_by_sensor=summaries_by_sensor,
@@ -168,6 +173,9 @@ def _hypothesis_trace_points(
             )
             if eligible and predicted_hz is not None
             else None
+        )
+        evidence_quality = (
+            sensor_match.window_quality if sensor_match is not None else window_quality
         )
         points.append(
             OrderTracePoint(
@@ -191,17 +199,44 @@ def _hypothesis_trace_points(
                 ref_source=ref_source or None,
                 strongest_location=(sensor_match.location if sensor_match is not None else None),
                 window_quality_score=(
-                    sensor_match.window_quality.score if sensor_match is not None else None
+                    evidence_quality.score if evidence_quality is not None else None
                 ),
                 window_quality_state=(
-                    sensor_match.window_quality.state if sensor_match is not None else None
+                    evidence_quality.state if evidence_quality is not None else None
                 ),
                 window_quality_reasons=(
-                    sensor_match.window_quality.reasons if sensor_match is not None else ()
+                    evidence_quality.reasons if evidence_quality is not None else ()
                 ),
             )
         )
     return tuple(points)
+
+
+def _representative_window_quality(
+    *,
+    summaries_by_sensor: Mapping[str, Sequence[WholeRunWindowSpectralSummary]],
+    window_index: int,
+    context_label: WholeRunContextWindowLabel,
+) -> WindowQuality | None:
+    qualities: list[WindowQuality] = []
+    for client_id in sorted(summaries_by_sensor):
+        summaries = summaries_by_sensor[client_id]
+        if window_index < 0 or window_index >= len(summaries):
+            continue
+        summary = summaries[window_index]
+        if summary.coverage_state != "full":
+            continue
+        qualities.append(
+            window_quality_with_context(
+                summary.window_quality,
+                context_coverage=context_label.context_coverage,
+                speed_validity=context_label.speed_validity,
+                rpm_validity=context_label.rpm_validity,
+            )
+        )
+    if not qualities:
+        return None
+    return min(qualities, key=lambda quality: quality.score)
 
 
 def _best_sensor_peak_match(

@@ -311,6 +311,7 @@ class OrderTraceSummary:
     usable_window_count: int = 0
     limited_window_count: int = 0
     excluded_window_count: int = 0
+    shock_transient_window_count: int = 0
     mean_quality_score: float | None = None
     support_intervals: tuple[OrderTraceSupportInterval, ...] = ()
     phase_support: tuple[OrderTracePhaseSupport, ...] = ()
@@ -343,6 +344,10 @@ class OrderTraceSummary:
         _require_nonnegative(self.usable_window_count, field_name="usable_window_count")
         _require_nonnegative(self.limited_window_count, field_name="limited_window_count")
         _require_nonnegative(self.excluded_window_count, field_name="excluded_window_count")
+        _require_nonnegative(
+            self.shock_transient_window_count,
+            field_name="shock_transient_window_count",
+        )
         _require_ratio(self.support_ratio, field_name="support_ratio")
         _require_ratio(self.reference_coverage_ratio, field_name="reference_coverage_ratio")
         _require_ratio(self.contiguous_support_ratio, field_name="contiguous_support_ratio")
@@ -367,6 +372,7 @@ class OrderTraceSummary:
             "usable_window_count": self.usable_window_count,
             "limited_window_count": self.limited_window_count,
             "excluded_window_count": self.excluded_window_count,
+            "shock_transient_window_count": self.shock_transient_window_count,
             "support_intervals": [interval.to_json_object() for interval in self.support_intervals],
             "phase_support": [row.to_json_object() for row in self.phase_support],
             "harmonic_summaries": [summary.to_json_object() for summary in self.harmonic_summaries],
@@ -408,6 +414,9 @@ class OrderTraceSummary:
             usable_window_count=_optional_int(data.get("usable_window_count")) or 0,
             limited_window_count=_optional_int(data.get("limited_window_count")) or 0,
             excluded_window_count=_optional_int(data.get("excluded_window_count")) or 0,
+            shock_transient_window_count=(
+                _optional_int(data.get("shock_transient_window_count")) or 0
+            ),
             mean_quality_score=_optional_float(data.get("mean_quality_score")),
             support_intervals=_tuple_from_mapping_list_field(
                 data,
