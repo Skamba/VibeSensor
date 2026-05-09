@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from math import isclose
-from typing import Literal, cast
+from typing import Literal
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -615,26 +615,26 @@ def _bool_from_json(value: JsonValue | object) -> bool:
 def _context_coverage_from_json(value: JsonValue | object) -> WholeRunContextCoverage:
     raw = _str_or_none(value)
     if raw in WHOLE_RUN_CONTEXT_COVERAGE_VALUES:
-        return cast(WholeRunContextCoverage, raw)
+        return raw
     return "missing"
 
 
 def _speed_validity_from_json(value: JsonValue | object) -> WholeRunSpeedValidity:
     raw = _str_or_none(value)
     if raw in WHOLE_RUN_SPEED_VALIDITY_VALUES:
-        return cast(WholeRunSpeedValidity, raw)
+        return raw
     return "missing"
 
 
 def _rpm_validity_from_json(value: JsonValue | object) -> WholeRunRpmValidity:
     raw = _str_or_none(value)
     if raw in WHOLE_RUN_RPM_VALIDITY_VALUES:
-        return cast(WholeRunRpmValidity, raw)
+        return raw
     return "missing"
 
 
 def _load_state_from_json(value: JsonValue | object) -> WholeRunContextLoadState:
     raw = _str_or_none(value)
     if raw in WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES:
-        return cast(WholeRunContextLoadState, raw)
+        return raw
     return "unknown"
