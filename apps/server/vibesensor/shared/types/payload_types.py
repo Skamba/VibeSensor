@@ -71,6 +71,8 @@ class WindowQualityPayload(TypedDict):
     transient_score: float
     shock_crest_factor: float | None
     shock_broadband_ratio: float | None
+    mounting_score: float
+    mounting_high_frequency_ratio: float | None
     context_score: float
     frequency_stability_score: float
     reasons: list[str]

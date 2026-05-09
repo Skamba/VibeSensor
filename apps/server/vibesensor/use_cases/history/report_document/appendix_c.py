@@ -188,6 +188,11 @@ def _dense_caveat_text(
             "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_CLIPPING_WINDOWS",
             count=str(summary.sensor_clipping_window_count),
         )
+    if summary.sensor_mounting_artifact_window_count > 0:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_MOUNTING_ARTIFACT_WINDOWS",
+            count=str(summary.sensor_mounting_artifact_window_count),
+        )
     if summary.shock_transient_window_count > 0:
         return tr(
             "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS",

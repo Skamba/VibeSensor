@@ -83,10 +83,11 @@ carry a `sensor_orientation_unknown` quality flag instead. Frequency masks live
 at this layer so later episode/order/finding logic can ignore unusable bands
 without recomputing the dense spectra.
 
-Shared per-window quality scoring detects repeated accelerometer rail hits and
-flat-topped waveforms, exposes clipping counts/ratios by axis in live payloads,
-and marks clipped windows as limited or excluded evidence rather than treating
-high clipped amplitudes as trustworthy vibration strength.
+Shared per-window quality scoring detects repeated accelerometer rail hits,
+flat-topped waveforms, and high-frequency mounting/enclosure artifacts. It
+exposes clipping counts/ratios plus mounting-quality scores in live payloads
+and marks clipped or suspect-mounted windows as limited/excluded evidence rather
+than treating local sensor artifacts as trustworthy vibration strength.
 
 `use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
 and final-drive references onto the same window grid. It uses conservative

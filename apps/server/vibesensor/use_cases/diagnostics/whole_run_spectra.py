@@ -585,6 +585,7 @@ def _build_window_summary(
                 samples_i16=samples_i16,
                 accel_scale_g_per_lsb=metadata.accel_scale_g_per_lsb,
             ),
+            sample_rate_hz=sensor_manifest.sample_rate_hz,
             peak_amp_g=peak_amp_g,
             noise_floor_amp_g=floor_amp_g,
         ),

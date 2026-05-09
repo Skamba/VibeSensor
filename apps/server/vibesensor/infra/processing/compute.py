@@ -113,6 +113,7 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
                     returned_sample_count=int(fft_input.shape[1]),
                     coverage_state="full",
                     samples_g=fft_input,
+                    sample_rate_hz=snapshot.sample_rate_hz,
                     peak_amp_g=strength_metrics.get("peak_amp_g"),
                     noise_floor_amp_g=strength_metrics.get("noise_floor_amp_g"),
                 ).to_payload()
