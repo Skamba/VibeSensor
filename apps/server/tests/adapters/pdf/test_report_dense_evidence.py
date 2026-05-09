@@ -95,7 +95,7 @@ def test_build_report_document_projects_dense_evidence_rows() -> None:
     assert row.source_name == "Wheel / Tire"
     assert row.order_label == "1x wheel order"
     assert row.confidence_label == "High (78%)"
-    assert row.support == "6/8 (75%)"
+    assert row.support == "6/8 (75%); lock 81%"
     assert row.support_ratio == 0.75
     assert row.reference_coverage_ratio == 0.875
     assert row.frequency_band == "12.4-12.9 Hz"
@@ -112,7 +112,7 @@ def test_build_report_pdf_renders_dense_evidence_chart_text() -> None:
     assert "Support / reference coverage" in text
     assert "support 75% / reference 88%" in text
     assert "High (78%)" in text
-    assert "6/8 (75%)" in text
+    assert "6/8 (75%); lock 81%" in text
     assert "12.4-12.9 Hz" in text
     assert "Reference coverage 88%" in text
 
