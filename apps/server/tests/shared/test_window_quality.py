@@ -24,6 +24,18 @@ def _sine_samples(*, sample_count: int = 256, amplitude: float = 0.05) -> np.nda
     )
 
 
+def _sine_at_hz(*, hz: float, sample_count: int = 256, amplitude: float = 0.05) -> np.ndarray:
+    sample_rate_hz = 256
+    t = np.arange(sample_count, dtype=np.float32) / float(sample_rate_hz)
+    return np.column_stack(
+        [
+            amplitude * np.sin(2.0 * pi * hz * t),
+            np.zeros(sample_count, dtype=np.float32),
+            np.zeros(sample_count, dtype=np.float32),
+        ]
+    )
+
+
 def test_window_quality_scores_clean_window_as_usable() -> None:
     sample_count = 256
     samples_g = _sine_samples(sample_count=sample_count)
@@ -42,6 +54,38 @@ def test_window_quality_scores_clean_window_as_usable() -> None:
     assert quality.shock_broadband_ratio is not None
     assert quality.shock_broadband_ratio < 0.15
     assert quality.reasons == ()
+
+
+def test_window_quality_flags_high_frequency_mounting_artifact_as_limited() -> None:
+    clean = _sine_at_hz(hz=18.0, amplitude=0.08)
+    loose_mount = _sine_at_hz(hz=92.0, amplitude=0.08)
+
+    clean_quality = score_window_quality(
+        expected_sample_count=clean.shape[0],
+        returned_sample_count=clean.shape[0],
+        coverage_state="full",
+        samples_g=clean,
+        sample_rate_hz=256,
+        peak_amp_g=0.08,
+        noise_floor_amp_g=0.01,
+    )
+    loose_mount_quality = score_window_quality(
+        expected_sample_count=loose_mount.shape[0],
+        returned_sample_count=loose_mount.shape[0],
+        coverage_state="full",
+        samples_g=loose_mount,
+        sample_rate_hz=256,
+        peak_amp_g=0.08,
+        noise_floor_amp_g=0.01,
+    )
+
+    assert clean_quality.state == "usable"
+    assert "mounting_artifact" not in clean_quality.reasons
+    assert loose_mount_quality.state == "limited"
+    assert "mounting_artifact" in loose_mount_quality.reasons
+    assert loose_mount_quality.mounting_score < 0.25
+    assert loose_mount_quality.mounting_high_frequency_ratio is not None
+    assert loose_mount_quality.to_payload()["mounting_high_frequency_ratio"] is not None
 
 
 def test_window_quality_marks_dropped_clipped_and_shock_windows_low_quality() -> None:

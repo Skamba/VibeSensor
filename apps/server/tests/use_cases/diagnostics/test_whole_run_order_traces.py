@@ -216,6 +216,7 @@ def _summary_rows(
                     packet_integrity_score=1.0,
                     clipping_score=1.0,
                     transient_score=1.0,
+                    mounting_score=1.0,
                     context_score=1.0,
                     frequency_stability_score=1.0,
                 ),
