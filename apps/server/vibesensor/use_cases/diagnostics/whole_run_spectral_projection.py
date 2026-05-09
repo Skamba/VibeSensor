@@ -235,10 +235,16 @@ def build_coverage_summary(
     )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
     late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
-    udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
-    queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
-    invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
-    write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
+    udp_ingest_queue_drop_count = _manifest_loss_count(
+        raw_capture,
+        "udp_ingest_queue_drop_count",
+    )
+    queue_overflow_chunk_count = _manifest_loss_count(
+        raw_capture,
+        "queue_overflow_chunk_count",
+    )
+    invalid_chunk_count = _manifest_loss_count(raw_capture, "invalid_chunk_count")
+    write_error_chunk_count = _manifest_loss_count(raw_capture, "write_error_chunk_count")
     coverage_confidence = build_coverage_confidence(
         total_sensor_window_count=total_sensor_window_count,
         partial_sensor_window_count=partial_sensor_window_count,
@@ -301,6 +307,16 @@ def build_coverage_summary(
         excluded_window_count=excluded_window_count,
         mean_quality_score=(sum(quality_scores) / len(quality_scores) if quality_scores else None),
         warnings=warnings,
+    )
+
+
+def _manifest_loss_count(raw_capture: RawRunCapture, field_name: str) -> int:
+    manifest_total = max(0, int(getattr(raw_capture.manifest.losses, field_name)))
+    if manifest_total > 0:
+        return manifest_total
+    return sum(
+        max(0, int(getattr(sensor_loss.losses, field_name)))
+        for sensor_loss in raw_capture.manifest.sensor_losses
     )
 
 

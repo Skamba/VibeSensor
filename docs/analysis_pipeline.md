@@ -84,10 +84,13 @@ at this layer so later episode/order/finding logic can ignore unusable bands
 without recomputing the dense spectra.
 
 Shared per-window quality scoring detects repeated accelerometer rail hits,
-flat-topped waveforms, and high-frequency mounting/enclosure artifacts. It
-exposes clipping counts/ratios plus mounting-quality scores in live payloads
-and marks clipped or suspect-mounted windows as limited/excluded evidence rather
-than treating local sensor artifacts as trustworthy vibration strength.
+flat-topped waveforms, high-frequency mounting/enclosure artifacts, and raw
+capture timing integrity loss from timestamp gaps, overlaps/resets, late
+packets, and queue drops. It exposes clipping counts/ratios, mounting-quality
+scores, and timing-quality reasons in live/whole-run payloads and marks clipped,
+suspect-mounted, or timing-compromised windows as limited/excluded evidence
+rather than treating local sensor artifacts or corrupted sample timing as
+trustworthy vibration strength.
 
 `use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
 and final-drive references onto the same window grid. It uses conservative

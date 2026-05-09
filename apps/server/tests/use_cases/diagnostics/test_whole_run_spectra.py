@@ -14,6 +14,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorClockSync,
     RawCaptureSensorData,
+    RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
     RawRunCapture,
 )
@@ -118,6 +119,7 @@ def _make_sensor(
 def _raw_capture(
     *sensors: RawCaptureSensorData,
     losses: RawCaptureLossStats | None = None,
+    sensor_losses: dict[str, RawCaptureLossStats] | None = None,
 ) -> RawRunCapture:
     manifest = RawCaptureManifest(
         run_id="run-spectra",
@@ -127,6 +129,10 @@ def _raw_capture(
         total_bytes=sum(sensor.manifest.bytes_written for sensor in sensors),
         created_at="2025-01-01T00:00:00Z",
         run_start_monotonic_us=_RUN_START_US,
+        sensor_losses=tuple(
+            RawCaptureSensorLossStats(client_id=client_id, losses=loss_stats)
+            for client_id, loss_stats in (sensor_losses or {}).items()
+        ),
         losses=losses or RawCaptureLossStats(),
     )
     return RawRunCapture(manifest=manifest, sensors=tuple(sensors))
@@ -268,6 +274,69 @@ def test_whole_run_spectra_mark_gap_windows_partial() -> None:
     assert [warning.code for warning in result.coverage_summary.warnings] == [
         "whole_run_alignment_incomplete"
     ]
+
+
+def test_whole_run_spectra_quality_marks_late_packets_and_queue_drops() -> None:
+    raw_capture = _raw_capture(
+        _make_sensor(
+            client_id="sensor-loss",
+            sample_rate_hz=8,
+            chunks=[(_RUN_START_US, _sine_samples(total_samples=16))],
+            clock_sync=_verified_sync(),
+        ),
+        sensor_losses={
+            "sensor-loss": RawCaptureLossStats(
+                late_packet_chunk_count=1,
+                queue_overflow_chunk_count=1,
+            )
+        },
+    )
+
+    result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=2,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert result.bundle is not None
+    summaries = _summaries(result.bundle, "sensor-loss")
+    assert summaries
+    assert all(summary.window_quality.state == "limited" for summary in summaries)
+    assert all("late_packet_loss" in summary.window_quality.reasons for summary in summaries)
+    assert all("server_queue_drop" in summary.window_quality.reasons for summary in summaries)
+    assert result.coverage_summary.late_packet_chunk_count == 1
+    assert result.coverage_summary.queue_overflow_chunk_count == 1
+
+
+def test_whole_run_spectra_quality_marks_overlap_windows_as_reset_timing_loss() -> None:
+    raw_capture = _raw_capture(
+        _make_sensor(
+            client_id="sensor-reset",
+            sample_rate_hz=8,
+            chunks=[
+                (_RUN_START_US, _sine_samples(total_samples=8)),
+                (_RUN_START_US + 500_000, _sine_samples(total_samples=8, phase_rad=0.5)),
+            ],
+            clock_sync=_verified_sync(),
+        ),
+    )
+
+    result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=4,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert result.bundle is not None
+    rows = _summary_rows(result.bundle.artifact_contents["spectral-summary:sensor-reset"])
+    assert rows[1]["coverage_reason"] == "window_crosses_overlap"
+    assert "sensor_reset" in rows[1]["window_quality"]["reasons"]
 
 
 def test_whole_run_spectra_keep_contiguous_chunk_boundaries_full() -> None:
