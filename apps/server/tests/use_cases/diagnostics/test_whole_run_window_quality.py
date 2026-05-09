@@ -120,6 +120,29 @@ def _mounting_artifact_point(window_index: int) -> OrderTracePoint:
     )
 
 
+def _timing_loss_point(window_index: int) -> OrderTracePoint:
+    return OrderTracePoint(
+        hypothesis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        order_family="wheel",
+        harmonic=1,
+        order_label="1x wheel",
+        window_index=window_index,
+        eligible=True,
+        matched=True,
+        predicted_hz=8.0 + window_index,
+        matched_hz=8.05 + window_index,
+        relative_error=0.01,
+        peak_intensity_db=24.0,
+        vibration_strength_db=20.0,
+        ref_source="speed+tire",
+        strongest_location="Front Left",
+        window_quality_score=0.92,
+        window_quality_state="limited",
+        window_quality_reasons=("late_packet_loss",),
+    )
+
+
 def test_order_trace_scoring_records_and_downweights_limited_window_quality() -> None:
     context_labels = _context_labels()
     clean_summary = summarize_whole_run_order_traces(
@@ -189,4 +212,23 @@ def test_order_trace_scoring_caps_suspect_mounting_only_lock() -> None:
     assert suspect_summary.sensor_mounting_artifact_window_count == 2
     assert suspect_summary.matched_window_count == 2
     assert suspect_summary.lock_score == 0.45
+    assert suspect_summary.lock_score < clean_summary.lock_score
+
+
+def test_order_trace_scoring_counts_and_caps_timing_loss_only_lock() -> None:
+    clean_summary = summarize_whole_run_order_traces(
+        points=(
+            _point(0, quality_score=1.0, quality_state="usable"),
+            _point(1, quality_score=1.0, quality_state="usable"),
+        ),
+        context_labels=_context_labels(),
+    )[0]
+    suspect_summary = summarize_whole_run_order_traces(
+        points=(_timing_loss_point(0), _timing_loss_point(1)),
+        context_labels=_context_labels(),
+    )[0]
+
+    assert suspect_summary.sensor_timing_integrity_window_count == 2
+    assert suspect_summary.matched_window_count == 2
+    assert suspect_summary.lock_score == 0.50
     assert suspect_summary.lock_score < clean_summary.lock_score

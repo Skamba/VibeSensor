@@ -51,6 +51,7 @@ def test_window_quality_scores_clean_window_as_usable() -> None:
 
     assert quality.state == "usable"
     assert quality.score > 0.95
+    assert quality.timing_integrity_score == 1.0
     assert quality.shock_broadband_ratio is not None
     assert quality.shock_broadband_ratio < 0.15
     assert quality.reasons == ()
@@ -122,6 +123,7 @@ def test_window_quality_marks_dropped_clipped_and_shock_windows_low_quality() ->
     assert dropped.state == "excluded"
     assert "sample_incomplete" in dropped.reasons
     assert "packet_integrity_gap" in dropped.reasons
+    assert "timing_gap" in dropped.reasons
     assert clipped_quality.state == "excluded"
     assert "sensor_clipping" in clipped_quality.reasons
     assert shock.state == "excluded"
@@ -209,6 +211,36 @@ def test_window_quality_context_downgrades_missing_speed_and_rpm() -> None:
     assert quality.state == "limited"
     assert quality.context_score < 0.5
     assert "context_unavailable" in quality.reasons
+
+
+def test_window_quality_flags_late_packets_queue_drops_and_reset_timing_loss() -> None:
+    late_packet = score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=256,
+        coverage_state="full",
+        late_packet_chunk_count=1,
+    )
+    queue_drop = score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=256,
+        coverage_state="full",
+        server_queue_drop_count=1,
+    )
+    reset_overlap = score_window_quality(
+        expected_sample_count=256,
+        returned_sample_count=128,
+        coverage_state="partial",
+        coverage_reason="window_crosses_overlap",
+    )
+
+    assert late_packet.state == "limited"
+    assert late_packet.timing_integrity_score < 1.0
+    assert "late_packet_loss" in late_packet.reasons
+    assert late_packet.to_payload()["timing_integrity_score"] == late_packet.timing_integrity_score
+    assert queue_drop.state == "limited"
+    assert "server_queue_drop" in queue_drop.reasons
+    assert reset_overlap.state == "excluded"
+    assert "sensor_reset" in reset_overlap.reasons
 
 
 @pytest.mark.parametrize(

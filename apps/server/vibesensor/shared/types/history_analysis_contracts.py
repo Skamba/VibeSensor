@@ -319,6 +319,7 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     shock_transient_window_count: Required[int]
     sensor_clipping_window_count: Required[int]
     sensor_mounting_artifact_window_count: Required[int]
+    sensor_timing_integrity_window_count: Required[int]
     mean_quality_score: float | None
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]

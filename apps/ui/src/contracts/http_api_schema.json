@@ -6322,6 +6322,10 @@
             "title": "Sensor Mounting Artifact Window Count",
             "type": "integer"
           },
+          "sensor_timing_integrity_window_count": {
+            "title": "Sensor Timing Integrity Window Count",
+            "type": "integer"
+          },
           "shock_transient_window_count": {
             "title": "Shock Transient Window Count",
             "type": "integer"
@@ -6401,6 +6405,7 @@
           "shock_transient_window_count",
           "sensor_clipping_window_count",
           "sensor_mounting_artifact_window_count",
+          "sensor_timing_integrity_window_count",
           "support_intervals",
           "phase_support",
           "harmonic_summaries",
@@ -9550,6 +9555,10 @@
             "title": "State",
             "type": "string"
           },
+          "timing_integrity_score": {
+            "title": "Timing Integrity Score",
+            "type": "number"
+          },
           "transient_score": {
             "title": "Transient Score",
             "type": "number"
@@ -9560,6 +9569,7 @@
           "state",
           "sample_completeness_score",
           "packet_integrity_score",
+          "timing_integrity_score",
           "clipping_score",
           "clipping_sample_count",
           "clipping_sample_ratio",
