@@ -2287,6 +2287,10 @@
     "en": "Sensor clipping windows filtered: {count}",
     "nl": "Sensorclippingvensters gefilterd: {count}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_MOUNTING_ARTIFACT_WINDOWS": {
+    "en": "Sensor mounting artifact windows limited diagnosis: {count}",
+    "nl": "Sensorbevestigingsartefacten beperken diagnose: {count}"
+  },
   "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
     "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
     "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"

@@ -8,7 +8,7 @@ from typing import Literal
 
 import numpy as np
 
-from vibesensor.shared.fft_analysis import broadband_energy_ratio
+from vibesensor.shared.fft_analysis import broadband_energy_ratio, high_frequency_energy_ratio
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.payload_types import WindowQualityPayload
 
@@ -18,6 +18,7 @@ type WindowQualityReason = Literal[
     "packet_integrity_gap",
     "sensor_clipping",
     "shock_transient",
+    "mounting_artifact",
     "context_unavailable",
     "frequency_unstable",
 ]
@@ -31,17 +32,19 @@ WINDOW_QUALITY_REASON_VALUES: frozenset[WindowQualityReason] = frozenset(
         "packet_integrity_gap",
         "sensor_clipping",
         "shock_transient",
+        "mounting_artifact",
         "context_unavailable",
         "frequency_unstable",
     }
 )
 
-_WEIGHT_SAMPLE_COMPLETENESS = 0.20
-_WEIGHT_PACKET_INTEGRITY = 0.20
-_WEIGHT_CLIPPING = 0.15
-_WEIGHT_TRANSIENT = 0.15
-_WEIGHT_CONTEXT = 0.15
-_WEIGHT_FREQUENCY = 0.15
+_WEIGHT_SAMPLE_COMPLETENESS = 0.18
+_WEIGHT_PACKET_INTEGRITY = 0.18
+_WEIGHT_CLIPPING = 0.14
+_WEIGHT_TRANSIENT = 0.14
+_WEIGHT_MOUNTING = 0.14
+_WEIGHT_CONTEXT = 0.11
+_WEIGHT_FREQUENCY = 0.11
 _CLIPPING_FULL_SCALE_I16 = 32760
 _CLIPPING_EXCLUDED_RATIO = 0.01
 _CLIPPING_MIN_REPEATED_RAIL_SAMPLES = 3
@@ -54,6 +57,9 @@ _CREST_FACTOR_CLEAN = 6.0
 _CREST_FACTOR_EXCLUDED = 12.0
 _BROADBAND_RATIO_CLEAN = 0.55
 _BROADBAND_RATIO_EXCLUDED = 0.82
+_MOUNTING_HIGH_FREQUENCY_RATIO_CLEAN = 0.35
+_MOUNTING_HIGH_FREQUENCY_RATIO_SUSPECT = 0.70
+_MOUNTING_MIN_HIGH_FREQUENCY_HZ = 45.0
 _AXIS_NAMES = ("x", "y", "z")
 
 
@@ -78,6 +84,12 @@ class WindowClippingAnalysis:
 
 
 @dataclass(frozen=True, slots=True)
+class _MountingArtifactAnalysis:
+    score: float
+    high_frequency_ratio: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class WindowQuality:
     """Typed quality score for one analysis window."""
 
@@ -87,10 +99,12 @@ class WindowQuality:
     packet_integrity_score: float
     clipping_score: float
     transient_score: float
+    mounting_score: float
     context_score: float
     frequency_stability_score: float
     shock_crest_factor: float | None = None
     shock_broadband_ratio: float | None = None
+    mounting_high_frequency_ratio: float | None = None
     clipping_sample_count: int = 0
     clipping_sample_ratio: float = 0.0
     clipping_axis_counts: tuple[int, int, int] = (0, 0, 0)
@@ -109,6 +123,8 @@ class WindowQuality:
             "transient_score": self.transient_score,
             "shock_crest_factor": self.shock_crest_factor,
             "shock_broadband_ratio": self.shock_broadband_ratio,
+            "mounting_score": self.mounting_score,
+            "mounting_high_frequency_ratio": self.mounting_high_frequency_ratio,
             "context_score": self.context_score,
             "frequency_stability_score": self.frequency_stability_score,
             "reasons": list(self.reasons),
@@ -127,6 +143,8 @@ class WindowQuality:
             "transient_score": self.transient_score,
             "shock_crest_factor": self.shock_crest_factor,
             "shock_broadband_ratio": self.shock_broadband_ratio,
+            "mounting_score": self.mounting_score,
+            "mounting_high_frequency_ratio": self.mounting_high_frequency_ratio,
             "context_score": self.context_score,
             "frequency_stability_score": self.frequency_stability_score,
             "reasons": list(self.reasons),
@@ -166,6 +184,10 @@ class WindowQuality:
             transient_score=_score_from_json(data.get("transient_score"), default=1.0),
             shock_crest_factor=_nonnegative_float_from_json(data.get("shock_crest_factor")),
             shock_broadband_ratio=_optional_score_from_json(data.get("shock_broadband_ratio")),
+            mounting_score=_score_from_json(data.get("mounting_score"), default=1.0),
+            mounting_high_frequency_ratio=_optional_score_from_json(
+                data.get("mounting_high_frequency_ratio")
+            ),
             context_score=_score_from_json(data.get("context_score"), default=1.0),
             frequency_stability_score=_score_from_json(
                 data.get("frequency_stability_score"),
@@ -195,6 +217,7 @@ def clean_window_quality() -> WindowQuality:
         clipping_sample_ratio=0.0,
         clipping_axis_counts=(0, 0, 0),
         transient_score=1.0,
+        mounting_score=1.0,
         context_score=1.0,
         frequency_stability_score=1.0,
     )
@@ -211,6 +234,7 @@ def score_window_quality(
     context_coverage: str | None = None,
     speed_validity: str | None = None,
     rpm_validity: str | None = None,
+    sample_rate_hz: int | None = None,
     peak_amp_g: float | None = None,
     noise_floor_amp_g: float | None = None,
 ) -> WindowQuality:
@@ -226,6 +250,7 @@ def score_window_quality(
     )
     clipping_analysis = analyze_window_clipping(samples_i16=samples_i16, samples_g=samples_g)
     transient_analysis = _transient_analysis(samples_g)
+    mounting_analysis = _mounting_artifact_analysis(samples_g, sample_rate_hz=sample_rate_hz)
     context_score = _context_score(
         context_coverage=context_coverage,
         speed_validity=speed_validity,
@@ -245,6 +270,8 @@ def score_window_quality(
         transient_score=transient_analysis.score,
         shock_crest_factor=transient_analysis.crest_factor,
         shock_broadband_ratio=transient_analysis.broadband_ratio,
+        mounting_score=mounting_analysis.score,
+        mounting_high_frequency_ratio=mounting_analysis.high_frequency_ratio,
         context_score=context_score,
         frequency_stability_score=frequency_score,
     )
@@ -269,6 +296,8 @@ def window_quality_with_context(
         transient_score=quality.transient_score,
         shock_crest_factor=quality.shock_crest_factor,
         shock_broadband_ratio=quality.shock_broadband_ratio,
+        mounting_score=quality.mounting_score,
+        mounting_high_frequency_ratio=quality.mounting_high_frequency_ratio,
         context_score=_context_score(
             context_coverage=context_coverage,
             speed_validity=speed_validity,
@@ -284,6 +313,7 @@ def _quality_from_component_scores(
     packet_integrity_score: float,
     clipping_score: float,
     transient_score: float,
+    mounting_score: float,
     context_score: float,
     frequency_stability_score: float,
     clipping_sample_count: int = 0,
@@ -291,6 +321,7 @@ def _quality_from_component_scores(
     clipping_axis_counts: tuple[int, int, int] = (0, 0, 0),
     shock_crest_factor: float | None = None,
     shock_broadband_ratio: float | None = None,
+    mounting_high_frequency_ratio: float | None = None,
 ) -> WindowQuality:
     sample_completeness_score = _clamp01(sample_completeness_score)
     packet_integrity_score = _clamp01(packet_integrity_score)
@@ -299,6 +330,7 @@ def _quality_from_component_scores(
     clipping_sample_ratio = _clamp01(clipping_sample_ratio)
     clipping_axis_counts = _normalized_axis_counts(clipping_axis_counts)
     transient_score = _clamp01(transient_score)
+    mounting_score = _clamp01(mounting_score)
     context_score = _clamp01(context_score)
     frequency_stability_score = _clamp01(frequency_stability_score)
     score = _clamp01(
@@ -306,6 +338,7 @@ def _quality_from_component_scores(
         + (_WEIGHT_PACKET_INTEGRITY * packet_integrity_score)
         + (_WEIGHT_CLIPPING * clipping_score)
         + (_WEIGHT_TRANSIENT * transient_score)
+        + (_WEIGHT_MOUNTING * mounting_score)
         + (_WEIGHT_CONTEXT * context_score)
         + (_WEIGHT_FREQUENCY * frequency_stability_score)
     )
@@ -318,6 +351,8 @@ def _quality_from_component_scores(
         reasons.append("sensor_clipping")
     if transient_score < 0.70:
         reasons.append("shock_transient")
+    if mounting_score < 0.98:
+        reasons.append("mounting_artifact")
     if context_score < 0.70:
         reasons.append("context_unavailable")
     if frequency_stability_score < 0.70:
@@ -343,10 +378,12 @@ def _quality_from_component_scores(
         clipping_sample_ratio=clipping_sample_ratio,
         clipping_axis_counts=clipping_axis_counts,
         transient_score=transient_score,
+        mounting_score=mounting_score,
         context_score=context_score,
         frequency_stability_score=frequency_stability_score,
         shock_crest_factor=shock_crest_factor,
         shock_broadband_ratio=shock_broadband_ratio,
+        mounting_high_frequency_ratio=mounting_high_frequency_ratio,
         reasons=tuple(dict.fromkeys(reasons)),
     )
 
@@ -493,6 +530,43 @@ def _transient_analysis(samples_g: np.ndarray | None) -> _TransientAnalysis:
         crest_factor=crest,
         broadband_ratio=broadband_ratio,
     )
+
+
+def _mounting_artifact_analysis(
+    samples_g: np.ndarray | None,
+    *,
+    sample_rate_hz: int | None,
+) -> _MountingArtifactAnalysis:
+    if samples_g is None or sample_rate_hz is None or sample_rate_hz <= 0:
+        return _MountingArtifactAnalysis(score=1.0, high_frequency_ratio=None)
+    samples = _time_axis_samples(samples_g)
+    if samples.size == 0:
+        return _MountingArtifactAnalysis(score=1.0, high_frequency_ratio=None)
+    detrended = samples - np.mean(samples, axis=0, keepdims=True)
+    high_frequency_start_hz = min(
+        float(sample_rate_hz) * 0.45,
+        max(_MOUNTING_MIN_HIGH_FREQUENCY_HZ, float(sample_rate_hz) * 0.20),
+    )
+    ratio = high_frequency_energy_ratio(
+        detrended.T.astype(np.float32, copy=False),
+        sample_rate_hz=sample_rate_hz,
+        high_frequency_start_hz=high_frequency_start_hz,
+    )
+    if ratio is None:
+        return _MountingArtifactAnalysis(score=1.0, high_frequency_ratio=None)
+    return _MountingArtifactAnalysis(
+        score=_mounting_high_frequency_score(ratio),
+        high_frequency_ratio=ratio,
+    )
+
+
+def _mounting_high_frequency_score(ratio: float) -> float:
+    if ratio <= _MOUNTING_HIGH_FREQUENCY_RATIO_CLEAN:
+        return 1.0
+    if ratio >= _MOUNTING_HIGH_FREQUENCY_RATIO_SUSPECT:
+        return 0.0
+    suspect_range = _MOUNTING_HIGH_FREQUENCY_RATIO_SUSPECT - _MOUNTING_HIGH_FREQUENCY_RATIO_CLEAN
+    return _clamp01((_MOUNTING_HIGH_FREQUENCY_RATIO_SUSPECT - ratio) / suspect_range)
 
 
 def _crest_factor_score(crest: float) -> float:

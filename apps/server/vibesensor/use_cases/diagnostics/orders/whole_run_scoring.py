@@ -199,6 +199,12 @@ def _summarize_hypothesis_trace(
     sensor_clipping_window_count = sum(
         1 for point in points if "sensor_clipping" in point.window_quality_reasons
     )
+    sensor_mounting_artifact_window_count = sum(
+        1 for point in points if "mounting_artifact" in point.window_quality_reasons
+    )
+    matched_mounting_artifact_window_count = sum(
+        1 for point in matched_points if "mounting_artifact" in point.window_quality_reasons
+    )
     support_intervals = _support_intervals(
         matched_points=matched_points,
         context_by_window=context_by_window,
@@ -219,6 +225,11 @@ def _summarize_hypothesis_trace(
         drift_score=drift_score,
         path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
         mean_quality_score=mean_quality_score,
+    )
+    lock_score = _mounting_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
     )
     peak_intensity_db = _max_or_none(
         point.peak_intensity_db for point in matched_points if point.peak_intensity_db is not None
@@ -289,6 +300,7 @@ def _summarize_hypothesis_trace(
         excluded_window_count=excluded_window_count,
         shock_transient_window_count=shock_transient_window_count,
         sensor_clipping_window_count=sensor_clipping_window_count,
+        sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
@@ -340,6 +352,21 @@ def _lock_score(
         return base_score
     quality_factor = 0.85 + (0.15 * max(0.0, min(1.0, mean_quality_score)))
     return max(0.0, min(1.0, base_score * quality_factor))
+
+
+def _mounting_adjusted_lock_score(
+    lock_score: float,
+    *,
+    matched_window_count: int,
+    matched_mounting_artifact_window_count: int,
+) -> float:
+    if matched_window_count <= 0 or matched_mounting_artifact_window_count <= 0:
+        return lock_score
+    if matched_mounting_artifact_window_count >= matched_window_count:
+        return min(lock_score, 0.45)
+    if matched_mounting_artifact_window_count / matched_window_count >= 0.5:
+        return min(lock_score, 0.60)
+    return lock_score
 
 
 def _relative_error_score(*, mean_relative_error: float | None, path_compliance: float) -> float:

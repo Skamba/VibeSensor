@@ -40,6 +40,7 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     _drift_score,
     _lock_score,
     _longest_contiguous_match_run,
+    _mounting_adjusted_lock_score,
     whole_run_order_trace_summaries_to_jsonl_bytes,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
@@ -213,6 +214,20 @@ def _family_summary(
             if "sensor_clipping" in point.window_quality_reasons
         }
     )
+    sensor_mounting_artifact_window_count = len(
+        {
+            point.window_index
+            for point in points
+            if "mounting_artifact" in point.window_quality_reasons
+        }
+    )
+    matched_mounting_artifact_window_count = len(
+        {
+            point.window_index
+            for point in matched_points
+            if "mounting_artifact" in point.window_quality_reasons
+        }
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -225,6 +240,11 @@ def _family_summary(
         drift_score=drift_score,
         path_compliance=1.0,
         mean_quality_score=mean_quality_score,
+    )
+    lock_score = _mounting_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
     )
     support_intervals, exemplar_interval_index = _support_intervals(
         eligible_windows=eligible_windows,
@@ -293,6 +313,7 @@ def _family_summary(
         excluded_window_count=excluded_window_count,
         shock_transient_window_count=shock_transient_window_count,
         sensor_clipping_window_count=sensor_clipping_window_count,
+        sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
