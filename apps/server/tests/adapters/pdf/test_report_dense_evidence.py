@@ -207,6 +207,22 @@ def test_build_report_document_projects_sensor_mounting_artifact_caveat() -> Non
     )
 
 
+def test_build_report_document_projects_sensor_timing_integrity_caveat() -> None:
+    summary = _dense_summary(
+        order_summary_overrides={
+            "reference_coverage_ratio": 1.0,
+            "mean_quality_score": 0.86,
+            "limited_window_count": 2,
+            "sensor_timing_integrity_window_count": 2,
+        }
+    )
+    document = build_report_document(prepare_report_input(summary))
+
+    assert document.appendix_c.dense_evidence_rows[0].caveat == (
+        "Sensor timing integrity windows limited diagnosis: 2"
+    )
+
+
 def test_build_report_document_skips_dense_evidence_when_artifacts_are_unavailable() -> None:
     document = build_report_document(prepare_report_input(minimal_summary()))
 

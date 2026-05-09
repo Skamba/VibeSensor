@@ -16,6 +16,10 @@ type WindowQualityState = Literal["usable", "limited", "excluded"]
 type WindowQualityReason = Literal[
     "sample_incomplete",
     "packet_integrity_gap",
+    "timing_gap",
+    "late_packet_loss",
+    "server_queue_drop",
+    "sensor_reset",
     "sensor_clipping",
     "shock_transient",
     "mounting_artifact",
@@ -30,6 +34,10 @@ WINDOW_QUALITY_REASON_VALUES: frozenset[WindowQualityReason] = frozenset(
     {
         "sample_incomplete",
         "packet_integrity_gap",
+        "timing_gap",
+        "late_packet_loss",
+        "server_queue_drop",
+        "sensor_reset",
         "sensor_clipping",
         "shock_transient",
         "mounting_artifact",
@@ -38,13 +46,14 @@ WINDOW_QUALITY_REASON_VALUES: frozenset[WindowQualityReason] = frozenset(
     }
 )
 
-_WEIGHT_SAMPLE_COMPLETENESS = 0.18
-_WEIGHT_PACKET_INTEGRITY = 0.18
-_WEIGHT_CLIPPING = 0.14
-_WEIGHT_TRANSIENT = 0.14
-_WEIGHT_MOUNTING = 0.14
-_WEIGHT_CONTEXT = 0.11
-_WEIGHT_FREQUENCY = 0.11
+_WEIGHT_SAMPLE_COMPLETENESS = 0.16
+_WEIGHT_PACKET_INTEGRITY = 0.14
+_WEIGHT_TIMING_INTEGRITY = 0.14
+_WEIGHT_CLIPPING = 0.13
+_WEIGHT_TRANSIENT = 0.13
+_WEIGHT_MOUNTING = 0.13
+_WEIGHT_CONTEXT = 0.085
+_WEIGHT_FREQUENCY = 0.085
 _CLIPPING_FULL_SCALE_I16 = 32760
 _CLIPPING_EXCLUDED_RATIO = 0.01
 _CLIPPING_MIN_REPEATED_RAIL_SAMPLES = 3
@@ -97,6 +106,7 @@ class WindowQuality:
     state: WindowQualityState
     sample_completeness_score: float
     packet_integrity_score: float
+    timing_integrity_score: float
     clipping_score: float
     transient_score: float
     mounting_score: float
@@ -116,6 +126,7 @@ class WindowQuality:
             "state": self.state,
             "sample_completeness_score": self.sample_completeness_score,
             "packet_integrity_score": self.packet_integrity_score,
+            "timing_integrity_score": self.timing_integrity_score,
             "clipping_score": self.clipping_score,
             "clipping_sample_count": self.clipping_sample_count,
             "clipping_sample_ratio": self.clipping_sample_ratio,
@@ -136,6 +147,7 @@ class WindowQuality:
             "state": self.state,
             "sample_completeness_score": self.sample_completeness_score,
             "packet_integrity_score": self.packet_integrity_score,
+            "timing_integrity_score": self.timing_integrity_score,
             "clipping_score": self.clipping_score,
             "clipping_sample_count": self.clipping_sample_count,
             "clipping_sample_ratio": self.clipping_sample_ratio,
@@ -172,6 +184,10 @@ class WindowQuality:
             ),
             packet_integrity_score=_score_from_json(
                 data.get("packet_integrity_score"),
+                default=1.0,
+            ),
+            timing_integrity_score=_score_from_json(
+                data.get("timing_integrity_score"),
                 default=1.0,
             ),
             clipping_score=_score_from_json(data.get("clipping_score"), default=1.0),
@@ -212,6 +228,7 @@ def clean_window_quality() -> WindowQuality:
         state="usable",
         sample_completeness_score=1.0,
         packet_integrity_score=1.0,
+        timing_integrity_score=1.0,
         clipping_score=1.0,
         clipping_sample_count=0,
         clipping_sample_ratio=0.0,
@@ -237,6 +254,10 @@ def score_window_quality(
     sample_rate_hz: int | None = None,
     peak_amp_g: float | None = None,
     noise_floor_amp_g: float | None = None,
+    dropped_frame_count: int = 0,
+    late_packet_chunk_count: int = 0,
+    server_queue_drop_count: int = 0,
+    reset_detected: bool = False,
 ) -> WindowQuality:
     """Score one FFT/order-analysis window from available signal and context facts."""
 
@@ -247,6 +268,13 @@ def score_window_quality(
     packet_score = _packet_integrity_score(
         coverage_state=coverage_state,
         coverage_reason=coverage_reason,
+    )
+    timing_score, timing_reasons = _timing_integrity_score(
+        coverage_reason=coverage_reason,
+        dropped_frame_count=dropped_frame_count,
+        late_packet_chunk_count=late_packet_chunk_count,
+        server_queue_drop_count=server_queue_drop_count,
+        reset_detected=reset_detected,
     )
     clipping_analysis = analyze_window_clipping(samples_i16=samples_i16, samples_g=samples_g)
     transient_analysis = _transient_analysis(samples_g)
@@ -263,6 +291,8 @@ def score_window_quality(
     return _quality_from_component_scores(
         sample_completeness_score=sample_score,
         packet_integrity_score=packet_score,
+        timing_integrity_score=timing_score,
+        timing_reasons=timing_reasons,
         clipping_score=clipping_analysis.score,
         clipping_sample_count=clipping_analysis.sample_count,
         clipping_sample_ratio=clipping_analysis.sample_ratio,
@@ -289,6 +319,8 @@ def window_quality_with_context(
     return _quality_from_component_scores(
         sample_completeness_score=quality.sample_completeness_score,
         packet_integrity_score=quality.packet_integrity_score,
+        timing_integrity_score=quality.timing_integrity_score,
+        timing_reasons=_timing_reasons_from(quality.reasons),
         clipping_score=quality.clipping_score,
         clipping_sample_count=quality.clipping_sample_count,
         clipping_sample_ratio=quality.clipping_sample_ratio,
@@ -311,6 +343,7 @@ def _quality_from_component_scores(
     *,
     sample_completeness_score: float,
     packet_integrity_score: float,
+    timing_integrity_score: float,
     clipping_score: float,
     transient_score: float,
     mounting_score: float,
@@ -322,9 +355,11 @@ def _quality_from_component_scores(
     shock_crest_factor: float | None = None,
     shock_broadband_ratio: float | None = None,
     mounting_high_frequency_ratio: float | None = None,
+    timing_reasons: tuple[WindowQualityReason, ...] = (),
 ) -> WindowQuality:
     sample_completeness_score = _clamp01(sample_completeness_score)
     packet_integrity_score = _clamp01(packet_integrity_score)
+    timing_integrity_score = _clamp01(timing_integrity_score)
     clipping_score = _clamp01(clipping_score)
     clipping_sample_count = max(0, int(clipping_sample_count))
     clipping_sample_ratio = _clamp01(clipping_sample_ratio)
@@ -336,6 +371,7 @@ def _quality_from_component_scores(
     score = _clamp01(
         (_WEIGHT_SAMPLE_COMPLETENESS * sample_completeness_score)
         + (_WEIGHT_PACKET_INTEGRITY * packet_integrity_score)
+        + (_WEIGHT_TIMING_INTEGRITY * timing_integrity_score)
         + (_WEIGHT_CLIPPING * clipping_score)
         + (_WEIGHT_TRANSIENT * transient_score)
         + (_WEIGHT_MOUNTING * mounting_score)
@@ -347,6 +383,8 @@ def _quality_from_component_scores(
         reasons.append("sample_incomplete")
     if packet_integrity_score < 0.98:
         reasons.append("packet_integrity_gap")
+    if timing_integrity_score < 0.98:
+        reasons.extend(timing_reasons or ("timing_gap",))
     if clipping_score < 0.98:
         reasons.append("sensor_clipping")
     if transient_score < 0.70:
@@ -361,6 +399,7 @@ def _quality_from_component_scores(
     if (
         sample_completeness_score < 0.75
         or packet_integrity_score <= 0.05
+        or timing_integrity_score < 0.20
         or clipping_score < 0.20
         or transient_score < 0.25
         or context_score < 0.25
@@ -373,6 +412,7 @@ def _quality_from_component_scores(
         state=state,
         sample_completeness_score=sample_completeness_score,
         packet_integrity_score=packet_integrity_score,
+        timing_integrity_score=timing_integrity_score,
         clipping_score=clipping_score,
         clipping_sample_count=clipping_sample_count,
         clipping_sample_ratio=clipping_sample_ratio,
@@ -408,6 +448,55 @@ def _packet_integrity_score(*, coverage_state: str, coverage_reason: str | None)
     if coverage_state == "partial":
         return 0.45
     return 0.0
+
+
+_TIMING_GAP_REASONS = frozenset(
+    {
+        "assembled_window_short",
+        "sample_rate_unverified",
+        "window_crosses_gap",
+    }
+)
+_TIMING_RESET_REASONS = frozenset({"window_crosses_overlap"})
+_TIMING_REASON_VALUES = frozenset(
+    {
+        "timing_gap",
+        "late_packet_loss",
+        "server_queue_drop",
+        "sensor_reset",
+    }
+)
+
+
+def _timing_integrity_score(
+    *,
+    coverage_reason: str | None,
+    dropped_frame_count: int,
+    late_packet_chunk_count: int,
+    server_queue_drop_count: int,
+    reset_detected: bool,
+) -> tuple[float, tuple[WindowQualityReason, ...]]:
+    score = 1.0
+    reasons: list[WindowQualityReason] = []
+    if coverage_reason in _TIMING_GAP_REASONS or dropped_frame_count > 0:
+        score = min(score, 0.35)
+        reasons.append("timing_gap")
+    if coverage_reason in _TIMING_RESET_REASONS or reset_detected:
+        score = min(score, 0.20)
+        reasons.append("sensor_reset")
+    if late_packet_chunk_count > 0:
+        score = min(score, 0.65)
+        reasons.append("late_packet_loss")
+    if server_queue_drop_count > 0:
+        score = min(score, 0.55)
+        reasons.append("server_queue_drop")
+    return score, tuple(dict.fromkeys(reasons))
+
+
+def _timing_reasons_from(
+    reasons: tuple[WindowQualityReason, ...],
+) -> tuple[WindowQualityReason, ...]:
+    return tuple(reason for reason in reasons if reason in _TIMING_REASON_VALUES)
 
 
 def analyze_window_clipping(

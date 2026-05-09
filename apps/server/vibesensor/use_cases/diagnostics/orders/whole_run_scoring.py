@@ -57,6 +57,9 @@ _LOCK_SCORE_ERROR_WEIGHT = 0.15
 _LOCK_SCORE_DRIFT_WEIGHT = 0.10
 _RELATIVE_ERROR_DENOMINATOR = 0.25
 _RELATIVE_ERROR_DRIFT_TOLERANCE = 0.08
+_TIMING_QUALITY_REASONS = frozenset(
+    {"timing_gap", "late_packet_loss", "server_queue_drop", "sensor_reset"}
+)
 
 __all__ = [
     "WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY",
@@ -205,6 +208,12 @@ def _summarize_hypothesis_trace(
     matched_mounting_artifact_window_count = sum(
         1 for point in matched_points if "mounting_artifact" in point.window_quality_reasons
     )
+    sensor_timing_integrity_window_count = sum(
+        1 for point in points if _has_timing_quality_reason(point)
+    )
+    matched_timing_integrity_window_count = sum(
+        1 for point in matched_points if _has_timing_quality_reason(point)
+    )
     support_intervals = _support_intervals(
         matched_points=matched_points,
         context_by_window=context_by_window,
@@ -230,6 +239,11 @@ def _summarize_hypothesis_trace(
         lock_score,
         matched_window_count=matched_window_count,
         matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
+    )
+    lock_score = _timing_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_timing_integrity_window_count=matched_timing_integrity_window_count,
     )
     peak_intensity_db = _max_or_none(
         point.peak_intensity_db for point in matched_points if point.peak_intensity_db is not None
@@ -301,6 +315,7 @@ def _summarize_hypothesis_trace(
         shock_transient_window_count=shock_transient_window_count,
         sensor_clipping_window_count=sensor_clipping_window_count,
         sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
+        sensor_timing_integrity_window_count=sensor_timing_integrity_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
@@ -367,6 +382,25 @@ def _mounting_adjusted_lock_score(
     if matched_mounting_artifact_window_count / matched_window_count >= 0.5:
         return min(lock_score, 0.60)
     return lock_score
+
+
+def _timing_adjusted_lock_score(
+    lock_score: float,
+    *,
+    matched_window_count: int,
+    matched_timing_integrity_window_count: int,
+) -> float:
+    if matched_window_count <= 0 or matched_timing_integrity_window_count <= 0:
+        return lock_score
+    if matched_timing_integrity_window_count >= matched_window_count:
+        return min(lock_score, 0.50)
+    if matched_timing_integrity_window_count / matched_window_count >= 0.5:
+        return min(lock_score, 0.65)
+    return lock_score
+
+
+def _has_timing_quality_reason(point: OrderTracePoint) -> bool:
+    return any(reason in _TIMING_QUALITY_REASONS for reason in point.window_quality_reasons)
 
 
 def _relative_error_score(*, mean_relative_error: float | None, path_compliance: float) -> float:
