@@ -27,7 +27,7 @@ def _prepared_report_input() -> PreparedReportInput:
             "sensor_count_used": 2,
             "lang": "en",
             "metadata": {},
-            "report_date": "",
+            "report_date": "2026-01-01T00:00:00Z",
             "record_length": "",
             "start_time_utc": "",
             "end_time_utc": "",
