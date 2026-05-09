@@ -68,6 +68,7 @@ def _raw_window(
     *,
     window_index: int = 0,
     flags: tuple[PostRunRawWindowDataQualityFlag, ...] = (),
+    mount_orientation: str | None = "+x,+y,+z",
 ) -> PostRunRawWindow:
     descriptor = _window_descriptor(window_index)
     sensor = PostRunRawSensorWindow(
@@ -84,6 +85,7 @@ def _raw_window(
         returned_sample_start=descriptor.sample_start if samples.size else None,
         returned_sample_count=int(samples.shape[0]),
         data_quality_flags=flags,
+        mount_orientation=mount_orientation,
     )
     return PostRunRawWindow(run_id=_RUN_ID, window=descriptor, sensors=(sensor,))
 
@@ -111,6 +113,7 @@ def test_window_features_detect_single_tone_axis_and_time_metrics() -> None:
 
     assert feature.dominant_freq_hz == pytest.approx(8.0, abs=0.25)
     assert feature.axis_dominance.axis == "x"
+    assert feature.axis_dominance.axis_frame == "vehicle"
     assert feature.axis_dominance.ratio is not None
     assert feature.axis_dominance.ratio > 1.6
     assert feature.rms_by_axis_g["x"] == pytest.approx(0.707, abs=0.04)
@@ -253,3 +256,15 @@ def test_window_features_debug_rows_for_synthetic_run() -> None:
     assert [row["window_index"] for row in rows] == [0, 1]
     assert rows[0]["dominant_freq_hz"] == pytest.approx(6.0, abs=0.25)
     assert rows[1]["axis"] == "y"
+    assert rows[1]["axis_frame"] == "vehicle"
+
+
+def test_window_features_suppress_axis_dominance_when_orientation_unknown() -> None:
+    stft = _stft_result(_raw_window(_tone(8.0, axis=0), mount_orientation=None))
+
+    feature = extract_post_run_window_features(stft).features[0]
+
+    assert feature.axis_frame == "sensor_local"
+    assert feature.axis_dominance.axis is None
+    assert "sensor_orientation_unknown" in feature.feature_quality_flags
+    assert feature.dominant_freq_hz == pytest.approx(8.0, abs=0.25)

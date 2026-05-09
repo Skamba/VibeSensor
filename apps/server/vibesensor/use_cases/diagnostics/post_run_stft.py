@@ -20,6 +20,13 @@ from vibesensor.shared.fft_analysis import (
     fft_frequency_slice,
     fft_window_values,
 )
+from vibesensor.shared.sensor_orientation import (
+    AxisFrame,
+    SignedAxis,
+    estimate_gravity_axis,
+    parse_mount_orientation,
+    transform_axis_matrix_to_vehicle,
+)
 from vibesensor.use_cases.diagnostics.post_run_raw_windows import (
     PostRunRawSensorWindow,
     PostRunRawWindow,
@@ -67,6 +74,9 @@ class PostRunStftFrame:
     returned_sample_count: int
     coverage_state: PostRunStftCoverageState
     data_quality_flags: tuple[PostRunRawWindowDataQualityFlag, ...]
+    mount_orientation: str | None
+    axis_frame: AxisFrame
+    gravity_axis: SignedAxis | None
     freq_hz: FloatArray
     spectrum_by_axis_amp_g: dict[Axis, FloatArray]
     combined_amp_g: FloatArray
@@ -226,6 +236,12 @@ def _compute_sensor_frame(
         return None
     if config.accel_scale_g_per_lsb is not None:
         prepared_samples = prepared_samples * np.float32(config.accel_scale_g_per_lsb)
+    gravity_axis = estimate_gravity_axis(prepared_samples)
+    orientation = parse_mount_orientation(sensor_window.mount_orientation)
+    axis_frame: AxisFrame = "sensor_local"
+    if orientation is not None:
+        prepared_samples = transform_axis_matrix_to_vehicle(prepared_samples, orientation)
+        axis_frame = "vehicle"
     rms_by_axis_g, p2p_by_axis_g = _time_domain_metrics_by_axis(prepared_samples)
     fft_result = compute_fft_spectrum(
         prepared_samples,
@@ -261,6 +277,9 @@ def _compute_sensor_frame(
         returned_sample_count=sensor_window.returned_sample_count,
         coverage_state=coverage_state,
         data_quality_flags=sensor_window.data_quality_flags,
+        mount_orientation=sensor_window.mount_orientation,
+        axis_frame=axis_frame,
+        gravity_axis=gravity_axis,
         freq_hz=np.asarray(fft_result["freq_slice"], dtype=np.float32, copy=True),
         spectrum_by_axis_amp_g=spectrum_by_axis,
         combined_amp_g=np.asarray(fft_result["combined_amp"], dtype=np.float32, copy=True),
@@ -359,6 +378,9 @@ def _empty_frame(
     coverage_state: PostRunStftCoverageState,
 ) -> PostRunStftFrame:
     empty = np.zeros(context.freq_hz.shape, dtype=np.float32)
+    axis_frame: AxisFrame = (
+        "vehicle" if parse_mount_orientation(sensor_window.mount_orientation) else "sensor_local"
+    )
     return PostRunStftFrame(
         run_id=sensor_window.run_id,
         client_id=sensor_window.client_id,
@@ -374,6 +396,9 @@ def _empty_frame(
         returned_sample_count=sensor_window.returned_sample_count,
         coverage_state=coverage_state,
         data_quality_flags=sensor_window.data_quality_flags,
+        mount_orientation=sensor_window.mount_orientation,
+        axis_frame=axis_frame,
+        gravity_axis=None,
         freq_hz=context.freq_hz.copy(),
         spectrum_by_axis_amp_g={axis: empty.copy() for axis in AXES},
         combined_amp_g=empty.copy(),

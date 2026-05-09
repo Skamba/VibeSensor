@@ -56,26 +56,32 @@ metadata and raw-capture manifests, then reads each sensor/window through the
 history raw range-read API. That keeps long runs streaming: downstream dense
 stages consume bounded axis arrays per window instead of materializing the full
 raw artifact bundle. Each emitted sensor window carries run ID, sensor ID,
-location snapshot, start/end timing, sample rate, x/y/z `int16` arrays, and
-data-quality flags such as partial windows, timestamp gaps, missing samples,
-low sample count, invalid axis data, sample-rate mismatch, and missing sidecars.
+location snapshot, mount orientation, start/end timing, sample rate, x/y/z
+`int16` arrays, and data-quality flags such as partial windows, timestamp gaps,
+missing samples, low sample count, invalid axis data, sample-rate mismatch, and
+missing sidecars.
 
 The first dense analysis consumer is
 `use_cases/diagnostics/post_run_stft.py`. It consumes those POSTRUN-01 window
 DTOs and produces in-memory STFT frames with per-axis spectra, combined spectra,
 window timing, sensor metadata, per-axis RMS/P2P, dominant frequency, top peaks,
-and dB strength facts. The STFT layer is deliberately post-run only: callers
-configure FFT size, window function, frequency range, and partial-window behavior
-independently from the live UI cadence, while still reusing the shared
-FFT/strength primitives.
+static-gravity-axis estimate, axis frame, and dB strength facts. Known mount
+orientations are transformed into vehicle-relative axes at this boundary;
+unknown orientations remain `sensor_local` so later stages can caveat or suppress
+axis-specific conclusions while preserving combined-magnitude location evidence.
+The STFT layer is deliberately post-run only: callers configure FFT size, window
+function, frequency range, and partial-window behavior independently from the
+live UI cadence, while still reusing the shared FFT/strength primitives.
 
 `use_cases/diagnostics/post_run_window_features.py` is the next reduction layer.
 It consumes POSTRUN-02 STFT frames and emits per-window/per-sensor feature DTOs:
 dominant and top peaks, canonical `vibration_strength_db`, peak amplitude, noise
-floor, strength bucket, axis dominance, RMS/P2P, structured quality flags, and
-compact debug rows for synthetic runs. Frequency masks live at this layer so
-later episode/order/finding logic can ignore unusable bands without recomputing
-the dense spectra.
+floor, strength bucket, axis dominance, RMS/P2P, axis frame, static gravity
+axis, structured quality flags, and compact debug rows for synthetic runs.
+Axis dominance is only emitted for vehicle-relative frames; sensor-local frames
+carry a `sensor_orientation_unknown` quality flag instead. Frequency masks live
+at this layer so later episode/order/finding logic can ignore unusable bands
+without recomputing the dense spectra.
 
 `use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
 and final-drive references onto the same window grid. It uses conservative
