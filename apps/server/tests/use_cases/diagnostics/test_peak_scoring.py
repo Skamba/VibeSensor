@@ -44,6 +44,8 @@ class TestPeakBin:
     def test_presence_ratio(self) -> None:
         peak_bin = _make_peak_bin(amps=[0.05] * 50, n_samples=100)
         assert peak_bin.presence_ratio == pytest.approx(0.50)
+        assert peak_bin.sample_count == 50
+        assert peak_bin.total_sample_count == 100
 
     def test_burstiness_uniform(self) -> None:
         peak_bin = _make_peak_bin(amps=[0.05] * 20)
@@ -122,5 +124,8 @@ class TestAssemblePeakFinding:
         metrics = finding.evidence
         assert metrics is not None
         assert metrics.presence_ratio > 0.0
+        assert metrics.matched_samples == 50
+        assert metrics.possible_samples == 100
+        assert metrics.match_rate == pytest.approx(metrics.presence_ratio)
         assert metrics.burstiness >= 0.0
         assert metrics.spatial_concentration > 0.0

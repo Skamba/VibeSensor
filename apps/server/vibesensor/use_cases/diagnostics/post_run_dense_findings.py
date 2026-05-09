@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Literal
 
-from vibesensor.domain import Finding, FindingKind, VibrationSource
+from vibesensor.domain import Finding, FindingEvidence, FindingKind, VibrationSource
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.whole_run_json_helpers import set_optional_value
 from vibesensor.use_cases.diagnostics.post_run_order_bands import (
@@ -25,6 +25,8 @@ type DenseFindingCaveat = Literal[
     "missing_reference_data",
     "poor_quality",
     "low_usable_duration",
+    "low_peak_persistence",
+    "intermittent_support",
     "transient_only",
     "unmatched_strong_episode",
 ]
@@ -56,6 +58,9 @@ class DenseFindingConfig:
     high_confidence_threshold: float = 0.7
     medium_confidence_threshold: float = 0.4
     strong_unknown_strength_db: float = 18.0
+    min_persistent_windows: int = 3
+    min_persistent_duration_s: float = 0.75
+    min_support_density: float = 0.75
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +129,9 @@ class DenseFinding:
     median_frequency_hz: float
     peak_strength_db: float
     duration_s: float
+    supporting_window_count: int
+    matched_evidence_window_count: int
+    support_density: float
     supporting_window_ids: tuple[int, ...]
 
     def to_json_object(self) -> JsonObject:
@@ -140,6 +148,9 @@ class DenseFinding:
             "median_frequency_hz": self.median_frequency_hz,
             "peak_strength_db": self.peak_strength_db,
             "duration_s": self.duration_s,
+            "supporting_window_count": self.supporting_window_count,
+            "matched_evidence_window_count": self.matched_evidence_window_count,
+            "support_density": self.support_density,
             "supporting_window_ids": list(self.supporting_window_ids),
         }
 
@@ -157,6 +168,17 @@ class DenseFinding:
             kind=FindingKind.DIAGNOSTIC,
             ranking_score=self.confidence_score * max(0.0, self.peak_strength_db),
             vibration_strength_db=self.peak_strength_db,
+            evidence=FindingEvidence(
+                match_rate=(
+                    self.matched_evidence_window_count / self.supporting_window_count
+                    if self.supporting_window_count > 0
+                    else 0.0
+                ),
+                possible_samples=self.supporting_window_count,
+                matched_samples=self.supporting_window_count,
+                presence_ratio=self.support_density,
+                vibration_strength_db=self.peak_strength_db,
+            ),
         )
 
 
@@ -215,6 +237,9 @@ def dense_finding_debug_rows(findings: Iterable[DenseFinding]) -> tuple[JsonObje
             "confidence_label": finding.confidence_label,
             "caveats": list(finding.caveats),
             "evidence_window_count": len(finding.evidence_windows),
+            "supporting_window_count": finding.supporting_window_count,
+            "supporting_duration_s": finding.duration_s,
+            "support_density": finding.support_density,
         }
         for finding in findings
     )
@@ -227,11 +252,17 @@ def _validate_config(config: DenseFindingConfig) -> None:
         ("high_confidence_threshold", config.high_confidence_threshold),
         ("medium_confidence_threshold", config.medium_confidence_threshold),
         ("strong_unknown_strength_db", config.strong_unknown_strength_db),
+        ("min_persistent_duration_s", config.min_persistent_duration_s),
+        ("min_support_density", config.min_support_density),
     ):
         if not isfinite(value) or value < 0:
             raise ValueError(f"dense finding config requires {field_name} >= 0")
+    if config.min_persistent_windows < 1:
+        raise ValueError("dense finding config requires min_persistent_windows >= 1")
     if config.min_match_ratio > 1 or config.ambiguity_margin > 1:
         raise ValueError("dense finding ratio thresholds must be <= 1")
+    if config.min_support_density > 1:
+        raise ValueError("dense finding support-density threshold must be <= 1")
     if config.high_confidence_threshold < config.medium_confidence_threshold:
         raise ValueError("high_confidence_threshold must be >= medium_confidence_threshold")
 
@@ -278,6 +309,16 @@ def _classify_episode(
     if episode.duration_s < 1.0:
         _append_unique(caveats, "low_usable_duration")
         confidence_score *= 0.9
+    if (
+        episode.peak_count < config.min_persistent_windows
+        or episode.duration_s < config.min_persistent_duration_s
+    ):
+        _append_unique(caveats, "low_peak_persistence")
+        confidence_score *= 0.65
+    support_density = _support_density(episode.supporting_window_ids)
+    if support_density < config.min_support_density:
+        _append_unique(caveats, "intermittent_support")
+        confidence_score *= max(0.5, support_density)
     if episode.transient:
         _append_unique(caveats, "transient_only")
         confidence_score *= 0.75
@@ -298,6 +339,9 @@ def _classify_episode(
         median_frequency_hz=episode.median_frequency_hz,
         peak_strength_db=episode.peak_strength_db,
         duration_s=episode.duration_s,
+        supporting_window_count=len(episode.supporting_window_ids),
+        matched_evidence_window_count=sum(1 for window in evidence_windows if window.matched),
+        support_density=support_density,
         supporting_window_ids=episode.supporting_window_ids,
     )
 
@@ -398,6 +442,16 @@ def _unknown_confidence(episode: VibrationEpisode, top: _SourceScore) -> float:
         + (localization_score * 0.10)
         + (top.score * 0.20)
     )
+
+
+def _support_density(window_ids: tuple[int, ...]) -> float:
+    if not window_ids:
+        return 0.0
+    unique_ids = set(window_ids)
+    span = max(unique_ids) - min(unique_ids) + 1
+    if span <= 0:
+        return 0.0
+    return _clamp(len(unique_ids) / span)
 
 
 def _localization_score(episode: VibrationEpisode) -> float:

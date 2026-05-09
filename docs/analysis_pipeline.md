@@ -112,13 +112,16 @@ extremes.
 `use_cases/diagnostics/post_run_dense_findings.py` fuses POSTRUN-06 episodes with
 POSTRUN-05 order bands. It compares each episode frequency path against the
 available wheel, driveshaft, and engine bands for the same `window_index`, ranks
-source hypotheses by match ratio, reference completeness, persistence, and
-strength, then emits compact dense findings. Each finding carries the likely
-origin, alternative hypotheses, confidence score/label, evidence windows, and
-caveats for ambiguity, missing references, quality penalties, short/transient
-events, conflicting multi-sensor evidence, or strong unmatched resonance. The DTO
-can project back to the existing domain `Finding` shape for report/history
-compatibility without persisting dense spectra.
+source hypotheses by match ratio, reference completeness, persistence, support
+density, and strength, then emits compact dense findings. Each finding carries
+the likely origin, alternative hypotheses, confidence score/label, evidence
+windows, supporting window count/duration, support density, and caveats for
+ambiguity, missing references, quality penalties, weak persistence, intermittent
+support, short/transient events, conflicting multi-sensor evidence, or strong
+unmatched resonance. The DTO can project back to the existing domain `Finding`
+shape for report/history compatibility without persisting dense spectra; that
+projection carries evidence counts so report facts can show support duration from
+the run feature interval.
 
 ## Related deep dives
 
