@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vibesensor.shared.types.raw_capture import RawCaptureCoverageState
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
 )
+from vibesensor.shared.window_quality import WindowQuality, clean_window_quality
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     client_locations_by_sensor,
     fallback_location_label,
@@ -41,6 +42,7 @@ class AlignedSpatialSensorWindow:
     dominant_freq_hz: float | None = None
     vibration_strength_db: float | None = None
     top_peaks: tuple[StrengthPeak, ...] = ()
+    window_quality: WindowQuality = field(default_factory=clean_window_quality)
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +146,7 @@ def _aligned_window(
                 dominant_freq_hz=summary.dominant_freq_hz,
                 vibration_strength_db=summary.vibration_strength_db,
                 top_peaks=summary.top_peaks,
+                window_quality=summary.window_quality,
             )
         if sensor_window.coverage_state == "full":
             full_sensor_count += 1

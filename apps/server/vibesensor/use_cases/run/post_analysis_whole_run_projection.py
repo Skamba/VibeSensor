@@ -177,6 +177,19 @@ def append_whole_run_spectral_metadata(
     analysis_metadata["whole_run_spectral_coverage_confidence"] = (
         coverage_summary.coverage_confidence
     )
+    analysis_metadata["whole_run_spectral_quality_usable_window_count"] = (
+        coverage_summary.usable_window_count
+    )
+    analysis_metadata["whole_run_spectral_quality_limited_window_count"] = (
+        coverage_summary.limited_window_count
+    )
+    analysis_metadata["whole_run_spectral_quality_excluded_window_count"] = (
+        coverage_summary.excluded_window_count
+    )
+    if coverage_summary.mean_quality_score is not None:
+        analysis_metadata["whole_run_spectral_quality_mean_score"] = (
+            coverage_summary.mean_quality_score
+        )
     return PersistedAnalysis.from_json_object(payload)
 
 

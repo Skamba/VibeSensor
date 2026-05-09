@@ -1886,6 +1886,9 @@
           "vib_mag_rms": {
             "title": "Vib Mag Rms",
             "type": "number"
+          },
+          "window_quality": {
+            "$ref": "#/components/schemas/WindowQualityPayload"
           }
         },
         "title": "CombinedMetrics",
@@ -6188,6 +6191,10 @@
             "title": "Eligible Window Count",
             "type": "integer"
           },
+          "excluded_window_count": {
+            "title": "Excluded Window Count",
+            "type": "integer"
+          },
           "exemplar_interval_index": {
             "anyOf": [
               {
@@ -6210,6 +6217,10 @@
             "title": "Hypothesis Key",
             "type": "string"
           },
+          "limited_window_count": {
+            "title": "Limited Window Count",
+            "type": "integer"
+          },
           "lock_score": {
             "title": "Lock Score",
             "type": "number"
@@ -6221,6 +6232,17 @@
           "matched_window_count": {
             "title": "Matched Window Count",
             "type": "integer"
+          },
+          "mean_quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Quality Score"
           },
           "mean_relative_error": {
             "anyOf": [
@@ -6343,6 +6365,10 @@
           "total_window_count": {
             "title": "Total Window Count",
             "type": "integer"
+          },
+          "usable_window_count": {
+            "title": "Usable Window Count",
+            "type": "integer"
           }
         },
         "required": [
@@ -6357,6 +6383,9 @@
           "reference_coverage_ratio",
           "longest_contiguous_support_window_count",
           "contiguous_support_ratio",
+          "usable_window_count",
+          "limited_window_count",
+          "excluded_window_count",
           "support_intervals",
           "phase_support",
           "harmonic_summaries",
@@ -9415,6 +9444,62 @@
           "counterevidence_factors"
         ],
         "title": "WholeRunDiagnosisSummaryResponse",
+        "type": "object"
+      },
+      "WindowQualityPayload": {
+        "properties": {
+          "clipping_score": {
+            "title": "Clipping Score",
+            "type": "number"
+          },
+          "context_score": {
+            "title": "Context Score",
+            "type": "number"
+          },
+          "frequency_stability_score": {
+            "title": "Frequency Stability Score",
+            "type": "number"
+          },
+          "packet_integrity_score": {
+            "title": "Packet Integrity Score",
+            "type": "number"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "sample_completeness_score": {
+            "title": "Sample Completeness Score",
+            "type": "number"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "transient_score": {
+            "title": "Transient Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "state",
+          "sample_completeness_score",
+          "packet_integrity_score",
+          "clipping_score",
+          "transient_score",
+          "context_score",
+          "frequency_stability_score",
+          "reasons"
+        ],
+        "title": "WindowQualityPayload",
         "type": "object"
       }
     }

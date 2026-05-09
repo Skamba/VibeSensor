@@ -10,6 +10,7 @@ from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.shared.window_quality import WindowQuality, window_quality_with_context
 from vibesensor.use_cases.diagnostics._artifact_bundles import (
     build_single_artifact_bundle_parts,
 )
@@ -67,6 +68,7 @@ class _SensorPeakMatch:
     relative_error: float
     peak_intensity_db: float | None
     vibration_strength_db: float | None
+    window_quality: WindowQuality
 
 
 def build_whole_run_order_trace_artifact_bundle(
@@ -162,6 +164,7 @@ def _hypothesis_trace_points(
                 predicted_hz=float(predicted_hz),
                 hypothesis=hypothesis,
                 client_locations=client_locations,
+                context_label=label,
             )
             if eligible and predicted_hz is not None
             else None
@@ -187,6 +190,15 @@ def _hypothesis_trace_points(
                 ),
                 ref_source=ref_source or None,
                 strongest_location=(sensor_match.location if sensor_match is not None else None),
+                window_quality_score=(
+                    sensor_match.window_quality.score if sensor_match is not None else None
+                ),
+                window_quality_state=(
+                    sensor_match.window_quality.state if sensor_match is not None else None
+                ),
+                window_quality_reasons=(
+                    sensor_match.window_quality.reasons if sensor_match is not None else ()
+                ),
             )
         )
     return tuple(points)
@@ -199,6 +211,7 @@ def _best_sensor_peak_match(
     predicted_hz: float,
     hypothesis: OrderHypothesis,
     client_locations: Mapping[str, str],
+    context_label: WholeRunContextWindowLabel,
 ) -> _SensorPeakMatch | None:
     best: _SensorPeakMatch | None = None
     for client_id in sorted(summaries_by_sensor):
@@ -207,6 +220,14 @@ def _best_sensor_peak_match(
             continue
         summary = summaries[window_index]
         if summary.coverage_state != "full":
+            continue
+        window_quality = window_quality_with_context(
+            summary.window_quality,
+            context_coverage=context_label.context_coverage,
+            speed_validity=context_label.speed_validity,
+            rpm_validity=context_label.rpm_validity,
+        )
+        if window_quality.state == "excluded":
             continue
         peak_index, peak_pairs = filtered_peak_pairs(summary.top_peaks)
         peak_match = best_order_peak_match(
@@ -225,6 +246,7 @@ def _best_sensor_peak_match(
             relative_error=peak_match.relative_error,
             peak_intensity_db=source_peak.get("vibration_strength_db"),
             vibration_strength_db=summary.vibration_strength_db,
+            window_quality=window_quality,
         )
         if best is None or _sensor_match_rank(candidate) > _sensor_match_rank(best):
             best = candidate

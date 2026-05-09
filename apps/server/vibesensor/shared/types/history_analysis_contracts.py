@@ -313,6 +313,10 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     reference_coverage_ratio: Required[float]
     longest_contiguous_support_window_count: Required[int]
     contiguous_support_ratio: Required[float]
+    usable_window_count: Required[int]
+    limited_window_count: Required[int]
+    excluded_window_count: Required[int]
+    mean_quality_score: float | None
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]
     harmonic_summaries: Required[list[OrderHarmonicEvidenceSummaryResponse]]
