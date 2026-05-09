@@ -31,7 +31,13 @@ def _episode(
     quality_penalty: float = 0.0,
     transient: bool = False,
     affected_sensors: tuple[str, ...] = ("sensor-a",),
+    frequencies: tuple[float, ...] | None = None,
 ) -> VibrationEpisode:
+    frequency_path = (
+        frequencies if frequencies is not None else tuple(frequency_hz for _ in windows)
+    )
+    if len(frequency_path) != len(windows):
+        raise ValueError("frequency path must match windows")
     return VibrationEpisode(
         episode_id=episode_id,
         run_id=_RUN_ID,
@@ -43,9 +49,9 @@ def _episode(
         start_window_index=windows[0],
         end_window_index=windows[-1],
         supporting_window_ids=windows,
-        frequency_path_hz=tuple(frequency_hz for _ in windows),
-        median_frequency_hz=frequency_hz,
-        peak_frequency_hz=frequency_hz,
+        frequency_path_hz=frequency_path,
+        median_frequency_hz=frequency_path[len(frequency_path) // 2],
+        peak_frequency_hz=max(frequency_path),
         frequency_slope_hz_per_s=0.0,
         median_strength_db=strength_db,
         peak_strength_db=strength_db,
@@ -137,6 +143,9 @@ def test_dense_findings_classify_clear_wheel_episode() -> None:
     assert finding.confidence_score >= 0.7
     assert finding.alternatives[0].best_band_label == "wheel_1x"
     assert all(window.matched for window in finding.evidence_windows)
+    assert finding.supporting_window_count == 4
+    assert finding.duration_s == pytest.approx(2.0)
+    assert finding.support_density == pytest.approx(1.0)
 
 
 def test_dense_findings_classify_clear_driveshaft_episode() -> None:
@@ -202,6 +211,60 @@ def test_dense_findings_penalize_conflicting_sensor_evidence() -> None:
     assert finding.confidence_score < 0.9
 
 
+def test_dense_findings_cap_one_window_peak_confidence() -> None:
+    findings = classify_post_run_dense_findings(
+        (
+            _episode(
+                frequency_hz=10.0,
+                windows=(0,),
+                strength_db=35.0,
+                transient=True,
+            ),
+        ),
+        _timeline(windows=(0,)),
+    )
+
+    finding = findings[0]
+    assert finding.confidence_label != "high"
+    assert "low_peak_persistence" in finding.caveats
+    assert "transient_only" in finding.caveats
+    assert finding.supporting_window_count == 1
+
+
+def test_dense_findings_penalize_intermittent_peak_support() -> None:
+    stable = classify_post_run_dense_findings(
+        (_episode(frequency_hz=10.0, windows=(0, 1, 2, 3)),),
+        _timeline(windows=(0, 1, 2, 3)),
+    )[0]
+    intermittent = classify_post_run_dense_findings(
+        (_episode(frequency_hz=10.0, windows=(0, 2, 4, 6)),),
+        _timeline(windows=(0, 2, 4, 6)),
+    )[0]
+
+    assert "intermittent_support" in intermittent.caveats
+    assert intermittent.support_density == pytest.approx(4 / 7)
+    assert intermittent.confidence_score < stable.confidence_score
+
+
+def test_dense_findings_track_drifting_peak_evidence_path() -> None:
+    finding = classify_post_run_dense_findings(
+        (
+            _episode(
+                frequency_hz=10.0,
+                windows=(0, 1, 2, 3),
+                frequencies=(10.0, 10.2, 10.4, 10.6),
+                quality_penalty=0.1,
+            ),
+        ),
+        _timeline(windows=(0, 1, 2, 3), wheel_hz=10.3),
+    )[0]
+
+    assert [window.frequency_hz for window in finding.evidence_windows] == pytest.approx(
+        [10.0, 10.2, 10.4, 10.6],
+    )
+    assert "poor_quality" in finding.caveats
+
+
 def test_dense_finding_maps_to_domain_finding() -> None:
     finding = classify_post_run_dense_findings((_episode(frequency_hz=10.0),), _timeline())[0]
 
@@ -211,6 +274,9 @@ def test_dense_finding_maps_to_domain_finding() -> None:
     assert domain_finding.suspected_source is VibrationSource.WHEEL_TIRE
     assert domain_finding.confidence == pytest.approx(finding.confidence_score)
     assert domain_finding.frequency_hz == pytest.approx(finding.median_frequency_hz)
+    assert domain_finding.evidence is not None
+    assert domain_finding.evidence.matched_samples == 4
+    assert domain_finding.evidence.possible_samples == 4
 
 
 def test_dense_finding_debug_rows_are_stable() -> None:
@@ -220,3 +286,4 @@ def test_dense_finding_debug_rows_are_stable() -> None:
 
     assert rows[0]["likely_origin"] == "wheel/tire"
     assert rows[0]["evidence_window_count"] == 4
+    assert rows[0]["supporting_duration_s"] == pytest.approx(2.0)
