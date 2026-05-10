@@ -1,25 +1,19 @@
 file_threshold_lines: 1200
 function_threshold_lines: 200
 files:
-  tools/dev/hygiene/checks.py:
-    max_lines: 3473
-    reason: Repo hygiene guard implementation lives behind a thin CLI wrapper while concern modules are split.
-  tools/dev/static_guards/checks.py:
-    max_lines: 2612
-    reason: Backend static guard implementation lives behind a thin CLI wrapper while guard modules are split.
   apps/server/tests/adapters/pdf/test_report_document_projection.py:
     max_lines: 1217
     reason: High-density report projection regression matrix kept together by document-output seam.
 functions:
-  tools/dev/hygiene/checks.py::check_docker_ci_dependency_hygiene:
+  tools/dev/hygiene/docker_ci.py::check_docker_ci_dependency_hygiene:
     max_lines: 637
-    reason: Docker and CI dependency drift checks stay together until split by package-manager concern.
-  tools/dev/hygiene/checks.py::check_runtime_policy_drift:
+    reason: Docker and CI dependency drift checks now live in their own concern module; keep together until split by package-manager surface.
+  tools/dev/hygiene/runtime_policy.py::check_runtime_policy_drift:
     max_lines: 323
-    reason: Runtime policy matrix validation stays together until runtime-policy checks are extracted.
-  tools/dev/hygiene/checks.py::check_contract_sync_entrypoint:
+    reason: Runtime policy matrix validation now lives in its own concern module; keep together to preserve one policy drift report.
+  tools/dev/hygiene/contract_sync.py::check_contract_sync_entrypoint:
     max_lines: 281
-    reason: Contract sync and UI validation entrypoint guards stay together until workflow/config checks are split.
+    reason: Contract sync and UI validation entrypoint guards now live in their own concern module; keep together for workflow/config drift reporting.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_diagnosis_ranking.py::test_execute_post_analysis_persists_whole_run_diagnosis_summaries:
     max_lines: 353
     reason: End-to-end whole-run diagnosis persistence scenario kept together to preserve setup/assertion context.
