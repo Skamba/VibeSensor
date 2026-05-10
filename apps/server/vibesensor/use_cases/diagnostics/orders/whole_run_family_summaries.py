@@ -29,16 +29,12 @@ from vibesensor.use_cases.diagnostics.math_utils import (
     _stddev_or_none as _stddev,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderTracePhaseSupport,
     OrderTracePoint,
     OrderTraceSummary,
-    OrderTraceSupportInterval,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WholeRunOrderTraceSummaryArtifactBundle,
-    _dominant_context_value,
     _drift_score,
-    _has_speed_context_quality_reason,
     _lock_score,
     _longest_contiguous_match_run,
     _mounting_adjusted_lock_score,
@@ -49,13 +45,20 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
 )
+from vibesensor.use_cases.diagnostics.whole_run_support_summary import (
+    build_phase_support,
+    build_support_intervals,
+    dominant_context_value,
+    has_speed_context_quality_reason,
+    has_timing_quality_reason,
+    mean_window_quality_score,
+    unique_quality_reason_window_count,
+    window_quality_state_counts,
+)
 
 WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY = "order-family-summaries"
 _WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_PATH = "orders/family-summaries.jsonl"
 _FAMILY_ORDER = ("wheel", "driveshaft", "engine")
-_TIMING_QUALITY_REASONS = frozenset(
-    {"timing_gap", "late_packet_loss", "server_queue_drop", "sensor_reset"}
-)
 
 __all__ = [
     "WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY",
@@ -206,12 +209,7 @@ def _family_summary(
     ]
     mean_relative_error = _mean(relative_errors)
     relative_error_stddev = _stddev(relative_errors)
-    quality_scores = [
-        point.window_quality_score
-        for point in matched_points
-        if point.window_quality_score is not None
-    ]
-    mean_quality_score = _mean(quality_scores)
+    mean_quality_score = mean_window_quality_score(matched_points)
     quality_counts = _family_quality_counts(
         points=points,
         matched_points=matched_points,
@@ -249,14 +247,18 @@ def _family_summary(
             quality_counts.matched_speed_context_limited_window_count
         ),
     )
-    support_intervals, exemplar_interval_index = _support_intervals(
+    support_interval_summary = build_support_intervals(
         eligible_windows=eligible_windows,
-        selected_matches_by_window=selected_matches_by_window,
+        matched_points_by_window=selected_matches_by_window,
         context_by_window=context_by_window,
+        context_rank_mode="weighted",
+        include_peak_intensity_in_rank=True,
+        missing_mean_error_rank=1.0,
     )
-    phase_support = _phase_support_rows(
+    support_intervals = support_interval_summary.intervals
+    phase_support = build_phase_support(
         eligible_windows=eligible_windows,
-        selected_matches_by_window=selected_matches_by_window,
+        matched_windows=selected_matches_by_window,
         context_by_window=context_by_window,
     )
     stable_frequency_min_hz = _min_or_none(
@@ -283,12 +285,12 @@ def _family_summary(
             if point.strongest_location
         )
     )
-    dominant_phase = _dominant_context_value(
+    dominant_phase = dominant_context_value(
         points=matched_points,
         context_by_window=context_by_window,
         attribute_name="phase",
     )
-    dominant_speed_band = _dominant_context_value(
+    dominant_speed_band = dominant_context_value(
         points=matched_points,
         context_by_window=context_by_window,
         attribute_name="speed_band",
@@ -327,7 +329,7 @@ def _family_summary(
         harmonic_summaries=harmonic_summaries,
         stable_frequency_min_hz=stable_frequency_min_hz,
         stable_frequency_max_hz=stable_frequency_max_hz,
-        exemplar_interval_index=exemplar_interval_index,
+        exemplar_interval_index=support_interval_summary.exemplar_interval_index,
         dominant_phase=dominant_phase,
         dominant_speed_band=dominant_speed_band,
         strongest_location=strongest_location,
@@ -347,49 +349,47 @@ def _family_quality_counts(
     matched_points: Sequence[OrderTracePoint],
     candidate_summaries: Sequence[OrderTraceSummary],
 ) -> _FamilyQualityCounts:
-    return _FamilyQualityCounts(
-        usable_window_count=sum(
-            1 for point in matched_points if point.window_quality_state == "usable"
-        ),
-        limited_window_count=sum(
-            1 for point in matched_points if point.window_quality_state == "limited"
-        ),
+    matched_state_counts = window_quality_state_counts(
+        matched_points,
         excluded_window_count=sum(summary.excluded_window_count for summary in candidate_summaries),
-        shock_transient_window_count=_unique_reason_window_count(points, "shock_transient"),
-        sensor_clipping_window_count=_unique_reason_window_count(points, "sensor_clipping"),
-        sensor_mounting_artifact_window_count=_unique_reason_window_count(
+    )
+    return _FamilyQualityCounts(
+        usable_window_count=matched_state_counts.usable_window_count,
+        limited_window_count=matched_state_counts.limited_window_count,
+        excluded_window_count=matched_state_counts.excluded_window_count,
+        shock_transient_window_count=unique_quality_reason_window_count(
+            points,
+            "shock_transient",
+        ),
+        sensor_clipping_window_count=unique_quality_reason_window_count(
+            points,
+            "sensor_clipping",
+        ),
+        sensor_mounting_artifact_window_count=unique_quality_reason_window_count(
             points,
             "mounting_artifact",
         ),
-        matched_mounting_artifact_window_count=_unique_reason_window_count(
+        matched_mounting_artifact_window_count=unique_quality_reason_window_count(
             matched_points,
             "mounting_artifact",
         ),
         sensor_timing_integrity_window_count=len(
-            {point.window_index for point in points if _has_timing_quality_reason(point)}
+            {point.window_index for point in points if has_timing_quality_reason(point)}
         ),
         matched_timing_integrity_window_count=len(
-            {point.window_index for point in matched_points if _has_timing_quality_reason(point)}
+            {point.window_index for point in matched_points if has_timing_quality_reason(point)}
         ),
         speed_context_limited_window_count=len(
-            {point.window_index for point in points if _has_speed_context_quality_reason(point)}
+            {point.window_index for point in points if has_speed_context_quality_reason(point)}
         ),
         matched_speed_context_limited_window_count=len(
             {
                 point.window_index
                 for point in matched_points
-                if _has_speed_context_quality_reason(point)
+                if has_speed_context_quality_reason(point)
             }
         ),
     )
-
-
-def _unique_reason_window_count(points: Sequence[OrderTracePoint], reason: str) -> int:
-    return len({point.window_index for point in points if reason in point.window_quality_reasons})
-
-
-def _has_timing_quality_reason(point: OrderTracePoint) -> bool:
-    return any(reason in _TIMING_QUALITY_REASONS for reason in point.window_quality_reasons)
 
 
 def _selected_family_matches_by_window(
@@ -410,157 +410,6 @@ def _selected_family_matches_by_window(
             reverse=True,
         )[0]
     return selected
-
-
-def _support_intervals(
-    *,
-    eligible_windows: Sequence[int],
-    selected_matches_by_window: Mapping[int, OrderTracePoint],
-    context_by_window: Mapping[int, WholeRunContextWindowLabel],
-) -> tuple[tuple[OrderTraceSupportInterval, ...], int | None]:
-    intervals: list[OrderTraceSupportInterval] = []
-    interval_ranks: list[tuple[int, float, float, float, int]] = []
-    current_start: int | None = None
-    current_windows: list[int] = []
-    matched_points: list[OrderTracePoint] = []
-    previous_window: int | None = None
-    for window_index in eligible_windows:
-        if previous_window is None or window_index == previous_window + 1:
-            if current_start is None:
-                current_start = window_index
-            current_windows.append(window_index)
-            point = selected_matches_by_window.get(window_index)
-            if point is not None:
-                matched_points.append(point)
-        else:
-            _append_interval(
-                intervals=intervals,
-                interval_ranks=interval_ranks,
-                interval_index=len(intervals),
-                start_window=current_start,
-                eligible_windows=current_windows,
-                matched_points=matched_points,
-                context_by_window=context_by_window,
-            )
-            current_start = window_index
-            current_windows = [window_index]
-            matched_points = []
-            point = selected_matches_by_window.get(window_index)
-            if point is not None:
-                matched_points.append(point)
-        previous_window = window_index
-    _append_interval(
-        intervals=intervals,
-        interval_ranks=interval_ranks,
-        interval_index=len(intervals),
-        start_window=current_start,
-        eligible_windows=current_windows,
-        matched_points=matched_points,
-        context_by_window=context_by_window,
-    )
-    exemplar_interval_index: int | None = None
-    if interval_ranks:
-        exemplar_interval_index = max(interval_ranks)[-1]
-    return tuple(intervals), exemplar_interval_index
-
-
-def _append_interval(
-    *,
-    intervals: list[OrderTraceSupportInterval],
-    interval_ranks: list[tuple[int, float, float, float, int]],
-    interval_index: int,
-    start_window: int | None,
-    eligible_windows: Sequence[int],
-    matched_points: Sequence[OrderTracePoint],
-    context_by_window: Mapping[int, WholeRunContextWindowLabel],
-) -> None:
-    if start_window is None or not eligible_windows or not matched_points:
-        return
-    end_window = eligible_windows[-1]
-    support_ratio = _ratio(len(matched_points), len(eligible_windows))
-    mean_relative_error = _mean(
-        point.relative_error for point in matched_points if point.relative_error is not None
-    )
-    interval = OrderTraceSupportInterval(
-        interval_index=interval_index,
-        start_window_index=start_window,
-        end_window_index=end_window,
-        matched_window_count=len(matched_points),
-        support_ratio=support_ratio,
-        phase=_dominant_context_value(
-            points=matched_points,
-            context_by_window=context_by_window,
-            attribute_name="phase",
-        ),
-        load_state=_dominant_load_state(matched_points, context_by_window),
-        speed_band=_dominant_context_value(
-            points=matched_points,
-            context_by_window=context_by_window,
-            attribute_name="speed_band",
-        ),
-        mean_relative_error=mean_relative_error,
-    )
-    intervals.append(interval)
-    interval_ranks.append(
-        (
-            len(matched_points),
-            support_ratio,
-            _max_or_none(
-                point.peak_intensity_db
-                for point in matched_points
-                if point.peak_intensity_db is not None
-            )
-            or 0.0,
-            -(mean_relative_error or 1.0),
-            -interval_index,
-        )
-    )
-
-
-def _phase_support_rows(
-    *,
-    eligible_windows: Sequence[int],
-    selected_matches_by_window: Mapping[int, OrderTracePoint],
-    context_by_window: Mapping[int, WholeRunContextWindowLabel],
-) -> tuple[OrderTracePhaseSupport, ...]:
-    eligible_by_phase: dict[str, int] = defaultdict(int)
-    matched_by_phase: dict[str, int] = defaultdict(int)
-    for window_index in eligible_windows:
-        label = context_by_window.get(window_index)
-        if label is None:
-            continue
-        phase = label.phase.value
-        eligible_by_phase[phase] += 1
-        if window_index in selected_matches_by_window:
-            matched_by_phase[phase] += 1
-    ordered_phases = sorted(eligible_by_phase)
-    return tuple(
-        OrderTracePhaseSupport(
-            phase=phase,
-            eligible_window_count=eligible_by_phase[phase],
-            matched_window_count=matched_by_phase.get(phase, 0),
-            support_ratio=_ratio(matched_by_phase.get(phase, 0), eligible_by_phase[phase]),
-        )
-        for phase in ordered_phases
-    )
-
-
-def _dominant_load_state(
-    points: Sequence[OrderTracePoint],
-    context_by_window: Mapping[int, WholeRunContextWindowLabel],
-) -> str | None:
-    ranked_values: list[tuple[str, float]] = []
-    for point in points:
-        label = context_by_window.get(point.window_index)
-        if label is None or not label.load_state:
-            continue
-        ranked_values.append(
-            (
-                label.load_state,
-                point.peak_intensity_db if point.peak_intensity_db is not None else 0.0,
-            )
-        )
-    return dominant_weighted_value(values=ranked_values)
 
 
 def _point_rank(
