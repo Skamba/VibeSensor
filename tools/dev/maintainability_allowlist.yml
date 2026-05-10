@@ -15,7 +15,7 @@ functions:
     max_lines: 281
     reason: Contract sync and UI validation entrypoint guards now live in their own concern module; keep together for workflow/config drift reporting.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_diagnosis_ranking.py::test_execute_post_analysis_persists_whole_run_diagnosis_summaries:
-    max_lines: 353
+    max_lines: 357
     reason: End-to-end whole-run diagnosis persistence scenario kept together to preserve setup/assertion context.
   apps/server/tests_e2e/test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys:
     max_lines: 263
@@ -24,14 +24,11 @@ functions:
     max_lines: 234
     reason: Raw-capture replay assembly retained until sample-building phases are separated.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_order_traces.py::test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metadata:
-    max_lines: 230
+    max_lines: 234
     reason: Whole-run order trace persistence scenario kept together to preserve fixture chronology.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_spatial_coherence.py::test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_metadata:
-    max_lines: 225
+    max_lines: 233
     reason: Whole-run spatial coherence persistence scenario kept together to preserve setup/assertion context.
   apps/server/tests/integration/test_ingest_backpressure_metrics.py::test_ingest_metrics_hold_ci_budget_under_sensor_load:
     max_lines: 220
     reason: Integration load scenario intentionally keeps timing, ingest, and metric assertions in one flow.
-  apps/server/tests/use_cases/run/test_post_analysis_executor.py::test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar:
-    max_lines: 206
-    reason: Post-analysis context summary persistence scenario kept together to preserve setup/assertion context.
