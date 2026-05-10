@@ -77,8 +77,10 @@ below.
     `spectral-summary:*` sidecars and context labels.
   - `orders/whole_run_scoring.py` collapses dense traces into compact lock and
     stability summaries.
+  - `whole_run_support_summary.py` owns shared support intervals, phase support,
+    dominant context, and quality-reason rollup helpers.
   - `orders/whole_run_family_summaries.py` rolls scored harmonic traces up to
-    family-level support intervals and phase summaries.
+    family-level summaries.
   - `whole_run_spatial_coherence.py` builds candidate-level spatial evidence
     windows and compact spatial summaries.
 - `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
@@ -271,9 +273,8 @@ whole-run traces stay aligned with the current live/sample order model.
 The current scoring owner is
 `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py`. It
 derives deterministic per-candidate `OrderTraceSummary` rows from the dense
-trace points, keeps `support_intervals` and `phase_support` empty until the
-later summarization issue lands, and already projects the compact stability
-fields that later ranking and persistence work need:
+trace points and projects compact stability fields that ranking and persistence
+need:
 
 - `reference_coverage_ratio`
 - `contiguous_support_ratio`
@@ -290,6 +291,12 @@ It consumes the dense trace points plus the per-candidate scored summaries from
 - per-phase `phase_support`
 - `stable_frequency_min_hz` / `stable_frequency_max_hz`
 - `exemplar_interval_index`
+
+Generic support interval, phase support, dominant context, and quality-reason
+rollup primitives live in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_support_summary.py` so
+candidate and family summaries share one summarization path while order-specific
+lock scoring stays in `orders/whole_run_scoring.py`.
 
 Those family summaries now feed a ranked persisted
 `whole_run_order_summaries` payload in `PersistedAnalysis`, while the dense
