@@ -5,14 +5,14 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, cast
 
 import aiosqlite
 
 from vibesensor.domain import CarOrderReferenceStatus
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.raw_capture import RawRunCapture
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
@@ -38,8 +38,10 @@ from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WholeRunSpatialCoherenceArtifactBundle,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    RawCaptureRangeReader,
     WholeRunSpectralArtifactBundle,
     WholeRunSpectralBuildResult,
+    raw_capture_range_reader_from_capture,
 )
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -80,7 +82,8 @@ class WholeRunArtifactBuilder(Protocol):
         *,
         run_id: str,
         metadata: RunMetadata,
-        raw_capture: RawRunCapture,
+        raw_capture_manifest: RawCaptureManifest,
+        raw_range_reader: RawCaptureRangeReader,
     ) -> WholeRunSpectralBuildResult: ...
 
 
@@ -416,12 +419,16 @@ class WholeRunPipelineRunner:
         )
 
     def _run_spectral_stage(self) -> None:
-        loaded = self.context.loaded
         raw_capture_policy = self.context.raw_capture_policy
+        raw_range_reader_available = self._raw_range_reader_available()
         self.state.spectral_result = self._record_stage(
             stage_name="BuildWholeRunSpectraStage",
-            prerequisites_met=raw_capture_policy.spectra_prerequisites_met(loaded.raw_capture),
-            prerequisite_reason=raw_capture_policy.spectra_prerequisite_reason(loaded.raw_capture),
+            prerequisites_met=raw_capture_policy.spectra_prerequisites_met(
+                raw_range_reader_available=raw_range_reader_available,
+            ),
+            prerequisite_reason=raw_capture_policy.spectra_prerequisite_reason(
+                raw_range_reader_available=raw_range_reader_available,
+            ),
             runner=self._build_spectral_stage,
         )
         if self.state.spectral_result is not None:
@@ -431,12 +438,13 @@ class WholeRunPipelineRunner:
         self,
     ) -> WholeRunStageExecution[WholeRunSpectralBuildResult | None]:
         loaded = self.context.loaded
-        raw_capture = loaded.raw_capture
-        assert raw_capture is not None
+        raw_capture_manifest = self.context.raw_capture_policy.manifest
+        assert raw_capture_manifest is not None
         result = self.context.builders.artifact_builder(
             run_id=loaded.run_id,
             metadata=loaded.metadata,
-            raw_capture=raw_capture,
+            raw_capture_manifest=raw_capture_manifest,
+            raw_range_reader=self._raw_range_reader(),
         )
         spectral_manifest = result.bundle.manifest if result.bundle is not None else None
         return _stage_execution(
@@ -448,6 +456,37 @@ class WholeRunPipelineRunner:
                 "coverage_confidence": result.coverage_summary.coverage_confidence,
             },
         )
+
+    def _raw_range_reader_available(self) -> bool:
+        if callable(getattr(self.context.db, "aload_raw_capture_sensor_range", None)):
+            return True
+        return self.context.loaded.raw_capture is not None
+
+    def _raw_range_reader(self) -> RawCaptureRangeReader:
+        loaded = self.context.loaded
+        if not callable(getattr(self.context.db, "aload_raw_capture_sensor_range", None)):
+            assert loaded.raw_capture is not None
+            return raw_capture_range_reader_from_capture(loaded.raw_capture)
+
+        def read_range(
+            client_id: str,
+            *,
+            sample_start: int,
+            sample_count: int,
+        ) -> RawCaptureSensorRange | None:
+            return cast(
+                RawCaptureSensorRange | None,
+                sync_run_persistence_call(
+                    self.context.db,
+                    "aload_raw_capture_sensor_range",
+                    loaded.run_id,
+                    client_id,
+                    sample_start=sample_start,
+                    sample_count=sample_count,
+                ),
+            )
+
+        return read_range
 
     def _run_context_stage(self) -> None:
         raw_capture_policy = self.context.raw_capture_policy

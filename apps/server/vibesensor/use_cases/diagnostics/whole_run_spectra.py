@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from io import BytesIO
-from typing import cast
+from typing import Protocol, cast
 
 import numpy as np
 
@@ -16,8 +16,9 @@ from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
-    assemble_raw_window_samples,
+    RawTimelineChunk,
     build_raw_sensor_timeline,
+    raw_anchor_reason,
     resolve_raw_window_end_time,
 )
 from vibesensor.shared.structured_logging import log_extra
@@ -25,8 +26,9 @@ from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureLossStats,
-    RawCaptureSensorData,
+    RawCaptureManifest,
     RawCaptureSensorManifest,
+    RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -61,7 +63,10 @@ __all__ = [
     "WholeRunSpectralBuildResult",
     "WholeRunSpectralCoverageSummary",
     "WholeRunWindowSpectralSummary",
+    "RawCaptureRangeReader",
     "build_whole_run_spectral_artifact_bundle",
+    "build_whole_run_spectral_artifact_bundle_from_ranges",
+    "raw_capture_range_reader_from_capture",
     "whole_run_spectral_summaries_by_sensor",
     "whole_run_window_spectral_summaries_from_jsonl_bytes",
     "whole_run_window_spectral_summaries_to_jsonl_bytes",
@@ -85,11 +90,29 @@ class WholeRunSpectralBuildResult:
     window_plan: WholeRunWindowPlan | None = None
 
 
+class RawCaptureRangeReader(Protocol):
+    """Bounded raw-capture sample reader used by the whole-run spectral executor."""
+
+    def __call__(
+        self,
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None: ...
+
+
 @dataclass(frozen=True, slots=True)
-class _SpectralChunk:
-    sensor_data: RawCaptureSensorData
+class _SpectralSensor:
+    manifest: RawCaptureSensorManifest
     timeline: RawSensorTimeline
     loss_stats: RawCaptureLossStats
+
+
+@dataclass(frozen=True, slots=True)
+class _SpectralChunk:
+    sensor: _SpectralSensor
+    raw_range_reader: RawCaptureRangeReader
     chunk_index: int
     windows: tuple[WholeRunWindowDescriptor, ...]
 
@@ -115,44 +138,89 @@ def build_whole_run_spectral_artifact_bundle(
     """Compute deterministic time-aligned whole-run spectral artifacts from raw capture."""
 
     sensors = tuple(sorted(raw_capture.sensors, key=lambda sensor: sensor.manifest.client_id))
-    if not sensors:
-        coverage_summary = WholeRunSpectralCoverageSummary(
-            total_sensor_window_count=0,
-            full_sensor_window_count=0,
-            partial_sensor_window_count=0,
-            missing_sensor_window_count=0,
-            empty_sensor_window_count=0,
-            gap_count=0,
-            overlap_count=0,
-            dropped_chunk_count=0,
-            late_packet_chunk_count=0,
-            queue_overflow_chunk_count=0,
-            invalid_chunk_count=0,
-            write_error_chunk_count=0,
-            sample_rate_mismatch_sensor_count=0,
-            sample_rate_unverified_sensor_count=0,
-            unanchored_sensor_count=0,
-            legacy_sensor_count=0,
-            sync_unverified_sensor_count=0,
-            stale_sync_sensor_count=0,
-            high_rtt_sensor_count=0,
-            coverage_confidence="unavailable",
-            udp_ingest_queue_drop_count=0,
-        )
-        return WholeRunSpectralBuildResult(bundle=None, coverage_summary=coverage_summary)
-    timelines = {
-        sensor.manifest.client_id: build_raw_sensor_timeline(
-            raw_capture,
-            sensor_id=sensor.manifest.client_id,
+    spectral_sensors = tuple(
+        _SpectralSensor(
+            manifest=sensor.manifest,
+            timeline=build_raw_sensor_timeline(
+                raw_capture,
+                sensor_id=sensor.manifest.client_id,
+            ),
+            loss_stats=_sensor_loss_stats(
+                raw_capture.manifest,
+                sensor.manifest.client_id,
+            ),
         )
         for sensor in sensors
-    }
+    )
+    return _build_whole_run_spectral_artifact_bundle_with_ranges(
+        run_id=run_id,
+        metadata=metadata,
+        raw_capture_manifest=raw_capture.manifest,
+        sensors=spectral_sensors,
+        raw_range_reader=raw_capture_range_reader_from_capture(raw_capture),
+        max_workers=max_workers,
+        chunk_window_count=chunk_window_count,
+        created_at=created_at,
+    )
+
+
+def build_whole_run_spectral_artifact_bundle_from_ranges(
+    *,
+    run_id: str,
+    metadata: RunMetadata,
+    raw_capture_manifest: RawCaptureManifest,
+    raw_range_reader: RawCaptureRangeReader,
+    max_workers: int = DEFAULT_WHOLE_RUN_MAX_WORKERS,
+    chunk_window_count: int = _DEFAULT_CHUNK_WINDOW_COUNT,
+    created_at: str | None = None,
+) -> WholeRunSpectralBuildResult:
+    """Compute whole-run spectral artifacts from manifest metadata and bounded raw reads."""
+
+    sensors = tuple(
+        _SpectralSensor(
+            manifest=sensor,
+            timeline=_build_manifest_sensor_timeline(
+                raw_capture_manifest=raw_capture_manifest,
+                sensor=sensor,
+            ),
+            loss_stats=_sensor_loss_stats(raw_capture_manifest, sensor.client_id),
+        )
+        for sensor in sorted(raw_capture_manifest.sensors, key=lambda item: item.client_id)
+    )
+    return _build_whole_run_spectral_artifact_bundle_with_ranges(
+        run_id=run_id,
+        metadata=metadata,
+        raw_capture_manifest=raw_capture_manifest,
+        sensors=sensors,
+        raw_range_reader=raw_range_reader,
+        max_workers=max_workers,
+        chunk_window_count=chunk_window_count,
+        created_at=created_at,
+    )
+
+
+def _build_whole_run_spectral_artifact_bundle_with_ranges(
+    *,
+    run_id: str,
+    metadata: RunMetadata,
+    raw_capture_manifest: RawCaptureManifest,
+    sensors: Sequence[_SpectralSensor],
+    raw_range_reader: RawCaptureRangeReader,
+    max_workers: int,
+    chunk_window_count: int,
+    created_at: str | None,
+) -> WholeRunSpectralBuildResult:
+    sensors = tuple(sensors)
+    if not sensors:
+        coverage_summary = _empty_coverage_summary()
+        return WholeRunSpectralBuildResult(bundle=None, coverage_summary=coverage_summary)
+    timelines = {sensor.manifest.client_id: sensor.timeline for sensor in sensors}
     plan = _build_time_domain_window_plan(metadata=metadata, timelines=timelines)
     if plan is None or plan.total_window_count <= 0:
         coverage_summary = build_coverage_summary(
-            raw_capture=raw_capture,
+            raw_capture_manifest=raw_capture_manifest,
             plan=None,
-            sensors=sensors,
+            sensors=tuple(sensor.manifest for sensor in sensors),
             timelines=timelines,
             summaries_by_sensor={},
         )
@@ -162,9 +230,8 @@ def build_whole_run_spectral_artifact_bundle(
             window_plan=None,
         )
     chunks = _build_chunks(
-        raw_capture=raw_capture,
         sensors=sensors,
-        timelines=timelines,
+        raw_range_reader=raw_range_reader,
         plan=plan,
         chunk_window_count=chunk_window_count,
     )
@@ -178,9 +245,9 @@ def build_whole_run_spectral_artifact_bundle(
         for sensor_id, sensor_results in _chunk_results_by_sensor(chunk_results).items()
     }
     coverage_summary = build_coverage_summary(
-        raw_capture=raw_capture,
+        raw_capture_manifest=raw_capture_manifest,
         plan=plan,
-        sensors=sensors,
+        sensors=tuple(sensor.manifest for sensor in sensors),
         timelines=timelines,
         summaries_by_sensor=summaries_by_sensor,
     )
@@ -188,7 +255,7 @@ def build_whole_run_spectral_artifact_bundle(
         bundle=_build_artifact_bundle(
             run_id=run_id,
             plan=plan,
-            raw_capture=raw_capture,
+            raw_capture_manifest=raw_capture_manifest,
             sensors=tuple(sensor.manifest for sensor in sensors),
             chunk_results=chunk_results,
             created_at=created_at or utc_now_iso(),
@@ -253,6 +320,136 @@ def _build_time_domain_window_plan(
         coverage_sample_end=windows[-1].sample_end,
         windows=windows,
     )
+
+
+def _empty_coverage_summary() -> WholeRunSpectralCoverageSummary:
+    return WholeRunSpectralCoverageSummary(
+        total_sensor_window_count=0,
+        full_sensor_window_count=0,
+        partial_sensor_window_count=0,
+        missing_sensor_window_count=0,
+        empty_sensor_window_count=0,
+        gap_count=0,
+        overlap_count=0,
+        dropped_chunk_count=0,
+        late_packet_chunk_count=0,
+        queue_overflow_chunk_count=0,
+        invalid_chunk_count=0,
+        write_error_chunk_count=0,
+        sample_rate_mismatch_sensor_count=0,
+        sample_rate_unverified_sensor_count=0,
+        unanchored_sensor_count=0,
+        legacy_sensor_count=0,
+        sync_unverified_sensor_count=0,
+        stale_sync_sensor_count=0,
+        high_rtt_sensor_count=0,
+        coverage_confidence="unavailable",
+        udp_ingest_queue_drop_count=0,
+    )
+
+
+def _build_manifest_sensor_timeline(
+    *,
+    raw_capture_manifest: RawCaptureManifest,
+    sensor: RawCaptureSensorManifest,
+) -> RawSensorTimeline:
+    sample_rate_hz = int(sensor.sample_rate_hz or 0)
+    sample_period_us = 1_000_000.0 / float(sample_rate_hz) if sample_rate_hz > 0 else 0.0
+    chunks: tuple[RawTimelineChunk, ...] = ()
+    if sensor.first_t0_us is not None and sensor.sample_count > 0 and sample_period_us > 0.0:
+        chunks = (
+            RawTimelineChunk(
+                sample_start=0,
+                sample_end=max(0, int(sensor.sample_count)),
+                start_us=float(sensor.first_t0_us),
+                end_us=float(sensor.first_t0_us)
+                + (float(max(0, int(sensor.sample_count))) * sample_period_us),
+            ),
+        )
+    anchored = (
+        raw_capture_manifest.run_start_monotonic_us is not None
+        and sensor.clock_sync is not None
+        and sensor.clock_sync.verified
+    )
+    return RawSensorTimeline(
+        client_id=sensor.client_id,
+        sample_rate_hz=sample_rate_hz,
+        sample_period_us=sample_period_us,
+        chunks=chunks,
+        gap_intervals=(),
+        overlap_intervals=(),
+        run_start_monotonic_us=raw_capture_manifest.run_start_monotonic_us,
+        anchored=anchored,
+        anchor_reason=raw_anchor_reason(
+            run_start_monotonic_us=raw_capture_manifest.run_start_monotonic_us,
+            clock_sync=sensor.clock_sync,
+        ),
+        clock_sync=sensor.clock_sync,
+    )
+
+
+def _sensor_loss_stats(
+    raw_capture_manifest: RawCaptureManifest,
+    client_id: str,
+) -> RawCaptureLossStats:
+    sensor_loss = raw_capture_manifest.sensor_loss(client_id)
+    return sensor_loss.losses if sensor_loss is not None else RawCaptureLossStats()
+
+
+def raw_capture_range_reader_from_capture(raw_capture: RawRunCapture) -> RawCaptureRangeReader:
+    """Build a bounded range reader over an already materialized raw capture."""
+
+    sensors = {sensor.manifest.client_id: sensor for sensor in raw_capture.sensors}
+
+    def read_range(
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        sensor = sensors.get(client_id)
+        if sensor is None:
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+        requested_start = max(0, int(sample_start))
+        requested_count = max(0, int(sample_count))
+        requested_end = requested_start + requested_count
+        available_end = int(sensor.samples_i16.shape[0])
+        returned_start = min(requested_start, available_end)
+        returned_end = min(max(returned_start, requested_end), available_end)
+        samples = np.asarray(sensor.samples_i16[returned_start:returned_end], dtype=np.int16)
+        returned_count = int(samples.shape[0])
+        coverage_state: RawCaptureCoverageState
+        if returned_count <= 0:
+            coverage_state = "missing"
+            returned_sample_start: int | None = None
+        elif returned_start == requested_start and returned_count == requested_count:
+            coverage_state = "full"
+            returned_sample_start = returned_start
+        else:
+            coverage_state = "partial"
+            returned_sample_start = returned_start
+        chunks = tuple(
+            chunk
+            for chunk in sensor.chunks
+            if chunk.sample_start < requested_end
+            and (chunk.sample_start + chunk.sample_count) > requested_start
+        )
+        return RawCaptureSensorRange(
+            client_id=client_id,
+            requested_sample_start=sample_start,
+            requested_sample_count=sample_count,
+            coverage_state=coverage_state,
+            samples_i16=np.ascontiguousarray(samples, dtype=np.int16),
+            manifest=sensor.manifest,
+            returned_sample_start=returned_sample_start,
+            chunks=chunks,
+        )
+
+    return read_range
 
 
 def _timeline_first_window_end_t_s(
@@ -332,9 +529,8 @@ def _build_time_windows(
 
 def _build_chunks(
     *,
-    raw_capture: RawRunCapture,
-    sensors: Sequence[RawCaptureSensorData],
-    timelines: Mapping[str, RawSensorTimeline],
+    sensors: Sequence[_SpectralSensor],
+    raw_range_reader: RawCaptureRangeReader,
     plan: WholeRunWindowPlan,
     chunk_window_count: int,
 ) -> tuple[_SpectralChunk, ...]:
@@ -342,18 +538,14 @@ def _build_chunks(
     chunks: list[_SpectralChunk] = []
     for sensor_data in sensors:
         windows = plan.windows
-        timeline = timelines[sensor_data.manifest.client_id]
-        sensor_loss = raw_capture.manifest.sensor_loss(sensor_data.manifest.client_id)
-        loss_stats = sensor_loss.losses if sensor_loss is not None else RawCaptureLossStats()
         for chunk_index, start in enumerate(range(0, len(windows), normalized_chunk_size)):
             chunk_windows = windows[start : start + normalized_chunk_size]
             if not chunk_windows:
                 continue
             chunks.append(
                 _SpectralChunk(
-                    sensor_data=sensor_data,
-                    timeline=timeline,
-                    loss_stats=loss_stats,
+                    sensor=sensor_data,
+                    raw_range_reader=raw_range_reader,
                     chunk_index=chunk_index,
                     windows=chunk_windows,
                 )
@@ -428,7 +620,7 @@ def _execute_chunks(
                         extra=log_extra(
                             event="whole_run_spectral_chunk_failed",
                             run_id=metadata.run_id,
-                            sensor_id=chunk.sensor_data.manifest.client_id,
+                            sensor_id=chunk.sensor.manifest.client_id,
                             chunk_index=chunk.chunk_index,
                             chunk_position=chunk_position,
                             completed_chunks=completed_chunks,
@@ -473,7 +665,7 @@ def _process_chunk(
     chunk: _SpectralChunk,
     metadata: RunMetadata,
 ) -> _SpectralChunkResult:
-    sensor_manifest = chunk.sensor_data.manifest
+    sensor_manifest = chunk.sensor.manifest
     sample_rate_hz = int(sensor_manifest.sample_rate_hz or 0)
     fft_computer = _build_fft_computer(
         metadata=metadata,
@@ -484,13 +676,12 @@ def _process_chunk(
     summaries = tuple(
         _build_window_summary(
             window=window,
-            sensor_data=chunk.sensor_data,
-            timeline=chunk.timeline,
+            sensor=chunk.sensor,
+            raw_range_reader=chunk.raw_range_reader,
             spectrum_rows=spectrum_rows,
             row_index=row_index,
             metadata=metadata,
             sensor_manifest=sensor_manifest,
-            loss_stats=chunk.loss_stats,
             fft_computer=fft_computer,
         )
         for row_index, window in enumerate(chunk.windows)
@@ -507,15 +698,16 @@ def _process_chunk(
 def _build_window_summary(
     *,
     window: WholeRunWindowDescriptor,
-    sensor_data: RawCaptureSensorData,
-    timeline: RawSensorTimeline,
+    sensor: _SpectralSensor,
+    raw_range_reader: RawCaptureRangeReader,
     spectrum_rows: np.ndarray,
     row_index: int,
     metadata: RunMetadata,
     sensor_manifest: RawCaptureSensorManifest,
-    loss_stats: RawCaptureLossStats,
     fft_computer: SpectralAnalysisComputer,
 ) -> WholeRunWindowSpectralSummary:
+    timeline = sensor.timeline
+    loss_stats = sensor.loss_stats
     if int(sensor_manifest.sample_rate_hz or 0) <= 0:
         return _coverage_only_summary(
             window=window,
@@ -543,13 +735,39 @@ def _build_window_summary(
             coverage_reason=resolved.reason,
             loss_stats=loss_stats,
         )
-    samples_i16 = np.asarray(
-        assemble_raw_window_samples(
-            sensor_data=sensor_data,
-            segments=resolved.segments,
-        ),
-        dtype=np.int16,
+    returned_sample_start = resolved.segments[0].sample_start if resolved.segments else None
+    requested_sample_count = sum(
+        max(0, segment.sample_end - segment.sample_start) for segment in resolved.segments
     )
+    if returned_sample_start is None or requested_sample_count <= 0:
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="missing",
+            coverage_reason="raw_window_unresolved",
+            loss_stats=loss_stats,
+        )
+    raw_range = raw_range_reader(
+        sensor_manifest.client_id,
+        sample_start=returned_sample_start,
+        sample_count=requested_sample_count,
+    )
+    if raw_range is None or raw_range.coverage_state == "missing":
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="missing",
+            coverage_reason="raw_range_missing",
+            loss_stats=loss_stats,
+        )
+    if raw_range.coverage_state != "full":
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="partial",
+            coverage_reason=f"raw_range_{raw_range.coverage_state}",
+            loss_stats=loss_stats,
+            returned_sample_start=raw_range.returned_sample_start,
+            returned_sample_count=raw_range.returned_sample_count,
+        )
+    samples_i16 = np.asarray(raw_range.samples_i16, dtype=np.int16)
     returned_sample_count = int(samples_i16.shape[0])
     if returned_sample_count != window.sample_count:
         return _coverage_only_summary(
@@ -557,9 +775,20 @@ def _build_window_summary(
             coverage_state="partial",
             coverage_reason="assembled_window_short",
             loss_stats=loss_stats,
-            returned_sample_start=(
-                resolved.segments[0].sample_start if resolved.segments else None
-            ),
+            returned_sample_start=raw_range.returned_sample_start,
+            returned_sample_count=returned_sample_count,
+        )
+    discontinuity_reason = _range_chunk_discontinuity_reason(
+        raw_range=raw_range,
+        sensor_manifest=sensor_manifest,
+    )
+    if discontinuity_reason is not None:
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="partial",
+            coverage_reason=discontinuity_reason,
+            loss_stats=loss_stats,
+            returned_sample_start=raw_range.returned_sample_start,
             returned_sample_count=returned_sample_count,
         )
     spectrum_row, top_peaks, vibration_strength_db, peak_amp_g, floor_amp_g, strength_bucket = (
@@ -572,10 +801,6 @@ def _build_window_summary(
     )
     spectrum_rows[row_index, :] = spectrum_row
     dominant_freq_hz = top_peaks[0]["hz"] if top_peaks else None
-    returned_sample_start = resolved.segments[0].sample_start if resolved.segments else None
-    returned_sample_count = sum(
-        max(0, segment.sample_end - segment.sample_start) for segment in resolved.segments
-    )
     return WholeRunWindowSpectralSummary(
         window_index=window.window_index,
         coverage_state="full",
@@ -634,6 +859,31 @@ def _coverage_only_summary(
             server_queue_drop_count=_server_queue_drop_count(loss_stats),
         ),
     )
+
+
+def _range_chunk_discontinuity_reason(
+    *,
+    raw_range: RawCaptureSensorRange,
+    sensor_manifest: RawCaptureSensorManifest,
+) -> str | None:
+    sample_rate_hz = int(sensor_manifest.sample_rate_hz or 0)
+    if sample_rate_hz <= 0 or len(raw_range.chunks) < 2:
+        return None
+    sample_period_us = 1_000_000.0 / float(sample_rate_hz)
+    tolerance_us = max(1.0, sample_period_us * 0.75)
+    previous = None
+    for chunk in sorted(raw_range.chunks, key=lambda item: (item.t0_us, item.sample_start)):
+        if previous is not None:
+            expected_start_us = float(previous.t0_us) + (
+                float(previous.sample_count) * sample_period_us
+            )
+            delta_us = float(chunk.t0_us) - expected_start_us
+            if delta_us > tolerance_us:
+                return "window_crosses_gap"
+            if delta_us < -tolerance_us:
+                return "window_crosses_overlap"
+        previous = chunk
+    return None
 
 
 def _server_queue_drop_count(loss_stats: RawCaptureLossStats) -> int:
@@ -719,7 +969,7 @@ def _build_artifact_bundle(
     *,
     run_id: str,
     plan: WholeRunWindowPlan,
-    raw_capture: RawRunCapture,
+    raw_capture_manifest: RawCaptureManifest,
     sensors: Sequence[RawCaptureSensorManifest],
     chunk_results: Sequence[_SpectralChunkResult],
     created_at: str,
@@ -791,7 +1041,7 @@ def _build_artifact_bundle(
             "summary_storage_format": "jsonl",
         },
         source_raw_manifests=(
-            WholeRunSourceRawManifest.from_raw_capture_manifest(raw_capture.manifest),
+            WholeRunSourceRawManifest.from_raw_capture_manifest(raw_capture_manifest),
         ),
     )
     return WholeRunSpectralArtifactBundle(
