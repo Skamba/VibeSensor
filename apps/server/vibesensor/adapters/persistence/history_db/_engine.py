@@ -19,9 +19,7 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
 )
-from vibesensor.shared.boundaries.codecs.scalars import text_or_none
-from vibesensor.shared.json_utils import json_text_dumps, safe_json_loads
-from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.json_utils import json_text_dumps
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ __all__ = ["HistoryDbEngineTimeoutError", "SQLiteHistoryEngine", "run_startup_qu
 _T = TypeVar("_T")
 _ENGINE_OPERATION_TIMEOUT_S = 10.0
 _ENGINE_OPEN_TIMEOUT_S = 30.0
-_ENGINE_SCHEMA_MIGRATION_TIMEOUT_S = 30.0
+_ENGINE_SCHEMA_CHECK_TIMEOUT_S = 30.0
 _ENGINE_QUICK_CHECK_TIMEOUT_S = 10.0
 _ENGINE_CLOSE_TIMEOUT_S = 5.0
 _ENGINE_SHUTDOWN_TIMEOUT_S = 5.0
@@ -38,21 +36,6 @@ _ENGINE_SHUTDOWN_TIMEOUT_S = 5.0
 
 class HistoryDbEngineTimeoutError(TimeoutError):
     """Raised when a history DB operation outlives its engine-loop budget."""
-
-
-def _extract_run_car_name(metadata_json: object) -> str | None:
-    parsed = safe_json_loads(
-        str(metadata_json) if metadata_json is not None else None,
-        context="history_db v11->v12 car_name migration",
-    )
-    if not is_json_object(parsed):
-        return None
-    active_car_snapshot = parsed.get("active_car_snapshot")
-    if is_json_object(active_car_snapshot):
-        nested_name = text_or_none(active_car_snapshot.get("name"))
-        if nested_name:
-            return nested_name
-    return text_or_none(parsed.get("car_name"))
 
 
 class _EngineLoopThread:
@@ -295,8 +278,8 @@ class SQLiteHistoryEngine:
                 self._conn = conn
                 await self._with_engine_timeout(
                     self._ensure_schema(),
-                    timeout_s=_ENGINE_SCHEMA_MIGRATION_TIMEOUT_S,
-                    operation="schema_migration",
+                    timeout_s=_ENGINE_SCHEMA_CHECK_TIMEOUT_S,
+                    operation="schema_check",
                 )
                 await self._with_engine_timeout(
                     self._run_startup_quick_check(),
@@ -608,32 +591,6 @@ class SQLiteHistoryEngine:
             async with self._cursor() as cur:
                 await cur.executescript(SCHEMA_SQL)
             return
-        if version == 11:
-            await self._migrate_v11_to_v12()
-            await self._migrate_v12_to_v13()
-            await self._migrate_v13_to_v14()
-            await self._migrate_v14_to_v15()
-            async with self._cursor() as cur:
-                await cur.executescript(SCHEMA_SQL)
-            return
-        if version == 12:
-            await self._migrate_v12_to_v13()
-            await self._migrate_v13_to_v14()
-            await self._migrate_v14_to_v15()
-            async with self._cursor() as cur:
-                await cur.executescript(SCHEMA_SQL)
-            return
-        if version == 13:
-            await self._migrate_v13_to_v14()
-            await self._migrate_v14_to_v15()
-            async with self._cursor() as cur:
-                await cur.executescript(SCHEMA_SQL)
-            return
-        if version == 14:
-            await self._migrate_v14_to_v15()
-            async with self._cursor() as cur:
-                await cur.executescript(SCHEMA_SQL)
-            return
         if version > SCHEMA_VERSION:
             await self._raise_incompatible_database(
                 version=version,
@@ -653,78 +610,6 @@ class SQLiteHistoryEngine:
             await cur.execute("PRAGMA user_version")
             row = await cur.fetchone()
         return int(row[0]) if row is not None else 0
-
-    async def _migrate_v11_to_v12(self) -> None:
-        LOGGER.info("Migrating history DB schema v11 -> v12")
-        async with self._cursor(commit=False) as cur:
-            await cur.execute("PRAGMA table_info(runs)")
-            columns = {str(row[1]) for row in await cur.fetchall()}
-        if "car_name" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute("ALTER TABLE runs ADD COLUMN car_name TEXT")
-        async with self.write_transaction_cursor() as cur:
-            await cur.execute("SELECT run_id, metadata_json FROM runs WHERE car_name IS NULL")
-            rows = await cur.fetchall()
-            if rows:
-                await cur.executemany(
-                    "UPDATE runs SET car_name = ? WHERE run_id = ?",
-                    [
-                        (_extract_run_car_name(metadata_json), str(run_id))
-                        for run_id, metadata_json in rows
-                    ],
-                )
-            await cur.execute("PRAGMA user_version = 12")
-
-    async def _migrate_v12_to_v13(self) -> None:
-        LOGGER.info("Migrating history DB schema v12 -> v13")
-        async with self._cursor(commit=False) as cur:
-            await cur.execute("PRAGMA table_info(runs)")
-            columns = {str(row[1]) for row in await cur.fetchall()}
-        if "raw_capture_manifest_json" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute("ALTER TABLE runs ADD COLUMN raw_capture_manifest_json TEXT")
-        async with self._cursor() as cur:
-            await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-
-    async def _migrate_v13_to_v14(self) -> None:
-        LOGGER.info("Migrating history DB schema v13 -> v14")
-        async with self._cursor(commit=False) as cur:
-            await cur.execute("PRAGMA table_info(runs)")
-            columns = {str(row[1]) for row in await cur.fetchall()}
-        if "whole_run_artifact_manifest_json" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute(
-                    "ALTER TABLE runs ADD COLUMN whole_run_artifact_manifest_json TEXT"
-                )
-        async with self._cursor() as cur:
-            await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-
-    async def _migrate_v14_to_v15(self) -> None:
-        LOGGER.info("Migrating history DB schema v14 -> v15")
-        async with self._cursor(commit=False) as cur:
-            await cur.execute("PRAGMA table_info(samples_v2)")
-            columns = {str(row[1]) for row in await cur.fetchall()}
-        if not columns:
-            async with self._cursor() as cur:
-                await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-            return
-        if "analysis_window_start_us" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute(
-                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_start_us INTEGER"
-                )
-        if "analysis_window_end_us" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute(
-                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_end_us INTEGER"
-                )
-        if "analysis_window_synced" not in columns:
-            async with self._cursor() as cur:
-                await cur.execute(
-                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_synced INTEGER"
-                )
-        async with self._cursor() as cur:
-            await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     async def _run_startup_quick_check(self) -> None:
         await run_startup_quick_check(

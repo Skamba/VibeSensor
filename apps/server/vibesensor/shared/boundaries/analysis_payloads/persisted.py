@@ -21,8 +21,8 @@ def persisted_analysis_from_storage_json_object(payload: JsonObject) -> Persiste
     """Build from storage JSON, validating and stripping the schema-version field."""
 
     normalized = deepcopy(payload)
-    raw_version = normalized.pop(STORAGE_SCHEMA_VERSION_KEY, 0)
-    if raw_version not in (0, PERSISTED_ANALYSIS_SCHEMA_VERSION):
+    raw_version = normalized.pop(STORAGE_SCHEMA_VERSION_KEY, None)
+    if raw_version != PERSISTED_ANALYSIS_SCHEMA_VERSION:
         raise ValueError(f"Unsupported persisted analysis schema version: {raw_version!r}")
     return PersistedAnalysis.from_json_object(normalized)
 
