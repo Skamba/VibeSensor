@@ -51,17 +51,15 @@ preserved.
 
 The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
 `use_cases/run/post_analysis_executor.py` through
-`use_cases/run/post_analysis_whole_run_builders.py`. It currently receives the
-full `RawRunCapture` loaded by `post_analysis_loader.py`, then builds and stores
-dense sidecar artifacts before compact report-facing summaries are persisted.
-The future streaming/range-read refactor should reuse the bounded range-read
-boundary in `post_run_raw_windows.py`, but that boundary is not the active
-executor input today.
+`use_cases/run/post_analysis_whole_run_builders.py`. Whole-run spectra now use
+`RawCaptureManifest` plus `RunPersistence.aload_raw_capture_sensor_range(...)`
+instead of receiving a full `RawRunCapture`; compact summary-row replay may still
+load full raw capture before compact report-facing summaries are persisted.
 
 Current whole-run sidecar stages:
 
 1. `use_cases/diagnostics/whole_run_spectra.py` computes deterministic
-   raw-window spectra from raw capture and emits `spectral-grid:*`,
+   raw-window spectra from bounded raw range reads and emits `spectral-grid:*`,
    `spectral-matrix:*`, and `spectral-summary:*` sidecars. The summaries carry
    window timing, coverage/quality, top peaks, and dB strength facts without
    forcing reports to read the dense matrices.
@@ -84,8 +82,8 @@ Current whole-run sidecar stages:
    summary through `RunPersistence.astore_analysis(...)`.
 
 The older `post_run_*` modules are compatibility/support/prototype components.
-`post_run_raw_windows.py` is the manifest-aware range-read access boundary for
-future streaming work; `post_run_stft.py`, `post_run_window_features.py`,
+`post_run_raw_windows.py` remains an alternate manifest-aware range-window
+iterator; `post_run_stft.py`, `post_run_window_features.py`,
 `post_run_vehicle_reference.py`, `post_run_order_bands.py`,
 `post_run_vibration_episodes.py`, and `post_run_dense_findings.py` preserve
 useful dense DTO and math seams, but the active sidecar pipeline is the
@@ -114,10 +112,10 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
                       ├─ load metadata + persisted summary rows via injected RunPersistence
-                      ├─ load full RawRunCapture when a raw-capture manifest exists
+                      ├─ load raw manifest; compact replay may load full RawRunCapture
                       ├─ build_post_analysis_input(...)
                       │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
-                      ├─ whole_run_* sidecar stages (spectra, context, orders, spatial coherence)
+                      ├─ whole_run_* sidecar stages (spectra use bounded raw ranges)
                       ├─ analysis_runner(...)
                       │    ← injected by RunRecorder
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
@@ -177,14 +175,14 @@ summaries to the persisted analysis.
 | `_reference_resolution.py` | ~80 | Engine/tire/reference resolution helpers reused by order analysis |
 | `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
-| `post_run_raw_windows.py` | ~300 | Compatibility/future-streaming manifest-aware raw waveform range reader and configurable overlapping-window iterator |
+| `post_run_raw_windows.py` | ~300 | Compatibility/support manifest-aware raw waveform range reader and configurable overlapping-window iterator |
 | `post_run_stft.py` | ~350 | Support/prototype in-memory dense STFT engine over range-read raw-window DTOs |
 | `post_run_window_features.py` | ~300 | Support/prototype window-level feature extraction over dense STFT frames |
 | `post_run_vehicle_reference.py` | ~350 | Support/prototype per-window vehicle speed/RPM/gear/final-drive reference normalization |
 | `post_run_order_bands.py` | ~400 | Support/prototype per-window wheel/driveshaft/engine order-band generation |
 | `post_run_vibration_episodes.py` | ~450 | Support/prototype deterministic grouping of dense window peaks into episodes |
 | `post_run_dense_findings.py` | ~500 | Support/prototype dense episode classification and domain-finding projection |
-| `whole_run_spectra.py` | ~900 | Active sidecar spectral executor over loaded raw capture; emits dense spectra and compact spectral summaries |
+| `whole_run_spectra.py` | ~900 | Active sidecar spectral executor over bounded raw range reads; emits dense spectra and compact spectral summaries |
 | `whole_run_context.py` | ~400 | Active sidecar context timeline and compact context intervals on the whole-run window grid |
 | `whole_run_spatial_coherence.py` | ~450 | Active candidate-level spatial evidence sidecars and compact spatial summaries |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
