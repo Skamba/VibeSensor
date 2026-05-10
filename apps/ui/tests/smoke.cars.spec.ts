@@ -102,7 +102,9 @@ test("hides contextual car guidance when a valid selected car exists", async ({
 test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({
   page,
 }) => {
-  let releaseCars: (() => void) | null = null;
+  let releaseCars: () => void = () => {
+    throw new Error("cars bootstrap gate was not initialized");
+  };
   let captureReady = false;
   const waitForCars = new Promise<void>((resolve) => {
     releaseCars = resolve;
@@ -242,9 +244,6 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
 
-  if (!releaseCars) {
-    throw new Error("cars bootstrap gate was not initialized");
-  }
   captureReady = true;
   releaseCars();
 

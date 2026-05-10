@@ -9,6 +9,11 @@ import type {
 } from "../src/app/views/history_table_view";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 import {
+  makeHistoryFinding,
+  makeHistoryInsightsPayload,
+  makeLocationIntensityRow,
+} from "./history_payload_test_support";
+import {
   buildHistoryHandlers,
   makeDeleteHistoryRunPayload,
   makeHistoryListPayload,
@@ -88,16 +93,12 @@ function createHistoryElements(): {
 }
 
 function historyInsightsPayload(runId: string, sensorCountUsed: number) {
-  return {
+  return makeHistoryInsightsPayload({
     run_id: runId,
-    status: "complete" as const,
     start_time_utc: "2026-01-01T00:00:00Z",
     duration_s: 12.3,
     sensor_count_used: sensorCountUsed,
-    findings: [],
-    warnings: [],
-    sensor_intensity_by_location: [],
-  };
+  });
 }
 
 function historyInsightsWithFindingsPayload(
@@ -114,9 +115,8 @@ function historyInsightsWithFindingsPayload(
         "Order content and spatial dominance agree on the front-right wheel.",
     },
     findings: [
-      {
+      makeHistoryFinding({
         finding_id: "finding-1",
-        amplitude_metric: "db",
         confidence: 0.92,
         confidence_pct: "92%",
         confidence_tone: "success",
@@ -126,10 +126,9 @@ function historyInsightsWithFindingsPayload(
         strongest_location: "Front-right wheel",
         strongest_speed_band: "60-90 km/h",
         suspected_source: "Front-right wheel imbalance",
-      },
-      {
+      }),
+      makeHistoryFinding({
         finding_id: "finding-2",
-        amplitude_metric: "db",
         confidence: 0.67,
         confidence_pct: "67%",
         confidence_tone: "warn",
@@ -139,18 +138,15 @@ function historyInsightsWithFindingsPayload(
         strongest_location: "Driveshaft tunnel",
         strongest_speed_band: "70-90 km/h",
         suspected_source: "Secondary driveline contribution",
-      },
+      }),
     ],
     sensor_intensity_by_location: [
-      {
+      makeLocationIntensityRow({
         location: "Front Right Wheel",
         p50_intensity_db: 18,
         p95_intensity_db: 32,
         max_intensity_db: 40,
-        dropped_frames_delta: 0,
-        queue_overflow_drops_delta: 0,
-        sample_count: 20,
-      },
+      }),
     ],
   };
 }
@@ -476,16 +472,10 @@ test("history feature rendering promotes loaded findings ahead of supporting sta
   state.history.runDetailsById.value = {
     ...state.history.runDetailsById.value,
     "run-001": {
-      preview: historyInsightsWithFindingsPayload(
-        "run-001",
-        2,
-      ) as RunDetail["preview"],
+      preview: historyInsightsWithFindingsPayload("run-001", 2),
       previewLoading: false,
       previewError: "",
-      insights: historyInsightsWithFindingsPayload(
-        "run-001",
-        2,
-      ) as RunDetail["insights"],
+      insights: historyInsightsWithFindingsPayload("run-001", 2),
       insightsLoading: false,
       insightsError: "",
       pdfLoading: false,

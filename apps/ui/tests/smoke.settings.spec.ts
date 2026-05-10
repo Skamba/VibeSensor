@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Route } from "@playwright/test";
 
 import {
   bootLiveDashboard,
@@ -115,7 +115,7 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
         manual_speed_kph: null,
         stale_timeout_s: 5,
       },
-      "PUT /api/settings/speed-source": async (route) => {
+      "PUT /api/settings/speed-source": async (route: Route) => {
         speedSourcePutCalls += 1;
         return route.request().postDataJSON();
       },
@@ -783,7 +783,7 @@ test("failed speed-source save keeps the draft and explains which source remains
         manual_speed_kph: null,
         stale_timeout_s: 5,
       },
-      "PUT /api/settings/speed-source": async (route) => {
+      "PUT /api/settings/speed-source": async (route: Route) => {
         await route.fulfill({
           status: 500,
           contentType: "application/json",
@@ -991,7 +991,7 @@ test("failed language save reverts the selector and shows an error", async ({
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/language": { language: "en" },
-      "PUT /api/settings/language": async (route) => {
+      "PUT /api/settings/language": async (route: Route) => {
         await route.fulfill({
           status: 500,
           contentType: "application/json",

@@ -1836,7 +1836,7 @@ def check_contract_sync_entrypoint() -> list[str]:
         "build": "npm run check:contracts && vite build",
         "build:prevalidated-contracts": "vite build",
         "typecheck": "npm run check:contracts && tsc --noEmit",
-        "typecheck:tests": "node tools/typecheck_tests_with_baseline.mjs",
+        "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
         "pretest:smoke": "npm run sync:generated-contracts",
     }
     for script_name, expected_command in expected_scripts.items():
@@ -1857,14 +1857,14 @@ def check_contract_sync_entrypoint() -> list[str]:
             "apps/ui/tsconfig.test.json must define the frontend test TypeScript project."
         )
     ui_test_typecheck_script = ROOT / "apps/ui/tools/typecheck_tests_with_baseline.mjs"
-    if not ui_test_typecheck_script.exists():
+    if ui_test_typecheck_script.exists():
         errors.append(
-            "apps/ui/tools/typecheck_tests_with_baseline.mjs must enforce the UI test typecheck baseline."
+            "apps/ui/tools/typecheck_tests_with_baseline.mjs must not exist; UI test typecheck must use plain tsc."
         )
     ui_test_typecheck_baseline = ROOT / "apps/ui/tests/typecheck-baseline.txt"
-    if not ui_test_typecheck_baseline.exists():
+    if ui_test_typecheck_baseline.exists():
         errors.append(
-            "apps/ui/tests/typecheck-baseline.txt must track the current UI test typecheck diagnostics."
+            "apps/ui/tests/typecheck-baseline.txt must not exist; UI test typecheck must be diagnostic-free."
         )
 
     makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
