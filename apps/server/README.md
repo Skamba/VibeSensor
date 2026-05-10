@@ -399,13 +399,23 @@ The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`
 
 ## Updates
 
-Production devices use the wheel-based updater in `apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public facade over the focused updater modules.
+Production devices use the wheel-based updater in
+`apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public
+facade over the focused updater modules.
 
-`firmware_cache.py` is now the thin public cache/CLI surface, while `firmware_release_fetcher.py` owns GitHub firmware HTTP access, `firmware_bundle.py` owns bundle extraction/validation/metadata helpers, and `firmware_types.py` owns the updater-local cache/release contracts.
+Firmware update code lives under
+`apps/server/vibesensor/use_cases/updates/firmware/`:
+`firmware_cache.py` is the thin public cache/CLI surface,
+`firmware_release_fetcher.py` owns GitHub firmware HTTP access,
+`firmware_bundle.py` owns bundle extraction/validation/metadata helpers,
+`firmware_types.py` owns updater-local cache/release contracts, and
+`esp_flash_manager.py` owns ESP flashing orchestration. Wi-Fi/uplink recovery
+code lives under `apps/server/vibesensor/use_cases/updates/wifi/` and
+`apps/server/vibesensor/use_cases/updates/transport/`.
 
 - The updater now centralizes its real retry and polling loops on `tenacity`:
-  `wifi_uplink_setup.py` handles retryable SSID scan lag,
-  `wifi_hotspot_recovery.py` handles hotspot restore retries,
+  `wifi/wifi_uplink_setup.py` handles retryable SSID scan lag,
+  `wifi/wifi_hotspot_recovery.py` handles hotspot restore retries,
   `transport/uplink_readiness.py` handles DNS readiness polling, and
   `releases/release_validation.py` handles packaged smoke-server startup
   polling. `restart_scheduler.py` stays custom because it is a two-command

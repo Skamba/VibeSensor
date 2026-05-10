@@ -43,16 +43,28 @@ Deep dive: `docs/run_lifecycle.md`
 | Field | Value |
 |------|-------------|
 | Source | Optional per-run raw capture written alongside an active recording |
-| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` |
-| Boundary | Raw capture is loaded through `RunPersistence`; replay stays inside the post-analysis pipeline |
-| Final consumer | Offline post-stop analysis, especially whole-run/replay-backed analysis |
-| Data shape | Persisted and replayable |
+| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_whole_run_builders.py` |
+| Boundary | Raw capture is loaded through `RunPersistence`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
+| Final consumer | Offline post-stop analysis: raw replay compatibility plus whole-run sidecar builders |
+| Data shape | Persisted and replayable raw artifacts, dense sidecar artifacts, and compact persisted summaries |
 
 Raw capture is not the report path and not the live UI path. Post-analysis may
 use raw replay when the manifest/store exists, or fall back to persisted summary
-rows when it does not. That degraded or missing raw state must propagate forward
-as lifecycle/artifact status and report context instead of triggering a second
-ad hoc recovery path in history or PDF code.
+rows when it does not. When raw capture is available, the current whole-run
+sidecar path builds spectra, context labels, order traces/summaries, family
+summaries, and spatial coherence through `post_analysis_whole_run_builders.py`
+and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
+`whole-run-artifacts/<run_id>/`; compact report-facing summaries and manifest
+metadata are appended to `analysis_json`.
+
+The compatibility/future-streaming raw window path is
+`use_cases/diagnostics/post_run_raw_windows.py`, which uses bounded raw range
+reads. The connected whole-run sidecar executor still receives a full
+`RawRunCapture` from `post_analysis_loader.py`, so future range-read work should
+replace that internal input without changing the history/report read side.
+Degraded or missing raw/whole-run state must propagate forward as
+lifecycle/artifact status and report context instead of triggering a second ad
+hoc recovery path in history or PDF code.
 
 Deep dives: `docs/run_lifecycle.md`, `docs/analysis_pipeline.md`
 

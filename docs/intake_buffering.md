@@ -99,9 +99,9 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
 2. `SignalMetricsComputer.compute()` detrends the captured windows by removing
    the per-axis mean before RMS/P2P and FFT computation.
 3. `apps/server/vibesensor/shared/fft_analysis.py` applies the SciPy-backed
-   Hann window, runs the planned pyFFTW RFFT backend, slices the configured
-   frequency range via SciPy FFT frequency bins, and produces both per-axis
-   spectra and a combined amplitude curve.
+   Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
+   the configured frequency range via SciPy FFT frequency bins, and produces
+   both per-axis spectra and a combined amplitude curve.
 4. `apps/server/vibesensor/vibration_strength.py` uses SciPy peak finding to
    select dominant candidate bins, estimates a P20/median noise floor, and
    converts the dominant peak band into the

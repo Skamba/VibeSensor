@@ -52,7 +52,7 @@ links onward to the scoped instruction files and repo map below.
 | `docs/runtime_support_matrix.md` | Canonical Python and Node support policy by environment plus update ownership. |
 | `docs/history_db_schema.md` | SQLite history database schema. |
 | `docs/run_lifecycle.md` | Recording lifecycle, persistence retries, and post-analysis queue semantics. |
-| `docs/run_schema_v2.md` | Run data persistence schema v2. |
+| `docs/run_schema_v2.md` | Legacy/CLI JSONL run schema v2 boundary. |
 | `docs/intake_buffering.md` | Sample intake, buffering, and live signal-processing flow. |
 | `docs/time_alignment.md` | Multi-sensor time alignment approach. |
 | `docs/multithreading_performance.md` | Threading model and performance considerations. |
