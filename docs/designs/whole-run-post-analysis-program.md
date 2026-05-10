@@ -38,7 +38,9 @@ below.
 - `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` uses raw capture
    only to rebuild FFT-derived metrics for those already-persisted summary rows.
 - `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` is the
-   canonical offline executor. It runs a structured stage pipeline:
+   canonical offline executor. `PostAnalysisExecutionRunner` owns the
+   declarative top-level stage order, using `PostAnalysisExecutionConfig` for
+   loader/runner/builder dependencies:
   `LoadRunStage`, `BuildPostAnalysisInputStage`,
   `BuildWholeRunSpectraStage`, `BuildWholeRunContextStage`,
   `BuildOrderTraceStage`, `BuildOrderTraceSummaryStage`,

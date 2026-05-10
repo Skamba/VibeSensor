@@ -10,7 +10,11 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisWholeRunBuilderConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
@@ -87,18 +91,22 @@ def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_l
     result = execute_post_analysis(
         run_id="run-loss-gated",
         db=FakeDB(),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id=run_id,
-            metadata=_run_metadata(run_id, language="en"),
-            language="en",
-            samples=_samples(),
-            raw_capture=RawRunCapture(manifest=manifest, sensors=()),
-            total_summary_row_count=1,
-            stride=1,
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id, language="en"),
+                language="en",
+                samples=_samples(),
+                raw_capture=RawRunCapture(manifest=manifest, sensors=()),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=analysis_runner,
+            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
+                artifact_builder=artifact_builder,
+                context_builder=context_builder,
+            ),
         ),
-        analysis_runner=analysis_runner,
-        whole_run_artifact_builder=artifact_builder,
-        whole_run_context_builder=context_builder,
     )
 
     assert isinstance(result, PostAnalysisExecutionSuccess)

@@ -19,6 +19,7 @@ from threading import Event, RLock, Thread
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisAttemptResult,
+    PostAnalysisExecutionConfig,
     PostAnalysisRunner,
     execute_post_analysis,
 )
@@ -241,8 +242,10 @@ class PostAnalysisWorker:
             result: PostAnalysisAttemptResult = execute_post_analysis(
                 run_id=run_id,
                 db=db,
-                analysis_runner=self._analysis_runner,
-                defer_retryable_error_storage=defer_retryable_error_storage,
+                config=PostAnalysisExecutionConfig(
+                    analysis_runner=self._analysis_runner,
+                    defer_retryable_error_storage=defer_retryable_error_storage,
+                ),
             )
             if isinstance(result, PostAnalysisExecutionRetryableFailure):
                 delay_s = _RETRY_DELAYS_S[retry_index]

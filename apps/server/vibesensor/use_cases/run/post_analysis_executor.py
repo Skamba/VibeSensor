@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Mapping
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from typing import Protocol
 
 import aiosqlite
-from opentelemetry.trace import SpanKind
+from opentelemetry.trace import Span, SpanKind
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.structured_logging import log_extra
@@ -45,6 +45,7 @@ from vibesensor.use_cases.run.post_analysis_stage_runner import (
     warning_codes,
 )
 from vibesensor.use_cases.run.post_analysis_whole_run_pipeline import (
+    ResolvedWholeRunBuilders,
     WholeRunArtifactBuilder,
     WholeRunContextBuilder,
     WholeRunDiagnosisSummaryBuilder,
@@ -119,6 +120,58 @@ class PostAnalysisInputStageOutput:
     stage_result: PostAnalysisStageResult
 
 
+@dataclass(frozen=True, slots=True)
+class PostAnalysisWholeRunBuilderConfig:
+    artifact_builder: WholeRunArtifactBuilder | None = None
+    context_builder: WholeRunContextBuilder | None = None
+    order_trace_builder: WholeRunOrderTraceBuilder | None = None
+    order_trace_summary_builder: WholeRunOrderTraceSummaryBuilder | None = None
+    order_family_summary_builder: WholeRunOrderFamilySummaryBuilder | None = None
+    spatial_coherence_builder: WholeRunSpatialCoherenceBuilder | None = None
+    diagnosis_summary_builder: WholeRunDiagnosisSummaryBuilder | None = None
+
+    def resolve(self) -> ResolvedWholeRunBuilders:
+        return resolve_whole_run_builders(
+            whole_run_artifact_builder=self.artifact_builder,
+            whole_run_context_builder=self.context_builder,
+            whole_run_order_trace_builder=self.order_trace_builder,
+            whole_run_order_trace_summary_builder=self.order_trace_summary_builder,
+            whole_run_order_family_summary_builder=self.order_family_summary_builder,
+            whole_run_spatial_coherence_builder=self.spatial_coherence_builder,
+            whole_run_diagnosis_summary_builder=self.diagnosis_summary_builder,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class PostAnalysisExecutionConfig:
+    analysis_runner: PostAnalysisRunner
+    load_run: PostAnalysisLoader = load_post_analysis_run
+    whole_run_builders: PostAnalysisWholeRunBuilderConfig = field(
+        default_factory=PostAnalysisWholeRunBuilderConfig
+    )
+    defer_retryable_error_storage: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PostAnalysisStageOutcome:
+    stage_results: tuple[PostAnalysisStageResult, ...]
+    terminal_result: PostAnalysisAttemptResult | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PostAnalysisStageDefinition:
+    stage_name: str
+    run: Callable[[], PostAnalysisStageOutcome]
+
+
+@dataclass(slots=True)
+class PostAnalysisExecutionState:
+    loaded: LoadedPostAnalysisRun | None = None
+    run_input: PostAnalysisRunInput | None = None
+    whole_run_output: WholeRunPipelineStageOutput | None = None
+    summary: PersistedAnalysis | None = None
+
+
 def _log_stage_result(run_id: str, stage_result: PostAnalysisStageResult) -> None:
     if stage_result.status == "ok":
         return
@@ -139,6 +192,174 @@ def _log_stage_result(run_id: str, stage_result: PostAnalysisStageResult) -> Non
             diagnostic_context=stage_result.diagnostic_context,
         ),
     )
+
+
+class PostAnalysisExecutionRunner:
+    def __init__(
+        self,
+        *,
+        run_id: str,
+        db: RunPersistence,
+        config: PostAnalysisExecutionConfig,
+        analysis_start: float,
+    ) -> None:
+        self.run_id = run_id
+        self.db = db
+        self.config = config
+        self.analysis_start = analysis_start
+        self.resolved_builders = config.whole_run_builders.resolve()
+        self.state = PostAnalysisExecutionState()
+
+    @property
+    def stage_names(self) -> tuple[str, ...]:
+        return tuple(stage.stage_name for stage in self._stage_definitions())
+
+    def run(self, span: Span) -> PostAnalysisAttemptResult:
+        for stage in self._stage_definitions():
+            try:
+                outcome = stage.run()
+            except PostAnalysisStageFailure as stage_failure:
+                return self._handle_stage_failure(span, stage_failure)
+            for stage_result in outcome.stage_results:
+                _log_stage_result(self.run_id, stage_result)
+            if outcome.terminal_result is not None:
+                self._record_terminal_span_attributes(span, outcome.stage_results)
+                return outcome.terminal_result
+        return self._success(span)
+
+    def _stage_definitions(self) -> tuple[PostAnalysisStageDefinition, ...]:
+        return (
+            PostAnalysisStageDefinition("LoadRunStage", self._run_load_stage),
+            PostAnalysisStageDefinition(
+                "BuildPostAnalysisInputStage",
+                self._run_input_stage,
+            ),
+            PostAnalysisStageDefinition("WholeRunPipelineStages", self._run_whole_run_stages),
+            PostAnalysisStageDefinition("BuildReportFactsStage", self._run_report_facts_stage),
+            PostAnalysisStageDefinition(
+                "PersistAnalysisSummaryStage",
+                self._run_persist_summary_stage,
+            ),
+        )
+
+    def _run_load_stage(self) -> PostAnalysisStageOutcome:
+        load_stage = run_load_run_stage(
+            run_id=self.run_id,
+            db=self.db,
+            load_run=self.config.load_run,
+            analysis_start=self.analysis_start,
+            defer_retryable_error_storage=self.config.defer_retryable_error_storage,
+        )
+        if load_stage.loaded is not None:
+            self.state.loaded = load_stage.loaded
+        return PostAnalysisStageOutcome(
+            stage_results=(load_stage.stage_result,),
+            terminal_result=load_stage.terminal_result,
+        )
+
+    def _run_input_stage(self) -> PostAnalysisStageOutcome:
+        loaded = self.state.loaded
+        assert loaded is not None
+        input_stage = run_build_post_analysis_input_stage(loaded)
+        self.state.run_input = input_stage.run_input
+        return PostAnalysisStageOutcome(stage_results=(input_stage.stage_result,))
+
+    def _run_whole_run_stages(self) -> PostAnalysisStageOutcome:
+        loaded = self.state.loaded
+        run_input = self.state.run_input
+        assert loaded is not None
+        assert run_input is not None
+        whole_run_output = run_whole_run_pipeline_stages(
+            db=self.db,
+            loaded=loaded,
+            run_input=run_input,
+            builders=self.resolved_builders,
+        )
+        self.state.whole_run_output = whole_run_output
+        return PostAnalysisStageOutcome(stage_results=whole_run_output.stage_results)
+
+    def _run_report_facts_stage(self) -> PostAnalysisStageOutcome:
+        run_input = self.state.run_input
+        whole_run_output = self.state.whole_run_output
+        assert run_input is not None
+        assert whole_run_output is not None
+        summary, report_facts_stage = run_build_report_facts_stage(
+            run_input=run_input,
+            analysis_runner=self.config.analysis_runner,
+            whole_run_output=whole_run_output,
+            diagnosis_summary_builder=self.resolved_builders.diagnosis_summary_builder,
+        )
+        self.state.summary = summary
+        return PostAnalysisStageOutcome(stage_results=(report_facts_stage,))
+
+    def _run_persist_summary_stage(self) -> PostAnalysisStageOutcome:
+        loaded = self.state.loaded
+        summary = self.state.summary
+        assert loaded is not None
+        assert summary is not None
+        persist_summary_stage = run_persist_analysis_summary_stage(
+            db=self.db,
+            run_id=loaded.run_id,
+            summary=summary,
+        )
+        return PostAnalysisStageOutcome(stage_results=(persist_summary_stage,))
+
+    def _record_terminal_span_attributes(
+        self,
+        span: Span,
+        stage_results: tuple[PostAnalysisStageResult, ...],
+    ) -> None:
+        if not stage_results:
+            return
+        failure_kind = stage_results[-1].diagnostic_context.get("failure_kind")
+        if failure_kind in {"missing_metadata", "no_samples"}:
+            span.set_attribute("vibesensor.failure_kind", failure_kind)
+
+    def _handle_stage_failure(
+        self,
+        span: Span,
+        stage_failure: PostAnalysisStageFailure,
+    ) -> PostAnalysisAttemptResult:
+        mark_span_error(span, stage_failure.cause)
+        span.set_attribute("vibesensor.failed_stage", stage_failure.stage_result.stage_name)
+        _log_stage_result(self.run_id, stage_failure.stage_result)
+        exc = stage_failure.cause
+        if self.config.defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+            return _retryable_failure_result(
+                run_id=self.run_id,
+                analysis_start=self.analysis_start,
+                exc=exc,
+                stage_name=stage_failure.stage_result.stage_name,
+            )
+        return _persistence_failure_result(
+            run_id=self.run_id,
+            analysis_start=self.analysis_start,
+            exc=exc,
+            db=self.db,
+            stage_name=stage_failure.stage_result.stage_name,
+        )
+
+    def _success(self, span: Span) -> PostAnalysisExecutionSuccess:
+        loaded = self.state.loaded
+        run_input = self.state.run_input
+        assert loaded is not None
+        assert run_input is not None
+        duration_s = time.monotonic() - self.analysis_start
+        span.set_attribute("vibesensor.sample_count", len(run_input.samples))
+        span.set_attribute("vibesensor.duration_s", round(duration_s, 3))
+        LOGGER.info(
+            "Analysis completed for run %s: %d samples in %.2fs",
+            loaded.run_id,
+            len(run_input.samples),
+            duration_s,
+            extra=log_extra(
+                event="post_analysis_completed",
+                run_id=loaded.run_id,
+                sample_count=len(run_input.samples),
+                duration_s=round(duration_s, 3),
+            ),
+        )
+        return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
 
 
 def run_load_run_stage(
@@ -409,27 +630,9 @@ def execute_post_analysis(
     *,
     run_id: str,
     db: RunPersistence,
-    analysis_runner: PostAnalysisRunner,
-    load_run: PostAnalysisLoader = load_post_analysis_run,
-    whole_run_artifact_builder: WholeRunArtifactBuilder | None = None,
-    whole_run_context_builder: WholeRunContextBuilder | None = None,
-    whole_run_order_trace_builder: WholeRunOrderTraceBuilder | None = None,
-    whole_run_order_trace_summary_builder: WholeRunOrderTraceSummaryBuilder | None = None,
-    whole_run_order_family_summary_builder: WholeRunOrderFamilySummaryBuilder | None = None,
-    whole_run_spatial_coherence_builder: WholeRunSpatialCoherenceBuilder | None = None,
-    whole_run_diagnosis_summary_builder: WholeRunDiagnosisSummaryBuilder | None = None,
-    defer_retryable_error_storage: bool = False,
+    config: PostAnalysisExecutionConfig,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
-    resolved_builders = resolve_whole_run_builders(
-        whole_run_artifact_builder=whole_run_artifact_builder,
-        whole_run_context_builder=whole_run_context_builder,
-        whole_run_order_trace_builder=whole_run_order_trace_builder,
-        whole_run_order_trace_summary_builder=whole_run_order_trace_summary_builder,
-        whole_run_order_family_summary_builder=whole_run_order_family_summary_builder,
-        whole_run_spatial_coherence_builder=whole_run_spatial_coherence_builder,
-        whole_run_diagnosis_summary_builder=whole_run_diagnosis_summary_builder,
-    )
     with start_span(
         __name__,
         "run.post_analysis.execute",
@@ -441,87 +644,13 @@ def execute_post_analysis(
             run_id,
             extra=log_extra(event="post_analysis_started", run_id=run_id),
         )
-        load_stage = run_load_run_stage(
+        runner = PostAnalysisExecutionRunner(
             run_id=run_id,
             db=db,
-            load_run=load_run,
+            config=config,
             analysis_start=analysis_start,
-            defer_retryable_error_storage=defer_retryable_error_storage,
         )
-        _log_stage_result(run_id, load_stage.stage_result)
-        if load_stage.terminal_result is not None:
-            if load_stage.stage_result.diagnostic_context.get("failure_kind") == "missing_metadata":
-                span.set_attribute("vibesensor.failure_kind", "missing_metadata")
-            if load_stage.stage_result.diagnostic_context.get("failure_kind") == "no_samples":
-                span.set_attribute("vibesensor.failure_kind", "no_samples")
-            return load_stage.terminal_result
-
-        loaded = load_stage.loaded
-        assert loaded is not None
-        try:
-            input_stage = run_build_post_analysis_input_stage(loaded)
-            _log_stage_result(loaded.run_id, input_stage.stage_result)
-
-            whole_run_stage = run_whole_run_pipeline_stages(
-                db=db,
-                loaded=loaded,
-                run_input=input_stage.run_input,
-                builders=resolved_builders,
-            )
-            for stage_result in whole_run_stage.stage_results:
-                _log_stage_result(loaded.run_id, stage_result)
-
-            run_input = input_stage.run_input
-            span.set_attribute("vibesensor.sample_count", len(run_input.samples))
-            summary, report_facts_stage = run_build_report_facts_stage(
-                run_input=run_input,
-                analysis_runner=analysis_runner,
-                whole_run_output=whole_run_stage,
-                diagnosis_summary_builder=resolved_builders.diagnosis_summary_builder,
-            )
-            _log_stage_result(loaded.run_id, report_facts_stage)
-
-            persist_summary_stage = run_persist_analysis_summary_stage(
-                db=db,
-                run_id=loaded.run_id,
-                summary=summary,
-            )
-            _log_stage_result(loaded.run_id, persist_summary_stage)
-        except PostAnalysisStageFailure as stage_failure:
-            mark_span_error(span, stage_failure.cause)
-            span.set_attribute("vibesensor.failed_stage", stage_failure.stage_result.stage_name)
-            _log_stage_result(loaded.run_id, stage_failure.stage_result)
-            exc = stage_failure.cause
-            if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
-                return _retryable_failure_result(
-                    run_id=loaded.run_id,
-                    analysis_start=analysis_start,
-                    exc=exc,
-                    stage_name=stage_failure.stage_result.stage_name,
-                )
-            return _persistence_failure_result(
-                run_id=loaded.run_id,
-                analysis_start=analysis_start,
-                exc=exc,
-                db=db,
-                stage_name=stage_failure.stage_result.stage_name,
-            )
-
-        duration_s = time.monotonic() - analysis_start
-        span.set_attribute("vibesensor.duration_s", round(duration_s, 3))
-        LOGGER.info(
-            "Analysis completed for run %s: %d samples in %.2fs",
-            loaded.run_id,
-            len(run_input.samples),
-            duration_s,
-            extra=log_extra(
-                event="post_analysis_completed",
-                run_id=loaded.run_id,
-                sample_count=len(run_input.samples),
-                duration_s=round(duration_s, 3),
-            ),
-        )
-        return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
+        return runner.run(span)
 
 
 def _store_load_error(

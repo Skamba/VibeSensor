@@ -31,7 +31,11 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisWholeRunBuilderConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
 
@@ -239,38 +243,42 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
     result = execute_post_analysis(
         run_id="run-order-traces",
         db=FakeDB(),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id=run_id,
-            metadata=_run_metadata(run_id),
-            language="en",
-            samples=_samples(),
-            total_summary_row_count=1,
-            stride=1,
-            raw_capture=_empty_raw_capture(raw_capture_manifest),
-            raw_capture_manifest=raw_capture_manifest,
-        ),
-        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(
-            type(
-                "Bundle",
-                (),
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+                raw_capture=_empty_raw_capture(raw_capture_manifest),
+                raw_capture_manifest=raw_capture_manifest,
+            ),
+            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
+                artifact_builder=lambda **_kwargs: _spectral_result(
+                    type(
+                        "Bundle",
+                        (),
+                        {
+                            "manifest": spectral_manifest,
+                            "artifact_contents": {"spectral-summary:sensor-a": b"{}\n{}\n"},
+                        },
+                    )()
+                ),
+                context_builder=lambda **_kwargs: context_bundle,
+                order_trace_builder=lambda **_kwargs: order_trace_bundle,
+                spatial_coherence_builder=lambda **_kwargs: None,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis(
                 {
-                    "manifest": spectral_manifest,
-                    "artifact_contents": {"spectral-summary:sensor-a": b"{}\n{}\n"},
-                },
-            )()
-        ),
-        whole_run_context_builder=lambda **_kwargs: context_bundle,
-        whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
-        whole_run_spatial_coherence_builder=lambda **_kwargs: None,
-        analysis_runner=lambda _run: make_persisted_analysis(
-            {
-                "analysis_metadata": {
-                    "analyzed_sample_count": 1,
-                    "total_sample_count": 1,
-                    "sampling_method": "full",
-                },
-                "run_suitability": [],
-            }
+                    "analysis_metadata": {
+                        "analyzed_sample_count": 1,
+                        "total_sample_count": 1,
+                        "sampling_method": "full",
+                    },
+                    "run_suitability": [],
+                }
+            ),
         ),
     )
 
