@@ -19,8 +19,8 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
-    RawCaptureSensorData,
-    RawRunCapture,
+    RawCaptureManifest,
+    RawCaptureSensorManifest,
 )
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.shared.window_quality import WindowQuality, clean_window_quality
@@ -166,9 +166,9 @@ class WholeRunSpectralCoverageSummary:
 
 def build_coverage_summary(
     *,
-    raw_capture: RawRunCapture,
+    raw_capture_manifest: RawCaptureManifest,
     plan: WholeRunWindowPlan | None,
-    sensors: Sequence[RawCaptureSensorData],
+    sensors: Sequence[RawCaptureSensorManifest],
     timelines: Mapping[str, RawSensorTimeline],
     summaries_by_sensor: Mapping[str, Sequence[WholeRunWindowSpectralSummary]],
 ) -> WholeRunSpectralCoverageSummary:
@@ -182,7 +182,7 @@ def build_coverage_summary(
     limited_window_count = 0
     excluded_window_count = 0
     for sensor in sensors:
-        summaries = summaries_by_sensor.get(sensor.manifest.client_id, ())
+        summaries = summaries_by_sensor.get(sensor.client_id, ())
         if not summaries and plan is not None:
             total_sensor_window_count += plan.total_window_count
             missing_sensor_window_count += plan.total_window_count
@@ -210,11 +210,10 @@ def build_coverage_summary(
     sample_rate_mismatch_sensor_count = sum(
         1
         for sensor in sensors
-        if sensor.manifest.sample_rate_corrected
-        or sensor.manifest.sample_rate_proof_state == "timing_inconsistent"
+        if sensor.sample_rate_corrected or sensor.sample_rate_proof_state == "timing_inconsistent"
     )
     sample_rate_unverified_sensor_count = sum(
-        1 for sensor in sensors if sensor.manifest.sample_rate_unverified
+        1 for sensor in sensors if sensor.sample_rate_unverified
     )
     unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
     legacy_sensor_count = sum(
@@ -233,18 +232,18 @@ def build_coverage_summary(
         for timeline in timelines.values()
         if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
     )
-    dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
-    late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
+    dropped_chunk_count = raw_capture_manifest.total_dropped_chunk_count
+    late_packet_chunk_count = raw_capture_manifest.total_late_packet_chunk_count
     udp_ingest_queue_drop_count = _manifest_loss_count(
-        raw_capture,
+        raw_capture_manifest,
         "udp_ingest_queue_drop_count",
     )
     queue_overflow_chunk_count = _manifest_loss_count(
-        raw_capture,
+        raw_capture_manifest,
         "queue_overflow_chunk_count",
     )
-    invalid_chunk_count = _manifest_loss_count(raw_capture, "invalid_chunk_count")
-    write_error_chunk_count = _manifest_loss_count(raw_capture, "write_error_chunk_count")
+    invalid_chunk_count = _manifest_loss_count(raw_capture_manifest, "invalid_chunk_count")
+    write_error_chunk_count = _manifest_loss_count(raw_capture_manifest, "write_error_chunk_count")
     coverage_confidence = build_coverage_confidence(
         total_sensor_window_count=total_sensor_window_count,
         partial_sensor_window_count=partial_sensor_window_count,
@@ -310,13 +309,13 @@ def build_coverage_summary(
     )
 
 
-def _manifest_loss_count(raw_capture: RawRunCapture, field_name: str) -> int:
-    manifest_total = max(0, int(getattr(raw_capture.manifest.losses, field_name)))
+def _manifest_loss_count(raw_capture_manifest: RawCaptureManifest, field_name: str) -> int:
+    manifest_total = max(0, int(getattr(raw_capture_manifest.losses, field_name)))
     if manifest_total > 0:
         return manifest_total
     return sum(
         max(0, int(getattr(sensor_loss.losses, field_name)))
-        for sensor_loss in raw_capture.manifest.sensor_losses
+        for sensor_loss in raw_capture_manifest.sensor_losses
     )
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
@@ -28,9 +28,10 @@ from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     build_whole_run_spatial_coherence_artifact_bundle,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    RawCaptureRangeReader,
     WholeRunSpectralArtifactBundle,
     WholeRunSpectralBuildResult,
-    build_whole_run_spectral_artifact_bundle,
+    build_whole_run_spectral_artifact_bundle_from_ranges,
 )
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -48,12 +49,14 @@ def build_whole_run_artifacts(
     *,
     run_id: str,
     metadata: RunMetadata,
-    raw_capture: RawRunCapture,
+    raw_capture_manifest: RawCaptureManifest,
+    raw_range_reader: RawCaptureRangeReader,
 ) -> WholeRunSpectralBuildResult:
-    return build_whole_run_spectral_artifact_bundle(
+    return build_whole_run_spectral_artifact_bundle_from_ranges(
         run_id=run_id,
         metadata=metadata,
-        raw_capture=raw_capture,
+        raw_capture_manifest=raw_capture_manifest,
+        raw_range_reader=raw_range_reader,
     )
 
 

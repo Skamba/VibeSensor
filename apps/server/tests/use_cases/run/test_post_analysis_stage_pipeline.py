@@ -4,7 +4,12 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureManifest,
+    RawCaptureSensorClockSync,
+    RawCaptureSensorManifest,
+    RawCaptureSensorRange,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
@@ -76,6 +81,36 @@ def _spectral_result(bundle) -> WholeRunSpectralBuildResult:
             high_rtt_sensor_count=0,
             coverage_confidence="unavailable",
         ),
+    )
+
+
+def _raw_capture_manifest_with_sensor(run_id: str) -> RawCaptureManifest:
+    return RawCaptureManifest(
+        run_id=run_id,
+        relative_dir=f"raw-runs/{run_id}",
+        sensors=(
+            RawCaptureSensorManifest(
+                client_id="sensor-a",
+                sample_rate_hz=800,
+                data_file="sensor-a.raw.i16le",
+                index_file="sensor-a.index.jsonl",
+                sample_count=2048,
+                chunk_count=1,
+                bytes_written=2048 * 3 * 2,
+                first_t0_us=1_000_000,
+                last_t0_us=1_000_000,
+                clock_sync=RawCaptureSensorClockSync(
+                    clock_domain="server_monotonic",
+                    proof_state="verified",
+                ),
+                declared_sample_rate_hz=800,
+                sample_rate_proof_state="observed_consistent",
+            ),
+        ),
+        total_samples=2048,
+        total_bytes=2048 * 3 * 2,
+        created_at="2025-01-01T00:00:00Z",
+        run_start_monotonic_us=1_000_000,
     )
 
 
@@ -191,6 +226,71 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback() -> No
     assert statuses["PersistArtifactsStage"] == "ok"
     assert stored["run_id"] == "run-stage-pipeline"
     assert result.stored_artifact_manifest is not None
+
+
+def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader() -> None:
+    raw_capture_manifest = _raw_capture_manifest_with_sensor("run-range-pipeline")
+    captured: dict[str, object] = {}
+
+    class FakeDB:
+        async def aload_raw_capture(self, _run_id):  # pragma: no cover - regression guard
+            raise AssertionError("whole-run spectra must not load full raw capture")
+
+        async def aload_raw_capture_sensor_range(
+            self,
+            run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            captured["range_read"] = (run_id, client_id, sample_start, sample_count)
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+
+    def artifact_builder(**kwargs):
+        captured["artifact_kwargs"] = kwargs
+        range_reader = kwargs["raw_range_reader"]
+        range_reader("sensor-a", sample_start=4, sample_count=8)
+        return _spectral_result(None)
+
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-range-pipeline",
+        metadata=_run_metadata("run-range-pipeline"),
+        language="en",
+        samples=_samples(),
+        total_summary_row_count=1,
+        stride=1,
+        raw_capture=None,
+        raw_capture_manifest=raw_capture_manifest,
+    )
+    run_input = run_build_post_analysis_input_stage(loaded).run_input
+    builders = resolve_whole_run_builders(
+        whole_run_artifact_builder=artifact_builder,
+        whole_run_context_builder=lambda **_kwargs: None,
+        whole_run_order_trace_builder=lambda **_kwargs: None,
+        whole_run_order_trace_summary_builder=lambda **_kwargs: None,
+        whole_run_order_family_summary_builder=lambda **_kwargs: None,
+        whole_run_spatial_coherence_builder=lambda **_kwargs: None,
+        whole_run_diagnosis_summary_builder=lambda **_kwargs: (),
+    )
+
+    result = run_whole_run_pipeline_stages(
+        db=FakeDB(),
+        loaded=loaded,
+        run_input=run_input,
+        builders=builders,
+    )
+
+    assert result.stage_results[0].stage_name == "BuildWholeRunSpectraStage"
+    assert result.stage_results[0].status == "ok"
+    artifact_kwargs = captured["artifact_kwargs"]
+    assert artifact_kwargs["raw_capture_manifest"] == raw_capture_manifest
+    assert "raw_capture" not in artifact_kwargs
+    assert captured["range_read"] == ("run-range-pipeline", "sensor-a", 4, 8)
 
 
 def test_run_persist_analysis_summary_stage_stores_summary() -> None:
