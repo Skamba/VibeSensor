@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from math import isclose
-from typing import Literal, cast
+from typing import Literal
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -676,8 +676,25 @@ def _speed_context_reasons_from_json(
     reasons: list[WholeRunSpeedContextReason] = []
     seen: set[str] = set()
     for item in value:
-        raw = _str_or_none(item)
-        if raw in WHOLE_RUN_SPEED_CONTEXT_REASON_VALUES and raw not in seen:
-            reasons.append(cast(WholeRunSpeedContextReason, raw))
-            seen.add(raw)
+        reason = _speed_context_reason_from_json(item)
+        if reason is not None and reason not in seen:
+            reasons.append(reason)
+            seen.add(reason)
     return tuple(reasons)
+
+
+def _speed_context_reason_from_json(
+    value: JsonValue | object,
+) -> WholeRunSpeedContextReason | None:
+    raw = _str_or_none(value)
+    if raw == "speed_unavailable":
+        return "speed_unavailable"
+    if raw == "speed_low":
+        return "speed_low"
+    if raw == "speed_stale":
+        return "speed_stale"
+    if raw == "speed_unstable":
+        return "speed_unstable"
+    if raw == "speed_assumed":
+        return "speed_assumed"
+    return None
