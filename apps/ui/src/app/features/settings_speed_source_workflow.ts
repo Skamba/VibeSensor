@@ -20,6 +20,7 @@ import {
   createSettingsSpeedSourceTransport,
   type SettingsSpeedSourceTransport,
 } from "./settings_speed_source_transport";
+import { createWorkflowGenerationGuard } from "./workflow_generation_guard";
 import { applySpeedSourcePayloadToSettings } from "./dashboard_startup_state";
 import {
   createHiddenTabPollingObserverOptions,
@@ -167,10 +168,19 @@ export function createSettingsSpeedSourceWorkflow(
   const obdSelectionError = signal(false);
   const diagnosticsOpen = signal(false);
   let disposed = false;
-  let loadGeneration = 0;
-  let saveGeneration = 0;
-  let scanGeneration = 0;
-  let pairGeneration = 0;
+  const workflowActive = () => !disposed;
+  const loadRequests = createWorkflowGenerationGuard({
+    isActive: workflowActive,
+  });
+  const saveRequests = createWorkflowGenerationGuard({
+    isActive: workflowActive,
+  });
+  const scanRequests = createWorkflowGenerationGuard({
+    isActive: workflowActive,
+  });
+  const pairRequests = createWorkflowGenerationGuard({
+    isActive: workflowActive,
+  });
   let saveInFlight = false;
   const renderState = computed<SettingsSpeedSourceRenderState>(() => {
     const settingsSnapshot: SpeedSourceStateSnapshot & {
@@ -207,13 +217,6 @@ export function createSettingsSpeedSourceWorkflow(
 
   function getRenderState(): SettingsSpeedSourceRenderState {
     return renderState.value;
-  }
-
-  function isCurrentRequest(
-    requestGeneration: number,
-    currentGeneration: number,
-  ): boolean {
-    return !disposed && requestGeneration === currentGeneration;
   }
 
   function shouldRunBackgroundRescan(): boolean {
@@ -332,7 +335,7 @@ export function createSettingsSpeedSourceWorkflow(
     if (disposed) {
       return;
     }
-    const requestGeneration = ++loadGeneration;
+    const requestGeneration = loadRequests.begin();
     let payload: SpeedSourcePayload;
     try {
       payload = await deps.queryClient.fetchQuery({
@@ -341,12 +344,12 @@ export function createSettingsSpeedSourceWorkflow(
         staleTime: 0,
       });
     } catch (error) {
-      if (!isCurrentRequest(requestGeneration, loadGeneration)) {
+      if (!loadRequests.isCurrent(requestGeneration)) {
         return;
       }
       throw error;
     }
-    if (!isCurrentRequest(requestGeneration, loadGeneration)) {
+    if (!loadRequests.isCurrent(requestGeneration)) {
       return;
     }
     applyPayload(payload, { preserveResolvedSource: true });
@@ -449,7 +452,7 @@ export function createSettingsSpeedSourceWorkflow(
     }
 
     saveInFlight = true;
-    const requestGeneration = ++saveGeneration;
+    const requestGeneration = saveRequests.begin();
     const payload: SpeedSourceRequest = {
       manual_speed_kph: manualSpeedKph,
       speed_source: source,
@@ -460,7 +463,7 @@ export function createSettingsSpeedSourceWorkflow(
 
     try {
       const saved = await transport.saveSpeedSource(payload);
-      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+      if (!saveRequests.isCurrent(requestGeneration)) {
         return;
       }
       deps.queryClient.setQueryData(
@@ -470,12 +473,12 @@ export function createSettingsSpeedSourceWorkflow(
       await deps.queryClient.invalidateQueries({
         queryKey: serverStateQueryKeys.settings.gpsStatus(),
       });
-      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+      if (!saveRequests.isCurrent(requestGeneration)) {
         return;
       }
       applyPayload(saved);
     } catch (error) {
-      if (!isCurrentRequest(requestGeneration, saveGeneration)) {
+      if (!saveRequests.isCurrent(requestGeneration)) {
         return;
       }
       showSaveFeedback(
@@ -483,7 +486,7 @@ export function createSettingsSpeedSourceWorkflow(
         deps.t("settings.speed.save_failed_detail", { source: activeSource }),
       );
     } finally {
-      if (requestGeneration === saveGeneration) {
+      if (saveRequests.isLatest(requestGeneration)) {
         saveInFlight = false;
       }
     }
@@ -495,7 +498,7 @@ export function createSettingsSpeedSourceWorkflow(
     if (disposed || scanInFlight.value || pairInFlightMac.value !== null) {
       return;
     }
-    const requestGeneration = ++scanGeneration;
+    const requestGeneration = scanRequests.begin();
     batch(() => {
       scanInFlight.value = true;
       if (mode === "manual") {
@@ -509,7 +512,7 @@ export function createSettingsSpeedSourceWorkflow(
         queryKey: serverStateQueryKeys.settings.speedSourceObdScan(),
         staleTime: 0,
       });
-      if (!isCurrentRequest(requestGeneration, scanGeneration)) {
+      if (!scanRequests.isCurrent(requestGeneration)) {
         return;
       }
       if (mode === "manual") {
@@ -527,7 +530,7 @@ export function createSettingsSpeedSourceWorkflow(
         mergeScannedDevices(payload.devices);
       }
     } catch (error) {
-      if (!isCurrentRequest(requestGeneration, scanGeneration)) {
+      if (!scanRequests.isCurrent(requestGeneration)) {
         return;
       }
       if (mode === "manual") {
@@ -539,7 +542,7 @@ export function createSettingsSpeedSourceWorkflow(
         );
       }
     } finally {
-      if (isCurrentRequest(requestGeneration, scanGeneration)) {
+      if (scanRequests.isCurrent(requestGeneration)) {
         scanInFlight.value = false;
       }
     }
@@ -549,7 +552,7 @@ export function createSettingsSpeedSourceWorkflow(
     if (disposed || pairInFlightMac.value !== null) {
       return;
     }
-    const requestGeneration = ++pairGeneration;
+    const requestGeneration = pairRequests.begin();
     clearObdSelectionFeedback();
     batch(() => {
       pairInFlightMac.value = macAddress;
@@ -557,7 +560,7 @@ export function createSettingsSpeedSourceWorkflow(
     });
     try {
       const payload = await transport.pairObdDevice(macAddress);
-      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+      if (!pairRequests.isCurrent(requestGeneration)) {
         return;
       }
       batch(() => {
@@ -580,11 +583,11 @@ export function createSettingsSpeedSourceWorkflow(
       await deps.queryClient.invalidateQueries({
         queryKey: serverStateQueryKeys.settings.gpsStatus(),
       });
-      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+      if (!pairRequests.isCurrent(requestGeneration)) {
         return;
       }
     } catch (error) {
-      if (!isCurrentRequest(requestGeneration, pairGeneration)) {
+      if (!pairRequests.isCurrent(requestGeneration)) {
         return;
       }
       obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_failed");
@@ -594,7 +597,7 @@ export function createSettingsSpeedSourceWorkflow(
           : deps.t("settings.speed.obd_pair_failed"),
       );
     } finally {
-      if (isCurrentRequest(requestGeneration, pairGeneration)) {
+      if (pairRequests.isCurrent(requestGeneration)) {
         pairInFlightMac.value = null;
       }
     }
@@ -628,10 +631,10 @@ export function createSettingsSpeedSourceWorkflow(
   return {
     dispose(): void {
       disposed = true;
-      loadGeneration += 1;
-      saveGeneration += 1;
-      scanGeneration += 1;
-      pairGeneration += 1;
+      loadRequests.invalidate();
+      saveRequests.invalidate();
+      scanRequests.invalidate();
+      pairRequests.invalidate();
       saveInFlight = false;
       obdBackgroundRescan.dispose();
     },
