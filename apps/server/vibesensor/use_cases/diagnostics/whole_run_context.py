@@ -19,7 +19,9 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextLoadState,
     WholeRunContextWindowLabel,
     WholeRunRpmValidity,
+    WholeRunSpeedContextReason,
     WholeRunSpeedValidity,
+    WholeRunWindowDescriptor,
 )
 from vibesensor.use_cases.diagnostics._artifact_bundles import (
     build_single_artifact_bundle_parts,
@@ -56,6 +58,9 @@ _RPM_VALIDITY_RANK: dict[WholeRunRpmValidity, int] = {
     "estimated": 1,
     "measured": 2,
 }
+_LOW_ORDER_SPEED_KMH = 15.0
+_UNSTABLE_SPEED_ABS_DELTA_KMH = 12.0
+_UNSTABLE_SPEED_REL_DELTA = 0.20
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,6 +200,17 @@ def normalize_whole_run_context_labels(
             speed_observation.speed_validity if speed_observation is not None else "missing"
         )
         rpm_validity = rpm_observation.rpm_validity if rpm_observation is not None else "missing"
+        speed_is_unstable = _speed_is_unstable_within_window(
+            window=window,
+            speed_observations=speed_observations,
+            context_span_s=freshness_limit_s,
+        )
+        speed_context_reasons = _speed_context_reasons(
+            speed_kmh=speed_kmh,
+            speed_validity=speed_validity,
+            speed_is_stale=speed_is_stale,
+            speed_is_unstable=speed_is_unstable,
+        )
         phase, load_state = _baseline_phase_state(
             speed_kmh=speed_kmh,
             speed_validity=speed_validity,
@@ -225,6 +241,7 @@ def normalize_whole_run_context_labels(
                 engine_rpm=(rpm_observation.engine_rpm if rpm_observation is not None else None),
                 engine_rpm_source=engine_rpm_source,
                 rpm_is_stale=rpm_is_stale,
+                speed_context_reasons=speed_context_reasons,
             )
         )
     return tuple(labels)
@@ -380,6 +397,48 @@ def _context_coverage(
     if speed_validity != "missing" or rpm_validity != "missing":
         return "partial"
     return "missing"
+
+
+def _speed_context_reasons(
+    *,
+    speed_kmh: float | None,
+    speed_validity: WholeRunSpeedValidity,
+    speed_is_stale: bool,
+    speed_is_unstable: bool,
+) -> tuple[WholeRunSpeedContextReason, ...]:
+    reasons: list[WholeRunSpeedContextReason] = []
+    if speed_validity == "missing":
+        reasons.append("speed_unavailable")
+    elif speed_validity == "assumed":
+        reasons.append("speed_assumed")
+    if speed_kmh is not None and speed_validity != "missing" and speed_kmh < _LOW_ORDER_SPEED_KMH:
+        reasons.append("speed_low")
+    if speed_is_stale:
+        reasons.append("speed_stale")
+    if speed_is_unstable and speed_validity != "missing" and not speed_is_stale:
+        reasons.append("speed_unstable")
+    return tuple(dict.fromkeys(reasons))
+
+
+def _speed_is_unstable_within_window(
+    *,
+    window: WholeRunWindowDescriptor,
+    speed_observations: Sequence[_SpeedObservation],
+    context_span_s: float,
+) -> bool:
+    half_span_s = max(1e-9, context_span_s) / 2.0
+    start_t_s = window.center_t_s - half_span_s
+    end_t_s = window.center_t_s + half_span_s
+    speeds = tuple(
+        observation.speed_kmh
+        for observation in speed_observations
+        if start_t_s <= observation.t_s <= end_t_s
+    )
+    if len(speeds) < 2:
+        return False
+    speed_delta = max(speeds) - min(speeds)
+    relative_threshold = _UNSTABLE_SPEED_REL_DELTA * max(1.0, max(speeds))
+    return speed_delta >= max(_UNSTABLE_SPEED_ABS_DELTA_KMH, relative_threshold)
 
 
 def _baseline_phase_state(

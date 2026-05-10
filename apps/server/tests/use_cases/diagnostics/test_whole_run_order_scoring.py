@@ -95,6 +95,7 @@ def _point(
     vibration_strength_db: float | None = None,
     strongest_location: str | None = None,
     ref_source: str | None = "speed+tire",
+    window_quality_reasons: tuple[str, ...] = (),
 ) -> OrderTracePoint:
     return OrderTracePoint(
         hypothesis_key=hypothesis_key,
@@ -112,6 +113,8 @@ def _point(
         vibration_strength_db=vibration_strength_db,
         ref_source=ref_source if eligible else None,
         strongest_location=strongest_location,
+        window_quality_state="limited" if window_quality_reasons else "usable",
+        window_quality_reasons=window_quality_reasons,
     )
 
 
@@ -299,6 +302,28 @@ def test_summarize_whole_run_order_traces_degrades_partial_reference_explicitly(
     assert full_reference.reference_coverage_ratio == 0.5
     assert partial_reference.reference_coverage_ratio == 0.25
     assert full_reference.lock_score > partial_reference.lock_score
+
+
+def test_summarize_whole_run_order_traces_caps_lock_when_speed_context_is_weak() -> None:
+    labels = tuple(_label(index) for index in range(6))
+    points = tuple(
+        _point(
+            index,
+            matched=True,
+            relative_error=0.01,
+            peak_intensity_db=18.0,
+            vibration_strength_db=12.0,
+            strongest_location="Front Left",
+            window_quality_reasons=("speed_unstable",),
+        )
+        for index in range(6)
+    )
+
+    summary = summarize_whole_run_order_traces(points=points, context_labels=labels)[0]
+
+    assert summary.lock_score == 0.45
+    assert summary.speed_context_limited_window_count == 6
+    assert summary.limited_window_count == 6
 
 
 def test_summarize_whole_run_order_traces_is_deterministic() -> None:

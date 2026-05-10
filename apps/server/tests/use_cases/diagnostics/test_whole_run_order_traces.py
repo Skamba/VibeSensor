@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 from test_support.report_helpers import diagnostics_context, wheel_metadata
 from test_support.sample_scenarios import make_analysis_sample
@@ -384,6 +386,31 @@ def test_build_whole_run_order_trace_artifact_bundle_suppresses_shock_windows() 
     assert "shock_transient" in shock_point.window_quality_reasons
     assert wheel_1x_by_window[0].matched
     assert wheel_1x_by_window[2].matched
+
+
+def test_build_whole_run_order_trace_artifact_bundle_propagates_speed_context_quality() -> None:
+    labels = tuple(
+        replace(
+            label,
+            speed_validity="assumed",
+            speed_source="manual",
+            speed_context_reasons=("speed_assumed",),
+        )
+        for label in _context_labels(speeds=(60.0, 60.0, 60.0))
+    )
+
+    trace_bundle = _trace_bundle_for(context_labels=labels)
+    wheel_1x = [
+        point
+        for point in trace_bundle.points
+        if point.hypothesis_key == "wheel_1x" and point.harmonic == 1
+    ]
+    summary = _wheel_1x_summary(_summary_bundle_for(context_labels=labels))
+
+    assert all(point.matched for point in wheel_1x)
+    assert all("speed_assumed" in point.window_quality_reasons for point in wheel_1x)
+    assert summary.speed_context_limited_window_count == 3
+    assert summary.lock_score == 0.45
 
 
 def test_build_whole_run_order_trace_artifact_bundle_is_deterministic() -> None:

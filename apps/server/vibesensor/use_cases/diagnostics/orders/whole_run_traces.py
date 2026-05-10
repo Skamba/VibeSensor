@@ -232,6 +232,7 @@ def _representative_window_quality(
                 context_coverage=context_label.context_coverage,
                 speed_validity=context_label.speed_validity,
                 rpm_validity=context_label.rpm_validity,
+                speed_context_reasons=context_label.speed_context_reasons,
             )
         )
     if not qualities:
@@ -261,6 +262,7 @@ def _best_sensor_peak_match(
             context_coverage=context_label.context_coverage,
             speed_validity=context_label.speed_validity,
             rpm_validity=context_label.rpm_validity,
+            speed_context_reasons=context_label.speed_context_reasons,
         )
         if window_quality.state == "excluded":
             continue

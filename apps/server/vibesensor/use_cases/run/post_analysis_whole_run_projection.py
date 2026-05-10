@@ -250,6 +250,15 @@ def append_whole_run_context(
     analysis_metadata["whole_run_context_stale_speed_window_count"] = sum(
         1 for label in bundle.labels if label.speed_is_stale
     )
+    analysis_metadata["whole_run_context_low_speed_window_count"] = sum(
+        1 for label in bundle.labels if "speed_low" in label.speed_context_reasons
+    )
+    analysis_metadata["whole_run_context_unstable_speed_window_count"] = sum(
+        1 for label in bundle.labels if "speed_unstable" in label.speed_context_reasons
+    )
+    analysis_metadata["whole_run_context_assumed_speed_window_count"] = sum(
+        1 for label in bundle.labels if "speed_assumed" in label.speed_context_reasons
+    )
     analysis_metadata["whole_run_context_stale_rpm_window_count"] = sum(
         1 for label in bundle.labels if label.rpm_is_stale
     )
