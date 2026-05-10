@@ -7,7 +7,6 @@ import time
 from collections.abc import Mapping
 from threading import RLock
 from typing import TYPE_CHECKING
-from uuid import uuid4
 
 import numpy as np
 from opentelemetry.trace import SpanKind
@@ -23,16 +22,12 @@ from vibesensor.shared.ports import (
     SpeedProvider,
 )
 from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
-    RawCaptureLossStats,
-    RawCaptureManifest,
     RawCaptureSensorClockSync,
 )
-from vibesensor.shared.types.run_schema import RunRawCaptureFinalize, RunSensorMetadata
-from vibesensor.shared.types.sensor_config import SensorConfigPayload
+from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.finalize_stages import (
@@ -49,15 +44,12 @@ from vibesensor.use_cases.run.persistence_writer import (
 )
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
+from vibesensor.use_cases.run.raw_capture_finalize_registry import RawCaptureFinalizeRegistry
 from vibesensor.use_cases.run.raw_capture_writer import (
     RawCaptureFinalizeResult,
     RunRawCaptureWriter,
 )
-from vibesensor.use_cases.run.run_context import build_run_context_snapshot
-from vibesensor.use_cases.run.run_sensor_snapshot import (
-    build_run_sensor_snapshot,
-    capture_run_sensor_snapshots,
-)
+from vibesensor.use_cases.run.recording_session import RunRecordingSessionService
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
     RunRecorderStatusSnapshot,
@@ -71,6 +63,9 @@ if TYPE_CHECKING:
     from vibesensor.domain import RunContextSnapshot
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
     from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
+    from vibesensor.shared.types.raw_capture import RawCaptureManifest
+    from vibesensor.shared.types.run_schema import RunSensorMetadata
+    from vibesensor.shared.types.sensor_config import SensorConfigPayload
     from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 
 LOGGER = logging.getLogger(__name__)
@@ -116,9 +111,6 @@ class RunRecorder:
         self._lock = RLock()
         self._history_db = history_db
         self._language_reader = language_reader
-        self._live_start_mono_s = time.monotonic()
-        self._active_run_context: RunContextSnapshot | None = None
-        self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
         self._capture_readiness = CaptureReadinessTracker()
 
         self._lifecycle = RunLifecycleState(
@@ -158,15 +150,31 @@ class RunRecorder:
             ),
             late_finalize_callback=self._handle_late_raw_capture_finalize_result,
         )
+        self._raw_capture_finalize_registry = RawCaptureFinalizeRegistry(logger=LOGGER)
+        self._recording_session = RunRecordingSessionService(
+            lock=self._lock,
+            registry=self.registry,
+            processor=self.processor,
+            settings_reader=settings_reader,
+            sensor_metadata_reader=sensor_metadata_reader,
+            lifecycle=self._lifecycle,
+            persistence=self._persistence,
+            raw_capture=self._raw_capture,
+            analysis_settings_snapshot=self._analysis_settings_snapshot,
+            active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
+            monotonic=lambda: time.monotonic(),
+        )
 
         self._sample_flush = SampleFlushOrchestrator(
             registry=self.registry,
             gps_monitor=self.gps_monitor,
             processor=self.processor,
-            analysis_settings_snapshot=self._recording_analysis_settings_snapshot,
+            analysis_settings_snapshot=self._recording_session.recording_analysis_settings_snapshot,
             default_sample_rate_hz=self.default_sample_rate_hz,
             sensor_metadata_reader=sensor_metadata_reader,
-            run_sensor_presentation_resolver=self._resolve_run_sensor_presentation,
+            run_sensor_presentation_resolver=(
+                self._recording_session.resolve_run_sensor_presentation
+            ),
             lifecycle=self._lifecycle,
             persistence=self._persistence,
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
@@ -176,9 +184,6 @@ class RunRecorder:
 
         with self._lock:
             self._persistence.reset()
-        self._run_ingest_drop_baseline: dict[str, int] | None = None
-        self._finalized_raw_capture_manifests: dict[str, RawCaptureManifest] = {}
-        self._raw_capture_finalize_results: dict[str, RunRawCaptureFinalize] = {}
 
     @property
     def enabled(self) -> bool:
@@ -196,6 +201,10 @@ class RunRecorder:
     def _run_id(self) -> str | None:
         return self._lifecycle.run_id
 
+    @property
+    def _live_start_mono_s(self) -> float:
+        return self._recording_session.live_start_mono_s
+
     def _run_id_matches(self, run_id: str) -> bool:
         current = self._lifecycle.current_run
         return current is not None and current.run_id == run_id
@@ -204,47 +213,22 @@ class RunRecorder:
         return _recorder_runtime.analysis_settings_snapshot(self._settings_reader)
 
     def _raw_capture_manifest_for_run(self, run_id: str) -> RawCaptureManifest | None:
-        return self._finalized_raw_capture_manifests.get(run_id)
+        return self._raw_capture_finalize_registry.manifest_for_run(run_id)
 
     def _raw_capture_finalize_for_run(self, run_id: str) -> RunRawCaptureFinalize | None:
-        return self._raw_capture_finalize_results.get(run_id)
+        return self._raw_capture_finalize_registry.finalize_for_run(run_id)
 
     def _live_run_context_snapshot(self) -> RunContextSnapshot:
-        active_car_snapshot = (
-            self._settings_reader.active_car_snapshot()
-            if self._settings_reader is not None
-            else None
-        )
-        return build_run_context_snapshot(
-            analysis_settings_snapshot=self._analysis_settings_snapshot(),
-            active_car_snapshot=active_car_snapshot,
-        )
+        return self._recording_session.live_run_context_snapshot()
 
     def _run_context_snapshot(self, run_id: str | None = None) -> RunContextSnapshot:
-        with self._lock:
-            current_run = self._lifecycle.current_run
-            active_run_context = self._active_run_context
-            if (
-                active_run_context is not None
-                and current_run is not None
-                and current_run.is_recording
-                and (run_id is None or current_run.run_id == run_id)
-            ):
-                return active_run_context
-        return self._live_run_context_snapshot()
+        return self._recording_session.run_context_snapshot(run_id)
 
     def _recording_analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
-        return self._run_context_snapshot().analysis_settings
+        return self._recording_session.recording_analysis_settings_snapshot()
 
     def _run_sensor_snapshots_for_run(self, run_id: str) -> tuple[RunSensorMetadata, ...]:
-        with self._lock:
-            current_run = self._lifecycle.current_run
-            if current_run is None or current_run.run_id != run_id:
-                return tuple()
-            return tuple(
-                self._run_sensor_snapshots[client_id]
-                for client_id in sorted(self._run_sensor_snapshots)
-            )
+        return self._recording_session.run_sensor_snapshots_for_run(run_id)
 
     def _resolve_run_sensor_presentation(
         self,
@@ -256,52 +240,21 @@ class RunRecorder:
         firmware_version: str | None,
         sensors_by_mac: Mapping[str, SensorConfigPayload],
     ) -> tuple[str, str]:
-        with self._lock:
-            snapshot = self._run_sensor_snapshots.get(client_id)
-            if snapshot is None:
-                snapshot = build_run_sensor_snapshot(
-                    sensor_id=client_id,
-                    fallback_name=fallback_name,
-                    fallback_location_code=fallback_location_code,
-                    sample_rate_hz=sample_rate_hz,
-                    firmware_version=firmware_version,
-                    sensors_by_mac=sensors_by_mac,
-                )
-                self._run_sensor_snapshots[client_id] = snapshot
-            return snapshot.display_name, snapshot.location_code
+        return self._recording_session.resolve_run_sensor_presentation(
+            client_id=client_id,
+            fallback_name=fallback_name,
+            fallback_location_code=fallback_location_code,
+            sample_rate_hz=sample_rate_hz,
+            firmware_version=firmware_version,
+            sensors_by_mac=sensors_by_mac,
+        )
 
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         with self._lock:
             return self._lifecycle.snapshot()
 
     def _start_new_run_locked(self) -> ActiveRunSnapshot:
-        for client_id in self.registry.active_client_ids():
-            self.processor.flush_client_buffer(
-                client_id,
-                reason="recording run start",
-            )
-        run_context = self._live_run_context_snapshot()
-        snapshot = self._lifecycle.start_new_run(
-            run_id=uuid4().hex,
-            analysis_settings_snapshot=run_context.analysis_settings,
-            start_time_utc=utc_now_iso(),
-            start_mono_s=time.monotonic(),
-            current_total=_recorder_runtime.active_frames_total(self.registry),
-        )
-        self._active_run_context = run_context
-        self._run_sensor_snapshots = capture_run_sensor_snapshots(
-            client_ids=self.registry.active_client_ids(),
-            registry=self.registry,
-            sensor_metadata_reader=self._sensor_metadata_reader,
-        )
-        self._persistence.reset()
-        self._live_start_mono_s = snapshot.start_mono_s
-        self._raw_capture.start_run(
-            snapshot.run_id,
-            run_start_monotonic_us=int(round(snapshot.start_mono_s * 1_000_000.0)),
-        )
-        self._run_ingest_drop_baseline = _snapshot_server_queue_drops(self.registry)
-        return snapshot
+        return self._recording_session.start_new_run()
 
     def capture_raw_samples(
         self,
@@ -388,10 +341,7 @@ class RunRecorder:
             run_id=self._run_id,
             start_time_utc=self._lifecycle.start_time_utc,
             stop_reason=reason,
-            ingest_drop_losses=_udp_ingest_drop_sensor_losses(
-                self.registry,
-                baseline=self._run_ingest_drop_baseline,
-            ),
+            ingest_drop_losses=self._recording_session.ingest_drop_losses(),
             sample_flush=self._sample_flush,
             persistence=self._persistence,
             raw_capture=self._raw_capture,
@@ -509,10 +459,8 @@ class RunRecorder:
                             finalize_result.persistence_snapshot.dropped_sample_count,
                         )
                     self._lifecycle.stop()
-                    self._active_run_context = None
-                    self._run_sensor_snapshots = {}
                     self._persistence.reset()
-                    self._run_ingest_drop_baseline = None
+                    self._recording_session.clear_stopped_run()
                     result = self.status()
             except Exception as exc:
                 mark_span_error(span, exc)
@@ -565,25 +513,7 @@ class RunRecorder:
         run_id: str,
         result: RawCaptureFinalizeResult,
     ) -> None:
-        self._raw_capture_finalize_results[run_id] = RunRawCaptureFinalize(
-            status=result.status,
-            queue_depth=result.queue_depth,
-            error_summary=result.error,
-        )
-        if result.manifest is not None:
-            self._finalized_raw_capture_manifests[run_id] = result.manifest
-        if result.completed or result.status == "not_configured":
-            return
-        LOGGER.warning(
-            "raw_capture_finalize_degraded",
-            extra=log_extra(
-                event="raw_capture_finalize_degraded",
-                run_id=run_id,
-                raw_capture_finalize_status=result.status,
-                raw_capture_queue_depth=result.queue_depth,
-                raw_capture_error=result.error,
-            ),
-        )
+        self._raw_capture_finalize_registry.record_result(run_id, result)
 
     def _handle_late_raw_capture_finalize_result(
         self,
@@ -591,11 +521,9 @@ class RunRecorder:
         result: RawCaptureFinalizeResult,
     ) -> None:
         with self._lock:
-            previous = self._raw_capture_finalize_results.get(run_id)
-            if previous is not None and previous.status != "timeout":
+            finalized = self._raw_capture_finalize_registry.record_late_result(run_id, result)
+            if finalized is None:
                 return
-            self._record_raw_capture_finalize_result(run_id, result)
-            finalized = self._raw_capture_finalize_results[run_id]
         if not self._persistence.update_raw_capture_finalize(run_id, finalized):
             LOGGER.warning(
                 "late_raw_capture_finalize_metadata_update_failed",
@@ -682,40 +610,3 @@ def _raw_capture_clock_proof_state(
 def _int_attr(value: object, name: str) -> int | None:
     raw_value = getattr(value, name, None)
     return int(raw_value) if isinstance(raw_value, int) else None
-
-
-def _snapshot_server_queue_drops(registry: ClientTracker) -> dict[str, int]:
-    client_ids: set[str] = set()
-    client_snapshots = getattr(registry, "client_snapshots", None)
-    if callable(client_snapshots):
-        for client_snapshot in client_snapshots():
-            client_id = str(getattr(client_snapshot, "client_id", "") or "").strip()
-            if client_id:
-                client_ids.add(client_id)
-    else:
-        client_ids.update(str(client_id) for client_id in registry.active_client_ids())
-    queue_drop_snapshot: dict[str, int] = {}
-    for client_id in sorted(client_ids):
-        record = registry.get(client_id)
-        if record is None:
-            continue
-        queue_drop_snapshot[client_id] = _int_attr(record, "server_queue_drops") or 0
-    return queue_drop_snapshot
-
-
-def _udp_ingest_drop_sensor_losses(
-    registry: ClientTracker,
-    *,
-    baseline: dict[str, int] | None,
-) -> dict[str, RawCaptureLossStats] | None:
-    current = _snapshot_server_queue_drops(registry)
-    client_ids = set(current) | set(baseline or {})
-    if not client_ids:
-        return None
-    losses: dict[str, RawCaptureLossStats] = {}
-    for client_id in sorted(client_ids):
-        delta = max(0, current.get(client_id, 0) - (baseline or {}).get(client_id, 0))
-        if delta <= 0:
-            continue
-        losses[client_id] = RawCaptureLossStats(udp_ingest_queue_drop_count=delta)
-    return losses or None
