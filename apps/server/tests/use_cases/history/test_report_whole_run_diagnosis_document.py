@@ -100,6 +100,18 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
                 "weak_spatial_separation": False,
                 "has_reference_gap": False,
                 "uses_summary_fallback": False,
+                "data_quality_summary": {
+                    "usable_window_count": 10,
+                    "limited_window_count": 2,
+                    "excluded_window_count": 1,
+                    "mean_quality_score": 0.78,
+                    "speed_context_limited_window_count": 2,
+                    "sensor_timing_integrity_window_count": 0,
+                    "sensor_mounting_artifact_window_count": 0,
+                    "sensor_clipping_window_count": 0,
+                    "shock_transient_window_count": 0,
+                    "limitation_keys": ["speed_context"],
+                },
                 "support_factors": [
                     {
                         "factor_key": "raw_backed",
@@ -146,6 +158,18 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
                 "weak_spatial_separation": False,
                 "has_reference_gap": False,
                 "uses_summary_fallback": False,
+                "data_quality_summary": {
+                    "usable_window_count": 9,
+                    "limited_window_count": 0,
+                    "excluded_window_count": 0,
+                    "mean_quality_score": 0.92,
+                    "speed_context_limited_window_count": 0,
+                    "sensor_timing_integrity_window_count": 0,
+                    "sensor_mounting_artifact_window_count": 0,
+                    "sensor_clipping_window_count": 0,
+                    "shock_transient_window_count": 0,
+                    "limitation_keys": [],
+                },
                 "support_factors": [],
                 "counterevidence_factors": [],
                 "exemplar_references": [],
@@ -163,6 +187,9 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
     assert document.appendix_b.runner_up_corner == "Front-Left"
     assert document.appendix_a.ranked_candidates[0].source_name == "Driveline"
     assert document.appendix_a.ranked_candidates[1].source_name == "Wheel / Tire"
+    assert "quality limited" in document.appendix_a.ranked_candidates[0].reason
+    assert "speed context" in document.appendix_a.ranked_candidates[0].reason
+    assert "quality clean" in document.appendix_a.ranked_candidates[1].reason
     assert prepared.report_facts.confidence.signal_keys == ("raw_backed",)
     assert prepared.report_facts.confidence.caveat_keys == ("close_alternative",)
     assert any(

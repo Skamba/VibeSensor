@@ -11,12 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.shared.types.history_analysis_contracts import (
+    DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES,
     DIAGNOSIS_EXEMPLAR_KIND_VALUES,
     DIAGNOSIS_FACTOR_KEY_VALUES,
     DIAGNOSIS_FACTOR_POLARITY_VALUES,
     DIAGNOSIS_FACTOR_SEVERITY_VALUES,
     LOCATION_PROOF_BASIS_VALUES,
     WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES,
+    DiagnosisDataQualityLimitation,
     DiagnosisExemplarKind,
     DiagnosisFactorKey,
     DiagnosisFactorPolarity,
@@ -52,6 +54,7 @@ from vibesensor.shared.types.whole_run_json_helpers import (
 
 __all__ = [
     "DiagnosisExemplarReference",
+    "DiagnosisDataQualitySummary",
     "DiagnosisFactor",
     "DiagnosisFactorDetails",
     "WholeRunDiagnosisSummary",
@@ -234,6 +237,84 @@ class DiagnosisFactor:
         )
 
 
+def _require_nonnegative(value: int, *, field_name: str) -> None:
+    if value < 0:
+        raise ValueError(f"{field_name} must be >= 0")
+
+
+@dataclass(frozen=True, slots=True)
+class DiagnosisDataQualitySummary:
+    """Compact persisted data-quality rollup for one fused diagnosis."""
+
+    usable_window_count: int | None = None
+    limited_window_count: int | None = None
+    excluded_window_count: int | None = None
+    mean_quality_score: float | None = None
+    speed_context_limited_window_count: int = 0
+    sensor_timing_integrity_window_count: int = 0
+    sensor_mounting_artifact_window_count: int = 0
+    sensor_clipping_window_count: int = 0
+    shock_transient_window_count: int = 0
+    limitation_keys: tuple[DiagnosisDataQualityLimitation, ...] = ()
+
+    def __post_init__(self) -> None:
+        for field_name, value in (
+            ("usable_window_count", self.usable_window_count),
+            ("limited_window_count", self.limited_window_count),
+            ("excluded_window_count", self.excluded_window_count),
+        ):
+            if value is not None:
+                _require_nonnegative(value, field_name=field_name)
+        for field_name, value in (
+            ("speed_context_limited_window_count", self.speed_context_limited_window_count),
+            ("sensor_timing_integrity_window_count", self.sensor_timing_integrity_window_count),
+            ("sensor_mounting_artifact_window_count", self.sensor_mounting_artifact_window_count),
+            ("sensor_clipping_window_count", self.sensor_clipping_window_count),
+            ("shock_transient_window_count", self.shock_transient_window_count),
+        ):
+            _require_nonnegative(value, field_name=field_name)
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {
+            "speed_context_limited_window_count": self.speed_context_limited_window_count,
+            "sensor_timing_integrity_window_count": self.sensor_timing_integrity_window_count,
+            "sensor_mounting_artifact_window_count": self.sensor_mounting_artifact_window_count,
+            "sensor_clipping_window_count": self.sensor_clipping_window_count,
+            "shock_transient_window_count": self.shock_transient_window_count,
+            "limitation_keys": list(self.limitation_keys),
+        }
+        _set_optional(payload, "usable_window_count", self.usable_window_count)
+        _set_optional(payload, "limited_window_count", self.limited_window_count)
+        _set_optional(payload, "excluded_window_count", self.excluded_window_count)
+        _set_optional(payload, "mean_quality_score", self.mean_quality_score)
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> DiagnosisDataQualitySummary:
+        return cls(
+            usable_window_count=_optional_int(data.get("usable_window_count")),
+            limited_window_count=_optional_int(data.get("limited_window_count")),
+            excluded_window_count=_optional_int(data.get("excluded_window_count")),
+            mean_quality_score=_optional_float(data.get("mean_quality_score")),
+            speed_context_limited_window_count=(
+                _optional_int(data.get("speed_context_limited_window_count")) or 0
+            ),
+            sensor_timing_integrity_window_count=(
+                _optional_int(data.get("sensor_timing_integrity_window_count")) or 0
+            ),
+            sensor_mounting_artifact_window_count=(
+                _optional_int(data.get("sensor_mounting_artifact_window_count")) or 0
+            ),
+            sensor_clipping_window_count=(
+                _optional_int(data.get("sensor_clipping_window_count")) or 0
+            ),
+            shock_transient_window_count=(
+                _optional_int(data.get("shock_transient_window_count")) or 0
+            ),
+            limitation_keys=_data_quality_limitations_from_json(data.get("limitation_keys")),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class WholeRunDiagnosisSummary:
     """Compact persisted/report-facing summary for one fused whole-run diagnosis."""
@@ -268,6 +349,7 @@ class WholeRunDiagnosisSummary:
     has_reference_gap: bool = False
     uses_summary_fallback: bool = False
     fallback_reason: str | None = None
+    data_quality_summary: DiagnosisDataQualitySummary = DiagnosisDataQualitySummary()
     exemplar_references: tuple[DiagnosisExemplarReference, ...] = ()
     support_factors: tuple[DiagnosisFactor, ...] = ()
     counterevidence_factors: tuple[DiagnosisFactor, ...] = ()
@@ -321,6 +403,7 @@ class WholeRunDiagnosisSummary:
         _set_optional(payload, "alternative_source", self.alternative_source)
         _set_optional(payload, "confidence_gap_to_alternative", self.confidence_gap_to_alternative)
         _set_optional(payload, "fallback_reason", self.fallback_reason)
+        payload["data_quality_summary"] = self.data_quality_summary.to_json_object()
         return payload
 
     @classmethod
@@ -358,6 +441,7 @@ class WholeRunDiagnosisSummary:
             has_reference_gap=_required_bool(data, "has_reference_gap"),
             uses_summary_fallback=_required_bool(data, "uses_summary_fallback"),
             fallback_reason=_optional_text(data.get("fallback_reason")),
+            data_quality_summary=_data_quality_summary_from_json(data.get("data_quality_summary")),
             exemplar_references=_tuple_from_mapping_list_field(
                 data,
                 "exemplar_references",
@@ -380,11 +464,6 @@ def _require_text(value: object, *, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value
-
-
-def _require_nonnegative(value: int, *, field_name: str) -> None:
-    if value < 0:
-        raise ValueError(f"{field_name} must be >= 0")
 
 
 def _required_text(data: JsonObject, field_name: str) -> str:
@@ -475,3 +554,50 @@ def _optional_int(value: object) -> int | None:
 
 def _optional_text(value: object) -> str | None:
     return _non_empty_text_or_none(value, strict=True)
+
+
+def _data_quality_summary_from_json(value: object) -> DiagnosisDataQualitySummary:
+    if isinstance(value, dict):
+        return DiagnosisDataQualitySummary.from_mapping(value)
+    return DiagnosisDataQualitySummary()
+
+
+def _data_quality_limitations_from_json(
+    value: object,
+) -> tuple[DiagnosisDataQualityLimitation, ...]:
+    if not isinstance(value, list):
+        return ()
+    limitations: list[DiagnosisDataQualityLimitation] = []
+    seen: set[str] = set()
+    for item in value:
+        limitation = _data_quality_limitation_from_json(item)
+        if limitation is not None and limitation not in seen:
+            limitations.append(limitation)
+            seen.add(limitation)
+    return tuple(limitations)
+
+
+def _data_quality_limitation_from_json(value: object) -> DiagnosisDataQualityLimitation | None:
+    if not isinstance(value, str) or value not in DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES:
+        return None
+    if value == "reference_gap":
+        return "reference_gap"
+    if value == "speed_context":
+        return "speed_context"
+    if value == "sensor_timing":
+        return "sensor_timing"
+    if value == "sensor_mounting":
+        return "sensor_mounting"
+    if value == "sensor_clipping":
+        return "sensor_clipping"
+    if value == "road_shock":
+        return "road_shock"
+    if value == "weak_spatial":
+        return "weak_spatial"
+    if value == "ambiguous_location":
+        return "ambiguous_location"
+    if value == "summary_fallback":
+        return "summary_fallback"
+    if value == "window_quality":
+        return "window_quality"
+    return None

@@ -119,6 +119,7 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
     analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
     diagnosis_summary = schema_dict["components"]["schemas"]["WholeRunDiagnosisSummaryResponse"]
+    diagnosis_quality = schema_dict["components"]["schemas"]["DiagnosisDataQualitySummaryResponse"]
     diagnosis_factor = schema_dict["components"]["schemas"]["DiagnosisFactorResponse"]
     finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
     car_gearbox = schema_dict["components"]["schemas"]["CarLibraryGearboxEntry"]
@@ -194,6 +195,12 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     }
     assert diagnosis_summary["properties"]["counterevidence_factors"]["items"] == {
         "$ref": "#/components/schemas/DiagnosisFactorResponse",
+    }
+    assert diagnosis_summary["properties"]["data_quality_summary"] == {
+        "$ref": "#/components/schemas/DiagnosisDataQualitySummaryResponse",
+    }
+    assert diagnosis_quality["properties"]["limitation_keys"]["items"] == {
+        "$ref": "#/components/schemas/DiagnosisDataQualityLimitation",
     }
     assert diagnosis_factor["properties"]["details"] == {
         "$ref": "#/components/schemas/DiagnosisFactorDetailsResponse",
