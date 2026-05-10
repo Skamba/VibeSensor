@@ -1,521 +1,180 @@
 # Testing
 
-## Key locations
+High-traffic validation router. Keep this concise; use Makefile targets and scripts as the source of executable truth.
 
-- Server tests live under `apps/server/tests/`.
-- UI validation lives under `apps/ui/` (Biome format/lint, Vite build/typecheck, and Playwright browser checks).
-- Firmware build/flash guidance lives in `firmware/esp/README.md`.
-- Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
-- `make format` is the canonical Python formatting command for backend and tooling files; no other Python formatter is supported in the repo workflow.
-- Use `make plan-validation` first to turn the current diff into the CI-backed validation plan.
-- Use `./.venv/bin/python tools/tests/plan_validation.py --run` to run that plan through the non-Docker local runner.
-- Use `./.venv/bin/python tools/tests/plan_validation.py --act` when you need ACT/GitHub-workflow parity for the planned jobs.
-- Use `make test-ci-fast` for lint, docs, static guards, and type checks without browser, release, firmware, e2e, or backend test suites.
-- Use `make test-ci-lite` for the larger non-Docker workflow surface except e2e; it still includes backend shards, UI smoke, release smoke, and firmware native tests.
-- Local `shell-lint` parity requires host `shellcheck`; `make doctor` reports it, and ACT/GitHub CI install it inside the workflow job.
-- Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file. Use `make benchmark-golden-replay` for the opt-in 30-minute dense post-run golden replay runtime/memory check. For direct `--benchmark-only` pytest runs, add `-o addopts=''` so the default xdist addopts do not disable benchmark mode.
-- Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
-- The full end-to-end verification runner is `make test-full-suite` (`./.venv/bin/python tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
-- `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time. It also accepts `--xdist-workers` / `VIBESENSOR_BACKEND_XDIST_WORKERS` for controlled intra-shard xdist; CI currently pins that to `3` because the current five-shard benchmark beat the nearby `5x2`, `4x3`, `4x2`, and `6x2` alternatives without changing shard count or the failure/JUnit surface. Retune only from fresh measurements, not guesswork.
-- `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
-- Python test configuration lives in `apps/server/pyproject.toml`.
-- Backend pytest runs through `pytest-randomly`, which randomizes test module, class, and function order on every run and prints the active seed in the header (e.g. `Using --randomly-seed=1234567890`). Reproduce a failing run with `pytest --randomly-seed=<seed> ...`, pinning to the reported value. Disable per run with `-p no:randomly` only when isolating a tooling issue, not to mask a real order-dependent failure.
-- Use `pytest-httpx` for backend outbound HTTP boundary tests around `httpx` clients; prefer it over monkeypatching low-level request functions when the goal is to assert request URLs, methods, payloads, status codes, and transport failures.
-- Use the shared MSW helpers under `apps/ui/tests/msw/` for frontend HTTP-boundary tests; they normalize relative `/api/...` requests onto the test origin and fail unhandled requests loudly by default.
-- Use `cd apps/ui && npm run dev:mock` for the optional browser-worker MSW mode when you need to exercise the UI without a live backend HTTP stack. That mode keeps unmocked HTTP requests on bypass, does not mock WebSockets, and has a dedicated smoke entrypoint at `cd apps/ui && npm run test:smoke:mock`.
-- Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py`, and repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`; both run via `make lint`.
-- Committed test-looking files are inventory-guarded in `tools/dev/check_hygiene.py`. New `test_*.py`, `*.spec.ts`, `benchmark_*.py`, and `firmware/esp/test/**/test_main.cpp` files must either map to a runner or, for intentional standalone benchmark scripts, carry a reason in `tools/dev/test_inventory_allowlist.yml`.
-- Pytest marker usage is also guardrailed in `tools/dev/check_hygiene.py`, with compact-path `smoke`, opt-in `long_sim`, and any `tests_e2e` file exemptions documented in `tools/dev/test_marker_policy_allowlist.yml`. The fast E2E lane uses `e2e and not long_sim`.
-- Oversized tracked test/spec files are guarded in `tools/dev/check_hygiene.py` with the allowlist at `tools/dev/oversized_test_allowlist.yml`. Files at or above the shared threshold must either be split or carry an explicit allowlist reason, and the hygiene output always prints the current largest tracked test/spec files.
-- `make sync-contracts` is the authoritative contract/doc regeneration path; `make lint` and the `backend-contract-drift` CI job run it in `--check` mode.
+## Quick router
 
-### Frontend HTTP tests with MSW
+- Start with `make plan-validation` to turn the current diff into a CI-backed plan.
+- Run planned non-Docker jobs with `./.venv/bin/python tools/tests/plan_validation.py --run`.
+- Use `./.venv/bin/python tools/tests/plan_validation.py --act` or `./tools/tests/run_ci_with_act.sh` only when GitHub workflow/Docker parity is needed.
+- Docs/instruction-only changes: `make docs-lint` plus `make plan-validation`.
+- Fast broad gate: `make test-ci-fast` for lint, docs, static guards, and type checks without heavy suites.
+- Larger non-Docker gate: `make test-ci-lite` for workflow jobs except e2e.
+- Backend iteration: `make test` or targeted `pytest -q apps/server/tests/<module>/`.
+- UI validation: `make ui-typecheck`; add UI test/build commands below when the changed seam requires them.
+- Firmware and Pi image validation: use the narrow commands below; avoid hardware/full image builds unless required.
+- Local `shell-lint` parity needs host `shellcheck`; `make doctor` reports prerequisites. Use ACT for the workflow-managed install path.
 
-Use MSW only for frontend tests that intentionally cross the real HTTP boundary.
-
-- Install the shared lifecycle from `apps/ui/tests/msw/node.ts` for Playwright
-  specs that call the real UI HTTP client. It rewrites relative `/api/...`
-  requests onto the test origin and throws on unhandled requests so missing
-  handlers fail loudly.
-- Keep reusable feature handlers in `apps/ui/tests/msw/handlers/` and cross-feature
-  primitives in `apps/ui/tests/msw/http.ts`. Follow the existing naming pattern:
-  `build<Feature>Handlers(...)`, `build<Feature><Scenario>Handlers(...)`, and
-  `make<Feature><Thing>Payload(...)`.
-- Prefer those shared scenario helpers over ad hoc `globalThis.fetch`
-  replacement when multiple specs in the same feature area need the same HTTP
-  behavior.
-- Do not add MSW to tests that already inject transport ports or stay inside
-  pure presenter/view/state seams. Those tests should remain network-free.
-- WebSocket mocking is outside the MSW boundary here; keep using the dedicated
-  fake WebSocket helpers for live-session flows.
-
-## Layout
-
-The test tree is feature-based. Most directories mirror the backend package or module they cover.
-
-```text
-apps/server/tests/
-├── _paths.py
-├── conftest.py
-├── test_support/
-├── adapters/
-├── app/
-├── domain/
-├── hygiene/
-├── infra/
-├── integration/
-├── shared/
-└── use_cases/
-```
-
-Older flat roots such as `analysis/`, `api/`, `config/`, `gps/`, `history/`,
-`hotspot/`, `metrics_log/`, `processing/`, `protocol/`, `report/`, `update/`,
-and `websocket/` were consolidated into the mirrored tree above. Do not create
-new top-level flat roots; use the matching mirrored area unless the test is
-intentionally cross-cutting.
-
-## Where tests belong
-
-| If you change... | Start with... |
-|---|---|
-| `vibesensor/adapters/http/*` | `apps/server/tests/adapters/http/` |
-| `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | the matching `apps/server/tests/adapters/.../` directory |
-| `vibesensor/app/*` | `apps/server/tests/app/` |
-| `vibesensor/domain/*` | `apps/server/tests/domain/` |
-| `vibesensor/infra/{config,processing,runtime,workers}/*` | the matching `apps/server/tests/infra/.../` directory |
-| `vibesensor/shared/boundaries/*`, `vibesensor/shared/types/sensor_frame.py`, shared helper utilities | `apps/server/tests/shared/` |
-| Shared types and metadata contracts used across the domain boundary (`run_schema`, `car_config`, `sensor_config`, `speed_source_config`, `settings_snapshot`, `settings_types`) | `apps/server/tests/domain/` or `apps/server/tests/shared/` depending on the ownership boundary under test |
-| `vibesensor/use_cases/{diagnostics,history,run,updates}/*` | the matching `apps/server/tests/use_cases/.../` directory |
-
-Use cross-cutting directories when a test is intentionally broader than one package boundary:
-
-- `apps/server/tests/integration/`: scenario, pipeline, multi-module behavior, and bug-fix regressions spanning multiple subsystems.
-- `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
-
-Those two directories are the intentional flat exceptions to the mirrored tree.
-
-Regression tests live alongside the feature they primarily test. Cross-cutting
-regressions that span multiple subsystems go in `integration/`.
-
-Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (shared finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
-
-If a guard needs AST or source-text inspection of production modules, put backend-specific checks in `tools/dev/verify_backend_static_guards.py` and repo/frontend boundary checks in `tools/dev/check_hygiene.py` instead of re-parsing source inside pytest. Hygiene tests should call those helpers through stable module interfaces rather than duplicating the source inspection logic. Oversized test/spec guardrails also belong in `tools/dev/check_hygiene.py`, with intentional exceptions documented in `tools/dev/oversized_test_allowlist.yml` rather than hidden in ad-hoc test code.
-
-## Contract bridge tests
-
-Contract bridge tests live in `apps/server/tests/integration/` and validate that data produced by one subsystem is accepted by the next. They catch schema drift at subsystem boundaries that unit tests miss.
-
-| File | Boundary |
-|---|---|
-| `test_contract_analysis_report.py` | `summarize_run_data()` → `prepare_report_input()` → `build_report_document()` |
-| `test_contract_persistence_analysis.py` | `HistoryDB` write → read → `summarize_run_data()` |
-
-These tests are marked `smoke`, run in standard CI, use minimal synthetic data,
-and complete in under 5 seconds.
-
-## Running tests
-
-Backend/local CI tiers: `make plan-validation` for the CI-backed changed-file plan, `./.venv/bin/python tools/tests/plan_validation.py --run` to execute that plan through the non-Docker local runner, `make test` for backend iteration, `make test-ci-fast` for lint/docs/static/typecheck gates without heavy suites, `make test-ci-lite` for non-Docker workflow jobs except e2e, `make test-all` for the broader local runner, and `./tools/tests/run_ci_with_act.sh` when you need ACT/GitHub-workflow parity. `make ui-typecheck` includes the UI Biome formatter drift check before lint/dependency/type gates. Local `shell-lint` runs need host `shellcheck`; use ACT if you need the workflow-managed install path.
-
-Main local tiers:
+## Command tiers
 
 ```bash
-# CI-backed changed-file validation plan
 make plan-validation
 ./.venv/bin/python tools/tests/plan_validation.py --run
 ./.venv/bin/python tools/tests/plan_validation.py --act
 
-# Changed-file heuristic (current branch vs origin/main, fallback to main)
+make docs-lint
 make test-changed
-
-# Generated dense post-run golden replay subset
-make test-golden-replay
-
-# Fast iteration — backend unit tests
-make test
-
-# Fast non-Docker CI gates, then larger non-Docker CI except e2e
 make test-ci-fast
 make test-ci-lite
-
-# Full local runner
 make test-all
+make test-full-suite
 
-# Explicit backend benchmarks
-make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
-make benchmark-golden-replay BENCHMARK_OPTS="--benchmark-save=golden-replay"
-make benchmark-compare-backend
-
-# GitHub workflow via act (requires Docker); default wrapper is changed-scope
-./tools/tests/run_ci_with_act.sh
-```
-
-Focused feature-area and fuzzing runs:
-
-```bash
 pytest -q apps/server/tests/adapters/pdf/
 pytest -q apps/server/tests/use_cases/history/
 pytest -q apps/server/tests/use_cases/updates/
 pytest -q apps/server/tests/integration/
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
 ```
 
-Explicit backend benchmark files stay out of default CI and normal pytest
-discovery so the blocking lanes do not turn noisy or hardware-sensitive.
-Run them on demand when you need regression evidence and save comparison data
-for later runs with `make benchmark-backend` / `make benchmark-compare-backend`.
-The generated dense post-run golden replay fixtures live in
-`apps/server/tests/test_support/golden_replay.py`; they avoid binary payloads by
-building deterministic raw waveforms and summary context from fixture seeds. Add
-new cases by extending the fixture catalog with expected source, confidence
-range, unavailable context reasons, and tolerance bands, then run
-`make test-golden-replay`. Use `make benchmark-golden-replay` for the opt-in
-30-minute dense replay benchmark. Failed golden runs write compact JSON
-snapshots under the pytest temp directory for debugging.
-
-Focused CI job groups and full-stack validation:
+Benchmarks and fuzzers are opt-in evidence, not default validation:
 
 ```bash
-./.venv/bin/python tools/tests/run_ci_parallel.py --ci-lite
-./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-smoke
-./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
-make test-full-suite
+make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
+make benchmark-golden-replay BENCHMARK_OPTS="--benchmark-save=golden-replay"
+make benchmark-compare-backend
+make test-golden-replay
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
+python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60 --processes 16
 ```
 
-Prefer the Makefile targets after `make setup`; they resolve the repo virtualenv
-Python automatically. Direct local CI runner scripts also self-check the
-`.python-version` major/minor and stop with a targeted setup hint if an ambient
-Python such as system `python3` is wrong.
+Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do not disable benchmark mode.
 
-When multiple selected local jobs have GitHub `needs` relationships,
-`run_ci_parallel.py` runs them in dependency waves and skips selected downstream
-jobs if a selected prerequisite fails. If you select only the downstream job, the
-runner reports the omitted prerequisite so the local-vs-GitHub ordering gap is
-visible. Workflow-only prerequisites that are substituted locally, such as CI
-artifact builder jobs, are reported as non-runnable local dependencies.
+## Backend test placement
 
-`release-smoke` is the packaged-artifact gate. It builds or reuses the server
-wheel, validates packaged static assets, boots the packaged server, and checks
-that `/api/health` reaches readiness. In GitHub CI it now consumes the
-same-commit `release-smoke-ui-static` artifact built after `frontend-typecheck`
-and runs `tools/tests/run_release_smoke.py --skip-ui-build` so the final smoke
-job validates packaged assets without rebuilding the UI from source again. That
-artifact build still runs `npm run sync:generated-contracts` to materialize the
-UI-only derivative files on a fresh checkout, but it now switches to the
-prevalidated-contracts build path instead of re-running the late
-`check:contracts` gate already owned by `backend-contract-drift` and
-`frontend-typecheck`. It is complementary to Docker/e2e validation, not a
-duplicate of it.
+`apps/server/tests/` mirrors backend package ownership:
+
+| Production change | Test start |
+|---|---|
+| `vibesensor/adapters/http/*` | `apps/server/tests/adapters/http/` |
+| `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | matching `apps/server/tests/adapters/.../` |
+| `vibesensor/app/*` | `apps/server/tests/app/` |
+| `vibesensor/domain/*` | `apps/server/tests/domain/` |
+| `vibesensor/infra/{config,processing,runtime,workers}/*` | matching `apps/server/tests/infra/.../` |
+| `vibesensor/shared/*` | `apps/server/tests/shared/` or `domain/` when testing domain-owned contracts |
+| `vibesensor/use_cases/{diagnostics,history,run,updates}/*` | matching `apps/server/tests/use_cases/.../` |
+
+- Cross-cutting regressions go in `apps/server/tests/integration/`.
+- Architecture/repo guards go in `apps/server/tests/hygiene/` or the owning guard script.
+- Shared helpers live in `apps/server/tests/test_support/`.
+- Do not create old flat roots such as `analysis/`, `api/`, `config/`, `gps/`, `history/`, `hotspot/`, `metrics_log/`, `processing/`, `protocol/`, `report/`, `update/`, or `websocket/`.
+- Contract bridge tests live in `apps/server/tests/integration/` and validate subsystem handoffs such as analysis -> report and persistence -> analysis.
+
+## Backend test rules
+
+- Python test config lives in `apps/server/pyproject.toml`.
+- Backend pytest uses `pytest-randomly`; reproduce order failures with the printed `--randomly-seed=<seed>`. Disable it only to isolate tooling, not to hide order-dependence.
+- Use `pytest-httpx` for backend outbound HTTP boundary tests.
+- Put AST/import guards in `tools/dev/verify_backend_static_guards.py`; repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`. Both run via `make lint`.
+- New test-looking files must map to a runner or be explicitly allowed in `tools/dev/test_inventory_allowlist.yml`.
+- Marker policy lives in `tools/dev/test_marker_policy_allowlist.yml`. Use `smoke`, `long_sim`, and `e2e` sparingly.
+- Oversized test/spec guardrails live in `tools/dev/check_hygiene.py`; intentional exceptions require a reason in `tools/dev/oversized_test_allowlist.yml`.
+- For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
 ## Frontend validation
-
-Use the standard UI workflow for `apps/ui/**` changes:
 
 ```bash
 make ui-typecheck
 cd apps/ui && npm run test:unit
 cd apps/ui && npm run build
 cd apps/ui && npm run test:visual
-cd apps/ui && npm run test:visual:audit   # optional broader visual sweep
+cd apps/ui && npm run test:visual:audit
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
 ```
 
-The UI has three test layers; pick the one that matches the seam under test:
+| Layer | Runner | Use for |
+|---|---|---|
+| Unit/integration | `npm run test:unit` | logic below browser boundary, payload decoders, runtime helpers, feature workflows, pure view helpers |
+| Smoke | `npm run test:smoke` | end-to-end flows against a real Vite dev/preview server |
+| Visual/snapshot | `npm run test:visual` | rendered-state regression baselines |
 
-| Layer | Runner | What it covers | Command |
-|-------|--------|----------------|---------|
-| Unit / integration | Vitest + `happy-dom` | Logic-heavy modules below the browser boundary (payload decoders, runtime helpers, feature workflows, signal-mounted islands, view-level pure helpers) | `npm run test:unit` |
-| Smoke | Playwright (Chromium) | End-to-end flows against a real Vite dev/preview server; file pattern `tests/smoke*.spec.ts` | `npm run test:smoke` |
-| Visual / snapshot | Playwright (Chromium) | Rendered-state regression baselines under `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
+- `make ui-typecheck` materializes generated UI contracts, then runs format/lint/type gates.
+- Use `npm run test:visual:update` only for intentional baseline changes.
+- Use shared MSW helpers under `apps/ui/tests/msw/` for frontend tests that intentionally cross the real HTTP boundary. They normalize relative `/api/...` requests and fail unhandled requests loudly.
+- Do not add MSW to tests that inject transport ports or stay inside presenter/view/state seams. Keep WebSocket mocking on the dedicated fake WebSocket helpers.
+- Optional browser-worker MSW mode: `cd apps/ui && npm run dev:mock`; smoke entrypoint `cd apps/ui && npm run test:smoke:mock`.
 
-- `npm run test:unit` is the canonical fast test lane. It auto-discovers
-  `tests/**/*.spec.ts` and excludes the Playwright-owned browser/visual/smoke
-  specs via [`apps/ui/vitest.config.ts`](../apps/ui/vitest.config.ts). Prefer it
-  for anything that does not need a real browser.
-- `npm run test:visual` is the rendered-state and snapshot gate; use
-  `npm run test:visual:update` only for intentional baseline changes.
-- `npm run test:visual:audit` is the opt-in four-project visual audit sweep
-  when you need dark/tablet coverage on purpose instead of in the default lane.
-- `frontend-quality` is the UI lint/tooling gate: it runs Biome,
-  dependency-cruiser, and knip. `frontend-typecheck` is the generated-contract
-  and TypeScript gate: it syncs generated contract artifacts, then runs
-  `npm run typecheck`. `ui-unit` runs the Vitest suite and `ui-smoke` is the CI
-  browser path. Use `act -j frontend-quality -W .github/workflows/ci.yml`,
-  `act -j frontend-typecheck -W .github/workflows/ci.yml`,
-  `act -j ui-unit -W .github/workflows/ci.yml`, or
-  `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
-  parity for those jobs.
-
-## Firmware and Pi-image validation
-
-Use the narrowest existing validation path that matches the layer you changed:
+## Firmware and Pi image validation
 
 ```bash
 cd firmware/esp && pio run
 python tools/firmware/generate_protocol_contract_fixtures.py --check
 cd firmware/esp && pio test -e native
+
 BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
 BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
-./infra/pi-image/pi-gen/validate-image.sh
+./infra/pi-image/pi-gen/validate-image.sh [artifact]
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
 ```
 
-- Use `cd firmware/esp && pio run` for firmware compile coverage.
-- Use the protocol fixture check plus `cd firmware/esp && pio test -e native`
-  when firmware/protocol changes need CI firmware-lane parity.
-- Use `pio run -t upload` and `pio device monitor` only when hardware-backed
-  firmware behavior needs confirmation.
-- Use `BUILD_MODE=app` for packaged app artifact changes, `BUILD_MODE=image` for
-  image-stage logic, and `validate-image.sh` to rerun image validation without a
-  rebuild. `BUILD_MODE=all` is only needed when both layers changed.
-- `release-smoke` validates packaged server/UI artifacts; it complements the
-  full Pi-image build rather than replacing it.
+- Use `pio run -t upload` and `pio device monitor` only when hardware-backed firmware behavior needs confirmation.
+- Use `BUILD_MODE=app` for packaged app artifacts, `BUILD_MODE=image` for image-stage logic, and `validate-image.sh` for existing artifacts. `BUILD_MODE=all` is only for changes spanning both layers.
+- Do not use ACT for `.github/workflows/manual-pi-image-arm.yml` or `.github/workflows/weekly-pi-image.yml`; those require GitHub's `ubuntu-24.04-arm` runner label, intentionally not mapped in `.actrc`.
+- `release-smoke` validates packaged server/UI artifacts; it complements, not replaces, Pi-image validation.
 
-## Fuzzing
+## Local CI with ACT
 
-Use `tools/dev/fuzz_analysis_engine.py` for randomized diagnostics coverage
-against the real `summarize_run_data()` analysis entrypoint. The harness uses
-Hypothesis, validates the produced summary against the typed analysis contract,
-and writes a minimized reproduction artifact under `artifacts/fuzz/` when it
-finds a failure.
+Use the wrapper unless raw ACT flags are necessary. The default wrapper mode is a changed-scope ACT run as a `pull_request` event; `--full-stack` forces a forced full-stack ACT run.
 
 ```bash
-python3 tools/dev/fuzz_analysis_engine.py
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
-python3 tools/dev/fuzz_processing_pipeline.py
-python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60 --processes 16
-```
-
-The script expects the backend package plus dev dependencies to be installed,
-for example via:
-
-```bash
-.venv/bin/python -m pip install -e "./apps/server[dev]"
-```
-
-`tools/dev/fuzz_processing_pipeline.py` covers upstream live-processing entry
-points that sit before persisted diagnostics:
-
-- `strength`: canonical vibration-strength math in `vibesensor.vibration_strength`
-- `fft`: pure FFT spectrum assembly in `vibesensor.shared.fft_analysis`
-- `processor`: live ingest / compute / debug payload paths in `SignalProcessor`
-
-Both fuzzers default to 16 concurrent worker processes. Use `--processes` to
-tune parallelism if you need to trade off CPU saturation against local
-interactivity. `--threads` remains accepted as a compatibility alias.
-
-## Characterization
-
-Use `python3 -m vibesensor.cli.characterize_aliasing` to inspect which
-out-of-band tones can fold into the current live-analysis band for the
-configured sample rate and FFT setup:
-
-```bash
-python3 -m vibesensor.cli.characterize_aliasing
-```
-
-The tool characterizes the current **digital** chain only. It does not replace
-hardware sweep tests of the physical sensor/front-end.
-
-## Local CI with `act`
-
-[`act`](https://nektosact.com/) runs the real `.github/workflows/ci.yml` locally
-inside Docker containers. It is the primary path for CI-parity validation.
-
-Prerequisites: Docker and [`act`](https://nektosact.com/installation/index.html).
-
-### Raw `act` commands (primary interface)
-
-```bash
-# List available CI jobs
-act -l -W .github/workflows/ci.yml
-
-# Run changed-scope CI jobs for the current branch as a pull_request event.
-# Generate the event first so ci-scope sees real base/head SHAs.
-python3 tools/tests/act_event.py --output /tmp/vibesensor-act-event.json
-act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
-
-# Force a full-stack workflow run through ci-scope.
-act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json \
-  --env VIBESENSOR_CI_FORCE_FULL_STACK=1
-
-# Run a single job
-act -j backend-lint -W .github/workflows/ci.yml
-act -j repo-hygiene -W .github/workflows/ci.yml
-act -j backend-static-guards -W .github/workflows/ci.yml
-act -j backend-preflight -W .github/workflows/ci.yml
-act -j docs-lint -W .github/workflows/ci.yml
-act -j backend-contract-drift -W .github/workflows/ci.yml
-act -j backend-typecheck -W .github/workflows/ci.yml
-act -j frontend-quality -W .github/workflows/ci.yml
-act -j frontend-typecheck -W .github/workflows/ci.yml
-act -j backend-tests -W .github/workflows/ci.yml
-act -j ui-smoke -W .github/workflows/ci.yml
-act -j release-smoke -W .github/workflows/ci.yml
-
-# Use a non-default base ref when needed.
-python3 tools/tests/act_event.py --base-ref main --output /tmp/vibesensor-act-event.json
-act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
-```
-
-### Optional wrapper (convenience only)
-
-A thin shell wrapper is provided at `tools/tests/run_ci_with_act.sh`. It checks
-prerequisites, generates a temporary pull-request event from the local checkout
-using `origin/main` then `main` as the base-ref fallback, and passes remaining
-arguments through to `act`:
-
-```bash
-./tools/tests/run_ci_with_act.sh -l               # list jobs
-./tools/tests/run_ci_with_act.sh                   # changed-scope ACT run as pull_request
-./tools/tests/run_ci_with_act.sh --full-stack      # forced full-stack ACT run
-./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job as pull_request
-./tools/tests/run_ci_with_act.sh -j backend-tests # run backend test matrix job
+./tools/tests/run_ci_with_act.sh -l
+./tools/tests/run_ci_with_act.sh
+./tools/tests/run_ci_with_act.sh --full-stack
+./tools/tests/run_ci_with_act.sh -j backend-lint
+./tools/tests/run_ci_with_act.sh -j backend-tests
 ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 ```
 
-For ACT `-j`, use raw GitHub workflow job ids from `.github/workflows/ci.yml`
-such as `backend-tests`. Do not use the local logical backend shard ids
-`backend-tests-1` through `backend-tests-5` with ACT.
-
-### Secrets
-
-No secrets are currently required. If needed in the future, copy
-`.secrets.act.example` to `.secrets.act`, fill in values, and the wrapper (or
-`--secret-file .secrets.act`) will pick them up. Never commit `.secrets.act`.
-
-### Known limitations under `act`
-
-ACT parity is currently scoped to `.github/workflows/ci.yml`. Do not use ACT for
-the Pi-image workflows `manual-pi-image-arm.yml` or `weekly-pi-image.yml`: they
-run on GitHub's `ubuntu-24.04-arm` runner label, and `.actrc` intentionally does
-not map that ARM runner to a local container image. Validate Pi-image changes
-with the supported local path instead:
+Raw equivalents:
 
 ```bash
-BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
-BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
-./infra/pi-image/pi-gen/validate-image.sh
+act -l -W .github/workflows/ci.yml
+python3 tools/tests/act_event.py --output /tmp/vibesensor-act-event.json
+act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
+act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json --env VIBESENSOR_CI_FORCE_FULL_STACK=1
+act -j backend-lint -W .github/workflows/ci.yml
+act -j backend-tests -W .github/workflows/ci.yml
 ```
 
-| Job | Status | Notes |
-|---|---|---|
-| `backend-lint` | ✅ Fully supported | — |
-| `repo-hygiene` | ✅ Fully supported | — |
-| `backend-static-guards` | ✅ Fully supported | — |
-| `backend-preflight` | ✅ Fully supported | — |
-| `docs-lint` | ✅ Fully supported | — |
-| `backend-contract-drift` | ✅ Fully supported | — |
-| `backend-typecheck` | ✅ Fully supported | — |
-| `frontend-quality` | ✅ Fully supported | — |
-| `frontend-typecheck` | ✅ Fully supported | — |
-| `ui-smoke` | ✅ Fully supported | — |
-| `release-smoke` | ✅ Fully supported | — |
-| `backend-tests` | ✅ Fully supported | This matrix job emits the `Backend tests (shard 1/5)` through `Backend tests (shard 5/5)` checks. Update-module workflow tests now patch tool lookup and privilege checks through shared fakes, so missing `nmcli` or non-root host state does not create `act`-only flakes. |
-| `e2e` | ✅ Fully supported | Runs isolated server subprocess shards directly; no Docker-in-Docker dependency. |
-| `manual-pi-image-arm.yml` / `weekly-pi-image.yml` | ❌ Not supported | ARM Pi-image workflows use `ubuntu-24.04-arm`, which is not mapped in `.actrc`; use `BUILD_MODE=app`, `BUILD_MODE=image`, and `validate-image.sh` instead. |
+- ACT `-j` uses raw workflow job IDs such as `backend-tests`, not local shard IDs like `backend-tests-1`.
+- No ACT secrets are currently required. If needed later, copy `.secrets.act.example` to `.secrets.act`; never commit it.
+- `run_ci_parallel.py` is a faster non-container local runner. It respects selected GitHub `needs`, reports omitted prerequisites, and expands backend matrix shards as `backend-tests-1` through `backend-tests-5`.
+- Changed-path gating lives in `tools/tests/ci_path_rules.py` and `tools/tests/ci_changed_scope.py`; update workflow wiring and focused hygiene tests together.
 
-### Relationship to `run_ci_parallel.py`
+## CI job reference
 
-`tools/tests/run_ci_parallel.py` (`make test-all`) remains available as a fast
-local convenience runner. Its job surface is derived from
-`.github/workflows/ci.yml`, while `act` remains the primary CI-parity mechanism
-because it runs the actual GitHub workflow file. Use `run_ci_parallel.py` when
-you want a faster non-containerized local run without Docker. The workflow’s raw
-job id is `backend-tests` because GitHub expands it as a matrix, while
-`run_ci_parallel.py` expands that same matrix source back into logical local
-jobs `backend-tests-1` through `backend-tests-5` so you can run individual
-backend shards directly. The path-planning `ci-scope` job stays workflow-only;
-it feeds GitHub job gating but is intentionally excluded from the local
-manifest-backed runner surface.
+Blocking job names come from `.github/workflows/ci.yml`. Common local job selectors:
 
-### Path-aware CI gating
+```bash
+./.venv/bin/python tools/tests/run_ci_parallel.py --ci-lite
+./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck
+./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
+./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
+```
 
-Changed-path gating lives in `tools/tests/ci_path_rules.py` and is applied by
-the workflow’s `ci-scope` job via `tools/tests/ci_changed_scope.py`. Keep those
-rules explicit, documented, and test-backed.
+Path-aware CI intent:
 
-The current gating contract is:
+- docs-only markdown changes run `docs-lint`;
+- frontend-only changes run repo hygiene, frontend quality/typecheck, UI unit/smoke, and release smoke;
+- backend-only changes run backend quality/typecheck/tests plus release smoke and e2e;
+- firmware-only changes run firmware native tests;
+- workflow/CI meta changes fall back to full stack.
 
-- docs-only markdown changes run `docs-lint` without the backend, frontend, release, firmware, or e2e stacks
-- frontend-only changes run `repo-hygiene`, `frontend-quality`, `frontend-typecheck`, `ui-unit`, `ui-smoke`, and `release-smoke`
-- backend-only changes run the split backend quality gates, `backend-typecheck`, `backend-tests`, `release-smoke`, and `e2e`
-- firmware-only changes run `firmware-native-tests`
-- workflow / CI meta changes such as `.github/workflows/ci.yml`, `Makefile`, version pins, Dockerfiles, and workflow-manifest tooling fall back to the full stack
-
-When you change these rules, update both the workflow wiring and the focused
-hygiene tests so path scope does not silently drift.
-
-## Coverage reporting
-
-Use coverage runs to expose untested paths before they become release risk.
+## Coverage and characterization
 
 ```bash
 make coverage
-
-# Optional pytest-cov overrides pass through COV_OPTS.
 COV_OPTS="--cov-report=html --cov-report=term-missing:skip-covered" make coverage
-COV_OPTS="--cov-fail-under=80 --cov-report=term-missing:skip-covered" make coverage
-```
-
-For direct control over thresholds and output:
-
-```bash
 cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered tests
+python3 -m vibesensor.cli.characterize_aliasing
 ```
 
-Coverage guidance:
-
-- Treat coverage as a risk-finding tool, not the only quality signal.
-- High-risk backend areas such as `apps/server/vibesensor/use_cases/diagnostics/`,
-  `apps/server/vibesensor/infra/processing/`,
-  `apps/server/vibesensor/adapters/persistence/history_db/`, and
-  `apps/server/vibesensor/use_cases/updates/` should stay above the repo-wide
-  baseline whenever practical.
-
-The default CI-parity suite now derives these blocking GitHub checks from the
-workflow-backed CI manifest:
-
-- `backend-lint`: Ruff lint and formatter drift checks for backend and tooling Python code.
-- `repo-hygiene`: line endings plus repo/path/runtime/CI hygiene checks.
-- `backend-static-guards`: import-linter backend architecture contracts plus the
-  remaining repo-specific backend static guards.
-- `backend-preflight`: `pip check`, backend `deptry` dependency-declaration
-  validation, and config preflight validation for dev, docker, and pi configs.
-- `docs-lint`: docs misuse and markdown-link validation.
-- `backend-contract-drift`: WS schema and HTTP API contract drift checks.
-- `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
-- `frontend-quality`: `npm run lint`, `npm run lint:deps`, and `npm run lint:unused` in `apps/ui/`.
-- `frontend-typecheck`: `npm run sync:generated-contracts` and `npm run typecheck` in `apps/ui/`.
-- `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
-- `ui-smoke`, `backend-tests` (matrix job emitting shard `1/5` through `5/5` checks), `e2e`: required test jobs.
-
-## Adding or moving tests
-
-1. Put the test in the narrowest directory that matches the production ownership boundary.
-2. Keep files focused on one behavior, scenario family, or maintenance boundary.
-3. Reuse shared helpers only when multiple files need the same setup or assertions.
-4. Import `SERVER_ROOT` and `REPO_ROOT` from `_paths.py` instead of using fragile parent traversals.
-
-Cached helpers such as `@lru_cache` are acceptable when they memoize immutable
-test data. If a test monkeypatches the underlying file, path, or other cached
-state, clear the cache in that test before asserting on the changed behavior.
-
-## Markers
-
-| Marker | Meaning |
-|---|---|
-| `e2e` | End-to-end tests |
-| `long_sim` | Longer simulated-run tests |
-| `smoke` | Minimal critical-path checks |
-
-Use markers sparingly:
-
-- `@pytest.mark.smoke`: fast, deterministic, high-signal checks for critical
-  paths such as schema/contract bridges or minimal end-to-end behavior.
-- `@pytest.mark.long_sim`: slower simulated-run tests that intentionally trade
-  speed for more scenario coverage.
-- `@pytest.mark.e2e`: end-to-end tests.
-
-Do not mark every fast unit test as `smoke`; keep it a compact slice that is
-useful for quick feedback.
+Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`diagnostics`, `infra/processing`, persistence history DB, updates) should stay above the repo baseline when practical.

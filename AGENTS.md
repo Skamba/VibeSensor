@@ -1,11 +1,9 @@
 # Agent guidance
 
-VibeSensor is a mixed Python backend, TypeScript/Vite dashboard, ESP32 firmware, and Raspberry Pi image repository.
+VibeSensor includes a Python backend, TypeScript/Vite UI, ESP32 firmware, and Raspberry Pi image build. Read [.github/copilot-instructions.md](.github/copilot-instructions.md).
 
-Read [.github/copilot-instructions.md](.github/copilot-instructions.md) for the canonical architecture, command, and validation guidance. Use `.github/instructions/` for Copilot path-scoped rules, and use `docs/ai/repo-map.md` for navigation only.
-
-Before changing code:
-- Identify the touched area: backend, frontend, firmware, Pi image, tests, docs, or instructions.
-- Follow the matching validation path from `.github/copilot-instructions.md`.
-- Update docs or AI guidance when the touched behavior changes their facts.
-- Keep changes scoped to the request plus direct root-cause fixes and clearly adjacent regressions found during validation.
+- Canonical repo guidance: `.github/copilot-instructions.md`.
+- Path-scoped rules: `.github/instructions/`.
+- Navigation fallback: `docs/ai/repo-map.md`; use `rg`, file names, imports, and tests first.
+- If your agent already auto-loads the relevant instruction files, do not reopen them just to duplicate context.
+- Before editing, identify the touched area, follow the matching validation path, update directly affected docs/guidance, and keep scope to the request plus root-cause fixes.

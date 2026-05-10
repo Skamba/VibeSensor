@@ -1,11 +1,7 @@
 # Backend test agent guidance
 
-Backend test rules live in `../../../.github/instructions/tests.instructions.md`; the full test map lives in `../../../docs/testing.md`.
-
-Use the matching `apps/server/tests/<module>/` directory for new tests. Reserve `integration/` for cross-cutting regressions and `hygiene/` for guards.
-
-Prefer focused test modules over adding to large omnibus regression files. Test observable behavior instead of source text.
-
-Default focused validation:
-- `pytest -q apps/server/tests/<module>/`
-- From `apps/server`, run `../.venv/bin/python -m pytest tests/<module>/ -q` when you need to pin the repo-managed backend environment.
+- Test rules: `../../../.github/instructions/tests.instructions.md`.
+- Test map and commands: `../../../docs/testing.md`.
+- Put new tests in the matching `apps/server/tests/<module>/`; reserve `integration/` for cross-cutting regressions and `hygiene/` for guards.
+- Prefer focused modules and observable behavior assertions.
+- Focused validation: `pytest -q apps/server/tests/<module>/`, or from `apps/server`, `../.venv/bin/python -m pytest tests/<module>/ -q`.
