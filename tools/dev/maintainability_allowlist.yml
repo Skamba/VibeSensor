@@ -20,9 +20,6 @@ functions:
   apps/server/tests_e2e/test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys:
     max_lines: 263
     reason: Docker user journey scenario intentionally keeps full workflow assertions together.
-  apps/server/vibesensor/use_cases/run/raw_capture_replay.py::build_raw_backed_samples:
-    max_lines: 234
-    reason: Raw-capture replay assembly retained until sample-building phases are separated.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_order_traces.py::test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metadata:
     max_lines: 234
     reason: Whole-run order trace persistence scenario kept together to preserve fixture chronology.
