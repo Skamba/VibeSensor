@@ -38,6 +38,7 @@ import {
   createCarsFeatureTransport,
   type CarsFeatureTransport,
 } from "./cars_feature_transport";
+import { createWorkflowGenerationGuard } from "./workflow_generation_guard";
 import { batch, computed, signal, type ReadonlySignal } from "../ui_signals";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
@@ -175,26 +176,23 @@ export function createCarsFeatureWorkflow(
   const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
   const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
   const noGearboxesMessage = signal<string | null>(null);
-  let wizardLoadGeneration = 0;
+  const wizardLoads = createWorkflowGenerationGuard({
+    isActive: () => isOpen.value,
+  });
 
   function nextWizardLoadGeneration(): number {
-    wizardLoadGeneration += 1;
-    return wizardLoadGeneration;
+    return wizardLoads.begin();
   }
 
   function invalidateWizardLoads(): void {
-    wizardLoadGeneration += 1;
+    wizardLoads.invalidate();
   }
 
   function canApplyWizardLoad(
     generation: number,
     matchesState: (state: WizardState) => boolean,
   ): boolean {
-    return (
-      isOpen.value &&
-      generation === wizardLoadGeneration &&
-      matchesState(wizardState.value)
-    );
+    return wizardLoads.isCurrent(generation) && matchesState(wizardState.value);
   }
 
   function focusIfCurrent(
