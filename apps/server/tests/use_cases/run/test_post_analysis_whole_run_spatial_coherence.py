@@ -28,7 +28,11 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisWholeRunBuilderConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
 
@@ -247,56 +251,64 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
     result = execute_post_analysis(
         run_id="run-spatial-coherence",
         db=FakeDB(),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id=run_id,
-            metadata=_run_metadata(run_id),
-            language="en",
-            samples=_samples(),
-            total_summary_row_count=2,
-            stride=1,
-            raw_capture=_empty_raw_capture(raw_capture_manifest),
-            raw_capture_manifest=raw_capture_manifest,
-        ),
-        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(
-            type(
-                "Bundle",
-                (),
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=2,
+                stride=1,
+                raw_capture=_empty_raw_capture(raw_capture_manifest),
+                raw_capture_manifest=raw_capture_manifest,
+            ),
+            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
+                artifact_builder=lambda **_kwargs: _spectral_result(
+                    type(
+                        "Bundle",
+                        (),
+                        {
+                            "manifest": spectral_manifest,
+                            "artifact_contents": {
+                                "spectral-summary:sensor-front": (
+                                    b'{"window_index":0,"coverage_state":"full",'
+                                    b'"returned_sample_start":0,"returned_sample_count":256,'
+                                    b'"top_peaks":[{"hz":5.0,"amp":0.2,'
+                                    b'"vibration_strength_db":31.0}]}\n'
+                                    b'{"window_index":1,"coverage_state":"full",'
+                                    b'"returned_sample_start":200,"returned_sample_count":256,'
+                                    b'"top_peaks":[{"hz":6.0,"amp":0.2,'
+                                    b'"vibration_strength_db":31.0}]}\n'
+                                ),
+                                "spectral-summary:sensor-rear": (
+                                    b'{"window_index":0,"coverage_state":"full",'
+                                    b'"returned_sample_start":0,"returned_sample_count":256,'
+                                    b'"top_peaks":[{"hz":5.05,"amp":0.15,'
+                                    b'"vibration_strength_db":29.0}]}\n'
+                                    b'{"window_index":1,"coverage_state":"full",'
+                                    b'"returned_sample_start":200,"returned_sample_count":256,'
+                                    b'"top_peaks":[{"hz":6.05,"amp":0.15,'
+                                    b'"vibration_strength_db":29.0}]}\n'
+                                ),
+                            },
+                        },
+                    )()
+                ),
+                context_builder=lambda **_kwargs: context_bundle,
+                order_trace_builder=lambda **_kwargs: order_trace_bundle,
+                order_trace_summary_builder=lambda **_kwargs: None,
+                order_family_summary_builder=lambda **_kwargs: None,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis(
                 {
-                    "manifest": spectral_manifest,
-                    "artifact_contents": {
-                        "spectral-summary:sensor-front": (
-                            b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
-                            b'"returned_sample_count":256,"top_peaks":[{"hz":5.0,"amp":0.2,'
-                            b'"vibration_strength_db":31.0}]}\n'
-                            b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
-                            b'"returned_sample_count":256,"top_peaks":[{"hz":6.0,"amp":0.2,'
-                            b'"vibration_strength_db":31.0}]}\n'
-                        ),
-                        "spectral-summary:sensor-rear": (
-                            b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
-                            b'"returned_sample_count":256,"top_peaks":[{"hz":5.05,"amp":0.15,'
-                            b'"vibration_strength_db":29.0}]}\n'
-                            b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
-                            b'"returned_sample_count":256,"top_peaks":[{"hz":6.05,"amp":0.15,'
-                            b'"vibration_strength_db":29.0}]}\n'
-                        ),
+                    "analysis_metadata": {
+                        "analyzed_sample_count": 2,
+                        "total_sample_count": 2,
+                        "sampling_method": "full",
                     },
-                },
-            )()
-        ),
-        whole_run_context_builder=lambda **_kwargs: context_bundle,
-        whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
-        whole_run_order_trace_summary_builder=lambda **_kwargs: None,
-        whole_run_order_family_summary_builder=lambda **_kwargs: None,
-        analysis_runner=lambda _run: make_persisted_analysis(
-            {
-                "analysis_metadata": {
-                    "analyzed_sample_count": 2,
-                    "total_sample_count": 2,
-                    "sampling_method": "full",
-                },
-                "run_suitability": [],
-            }
+                    "run_suitability": [],
+                }
+            ),
         ),
     )
 

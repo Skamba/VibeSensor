@@ -30,7 +30,10 @@ from vibesensor.shared.types.raw_capture import (
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
@@ -195,20 +198,24 @@ def execute_golden_replay_fixture(
     result = execute_post_analysis(
         run_id=run.run_id,
         db=cast(RunPersistence, recorder),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id=run_id,
-            metadata=run.metadata,
-            language=run.metadata.language or "en",
-            samples=list(run.samples),
-            total_summary_row_count=len(run.samples),
-            stride=1,
-            summary_duration_s=duration_s or fixture.duration_s,
-            context_samples=list(run.samples),
-            raw_capture=run.raw_capture,
-            raw_capture_manifest=run.raw_capture.manifest,
-        ),
-        analysis_runner=(
-            build_post_analysis_summary if analysis_runner is None else cast(Any, analysis_runner)
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=run.metadata,
+                language=run.metadata.language or "en",
+                samples=list(run.samples),
+                total_summary_row_count=len(run.samples),
+                stride=1,
+                summary_duration_s=duration_s or fixture.duration_s,
+                context_samples=list(run.samples),
+                raw_capture=run.raw_capture,
+                raw_capture_manifest=run.raw_capture.manifest,
+            ),
+            analysis_runner=(
+                build_post_analysis_summary
+                if analysis_runner is None
+                else cast(Any, analysis_runner)
+            ),
         ),
     )
     assert isinstance(result, PostAnalysisExecutionSuccess)
