@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
+from vibesensor.adapters.pdf.layout_primitives import (
+    PanelRegion,
+    draw_overflow_note_if_room,
+    draw_panel_region,
+    draw_section_block_if_room,
+    draw_text_block,
+)
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
     FONT_B,
@@ -16,15 +22,12 @@ from vibesensor.adapters.pdf.pdf_style import (
     MARGIN,
     PAGE_H,
     PAGE_W,
-    PANEL_HEADER_H,
     REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import (
-    _draw_section_block,
     _draw_text,
-    _measure_section_block_height,
 )
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
@@ -77,20 +80,24 @@ def _draw_appendix_c_evidence_chain_panel(
     appendix = plan.appendix
     chain_h = _evidence_chain_panel_height(appendix)
     chain_y = title_y - chain_h
-    _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
-    chain_top = (
-        _draw_text(
-            c,
-            MARGIN + 4 * mm,
-            chain_y + chain_h - PANEL_HEADER_H - 2 * mm,
-            width - 8 * mm,
-            appendix.evidence_summary or _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
-            size=FS_SMALL,
-            color=SUB_CLR,
-            leading=FS_SMALL + 1.0,
-            max_lines=3,
-        )
-        - 1.0 * mm
+    chain_region = draw_panel_region(
+        c,
+        x=MARGIN,
+        y=chain_y,
+        w=width,
+        h=chain_h,
+        title=_tr(plan.lang, "REPORT_EVIDENCE_CHAIN_TITLE"),
+    )
+    chain_top = draw_text_block(
+        c,
+        region=chain_region,
+        y=chain_region.content_top,
+        text=appendix.evidence_summary or _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
+        size=FS_SMALL,
+        color=SUB_CLR,
+        leading=FS_SMALL + 1.0,
+        max_lines=3,
+        after_gap=1.0 * mm,
     )
     show_ambiguity = len(appendix.evidence_chain_rows) > 1 and any(
         bool(row.ambiguity_note) for row in appendix.evidence_chain_rows
@@ -124,10 +131,10 @@ def _draw_appendix_c_evidence_chain_panel(
         chain_widths = [0.15, 0.16, 0.13, 0.10, 0.13, 0.11, 0.22]
     _draw_table(
         c,
-        x=MARGIN + 4 * mm,
+        x=chain_region.content_x,
         y=chain_top,
-        w=width - 8 * mm,
-        y_bottom=chain_y + 4 * mm,
+        w=chain_region.content_w,
+        y_bottom=chain_region.content_bottom,
         headers=chain_headers,
         rows=chain_rows,
         col_widths=chain_widths,
@@ -156,13 +163,13 @@ def _draw_appendix_c_measurement_panel(
     appendix = plan.appendix
     measurement_h = _measurement_panel_height(appendix)
     measurement_y = chain_y - GAP - measurement_h
-    _draw_panel(
+    measurement_region = draw_panel_region(
         c,
-        MARGIN,
-        measurement_y,
-        width,
-        measurement_h,
-        _measurement_panel_title(appendix, lang=plan.lang),
+        x=MARGIN,
+        y=measurement_y,
+        w=width,
+        h=measurement_h,
+        title=_measurement_panel_title(appendix, lang=plan.lang),
     )
     measurement_source_values = {
         row.source_name for row in appendix.measurement_rows if row.source_name
@@ -182,37 +189,32 @@ def _draw_appendix_c_measurement_panel(
         and len(measurement_speed_values) == 1
         and len(measurement_location_values) == 1
     )
-    measurement_top = measurement_y + measurement_h - PANEL_HEADER_H - 2 * mm
+    measurement_top = measurement_region.content_top
     if shared_measurement_context:
-        measurement_top = (
-            _draw_text(
-                c,
-                MARGIN + 4 * mm,
-                measurement_top,
-                width - 8 * mm,
-                _tr(
-                    plan.lang,
-                    "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT",
-                    source=next(iter(measurement_source_values)),
-                    signal=next(iter(measurement_signal_values)),
-                    speed=next(iter(measurement_speed_values)),
-                    location=human_location(
-                        next(iter(measurement_location_values)), lang=plan.lang
-                    ),
-                ),
-                size=FS_SMALL,
-                color=TEXT_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=1,
-            )
-            - 0.8 * mm
+        measurement_top = draw_text_block(
+            c,
+            region=measurement_region,
+            y=measurement_top,
+            text=_tr(
+                plan.lang,
+                "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT",
+                source=next(iter(measurement_source_values)),
+                signal=next(iter(measurement_signal_values)),
+                speed=next(iter(measurement_speed_values)),
+                location=human_location(next(iter(measurement_location_values)), lang=plan.lang),
+            ),
+            size=FS_SMALL,
+            color=TEXT_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=1,
+            after_gap=0.8 * mm,
         )
     measurement_top = _draw_measurement_panel_guide(
         c,
         plan=plan,
         appendix=appendix,
         y=measurement_top,
-        width=width,
+        region=measurement_region,
     )
     measurement_headers, measurement_rows, measurement_widths = _measurement_table_content(
         plan,
@@ -221,10 +223,10 @@ def _draw_appendix_c_measurement_panel(
     )
     _draw_table(
         c,
-        x=MARGIN + 4 * mm,
+        x=measurement_region.content_x,
         y=measurement_top,
-        w=width - 8 * mm,
-        y_bottom=measurement_y + 4 * mm,
+        w=measurement_region.content_w,
+        y_bottom=measurement_region.content_bottom,
         headers=measurement_headers,
         rows=measurement_rows,
         col_widths=measurement_widths,
@@ -264,44 +266,41 @@ def _draw_appendix_c_lower_panels(
         ),
     )
     lower_y = measurement_y - GAP - lower_h
-    _draw_panel(
-        c, MARGIN, lower_y, context_w, lower_h, _tr(plan.lang, "REPORT_SUPPORTING_CONTEXT_TITLE")
+    context_region = draw_panel_region(
+        c,
+        x=MARGIN,
+        y=lower_y,
+        w=context_w,
+        h=lower_h,
+        title=_tr(plan.lang, "REPORT_SUPPORTING_CONTEXT_TITLE"),
     )
-    block_x = MARGIN + 4 * mm
-    block_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
+    block_y = context_region.content_top
     if appendix.context_summary:
-        block_y = (
-            _draw_text(
-                c,
-                block_x,
-                block_y,
-                context_w - 8 * mm,
-                appendix.context_summary,
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=4,
-            )
-            - 1.2 * mm
+        block_y = draw_text_block(
+            c,
+            region=context_region,
+            y=block_y,
+            text=appendix.context_summary,
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=4,
+            after_gap=1.2 * mm,
         )
     for snapshot in appendix.evidence_snapshot_rows[:5]:
-        block_y, did_draw = _draw_section_block_if_room(
+        block_y, did_draw = draw_section_block_if_room(
             c,
-            block_x,
-            block_y,
-            context_w - 8 * mm,
-            snapshot.label,
-            snapshot.value or _tr(plan.lang, "UNKNOWN"),
-            bottom_y=lower_y + 4 * mm,
+            region=context_region,
+            y=block_y,
+            title=snapshot.label,
+            body=snapshot.value or _tr(plan.lang, "UNKNOWN"),
             max_lines=3,
         )
         if not did_draw:
             block_y = _draw_context_overflow_note(
                 c,
-                x=block_x,
+                region=context_region,
                 y=block_y,
-                w=context_w - 8 * mm,
-                bottom_y=lower_y + 4 * mm,
                 lang=plan.lang,
             )
             break
@@ -310,94 +309,80 @@ def _draw_appendix_c_lower_panels(
         appendix.observations
     )
     if show_speed_phase:
-        block_y, did_draw = _draw_section_block_if_room(
+        block_y, did_draw = draw_section_block_if_room(
             c,
-            block_x,
-            block_y,
-            context_w - 8 * mm,
-            _tr(plan.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
-            appendix.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
-            bottom_y=lower_y + 4 * mm,
+            region=context_region,
+            y=block_y,
+            title=_tr(plan.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
+            body=appendix.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
             max_lines=3,
         )
         if did_draw:
-            block_y, did_draw = _draw_section_block_if_room(
+            block_y, did_draw = draw_section_block_if_room(
                 c,
-                block_x,
-                block_y,
-                context_w - 8 * mm,
-                _tr(plan.lang, "REPORT_PHASE_SUMMARY_LABEL"),
-                appendix.phase_summary or _tr(plan.lang, "UNKNOWN"),
-                bottom_y=lower_y + 4 * mm,
+                region=context_region,
+                y=block_y,
+                title=_tr(plan.lang, "REPORT_PHASE_SUMMARY_LABEL"),
+                body=appendix.phase_summary or _tr(plan.lang, "UNKNOWN"),
                 max_lines=3,
             )
     if not did_draw:
         block_y = _draw_context_overflow_note(
             c,
-            x=block_x,
+            region=context_region,
             y=block_y,
-            w=context_w - 8 * mm,
-            bottom_y=lower_y + 4 * mm,
             lang=plan.lang,
         )
     if appendix.observations and block_y > lower_y + 8 * mm:
         observations_text = "\n".join(f"- {item}" for item in appendix.observations[:2])
-        block_y, did_draw = _draw_section_block_if_room(
+        block_y, did_draw = draw_section_block_if_room(
             c,
-            block_x,
-            block_y,
-            context_w - 8 * mm,
-            _tr(plan.lang, "ADDITIONAL_OBSERVATIONS"),
-            observations_text,
-            bottom_y=lower_y + 4 * mm,
+            region=context_region,
+            y=block_y,
+            title=_tr(plan.lang, "ADDITIONAL_OBSERVATIONS"),
+            body=observations_text,
             max_lines=4,
         )
         if not did_draw:
             _draw_context_overflow_note(
                 c,
-                x=block_x,
+                region=context_region,
                 y=block_y,
-                w=context_w - 8 * mm,
-                bottom_y=lower_y + 4 * mm,
                 lang=plan.lang,
             )
 
     suitability_x = MARGIN + context_w + GAP
-    _draw_panel(
+    suitability_region = draw_panel_region(
         c,
-        suitability_x,
-        lower_y,
-        suitability_w,
-        lower_h,
-        _tr(plan.lang, "REPORT_SUITABILITY_DETAIL_TITLE"),
+        x=suitability_x,
+        y=lower_y,
+        w=suitability_w,
+        h=lower_h,
+        title=_tr(plan.lang, "REPORT_SUITABILITY_DETAIL_TITLE"),
     )
-    trust_x = suitability_x + 4 * mm
-    trust_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
+    trust_y = suitability_region.content_top
     filtered_suitability_items = [
         item for item in appendix.suitability_items if item.detail != plan.action_status_note
     ]
     if appendix.limits_summary:
-        trust_y = (
-            _draw_text(
-                c,
-                trust_x,
-                trust_y,
-                suitability_w - 8 * mm,
-                appendix.limits_summary,
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=4,
-            )
-            - 1.0 * mm
+        trust_y = draw_text_block(
+            c,
+            region=suitability_region,
+            y=trust_y,
+            text=appendix.limits_summary,
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=4,
+            after_gap=1.0 * mm,
         )
     for item in filtered_suitability_items[:5]:
         trust_y = (
             _draw_text(
                 c,
-                trust_x,
+                suitability_region.content_x,
                 trust_y,
-                suitability_w - 8 * mm,
+                suitability_region.content_w,
                 item.check,
                 font=FONT_B,
                 size=FS_SMALL,
@@ -411,9 +396,9 @@ def _draw_appendix_c_lower_panels(
             trust_y = (
                 _draw_text(
                     c,
-                    trust_x,
+                    suitability_region.content_x,
                     trust_y,
-                    suitability_w - 8 * mm,
+                    suitability_region.content_w,
                     item.detail,
                     size=FS_SMALL,
                     color=SUB_CLR,
@@ -424,77 +409,42 @@ def _draw_appendix_c_lower_panels(
             )
 
     trace_x = suitability_x + suitability_w + GAP
-    _draw_panel(
-        c, trace_x, lower_y, trace_w, lower_h, _tr(plan.lang, "REPORT_TRACEABILITY_PANEL_TITLE")
+    trace_region = draw_panel_region(
+        c,
+        x=trace_x,
+        y=lower_y,
+        w=trace_w,
+        h=lower_h,
+        title=_tr(plan.lang, "REPORT_TRACEABILITY_PANEL_TITLE"),
     )
-    trace_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
+    trace_y = trace_region.content_top
     for trace_row in plan.trace_rows:
         trace_y = (
             _draw_traceability_row(
                 c,
                 trace_row,
-                x=trace_x + 4 * mm,
+                x=trace_region.content_x,
                 y=trace_y,
-                w=trace_w - 8 * mm,
+                w=trace_region.content_w,
             )
             - 0.4 * mm
         )
-        if trace_y < lower_y + 4 * mm:
+        if trace_y < trace_region.content_bottom:
             break
-
-
-def _draw_section_block_if_room(
-    c: Canvas,
-    x: float,
-    y: float,
-    w: float,
-    title: str,
-    body: str,
-    *,
-    bottom_y: float,
-    max_lines: int,
-) -> tuple[float, bool]:
-    needed_h = _measure_section_block_height(body, w=w, max_lines=max_lines)
-    if y - needed_h < bottom_y:
-        return y, False
-    return (
-        _draw_section_block(
-            c,
-            x,
-            y,
-            w,
-            title,
-            body,
-            max_lines=max_lines,
-        ),
-        True,
-    )
 
 
 def _draw_context_overflow_note(
     c: Canvas,
     *,
-    x: float,
+    region: PanelRegion,
     y: float,
-    w: float,
-    bottom_y: float,
     lang: str,
 ) -> float:
-    if y - 6 * mm < bottom_y:
-        return y
-    return float(
-        _draw_text(
-            c,
-            x,
-            y,
-            w,
-            _tr(lang, "REPORT_CONTEXT_MORE_NOT_SHOWN"),
-            size=FS_SMALL,
-            color=SUB_CLR,
-            leading=FS_SMALL + 1.0,
-            max_lines=2,
-        )
-        - 0.8 * mm
+    return draw_overflow_note_if_room(
+        c,
+        region=region,
+        y=y,
+        text=_tr(lang, "REPORT_CONTEXT_MORE_NOT_SHOWN"),
     )
 
 
@@ -512,48 +462,42 @@ def _draw_measurement_panel_guide(
     plan: AppendixCRenderPlan,
     appendix: AppendixCData,
     y: float,
-    width: float,
+    region: PanelRegion,
 ) -> float:
     if appendix.dense_evidence_rows:
-        top = (
-            _draw_text(
-                c,
-                MARGIN + 4 * mm,
-                y,
-                width - 8 * mm,
-                _tr(plan.lang, "REPORT_DENSE_EVIDENCE_GUIDE"),
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=2,
-            )
-            - 0.8 * mm
+        top = draw_text_block(
+            c,
+            region=region,
+            y=y,
+            text=_tr(plan.lang, "REPORT_DENSE_EVIDENCE_GUIDE"),
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
+            after_gap=0.8 * mm,
         )
         return float(
             _draw_dense_evidence_charts(
                 c,
-                x=MARGIN + 4 * mm,
+                x=region.content_x,
                 y=top,
-                w=width - 8 * mm,
+                w=region.content_w,
                 rows=appendix.dense_evidence_rows,
                 lang=plan.lang,
             )
             - 1.0 * mm
         )
     if appendix.measurement_guide:
-        return float(
-            _draw_text(
-                c,
-                MARGIN + 4 * mm,
-                y,
-                width - 8 * mm,
-                appendix.measurement_guide,
-                size=FS_SMALL,
-                color=SUB_CLR,
-                leading=FS_SMALL + 1.0,
-                max_lines=2,
-            )
-            - 0.8 * mm
+        return draw_text_block(
+            c,
+            region=region,
+            y=y,
+            text=appendix.measurement_guide,
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
+            after_gap=0.8 * mm,
         )
     return y
 
