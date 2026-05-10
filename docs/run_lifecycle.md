@@ -11,6 +11,10 @@ one big state-machine class:
   finalization.
 - `RunRawCaptureWriter` owns the recorder-side raw UDP chunk handoff and
   artifact finalization for the active run.
+- `RunRecordingSessionService` owns active-run context snapshots, sensor
+  snapshots, run-start side effects, and ingest-drop baselines.
+- `RawCaptureFinalizeRegistry` owns raw-capture finalize manifests/results and
+  late-finalize replacement rules.
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
 - `whole_run_spectra.py` owns the connected bounded raw range-read sidecar
@@ -28,6 +32,8 @@ one big state-machine class:
 | `SampleFlushOrchestrator` | `use_cases/run/sample_flush.py` | Build `SensorFrame` rows, refresh recent metrics, and decide when to flush or auto-stop. |
 | `RunPersistenceWriter` | `use_cases/run/persistence_writer.py` | Create the persisted run, append sample rows with retries, and finalize the run metadata. |
 | `RunRawCaptureWriter` | `use_cases/run/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
+| `RunRecordingSessionService` | `use_cases/run/recording_session.py` | Active run context/sensor snapshots, start-run side effects, and ingest-drop baseline accounting. |
+| `RawCaptureFinalizeRegistry` | `use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `CaptureReadinessTracker` | `use_cases/run/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
 | `RunRecorder` | `use_cases/run/logger.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `use_cases/run/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
@@ -222,6 +228,8 @@ task/timeout helpers:
 | `apps/server/vibesensor/use_cases/run/sample_flush.py` | Flush decisions, live metric refresh, and sample-row building. |
 | `apps/server/vibesensor/use_cases/run/persistence_writer.py` | History-run creation, append retries, counters, and finalize flow. |
 | `apps/server/vibesensor/use_cases/run/raw_capture_writer.py` | Recorder-side raw chunk queue and raw manifest finalization. |
+| `apps/server/vibesensor/use_cases/run/recording_session.py` | Active run context/sensor snapshots, run-start side effects, and ingest-drop baselines. |
+| `apps/server/vibesensor/use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `apps/server/vibesensor/use_cases/run/logger.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
 | `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path. |
