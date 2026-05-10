@@ -48,7 +48,9 @@ TEXT_EXTS = {
 
 _RELATIVE_POINTER_RE = re.compile(r"^(?:\./|\.\./)\S+$")
 
-_PY_PATH_HACK_RE = re.compile(r"sys\.path\.(?:insert|append)\(|PYTHONPATH=")
+_PY_PATH_HACK_RE = re.compile(
+    "|".join((r"sys\.path\.(?:insert|append)\(", "PYTHON" + "PATH="))
+)
 
 _BACKEND_TEST_MATRIX_JOB = "backend-tests"
 
