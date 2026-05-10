@@ -49,6 +49,7 @@ __all__ = [
 
 type RawReplayCoverageState = Literal["complete", "partial", "missing"]
 type RawReplayConfidence = Literal["full", "partial", "fallback", "unavailable"]
+type RawCaptureMode = Literal["raw_backed", "partial_raw_backed", "summary_only"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,7 +90,7 @@ class RawReplaySummary:
     stale_sync_sensor_count: int
     high_rtt_sensor_count: int
     replay_confidence: RawReplayConfidence
-    raw_capture_mode: str
+    raw_capture_mode: RawCaptureMode
     raw_capture_loss_policy_severity: str = "ok"
     raw_capture_loss_policy_reason: str = "raw_capture_loss_ok"
     raw_capture_loss_policy_gate_whole_run: bool = False
@@ -123,6 +124,49 @@ class _ComputedStrengthMetrics:
     analytically_valid: bool
 
 
+@dataclass(frozen=True, slots=True)
+class _ReplayBuildContext:
+    fft_n: int
+    timelines: dict[str, RawSensorTimeline]
+    fft_computer: SpectralAnalysisComputer
+    accel_scale_g_per_lsb: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class _ReplayWindowBuildResult:
+    samples: tuple[SensorFrame, ...]
+    coverages: tuple[RawReplayWindowCoverage, ...]
+    raw_backed_count: int
+    complete_window_count: int
+    partial_window_count: int
+    missing_window_count: int
+    sample_rate_mismatch_count: int
+    timing_fallback_count: int
+    fft_unusable_window_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class _RawTimelineSummary:
+    gap_count: int
+    overlap_count: int
+    sample_rate_unverified_sensor_count: int
+    unanchored_sensor_count: int
+    legacy_sensor_count: int
+    sync_unverified_sensor_count: int
+    stale_sync_sensor_count: int
+    high_rtt_sensor_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class _RawCaptureLossCounts:
+    dropped_chunk_count: int
+    late_packet_chunk_count: int
+    queue_overflow_chunk_count: int
+    invalid_chunk_count: int
+    write_error_chunk_count: int
+    udp_ingest_queue_drop_count: int
+
+
 def build_raw_backed_samples(
     *,
     samples: tuple[SensorFrame, ...],
@@ -132,165 +176,92 @@ def build_raw_backed_samples(
     """Replace summary strength metrics with raw-backed metrics when possible."""
 
     if raw_capture is None:
-        return RawReplayResult(
-            samples=samples,
-            summary=RawReplaySummary(
-                raw_capture_available=False,
-                raw_backed_summary_row_count=0,
-                replay_window_count=len(samples),
-                complete_window_count=0,
-                partial_window_count=0,
-                missing_window_count=len(samples),
-                gap_count=0,
-                overlap_count=0,
-                dropped_chunk_count=0,
-                late_packet_chunk_count=0,
-                queue_overflow_chunk_count=0,
-                invalid_chunk_count=0,
-                write_error_chunk_count=0,
-                timing_fallback_count=0,
-                sample_rate_mismatch_count=0,
-                fft_unusable_window_count=0,
-                sample_rate_unverified_sensor_count=0,
-                unanchored_sensor_count=0,
-                legacy_sensor_count=0,
-                sync_unverified_sensor_count=0,
-                stale_sync_sensor_count=0,
-                high_rtt_sensor_count=0,
-                replay_confidence="unavailable",
-                raw_capture_mode="summary_only",
-                udp_ingest_queue_drop_count=0,
-            ),
-            window_coverages=tuple(
-                RawReplayWindowCoverage(
-                    client_id=sample.client_id,
-                    t_s=sample.t_s,
-                    coverage_state="missing",
-                    raw_backed=False,
-                    reason="raw_capture_unavailable",
-                )
-                for sample in samples
-            ),
-        )
+        return _build_raw_capture_unavailable_replay_result(samples)
     fft_n = int(metadata.fft_window_size_samples or 0)
     if fft_n <= 0:
         return _build_fft_unavailable_replay_result(samples=samples, raw_capture=raw_capture)
-    timelines = {
-        sensor.manifest.client_id: _build_sensor_timeline(
-            raw_capture, sensor_id=sensor.manifest.client_id
-        )
-        for sensor in raw_capture.sensors
-    }
-    fft_computer = _build_fft_computer(metadata)
-    replayed: list[SensorFrame] = []
-    coverages: list[RawReplayWindowCoverage] = []
-    complete_window_count = 0
-    partial_window_count = 0
-    missing_window_count = 0
-    sample_rate_mismatch_count = 0
-    timing_fallback_count = 0
-    fft_unusable_window_count = 0
-    raw_backed_count = 0
-    scale = metadata.accel_scale_g_per_lsb
-    for sample in samples:
-        rebuilt, coverage = _rebuild_sample(
-            sample=sample,
-            timeline=timelines.get(sample.client_id),
-            raw_capture=raw_capture,
-            fft_computer=fft_computer,
-            fft_n=fft_n,
-            accel_scale_g_per_lsb=scale,
-        )
-        if coverage.raw_backed:
-            raw_backed_count += 1
-        if coverage.coverage_state == "complete":
-            complete_window_count += 1
-        elif coverage.coverage_state == "partial":
-            partial_window_count += 1
-        else:
-            missing_window_count += 1
-        if coverage.reason == "sample_rate_mismatch":
-            sample_rate_mismatch_count += 1
-        if coverage.reason == "timing_fallback":
-            timing_fallback_count += 1
-        if coverage.reason == "fft_no_valid_bins":
-            fft_unusable_window_count += 1
-        replayed.append(rebuilt)
-        coverages.append(coverage)
-    gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
-    overlap_count = sum(len(timeline.overlap_intervals) for timeline in timelines.values())
-    unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
-    sample_rate_unverified_sensor_count = sum(
-        1 for sensor in raw_capture.sensors if sensor.manifest.sample_rate_unverified
+    context = _build_replay_context(
+        metadata=metadata,
+        raw_capture=raw_capture,
+        fft_n=fft_n,
     )
-    legacy_sensor_count = sum(
-        1 for timeline in timelines.values() if raw_timeline_is_legacy(timeline)
+    windows = _build_replay_windows(
+        samples=samples,
+        raw_capture=raw_capture,
+        context=context,
     )
-    sync_unverified_sensor_count = sum(
-        1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
+    timeline_summary = _summarize_raw_timelines(
+        raw_capture=raw_capture,
+        timelines=context.timelines,
     )
-    stale_sync_sensor_count = sum(
-        1
-        for timeline in timelines.values()
-        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "stale_sync"
-    )
-    high_rtt_sensor_count = sum(
-        1
-        for timeline in timelines.values()
-        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
-    )
-    dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
-    late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
+    loss_counts = _summarize_raw_capture_losses(raw_capture)
     loss_policy = assess_raw_capture_loss_policy(raw_capture.manifest)
-    udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
-    queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
-    invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
-    write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
     replay_confidence = _replay_confidence(
-        raw_backed_summary_row_count=raw_backed_count,
+        raw_backed_summary_row_count=windows.raw_backed_count,
         replay_window_count=len(samples),
-        partial_window_count=partial_window_count,
-        missing_window_count=missing_window_count,
-        gap_count=gap_count,
-        overlap_count=overlap_count,
-        dropped_chunk_count=dropped_chunk_count,
-        late_packet_chunk_count=late_packet_chunk_count,
-        sample_rate_mismatch_count=sample_rate_mismatch_count,
-        fft_unusable_window_count=fft_unusable_window_count,
-        sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
-        unanchored_sensor_count=unanchored_sensor_count,
-        sync_unverified_sensor_count=sync_unverified_sensor_count,
+        partial_window_count=windows.partial_window_count,
+        missing_window_count=windows.missing_window_count,
+        gap_count=timeline_summary.gap_count,
+        overlap_count=timeline_summary.overlap_count,
+        dropped_chunk_count=loss_counts.dropped_chunk_count,
+        late_packet_chunk_count=loss_counts.late_packet_chunk_count,
+        sample_rate_mismatch_count=windows.sample_rate_mismatch_count,
+        fft_unusable_window_count=windows.fft_unusable_window_count,
+        sample_rate_unverified_sensor_count=(timeline_summary.sample_rate_unverified_sensor_count),
+        unanchored_sensor_count=timeline_summary.unanchored_sensor_count,
+        sync_unverified_sensor_count=timeline_summary.sync_unverified_sensor_count,
     )
-    raw_capture_mode = (
-        "summary_only"
-        if raw_backed_count <= 0
-        else ("raw_backed" if replay_confidence == "full" else "partial_raw_backed")
+    return _assemble_raw_replay_result(
+        windows=windows,
+        timeline_summary=timeline_summary,
+        loss_counts=loss_counts,
+        loss_policy=loss_policy,
+        replay_window_count=len(samples),
+        replay_confidence=replay_confidence,
+        raw_capture_mode=_raw_capture_mode(
+            raw_backed_count=windows.raw_backed_count,
+            replay_confidence=replay_confidence,
+        ),
     )
+
+
+def _assemble_raw_replay_result(
+    *,
+    windows: _ReplayWindowBuildResult,
+    timeline_summary: _RawTimelineSummary,
+    loss_counts: _RawCaptureLossCounts,
+    loss_policy: RawCaptureLossPolicyAssessment,
+    replay_window_count: int,
+    replay_confidence: RawReplayConfidence,
+    raw_capture_mode: RawCaptureMode,
+) -> RawReplayResult:
     return RawReplayResult(
-        samples=tuple(replayed),
+        samples=windows.samples,
         summary=RawReplaySummary(
             raw_capture_available=True,
-            raw_backed_summary_row_count=raw_backed_count,
-            replay_window_count=len(samples),
-            complete_window_count=complete_window_count,
-            partial_window_count=partial_window_count,
-            missing_window_count=missing_window_count,
-            gap_count=gap_count,
-            overlap_count=overlap_count,
-            dropped_chunk_count=dropped_chunk_count,
-            late_packet_chunk_count=late_packet_chunk_count,
-            queue_overflow_chunk_count=queue_overflow_chunk_count,
-            invalid_chunk_count=invalid_chunk_count,
-            write_error_chunk_count=write_error_chunk_count,
-            timing_fallback_count=timing_fallback_count,
-            sample_rate_mismatch_count=sample_rate_mismatch_count,
-            fft_unusable_window_count=fft_unusable_window_count,
-            sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
-            unanchored_sensor_count=unanchored_sensor_count,
-            legacy_sensor_count=legacy_sensor_count,
-            sync_unverified_sensor_count=sync_unverified_sensor_count,
-            stale_sync_sensor_count=stale_sync_sensor_count,
-            high_rtt_sensor_count=high_rtt_sensor_count,
+            raw_backed_summary_row_count=windows.raw_backed_count,
+            replay_window_count=replay_window_count,
+            complete_window_count=windows.complete_window_count,
+            partial_window_count=windows.partial_window_count,
+            missing_window_count=windows.missing_window_count,
+            gap_count=timeline_summary.gap_count,
+            overlap_count=timeline_summary.overlap_count,
+            dropped_chunk_count=loss_counts.dropped_chunk_count,
+            late_packet_chunk_count=loss_counts.late_packet_chunk_count,
+            queue_overflow_chunk_count=loss_counts.queue_overflow_chunk_count,
+            invalid_chunk_count=loss_counts.invalid_chunk_count,
+            write_error_chunk_count=loss_counts.write_error_chunk_count,
+            timing_fallback_count=windows.timing_fallback_count,
+            sample_rate_mismatch_count=windows.sample_rate_mismatch_count,
+            fft_unusable_window_count=windows.fft_unusable_window_count,
+            sample_rate_unverified_sensor_count=(
+                timeline_summary.sample_rate_unverified_sensor_count
+            ),
+            unanchored_sensor_count=timeline_summary.unanchored_sensor_count,
+            legacy_sensor_count=timeline_summary.legacy_sensor_count,
+            sync_unverified_sensor_count=timeline_summary.sync_unverified_sensor_count,
+            stale_sync_sensor_count=timeline_summary.stale_sync_sensor_count,
+            high_rtt_sensor_count=timeline_summary.high_rtt_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
             raw_capture_loss_policy_severity=loss_policy.severity,
@@ -300,32 +271,34 @@ def build_raw_backed_samples(
             raw_capture_loss_policy_max_events_per_minute=(
                 loss_policy.max_sensor_loss_events_per_minute
             ),
-            udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
+            udp_ingest_queue_drop_count=loss_counts.udp_ingest_queue_drop_count,
             warnings=_build_replay_warnings(
-                raw_backed_summary_row_count=raw_backed_count,
-                timing_fallback_count=timing_fallback_count,
-                partial_window_count=partial_window_count,
-                missing_window_count=missing_window_count,
-                gap_count=gap_count,
-                overlap_count=overlap_count,
-                dropped_chunk_count=dropped_chunk_count,
-                late_packet_chunk_count=late_packet_chunk_count,
-                udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
-                queue_overflow_chunk_count=queue_overflow_chunk_count,
-                invalid_chunk_count=invalid_chunk_count,
-                write_error_chunk_count=write_error_chunk_count,
-                sample_rate_mismatch_count=sample_rate_mismatch_count,
-                fft_unusable_window_count=fft_unusable_window_count,
-                sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
-                legacy_sensor_count=legacy_sensor_count,
-                unanchored_sensor_count=unanchored_sensor_count,
-                sync_unverified_sensor_count=sync_unverified_sensor_count,
-                stale_sync_sensor_count=stale_sync_sensor_count,
-                high_rtt_sensor_count=high_rtt_sensor_count,
+                raw_backed_summary_row_count=windows.raw_backed_count,
+                timing_fallback_count=windows.timing_fallback_count,
+                partial_window_count=windows.partial_window_count,
+                missing_window_count=windows.missing_window_count,
+                gap_count=timeline_summary.gap_count,
+                overlap_count=timeline_summary.overlap_count,
+                dropped_chunk_count=loss_counts.dropped_chunk_count,
+                late_packet_chunk_count=loss_counts.late_packet_chunk_count,
+                udp_ingest_queue_drop_count=loss_counts.udp_ingest_queue_drop_count,
+                queue_overflow_chunk_count=loss_counts.queue_overflow_chunk_count,
+                invalid_chunk_count=loss_counts.invalid_chunk_count,
+                write_error_chunk_count=loss_counts.write_error_chunk_count,
+                sample_rate_mismatch_count=windows.sample_rate_mismatch_count,
+                fft_unusable_window_count=windows.fft_unusable_window_count,
+                sample_rate_unverified_sensor_count=(
+                    timeline_summary.sample_rate_unverified_sensor_count
+                ),
+                legacy_sensor_count=timeline_summary.legacy_sensor_count,
+                unanchored_sensor_count=timeline_summary.unanchored_sensor_count,
+                sync_unverified_sensor_count=timeline_summary.sync_unverified_sensor_count,
+                stale_sync_sensor_count=timeline_summary.stale_sync_sensor_count,
+                high_rtt_sensor_count=timeline_summary.high_rtt_sensor_count,
                 loss_policy=loss_policy,
             ),
         ),
-        window_coverages=tuple(coverages),
+        window_coverages=windows.coverages,
     )
 
 
@@ -484,6 +457,178 @@ def _rebuild_sample(
                 else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
             ),
         ),
+    )
+
+
+def _raw_capture_mode(
+    *,
+    raw_backed_count: int,
+    replay_confidence: RawReplayConfidence,
+) -> RawCaptureMode:
+    if raw_backed_count <= 0:
+        return "summary_only"
+    if replay_confidence == "full":
+        return "raw_backed"
+    return "partial_raw_backed"
+
+
+def _build_raw_capture_unavailable_replay_result(
+    samples: tuple[SensorFrame, ...],
+) -> RawReplayResult:
+    return RawReplayResult(
+        samples=samples,
+        summary=RawReplaySummary(
+            raw_capture_available=False,
+            raw_backed_summary_row_count=0,
+            replay_window_count=len(samples),
+            complete_window_count=0,
+            partial_window_count=0,
+            missing_window_count=len(samples),
+            gap_count=0,
+            overlap_count=0,
+            dropped_chunk_count=0,
+            late_packet_chunk_count=0,
+            queue_overflow_chunk_count=0,
+            invalid_chunk_count=0,
+            write_error_chunk_count=0,
+            timing_fallback_count=0,
+            sample_rate_mismatch_count=0,
+            fft_unusable_window_count=0,
+            sample_rate_unverified_sensor_count=0,
+            unanchored_sensor_count=0,
+            legacy_sensor_count=0,
+            sync_unverified_sensor_count=0,
+            stale_sync_sensor_count=0,
+            high_rtt_sensor_count=0,
+            replay_confidence="unavailable",
+            raw_capture_mode="summary_only",
+            udp_ingest_queue_drop_count=0,
+        ),
+        window_coverages=tuple(
+            RawReplayWindowCoverage(
+                client_id=sample.client_id,
+                t_s=sample.t_s,
+                coverage_state="missing",
+                raw_backed=False,
+                reason="raw_capture_unavailable",
+            )
+            for sample in samples
+        ),
+    )
+
+
+def _build_replay_context(
+    *,
+    metadata: RunMetadata,
+    raw_capture: RawRunCapture,
+    fft_n: int,
+) -> _ReplayBuildContext:
+    timelines = {
+        sensor.manifest.client_id: _build_sensor_timeline(
+            raw_capture, sensor_id=sensor.manifest.client_id
+        )
+        for sensor in raw_capture.sensors
+    }
+    return _ReplayBuildContext(
+        fft_n=fft_n,
+        timelines=timelines,
+        fft_computer=_build_fft_computer(metadata),
+        accel_scale_g_per_lsb=metadata.accel_scale_g_per_lsb,
+    )
+
+
+def _build_replay_windows(
+    *,
+    samples: tuple[SensorFrame, ...],
+    raw_capture: RawRunCapture,
+    context: _ReplayBuildContext,
+) -> _ReplayWindowBuildResult:
+    replayed: list[SensorFrame] = []
+    coverages: list[RawReplayWindowCoverage] = []
+    raw_backed_count = 0
+    complete_window_count = 0
+    partial_window_count = 0
+    missing_window_count = 0
+    sample_rate_mismatch_count = 0
+    timing_fallback_count = 0
+    fft_unusable_window_count = 0
+    for sample in samples:
+        rebuilt, coverage = _rebuild_sample(
+            sample=sample,
+            timeline=context.timelines.get(sample.client_id),
+            raw_capture=raw_capture,
+            fft_computer=context.fft_computer,
+            fft_n=context.fft_n,
+            accel_scale_g_per_lsb=context.accel_scale_g_per_lsb,
+        )
+        if coverage.raw_backed:
+            raw_backed_count += 1
+        if coverage.coverage_state == "complete":
+            complete_window_count += 1
+        elif coverage.coverage_state == "partial":
+            partial_window_count += 1
+        else:
+            missing_window_count += 1
+        if coverage.reason == "sample_rate_mismatch":
+            sample_rate_mismatch_count += 1
+        if coverage.reason == "timing_fallback":
+            timing_fallback_count += 1
+        if coverage.reason == "fft_no_valid_bins":
+            fft_unusable_window_count += 1
+        replayed.append(rebuilt)
+        coverages.append(coverage)
+    return _ReplayWindowBuildResult(
+        samples=tuple(replayed),
+        coverages=tuple(coverages),
+        raw_backed_count=raw_backed_count,
+        complete_window_count=complete_window_count,
+        partial_window_count=partial_window_count,
+        missing_window_count=missing_window_count,
+        sample_rate_mismatch_count=sample_rate_mismatch_count,
+        timing_fallback_count=timing_fallback_count,
+        fft_unusable_window_count=fft_unusable_window_count,
+    )
+
+
+def _summarize_raw_timelines(
+    *,
+    raw_capture: RawRunCapture,
+    timelines: dict[str, RawSensorTimeline],
+) -> _RawTimelineSummary:
+    return _RawTimelineSummary(
+        gap_count=sum(len(timeline.gap_intervals) for timeline in timelines.values()),
+        overlap_count=sum(len(timeline.overlap_intervals) for timeline in timelines.values()),
+        sample_rate_unverified_sensor_count=sum(
+            1 for sensor in raw_capture.sensors if sensor.manifest.sample_rate_unverified
+        ),
+        unanchored_sensor_count=sum(1 for timeline in timelines.values() if not timeline.anchored),
+        legacy_sensor_count=sum(
+            1 for timeline in timelines.values() if raw_timeline_is_legacy(timeline)
+        ),
+        sync_unverified_sensor_count=sum(
+            1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
+        ),
+        stale_sync_sensor_count=sum(
+            1
+            for timeline in timelines.values()
+            if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "stale_sync"
+        ),
+        high_rtt_sensor_count=sum(
+            1
+            for timeline in timelines.values()
+            if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
+        ),
+    )
+
+
+def _summarize_raw_capture_losses(raw_capture: RawRunCapture) -> _RawCaptureLossCounts:
+    return _RawCaptureLossCounts(
+        dropped_chunk_count=raw_capture.manifest.total_dropped_chunk_count,
+        late_packet_chunk_count=raw_capture.manifest.total_late_packet_chunk_count,
+        queue_overflow_chunk_count=raw_capture.manifest.losses.queue_overflow_chunk_count,
+        invalid_chunk_count=raw_capture.manifest.losses.invalid_chunk_count,
+        write_error_chunk_count=raw_capture.manifest.losses.write_error_chunk_count,
+        udp_ingest_queue_drop_count=raw_capture.manifest.losses.udp_ingest_queue_drop_count,
     )
 
 
