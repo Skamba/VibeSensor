@@ -48,11 +48,21 @@ def test_golden_replay_fixture_catalog_covers_required_scenarios() -> None:
         "rear-wheel-imbalance",
         "driveshaft-rumble",
         "engine-harmonic",
+        "fixed-resonance-speed-sweep",
+        "road-shock-transient",
         "transient-spike",
         "noisy-sensor",
         "gps-dropout",
         "missing-rpm",
     ]
+    assert {fixture.group for fixture in fixtures} >= {
+        "baseline",
+        "wheel",
+        "driveline",
+        "engine",
+        "resonance",
+        "road_shock",
+    }
     assert all(fixture.seed > 0 for fixture in fixtures)
     assert all(fixture.expected.tolerance_bands is not None for fixture in fixtures)
 
@@ -70,8 +80,16 @@ def _assert_expected_outcome(
             assert top.get("strongest_location") == expected.strongest_location
         confidence = float(top.get("confidence", 0.0))
         assert expected.confidence_range[0] <= confidence <= expected.confidence_range[1]
+        if expected.confidence_label_key is not None:
+            assert top.get("confidence_label_key") == expected.confidence_label_key
     elif top is not None and expected.max_false_positive_confidence is not None:
         assert float(top.get("confidence", 0.0)) <= expected.max_false_positive_confidence
+    else:
+        assert expected.confidence_range[0] <= 0.0 <= expected.confidence_range[1]
+
+    _assert_tolerance_bands(fixture, analysis, top)
+    _assert_required_warnings(fixture, analysis)
+    _assert_required_metadata(fixture, analysis)
 
     metadata = analysis.get("analysis_metadata")
     assert isinstance(metadata, dict)
@@ -80,6 +98,76 @@ def _assert_expected_outcome(
             assert int(metadata.get("whole_run_context_missing_speed_window_count", 0)) > 0
         if reason == "missing_rpm":
             assert int(metadata.get("whole_run_context_missing_rpm_window_count", 0)) > 0
+
+
+def _assert_tolerance_bands(
+    fixture: GoldenReplayFixture,
+    analysis: dict[str, object],
+    top: dict[str, Any] | None,
+) -> None:
+    bands = fixture.expected.tolerance_bands or {}
+    for metric, (minimum, maximum) in bands.items():
+        if metric == "top_confidence":
+            value = float(top.get("confidence", 0.0)) if top is not None else 0.0
+        elif metric == "frequency_hz":
+            assert top is not None
+            value = _representative_matched_frequency_hz(top)
+        elif metric == "fixed_frequency_hz":
+            assert fixture.primary_frequency_hz is not None
+            value = fixture.primary_frequency_hz
+        elif metric == "missing_speed_windows_min":
+            metadata = analysis.get("analysis_metadata")
+            assert isinstance(metadata, dict)
+            value = float(metadata.get("whole_run_context_missing_speed_window_count", 0.0))
+        elif metric == "missing_rpm_windows_min":
+            metadata = analysis.get("analysis_metadata")
+            assert isinstance(metadata, dict)
+            value = float(metadata.get("whole_run_context_missing_rpm_window_count", 0.0))
+        else:
+            metadata = analysis.get("analysis_metadata")
+            assert isinstance(metadata, dict)
+            value = float(metadata.get(metric, 0.0))
+        assert minimum <= value <= maximum, (
+            f"{fixture.case_id} expected {metric} in [{minimum}, {maximum}], got {value}"
+        )
+
+
+def _assert_required_warnings(
+    fixture: GoldenReplayFixture,
+    analysis: dict[str, object],
+) -> None:
+    expected_codes = set(fixture.expected.required_warning_codes)
+    if not expected_codes:
+        return
+    warnings = analysis.get("warnings")
+    assert isinstance(warnings, list)
+    actual_codes = {str(warning.get("code")) for warning in warnings if isinstance(warning, dict)}
+    assert expected_codes <= actual_codes
+
+
+def _assert_required_metadata(
+    fixture: GoldenReplayFixture,
+    analysis: dict[str, object],
+) -> None:
+    minimums = fixture.expected.required_metadata_minimums or {}
+    if not minimums:
+        return
+    metadata = analysis.get("analysis_metadata")
+    assert isinstance(metadata, dict)
+    for key, minimum in minimums.items():
+        assert float(metadata.get(key, 0.0)) >= minimum
+
+
+def _representative_matched_frequency_hz(top: dict[str, Any]) -> float:
+    points = top.get("matched_points")
+    assert isinstance(points, list) and points
+    frequencies = [
+        float(point.get("matched_hz", 0.0))
+        for point in points
+        if isinstance(point, dict) and point.get("matched_hz") is not None
+    ]
+    assert frequencies
+    return sum(frequencies) / len(frequencies)
 
 
 def _top_cause(analysis: dict[str, object]) -> dict[str, Any] | None:
