@@ -16,12 +16,14 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
+    RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
     build_whole_run_spectral_artifact_bundle,
+    build_whole_run_spectral_artifact_bundle_from_ranges,
 )
 
 _RUN_START_US = 1_000_000
@@ -147,6 +149,37 @@ def _summaries(bundle, sensor_id: str) -> tuple[WholeRunWindowSpectralSummary, .
     return tuple(WholeRunWindowSpectralSummary.from_mapping(row) for row in _summary_rows(payload))
 
 
+def _range_reader(raw_capture: RawRunCapture, read_sizes: list[int]):
+    sensors = {sensor.manifest.client_id: sensor for sensor in raw_capture.sensors}
+
+    def read_range(
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        sensor = sensors[client_id]
+        read_sizes.append(sample_count)
+        sample_end = sample_start + sample_count
+        return RawCaptureSensorRange(
+            client_id=client_id,
+            requested_sample_start=sample_start,
+            requested_sample_count=sample_count,
+            coverage_state="full",
+            samples_i16=np.ascontiguousarray(sensor.samples_i16[sample_start:sample_end]),
+            manifest=sensor.manifest,
+            returned_sample_start=sample_start,
+            chunks=tuple(
+                chunk
+                for chunk in sensor.chunks
+                if chunk.sample_start < sample_end
+                and (chunk.sample_start + chunk.sample_count) > sample_start
+            ),
+        )
+
+    return read_range
+
+
 def test_whole_run_spectra_are_deterministic_across_serial_and_parallel_execution() -> None:
     raw_capture = _raw_capture(
         _make_sensor(
@@ -194,6 +227,46 @@ def test_whole_run_spectra_are_deterministic_across_serial_and_parallel_executio
         "spectral-matrix:sensor-b",
         "spectral-summary:sensor-b",
     ]
+
+
+def test_whole_run_spectra_range_reader_matches_full_capture_without_full_range_reads() -> None:
+    raw_capture = _raw_capture(
+        _make_sensor(
+            client_id="sensor-a",
+            sample_rate_hz=8,
+            chunks=[
+                (_RUN_START_US, _sine_samples(total_samples=8)),
+                (_RUN_START_US + 1_000_000, _sine_samples(total_samples=8, phase_rad=0.1)),
+            ],
+            clock_sync=_verified_sync(),
+        )
+    )
+    read_sizes: list[int] = []
+
+    full_result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=2,
+        created_at="2025-01-01T00:00:00Z",
+    )
+    range_result = build_whole_run_spectral_artifact_bundle_from_ranges(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture_manifest=raw_capture.manifest,
+        raw_range_reader=_range_reader(raw_capture, read_sizes),
+        max_workers=1,
+        chunk_window_count=2,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert full_result.bundle is not None
+    assert range_result.bundle is not None
+    assert range_result.bundle.manifest == full_result.bundle.manifest
+    assert range_result.bundle.artifact_contents == full_result.bundle.artifact_contents
+    assert range_result.coverage_summary == full_result.coverage_summary
+    assert read_sizes == [8, 8, 8]
 
 
 def test_whole_run_spectra_align_sensor_windows_by_measurement_time() -> None:

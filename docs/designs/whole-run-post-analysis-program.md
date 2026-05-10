@@ -32,11 +32,9 @@ below.
 - `apps/server/vibesensor/use_cases/run/logger.py` finalizes a run and schedules
    `PostAnalysisWorker`.
 - `apps/server/vibesensor/use_cases/run/post_analysis_loader.py` loads persisted
-   samples for a run, but caps analysis input at `_MAX_POST_ANALYSIS_SAMPLES =
-   12_000` and applies event-preserving sampling when the summary row set is
-   longer. When a raw-capture manifest exists, the loader also asks persistence
-   for the full `RawRunCapture` via `aload_raw_capture(...)`; the current
-   connected whole-run sidecar path is not yet a pure range-streaming executor.
+   samples for a run, caps compact analysis input at `_MAX_POST_ANALYSIS_SAMPLES =
+   12_000`, and applies event-preserving sampling when needed. Compact summary
+   replay may still use a full `RawRunCapture`; whole-run spectra do not.
 - `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` uses raw capture
    only to rebuild FFT-derived metrics for those already-persisted summary rows.
 - `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` is the
@@ -64,15 +62,13 @@ below.
    `.raw.i16le` and `.index.jsonl` files via
    `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
 - Indexed raw range reads exist through
-  `RunPersistence.aload_raw_capture_sensor_range(...)` and are used by the
-  compatibility/prototype diagnostics boundary in
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_raw_windows.py`.
+   `RunPersistence.aload_raw_capture_sensor_range(...)`.
 - The current connected dense sidecar path is owned by
   `apps/server/vibesensor/use_cases/run/post_analysis_whole_run_builders.py` and
   the `whole_run_*` diagnostics modules:
   - `whole_run_spectra.py` builds deterministic whole-run spectral sidecars from
-    `RawRunCapture`, emitting spectral grids/matrices plus per-window compact
-    spectral summaries.
+    `RawCaptureManifest` plus bounded raw range reads, emitting spectral
+    grids/matrices plus per-window compact spectral summaries.
   - `whole_run_context.py` labels the same window grid with speed/RPM/reference
     context and persists compact context intervals in `analysis_json`.
   - `orders/whole_run_traces.py` builds dense order trace points from
@@ -85,9 +81,9 @@ below.
     windows and compact spatial summaries.
 - `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
   persists dense sidecar artifacts under `data/whole-run-artifacts/{run_id}/`.
-- The older `post_run_*` modules remain useful support/prototype code for
-  bounded range-read experiments and legacy dense DTOs, but they are not the
-  currently connected sidecar pipeline in `execute_post_analysis()`.
+- The older `post_run_*` modules remain useful support/prototype code for legacy
+   dense DTOs and alternate bounded-window iteration, but they are not the
+   currently connected sidecar pipeline in `execute_post_analysis()`.
 
 ### Persisted analysis and reporting
 
@@ -106,16 +102,13 @@ The current architecture has raw capture, a canonical executor, dense sidecar
 persistence, whole-run spectra/context/order/spatial stages, and compact
 report-facing summaries. Remaining debt is narrower:
 
-1. **Future streaming/range-read refactor.** The compatibility
-   `post_run_raw_windows.py` path reads bounded raw ranges, but the connected
-   whole-run spectral stage currently receives a fully loaded `RawRunCapture`
-   from `post_analysis_loader.py`. Long-run memory pressure should be reduced by
-   wiring the sidecar executor to bounded range reads or an equivalent streaming
-   source.
-2. **Summary-era compatibility remains.** The compact `RunAnalysis` path over
+1. **Summary-era compatibility remains.** The compact `RunAnalysis` path over
    summary rows still builds the report-facing baseline. Whole-run summaries are
    projected into that persisted analysis, but legacy `Finding` narratives remain
    a fallback when fused whole-run diagnosis summaries are absent.
+2. **Compact raw replay still materializes raw capture.** Summary-row replay may
+   still use the optional full `RawRunCapture`; keep it separate from the
+   bounded range-read whole-run sidecar executor.
 3. **Dense sidecars are write-mostly.** History/report consumers intentionally
    read compact summaries and manifests. Sidecar readback is limited to explicit
    internal needs; adding new report surfaces should still project compact
@@ -131,7 +124,7 @@ diagnosis/report summaries.
 
 ```text
 raw capture manifest/files (#3065)
-  -> current RawRunCapture load (future streaming/range-read refactor)
+  -> bounded raw range reads for whole-run spectra
   -> deterministic window planner
   -> raw-window spectral executor
   -> context timeline + segment labels
@@ -147,8 +140,8 @@ raw capture manifest/files (#3065)
 | Layer | Owner area | Responsibility |
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
-| Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `post_run_raw_windows.py` owns raw-window iteration for dense stages |
-| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py` owns the in-memory DTO-first STFT engine, `post_run_window_features.py` owns the compact per-window feature reduction, and `post_run_vibration_episodes.py` owns deterministic episode grouping |
+| Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `whole_run_spectra.py` resolves each window to bounded raw range reads |
+| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py`, `post_run_window_features.py`, and `post_run_vibration_episodes.py` remain support/prototype seams |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments; `post_run_vehicle_reference.py` owns the conservative vehicle-reference timeline for dense stages |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability; `post_run_order_bands.py` owns the pre-classification per-window expected band grid |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
