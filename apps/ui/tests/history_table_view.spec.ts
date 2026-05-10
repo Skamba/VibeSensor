@@ -2,6 +2,11 @@ import { expect, test } from "vitest";
 import type { HistoryEntry, HistoryInsightsPayload } from "../src/api/types";
 import type { RunDetail } from "../src/app/ui_app_state";
 import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
+import {
+  makeHistoryFinding,
+  makeHistoryInsightsPayload,
+  makeLocationIntensityRow,
+} from "./history_payload_test_support";
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -20,9 +25,8 @@ function historyListRun(runId: string): HistoryEntry {
 }
 
 function populatedInsights(runId: string): HistoryInsightsPayload {
-  return {
+  return makeHistoryInsightsPayload({
     run_id: runId,
-    status: "complete",
     start_time_utc: "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
     duration_s: 12.3,
@@ -34,7 +38,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       explanation: "Most likely wheel-tire contribution.",
     },
     findings: [
-      {
+      makeHistoryFinding({
         suspected_source: "wheel_tire",
         confidence: 0.92,
         confidence_pct: "92%",
@@ -43,8 +47,9 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "80-100 km/h",
         frequency_hz_or_order: 32,
         evidence_summary: "Front-right wheel imbalance",
-      },
-      {
+      }),
+      makeHistoryFinding({
+        finding_id: "finding-2",
         suspected_source: "driveline",
         confidence: 0.61,
         confidence_pct: "61%",
@@ -53,10 +58,11 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "60-80 km/h",
         frequency_hz_or_order: 18.5,
         evidence_summary: "Secondary driveline contribution",
-      },
+      }),
     ],
     warnings: [
       {
+        applies_to: "run",
         code: "speed-gap",
         severity: "warn",
         title: "history.warning.speed_gap",
@@ -64,10 +70,16 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       },
     ],
     sensor_intensity_by_location: [
-      { location: "front-right wheel", p95_intensity_db: 32 },
-      { location: "driveshaft tunnel", p95_intensity_db: 25.5 },
+      makeLocationIntensityRow({
+        location: "front-right wheel",
+        p95_intensity_db: 32,
+      }),
+      makeLocationIntensityRow({
+        location: "driveshaft tunnel",
+        p95_intensity_db: 25.5,
+      }),
     ],
-  } as HistoryInsightsPayload;
+  });
 }
 
 function defaultDetail(detail: Partial<RunDetail>): RunDetail {
@@ -90,15 +102,14 @@ test("buildHistoryTableRowsViewModel builds rows and expanded details from typed
     expandedRunId: "run-001",
     runDetailsById: {
       "run-001": defaultDetail({
-        preview: populatedInsights("run-001") as RunDetail["preview"],
-        insights: populatedInsights("run-001") as RunDetail["insights"],
+        preview: populatedInsights("run-001"),
+        insights: populatedInsights("run-001"),
       }),
     },
     t: testTranslation,
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
     fmtTs: (iso) => iso,
     formatInt: (value) => String(value),
-    historyExportUrl: (runId) => `/api/history/${runId}/export`,
   });
 
   expect(rows).toHaveLength(1);
@@ -129,14 +140,13 @@ test("buildHistoryTableRowsViewModel keeps collapsed quick-report context in the
     expandedRunId: null,
     runDetailsById: {
       "run-001": defaultDetail({
-        preview: populatedInsights("run-001") as RunDetail["preview"],
+        preview: populatedInsights("run-001"),
       }),
     },
     t: testTranslation,
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
     fmtTs: (iso) => iso,
     formatInt: (value) => String(value),
-    historyExportUrl: (runId) => `/api/history/${runId}/export`,
   });
 
   expect(rows).toHaveLength(1);

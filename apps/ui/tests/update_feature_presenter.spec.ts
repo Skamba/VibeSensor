@@ -231,6 +231,7 @@ describe("buildUpdateFeaturePanelModels", () => {
           status: "degraded",
           degradation_reasons: ["db"],
           persistence: {
+            ...createHealthyUpdateStatus().persistence,
             analysis_active_run_id: null,
             analysis_elapsed_s: null,
             analysis_in_progress: false,

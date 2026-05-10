@@ -21,7 +21,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
   test("reuses series metadata when only spectrum values change", async () => {
     const seriesMetaSnapshots: CreateSpectrumChartDeps["seriesMeta"]["value"][] =
       [];
-    const setDataSnapshots: readonly unknown[][] = [];
+    const setDataSnapshots: Array<readonly unknown[]> = [];
 
     await withSpectrumRendererHarness(
       {
@@ -110,9 +110,10 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         await flushSignalUpdates();
 
         state.realtime.rotationalSpeeds.value = {
-          wheel_rpm: 600,
-          engine_rpm: 1800,
-          driveshaft_rpm: 600,
+          basis_speed_source: null,
+          wheel: { rpm: 600, mode: null, reason: null },
+          engine: { rpm: 1800, mode: null, reason: null },
+          driveshaft: { rpm: 600, mode: null, reason: null },
           order_bands: [
             {
               key: "wheel_1x",
@@ -223,7 +224,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
   });
 
   test("rebuilds chart data buffers when the frame shape changes", async () => {
-    const setDataSnapshots: readonly unknown[][] = [];
+    const setDataSnapshots: Array<readonly unknown[]> = [];
 
     await withSpectrumRendererHarness(
       {

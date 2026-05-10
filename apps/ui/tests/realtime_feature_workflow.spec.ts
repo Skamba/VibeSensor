@@ -29,11 +29,14 @@ function makeClient(
     id,
     name: id,
     connected: true,
+    mac_address: id,
+    location_code: "",
     sample_rate_hz: 1000,
     frame_samples: 200,
     dropped_frames: 0,
     frames_total: 100,
     last_seen_age_ms: 10,
+    firmware_version: "",
     ...overrides,
   };
 }

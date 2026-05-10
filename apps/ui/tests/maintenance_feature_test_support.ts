@@ -9,7 +9,6 @@ import type { UpdateFeatureDeps } from "../src/app/features/update_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type {
   EspFlashPanelActionHandlers,
-  EspFlashPanelDom,
   EspFlashPanelRenderModel,
   EspFlashPanelView,
 } from "../src/app/views/esp_flash_panel";
@@ -217,7 +216,7 @@ async function createEspFlashFeatureDeps() {
     settingsTabPanels: [],
     settingsTabs: [],
     views: [],
-  } satisfies EspFlashPanelDom;
+  };
 
   return {
     cleanup,

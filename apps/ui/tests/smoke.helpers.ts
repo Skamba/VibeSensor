@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, type Route } from "@playwright/test";
+import type { LoggingStatusPayload } from "../src/api/types";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 export type FakeWebSocketOptions = {
@@ -354,7 +355,7 @@ type CaptureReadinessState = "pass" | "warn" | "fail";
 type CaptureReadinessCheckInput = {
   state: CaptureReadinessState;
   reasonKey: string;
-  details?: Record<string, unknown>;
+  details?: Record<string, string | number>;
 };
 
 type CaptureReadinessInput = {
@@ -368,7 +369,7 @@ type CaptureReadinessInput = {
 function readinessCheck(
   checkKey: string,
   input: CaptureReadinessCheckInput,
-): Record<string, unknown> {
+): NonNullable<LoggingStatusPayload["capture_readiness"]>["checks"][number] {
   return {
     check_key: checkKey,
     state: input.state,
@@ -379,7 +380,7 @@ function readinessCheck(
 
 export function buildCaptureReadiness(
   input: CaptureReadinessInput,
-): Record<string, unknown> {
+): NonNullable<LoggingStatusPayload["capture_readiness"]> {
   const overall =
     input.overall ??
     (input.isReady

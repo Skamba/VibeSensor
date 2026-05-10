@@ -20,7 +20,7 @@ describe("spectrum_css_vars", () => {
         getPropertyValue(name: string): string {
           return styleValues[name] ?? "";
         },
-      } as CSSStyleDeclaration;
+      } as unknown as CSSStyleDeclaration;
     }) as typeof getComputedStyle;
     globalThis.matchMedia = (() => ({
       matches: false,
@@ -44,6 +44,16 @@ describe("spectrum_css_vars", () => {
 
     try {
       const { getSpectrumCssVars } = await import("../src/spectrum_css_vars");
+      const dispatchThemeChange = (): void => {
+        const handler = themeChangeHandler;
+        if (!handler) {
+          throw new Error("theme change handler was not registered");
+        }
+        handler({
+          matches: true,
+          media: "(prefers-color-scheme: dark)",
+        } as MediaQueryListEvent);
+      };
 
       const first = getSpectrumCssVars();
       expect(first).toEqual({
@@ -55,10 +65,7 @@ describe("spectrum_css_vars", () => {
       });
       expect(readCount).toBe(1);
 
-      themeChangeHandler?.({
-        matches: true,
-        media: "(prefers-color-scheme: dark)",
-      } as MediaQueryListEvent);
+      dispatchThemeChange();
       const unchangedRefresh = getSpectrumCssVars();
       expect(unchangedRefresh).toBe(first);
       expect(readCount).toBe(2);
@@ -68,29 +75,20 @@ describe("spectrum_css_vars", () => {
       expect(getSpectrumCssVars().surface).toBe("#101820");
       expect(readCount).toBe(2);
 
-      themeChangeHandler?.({
-        matches: true,
-        media: "(prefers-color-scheme: dark)",
-      } as MediaQueryListEvent);
+      dispatchThemeChange();
       const refreshed = getSpectrumCssVars();
       expect(refreshed.surface).toBe("#222222");
       expect(refreshed).not.toBe(first);
       expect(getSpectrumCssVars()).toBe(refreshed);
       expect(readCount).toBe(3);
 
-      themeChangeHandler?.({
-        matches: true,
-        media: "(prefers-color-scheme: dark)",
-      } as MediaQueryListEvent);
+      dispatchThemeChange();
       const unchangedThemeRefresh = getSpectrumCssVars();
       expect(unchangedThemeRefresh).toBe(refreshed);
       expect(readCount).toBe(4);
 
       styleValues["--surface"] = "#444444";
-      themeChangeHandler?.({
-        matches: true,
-        media: "(prefers-color-scheme: dark)",
-      } as MediaQueryListEvent);
+      dispatchThemeChange();
       const autoRefreshed = getSpectrumCssVars();
       expect(autoRefreshed.surface).toBe("#444444");
       expect(autoRefreshed).not.toBe(refreshed);

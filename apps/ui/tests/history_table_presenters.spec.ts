@@ -2,6 +2,11 @@ import { expect, test } from "vitest";
 import type { HistoryEntry, HistoryInsightsPayload } from "../src/api/types";
 import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 import type { RunDetail } from "../src/app/ui_app_state";
+import {
+  makeHistoryFinding,
+  makeHistoryInsightsPayload,
+  makeLocationIntensityRow,
+} from "./history_payload_test_support";
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -27,9 +32,8 @@ function historyListRun(runId: string): HistoryEntry {
 }
 
 function populatedInsights(runId: string): HistoryInsightsPayload {
-  return {
+  return makeHistoryInsightsPayload({
     run_id: runId,
-    status: "complete",
     start_time_utc: "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
     duration_s: 12.3,
@@ -41,7 +45,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       explanation: "Most likely wheel-tire contribution.",
     },
     findings: [
-      {
+      makeHistoryFinding({
         suspected_source: "wheel_tire",
         confidence: 0.92,
         confidence_pct: "92%",
@@ -50,8 +54,9 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "80-100 km/h",
         frequency_hz_or_order: 32,
         evidence_summary: "Front-right wheel imbalance",
-      },
-      {
+      }),
+      makeHistoryFinding({
+        finding_id: "finding-2",
         suspected_source: "driveline",
         confidence: 0.61,
         confidence_pct: "61%",
@@ -60,8 +65,9 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "60-80 km/h",
         frequency_hz_or_order: 18.5,
         evidence_summary: "Secondary driveline contribution",
-      },
-      {
+      }),
+      makeHistoryFinding({
+        finding_id: "finding-3",
         suspected_source: "engine",
         confidence: 0.44,
         confidence_pct: "44%",
@@ -70,8 +76,9 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "idle",
         frequency_hz_or_order: 12.5,
         evidence_summary: "Engine harmonics remain visible",
-      },
-      {
+      }),
+      makeHistoryFinding({
+        finding_id: "finding-4",
         suspected_source: "body_resonance",
         confidence: 0.27,
         confidence_pct: "27%",
@@ -80,16 +87,18 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         strongest_speed_band: "100-120 km/h",
         frequency_hz_or_order: 9.2,
         evidence_summary: "Cabin resonance remains possible",
-      },
+      }),
     ],
     warnings: [
       {
+        applies_to: "run",
         code: "speed-gap",
         severity: "warn",
         title: "history.warning.speed_gap",
         detail: "Gap",
       },
       {
+        applies_to: "run",
         code: "speed-gap",
         severity: "warn",
         title: "history.warning.speed_gap",
@@ -97,11 +106,20 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       },
     ],
     sensor_intensity_by_location: [
-      { location: "front-right wheel", p95_intensity_db: 32 },
-      { location: "driveshaft tunnel", p95_intensity_db: 25.5 },
-      { location: "custom bracket", p95_intensity_db: 21.1 },
+      makeLocationIntensityRow({
+        location: "front-right wheel",
+        p95_intensity_db: 32,
+      }),
+      makeLocationIntensityRow({
+        location: "driveshaft tunnel",
+        p95_intensity_db: 25.5,
+      }),
+      makeLocationIntensityRow({
+        location: "custom bracket",
+        p95_intensity_db: 21.1,
+      }),
     ],
-  } as HistoryInsightsPayload;
+  });
 }
 
 function defaultDetail(detail: Partial<RunDetail>): RunDetail {
@@ -121,7 +139,10 @@ function defaultDetail(detail: Partial<RunDetail>): RunDetail {
 test("history table presenter builds typed diagnosis models from raw insights", () => {
   const run = historyListRun("run-001");
   run.lifecycle = {
-    ...run.lifecycle,
+    stage: "post_analysis_ready",
+    whole_run_artifacts: "ready",
+    post_analysis: "ready",
+    report: "ready",
     raw_capture: "missing",
   };
   run.artifact_availability = {
@@ -133,8 +154,8 @@ test("history table presenter builds typed diagnosis models from raw insights", 
     expandedRunId: "run-001",
     runDetailsById: {
       "run-001": defaultDetail({
-        preview: populatedInsights("run-001") as RunDetail["preview"],
-        insights: populatedInsights("run-001") as RunDetail["insights"],
+        preview: populatedInsights("run-001"),
+        insights: populatedInsights("run-001"),
       }),
     },
     t: testTranslation,
@@ -218,7 +239,7 @@ test("history table presenter keeps loading and error state outside the renderer
 });
 
 test("history table presenter keeps PDF pending until analysis completes", () => {
-  const run = {
+  const run: HistoryEntry = {
     ...historyListRun("run-003"),
     status: "analyzing" as const,
     lifecycle: {
@@ -234,7 +255,7 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
     expandedRunId: null,
     runDetailsById: {
       "run-003": defaultDetail({
-        preview: populatedInsights("run-003") as RunDetail["preview"],
+        preview: populatedInsights("run-003"),
       }),
     },
     t: testTranslation,
@@ -255,7 +276,7 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
 });
 
 test("history table presenter keeps PDF pending from lifecycle even when run status is complete", () => {
-  const run = {
+  const run: HistoryEntry = {
     ...historyListRun("run-003b"),
     lifecycle: {
       stage: "post_analysis_degraded",
@@ -308,7 +329,7 @@ test("history table presenter shows degraded raw capture warning details", () =>
     expandedRunId: "run-004",
     runDetailsById: {
       "run-004": defaultDetail({
-        preview: populatedInsights("run-004") as RunDetail["preview"],
+        preview: populatedInsights("run-004"),
       }),
     },
     t: testTranslation,

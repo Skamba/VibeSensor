@@ -12,6 +12,7 @@ import type {
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../../../src/api/types";
+import type { JsonBodyType } from "msw";
 import {
   createEspFlashPort,
   createHealthyUpdateStatus,
@@ -26,10 +27,13 @@ type ErrorResponse = {
 };
 
 type ScenarioValue<T> = T | ErrorResponse;
+type ScenarioResolver<T> = (
+  request: Request,
+) => ScenarioValue<T> | Promise<ScenarioValue<T>>;
 type ScenarioInput<T> =
   | ScenarioValue<T>
   | readonly ScenarioValue<T>[]
-  | ((request: Request) => ScenarioValue<T> | Promise<ScenarioValue<T>>);
+  | ScenarioResolver<T>;
 
 export type EspFlashStartRequestPayload = {
   auto_detect: boolean;
@@ -44,23 +48,26 @@ function createScenarioResolver<T>(input: ScenarioInput<T>) {
   let index = 0;
   return async (request: Request): Promise<ScenarioValue<T>> => {
     if (typeof input === "function") {
-      return await input(request);
+      return await (input as ScenarioResolver<T>)(request);
     }
     if (Array.isArray(input)) {
+      if (input.length === 0) {
+        throw new Error("Scenario input arrays must not be empty");
+      }
       const value = input[Math.min(index, input.length - 1)];
       if (index < input.length - 1) {
         index += 1;
       }
-      return value;
+      return value ?? input[input.length - 1];
     }
-    return input;
+    return input as ScenarioValue<T>;
   };
 }
 
 async function resolveJsonScenario<T>(
   request: Request,
   resolve: (request: Request) => Promise<ScenarioValue<T>>,
-): Promise<HttpResponse> {
+): Promise<HttpResponse<JsonBodyType>> {
   const resolved = await resolve(request);
   if (isErrorResponse(resolved)) {
     return HttpResponse.json(
@@ -68,7 +75,7 @@ async function resolveJsonScenario<T>(
       { status: resolved.status ?? 400 },
     );
   }
-  return HttpResponse.json(resolved);
+  return HttpResponse.json(resolved as JsonBodyType);
 }
 
 export function makeUpdateStartPayload(

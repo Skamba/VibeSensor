@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type {
   CarLibraryGearbox,
+  CarLibraryTireOption,
   CarRecord,
   CarOrderReferenceStatus,
 } from "../src/api/types";
@@ -93,6 +94,26 @@ function makeGearbox(
   };
 }
 
+function makeTireOption(
+  overrides: Partial<CarLibraryTireOption> = {},
+): CarLibraryTireOption {
+  return {
+    default_axle_for_speed: "rear",
+    front: {
+      width_mm: 225,
+      aspect_pct: 45,
+      rim_in: 18,
+    },
+    name: "Factory rear",
+    rear: null,
+    rim_in: 18,
+    source_confidence: "official_exact",
+    tire_aspect_pct: 45,
+    tire_width_mm: 225,
+    ...overrides,
+  };
+}
+
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   return {
     id: "car-1",
@@ -152,13 +173,7 @@ test("buildGearboxConfidenceHint feeds the wizard action hint for approximate li
   const state = createInitialWizardState();
   state.step = 4;
   state.specBranch = "library";
-  state.selectedTire = {
-    width_mm: 225,
-    aspect_pct: 45,
-    rim_in: 18,
-    default_axle_for_speed: "rear",
-    source_status: "exact_row",
-  };
+  state.selectedTire = makeTireOption();
   state.selectedGearbox = makeGearbox({
     final_drive_ratio_confidence: "reputable_secondary_crosschecked",
     top_gear_ratio_confidence: "family_default",
@@ -174,6 +189,7 @@ test("buildGearboxConfidenceHint feeds the wizard action hint for approximate li
     tire_options: [state.selectedTire],
     tire_width_mm: 225,
     type: "Sedan",
+    variants: [],
   };
 
   expect(buildGearboxConfidenceHint(state.selectedGearbox, t)).toBe(

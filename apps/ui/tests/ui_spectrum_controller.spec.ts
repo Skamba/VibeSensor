@@ -345,12 +345,11 @@ describe("UiSpectrumController", () => {
         }),
       });
       const applyCalls: string[] = [];
-      const controllerForTest = controller as UiSpectrumController & {
-        applyPreparedSpectrum: (prepared: { hasData: boolean }) => void;
-      };
-      controllerForTest.applyPreparedSpectrum = ((prepared) => {
-        applyCalls.push(String(prepared.hasData));
-      }) as typeof controllerForTest.applyPreparedSpectrum;
+      Object.defineProperty(controller, "applyPreparedSpectrum", {
+        value(prepared: { hasData: boolean }): void {
+          applyCalls.push(String(prepared.hasData));
+        },
+      });
 
       applyLivePayloadUpdate({
         realtime: state.realtime,

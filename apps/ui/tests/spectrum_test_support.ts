@@ -54,12 +54,12 @@ export function createElementStub(tagName = "div"): ElementStub {
     get children(): ElementStub[] {
       return state.children;
     },
-    append(...children: ElementStub[]): void {
+    append(this: ElementStub, ...children: ElementStub[]): void {
       for (const child of children) {
         this.insertBefore(child, null);
       }
     },
-    appendChild(child: ElementStub): ElementStub {
+    appendChild(this: ElementStub, child: ElementStub): ElementStub {
       return this.insertBefore(child, null);
     },
     insertBefore(child: ElementStub, before: ElementStub | null): ElementStub {
@@ -159,7 +159,7 @@ export function installDocumentStub(): () => void {
   globalThis.getComputedStyle = (() =>
     ({
       getPropertyValue: () => "",
-    }) as CSSStyleDeclaration) as typeof getComputedStyle;
+    }) as unknown as CSSStyleDeclaration) as typeof getComputedStyle;
   return () => {
     (globalThis as { document?: Document }).document = originalDocument;
     (globalThis as { devicePixelRatio?: number }).devicePixelRatio =

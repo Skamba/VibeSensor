@@ -104,12 +104,14 @@ function makeTireOption(
 
 function makeModel(overrides: Partial<CarLibraryModel> = {}): CarLibraryModel {
   return {
+    brand: "BMW",
     gearboxes: [],
     model: "X5",
     rim_in: 21,
     tire_aspect_pct: 40,
     tire_options: [],
     tire_width_mm: 275,
+    type: "SUV",
     variants: [],
     ...overrides,
   };
