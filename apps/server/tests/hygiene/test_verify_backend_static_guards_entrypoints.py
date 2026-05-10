@@ -2,25 +2,20 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from types import ModuleType
 
 from _paths import REPO_ROOT
+from test_support.check_hygiene_loader import load_tool_package_module
 
 _BACKEND_STATIC_GUARDS = REPO_ROOT / "tools" / "dev" / "static_guards" / "checks.py"
 
 
 def _load_verify_backend_static_guards_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        "verify_backend_static_guards_test_entrypoints",
-        _BACKEND_STATIC_GUARDS,
+    return load_tool_package_module(
+        module_name="verify_backend_static_guards_test_entrypoints",
+        module_path=_BACKEND_STATIC_GUARDS,
+        package_dir=_BACKEND_STATIC_GUARDS.parent,
     )
-    assert spec is not None and spec.loader is not None, f"Unable to load {_BACKEND_STATIC_GUARDS}"
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 def test_verify_backend_static_guards_main_passes() -> None:
