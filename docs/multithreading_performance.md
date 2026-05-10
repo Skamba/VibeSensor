@@ -30,8 +30,11 @@ keeping the event loop unblocked during FFT. No change needed.
 
 ### 3. Post-analysis report generation — already threaded
 
-`MetricsLogger` already runs post-analysis in a background `Thread`.
-No change needed.
+`PostAnalysisWorker` in `apps/server/vibesensor/use_cases/run/post_analysis.py`
+owns a single daemon thread for completed-run post-analysis. `RunRecorder`
+creates it during run-lifecycle setup and schedules completed run IDs after
+finalization. No separate report-generation thread is created in the renderer;
+report requests read persisted analysis and render on demand.
 
 ### 4. UDP ingest path — kept lightweight (no threading added)
 
@@ -46,7 +49,7 @@ with explicit drop logging.
 |-----------|--------|
 | `worker_pool.py` | Bounded worker pool wrapper: caps running + queued tasks, applies caller backpressure, isolates task failures, exposes metrics, supports clean shutdown |
 | `processing/` | `compute_all()` dispatches per-client FFT adaptively; ingest/compute timing counters added |
-| `runtime/builders.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
+| `app/container.py` | Creates shared `WorkerPool(max_workers=4, thread_name_prefix="vibesensor-fft")`, injects into `SignalProcessor`, runtime shuts it down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
 | Benchmark | `apps/server/tests/infra/workers/benchmark_compute_all.py` — canonical pytest-benchmark regression path |
 

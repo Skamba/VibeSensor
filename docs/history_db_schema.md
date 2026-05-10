@@ -70,6 +70,9 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 | `run_id` | TEXT FK | References `runs(run_id)` with `ON DELETE CASCADE` |
 | `timestamp_utc` | TEXT | ISO-8601 sample time |
 | `t_s` | REAL | Seconds since run start (monotonic) |
+| `analysis_window_start_us` | INTEGER | Optional raw-analysis window start timestamp in run-monotonic microseconds |
+| `analysis_window_end_us` | INTEGER | Optional raw-analysis window end timestamp in run-monotonic microseconds |
+| `analysis_window_synced` | INTEGER | Optional boolean flag (`0`/`1`) indicating whether the analysis window is synchronized to raw capture timing |
 | `client_id` | TEXT | Sensor MAC address (hex) |
 | `client_name` | TEXT | Human-readable sensor name |
 | `location` | TEXT | Mounting position (e.g. `front_left`) |
@@ -160,7 +163,11 @@ destructive deletion.
 | Batch insert size | 256 | Balances transaction overhead vs. memory usage |
 | Read batch size | 1000 (default) | Keyset pagination for streaming reads |
 
-## Storage comparison (approximate)
+## Historical storage comparison (approximate)
+
+This comparison records why the schema moved from older opaque sample JSON blobs
+to typed `samples_v2` columns. It is historical design context, not current
+guidance for choosing a storage version; current databases use schema v15.
 
 For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 
