@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain import CarOrderReferenceStatus
+from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+    report_analysis_metadata_from_mapping,
+)
 from vibesensor.shared.boundaries.reporting.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     derive_report_fallback_reasons,
@@ -394,7 +397,7 @@ def refresh_report_fallback_metadata(summary: PersistedAnalysis) -> PersistedAna
         payload["analysis_metadata"] = analysis_metadata
     normalized = report_summary_from_mapping(payload)
     fallback_reasons = derive_report_fallback_reasons(
-        analysis_metadata,
+        report_analysis_metadata_from_mapping(analysis_metadata),
         has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
         has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
         has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
