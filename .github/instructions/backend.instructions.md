@@ -1,27 +1,18 @@
 ---
 applyTo: "apps/server/**"
 ---
-Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-map.md` for full package layout and entry points)
-- Backend ownership boundaries: see `docs/ai/repo-map.md` § "Backend package layout" for the full module map and `docs/domain-model.md` for the domain object graph.
-- Shared domain-model authority lives in `.github/copilot-instructions.md` § "Domain model"; the bullets below are backend-specific deltas on top of that baseline.
-- Domain-first modeling rules:
-	- Analysis pipeline adapters delegate classification and ranking to domain `Finding`.
-	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
-	- Do not introduce forward-looking infrastructure types until their persistence and delivery requirements exist. Domain types that produce outputs consumed by no production code path are phantom infrastructure.
-	- Do not create domain types that are only consumed by a single class within the same package. Merge single-consumer satellites into their host file.
-	- See `docs/domain-model.md` for the full domain object graph and modeling rules.
-- Report generation rules:
-	- Preserve persistence-aware diagnostics and ranking behavior; do not regress report ranking to max-only peak selection.
-	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
-	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
-	- When user-facing report text changes, update `apps/server/vibesensor/data/report_i18n.json`.
-	- `apps/server/vibesensor/use_cases/updates/`: wheel-based updater package; `apps/server/vibesensor/use_cases/updates/manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `apps/server/vibesensor/use_cases/updates/`; when methods move to sub-modules, update callers directly.
-	- Updater-owned GitHub release JSON boundaries should prefer msgspec-backed typed decode (`read_typed_json_response`, `GitHubApiClient.get_typed_json`) instead of loose `json.loads(...)` + manual `.get(...)` coercion. Minimal dependency CLI validation paths may stay on stdlib `json` when they intentionally run without optional runtime deps.
-	- `apps/server/vibesensor/use_cases/updates/releases/release_validation.py` may use `tenacity` lazily inside the `smoke-server` readiness path, but `validate-wheel-metadata` and `validate-firmware-manifest` must remain importable without optional deps such as `tenacity`, `msgspec`, or `pydantic`.
-- Backend-owned persistence/history/export JSON text serialization should prefer shared `orjson` helpers (`json_text_dumps`, `safe_json_dumps`) over ad hoc stdlib `json.dumps(...)`. CLI/debug/log sinks may stay on stdlib `json` when human formatting, ASCII escaping, or script portability is the real requirement.
-- Use the backend command list (defined in the copilot instructions "Commands" section); its backend type gate runs mypy across the `vibesensor` package by default without an internal module denylist, and `docs/testing.md` covers backend test placement and command details.
-- Keep route-facing modules on shared ports or adapter-local protocols rather than direct `infra` imports, and keep sensor metadata writes behind the client location-assignment handoff in `apps/server/vibesensor/adapters/http/clients.py`.
-- Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
-- Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
-- For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
-- Common backend documentation touchpoints include `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` or `.github/*.instructions.md` files.
+Backend rules. Use `docs/ai/repo-map.md` only for ownership lookup and `docs/domain-model.md` for the full domain graph.
+
+- Preserve the backend layer DAG from `.github/copilot-instructions.md`. Domain/shared/use_cases/infra/adapters/app boundaries are enforced by `apps/server/pyproject.toml` and `tools/dev/verify_backend_static_guards.py`.
+- Domain behavior belongs in domain objects or the owning use case. Adapters translate at persistence, transport, PDF, simulator, and HTTP boundaries; they do not duplicate classification, ranking, lifecycle, or computation.
+- Route-facing modules should depend on shared ports or adapter-local protocols, not direct `infra` imports. Keep sensor metadata writes behind the client location-assignment handoff in `apps/server/vibesensor/adapters/http/clients.py`.
+- Analysis adapters delegate classification/ranking to domain `Finding`.
+- Keep pure math, DSP, FFT, and signal transforms functional; do not wrap them in classes without a domain reason.
+- Do not create phantom domain/infrastructure types consumed by no production path, or single-consumer domain satellites that should live with their host.
+- Preserve report ranking and persistence-aware diagnostics. Do not regress report ranking to max-only peak selection.
+- Keep transient/impact events visible in reports without promoting them above likely persistent faults by default.
+- Validate report-facing output: rendered/API/PDF text and ordering, not only helper internals. User-facing report text changes require `apps/server/vibesensor/data/report_i18n.json`.
+- Prefer shared `orjson` helpers (`json_text_dumps`, `safe_json_dumps`) for backend-owned persistence/history/export JSON text. CLI/debug/log sinks may use stdlib `json` for formatting, ASCII escaping, or script portability.
+- Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject`) over `Any`. Use `object` for untrusted inputs, `ParamSpec` for callable wrappers, and focused contracts for nested state.
+- For live processing/WebSocket payloads, reuse `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` instead of ad-hoc `dict[str, Any]` bags.
+- Backend validation: start with `make plan-validation`; for backend source run `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`. Add `make sync-contracts` and `make ui-typecheck` when API payloads, generated contracts, or shared backend/frontend constants change.
