@@ -38,9 +38,11 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WholeRunOrderTraceSummaryArtifactBundle,
     _dominant_context_value,
     _drift_score,
+    _has_speed_context_quality_reason,
     _lock_score,
     _longest_contiguous_match_run,
     _mounting_adjusted_lock_score,
+    _speed_context_adjusted_lock_score,
     _timing_adjusted_lock_score,
     whole_run_order_trace_summaries_to_jsonl_bytes,
 )
@@ -238,6 +240,12 @@ def _family_summary(
     matched_timing_integrity_window_count = len(
         {point.window_index for point in matched_points if _has_timing_quality_reason(point)}
     )
+    speed_context_limited_window_count = len(
+        {point.window_index for point in points if _has_speed_context_quality_reason(point)}
+    )
+    matched_speed_context_limited_window_count = len(
+        {point.window_index for point in matched_points if _has_speed_context_quality_reason(point)}
+    )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
         path_compliance=1.0,
@@ -260,6 +268,11 @@ def _family_summary(
         lock_score,
         matched_window_count=matched_window_count,
         matched_timing_integrity_window_count=matched_timing_integrity_window_count,
+    )
+    lock_score = _speed_context_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_speed_context_limited_window_count=matched_speed_context_limited_window_count,
     )
     support_intervals, exemplar_interval_index = _support_intervals(
         eligible_windows=eligible_windows,
@@ -330,6 +343,7 @@ def _family_summary(
         sensor_clipping_window_count=sensor_clipping_window_count,
         sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
         sensor_timing_integrity_window_count=sensor_timing_integrity_window_count,
+        speed_context_limited_window_count=speed_context_limited_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,

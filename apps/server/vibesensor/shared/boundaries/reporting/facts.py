@@ -124,6 +124,9 @@ class ReportContextFacts:
     missing_rpm_window_count: int
     stale_speed_window_count: int
     stale_rpm_window_count: int
+    low_speed_window_count: int
+    unstable_speed_window_count: int
+    assumed_speed_window_count: int
     warnings: tuple[RunContextWarning, ...]
 
     @property
@@ -136,7 +139,13 @@ class ReportContextFacts:
 
     @property
     def speed_gap_window_count(self) -> int:
-        return self.missing_speed_window_count + self.stale_speed_window_count
+        return (
+            self.missing_speed_window_count
+            + self.stale_speed_window_count
+            + self.low_speed_window_count
+            + self.unstable_speed_window_count
+            + self.assumed_speed_window_count
+        )
 
     @property
     def rpm_gap_window_count(self) -> int:
@@ -320,6 +329,9 @@ def _build_report_context_facts(
             missing_rpm_window_count=0,
             stale_speed_window_count=0,
             stale_rpm_window_count=0,
+            low_speed_window_count=0,
+            unstable_speed_window_count=0,
+            assumed_speed_window_count=0,
             warnings=(),
         )
     whole_run_available = bool(analysis_metadata.get("whole_run_context_available")) or bool(
@@ -359,6 +371,18 @@ def _build_report_context_facts(
         analysis_metadata,
         "whole_run_context_stale_speed_window_count",
     )
+    low_speed_window_count = _analysis_metadata_count(
+        analysis_metadata,
+        "whole_run_context_low_speed_window_count",
+    )
+    unstable_speed_window_count = _analysis_metadata_count(
+        analysis_metadata,
+        "whole_run_context_unstable_speed_window_count",
+    )
+    assumed_speed_window_count = _analysis_metadata_count(
+        analysis_metadata,
+        "whole_run_context_assumed_speed_window_count",
+    )
     stale_rpm_window_count = _analysis_metadata_count(
         analysis_metadata,
         "whole_run_context_stale_rpm_window_count",
@@ -389,11 +413,20 @@ def _build_report_context_facts(
         missing_rpm_window_count=missing_rpm_window_count,
         stale_speed_window_count=stale_speed_window_count,
         stale_rpm_window_count=stale_rpm_window_count,
+        low_speed_window_count=low_speed_window_count,
+        unstable_speed_window_count=unstable_speed_window_count,
+        assumed_speed_window_count=assumed_speed_window_count,
         warnings=_report_context_warnings(
             source=source,
             partial_window_count=partial_window_count,
             missing_window_count=missing_window_count,
-            speed_gap_window_count=missing_speed_window_count + stale_speed_window_count,
+            speed_gap_window_count=(
+                missing_speed_window_count
+                + stale_speed_window_count
+                + low_speed_window_count
+                + unstable_speed_window_count
+                + assumed_speed_window_count
+            ),
             rpm_gap_window_count=missing_rpm_window_count + stale_rpm_window_count,
         ),
     )
