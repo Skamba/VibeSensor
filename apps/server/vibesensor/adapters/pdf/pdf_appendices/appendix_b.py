@@ -45,6 +45,18 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
     )
     appendix = plan.appendix
     width = PAGE_W - 2 * MARGIN
+    top_y = _draw_appendix_b_top_panels(c, plan=plan, title_y=title_y, width=width)
+    _draw_appendix_b_bottom_panel(c, plan=plan, appendix=appendix, top_y=top_y, width=width)
+
+
+def _draw_appendix_b_top_panels(
+    c: Canvas,
+    *,
+    plan: AppendixBRenderPlan,
+    title_y: float,
+    width: float,
+) -> float:
+    appendix = plan.appendix
     top_h = 114 * mm
     left_w = width * 0.56
     right_w = width - left_w - GAP
@@ -175,7 +187,17 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
             )
             - 1.0 * mm
         )
+    return float(top_y)
 
+
+def _draw_appendix_b_bottom_panel(
+    c: Canvas,
+    *,
+    plan: AppendixBRenderPlan,
+    appendix: AppendixBData,
+    top_y: float,
+    width: float,
+) -> None:
     bottom_h = top_y - (MARGIN + 8 * mm)
     bottom_y = MARGIN + 8 * mm
     if appendix.sensor_observation_rows:

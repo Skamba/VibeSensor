@@ -7,9 +7,6 @@ files:
   tools/dev/verify_backend_static_guards.py:
     max_lines: 2612
     reason: Static guard collection retained as one entrypoint until guard modules are split.
-  apps/server/vibesensor/use_cases/run/post_analysis_executor.py:
-    max_lines: 1250
-    reason: Whole-run post-analysis orchestration retained until stage runner extraction; raw-capture quality gating is centralized but still adds stage wiring.
   apps/server/tests/adapters/pdf/test_report_document_projection.py:
     max_lines: 1217
     reason: High-density report projection regression matrix kept together by document-output seam.
@@ -23,24 +20,12 @@ functions:
   tools/dev/check_hygiene.py::check_contract_sync_entrypoint:
     max_lines: 281
     reason: Contract sync and UI validation entrypoint guards stay together until workflow/config checks are split.
-  apps/server/vibesensor/use_cases/run/post_analysis_executor.py::run_whole_run_pipeline_stages:
-    max_lines: 229
-    reason: Whole-run stage orchestration retained until table-driven stage runner extraction; raw-capture quality gating is kept at the stage prerequisite seam.
-  apps/server/vibesensor/adapters/pdf/pdf_appendices/appendix_c.py::_appendix_c_page:
-    max_lines: 434
-    reason: Dense appendix drawing routine retained until PDF rendering is split into smaller layout helpers; complex evidence panel sizing kept in the same renderer for now.
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_diagnosis_ranking.py::test_execute_post_analysis_persists_whole_run_diagnosis_summaries:
     max_lines: 353
     reason: End-to-end whole-run diagnosis persistence scenario kept together to preserve setup/assertion context.
-  apps/server/vibesensor/adapters/pdf/pdf_timeline_render.py::run_timeline_graph:
-    max_lines: 271
-    reason: Timeline graph rendering path retained until chart layout and drawing steps are separated.
   apps/server/tests_e2e/test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys:
     max_lines: 263
     reason: Docker user journey scenario intentionally keeps full workflow assertions together.
-  apps/server/vibesensor/adapters/pdf/pdf_diagram_render.py::_draw_vehicle_shell:
-    max_lines: 252
-    reason: Vehicle diagram drawing routine retained until geometry/layout primitives are extracted.
   apps/server/vibesensor/use_cases/run/raw_capture_replay.py::build_raw_backed_samples:
     max_lines: 234
     reason: Raw-capture replay assembly retained until sample-building phases are separated.
@@ -53,9 +38,6 @@ functions:
   apps/server/tests/integration/test_ingest_backpressure_metrics.py::test_ingest_metrics_hold_ci_budget_under_sensor_load:
     max_lines: 220
     reason: Integration load scenario intentionally keeps timing, ingest, and metric assertions in one flow.
-  apps/server/vibesensor/adapters/pdf/pdf_appendices/appendix_b.py::_appendix_b_page:
-    max_lines: 275
-    reason: Dense appendix drawing routine retained until PDF rendering is split into smaller layout helpers; location snapshot rendering remains colocated with the sensor matrix.
   apps/server/tests/use_cases/run/test_post_analysis_executor.py::test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar:
     max_lines: 206
     reason: Post-analysis context summary persistence scenario kept together to preserve setup/assertion context.
