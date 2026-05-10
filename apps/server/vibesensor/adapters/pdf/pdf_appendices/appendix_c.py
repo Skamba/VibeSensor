@@ -51,9 +51,30 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         width=PAGE_W - 2 * MARGIN,
         page_top=PAGE_H - MARGIN,
     )
-    appendix = plan.appendix
     width = PAGE_W - 2 * MARGIN
+    chain_y = _draw_appendix_c_evidence_chain_panel(c, plan=plan, width=width, title_y=title_y)
+    measurement_y = _draw_appendix_c_measurement_panel(
+        c,
+        plan=plan,
+        width=width,
+        chain_y=chain_y,
+    )
+    _draw_appendix_c_lower_panels(
+        c,
+        plan=plan,
+        width=width,
+        measurement_y=measurement_y,
+    )
 
+
+def _draw_appendix_c_evidence_chain_panel(
+    c: Canvas,
+    *,
+    plan: AppendixCRenderPlan,
+    width: float,
+    title_y: float,
+) -> float:
+    appendix = plan.appendix
     chain_h = _evidence_chain_panel_height(appendix)
     chain_y = title_y - chain_h
     _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
@@ -122,7 +143,17 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             count="{count}",
         ),
     )
+    return chain_y
 
+
+def _draw_appendix_c_measurement_panel(
+    c: Canvas,
+    *,
+    plan: AppendixCRenderPlan,
+    width: float,
+    chain_y: float,
+) -> float:
+    appendix = plan.appendix
     measurement_h = _measurement_panel_height(appendix)
     measurement_y = chain_y - GAP - measurement_h
     _draw_panel(
@@ -209,7 +240,17 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             count="{count}",
         ),
     )
+    return float(measurement_y)
 
+
+def _draw_appendix_c_lower_panels(
+    c: Canvas,
+    *,
+    plan: AppendixCRenderPlan,
+    width: float,
+    measurement_y: float,
+) -> None:
+    appendix = plan.appendix
     context_w = width * 0.24
     suitability_w = width * 0.31
     trace_w = width - context_w - suitability_w - (2 * GAP)
