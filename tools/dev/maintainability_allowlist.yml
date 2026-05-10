@@ -29,6 +29,9 @@ functions:
   apps/server/tests/use_cases/run/test_post_analysis_whole_run_spatial_coherence.py::test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_metadata:
     max_lines: 233
     reason: Whole-run spatial coherence persistence scenario kept together to preserve setup/assertion context.
+  apps/server/tests/use_cases/run/test_post_analysis_executor_whole_run_metadata.py::test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar:
+    max_lines: 210
+    reason: Post-analysis context summary persistence scenario kept together to preserve setup/assertion context after moving out of the oversized executor test module.
   apps/server/tests/integration/test_ingest_backpressure_metrics.py::test_ingest_metrics_hold_ci_budget_under_sensor_load:
     max_lines: 220
     reason: Integration load scenario intentionally keeps timing, ingest, and metric assertions in one flow.
