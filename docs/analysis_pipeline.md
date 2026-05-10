@@ -49,94 +49,50 @@ fallbacks are marked `diagnostic_filtered`. Persisted analysis metadata records
 the active profile, filter chains, and whether raw diagnostic evidence was
 preserved.
 
-Full-run dense analysis stages use
-`use_cases/diagnostics/post_run_raw_windows.py` as the raw waveform access
-boundary. It prepares a manifest-backed, deterministic window graph from run
-metadata and raw-capture manifests, then reads each sensor/window through the
-history raw range-read API. That keeps long runs streaming: downstream dense
-stages consume bounded axis arrays per window instead of materializing the full
-raw artifact bundle. Each emitted sensor window carries run ID, sensor ID,
-location snapshot, mount orientation, start/end timing, sample rate, x/y/z
-`int16` arrays, and data-quality flags such as partial windows, timestamp gaps,
-missing samples, low sample count, invalid axis data, sample-rate mismatch,
-sensor clipping, and missing sidecars.
+The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
+`use_cases/run/post_analysis_executor.py` through
+`use_cases/run/post_analysis_whole_run_builders.py`. It currently receives the
+full `RawRunCapture` loaded by `post_analysis_loader.py`, then builds and stores
+dense sidecar artifacts before compact report-facing summaries are persisted.
+The future streaming/range-read refactor should reuse the bounded range-read
+boundary in `post_run_raw_windows.py`, but that boundary is not the active
+executor input today.
 
-The first dense analysis consumer is
-`use_cases/diagnostics/post_run_stft.py`. It consumes those POSTRUN-01 window
-DTOs and produces in-memory STFT frames with per-axis spectra, combined spectra,
-window timing, sensor metadata, per-axis RMS/P2P, dominant frequency, top peaks,
-static-gravity-axis estimate, axis frame, and dB strength facts. Known mount
-orientations are transformed into vehicle-relative axes at this boundary;
-unknown orientations remain `sensor_local` so later stages can caveat or suppress
-axis-specific conclusions while preserving combined-magnitude location evidence.
-The STFT layer is deliberately post-run only: callers configure FFT size, window
-function, frequency range, and partial-window behavior independently from the
-live UI cadence, while still reusing the shared FFT/strength primitives.
+Current whole-run sidecar stages:
 
-`use_cases/diagnostics/post_run_window_features.py` is the next reduction layer.
-It consumes POSTRUN-02 STFT frames and emits per-window/per-sensor feature DTOs:
-dominant and top peaks, canonical `vibration_strength_db`, peak amplitude, noise
-floor, strength bucket, axis dominance, RMS/P2P, axis frame, static gravity
-axis, structured quality flags, and compact debug rows for synthetic runs.
-Axis dominance is only emitted for vehicle-relative frames; sensor-local frames
-carry a `sensor_orientation_unknown` quality flag instead. Frequency masks live
-at this layer so later episode/order/finding logic can ignore unusable bands
-without recomputing the dense spectra.
+1. `use_cases/diagnostics/whole_run_spectra.py` computes deterministic
+   raw-window spectra from raw capture and emits `spectral-grid:*`,
+   `spectral-matrix:*`, and `spectral-summary:*` sidecars. The summaries carry
+   window timing, coverage/quality, top peaks, and dB strength facts without
+   forcing reports to read the dense matrices.
+2. `use_cases/diagnostics/whole_run_context.py` projects speed/RPM/reference
+   context onto the same window grid and emits dense `context-window-labels`
+   plus compact `whole_run_context_intervals` for `analysis_json`.
+3. `use_cases/diagnostics/orders/whole_run_traces.py` joins spectral summaries
+   with context labels and scores wheel/driveshaft/engine hypotheses per window,
+   writing dense `order-trace-points` sidecars.
+4. `use_cases/diagnostics/orders/whole_run_scoring.py` collapses trace points
+   into compact lock/stability summaries with reference coverage, contiguous
+   support, drift/error, and lock score.
+5. `use_cases/diagnostics/orders/whole_run_family_summaries.py` rolls harmonic
+   summaries up to family-level support intervals and phase summaries.
+6. `use_cases/diagnostics/whole_run_spatial_coherence.py` builds candidate-level
+   multi-sensor spatial evidence windows and compact spatial summaries.
+7. `post_analysis_executor.py` persists dense artifacts through
+   `RunPersistence.astore_whole_run_artifacts(...)`, appends compact whole-run
+   metadata/summaries into `PersistedAnalysis`, and then stores the report-facing
+   summary through `RunPersistence.astore_analysis(...)`.
 
-Shared per-window quality scoring detects repeated accelerometer rail hits,
-flat-topped waveforms, high-frequency mounting/enclosure artifacts, and raw
-capture timing integrity loss from timestamp gaps, overlaps/resets, late
-packets, and queue drops. It exposes clipping counts/ratios, mounting-quality
-scores, and timing-quality reasons in live/whole-run payloads and marks clipped,
+The older `post_run_*` modules are compatibility/support/prototype components.
+`post_run_raw_windows.py` is the manifest-aware range-read access boundary for
+future streaming work; `post_run_stft.py`, `post_run_window_features.py`,
+`post_run_vehicle_reference.py`, `post_run_order_bands.py`,
+`post_run_vibration_episodes.py`, and `post_run_dense_findings.py` preserve
+useful dense DTO and math seams, but the active sidecar pipeline is the
+`whole_run_*` implementation above. Shared quality scoring still marks clipped,
 suspect-mounted, or timing-compromised windows as limited/excluded evidence
 rather than treating local sensor artifacts or corrupted sample timing as
 trustworthy vibration strength.
-
-`use_cases/diagnostics/post_run_vehicle_reference.py` normalizes speed, RPM, gear,
-and final-drive references onto the same window grid. It uses conservative
-interpolation only across short, same-source gaps; rejects ambiguous source,
-gear, or final-drive changes; and records explicit unavailable reasons such as
-missing speed/RPM/gear, stale samples, inconsistent sample rate, and missing
-vehicle configuration. Wheel, driveshaft, and engine frequencies are derived via
-the shared `OrderReferenceSpec` math instead of diagnostics-local formulas.
-
-`use_cases/diagnostics/post_run_order_bands.py` consumes that vehicle-reference
-timeline and emits per-window wheel, driveshaft, and engine order bands. It uses
-the existing `tolerance_for_order()` math, the run's configured uncertainty and
-bandwidth settings, optional harmonic lists, and an explicit output spectrum
-clamp. Unavailable reference inputs become unavailable band rows with reasons
-instead of being dropped or guessed.
-
-Whole-run order traces score the same speed/RPM-synchronous hypotheses across
-consecutive analysis windows. Summaries persist matched support intervals,
-phase-level support, contiguous support, drift/error, and an order-lock score, so
-fixed-frequency resonances during speed changes stay weak unless they follow the
-expected wheel, driveshaft, or engine trajectory.
-
-`use_cases/diagnostics/post_run_vibration_episodes.py` groups POSTRUN-03
-window-feature peaks into deterministic, time-bounded episodes. Grouping is by
-sensor/location, adjacent time windows, allowed per-step frequency drift, and a
-minimum strength threshold. Defaults require at least three supporting windows
-and 0.75 seconds of duration; isolated spikes are suppressed unless they exceed
-the extreme-transient threshold and are marked as transient. Episode rows carry
-frequency path, median/peak strength, median frequency, slope, dominant axis,
-supporting window IDs, affected sensors, and explainable quality penalties for
-dropout gaps, broad drift, noisy feature flags, short duration, and transient
-extremes.
-
-`use_cases/diagnostics/post_run_dense_findings.py` fuses POSTRUN-06 episodes with
-POSTRUN-05 order bands. It compares each episode frequency path against the
-available wheel, driveshaft, and engine bands for the same `window_index`, ranks
-source hypotheses by match ratio, reference completeness, persistence, support
-density, and strength, then emits compact dense findings. Each finding carries
-the likely origin, alternative hypotheses, confidence score/label, evidence
-windows, supporting window count/duration, support density, and caveats for
-ambiguity, missing references, quality penalties, weak persistence, intermittent
-support, short/transient events, conflicting multi-sensor evidence, or strong
-unmatched resonance. The DTO can project back to the existing domain `Finding`
-shape for report/history compatibility without persisting dense spectra; that
-projection carries evidence counts so report facts can show support duration from
-the run feature interval.
 
 ## Related deep dives
 
@@ -157,14 +113,18 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
        └─ PostAnalysisWorker.schedule() # use_cases/run/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata + samples (+ raw capture when present) via injected RunPersistence
+                      ├─ load metadata + persisted summary rows via injected RunPersistence
+                      ├─ load full RawRunCapture when a raw-capture manifest exists
                       ├─ build_post_analysis_input(...)
                       │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
+                      ├─ whole_run_* sidecar stages (spectra, context, orders, spatial coherence)
                       ├─ analysis_runner(...)
                       │    ← injected by RunRecorder
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
-                      └─ history_db.store_analysis()
-                            ← persist results via injected RunPersistence
+                      ├─ append compact whole-run summaries/metadata to PersistedAnalysis
+                      ├─ history_db.astore_whole_run_artifacts()
+                      └─ history_db.astore_analysis()
+                            ← persist sidecars and report-facing summary via injected RunPersistence
 ```
 
 `PostAnalysisWorker` receives persistence access, the post-stop analysis
@@ -175,8 +135,10 @@ load/store boundary around the injected analysis dependency.
 ## Pipeline Steps
 
 `RunAnalysis.summarize()` in `run_analysis.py` delegates to
-`analysis_pipeline.py` and executes these steps
-in order. Each step runs exactly once per analysis invocation.
+`analysis_pipeline.py` for the compact summary/report-facing analysis over
+summary-style samples. `execute_post_analysis()` runs the whole-run sidecar
+stages before this compact summary is stored, then appends whole-run metadata and
+summaries to the persisted analysis.
 
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
@@ -215,13 +177,16 @@ in order. Each step runs exactly once per analysis invocation.
 | `_reference_resolution.py` | ~80 | Engine/tire/reference resolution helpers reused by order analysis |
 | `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
-| `post_run_raw_windows.py` | ~300 | Manifest-aware streaming raw waveform reader and configurable overlapping-window iterator for dense post-run stages |
-| `post_run_stft.py` | ~350 | In-memory dense STFT engine over POSTRUN-01 raw-window DTOs |
-| `post_run_window_features.py` | ~300 | Window-level feature extraction over POSTRUN-02 STFT frames |
-| `post_run_vehicle_reference.py` | ~350 | Per-window vehicle speed/RPM/gear/final-drive reference normalization for dense order stages |
-| `post_run_order_bands.py` | ~400 | Per-window wheel/driveshaft/engine order-band generation over POSTRUN-04 vehicle references |
-| `post_run_vibration_episodes.py` | ~450 | Deterministic grouping of dense window peaks into persistent or intentional transient vibration episodes |
-| `post_run_dense_findings.py` | ~500 | Dense episode classification into likely origins, alternatives, confidence, caveats, evidence windows, and domain-finding compatibility |
+| `post_run_raw_windows.py` | ~300 | Compatibility/future-streaming manifest-aware raw waveform range reader and configurable overlapping-window iterator |
+| `post_run_stft.py` | ~350 | Support/prototype in-memory dense STFT engine over range-read raw-window DTOs |
+| `post_run_window_features.py` | ~300 | Support/prototype window-level feature extraction over dense STFT frames |
+| `post_run_vehicle_reference.py` | ~350 | Support/prototype per-window vehicle speed/RPM/gear/final-drive reference normalization |
+| `post_run_order_bands.py` | ~400 | Support/prototype per-window wheel/driveshaft/engine order-band generation |
+| `post_run_vibration_episodes.py` | ~450 | Support/prototype deterministic grouping of dense window peaks into episodes |
+| `post_run_dense_findings.py` | ~500 | Support/prototype dense episode classification and domain-finding projection |
+| `whole_run_spectra.py` | ~900 | Active sidecar spectral executor over loaded raw capture; emits dense spectra and compact spectral summaries |
+| `whole_run_context.py` | ~400 | Active sidecar context timeline and compact context intervals on the whole-run window grid |
+| `whole_run_spatial_coherence.py` | ~450 | Active candidate-level spatial evidence sidecars and compact spatial summaries |
 | `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
@@ -232,6 +197,9 @@ in order. Each step runs exactly once per analysis invocation.
 | `orders/statistics.py` | ~260 | Order evidence aggregation plus typed confidence calibration settings |
 | `orders/heuristics.py` | ~150 | Diffuse-excitation, localization-override, and engine-alias heuristics |
 | `orders/settings.py` | ~80 | Typed frozen tuning collections used by order scoring and heuristics |
+| `orders/whole_run_traces.py` | ~350 | Active dense order-trace sidecar generation from spectral summaries plus context labels |
+| `orders/whole_run_scoring.py` | ~600 | Active compact lock/stability scoring over dense order traces |
+| `orders/whole_run_family_summaries.py` | ~600 | Active family-level support intervals and phase summaries from scored order traces |
 | `peaks/findings.py` | ~200 | Persistent-peak support: `PeakFindingAnalyzer`, phase filtering, and duplicate suppression |
 | `peaks/accumulation.py` | ~100 | Raw peak-bin accumulation across samples |
 | `peaks/classification.py` | ~60 | Peak classification policy backed by typed settings |
@@ -253,13 +221,34 @@ in order. Each step runs exactly once per analysis invocation.
 
 ## Data Flow
 
+Whole-run sidecar flow:
+
 ```
-Input: raw samples (list[JsonObject]) + metadata (JsonObject)
+Input: persisted summary samples + metadata (+ optional raw-capture manifest/files)
+  │
+  ├─ post_analysis_loader.load_post_analysis_run()
+  │    ├─ loads persisted summary rows and caps compact-analysis input
+  │    └─ loads full RawRunCapture when raw capture is available
+  │
+  ├─ post_analysis_whole_run_builders.build_whole_run_artifacts()
+  │    ├─ whole_run_spectra.py → dense spectral sidecars + spectral summaries
+  │    ├─ whole_run_context.py → context-window-labels sidecar + compact intervals
+  │    ├─ orders/whole_run_traces.py → dense order-trace sidecar
+  │    ├─ orders/whole_run_scoring.py → compact trace summaries
+  │    ├─ orders/whole_run_family_summaries.py → compact family summaries
+  │    └─ whole_run_spatial_coherence.py → spatial sidecar + compact summaries
+  │
+  ├─ history_db.astore_whole_run_artifacts() → dense sidecar artifacts
+  │
+  └─ compact-analysis/report summary flow
+```
+
+Compact-analysis/report summary flow:
+
+```text
+Input: PostAnalysisRunInput + optional whole-run stage output
   │
   ├─ _context_decode.build_diagnostics_context() → typed diagnostics context
-  │    ├─ RunMetadataSnapshot
-  │    ├─ RunContextSnapshot
-  │    └─ diagnostics-local context conveniences / boundary metadata rehydration
   │
   ├─ _types.normalize_analysis_samples() → raw rows + typed AnalysisSample objects
   │
@@ -275,32 +264,37 @@ Input: raw samples (list[JsonObject]) + metadata (JsonObject)
   │    ├─ finalize_findings() → enriched domain Finding objects
   │    └─ select_top_causes() → ranked top causes
   │
-  ├─ _summary_result.build_analysis_result()
-  │    ├─ AnalysisResult
-  │    ├─ TestRun / DiagnosticCase
-  │    └─ rehydrated metadata dict for later boundary serialization
+  ├─ _summary_result.build_analysis_result() → AnalysisResult/TestRun/DiagnosticCase
   │
-  └─ _summary_result._plot_data() → diagnostics-local PlotDataResultData
-       └─ serialize_plot_data() → persisted chart payload + labeled peak table
+  ├─ _summary_result._plot_data() → diagnostics-local PlotDataResultData
+  │    └─ serialize_plot_data() → persisted chart payload + labeled peak table
   │
-Output: AnalysisResult (TestRun, DiagnosticCase, diagnostics-local artifacts)
+  ├─ post_analysis_executor.append_whole_run_*() → compact persisted summaries
+  │
+  └─ history_db.astore_analysis() → PersistedAnalysis/report-facing summary
 ```
 
 ## Persisted Outputs
 
-After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
+During `execute_post_analysis()`, `PostAnalysisWorker`:
 
-1. Adds `analysis_metadata` (sample count, stride info, and whether raw-backed
-   replay was used).
-2. Adds language-neutral trust warnings when the captured run context
-   was incomplete for confident order analysis.
-3. Stores the summary via `history_db.store_analysis()` as a
-   versioned persistence envelope.
+1. Builds and stores dense whole-run sidecar artifacts when raw capture is
+   available and prerequisites pass.
+2. Runs the compact summary analysis path and adds `analysis_metadata` (sample
+   count, sampling method, profile info, raw/whole-run availability, artifact
+   manifest pointers, and stage/fallback details).
+3. Adds compact whole-run context/order/spatial/diagnosis summaries when those
+   stages produced them.
+4. Adds language-neutral trust warnings when the captured run context was
+   incomplete for confident order analysis.
+5. Stores the summary via `history_db.astore_analysis()` as a versioned
+   persistence envelope.
 
-History readers unwrap the envelope back to the summary shape. When a run has a
-raw capture bundle, the persisted analysis summary already reflects raw-backed
-strength/peak metrics from post-stop replay; report/history readers still stay
-persistence-only and never re-run diagnostics. The core
+History readers unwrap the envelope back to the summary shape. When a run has
+raw capture and whole-run sidecars, the persisted analysis summary already
+contains compact report-facing summaries plus sidecar manifest metadata;
+report/history readers still stay persistence-only and never re-run diagnostics.
+The core
 history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an
 explicit advisory overlay at the history delivery boundary, not a hidden input

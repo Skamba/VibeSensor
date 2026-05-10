@@ -4,10 +4,11 @@
 
 The report generation pipeline has two distinct phases:
 
-1. **Post-stop analysis** (`vibesensor.use_cases.diagnostics`) — runs once when a recording
-   ends, producing an app-level `AnalysisResult`. The serialized summary dict is
-   then created at the boundary by `vibesensor.shared.boundaries.analysis_payloads`
-   / `vibesensor.adapters.analysis_summary`.
+1. **Post-stop analysis** (`vibesensor.use_cases.run.post_analysis_executor` +
+   `vibesensor.use_cases.diagnostics`) — runs once when a recording ends. It
+   builds dense whole-run sidecar artifacts when raw capture is available, builds
+   the compact diagnostics summary, appends compact whole-run report-facing
+   summaries, and persists the resulting `PersistedAnalysis`.
 2. **History request loading + reporting-boundary preparation + rendering**
       (`vibesensor.use_cases.history` →
       `vibesensor.shared.boundaries.reporting` →
@@ -17,21 +18,25 @@ The report generation pipeline has two distinct phases:
      plus precomputed semantic report facts, builds one canonical
      `ReportDocument`, and renders a PDF. This phase performs **zero
       analysis** — it only shapes persisted report data and formats pre-computed
-      results. If a run had raw capture available, that evidence was already
-      folded into the persisted analysis during post-stop replay.
+       results. If a run had raw capture available, raw-backed replay and any
+       whole-run sidecar summaries were already folded into the persisted
+       analysis during post-stop execution.
 
 ```text
 Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
-    → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis]
-      → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
-      → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py (preparation, phases, suitability, domain/result assembly)
-      → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
-      → findings.py + _reference_findings.py + _context_decode.py/_context_projection.py + _sample_metrics.py + _analysis_models.py + orders/{pipeline,matching,scoring,finding_builder,statistics,heuristics,settings}.py + peaks/{findings,accumulation,classification,scoring,finding_builder,statistics,settings,table}.py + signal_aggregation.py + top_cause_selection.py + plots.py
-    → build_report_document() [vibesensor.use_cases.history.report_document]
-      → builder.py + document_context.py + composition.py + appendix_c.py +
-        timeline_graph.py + traceability.py + report_sections.py + peak_table.py
-    → store_analysis() [vibesensor.adapters.persistence.history_db]
+    → execute_post_analysis() [vibesensor.use_cases.run.post_analysis_executor]
+      → load_post_analysis_run() [vibesensor.use_cases.run.post_analysis_loader]
+      → build_whole_run_artifacts() [vibesensor.use_cases.run.post_analysis_whole_run_builders]
+        → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
+        → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
+      → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]
+      → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis_summary]
+        → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
+        → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py
+        → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
+      → append compact whole-run report-facing summaries
+      → astore_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
@@ -86,11 +91,11 @@ normalization, and grouped semantic fact assembly:
 
 Canonical report-document assembly lives in
 `vibesensor.use_cases.history.report_document`, which maps `PreparedReportInput`
-into the renderer-facing `ReportDocument`. Pure report-domain interpretation
-that reads domain findings/test runs but does not perform i18n or PDF dataclass
-assembly still lives in `vibesensor.shared.boundaries.report_interpretation`,
-but it is consumed by the reporting boundary rather than imported directly by
-`adapters.pdf` modules.
+into the renderer-facing `ReportDocument`. Report-specific interpretation and
+fact preparation live under `vibesensor.shared.boundaries.reporting/` (for
+example `facts.py`, `evidence_facts.py`, `confidence_facts.py`, `findings.py`,
+`sensor_facts.py`, `decision_facts.py`, `projection.py`, and
+`preparation.py`) rather than in `adapters.pdf` modules.
 
 ### ReportDocument schema
 
@@ -135,7 +140,7 @@ needs:
    `vibesensor.shared.boundaries.reporting.document`.
 3. If the new section needs report-specific shaping, add it under
    `vibesensor.shared.boundaries.reporting` (`facts.py`, `sensor_facts.py`,
-   `decision_facts.py`, `projection.py`, `reconstruction.py`, or
+   `decision_facts.py`, `projection.py`, `findings.py`, `evidence_facts.py`, or
    `preparation.py` as appropriate), then populate the final renderer field in
    `build_report_document()` in
    `vibesensor.use_cases.history.report_document`.

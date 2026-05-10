@@ -8,9 +8,10 @@
 > `docs/designs/whole-run-post-analysis-history.md` keeps old issue plans,
 > branch notes, and benchmark snapshots for reference only.
 
-This document records the current architecture, the target architecture, the
-shared contracts that must stay stable, and the recommended execution order. It
-does not track implementation status or old branch plans.
+This document records the implemented architecture, the remaining debt, and the
+shared contracts that must stay stable. Completed checklist items are kept only
+as historical context; current execution status lives in the code paths named
+below.
 
 ## Current state
 
@@ -29,17 +30,28 @@ does not track implementation status or old branch plans.
 ### Run persistence and post-stop analysis
 
 - `apps/server/vibesensor/use_cases/run/logger.py` finalizes a run and schedules
-  `PostAnalysisWorker`.
+   `PostAnalysisWorker`.
 - `apps/server/vibesensor/use_cases/run/post_analysis_loader.py` loads persisted
-  samples for a run, but caps analysis input at `_MAX_POST_ANALYSIS_SAMPLES =
-  12_000` and applies an upfront stride when the run is longer.
+   samples for a run, but caps analysis input at `_MAX_POST_ANALYSIS_SAMPLES =
+   12_000` and applies event-preserving sampling when the summary row set is
+   longer. When a raw-capture manifest exists, the loader also asks persistence
+   for the full `RawRunCapture` via `aload_raw_capture(...)`; the current
+   connected whole-run sidecar path is not yet a pure range-streaming executor.
 - `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` uses raw capture
-  only to rebuild FFT-derived metrics for those already-persisted summary rows.
+   only to rebuild FFT-derived metrics for those already-persisted summary rows.
+- `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` is the
+   canonical offline executor. It runs a structured stage pipeline:
+  `LoadRunStage`, `BuildPostAnalysisInputStage`,
+  `BuildWholeRunSpectraStage`, `BuildWholeRunContextStage`,
+  `BuildOrderTraceStage`, `BuildOrderTraceSummaryStage`,
+  `BuildOrderFamilySummaryStage`, `BuildSpatialSummaryStage`,
+  `PersistArtifactsStage`, `BuildReportFactsStage`, and
+  `PersistAnalysisSummaryStage`.
 - `apps/server/vibesensor/use_cases/diagnostics/run_analysis.py` and
-  `analysis_pipeline.py` still operate on summary-style `SensorFrame` samples,
-  not on a true full-run raw-window graph.
+  `analysis_pipeline.py` still provide the compact summary/report-facing
+  analysis path over summary-style `SensorFrame` samples.
 
-### Raw capture from #3065
+### Raw capture and dense sidecars
 
 - Raw artifacts are already stored separately from `samples_v2`.
 - The canonical storage contract is
@@ -49,52 +61,33 @@ does not track implementation status or old branch plans.
   - `RawCaptureChunkIndex`
   - `RawRunCapture`
 - Persistence uses `data/raw-runs/{run_id}/` with per-sensor
-  `.raw.i16le` and `.index.jsonl` files via
-  `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
-- Whole-run foundations now include indexed raw range reads via
-  `RunPersistence.aload_raw_capture_sensor_range(...)`, but there is still no
-  canonical offline executor that walks the full run as a deterministic window
-  graph.
-- POSTRUN-01 adds that diagnostics-layer access boundary in
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_raw_windows.py`: it
-  validates raw manifests, derives configurable overlapping windows, filters
-  sensors, and streams each window through range reads with structured warnings.
-- POSTRUN-02 adds the first dense consumer in
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_stft.py`: an in-memory
-  STFT engine over those raw-window DTOs. Persistence of dense arrays remains
-  owned by POSTRUN-08.
-- POSTRUN-03 adds
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_window_features.py`:
-  a deterministic reduction from STFT frames to per-window/per-sensor diagnostic
-  features, including canonical dB strength, top peaks, axis dominance, RMS/P2P,
-  frequency masking, and propagated quality flags.
-- POSTRUN-04 adds
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py`:
-  a deterministic vehicle-reference timeline aligned to the dense window grid.
-  It normalizes speed, RPM, gear, and final-drive inputs, rejects ambiguous or
-  stale references, and derives wheel/driveshaft/engine Hz through
-  `OrderReferenceSpec`.
-- POSTRUN-05 adds
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py`:
-  a deterministic per-window order-band timeline for wheel, driveshaft, and
-  engine harmonics. It reuses shared tolerance math, clamps to the configured
-  dense spectrum range, and carries explicit unavailable reasons for missing
-  references.
-- POSTRUN-06 adds
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_vibration_episodes.py`:
-  deterministic grouping of POSTRUN-03 feature peaks into sustained vibration
-  episodes, with explicit transient-spike handling, dropout/drift/noise quality
-  penalties, and debug rows for inspection.
-- POSTRUN-07 adds
-  `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py`:
-  deterministic classification of dense episodes against POSTRUN-05 order bands.
-  It ranks wheel, driveshaft, and engine hypotheses by per-window band matches,
-  reference completeness, persistence, and strength; preserves strong unmatched
-  episodes as unknown resonance; records caveats for ambiguity, missing
-  references, poor quality, short duration, transients, and conflicting
-  multi-sensor evidence; and maps compact
-  dense findings back into the existing domain `Finding` contract for
-  report/history compatibility.
+   `.raw.i16le` and `.index.jsonl` files via
+   `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
+- Indexed raw range reads exist through
+  `RunPersistence.aload_raw_capture_sensor_range(...)` and are used by the
+  compatibility/prototype diagnostics boundary in
+  `apps/server/vibesensor/use_cases/diagnostics/post_run_raw_windows.py`.
+- The current connected dense sidecar path is owned by
+  `apps/server/vibesensor/use_cases/run/post_analysis_whole_run_builders.py` and
+  the `whole_run_*` diagnostics modules:
+  - `whole_run_spectra.py` builds deterministic whole-run spectral sidecars from
+    `RawRunCapture`, emitting spectral grids/matrices plus per-window compact
+    spectral summaries.
+  - `whole_run_context.py` labels the same window grid with speed/RPM/reference
+    context and persists compact context intervals in `analysis_json`.
+  - `orders/whole_run_traces.py` builds dense order trace points from
+    `spectral-summary:*` sidecars and context labels.
+  - `orders/whole_run_scoring.py` collapses dense traces into compact lock and
+    stability summaries.
+  - `orders/whole_run_family_summaries.py` rolls scored harmonic traces up to
+    family-level support intervals and phase summaries.
+  - `whole_run_spatial_coherence.py` builds candidate-level spatial evidence
+    windows and compact spatial summaries.
+- `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
+  persists dense sidecar artifacts under `data/whole-run-artifacts/{run_id}/`.
+- The older `post_run_*` modules remain useful support/prototype code for
+  bounded range-read experiments and legacy dense DTOs, but they are not the
+  currently connected sidecar pipeline in `execute_post_analysis()`.
 
 ### Persisted analysis and reporting
 
@@ -107,34 +100,38 @@ does not track implementation status or old branch plans.
 - `apps/server/vibesensor/use_cases/history/report_document/` composes the final
   `ReportDocument`, and `adapters/pdf` only renders it.
 
-## Why the current path is insufficient
+## Remaining debt
 
-The current architecture already has strong raw capture and a stable
-reporting boundary, but it still has four blocking limitations for whole-run
-offline analysis:
+The current architecture has raw capture, a canonical executor, dense sidecar
+persistence, whole-run spectra/context/order/spatial stages, and compact
+report-facing summaries. Remaining debt is narrower:
 
-1. **No full-run raw window engine.** Raw capture is only used to rehydrate the
-   FFT-derived fields of summary rows, not to analyze the full run as a
-   deterministic window graph.
-2. **Long runs are sample-capped.** `post_analysis_loader.py` strides the input
-   once a run exceeds 12k persisted rows, which is incompatible with
-   whole-run trace continuity.
-3. **Summary-shaped contracts dominate.** Orders, phases, and location proof are
-   still derived from per-sample peak summaries and matched points instead of
-   first-class whole-run artifacts.
-4. **Persisted analysis JSON is the wrong place for heavy artifacts.** The
-   report/history path should keep consuming compact summary objects, not
-   tens of thousands of per-window spectra or traces.
+1. **Future streaming/range-read refactor.** The compatibility
+   `post_run_raw_windows.py` path reads bounded raw ranges, but the connected
+   whole-run spectral stage currently receives a fully loaded `RawRunCapture`
+   from `post_analysis_loader.py`. Long-run memory pressure should be reduced by
+   wiring the sidecar executor to bounded range reads or an equivalent streaming
+   source.
+2. **Summary-era compatibility remains.** The compact `RunAnalysis` path over
+   summary rows still builds the report-facing baseline. Whole-run summaries are
+   projected into that persisted analysis, but legacy `Finding` narratives remain
+   a fallback when fused whole-run diagnosis summaries are absent.
+3. **Dense sidecars are write-mostly.** History/report consumers intentionally
+   read compact summaries and manifests. Sidecar readback is limited to explicit
+   internal needs; adding new report surfaces should still project compact
+   summaries first instead of loading dense matrices during render.
+4. **Fusion should stay compact.** Future diagnosis/fusion refinements must keep
+   `PersistedAnalysis` report-facing and store any dense evidence as sidecars.
 
-## Target architecture
+## Implemented architecture and current direction
 
-The target shape keeps the current one-time post-stop analysis model, but adds
-an internal whole-run artifact layer between raw capture and persisted
+The implemented shape keeps the one-time post-stop analysis model and adds an
+internal whole-run artifact layer between raw capture and persisted
 diagnosis/report summaries.
 
 ```text
 raw capture manifest/files (#3065)
-  -> indexed range/window reader
+  -> current RawRunCapture load (future streaming/range-read refactor)
   -> deterministic window planner
   -> raw-window spectral executor
   -> context timeline + segment labels
@@ -593,13 +590,16 @@ Add opt-in benchmarks for:
   (full/partial/missing plus speed/RPM gap counts) so history/report preparation
   can project caveats without loading dense sidecar labels during report render.
 
-## Recommended implementation order
+## Historical/completed implementation checklist
 
-1. Settle whole-run window contracts and sidecar artifact persistence.
-2. Add indexed raw range reads and the deterministic window planner.
-3. Build the raw-window spectral executor and benchmark it.
-4. Build the context timeline and segment labeling on the same window grid.
-5. Build order tracking and spatial/coherence in parallel on top of the shared
-   spectral/context artifacts.
-6. Build fusion, counterevidence, persisted diagnosis summaries, and report
-   wiring last.
+These items describe the completed implementation order and should not be read
+as current blockers:
+
+1. Whole-run window contracts and sidecar artifact persistence were added.
+2. Indexed raw range reads and deterministic window planning were added.
+3. The raw-window spectral executor and benchmarks were added.
+4. Context timelines and segment labels were added on the shared window grid.
+5. Whole-run order traces, order scoring, family summaries, and spatial
+   coherence were added on top of spectral/context artifacts.
+6. Compact whole-run summaries and report-facing fallback/fused-summary wiring
+   were added while keeping dense artifacts sidecar-only.

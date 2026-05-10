@@ -5,7 +5,10 @@ Scope: shared order-reference math and the post-stop order-analysis flow.
 VibeSensor uses the same vehicle-order reference model in two places:
 
 - live telemetry, where the server precomputes order bands for spectrum views
-- post-stop diagnostics, where stored samples are matched against those orders
+- post-stop diagnostics, where the active whole-run sidecar pipeline scores
+  order traces against spectral summaries and context labels, and the legacy
+  compact path still matches stored sample peaks when whole-run summaries are
+  unavailable
 
 The shared physics lives in `apps/server/vibesensor/domain/order_reference.py`
 and `apps/server/vibesensor/shared/order_bands.py`. The post-stop finding flow
@@ -18,10 +21,11 @@ lives in `apps/server/vibesensor/use_cases/diagnostics/orders/`.
 | `OrderReferenceSpec` | `domain/order_reference.py` | Tire geometry, final-drive ratio, gear ratio, and uncertainty settings for order analysis. |
 | `vehicle_orders_hz()` | `shared/order_bands.py` | Resolve wheel / driveshaft / engine reference frequencies for one speed sample. |
 | `build_order_bands()` | `shared/order_bands.py` | Precompute live order-band payloads so the frontend does not duplicate tolerance math. |
-| `build_post_run_vehicle_reference_timeline()` | `use_cases/diagnostics/post_run_vehicle_reference.py` | Normalize speed/RPM/gear/final-drive references onto whole-run windows for dense post-run order stages. |
-| `build_post_run_order_band_timeline()` | `use_cases/diagnostics/post_run_order_bands.py` | Compute per-window wheel/driveshaft/engine order bands from the vehicle-reference timeline. |
+| `build_whole_run_order_trace_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_traces.py` | Build dense whole-run order trace points from spectral summaries plus context labels. |
+| `build_whole_run_order_trace_summary_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense trace points into compact lock/stability summaries. |
+| `build_whole_run_order_family_summary_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_family_summaries.py` | Roll harmonic summaries up to family-level support intervals and phase summaries. |
 | `OrderHypothesis` | `use_cases/diagnostics/orders/physics.py` | One named order candidate such as `wheel_1x` or `engine_2x`. |
-| `OrderAnalysisSession` | `use_cases/diagnostics/orders/pipeline.py` | Run all eligible hypotheses across stored samples and return ranked findings. |
+| `OrderAnalysisSession` | `use_cases/diagnostics/orders/pipeline.py` | Legacy/compatibility compact sample-peak order pass used by the summary analysis path. |
 
 ## From speed to reference frequencies
 
@@ -43,10 +47,38 @@ The spec exposes capability checks before any of that math is used:
 If the required tire or driveline data is missing, VibeSensor omits the order
 reference instead of inventing one.
 
-## Per-window post-run references
+## Active whole-run order sidecar flow
 
-Dense post-run order work first maps vehicle context onto the deterministic
-window grid with
+The current connected dense order path is wired in
+`apps/server/vibesensor/use_cases/run/post_analysis_executor.py` after
+whole-run spectra and context sidecars are built:
+
+1. `whole_run_spectra.py` writes per-sensor `spectral-summary:*` sidecars with
+   compact per-window peaks, dB strength, and quality/coverage facts.
+2. `whole_run_context.py` writes `context-window-labels` and compact
+   `whole_run_context_intervals`, carrying speed/RPM/reference validity on the
+   same window grid.
+3. `orders/whole_run_traces.py` evaluates the fixed `OrderHypothesis` catalog
+   against each window, using the same predicted-Hz and peak-match tolerance
+   concepts as the compact sample path, and stores dense `order-trace-points`
+   sidecars.
+4. `orders/whole_run_scoring.py` scores those dense traces into compact
+   `OrderTraceSummary` rows with reference coverage, contiguous support,
+   drift/error, and lock score.
+5. `orders/whole_run_family_summaries.py` rolls harmonic summaries up into
+   source-family summaries with support intervals, phase support,
+   stable-frequency fields, and exemplar interval IDs.
+6. `post_analysis_executor.py` appends ranked
+   `whole_run_order_summaries` and related metadata into `analysis_json` while
+   keeping dense trace points sidecar-only.
+
+This split lets history/report consumers use compact report-facing summaries
+without loading dense sidecar artifacts during normal report generation.
+
+## Compatibility per-window post-run references
+
+The older `post_run_*` DTO path can still map vehicle context onto a
+deterministic window grid with
 `build_post_run_vehicle_reference_timeline()` in
 `use_cases/diagnostics/post_run_vehicle_reference.py`.
 
@@ -65,9 +97,9 @@ formulas. Missing RPM can still produce an engine reference only when speed,
 final drive, and gear ratio are available from aligned samples or settings, and
 the missing-RPM reason remains visible to downstream coverage scoring.
 
-## Per-window dense order bands
+## Compatibility per-window dense order bands
 
-`build_post_run_order_band_timeline()` consumes the POSTRUN-04
+`build_post_run_order_band_timeline()` consumes the compatibility
 `VehicleReferenceTimeline` and the run's `OrderReferenceSpec`. For each window it
 emits deterministic `OrderBand` rows for configured harmonics:
 
@@ -92,10 +124,10 @@ final-drive, gear, RPM, or whole order-reference settings also stay explicit on
 the affected rows. Engine bands can remain available from RPM even when
 speed-derived wheel/driveshaft bands are unavailable.
 
-## Dense episode classification
+## Compatibility dense episode classification
 
-`use_cases/diagnostics/post_run_dense_findings.py` consumes POSTRUN-06
-`VibrationEpisode` rows and the POSTRUN-05 `PostRunOrderBandTimeline`. For each
+`use_cases/diagnostics/post_run_dense_findings.py` consumes compatibility
+`VibrationEpisode` rows and the compatibility `PostRunOrderBandTimeline`. For each
 episode it checks the episode frequency at each supporting `window_index` against
 available order bands for wheel, driveshaft, and engine. A source hypothesis is
 scored from:
@@ -115,8 +147,9 @@ usable duration, transient-only evidence, and conflicting multi-sensor evidence
 are also carried as caveats.
 
 Dense findings keep compact evidence windows plus alternatives and can project
-to the existing domain `Finding` model, preserving report/history compatibility
-while leaving dense spectra and traces outside persisted summary JSON.
+to the existing domain `Finding` model. This remains support/prototype logic;
+the active sidecar path persists compact whole-run order summaries from
+`orders/whole_run_family_summaries.py`.
 
 ## Uncertainty and tolerance bands
 
@@ -177,7 +210,8 @@ Each `OrderHypothesis` carries:
 - `path_compliance`, which widens tolerance for softer transmission paths such
   as wheel/tire vibration traveling through suspension and bushings
 
-`OrderAnalysisSession.analyze()` coordinates the evidence flow:
+For the compact summary compatibility path, `OrderAnalysisSession.analyze()`
+coordinates the evidence flow:
 
 1. Skip hypotheses that do not have enough reference data (`_should_test()`).
 2. Use `match_samples_for_hypothesis()` to compare predicted order bands against
@@ -198,8 +232,11 @@ The same reference math serves both runtime and diagnostics:
 
 - live telemetry calls `vehicle_orders_hz()` and `build_order_bands()` so the
   UI can annotate the current spectrum without duplicating the formulas
-- post-stop diagnostics uses the same order references, then asks whether peaks
-  keep recurring in the predicted bands across the saved run
+- the active whole-run sidecar path uses the same order references and scores
+  whether peak support follows the expected wheel/driveshaft/engine trajectory
+  across the saved run
+- the compact compatibility path still asks whether stored summary peaks keep
+  recurring in the predicted bands
 
 The saved per-sample peak/floor inputs consumed by order matching come from the
 same canonical live-processing FFT/strength pipeline
@@ -217,9 +254,9 @@ That shared ownership is why `shared/order_bands.py` exists outside
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
 | `apps/server/vibesensor/shared/order_bands.py` | Shared uncertainty, tolerance-band, and live band-payload helpers. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py` | Dense per-window vehicle reference normalization and debug fixtures. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py` | Dense per-window order-band DTOs, clamping, unavailable reasons, and serializer rows. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py` | Classify dense vibration episodes against per-window order bands into compact findings with alternatives, caveats, and domain `Finding` projection. |
+| `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py` | Compatibility/prototype per-window vehicle reference normalization and debug fixtures. |
+| `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py` | Compatibility/prototype per-window order-band DTOs, clamping, unavailable reasons, and serializer rows. |
+| `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py` | Compatibility/prototype dense vibration episode classification and domain `Finding` projection. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
