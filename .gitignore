@@ -48,6 +48,12 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.import_linter_cache/
+.deptry_cache/
+htmlcov/
+coverage.xml
 
 # Runtime data
 apps/server/data/*.csv
