@@ -19,6 +19,8 @@ from vibesensor.shared.boundaries.summary_fields.hotspot import (
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import (
+    DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES,
+    DiagnosisDataQualityLimitation,
     DiagnosisExemplarKind,
     DiagnosisFactorKey,
     DiagnosisFactorPolarity,
@@ -31,6 +33,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 __all__ = [
     "NormalizedReportSummary",
     "ReportDiagnosisExemplarReference",
+    "ReportDiagnosisDataQualitySummary",
     "ReportDiagnosisFactor",
     "ReportDiagnosisFactorDetails",
     "ReportOrderHarmonicEvidenceSummary",
@@ -221,6 +224,22 @@ class ReportDiagnosisFactor:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportDiagnosisDataQualitySummary:
+    """Typed persisted data-quality summary for report/history reload paths."""
+
+    usable_window_count: int | None
+    limited_window_count: int | None
+    excluded_window_count: int | None
+    mean_quality_score: float | None
+    speed_context_limited_window_count: int
+    sensor_timing_integrity_window_count: int
+    sensor_mounting_artifact_window_count: int
+    sensor_clipping_window_count: int
+    shock_transient_window_count: int
+    limitation_keys: tuple[DiagnosisDataQualityLimitation, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class ReportSpatialLocationSummary:
     """Typed persisted per-location spatial evidence row for report/history reload."""
 
@@ -289,6 +308,7 @@ class ReportWholeRunDiagnosisSummary:
     has_reference_gap: bool
     uses_summary_fallback: bool
     fallback_reason: str | None
+    data_quality_summary: ReportDiagnosisDataQualitySummary
     exemplar_references: tuple[ReportDiagnosisExemplarReference, ...]
     support_factors: tuple[ReportDiagnosisFactor, ...]
     counterevidence_factors: tuple[ReportDiagnosisFactor, ...]
@@ -391,6 +411,19 @@ def _text_tuple_field(name: str) -> _FieldDecoder:
     return _payload_field(name, _text_tuple)
 
 
+def _data_quality_limitations(raw_values: object) -> tuple[DiagnosisDataQualityLimitation, ...]:
+    if not isinstance(raw_values, list):
+        return ()
+    limitations: list[DiagnosisDataQualityLimitation] = []
+    seen: set[str] = set()
+    for raw_value in raw_values:
+        limitation = _literal_text_or_none(raw_value, DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES)
+        if limitation is not None and limitation not in seen:
+            limitations.append(limitation)
+            seen.add(limitation)
+    return tuple(limitations)
+
+
 def _literal_text_or_none[LiteralTextT: str](
     raw_value: object,
     allowed: frozenset[LiteralTextT],
@@ -440,6 +473,17 @@ def _rows_field[RowModelT](
         return _decode_rows(raw, decoder)
 
     return _payload_field(name, read_rows)
+
+
+def _row_field[RowModelT](
+    name: str,
+    decoder: _RowDecoder[RowModelT],
+    default: RowModelT,
+) -> _FieldDecoder:
+    def read_row(raw: object) -> object:
+        return _decode_row(raw, decoder) or default
+
+    return _payload_field(name, read_row)
 
 
 _PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
@@ -657,6 +701,33 @@ _DIAGNOSIS_FACTOR_DECODER = _RowDecoder(
     ),
     required_fields=frozenset({"factor_key", "polarity", "severity"}),
 )
+_DIAGNOSIS_DATA_QUALITY_DECODER = _RowDecoder(
+    factory=ReportDiagnosisDataQualitySummary,
+    fields=(
+        _optional_count_field("usable_window_count"),
+        _optional_count_field("limited_window_count"),
+        _optional_count_field("excluded_window_count"),
+        _float_field("mean_quality_score"),
+        _count_field("speed_context_limited_window_count"),
+        _count_field("sensor_timing_integrity_window_count"),
+        _count_field("sensor_mounting_artifact_window_count"),
+        _count_field("sensor_clipping_window_count"),
+        _count_field("shock_transient_window_count"),
+        _payload_field("limitation_keys", _data_quality_limitations),
+    ),
+)
+_EMPTY_DIAGNOSIS_DATA_QUALITY = ReportDiagnosisDataQualitySummary(
+    usable_window_count=None,
+    limited_window_count=None,
+    excluded_window_count=None,
+    mean_quality_score=None,
+    speed_context_limited_window_count=0,
+    sensor_timing_integrity_window_count=0,
+    sensor_mounting_artifact_window_count=0,
+    sensor_clipping_window_count=0,
+    shock_transient_window_count=0,
+    limitation_keys=(),
+)
 _WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
     factory=ReportWholeRunOrderSummary,
     fields=(
@@ -755,6 +826,11 @@ _WHOLE_RUN_DIAGNOSIS_SUMMARY_DECODER = _RowDecoder(
         _bool_field("has_reference_gap"),
         _bool_field("uses_summary_fallback"),
         _text_field("fallback_reason"),
+        _row_field(
+            "data_quality_summary",
+            _DIAGNOSIS_DATA_QUALITY_DECODER,
+            _EMPTY_DIAGNOSIS_DATA_QUALITY,
+        ),
         _rows_field("exemplar_references", _DIAGNOSIS_EXEMPLAR_REFERENCE_DECODER),
         _rows_field("support_factors", _DIAGNOSIS_FACTOR_DECODER),
         _rows_field("counterevidence_factors", _DIAGNOSIS_FACTOR_DECODER),

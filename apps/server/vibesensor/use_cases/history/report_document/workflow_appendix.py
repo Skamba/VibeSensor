@@ -361,20 +361,82 @@ def _diagnosis_summary_reason_text(
     matched_finding: Finding | None,
     tr: Callable[..., str],
 ) -> str:
+    quality_text = _diagnosis_quality_text(summary, tr=tr)
     if summary.supporting_duration_s is not None and summary.supporting_window_count is not None:
-        return tr(
+        support_text = tr(
             "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
             count=str(summary.supporting_window_count),
             duration=f"{summary.supporting_duration_s:.1f}",
         )
+        return _append_quality_summary(support_text, quality_text)
     if summary.supporting_window_count is not None and summary.supporting_window_count > 0:
-        return tr(
+        support_text = tr(
             "REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY",
             count=str(summary.supporting_window_count),
         )
+        return _append_quality_summary(support_text, quality_text)
+    if quality_text is not None:
+        return quality_text
     if matched_finding is not None:
         return _candidate_reason_text(matched_finding, tr=tr)
     return tr("REPORT_SIGNAL_FALLBACK")
+
+
+def _append_quality_summary(support_text: str, quality_text: str | None) -> str:
+    if quality_text is None:
+        return support_text
+    return f"{support_text}; {quality_text}"
+
+
+def _diagnosis_quality_text(
+    summary: ReportWholeRunDiagnosisSummary,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    quality = summary.data_quality_summary
+    usable = quality.usable_window_count
+    limited = quality.limited_window_count
+    excluded = quality.excluded_window_count
+    if usable is None and limited is None and excluded is None and not quality.limitation_keys:
+        return None
+    if not quality.limitation_keys:
+        return tr(
+            "REPORT_FINDING_DATA_QUALITY_CLEAN",
+            usable=str(usable or 0),
+            excluded=str(excluded or 0),
+        )
+    return tr(
+        "REPORT_FINDING_DATA_QUALITY_LIMITED",
+        usable=str(usable or 0),
+        excluded=str(excluded or 0),
+        limitations=_data_quality_limitations_text(quality.limitation_keys, tr=tr),
+    )
+
+
+def _data_quality_limitations_text(
+    limitation_keys: Sequence[str],
+    *,
+    tr: Callable[..., str],
+) -> str:
+    labels = [
+        tr(_DATA_QUALITY_LIMITATION_LABEL_KEYS.get(key, "REPORT_DATA_QUALITY_LIMIT_WINDOW"))
+        for key in limitation_keys[:3]
+    ]
+    return ", ".join(labels)
+
+
+_DATA_QUALITY_LIMITATION_LABEL_KEYS: dict[str, str] = {
+    "reference_gap": "REPORT_DATA_QUALITY_LIMIT_REFERENCE",
+    "speed_context": "REPORT_DATA_QUALITY_LIMIT_SPEED_CONTEXT",
+    "sensor_timing": "REPORT_DATA_QUALITY_LIMIT_SENSOR_TIMING",
+    "sensor_mounting": "REPORT_DATA_QUALITY_LIMIT_SENSOR_MOUNTING",
+    "sensor_clipping": "REPORT_DATA_QUALITY_LIMIT_SENSOR_CLIPPING",
+    "road_shock": "REPORT_DATA_QUALITY_LIMIT_ROAD_SHOCK",
+    "weak_spatial": "REPORT_DATA_QUALITY_LIMIT_WEAK_SPATIAL",
+    "ambiguous_location": "REPORT_DATA_QUALITY_LIMIT_AMBIGUOUS_LOCATION",
+    "summary_fallback": "REPORT_DATA_QUALITY_LIMIT_SUMMARY_FALLBACK",
+    "window_quality": "REPORT_DATA_QUALITY_LIMIT_WINDOW",
+}
 
 
 def _path_role_text(index: int, *, tr: Callable[..., str]) -> str:

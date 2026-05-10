@@ -48,7 +48,10 @@ __all__ = [
     "DataQualityRequiredMissingPctResponse",
     "DataQualityResponse",
     "DataQualitySpeedCoverageResponse",
+    "DiagnosisDataQualityLimitation",
+    "DiagnosisDataQualitySummaryResponse",
     "DIAGNOSIS_EXEMPLAR_KIND_VALUES",
+    "DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES",
     "DIAGNOSIS_FACTOR_KEY_VALUES",
     "DIAGNOSIS_FACTOR_POLARITY_VALUES",
     "DIAGNOSIS_FACTOR_SEVERITY_VALUES",
@@ -122,6 +125,32 @@ type DiagnosisFactorKey = Literal[
     "approximate_vehicle_data",
     "unverified_vehicle_data",
 ]
+type DiagnosisDataQualityLimitation = Literal[
+    "reference_gap",
+    "speed_context",
+    "sensor_timing",
+    "sensor_mounting",
+    "sensor_clipping",
+    "road_shock",
+    "weak_spatial",
+    "ambiguous_location",
+    "summary_fallback",
+    "window_quality",
+]
+DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES: frozenset[DiagnosisDataQualityLimitation] = frozenset(
+    {
+        "reference_gap",
+        "speed_context",
+        "sensor_timing",
+        "sensor_mounting",
+        "sensor_clipping",
+        "road_shock",
+        "weak_spatial",
+        "ambiguous_location",
+        "summary_fallback",
+        "window_quality",
+    }
+)
 type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
 type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
 type WholeRunDiagnosisDataBasis = Literal["raw_backed", "partial_raw_backed", "summary_only"]
@@ -320,6 +349,7 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     sensor_clipping_window_count: Required[int]
     sensor_mounting_artifact_window_count: Required[int]
     sensor_timing_integrity_window_count: Required[int]
+    speed_context_limited_window_count: Required[int]
     mean_quality_score: float | None
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]
@@ -417,6 +447,21 @@ class DiagnosisFactorResponse(TypedDict, total=False):
     details: Required[DiagnosisFactorDetailsResponse]
 
 
+class DiagnosisDataQualitySummaryResponse(TypedDict, total=False):
+    """Compact report-facing data-quality summary for one diagnosis/finding."""
+
+    usable_window_count: int | None
+    limited_window_count: int | None
+    excluded_window_count: int | None
+    mean_quality_score: float | None
+    speed_context_limited_window_count: Required[int]
+    sensor_timing_integrity_window_count: Required[int]
+    sensor_mounting_artifact_window_count: Required[int]
+    sensor_clipping_window_count: Required[int]
+    shock_transient_window_count: Required[int]
+    limitation_keys: Required[list[DiagnosisDataQualityLimitation]]
+
+
 class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
     """Future persisted/report-facing summary shape for fused whole-run diagnoses."""
 
@@ -450,6 +495,7 @@ class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
     has_reference_gap: Required[bool]
     uses_summary_fallback: Required[bool]
     fallback_reason: str | None
+    data_quality_summary: Required[DiagnosisDataQualitySummaryResponse]
     exemplar_references: Required[list[DiagnosisExemplarReferenceResponse]]
     support_factors: Required[list[DiagnosisFactorResponse]]
     counterevidence_factors: Required[list[DiagnosisFactorResponse]]

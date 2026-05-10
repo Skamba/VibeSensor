@@ -3,12 +3,14 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.shared.types.history_analysis_contracts import (
+    DiagnosisDataQualitySummaryResponse,
     DiagnosisExemplarReferenceResponse,
     DiagnosisFactorDetailsResponse,
     DiagnosisFactorResponse,
     WholeRunDiagnosisSummaryResponse,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+    DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,
     DiagnosisFactor,
     DiagnosisFactorDetails,
@@ -59,6 +61,14 @@ def test_whole_run_diagnosis_summary_round_trips_nested_compact_contracts() -> N
         weak_spatial_separation=False,
         has_reference_gap=True,
         uses_summary_fallback=False,
+        data_quality_summary=DiagnosisDataQualitySummary(
+            usable_window_count=7,
+            limited_window_count=1,
+            excluded_window_count=2,
+            mean_quality_score=0.82,
+            speed_context_limited_window_count=1,
+            limitation_keys=("reference_gap", "speed_context"),
+        ),
         exemplar_references=(
             DiagnosisExemplarReference(
                 kind="order_support_interval",
@@ -168,6 +178,20 @@ def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
     ]
 
 
+def test_whole_run_diagnosis_summary_defaults_missing_quality_summary() -> None:
+    payload = WholeRunDiagnosisSummary(
+        diagnosis_key="wheel_1x",
+        suspected_source="wheel/tire",
+        rank=1,
+        data_basis="raw_backed",
+    ).to_json_object()
+    del payload["data_quality_summary"]
+
+    restored = WholeRunDiagnosisSummary.from_mapping(payload)
+
+    assert restored.data_quality_summary == DiagnosisDataQualitySummary()
+
+
 def test_diagnosis_exemplar_reference_rejects_unsupported_kind() -> None:
     with pytest.raises(ValueError, match="supported diagnosis exemplar kind"):
         DiagnosisExemplarReference.from_mapping({"kind": "bad-kind"})
@@ -259,6 +283,18 @@ def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> N
         "weight",
         "details",
     }
+    assert set(DiagnosisDataQualitySummaryResponse.__annotations__) == {
+        "usable_window_count",
+        "limited_window_count",
+        "excluded_window_count",
+        "mean_quality_score",
+        "speed_context_limited_window_count",
+        "sensor_timing_integrity_window_count",
+        "sensor_mounting_artifact_window_count",
+        "sensor_clipping_window_count",
+        "shock_transient_window_count",
+        "limitation_keys",
+    }
     assert set(WholeRunDiagnosisSummaryResponse.__annotations__) == {
         "diagnosis_key",
         "suspected_source",
@@ -290,6 +326,7 @@ def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> N
         "has_reference_gap",
         "uses_summary_fallback",
         "fallback_reason",
+        "data_quality_summary",
         "exemplar_references",
         "support_factors",
         "counterevidence_factors",

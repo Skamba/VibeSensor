@@ -2161,6 +2161,107 @@
         "title": "DeleteHistoryRunResponse",
         "type": "object"
       },
+      "DiagnosisDataQualityLimitation": {
+        "enum": [
+          "reference_gap",
+          "speed_context",
+          "sensor_timing",
+          "sensor_mounting",
+          "sensor_clipping",
+          "road_shock",
+          "weak_spatial",
+          "ambiguous_location",
+          "summary_fallback",
+          "window_quality"
+        ],
+        "type": "string"
+      },
+      "DiagnosisDataQualitySummaryResponse": {
+        "description": "Compact report-facing data-quality summary for one diagnosis/finding.",
+        "properties": {
+          "excluded_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Window Count"
+          },
+          "limitation_keys": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisDataQualityLimitation"
+            },
+            "title": "Limitation Keys",
+            "type": "array"
+          },
+          "limited_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limited Window Count"
+          },
+          "mean_quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Quality Score"
+          },
+          "sensor_clipping_window_count": {
+            "title": "Sensor Clipping Window Count",
+            "type": "integer"
+          },
+          "sensor_mounting_artifact_window_count": {
+            "title": "Sensor Mounting Artifact Window Count",
+            "type": "integer"
+          },
+          "sensor_timing_integrity_window_count": {
+            "title": "Sensor Timing Integrity Window Count",
+            "type": "integer"
+          },
+          "shock_transient_window_count": {
+            "title": "Shock Transient Window Count",
+            "type": "integer"
+          },
+          "speed_context_limited_window_count": {
+            "title": "Speed Context Limited Window Count",
+            "type": "integer"
+          },
+          "usable_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Window Count"
+          }
+        },
+        "required": [
+          "speed_context_limited_window_count",
+          "sensor_timing_integrity_window_count",
+          "sensor_mounting_artifact_window_count",
+          "sensor_clipping_window_count",
+          "shock_transient_window_count",
+          "limitation_keys"
+        ],
+        "title": "DiagnosisDataQualitySummaryResponse",
+        "type": "object"
+      },
       "DiagnosisExemplarKind": {
         "enum": [
           "order_support_interval",
@@ -6330,6 +6431,10 @@
             "title": "Shock Transient Window Count",
             "type": "integer"
           },
+          "speed_context_limited_window_count": {
+            "title": "Speed Context Limited Window Count",
+            "type": "integer"
+          },
           "stable_frequency_max_hz": {
             "anyOf": [
               {
@@ -6406,6 +6511,7 @@
           "sensor_clipping_window_count",
           "sensor_mounting_artifact_window_count",
           "sensor_timing_integrity_window_count",
+          "speed_context_limited_window_count",
           "support_intervals",
           "phase_support",
           "harmonic_summaries",
@@ -9219,6 +9325,9 @@
           "data_basis": {
             "$ref": "#/components/schemas/WholeRunDiagnosisDataBasis"
           },
+          "data_quality_summary": {
+            "$ref": "#/components/schemas/DiagnosisDataQualitySummaryResponse"
+          },
           "diagnosis_key": {
             "title": "Diagnosis Key",
             "type": "string"
@@ -9459,6 +9568,7 @@
           "weak_spatial_separation",
           "has_reference_gap",
           "uses_summary_fallback",
+          "data_quality_summary",
           "exemplar_references",
           "support_factors",
           "counterevidence_factors"
