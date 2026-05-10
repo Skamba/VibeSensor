@@ -28,13 +28,16 @@ def _which(command: str) -> str | None:
 
 
 def _run(command: list[str]) -> tuple[bool, str]:
-    proc = subprocess.run(
-        command,
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+    except OSError as exc:
+        return False, str(exc)
     output = (proc.stdout or "").strip()
     return proc.returncode == 0, output
 

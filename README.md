@@ -105,6 +105,13 @@ workflow paths are available on your machine. Run bare `make` to list the
 supported repo commands. Use `make format` as the only supported Python
 formatter for backend and tooling files.
 
+Cleanup levels are explicit: `make clean` removes fast regenerated build, test
+cache, static UI, and generated derivative outputs; `make pristine` also removes
+ignored local generated/cache/runtime outputs such as `.venv`, UI
+`node_modules`, Pi image outputs, artifacts, and tmp dirs while preserving local
+secret files. Run `make setup` after `make pristine` to restore the native dev
+checkout.
+
 ## Quick Start
 
 ### Docker (quick product check)
