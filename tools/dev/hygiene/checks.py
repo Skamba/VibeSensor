@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from . import test_layout as _test_layout
+from . import layout_checks as _layout_checks
 from ._shared import ROOT, ListCheckSpec
 from .ci_workflow import (
     check_ci_command_sync,
@@ -27,7 +27,7 @@ from .runtime_policy import (
     check_python_policy_alignment,
     check_runtime_policy_drift,
 )
-from .test_layout import (
+from .layout_checks import (
     check_oversized_test_files,
     check_test_inventory_ownership,
     check_test_marker_policy,
@@ -35,31 +35,31 @@ from .test_layout import (
 
 
 def all_ui_specs() -> set[str]:
-    return _test_layout.all_ui_specs()
+    return _layout_checks.all_ui_specs()
 
 
 def ui_runner_owned_specs() -> dict[str, set[str]]:
-    return _test_layout.ui_runner_owned_specs()
+    return _layout_checks.ui_runner_owned_specs()
 
 
 def inventory_errors_for_test_paths(*args: object, **kwargs: object) -> list[str]:
-    return _test_layout.inventory_errors_for_test_paths(*args, **kwargs)
+    return _layout_checks.inventory_errors_for_test_paths(*args, **kwargs)
 
 
 def marker_policy_errors(*args: object, **kwargs: object) -> list[str]:
-    return _test_layout.marker_policy_errors(*args, **kwargs)
+    return _layout_checks.marker_policy_errors(*args, **kwargs)
 
 
 def _marker_policy_test_files() -> list[object]:
-    original_root = _test_layout.ROOT
-    original_git_tracked_files = _test_layout._git_tracked_files
+    original_root = _layout_checks.ROOT
+    original_git_tracked_files = _layout_checks._git_tracked_files
     try:
-        _test_layout.ROOT = ROOT
-        _test_layout._git_tracked_files = _git_tracked_files
-        return _test_layout._marker_policy_test_files()
+        _layout_checks.ROOT = ROOT
+        _layout_checks._git_tracked_files = _git_tracked_files
+        return _layout_checks._marker_policy_test_files()
     finally:
-        _test_layout.ROOT = original_root
-        _test_layout._git_tracked_files = original_git_tracked_files
+        _layout_checks.ROOT = original_root
+        _layout_checks._git_tracked_files = original_git_tracked_files
 
 
 _LIST_CHECK_SPECS = (
