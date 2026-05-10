@@ -13,10 +13,12 @@ from vibesensor.domain import (
     DiagnosisAssessmentInputs,
     score_diagnosis_assessment_inputs,
 )
+from vibesensor.shared.types.history_analysis_contracts import DiagnosisDataQualityLimitation
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
 from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+    DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,
     DiagnosisFactor,
     DiagnosisFactorDetails,
@@ -150,6 +152,7 @@ def build_whole_run_diagnosis_summaries(
                 has_reference_gap=candidate.assessment.has_reference_gap,
                 uses_summary_fallback=candidate.assessment.uses_summary_fallback,
                 fallback_reason=candidate.assessment.fallback_reason,
+                data_quality_summary=_data_quality_summary(candidate),
                 exemplar_references=_exemplar_references(candidate, context_intervals),
                 support_factors=tuple(
                     _diagnosis_factor_from_assessment_factor(factor)
@@ -321,6 +324,59 @@ def _context_source(analysis_metadata: Mapping[str, object]) -> str:
     if _data_basis(analysis_metadata, None) == "summary_only":
         return "summary_only"
     return "legacy"
+
+
+def _data_quality_summary(candidate: _CandidateEvaluation) -> DiagnosisDataQualitySummary:
+    order_summary = candidate.order_summary
+    limitation_keys = _data_quality_limitation_keys(candidate)
+    return DiagnosisDataQualitySummary(
+        usable_window_count=order_summary.usable_window_count,
+        limited_window_count=order_summary.limited_window_count,
+        excluded_window_count=order_summary.excluded_window_count,
+        mean_quality_score=order_summary.mean_quality_score,
+        speed_context_limited_window_count=order_summary.speed_context_limited_window_count,
+        sensor_timing_integrity_window_count=order_summary.sensor_timing_integrity_window_count,
+        sensor_mounting_artifact_window_count=(order_summary.sensor_mounting_artifact_window_count),
+        sensor_clipping_window_count=order_summary.sensor_clipping_window_count,
+        shock_transient_window_count=order_summary.shock_transient_window_count,
+        limitation_keys=limitation_keys,
+    )
+
+
+def _data_quality_limitation_keys(
+    candidate: _CandidateEvaluation,
+) -> tuple[DiagnosisDataQualityLimitation, ...]:
+    order_summary = candidate.order_summary
+    spatial_summary = candidate.spatial_summary
+    assessment = candidate.assessment
+    limitations: list[DiagnosisDataQualityLimitation] = []
+    if assessment.has_reference_gap:
+        limitations.append("reference_gap")
+    if order_summary.speed_context_limited_window_count > 0:
+        limitations.append("speed_context")
+    if order_summary.sensor_timing_integrity_window_count > 0:
+        limitations.append("sensor_timing")
+    if order_summary.sensor_mounting_artifact_window_count > 0:
+        limitations.append("sensor_mounting")
+    if order_summary.sensor_clipping_window_count > 0:
+        limitations.append("sensor_clipping")
+    if order_summary.shock_transient_window_count > 0:
+        limitations.append("road_shock")
+    if spatial_summary is not None and spatial_summary.weak_spatial_separation:
+        limitations.append("weak_spatial")
+    if spatial_summary is not None and spatial_summary.ambiguous_location:
+        limitations.append("ambiguous_location")
+    if assessment.uses_summary_fallback:
+        limitations.append("summary_fallback")
+    if (
+        order_summary.limited_window_count > 0
+        or order_summary.excluded_window_count > 0
+        or (
+            order_summary.mean_quality_score is not None and order_summary.mean_quality_score < 0.75
+        )
+    ):
+        limitations.append("window_quality")
+    return tuple(dict.fromkeys(limitations))
 
 
 def _supporting_duration_s(order_summary: OrderTraceSummary) -> float | None:

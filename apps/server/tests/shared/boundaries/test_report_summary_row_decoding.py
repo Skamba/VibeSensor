@@ -65,3 +65,46 @@ def test_report_summary_from_mapping_keeps_diagnosis_factor_with_non_mapping_det
     assert factor.factor_key == "summary_only"
     assert factor.details.raw_backed_sample_count is None
     assert factor.details.fallback_reason is None
+
+
+def test_report_summary_from_mapping_decodes_diagnosis_data_quality_summary() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "whole_run_diagnosis_summaries": [
+                {
+                    "diagnosis_key": "wheel_1x",
+                    "suspected_source": "wheel/tire",
+                    "rank": 1,
+                    "data_basis": "raw_backed",
+                    "data_quality_summary": {
+                        "usable_window_count": 7,
+                        "limited_window_count": 2,
+                        "excluded_window_count": 1,
+                        "mean_quality_score": 0.81,
+                        "speed_context_limited_window_count": 1,
+                        "sensor_timing_integrity_window_count": 2,
+                        "sensor_mounting_artifact_window_count": 0,
+                        "sensor_clipping_window_count": 1,
+                        "shock_transient_window_count": 0,
+                        "limitation_keys": [
+                            "speed_context",
+                            "sensor_timing",
+                            "bad-value",
+                            "speed_context",
+                        ],
+                    },
+                }
+            ]
+        }
+    )
+
+    quality = summary.whole_run_diagnosis_summaries[0].data_quality_summary
+
+    assert quality.usable_window_count == 7
+    assert quality.limited_window_count == 2
+    assert quality.excluded_window_count == 1
+    assert quality.mean_quality_score == 0.81
+    assert quality.speed_context_limited_window_count == 1
+    assert quality.sensor_timing_integrity_window_count == 2
+    assert quality.sensor_clipping_window_count == 1
+    assert quality.limitation_keys == ("speed_context", "sensor_timing")
