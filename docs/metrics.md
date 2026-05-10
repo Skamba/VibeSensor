@@ -82,11 +82,15 @@ Hysteresis and persistence logic is handled in `severity.severity_from_peak()`:
 - `PERSISTENCE_TICKS = 3` — ticks a new band must be seen before promotion
 - `DECAY_TICKS = 5` — ticks below threshold before demotion
 
-## JSONL Run Log Fields
+## Run persistence fields
 
-The field written to `.jsonl` run files is `vibration_strength_db` (dB).
+Current runtime history stores sample metrics in SQLite `samples_v2` typed
+columns; the legacy/CLI JSONL boundary uses the same `SensorFrame` field names.
+See `docs/history_db_schema.md` for the current DB schema and
+`docs/run_schema_v2.md` for the legacy JSONL boundary. This section lists only
+metric fields, not the full persistence schema.
 
-### Current fields (v2 schema)
+### Metric fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -94,6 +98,8 @@ The field written to `.jsonl` run files is `vibration_strength_db` (dB).
 | `strength_bucket` | str \| null | Severity band key (`l1`–`l5`) or `null` |
 | `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket}]` |
 | `dominant_freq_hz` | float | Frequency of dominant peak (Hz) |
+| `strength_peak_amp_g` | float | Peak amplitude used to compute dB strength |
+| `strength_floor_amp_g` | float | Noise-floor amplitude used to compute dB strength |
 
 ### Removed fields (previously present, now deleted)
 

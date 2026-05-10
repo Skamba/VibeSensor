@@ -1,8 +1,12 @@
-# Run Schema v2 (`.jsonl`)
+# Legacy Run Schema v2 (`.jsonl`)
 
-VibeSensor writes run logs as JSONL (`*.jsonl`).
+This document describes the legacy/CLI JSONL run boundary used by
+`shared/types/run_schema.py` constants and tools such as `vibesensor-report`.
+The current server runtime persists run history in SQLite (`history.db`) plus
+raw-capture and whole-run sidecar directories; see `docs/history_db_schema.md`
+and `docs/analysis_pipeline.md` for the active storage model.
 
-Each run file has:
+When a JSONL run file is read or written at this boundary, it has:
 
 1. `run_metadata` record (first line)
 2. many `sample` records (time series)
@@ -18,7 +22,13 @@ Required fields:
 - `start_time_utc`
 - `end_time_utc` (may be `null` while active)
 - `sensor_model`
+- `firmware_version` (optional)
+- `strength_algorithm_version` (optional)
+- `peak_detector_version` (optional)
+- `calibration_profile_id` (optional)
+- `vehicle_baseline_profile_id` (optional)
 - `raw_sample_rate_hz`
+- `configured_raw_sample_rate_hz` (optional)
 - `feature_interval_s` (used by time-aware order-evidence gating to convert logged match samples into durations)
 - `fft_window_size_samples`
 - `fft_window_type`
@@ -31,8 +41,14 @@ If key references are missing, set:
 
 Optional but recommended:
 
-- `tire_circumference_m` (required for wheel-order labeling)
-- `firmware_version` (ESP firmware version string captured from connected sensors)
+- `analysis_settings` (active run-attached analysis settings snapshot)
+- `car` (run-attached car identity and order-reference status)
+- `sensor_snapshots` (per-run sensor identity/location/orientation/sample-rate snapshots)
+- `raw_capture_finalize` (raw-capture finalize status when the runtime writes a DB-backed run)
+- `finalization_stages` (structured recorder finalization stage results)
+- `case_id`, `sensor_mac`, `symptom`, `report_date`, `language`
+- `wheel_circumference_m` (legacy wheel-reference fallback)
+- `recorded_utc_offset_seconds`
 
 ### `sample` (per timestamp)
 
@@ -40,15 +56,27 @@ Required columns (must exist per record):
 
 - `t_s` (monotonic seconds)
 - `speed_kmh` (required for speed/order analysis; can be `null`)
+- `gps_speed_kmh`
+- `speed_source`
+- `engine_rpm`
+- `engine_rpm_source`
+- `gear`
+- `final_drive_ratio`
 - `accel_x_g`
 - `accel_y_g`
 - `accel_z_g`
+- `analysis_window_start_us` (optional raw-analysis window start)
+- `analysis_window_end_us` (optional raw-analysis window end)
+- `analysis_window_synced` (optional raw-window sync flag)
 
 Recommended:
 
-- `engine_rpm`
-- `gear`
-- `gps_speed_kmh`
+- `client_id`
+- `client_name`
+- `location`
+- `sample_rate_hz`
+- `frames_dropped_total`
+- `queue_overflow_drops`
 
 Common derived fields:
 
@@ -68,15 +96,18 @@ Contains:
 
 The report pipeline does not infer orders without references.
 
-- Wheel order requires `speed_kmh` + `tire_circumference_m` (or wheel speed sensor).
-- Engine order requires `engine_rpm`.
+- Wheel order requires speed plus tire/order-reference settings.
+- Driveshaft order requires wheel reference plus final-drive data.
+- Engine order requires RPM or aligned speed/final-drive/gear reference data.
 
 When missing, report findings include explicit `reference missing` entries and
 order-specific claims are skipped.
 
-Order tracking uses per-sample predicted order frequencies and matches against
-`top_peaks` within tolerance, so wheel/driveline/engine findings remain valid
-when speed changes during the run.
+The current whole-run sidecar path scores order traces against the dense window
+grid and persists compact summaries. The legacy JSONL/summary path still uses
+per-sample predicted order frequencies and matches against `top_peaks` within
+tolerance, so wheel/driveline/engine findings can remain valid when speed
+changes during the run.
 
 ## Commands
 
@@ -86,7 +117,9 @@ Generate PDF from run file:
 vibesensor-report path/to/metrics_20260215_120000.jsonl
 ```
 
-Legacy CSV files are intentionally not supported in this lab setup.
+Legacy CSV files are intentionally not supported in this lab setup. For current
+runtime history, use the SQLite history DB and sidecar artifacts rather than
+treating JSONL files as the primary run store.
 
 ## Removed Fields (schema history)
 

@@ -78,9 +78,23 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 The generated PDF uses A4 portrait and starts with a **one-glance verdict page**:
 
 ### Page structure
-1. **Verdict page** (page 1) — compact date/car/run metadata, primary source, inspect-first target, short reason, a compact decision path, concise corner proof, ranked source-comparison bars, and the first action plus confirm/clean/parts-gate outcomes. Page 1 intentionally omits the run timeline and support-duration phrasing that can be confused with elapsed runtime. The action preview must not truncate the instruction, the lower layout should use the available vertical space for useful proof/inspection facts, and fallback wording should be operational (for example, "If the primary path is clean: inspect the fallback path") rather than vague caveat language.
-2. **Evidence & Diagnostics** (page 2) — left column: car hotspot heat-map diagram (42 % width, aspect-ratio preserved); right column: compact pattern evidence panel + diagnostic peaks table (system-relevance oriented).
-3. **Inspection path** — full action-card detail, alternatives, confirm/falsify guidance, and longer evidence/context that does not belong on the glanceable verdict page.
+1. **Verdict page** (page 1) — compact date/car/run metadata, primary source,
+   inspect-first target, short reason, a compact decision path, concise proof
+   rows, ranked source-comparison bars, and the first action plus
+   confirm/clean/parts-gate outcomes. Page 1 intentionally omits the run
+   timeline and support-duration phrasing that can be confused with elapsed
+   runtime. The action preview must not truncate the instruction, the lower
+   layout should use the available vertical space for useful proof/inspection
+   facts, and fallback wording should be operational (for example, "If the
+   primary path is clean: inspect the fallback path") rather than vague caveat
+   language.
+2. **Appendix / evidence pages** — Appendix-B style location proof and hotspot
+   diagrams, Appendix-C diagnosis proof packs, worksheet/action-matrix guidance,
+   and diagnostic peak/evidence tables are rendered from the canonical
+   `ReportDocument`, not by re-running diagnostics in the PDF adapter.
+3. **Inspection path** — full action-card detail, alternatives,
+   confirm/falsify guidance, and longer evidence/context that does not belong on
+   the glanceable verdict page.
 
 ### Primitives
 | Primitive | File | Purpose |
@@ -89,7 +103,7 @@ The generated PDF uses A4 portrait and starts with a **one-glance verdict page**
 | `strength_text(db_value, lang)` | `apps/server/vibesensor/shared/report_presentation.py` | Natural-language strength label with dB |
 | `ConfidenceAssessment.tier` | `apps/server/vibesensor/domain/confidence_assessment.py` | Report layout tier (A/B/C) for section visibility |
 
-### Card tone tokens (`report/pdf_style.py`)
+### Card tone tokens (`apps/server/vibesensor/adapters/pdf/pdf_style.py`)
 - `brand_surface_soft` — low-emphasis metadata strip background
 - `card_neutral_bg / _border` — informational
 - `card_success_bg / _border` — good / ok status
@@ -97,7 +111,11 @@ The generated PDF uses A4 portrait and starts with a **one-glance verdict page**
 - `card_error_bg / _border` — critical issue
 
 ### Heat-map gradient
-The car hotspot diagram uses a severity gradient defined in `report/pdf_style.py`.
+The car hotspot diagram uses a severity gradient defined in
+`apps/server/vibesensor/adapters/pdf/pdf_style.py` and is planned/rendered
+through the report-document and PDF adapter modules under
+`apps/server/vibesensor/use_cases/history/report_document/` and
+`apps/server/vibesensor/adapters/pdf/`.
 
 ### i18n
 All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.
