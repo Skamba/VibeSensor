@@ -265,6 +265,7 @@ def test_history_order_trace_response_contracts_expose_named_summary_fields() ->
         "sensor_clipping_window_count",
         "sensor_mounting_artifact_window_count",
         "sensor_timing_integrity_window_count",
+        "speed_context_limited_window_count",
         "mean_quality_score",
         "support_intervals",
         "phase_support",

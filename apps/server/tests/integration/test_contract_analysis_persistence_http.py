@@ -227,6 +227,7 @@ async def test_whole_run_order_summaries_survive_persistence_and_http_layers() -
             "sensor_clipping_window_count": 0,
             "sensor_mounting_artifact_window_count": 0,
             "sensor_timing_integrity_window_count": 0,
+            "speed_context_limited_window_count": 0,
             "mean_quality_score": 0.92,
             "support_intervals": [
                 {
@@ -378,6 +379,18 @@ async def test_whole_run_diagnosis_summaries_survive_persistence_and_http_layers
             "weak_spatial_separation": False,
             "has_reference_gap": True,
             "uses_summary_fallback": False,
+            "data_quality_summary": {
+                "usable_window_count": 7,
+                "limited_window_count": 1,
+                "excluded_window_count": 0,
+                "mean_quality_score": 0.9,
+                "speed_context_limited_window_count": 0,
+                "sensor_timing_integrity_window_count": 0,
+                "sensor_mounting_artifact_window_count": 0,
+                "sensor_clipping_window_count": 0,
+                "shock_transient_window_count": 0,
+                "limitation_keys": ["reference_gap"],
+            },
             "support_factors": [
                 {
                     "factor_key": "raw_backed",
