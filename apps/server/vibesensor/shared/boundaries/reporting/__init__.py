@@ -2,6 +2,11 @@
 
 # Summary normalization and projectable-payload gates.
 # Fact projections and prepared fact groups.
+from .analysis_metadata import (
+    REPORT_ANALYSIS_METADATA_STABLE_KEYS,
+    ReportAnalysisMetadata,
+    report_analysis_metadata_from_mapping,
+)
 from .confidence_facts import ReportConfidenceFacts, build_report_confidence_facts
 from .decision_facts import ReportDecisionFacts, build_report_decision_facts
 from .facts import (
@@ -53,8 +58,10 @@ __all__ = [
     "PreparedReportFindings",
     "PreparedReportInput",
     "PrimaryReportFacts",
+    "REPORT_ANALYSIS_METADATA_STABLE_KEYS",
     "REPORT_FALLBACK_REASONS_METADATA_KEY",
     "REPORT_FALLBACK_REASON_VALUES",
+    "ReportAnalysisMetadata",
     "ReportConfidenceFacts",
     "ReportContextFacts",
     "ReportCoverageSummary",
@@ -73,6 +80,7 @@ __all__ = [
     "prepare_persisted_report_input",
     "prepare_report_facts",
     "prepare_report_input",
+    "report_analysis_metadata_from_mapping",
     "report_summary_from_mapping",
     "require_projectable_report_payload",
     "resolve_primary_report_facts",

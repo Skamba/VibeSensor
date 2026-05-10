@@ -7,6 +7,9 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
+from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+    report_analysis_metadata_from_mapping,
+)
 from vibesensor.shared.boundaries.reporting.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     derive_report_fallback_reasons,
@@ -245,7 +248,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
 
 def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:
     fallback_reasons = derive_report_fallback_reasons(
-        analysis_metadata,
+        report_analysis_metadata_from_mapping(analysis_metadata),
         has_whole_run_context_intervals=False,
         has_whole_run_order_summaries=False,
         has_whole_run_spatial_summaries=False,

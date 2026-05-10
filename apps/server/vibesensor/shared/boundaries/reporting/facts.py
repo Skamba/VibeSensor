@@ -7,7 +7,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
-from vibesensor.shared.boundaries.codecs.scalars import coerce_count, text_or_none
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
+from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+    ReportAnalysisMetadata,
+    report_analysis_metadata_from_payload,
+)
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_CONTEXT_INCOMPLETE,
@@ -204,8 +208,15 @@ def prepare_report_facts(
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
-    fallback_reasons = _report_fallback_reasons(payload, summary=summary)
-    context_facts = _build_report_context_facts(payload, summary=summary)
+    analysis_metadata = report_analysis_metadata_from_payload(payload)
+    fallback_reasons = _report_fallback_reasons(
+        analysis_metadata,
+        summary=summary,
+    )
+    context_facts = _build_report_context_facts(
+        analysis_metadata,
+        summary=summary,
+    )
     sensor_facts = build_report_sensor_facts(
         test_run=test_run,
         sensor_locations_active=summary.active_sensor_locations,
@@ -220,7 +231,7 @@ def prepare_report_facts(
         warnings=warnings,
     )
     evidence_facts = build_report_evidence_facts(
-        payload,
+        analysis_metadata,
         summary=summary,
         primary_candidate=decision_facts.primary_candidate,
         decision_facts=decision_facts,
@@ -231,14 +242,13 @@ def prepare_report_facts(
         evidence_data_basis=evidence_facts.data_basis,
     )
     provisional_confidence_facts = build_report_confidence_facts(
-        has_explicit_analysis_metadata=isinstance(payload.get("analysis_metadata"), Mapping),
+        has_explicit_analysis_metadata=analysis_metadata.present,
         primary_candidate=decision_facts.primary_candidate,
         evidence_facts=evidence_facts,
         decision_facts=decision_facts,
         context_facts=context_facts,
     )
     whole_run_diagnosis_summaries = _report_whole_run_diagnosis_summaries(
-        payload,
         summary=summary,
         sensor_facts=sensor_facts,
         decision_facts=decision_facts,
@@ -246,6 +256,7 @@ def prepare_report_facts(
         confidence_facts=provisional_confidence_facts,
         context_facts=context_facts,
         fallback_reasons=fallback_reasons,
+        analysis_metadata=analysis_metadata,
     )
     confidence_facts = _report_surface_confidence_facts(
         whole_run_diagnosis_summaries,
@@ -310,12 +321,11 @@ def _tire_spec_text(tire_spec: object) -> str | None:
 
 
 def _build_report_context_facts(
-    payload: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     summary: NormalizedReportSummary,
 ) -> ReportContextFacts:
-    analysis_metadata = payload.get("analysis_metadata")
-    if not isinstance(analysis_metadata, Mapping):
+    if not analysis_metadata.present:
         return ReportContextFacts(
             traceable=False,
             source="implicit",
@@ -334,70 +344,52 @@ def _build_report_context_facts(
             assumed_speed_window_count=0,
             warnings=(),
         )
-    whole_run_available = bool(analysis_metadata.get("whole_run_context_available")) or bool(
+    context_metadata = analysis_metadata.whole_run_context
+    whole_run_available = analysis_metadata.whole_run_context_available or bool(
         summary.whole_run_context_intervals
     )
     if whole_run_available:
         source = "whole_run"
-    elif _is_summary_only_context_fallback(analysis_metadata):
+    elif analysis_metadata.is_summary_only_context_fallback:
         source = "summary_only"
     else:
         source = "legacy"
     intervals = summary.whole_run_context_intervals if whole_run_available else ()
-    full_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_full_window_count",
+    full_window_count = _metadata_count_or_default(
+        context_metadata.full_window_count,
         default=sum(interval.full_context_window_count for interval in intervals),
     )
-    partial_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_partial_window_count",
+    partial_window_count = _metadata_count_or_default(
+        context_metadata.partial_window_count,
         default=sum(interval.partial_context_window_count for interval in intervals),
     )
-    missing_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_missing_window_count",
+    missing_window_count = _metadata_count_or_default(
+        context_metadata.missing_window_count,
         default=sum(interval.missing_context_window_count for interval in intervals),
     )
-    missing_speed_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_missing_speed_window_count",
+    missing_speed_window_count = _metadata_count_or_default(
+        context_metadata.missing_speed_window_count
     )
-    missing_rpm_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_missing_rpm_window_count",
+    missing_rpm_window_count = _metadata_count_or_default(context_metadata.missing_rpm_window_count)
+    stale_speed_window_count = _metadata_count_or_default(context_metadata.stale_speed_window_count)
+    low_speed_window_count = _metadata_count_or_default(context_metadata.low_speed_window_count)
+    unstable_speed_window_count = _metadata_count_or_default(
+        context_metadata.unstable_speed_window_count
     )
-    stale_speed_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_stale_speed_window_count",
+    assumed_speed_window_count = _metadata_count_or_default(
+        context_metadata.assumed_speed_window_count
     )
-    low_speed_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_low_speed_window_count",
-    )
-    unstable_speed_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_unstable_speed_window_count",
-    )
-    assumed_speed_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_assumed_speed_window_count",
-    )
-    stale_rpm_window_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_stale_rpm_window_count",
-    )
+    stale_rpm_window_count = _metadata_count_or_default(context_metadata.stale_rpm_window_count)
     default_window_count = (
         sum(interval.window_count for interval in intervals) if intervals else None
     )
-    window_count = _analysis_metadata_optional_count(
-        analysis_metadata,
-        "whole_run_context_window_count",
-        default=default_window_count,
+    window_count = (
+        context_metadata.window_count
+        if context_metadata.window_count is not None
+        else default_window_count
     )
-    interval_count = _analysis_metadata_count(
-        analysis_metadata,
-        "whole_run_context_interval_count",
+    interval_count = _metadata_count_or_default(
+        context_metadata.interval_count,
         default=len(intervals),
     )
     return ReportContextFacts(
@@ -433,7 +425,6 @@ def _build_report_context_facts(
 
 
 def _report_whole_run_diagnosis_summaries(
-    payload: Mapping[str, object],
     *,
     summary: NormalizedReportSummary,
     sensor_facts: ReportSensorFacts,
@@ -442,6 +433,7 @@ def _report_whole_run_diagnosis_summaries(
     confidence_facts: ReportConfidenceFacts,
     context_facts: ReportContextFacts,
     fallback_reasons: tuple[ReportFallbackReason, ...],
+    analysis_metadata: ReportAnalysisMetadata,
 ) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
     if summary.whole_run_diagnosis_summaries:
         return summary.whole_run_diagnosis_summaries
@@ -449,7 +441,7 @@ def _report_whole_run_diagnosis_summaries(
     if primary_candidate.domain_primary is None or primary_candidate.primary_source is None:
         return ()
     fallback_reason = _whole_run_diagnosis_fallback_reason(
-        payload,
+        analysis_metadata,
         summary=summary,
         fallback_reasons=fallback_reasons,
     )
@@ -519,31 +511,26 @@ def _report_whole_run_diagnosis_summaries(
 
 
 def _whole_run_diagnosis_fallback_reason(
-    payload: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     summary: NormalizedReportSummary,
     fallback_reasons: tuple[ReportFallbackReason, ...],
 ) -> str | None:
     if fallback_reasons:
         return fallback_reasons[0]
-    analysis_metadata = payload.get("analysis_metadata")
-    if not isinstance(analysis_metadata, Mapping):
+    if not analysis_metadata.present:
         return "legacy_summary_only"
-    loss_policy_severity = text_or_none(analysis_metadata.get("raw_capture_loss_policy_severity"))
-    if loss_policy_severity == "fatal":
+    if analysis_metadata.raw_capture_loss_policy_severity == "fatal":
         return "raw_capture_loss_exceeded"
-    raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
-    if raw_capture_mode == "summary_only" or raw_backed_sample_count <= 0:
+    if (
+        analysis_metadata.raw_capture_mode == "summary_only"
+        or analysis_metadata.raw_backed_sample_count <= 0
+    ):
         return "legacy_summary_only"
-    has_partial_whole_run_inputs = bool(
-        summary.whole_run_context_intervals
-        or summary.whole_run_order_summaries
-        or summary.whole_run_spatial_summaries
-        or analysis_metadata.get("whole_run_artifacts_available")
-        or analysis_metadata.get("whole_run_context_available")
-        or analysis_metadata.get("whole_run_order_family_summaries_available")
-        or analysis_metadata.get("whole_run_spatial_coherence_available")
+    has_partial_whole_run_inputs = analysis_metadata.has_partial_whole_run_inputs(
+        has_whole_run_context_intervals=bool(summary.whole_run_context_intervals),
+        has_whole_run_order_summaries=bool(summary.whole_run_order_summaries),
+        has_whole_run_spatial_summaries=bool(summary.whole_run_spatial_summaries),
     )
     if has_partial_whole_run_inputs:
         return "whole_run_evidence_incomplete"
@@ -551,7 +538,7 @@ def _whole_run_diagnosis_fallback_reason(
 
 
 def _report_fallback_reasons(
-    payload: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     summary: NormalizedReportSummary,
 ) -> tuple[ReportFallbackReason, ...]:
@@ -559,8 +546,7 @@ def _report_fallback_reasons(
     metadata = summary.metadata
     if metadata is not None:
         reasons.extend(finalization_stage_fallback_reasons(metadata.finalization_stages))
-    analysis_metadata = payload.get("analysis_metadata")
-    if isinstance(analysis_metadata, Mapping):
+    if analysis_metadata.present:
         reasons.extend(
             derive_report_fallback_reasons(
                 analysis_metadata,
@@ -673,33 +659,8 @@ def _fallback_diagnosis_is_suspicious(
     )
 
 
-def _is_summary_only_context_fallback(analysis_metadata: Mapping[str, object]) -> bool:
-    raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    if raw_capture_mode == "summary_only":
-        return True
-    if raw_capture_mode == "raw_backed":
-        return False
-    return coerce_count(analysis_metadata.get("raw_backed_sample_count")) <= 0
-
-
-def _analysis_metadata_count(
-    analysis_metadata: Mapping[str, object],
-    key: str,
-    *,
-    default: int = 0,
-) -> int:
-    return coerce_count(analysis_metadata.get(key)) if key in analysis_metadata else default
-
-
-def _analysis_metadata_optional_count(
-    analysis_metadata: Mapping[str, object],
-    key: str,
-    *,
-    default: int | None,
-) -> int | None:
-    if key not in analysis_metadata:
-        return default
-    return coerce_count(analysis_metadata.get(key))
+def _metadata_count_or_default(value: int | None, *, default: int = 0) -> int:
+    return value if value is not None else default
 
 
 def _report_context_warnings(

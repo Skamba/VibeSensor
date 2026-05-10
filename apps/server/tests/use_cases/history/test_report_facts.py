@@ -321,6 +321,24 @@ def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_an
     assert [warning.code for warning in facts.decision.warnings] == ["whole_run_context_incomplete"]
 
 
+def test_prepare_report_facts_projects_typed_analysis_metadata_into_evidence() -> None:
+    summary = _summary()
+    summary["analysis_metadata"] = {
+        "raw_backed_sample_count": 9,
+        "raw_capture_mode": "partial_raw_backed",
+        "whole_run_artifacts_available": True,
+    }
+
+    facts = _prepare_facts(summary)
+
+    assert facts.evidence.data_basis == "partial_raw_backed"
+    assert facts.evidence.raw_backed_sample_count == 9
+    assert facts.fallback_reasons == ("whole_run_evidence_incomplete",)
+    assert facts.whole_run_diagnosis_summaries[0].fallback_reason == (
+        "whole_run_evidence_incomplete"
+    )
+
+
 def test_build_report_document_builds_workflow_document_sections() -> None:
     summary = _summary()
     document = _prepare_document(summary)

@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Literal
 
-from vibesensor.shared.boundaries.codecs.scalars import coerce_count, text_or_none
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
+from vibesensor.shared.boundaries.reporting.analysis_metadata import ReportAnalysisMetadata
 
 __all__ = [
     "REPORT_FALLBACK_REASONS_METADATA_KEY",
@@ -117,7 +118,7 @@ def finalization_stage_fallback_reasons(
 
 
 def derive_report_fallback_reasons(
-    analysis_metadata: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     has_whole_run_context_intervals: bool,
     has_whole_run_order_summaries: bool,
@@ -139,32 +140,24 @@ def derive_report_fallback_reasons(
 
 
 def _raw_capture_fallback_reasons(
-    analysis_metadata: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
 ) -> tuple[ReportFallbackReason, ...]:
     reasons: list[str] = []
-    if analysis_metadata.get("raw_capture_available") is False:
+    if analysis_metadata.raw_capture_available is False:
         reasons.append("raw_capture_not_configured")
-    finalize_status = text_or_none(analysis_metadata.get("raw_capture_finalize_status"))
-    if finalize_status == "timeout":
+    if analysis_metadata.raw_capture_finalize_status == "timeout":
         reasons.append("raw_capture_finalize_timeout")
-    elif finalize_status == "failed":
+    elif analysis_metadata.raw_capture_finalize_status == "failed":
         reasons.append("raw_capture_finalize_failed")
-    loss_policy_severity = text_or_none(analysis_metadata.get("raw_capture_loss_policy_severity"))
-    if loss_policy_severity == "fatal" or bool(
-        analysis_metadata.get("raw_capture_loss_policy_gate_whole_run")
-    ):
+    if analysis_metadata.has_fatal_raw_capture_loss:
         reasons.append("raw_capture_loss_exceeded")
-    raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
-    if raw_capture_mode == "summary_only" or (
-        raw_capture_mode is None and raw_backed_sample_count <= 0
-    ):
+    if analysis_metadata.is_summary_only_capture:
         reasons.append("legacy_summary_only")
     return dedupe_report_fallback_reasons(reasons)
 
 
 def _whole_run_fallback_reasons(
-    analysis_metadata: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     has_whole_run_context_intervals: bool,
     has_whole_run_order_summaries: bool,
@@ -179,43 +172,40 @@ def _whole_run_fallback_reasons(
         has_whole_run_spatial_summaries=has_whole_run_spatial_summaries,
     ):
         return ("sidecar_summary_mismatch",)
-    has_partial_whole_run_inputs = bool(
-        has_whole_run_context_intervals
-        or has_whole_run_order_summaries
-        or has_whole_run_spatial_summaries
-        or analysis_metadata.get("whole_run_artifacts_available")
-        or analysis_metadata.get("whole_run_context_available")
-        or analysis_metadata.get("whole_run_order_family_summaries_available")
-        or analysis_metadata.get("whole_run_spatial_coherence_available")
+    has_partial_whole_run_inputs = analysis_metadata.has_partial_whole_run_inputs(
+        has_whole_run_context_intervals=has_whole_run_context_intervals,
+        has_whole_run_order_summaries=has_whole_run_order_summaries,
+        has_whole_run_spatial_summaries=has_whole_run_spatial_summaries,
     )
     if has_partial_whole_run_inputs:
         return ("whole_run_evidence_incomplete",)
-    raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
-    if raw_capture_mode in {"raw_backed", "partial_raw_backed"} or raw_backed_sample_count > 0:
+    if (
+        analysis_metadata.raw_capture_mode in {"raw_backed", "partial_raw_backed"}
+        or analysis_metadata.raw_backed_sample_count > 0
+    ):
         return ("whole_run_evidence_missing",)
     return ()
 
 
 def _has_sidecar_summary_mismatch(
-    analysis_metadata: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     has_whole_run_order_summaries: bool,
     has_whole_run_spatial_summaries: bool,
 ) -> bool:
     if (
-        bool(analysis_metadata.get("whole_run_diagnosis_summaries_available"))
-        and coerce_count(analysis_metadata.get("whole_run_diagnosis_summary_count")) > 0
+        analysis_metadata.whole_run_diagnosis_summaries_available
+        and analysis_metadata.whole_run_diagnosis_summary_count > 0
     ):
         return True
     if (
-        bool(analysis_metadata.get("whole_run_order_family_summaries_available"))
-        and coerce_count(analysis_metadata.get("whole_run_order_family_summary_count")) > 0
+        analysis_metadata.whole_run_order_family_summaries_available
+        and analysis_metadata.whole_run_order_family_summary_count > 0
         and not has_whole_run_order_summaries
     ):
         return True
     return bool(
-        bool(analysis_metadata.get("whole_run_spatial_coherence_available"))
-        and coerce_count(analysis_metadata.get("whole_run_spatial_coherence_summary_count")) > 0
+        analysis_metadata.whole_run_spatial_coherence_available
+        and analysis_metadata.whole_run_spatial_coherence_summary_count > 0
         and not has_whole_run_spatial_summaries
     )
