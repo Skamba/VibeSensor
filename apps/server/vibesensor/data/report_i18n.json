@@ -2483,6 +2483,54 @@
     "en": "No retained supporting windows",
     "nl": "Geen bewaarde ondersteunende vensters"
   },
+  "REPORT_FINDING_DATA_QUALITY_CLEAN": {
+    "en": "quality clean: {usable} usable, {excluded} excluded",
+    "nl": "kwaliteit schoon: {usable} bruikbaar, {excluded} uitgesloten"
+  },
+  "REPORT_FINDING_DATA_QUALITY_LIMITED": {
+    "en": "quality limited: {usable} usable, {excluded} excluded; {limitations}",
+    "nl": "kwaliteit beperkt: {usable} bruikbaar, {excluded} uitgesloten; {limitations}"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_REFERENCE": {
+    "en": "reference gaps",
+    "nl": "referentiegaten"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_SPEED_CONTEXT": {
+    "en": "speed context",
+    "nl": "snelheidscontext"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_SENSOR_TIMING": {
+    "en": "sensor timing",
+    "nl": "sensortiming"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_SENSOR_MOUNTING": {
+    "en": "sensor mounting",
+    "nl": "sensorbevestiging"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_SENSOR_CLIPPING": {
+    "en": "sensor clipping",
+    "nl": "sensorclipping"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_ROAD_SHOCK": {
+    "en": "road shock",
+    "nl": "wegschok"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_WEAK_SPATIAL": {
+    "en": "weak location split",
+    "nl": "zwakke locatiescheiding"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_AMBIGUOUS_LOCATION": {
+    "en": "ambiguous location",
+    "nl": "dubbelzinnige locatie"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_SUMMARY_FALLBACK": {
+    "en": "summary fallback",
+    "nl": "samenvattingsfallback"
+  },
+  "REPORT_DATA_QUALITY_LIMIT_WINDOW": {
+    "en": "window quality",
+    "nl": "vensterkwaliteit"
+  },
   "REPORT_MEASUREMENT_ID_COLUMN": {
     "en": "Measurement",
     "nl": "Meting"

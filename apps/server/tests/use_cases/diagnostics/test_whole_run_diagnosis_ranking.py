@@ -206,6 +206,8 @@ def test_build_whole_run_diagnosis_summaries_ranks_candidates_and_projects_exemp
     assert "incomplete_reference" in {
         factor.factor_key for factor in top_summary.counterevidence_factors
     }
+    assert top_summary.data_quality_summary.usable_window_count == 0
+    assert top_summary.data_quality_summary.limitation_keys == ("reference_gap",)
 
 
 def test_diagnosis_ranking_marks_context_gaps_and_weak_spatial_as_suspicious() -> None:
@@ -273,6 +275,12 @@ def test_diagnosis_ranking_marks_context_gaps_and_weak_spatial_as_suspicious() -
                 peak_intensity_db=12.0,
                 mean_vibration_strength_db=10.2,
                 ref_sources=("speed+engine",),
+                usable_window_count=1,
+                limited_window_count=2,
+                excluded_window_count=1,
+                mean_quality_score=0.62,
+                speed_context_limited_window_count=1,
+                sensor_timing_integrity_window_count=1,
             ),
         ),
         spatial_summaries=(
@@ -322,3 +330,16 @@ def test_diagnosis_ranking_marks_context_gaps_and_weak_spatial_as_suspicious() -
     assert "speed_context_gaps" in {factor.factor_key for factor in summary.counterevidence_factors}
     assert "rpm_context_gaps" in {factor.factor_key for factor in summary.counterevidence_factors}
     assert "weak_spatial" in {factor.factor_key for factor in summary.counterevidence_factors}
+    quality = summary.data_quality_summary
+    assert quality.usable_window_count == 1
+    assert quality.limited_window_count == 2
+    assert quality.excluded_window_count == 1
+    assert quality.mean_quality_score == 0.62
+    assert quality.limitation_keys == (
+        "reference_gap",
+        "speed_context",
+        "sensor_timing",
+        "weak_spatial",
+        "ambiguous_location",
+        "window_quality",
+    )
