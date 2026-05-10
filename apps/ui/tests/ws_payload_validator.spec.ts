@@ -3,7 +3,7 @@ import { wsPayloadSchema } from "../src/contracts/ws_payload_schema.generated";
 import type { LiveWsPayload } from "../src/contracts/ws_payload_types";
 import { validateLiveWsPayload } from "../src/ws_payload_validator";
 
-const basePayload = {
+const basePayload: Omit<LiveWsPayload, "spectra"> = {
   schema_version: "1",
   server_time: "2026-01-01T00:00:00Z",
   clients: [
@@ -24,7 +24,7 @@ const basePayload = {
   selected_client_id: null,
   rotational_speeds: null,
   speed_mps: 12.5,
-} as const;
+};
 
 function makeStrengthMetrics() {
   return {
@@ -164,8 +164,8 @@ const driftBranches: readonly DriftBranch[] = [
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics/top_peaks/0",
     required: requiredFields(wsPayloadSchema.$defs.StrengthPeak),
     getTarget: (payload) =>
-      payload.spectra!.clients!["sensor-1"].strength_metrics
-        .top_peaks[0] as unknown as Record<string, unknown>,
+      payload.spectra!.clients!["sensor-1"]!.strength_metrics!
+        .top_peaks![0]! as unknown as Record<string, unknown>,
   },
 ];
 

@@ -49,6 +49,15 @@ function translate(key: string, vars?: Record<string, unknown>): string {
   }
 }
 
+function requireAnalysisActions(
+  actions: AnalysisPanelActionHandlers | null,
+): AnalysisPanelActionHandlers {
+  if (!actions) {
+    throw new Error("Expected analysis actions to be bound");
+  }
+  return actions;
+}
+
 beforeEach(() => {
   installWindowGlobal();
 });
@@ -112,7 +121,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     ],
   );
 
-  actions?.onFieldInput({
+  requireAnalysisActions(actions).onFieldInput({
     field: "wheel_bandwidth_pct",
     value: "200",
   });
@@ -131,7 +140,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
   expect(guidanceOpened).toBe(true);
 
   const rendersBeforeRecovery = renders.length;
-  actions?.onFieldInput({
+  requireAnalysisActions(actions).onFieldInput({
     field: "wheel_bandwidth_pct",
     value: "5",
   });

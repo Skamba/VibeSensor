@@ -77,13 +77,15 @@ function createCoordinatorHarness() {
 }
 
 function installLocation(search: string): () => void {
-  const target = window as Window & typeof globalThis & { location?: Location };
+  const target = window as unknown as {
+    location?: Pick<Location, "host" | "protocol" | "search">;
+  };
   const previousLocation = target.location;
   target.location = {
     search,
     protocol: "http:",
     host: "localhost",
-  } as Location;
+  };
   return () => {
     if (previousLocation === undefined) {
       delete target.location;

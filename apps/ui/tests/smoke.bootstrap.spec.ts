@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import type { LoggingStatusPayload } from "../src/api/types";
 import {
   buildCaptureReadiness,
   fulfillJson,
@@ -208,7 +209,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({
   let startCalls = 0;
   let stopCalls = 0;
   const startedAt = new Date(Date.now() - 65_000).toISOString();
-  let recordingStatus = {
+  let recordingStatus: LoggingStatusPayload = {
     enabled: false,
     run_id: null,
     write_error: null,

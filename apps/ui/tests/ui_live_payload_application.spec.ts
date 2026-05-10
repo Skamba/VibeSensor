@@ -25,6 +25,7 @@ function makeClient(id: string) {
     last_seen_age_ms: 0,
     dropped_frames: 0,
     frames_total: 1,
+    frame_samples: 200,
     sample_rate_hz: 1600,
     firmware_version: "1.0.0",
   };

@@ -56,10 +56,27 @@ export async function mountSignalView<TView>(
   try {
     const { render } = await import("preact");
     const mount = await loadMount();
-    const view = createView ? createView() : undefined;
-    const mountedView = createView
-      ? (mount as (host: HTMLElement, view: TView) => void)(host, view)
-      : (mount as (host: HTMLElement) => TView)(host);
+    if (createView) {
+      const view = createView();
+      (mount as (host: HTMLElement, view: TView) => void)(host, view);
+      return {
+        cleanup(): void {
+          if (cleanedUp) {
+            return;
+          }
+          cleanedUp = true;
+          render(null, host);
+          host.remove();
+          restoreDom();
+        },
+        flush(rounds = 12): Promise<void> {
+          return flushSignalUpdates(rounds);
+        },
+        host,
+        view,
+      };
+    }
+    const view = (mount as (host: HTMLElement) => TView)(host);
     return {
       cleanup(): void {
         if (cleanedUp) {
@@ -74,7 +91,7 @@ export async function mountSignalView<TView>(
         return flushSignalUpdates(rounds);
       },
       host,
-      view: createView ? view : mountedView,
+      view,
     };
   } catch (error) {
     host.remove();
@@ -134,7 +151,7 @@ export function installMountedDomGlobals(): () => void {
       : () =>
           ({
             getPropertyValue: () => "",
-          }) as CSSStyleDeclaration
+          }) as unknown as CSSStyleDeclaration
   ) as typeof getComputedStyle;
   globalRef.requestAnimationFrame = requestAnimationFrameShim;
   globalRef.cancelAnimationFrame = cancelAnimationFrameShim;
@@ -191,9 +208,13 @@ function restoreMountedViewGlobal<K extends keyof MountedViewGlobals>(
   key: K,
   value: MountedViewGlobals[K],
 ): void {
-  if (value) {
-    globalRef[key] = value;
+  const writableGlobals = globalRef as Record<
+    keyof MountedViewGlobals,
+    unknown
+  >;
+  if (value !== undefined) {
+    writableGlobals[key] = value;
     return;
   }
-  delete globalRef[key];
+  delete writableGlobals[key];
 }

@@ -76,7 +76,7 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
         },
       } as unknown as HTMLAnchorElement;
     },
-  } as Document;
+  } as unknown as Document;
   URL.createObjectURL = (() =>
     "blob:history-download-test") as typeof URL.createObjectURL;
   URL.revokeObjectURL = ((url: string) => {

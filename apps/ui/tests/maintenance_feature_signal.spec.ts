@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
+import type { UpdateStartRequestPayload } from "../src/api/types";
 import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import {
   createEspFlashFeatureHarness,
@@ -350,15 +351,13 @@ async function runEspFlashRunningStateHighlightsStage(): Promise<void> {
 
 async function runEspFlashFailedRefreshKeepsStoppedStage(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    let status = {
+    let status = makeEspFlashStatusPayload({
       state: "running",
       phase: "flashing",
       selected_port: "/dev/ttyUSB0",
       auto_detect: false,
-      last_success_at: null,
       error: null,
-      log_count: 0,
-    };
+    });
     scope.server.use(
       ...buildEspFlashHandlers({
         ports: { ports: [createEspFlashPort()] },
@@ -421,11 +420,7 @@ async function runEspFlashFailedRefreshKeepsStoppedStage(): Promise<void> {
 
 async function runUpdateStartRefreshesStatusImmediately(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const startRequests: Array<{
-      password: string;
-      ssid?: string | null;
-      transport: string;
-    }> = [];
+    const startRequests: UpdateStartRequestPayload[] = [];
     let statusRequests = 0;
     scope.server.use(
       ...buildUpdateHandlers({
@@ -477,11 +472,7 @@ async function runUpdateStartRefreshesStatusImmediately(): Promise<void> {
 
 async function runUpdateUsbTransportFlow(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const startRequests: Array<{
-      password: string;
-      ssid?: string | null;
-      transport: string;
-    }> = [];
+    const startRequests: UpdateStartRequestPayload[] = [];
     scope.server.use(
       ...buildUpdateHandlers({
         health: createHealthyUpdateStatus(),
