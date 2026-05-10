@@ -13,7 +13,7 @@ from typing import Any, Literal, cast
 
 import numpy as np
 
-from test_support.core import ALL_SENSORS, FINAL_DRIVE, GEAR_RATIO, standard_metadata, wheel_hz
+from test_support.core import ALL_SENSORS, FINAL_DRIVE, GEAR_RATIO, standard_metadata
 from test_support.sample_scenarios import make_sample
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
@@ -42,6 +42,8 @@ GoldenScenarioGroup = Literal[
     "wheel",
     "driveline",
     "engine",
+    "resonance",
+    "road_shock",
     "transient",
     "data_quality",
 ]
@@ -66,9 +68,12 @@ class GoldenReplayExpected:
     suspected_source: str | None
     strongest_location: str | None = None
     confidence_range: tuple[float, float] = (0.0, 1.0)
+    confidence_label_key: str | None = None
     unavailable_reasons: tuple[GoldenUnavailableReason, ...] = ()
     tolerance_bands: Mapping[str, tuple[float, float]] | None = None
     max_false_positive_confidence: float | None = None
+    required_warning_codes: tuple[str, ...] = ()
+    required_metadata_minimums: Mapping[str, float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +90,7 @@ class GoldenReplayFixture:
     signal_amp_g: float = 0.08
     transfer_amp_g: float = 0.024
     speed_kmh: float | None = _DEFAULT_SPEED_KMH
+    speed_sweep_kmh: tuple[float, float] | None = None
     speed_source: str = "gps"
     engine_rpm: float | None = _DEFAULT_ENGINE_RPM
     final_drive_ratio: float | None = FINAL_DRIVE
@@ -92,6 +98,8 @@ class GoldenReplayFixture:
     duration_s: float = _DEFAULT_DURATION_S
     sample_rate_hz: int = _SAMPLE_RATE_HZ
     fft_window_size_samples: int = _FFT_WINDOW_SIZE_SAMPLES
+    transient_duration_s: float = 0.0
+    transient_frequency_hz: float | None = None
     fast_ci: bool = True
 
     def build(self, *, duration_s: float | None = None) -> GoldenReplayRun:
@@ -168,17 +176,9 @@ class GoldenReplayRecorder:
 
 
 def golden_replay_fixtures(*, fast_ci_only: bool = False) -> tuple[GoldenReplayFixture, ...]:
-    fixtures = (
-        _balanced_fixture(),
-        _front_wheel_fixture(),
-        _rear_wheel_fixture(),
-        _driveshaft_fixture(),
-        _engine_fixture(),
-        _transient_fixture(),
-        _noisy_sensor_fixture(),
-        _gps_dropout_fixture(),
-        _missing_rpm_fixture(),
-    )
+    from test_support.golden_replay_catalog import golden_replay_fixture_catalog
+
+    fixtures = golden_replay_fixture_catalog()
     if fast_ci_only:
         return tuple(fixture for fixture in fixtures if fixture.fast_ci)
     return fixtures
@@ -301,9 +301,12 @@ def _expected_snapshot(expected: GoldenReplayExpected) -> dict[str, object]:
         "suspected_source": expected.suspected_source,
         "strongest_location": expected.strongest_location,
         "confidence_range": list(expected.confidence_range),
+        "confidence_label_key": expected.confidence_label_key,
         "unavailable_reasons": list(expected.unavailable_reasons),
         "tolerance_bands": dict(expected.tolerance_bands or {}),
         "max_false_positive_confidence": expected.max_false_positive_confidence,
+        "required_warning_codes": list(expected.required_warning_codes),
+        "required_metadata_minimums": dict(expected.required_metadata_minimums or {}),
     }
 
 
@@ -338,7 +341,7 @@ def _summary_samples(
                     run_id=run_id,
                     t_s=float(index),
                     sensor=sensor,
-                    transient_active=fixture.case_id == "transient-spike" and index < 2,
+                    transient_active=_transient_active(fixture, t_s=float(index)),
                 )
             )
     return rows
@@ -354,7 +357,7 @@ def _summary_sample(
 ) -> dict[str, Any]:
     frequency = _effective_frequency(fixture, transient_active=transient_active)
     amp = _sensor_amp(fixture, sensor=sensor, transient_active=transient_active)
-    speed = 0.0 if fixture.speed_kmh is None else fixture.speed_kmh
+    speed = _speed_kmh_at_t(fixture, t_s=t_s)
     peaks = _peaks_for_frequency(frequency, amp)
     row = make_sample(
         t_s=t_s,
@@ -370,7 +373,7 @@ def _summary_sample(
     )
     row["run_id"] = run_id
     row["speed_source"] = fixture.speed_source
-    if fixture.speed_kmh is None:
+    if fixture.speed_kmh is None and fixture.speed_sweep_kmh is None:
         row.pop("speed_kmh", None)
     if fixture.engine_rpm is not None:
         row["engine_rpm_source"] = "obd2"
@@ -459,9 +462,13 @@ def _sensor_waveform(
         base = np.zeros(total_samples, dtype=np.float64)
     else:
         envelope = np.ones(total_samples, dtype=np.float64)
-        if fixture.case_id == "transient-spike":
+        if fixture.transient_duration_s > 0.0:
             envelope[:] = 0.05
-            envelope[: fixture.sample_rate_hz * 2] = 1.0
+            transient_sample_count = min(
+                total_samples,
+                int(fixture.sample_rate_hz * fixture.transient_duration_s),
+            )
+            envelope[:transient_sample_count] = 1.0
         base = amp_g * envelope * np.sin((2.0 * pi * frequency * t) + _phase_for_sensor(sensor))
         if frequency * 2.0 < fixture.sample_rate_hz / 2.0:
             base += (amp_g * 0.35) * envelope * np.sin(2.0 * pi * frequency * 2.0 * t)
@@ -479,14 +486,26 @@ def _phase_for_sensor(sensor: str) -> float:
     return (sum(ord(char) for char in sensor) % 17) * 0.11
 
 
+def _transient_active(fixture: GoldenReplayFixture, *, t_s: float) -> bool:
+    return fixture.transient_duration_s > 0.0 and t_s < fixture.transient_duration_s
+
+
 def _effective_frequency(
     fixture: GoldenReplayFixture,
     *,
     transient_active: bool,
 ) -> float | None:
-    if fixture.case_id == "transient-spike" and transient_active:
-        return 50.0
+    if transient_active and fixture.transient_frequency_hz is not None:
+        return fixture.transient_frequency_hz
     return fixture.primary_frequency_hz
+
+
+def _speed_kmh_at_t(fixture: GoldenReplayFixture, *, t_s: float) -> float:
+    if fixture.speed_sweep_kmh is not None:
+        start, end = fixture.speed_sweep_kmh
+        ratio = min(1.0, max(0.0, t_s / max(1.0, fixture.duration_s - 1.0)))
+        return start + (end - start) * ratio
+    return 0.0 if fixture.speed_kmh is None else fixture.speed_kmh
 
 
 def _sensor_amp(
@@ -495,9 +514,9 @@ def _sensor_amp(
     sensor: str,
     transient_active: bool,
 ) -> float:
-    if fixture.primary_frequency_hz is None and fixture.case_id != "transient-spike":
+    if fixture.primary_frequency_hz is None and fixture.transient_duration_s <= 0.0:
         return 0.006 if fixture.case_id == "noisy-sensor" else 0.003
-    if fixture.case_id == "transient-spike" and not transient_active:
+    if fixture.transient_duration_s > 0.0 and not transient_active:
         return 0.004
     if fixture.strongest_sensor is None:
         return fixture.transfer_amp_g
@@ -515,170 +534,3 @@ def _peaks_for_frequency(frequency: float | None, amp: float) -> list[dict[str, 
         peaks.append({"hz": frequency * 2.0, "amp": amp * 0.35})
     peaks.append({"hz": 55.0, "amp": max(0.003, amp * 0.12)})
     return peaks
-
-
-def _balanced_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="balanced-no-issue",
-        title="Balanced/no issue",
-        group="baseline",
-        seed=1001,
-        primary_frequency_hz=None,
-        strongest_sensor=None,
-        engine_rpm=None,
-        expected=GoldenReplayExpected(
-            suspected_source=None,
-            confidence_range=(0.0, 0.35),
-            max_false_positive_confidence=0.35,
-            tolerance_bands={"top_confidence": (0.0, 0.35)},
-        ),
-    )
-
-
-def _front_wheel_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="front-wheel-imbalance",
-        title="Front wheel imbalance",
-        group="wheel",
-        seed=1002,
-        primary_frequency_hz=wheel_hz(_DEFAULT_SPEED_KMH),
-        strongest_sensor="front-left",
-        expected=GoldenReplayExpected(
-            suspected_source=_WHEEL_SOURCE,
-            strongest_location="front-left",
-            confidence_range=(0.45, 0.9),
-            tolerance_bands={"frequency_hz": (9.0, 12.0), "top_confidence": (0.45, 0.9)},
-        ),
-    )
-
-
-def _rear_wheel_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="rear-wheel-imbalance",
-        title="Rear wheel imbalance",
-        group="wheel",
-        seed=1003,
-        primary_frequency_hz=wheel_hz(_DEFAULT_SPEED_KMH),
-        strongest_sensor="rear-right",
-        expected=GoldenReplayExpected(
-            suspected_source=_WHEEL_SOURCE,
-            strongest_location="rear-right",
-            confidence_range=(0.45, 0.9),
-            tolerance_bands={"frequency_hz": (9.0, 12.0), "top_confidence": (0.45, 0.9)},
-        ),
-    )
-
-
-def _driveshaft_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="driveshaft-rumble",
-        title="Driveshaft rumble",
-        group="driveline",
-        seed=1004,
-        primary_frequency_hz=wheel_hz(_DEFAULT_SPEED_KMH) * FINAL_DRIVE,
-        strongest_sensor="rear-left",
-        expected=GoldenReplayExpected(
-            suspected_source=_DRIVESHAFT_SOURCE,
-            strongest_location="rear-left",
-            confidence_range=(0.4, 0.9),
-            tolerance_bands={"frequency_hz": (29.0, 34.0), "top_confidence": (0.4, 0.9)},
-        ),
-    )
-
-
-def _engine_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="engine-harmonic",
-        title="Engine harmonic",
-        group="engine",
-        seed=1005,
-        primary_frequency_hz=_DEFAULT_ENGINE_RPM / 60.0,
-        strongest_sensor="front-left",
-        expected=GoldenReplayExpected(
-            suspected_source=_ENGINE_SOURCE,
-            strongest_location="front-left",
-            confidence_range=(0.4, 0.9),
-            tolerance_bands={"frequency_hz": (23.0, 27.0), "top_confidence": (0.4, 0.9)},
-        ),
-    )
-
-
-def _transient_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="transient-spike",
-        title="Transient spike",
-        group="transient",
-        seed=1006,
-        primary_frequency_hz=None,
-        strongest_sensor="front-left",
-        signal_amp_g=0.12,
-        transfer_amp_g=0.006,
-        engine_rpm=None,
-        final_drive_ratio=None,
-        current_gear_ratio=None,
-        expected=GoldenReplayExpected(
-            suspected_source=None,
-            confidence_range=(0.0, 0.45),
-            max_false_positive_confidence=0.45,
-            tolerance_bands={"top_confidence": (0.0, 0.45)},
-        ),
-    )
-
-
-def _noisy_sensor_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="noisy-sensor",
-        title="Noisy sensor",
-        group="data_quality",
-        seed=1007,
-        primary_frequency_hz=None,
-        strongest_sensor="front-right",
-        signal_amp_g=0.018,
-        transfer_amp_g=0.006,
-        expected=GoldenReplayExpected(
-            suspected_source=None,
-            confidence_range=(0.0, 0.45),
-            max_false_positive_confidence=0.45,
-            tolerance_bands={"top_confidence": (0.0, 0.45)},
-        ),
-    )
-
-
-def _gps_dropout_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="gps-dropout",
-        title="GPS dropout",
-        group="data_quality",
-        seed=1008,
-        primary_frequency_hz=wheel_hz(_DEFAULT_SPEED_KMH),
-        strongest_sensor="front-left",
-        speed_source="gps_unaligned",
-        expected=GoldenReplayExpected(
-            suspected_source=_WHEEL_SOURCE,
-            strongest_location="front-left",
-            confidence_range=(0.35, 0.9),
-            unavailable_reasons=("missing_speed",),
-            tolerance_bands={"missing_speed_windows_min": (1.0, 9999.0)},
-        ),
-    )
-
-
-def _missing_rpm_fixture() -> GoldenReplayFixture:
-    return GoldenReplayFixture(
-        case_id="missing-rpm",
-        title="Missing RPM",
-        group="data_quality",
-        seed=1009,
-        primary_frequency_hz=_DEFAULT_ENGINE_RPM / 60.0,
-        strongest_sensor="front-left",
-        engine_rpm=None,
-        final_drive_ratio=None,
-        current_gear_ratio=None,
-        expected=GoldenReplayExpected(
-            suspected_source=None,
-            confidence_range=(0.0, 0.45),
-            unavailable_reasons=("missing_rpm",),
-            max_false_positive_confidence=0.45,
-            tolerance_bands={"missing_rpm_windows_min": (1.0, 9999.0)},
-        ),
-    )
