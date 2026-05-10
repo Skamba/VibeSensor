@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.codecs.scalars import coerce_count, text_or_none
+from vibesensor.shared.boundaries.reporting.analysis_metadata import ReportAnalysisMetadata
 from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
@@ -34,7 +33,7 @@ class ReportEvidenceFacts:
 
 
 def build_report_evidence_facts(
-    payload: Mapping[str, object],
+    analysis_metadata: ReportAnalysisMetadata,
     *,
     summary: NormalizedReportSummary,
     primary_candidate: PrimaryReportFacts,
@@ -42,10 +41,8 @@ def build_report_evidence_facts(
 ) -> ReportEvidenceFacts:
     """Build prepared evidence facts from persisted analysis plus domain finding data."""
 
-    metadata = payload.get("analysis_metadata")
-    analysis_metadata = metadata if isinstance(metadata, Mapping) else {}
-    raw_backed_sample_count = coerce_count(analysis_metadata.get("raw_backed_sample_count"))
-    data_basis = _resolve_data_basis(analysis_metadata, raw_backed_sample_count)
+    raw_backed_sample_count = analysis_metadata.raw_backed_sample_count
+    data_basis = analysis_metadata.data_basis
     supporting_window_count = primary_candidate.matched_evidence_window_count
     duration_s = _supporting_duration_s(
         supporting_window_count=supporting_window_count,
@@ -68,16 +65,6 @@ def build_report_evidence_facts(
         ),
         has_reference_gap=primary_candidate.has_reference_gaps,
     )
-
-
-def _resolve_data_basis(
-    analysis_metadata: Mapping[str, object],
-    raw_backed_sample_count: int,
-) -> str:
-    raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    if raw_capture_mode in {"raw_backed", "partial_raw_backed", "summary_only"}:
-        return raw_capture_mode
-    return "raw_backed" if raw_backed_sample_count > 0 else "summary_only"
 
 
 def _supporting_duration_s(
