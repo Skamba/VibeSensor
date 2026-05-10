@@ -168,8 +168,9 @@ math inputs are evidence-backed.
 
 Canonical validation lives in:
 
-- `vibesensor.adapters.persistence.car_library_validation` for structural and
-  plausibility checks on canonical configs and derived picker rows
+- `vibesensor.adapters.persistence.car_library_validation` for the public
+  validation facade. Adapter-internal modules split allowlists, legacy grouped
+  rows, exact-row checks, powertrain rules, tire rules, and duplicate detection.
 - `vibesensor.adapters.persistence.car_library_source_evidence` for
   `evidence_refs` resolution against `car_sources/*.json`
 
