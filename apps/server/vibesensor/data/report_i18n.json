@@ -2279,6 +2279,10 @@
     "en": "Reference coverage {pct}",
     "nl": "Referentiedekking {pct}"
   },
+  "REPORT_DENSE_EVIDENCE_CAVEAT_SPEED_CONTEXT_LIMITED": {
+    "en": "Speed context limited order diagnosis: {count}",
+    "nl": "Snelheidscontext beperkt orderdiagnose: {count}"
+  },
   "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS": {
     "en": "Road-shock windows filtered: {count}",
     "nl": "Wegschokvensters gefilterd: {count}"

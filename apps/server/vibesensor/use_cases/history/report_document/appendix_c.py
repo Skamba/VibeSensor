@@ -183,6 +183,11 @@ def _dense_caveat_text(
             "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL",
             pct=f"{summary.reference_coverage_ratio * 100:.0f}%",
         )
+    if summary.speed_context_limited_window_count > 0:
+        return tr(
+            "REPORT_DENSE_EVIDENCE_CAVEAT_SPEED_CONTEXT_LIMITED",
+            count=str(summary.speed_context_limited_window_count),
+        )
     if summary.sensor_clipping_window_count > 0:
         return tr(
             "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_CLIPPING_WINDOWS",

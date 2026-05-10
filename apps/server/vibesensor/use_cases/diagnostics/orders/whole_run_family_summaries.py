@@ -38,9 +38,11 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WholeRunOrderTraceSummaryArtifactBundle,
     _dominant_context_value,
     _drift_score,
+    _has_speed_context_quality_reason,
     _lock_score,
     _longest_contiguous_match_run,
     _mounting_adjusted_lock_score,
+    _speed_context_adjusted_lock_score,
     _timing_adjusted_lock_score,
     whole_run_order_trace_summaries_to_jsonl_bytes,
 )
@@ -70,6 +72,21 @@ class WholeRunOrderFamilySummaryArtifactBundle:
     manifest: WholeRunArtifactManifest
     artifact_contents: dict[str, bytes]
     summaries: tuple[OrderTraceSummary, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _FamilyQualityCounts:
+    usable_window_count: int
+    limited_window_count: int
+    excluded_window_count: int
+    shock_transient_window_count: int
+    sensor_clipping_window_count: int
+    sensor_mounting_artifact_window_count: int
+    matched_mounting_artifact_window_count: int
+    sensor_timing_integrity_window_count: int
+    matched_timing_integrity_window_count: int
+    speed_context_limited_window_count: int
+    matched_speed_context_limited_window_count: int
 
 
 def build_whole_run_order_family_summary_artifact_bundle(
@@ -195,48 +212,10 @@ def _family_summary(
         if point.window_quality_score is not None
     ]
     mean_quality_score = _mean(quality_scores)
-    usable_window_count = sum(
-        1 for point in matched_points if point.window_quality_state == "usable"
-    )
-    limited_window_count = sum(
-        1 for point in matched_points if point.window_quality_state == "limited"
-    )
-    excluded_window_count = sum(
-        summary.excluded_window_count for summary in ordered_candidate_summaries
-    )
-    shock_transient_window_count = len(
-        {
-            point.window_index
-            for point in points
-            if "shock_transient" in point.window_quality_reasons
-        }
-    )
-    sensor_clipping_window_count = len(
-        {
-            point.window_index
-            for point in points
-            if "sensor_clipping" in point.window_quality_reasons
-        }
-    )
-    sensor_mounting_artifact_window_count = len(
-        {
-            point.window_index
-            for point in points
-            if "mounting_artifact" in point.window_quality_reasons
-        }
-    )
-    matched_mounting_artifact_window_count = len(
-        {
-            point.window_index
-            for point in matched_points
-            if "mounting_artifact" in point.window_quality_reasons
-        }
-    )
-    sensor_timing_integrity_window_count = len(
-        {point.window_index for point in points if _has_timing_quality_reason(point)}
-    )
-    matched_timing_integrity_window_count = len(
-        {point.window_index for point in matched_points if _has_timing_quality_reason(point)}
+    quality_counts = _family_quality_counts(
+        points=points,
+        matched_points=matched_points,
+        candidate_summaries=ordered_candidate_summaries,
     )
     drift_score = _drift_score(
         relative_error_stddev=relative_error_stddev,
@@ -254,12 +233,21 @@ def _family_summary(
     lock_score = _mounting_adjusted_lock_score(
         lock_score,
         matched_window_count=matched_window_count,
-        matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
+        matched_mounting_artifact_window_count=(
+            quality_counts.matched_mounting_artifact_window_count
+        ),
     )
     lock_score = _timing_adjusted_lock_score(
         lock_score,
         matched_window_count=matched_window_count,
-        matched_timing_integrity_window_count=matched_timing_integrity_window_count,
+        matched_timing_integrity_window_count=quality_counts.matched_timing_integrity_window_count,
+    )
+    lock_score = _speed_context_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_speed_context_limited_window_count=(
+            quality_counts.matched_speed_context_limited_window_count
+        ),
     )
     support_intervals, exemplar_interval_index = _support_intervals(
         eligible_windows=eligible_windows,
@@ -323,13 +311,16 @@ def _family_summary(
         reference_coverage_ratio=reference_coverage_ratio,
         longest_contiguous_support_window_count=longest_contiguous_support_window_count,
         contiguous_support_ratio=contiguous_support_ratio,
-        usable_window_count=usable_window_count,
-        limited_window_count=limited_window_count,
-        excluded_window_count=excluded_window_count,
-        shock_transient_window_count=shock_transient_window_count,
-        sensor_clipping_window_count=sensor_clipping_window_count,
-        sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
-        sensor_timing_integrity_window_count=sensor_timing_integrity_window_count,
+        usable_window_count=quality_counts.usable_window_count,
+        limited_window_count=quality_counts.limited_window_count,
+        excluded_window_count=quality_counts.excluded_window_count,
+        shock_transient_window_count=quality_counts.shock_transient_window_count,
+        sensor_clipping_window_count=quality_counts.sensor_clipping_window_count,
+        sensor_mounting_artifact_window_count=(
+            quality_counts.sensor_mounting_artifact_window_count
+        ),
+        sensor_timing_integrity_window_count=(quality_counts.sensor_timing_integrity_window_count),
+        speed_context_limited_window_count=quality_counts.speed_context_limited_window_count,
         mean_quality_score=mean_quality_score,
         support_intervals=support_intervals,
         phase_support=phase_support,
@@ -348,6 +339,53 @@ def _family_summary(
         mean_vibration_strength_db=mean_vibration_strength_db,
         ref_sources=ref_sources,
     )
+
+
+def _family_quality_counts(
+    *,
+    points: Sequence[OrderTracePoint],
+    matched_points: Sequence[OrderTracePoint],
+    candidate_summaries: Sequence[OrderTraceSummary],
+) -> _FamilyQualityCounts:
+    return _FamilyQualityCounts(
+        usable_window_count=sum(
+            1 for point in matched_points if point.window_quality_state == "usable"
+        ),
+        limited_window_count=sum(
+            1 for point in matched_points if point.window_quality_state == "limited"
+        ),
+        excluded_window_count=sum(summary.excluded_window_count for summary in candidate_summaries),
+        shock_transient_window_count=_unique_reason_window_count(points, "shock_transient"),
+        sensor_clipping_window_count=_unique_reason_window_count(points, "sensor_clipping"),
+        sensor_mounting_artifact_window_count=_unique_reason_window_count(
+            points,
+            "mounting_artifact",
+        ),
+        matched_mounting_artifact_window_count=_unique_reason_window_count(
+            matched_points,
+            "mounting_artifact",
+        ),
+        sensor_timing_integrity_window_count=len(
+            {point.window_index for point in points if _has_timing_quality_reason(point)}
+        ),
+        matched_timing_integrity_window_count=len(
+            {point.window_index for point in matched_points if _has_timing_quality_reason(point)}
+        ),
+        speed_context_limited_window_count=len(
+            {point.window_index for point in points if _has_speed_context_quality_reason(point)}
+        ),
+        matched_speed_context_limited_window_count=len(
+            {
+                point.window_index
+                for point in matched_points
+                if _has_speed_context_quality_reason(point)
+            }
+        ),
+    )
+
+
+def _unique_reason_window_count(points: Sequence[OrderTracePoint], reason: str) -> int:
+    return len({point.window_index for point in points if reason in point.window_quality_reasons})
 
 
 def _has_timing_quality_reason(point: OrderTracePoint) -> bool:
