@@ -74,6 +74,7 @@ def test_normalize_whole_run_context_labels_aligns_to_centers_and_groups_rows() 
     assert labels[0].engine_rpm_source == "obd2"
     assert labels[0].speed_is_stale is False
     assert labels[0].rpm_is_stale is False
+    assert labels[0].speed_context_reasons == ("speed_low",)
     assert labels[0].phase == DrivingPhase.SPEED_UNKNOWN
 
     assert labels[1].context_coverage == "full"
@@ -82,6 +83,7 @@ def test_normalize_whole_run_context_labels_aligns_to_centers_and_groups_rows() 
     assert labels[1].speed_source == "manual"
     assert labels[1].engine_rpm_source == "estimated_from_speed_and_ratios"
     assert labels[1].speed_band == "40-50 km/h"
+    assert labels[1].speed_context_reasons == ("speed_assumed",)
 
     assert labels[2].context_coverage == "full"
     assert labels[2].speed_validity == "measured"
@@ -117,6 +119,7 @@ def test_normalize_whole_run_context_labels_marks_stale_context_explicitly() -> 
     assert label.rpm_validity == "estimated"
     assert label.speed_is_stale is True
     assert label.rpm_is_stale is True
+    assert label.speed_context_reasons == ("speed_assumed", "speed_stale")
     assert label.phase == DrivingPhase.SPEED_UNKNOWN
     assert label.load_state == "unknown"
 
@@ -149,6 +152,7 @@ def test_normalize_whole_run_context_labels_marks_fallback_manual_as_stale_prove
     assert label.speed_source == "fallback_manual"
     assert label.speed_is_stale is True
     assert label.rpm_is_stale is True
+    assert label.speed_context_reasons == ("speed_assumed", "speed_stale")
     assert label.speed_band is None
     assert label.phase == DrivingPhase.SPEED_UNKNOWN
     assert label.load_state == "unknown"
@@ -171,7 +175,39 @@ def test_normalize_whole_run_context_labels_keeps_missing_windows_explicit() -> 
     assert label.engine_rpm_source is None
     assert label.speed_is_stale is False
     assert label.rpm_is_stale is False
+    assert label.speed_context_reasons == ("speed_unavailable",)
     assert label.phase == DrivingPhase.SPEED_UNKNOWN
+
+
+def test_normalize_whole_run_context_labels_marks_unstable_speed_windows() -> None:
+    metadata = _metadata()
+    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
+    samples = sensor_frames_from_mappings(
+        [
+            {
+                "t_s": 1.20,
+                "client_id": "sensor-a",
+                "speed_kmh": 30.0,
+                "speed_source": "gps",
+            },
+            {
+                "t_s": 1.35,
+                "client_id": "sensor-a",
+                "speed_kmh": 70.0,
+                "speed_source": "gps",
+            },
+        ]
+    )
+
+    label = normalize_whole_run_context_labels(
+        metadata=metadata,
+        samples=samples,
+        window_plan=window_plan,
+    )[0]
+
+    assert label.speed_validity == "measured"
+    assert label.speed_is_stale is False
+    assert label.speed_context_reasons == ("speed_unstable",)
 
 
 def test_normalize_whole_run_context_labels_marks_idle_when_fresh_speed_is_zero() -> None:

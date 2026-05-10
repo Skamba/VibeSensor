@@ -223,6 +223,20 @@ def test_build_report_document_projects_sensor_timing_integrity_caveat() -> None
     )
 
 
+def test_build_report_document_projects_limited_speed_context_caveat() -> None:
+    summary = _dense_summary(
+        order_summary_overrides={
+            "reference_coverage_ratio": 1.0,
+            "speed_context_limited_window_count": 3,
+        }
+    )
+    document = build_report_document(prepare_report_input(summary))
+
+    assert document.appendix_c.dense_evidence_rows[0].caveat == (
+        "Speed context limited order diagnosis: 3"
+    )
+
+
 def test_build_report_document_skips_dense_evidence_when_artifacts_are_unavailable() -> None:
     document = build_report_document(prepare_report_input(minimal_summary()))
 

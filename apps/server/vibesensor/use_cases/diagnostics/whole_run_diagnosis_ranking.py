@@ -247,7 +247,10 @@ def _evaluate_candidate(
             speed_gap_window_count=_count(
                 analysis_metadata.get("whole_run_context_missing_speed_window_count")
             )
-            + _count(analysis_metadata.get("whole_run_context_stale_speed_window_count")),
+            + _count(analysis_metadata.get("whole_run_context_stale_speed_window_count"))
+            + _count(analysis_metadata.get("whole_run_context_low_speed_window_count"))
+            + _count(analysis_metadata.get("whole_run_context_unstable_speed_window_count"))
+            + _count(analysis_metadata.get("whole_run_context_assumed_speed_window_count")),
             rpm_gap_window_count=_count(
                 analysis_metadata.get("whole_run_context_missing_rpm_window_count")
             )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from math import isclose
-from typing import Literal
+from typing import Literal, cast
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -36,6 +36,7 @@ __all__ = [
     "WHOLE_RUN_CONTEXT_COVERAGE_VALUES",
     "WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES",
     "WHOLE_RUN_RPM_VALIDITY_VALUES",
+    "WHOLE_RUN_SPEED_CONTEXT_REASON_VALUES",
     "WHOLE_RUN_SPEED_VALIDITY_VALUES",
     "WholeRunArtifactFile",
     "WholeRunArtifactManifest",
@@ -44,6 +45,7 @@ __all__ = [
     "WholeRunContextLoadState",
     "WholeRunContextWindowLabel",
     "WholeRunRpmValidity",
+    "WholeRunSpeedContextReason",
     "WholeRunSpeedValidity",
     "WholeRunSourceRawManifest",
     "WholeRunSourceRawSensorManifest",
@@ -69,6 +71,13 @@ type WholeRunContextCoverage = Literal["full", "partial", "missing"]
 type WholeRunSpeedValidity = Literal["measured", "assumed", "missing"]
 type WholeRunRpmValidity = Literal["measured", "estimated", "missing"]
 type WholeRunContextLoadState = Literal["idle", "steady", "transient", "unknown"]
+type WholeRunSpeedContextReason = Literal[
+    "speed_unavailable",
+    "speed_low",
+    "speed_stale",
+    "speed_unstable",
+    "speed_assumed",
+]
 
 WHOLE_RUN_CONTEXT_COVERAGE_VALUES: frozenset[WholeRunContextCoverage] = frozenset(
     {"full", "partial", "missing"}
@@ -78,6 +87,9 @@ WHOLE_RUN_SPEED_VALIDITY_VALUES: frozenset[WholeRunSpeedValidity] = frozenset(
 )
 WHOLE_RUN_RPM_VALIDITY_VALUES: frozenset[WholeRunRpmValidity] = frozenset(
     {"measured", "estimated", "missing"}
+)
+WHOLE_RUN_SPEED_CONTEXT_REASON_VALUES: frozenset[WholeRunSpeedContextReason] = frozenset(
+    {"speed_unavailable", "speed_low", "speed_stale", "speed_unstable", "speed_assumed"}
 )
 WHOLE_RUN_CONTEXT_LOAD_STATE_VALUES: frozenset[WholeRunContextLoadState] = frozenset(
     {"idle", "steady", "transient", "unknown"}
@@ -459,6 +471,7 @@ class WholeRunContextWindowLabel:
     engine_rpm: float | None = None
     engine_rpm_source: str | None = None
     rpm_is_stale: bool = False
+    speed_context_reasons: tuple[WholeRunSpeedContextReason, ...] = ()
 
     def __post_init__(self) -> None:
         if self.window_index < 0:
@@ -477,6 +490,8 @@ class WholeRunContextWindowLabel:
             "speed_is_stale": self.speed_is_stale,
             "rpm_is_stale": self.rpm_is_stale,
         }
+        if self.speed_context_reasons:
+            payload["speed_context_reasons"] = list(self.speed_context_reasons)
         if self.segment_index is not None:
             payload["segment_index"] = self.segment_index
         if self.speed_kmh is not None:
@@ -508,6 +523,9 @@ class WholeRunContextWindowLabel:
             engine_rpm=_float_or_none(data.get("engine_rpm")),
             engine_rpm_source=_str_or_none(data.get("engine_rpm_source")),
             rpm_is_stale=_bool_from_json(data.get("rpm_is_stale")),
+            speed_context_reasons=_speed_context_reasons_from_json(
+                data.get("speed_context_reasons")
+            ),
         )
 
 
@@ -648,3 +666,18 @@ def _load_state_from_json(value: JsonValue | object) -> WholeRunContextLoadState
     if raw == "transient":
         return "transient"
     return "unknown"
+
+
+def _speed_context_reasons_from_json(
+    value: JsonValue | object,
+) -> tuple[WholeRunSpeedContextReason, ...]:
+    if not isinstance(value, list):
+        return ()
+    reasons: list[WholeRunSpeedContextReason] = []
+    seen: set[str] = set()
+    for item in value:
+        raw = _str_or_none(item)
+        if raw in WHOLE_RUN_SPEED_CONTEXT_REASON_VALUES and raw not in seen:
+            reasons.append(cast(WholeRunSpeedContextReason, raw))
+            seen.add(raw)
+    return tuple(reasons)

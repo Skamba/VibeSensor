@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 
@@ -24,6 +24,11 @@ type WindowQualityReason = Literal[
     "shock_transient",
     "mounting_artifact",
     "context_unavailable",
+    "speed_unavailable",
+    "speed_low",
+    "speed_stale",
+    "speed_unstable",
+    "speed_assumed",
     "frequency_unstable",
 ]
 
@@ -42,6 +47,11 @@ WINDOW_QUALITY_REASON_VALUES: frozenset[WindowQualityReason] = frozenset(
         "shock_transient",
         "mounting_artifact",
         "context_unavailable",
+        "speed_unavailable",
+        "speed_low",
+        "speed_stale",
+        "speed_unstable",
+        "speed_assumed",
         "frequency_unstable",
     }
 )
@@ -313,6 +323,7 @@ def window_quality_with_context(
     context_coverage: str | None,
     speed_validity: str | None,
     rpm_validity: str | None,
+    speed_context_reasons: tuple[str, ...] = (),
 ) -> WindowQuality:
     """Return ``quality`` with the context component updated for a window label."""
 
@@ -334,7 +345,9 @@ def window_quality_with_context(
             context_coverage=context_coverage,
             speed_validity=speed_validity,
             rpm_validity=rpm_validity,
+            speed_context_reasons=speed_context_reasons,
         ),
+        context_reasons=_window_quality_reasons_from(speed_context_reasons),
         frequency_stability_score=quality.frequency_stability_score,
     )
 
@@ -356,6 +369,7 @@ def _quality_from_component_scores(
     shock_broadband_ratio: float | None = None,
     mounting_high_frequency_ratio: float | None = None,
     timing_reasons: tuple[WindowQualityReason, ...] = (),
+    context_reasons: tuple[WindowQualityReason, ...] = (),
 ) -> WindowQuality:
     sample_completeness_score = _clamp01(sample_completeness_score)
     packet_integrity_score = _clamp01(packet_integrity_score)
@@ -391,6 +405,7 @@ def _quality_from_component_scores(
         reasons.append("shock_transient")
     if mounting_score < 0.98:
         reasons.append("mounting_artifact")
+    reasons.extend(context_reasons)
     if context_score < 0.70:
         reasons.append("context_unavailable")
     if frequency_stability_score < 0.70:
@@ -707,6 +722,7 @@ def _context_score(
     context_coverage: str | None,
     speed_validity: str | None,
     rpm_validity: str | None,
+    speed_context_reasons: tuple[str, ...] = (),
 ) -> float:
     if context_coverage is None and speed_validity is None and rpm_validity is None:
         return 1.0
@@ -722,7 +738,27 @@ def _context_score(
         str(rpm_validity or "missing"),
         0.50,
     )
-    return (coverage_score + speed_score + rpm_score) / 3.0
+    context_score = (coverage_score + speed_score + rpm_score) / 3.0
+    for reason in speed_context_reasons:
+        context_score = min(context_score, _SPEED_CONTEXT_REASON_SCORE_CAPS.get(reason, 1.0))
+    return context_score
+
+
+_SPEED_CONTEXT_REASON_SCORE_CAPS: dict[str, float] = {
+    "speed_unavailable": 0.35,
+    "speed_low": 0.55,
+    "speed_stale": 0.45,
+    "speed_unstable": 0.55,
+    "speed_assumed": 0.75,
+}
+
+
+def _window_quality_reasons_from(reasons: tuple[str, ...]) -> tuple[WindowQualityReason, ...]:
+    return tuple(
+        cast(WindowQualityReason, reason)
+        for reason in reasons
+        if reason in _SPEED_CONTEXT_REASON_SCORE_CAPS
+    )
 
 
 def _frequency_stability_score(
