@@ -33,7 +33,7 @@ function installWindowStub(): void {
     clearTimeout: () => undefined,
     setTimeout: (() =>
       1 as unknown as ReturnType<typeof setTimeout>) as Window["setTimeout"],
-  } as Window & typeof globalThis;
+  } as unknown as Window & typeof globalThis;
 }
 
 function createChromeViewHarness() {
@@ -102,7 +102,9 @@ describe("createUiShellNavigationModule", () => {
 
   test("waits for async lazy-view activation before switching views", async () => {
     const state = createAppState();
-    let resolveActivation: (() => void) | null = null;
+    let resolveActivation: () => void = () => {
+      throw new Error("activation promise was not created");
+    };
 
     const module = createUiShellNavigationModule({
       shell: state.shell,
@@ -119,7 +121,7 @@ describe("createUiShellNavigationModule", () => {
     expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
 
-    resolveActivation?.();
+    resolveActivation();
     await Promise.resolve();
 
     expect(state.shell.activeViewId.value).toBe("settingsView");
@@ -369,7 +371,7 @@ describe("createUiShellPreferencesModule", () => {
 
   test("keeps the pending language selection visible until the save resolves", async () => {
     const state = createAppState();
-    let resolveResponse: ((response: Response) => void) | null = null;
+    let resolveResponse: ((response: Response) => void) | undefined;
     const preparedLanguages: string[] = [];
 
     const module = createUiShellPreferencesModule({
@@ -393,8 +395,11 @@ describe("createUiShellPreferencesModule", () => {
     const savePromise = module.saveLanguage("nl");
     expect(module.selectedLanguage.value).toBe("nl");
     expect(state.shell.lang.value).toBe("en");
-    await expect.poll(() => resolveResponse !== null).toBe(true);
-    resolveResponse?.(HttpResponse.json({ language: "nl" }));
+    await expect.poll(() => typeof resolveResponse).toBe("function");
+    if (!resolveResponse) {
+      throw new Error("language response resolver was not created");
+    }
+    resolveResponse(HttpResponse.json({ language: "nl" }));
     await savePromise;
 
     expect(preparedLanguages).toEqual(["nl"]);
@@ -429,7 +434,9 @@ describe("createUiShellPreferencesModule", () => {
 
 describe("createUiShellNotificationModule", () => {
   test("shows and clears the shared error banner model signal", () => {
-    let pendingHide: (() => void) | null = null;
+    let pendingHide: () => void = () => {
+      throw new Error("hide timer was not scheduled");
+    };
 
     const module = createUiShellNotificationModule({
       window: {
@@ -448,7 +455,7 @@ describe("createUiShellNotificationModule", () => {
       variant: "bad",
     });
 
-    pendingHide?.();
+    pendingHide();
     expect(module.bannerModel.value).toEqual({
       hidden: true,
       text: "",

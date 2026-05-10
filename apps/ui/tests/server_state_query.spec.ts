@@ -84,15 +84,19 @@ describe("createObservedServerStateQuery", () => {
     vi.useFakeTimers();
     let calls = 0;
     const queryClient = createTestQueryClient();
+    const queryKey = ["test", "hidden-tab-polling"] as const;
     queryClient.mount();
     const query = createObservedServerStateQuery({
-      observerOptions: createHiddenTabPollingObserverOptions<number>(500),
+      observerOptions: createHiddenTabPollingObserverOptions<
+        number,
+        typeof queryKey
+      >(500),
       queryClient,
       queryFn: async () => {
         calls += 1;
         return calls;
       },
-      queryKey: ["test", "hidden-tab-polling"] as const,
+      queryKey,
     });
 
     await flushMicrotasks();

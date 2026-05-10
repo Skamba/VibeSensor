@@ -39,7 +39,7 @@ function resolveFetchInput(input: URL | RequestInfo): URL | Request {
 
 export function createUiMswTestServer() {
   const server = setupServer();
-  let restoreInterception = () => undefined;
+  let restoreInterception = (): void => undefined;
 
   // Use this shared lifecycle only for tests that cross the real HTTP/fetch
   // boundary. Transport-injected or pure view/state tests should stay below it.
