@@ -8,6 +8,7 @@ in ``diagram_layout``.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from vibesensor.adapters.pdf.diagram_layout import (
@@ -79,6 +80,29 @@ def _fit_vehicle_shell_rect(
 # ── Canvas drawing functions ─────────────────────────────────────────────────
 
 
+@dataclass(frozen=True, slots=True)
+class _VehicleShellContext:
+    x0: float
+    y0: float
+    car_w: float
+    car_h: float
+    color_surface: Any
+    color_border: Any
+    color_row_border: Any
+    color_text_primary: Any
+    hex_color: Any
+
+    @property
+    def center_x(self) -> float:
+        return self.x0 + (self.car_w / 2)
+
+    def px(self, ratio: float) -> float:
+        return self.x0 + (self.car_w * ratio)
+
+    def py(self, ratio: float) -> float:
+        return self.y0 + (self.car_h * ratio)
+
+
 def _draw_vehicle_shell(
     drawing: Any,
     *,
@@ -92,21 +116,34 @@ def _draw_vehicle_shell(
     color_text_primary: Any,
     hex_color: Any,
 ) -> None:
-    from reportlab.graphics.shapes import Circle, Line, Path, Polygon, Rect, String
+    ctx = _VehicleShellContext(
+        x0=x0,
+        y0=y0,
+        car_w=car_w,
+        car_h=car_h,
+        color_surface=color_surface,
+        color_border=color_border,
+        color_row_border=color_row_border,
+        color_text_primary=color_text_primary,
+        hex_color=hex_color,
+    )
+    _draw_vehicle_body(drawing, ctx)
+    _draw_vehicle_windows(drawing, ctx)
+    _draw_vehicle_seams(drawing, ctx)
+    _draw_vehicle_mirrors_and_lights(drawing, ctx)
+    _draw_vehicle_wheels(drawing, ctx)
+    _draw_vehicle_orientation_labels(drawing, ctx)
 
-    center_x = x0 + (car_w / 2)
-    tire_w = max(10.0, car_w * 0.11)
-    tire_h = max(20.0, car_h * 0.12)
 
-    def px(ratio: float) -> float:
-        return x0 + (car_w * ratio)
+def _draw_vehicle_body(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import Path
 
-    def py(ratio: float) -> float:
-        return y0 + (car_h * ratio)
-
+    center_x = ctx.center_x
+    px = ctx.px
+    py = ctx.py
     body = Path(
-        fillColor=color_surface,
-        strokeColor=color_border,
+        fillColor=ctx.color_surface,
+        strokeColor=ctx.color_border,
         strokeWidth=1.55,
     )
     body.moveTo(center_x, py(0.985))
@@ -121,75 +158,95 @@ def _draw_vehicle_shell(
     body.closePath()
     drawing.add(body)
 
+
+def _draw_vehicle_windows(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import Path, Polygon
+
     roof_shell = Path(
-        fillColor=hex_color("#ffffff"),
-        strokeColor=color_row_border,
+        fillColor=ctx.hex_color("#ffffff"),
+        strokeColor=ctx.color_row_border,
         strokeWidth=1.0,
     )
-    roof_shell.moveTo(center_x, py(0.79))
-    roof_shell.curveTo(px(0.35), py(0.785), px(0.25), py(0.70), px(0.23), py(0.58))
-    roof_shell.lineTo(px(0.23), py(0.34))
-    roof_shell.curveTo(px(0.25), py(0.24), px(0.35), py(0.18), center_x, py(0.17))
-    roof_shell.curveTo(px(0.65), py(0.18), px(0.75), py(0.24), px(0.77), py(0.34))
-    roof_shell.lineTo(px(0.77), py(0.58))
-    roof_shell.curveTo(px(0.75), py(0.70), px(0.65), py(0.785), center_x, py(0.79))
+    roof_shell.moveTo(ctx.center_x, ctx.py(0.79))
+    roof_shell.curveTo(
+        ctx.px(0.35), ctx.py(0.785), ctx.px(0.25), ctx.py(0.70), ctx.px(0.23), ctx.py(0.58)
+    )
+    roof_shell.lineTo(ctx.px(0.23), ctx.py(0.34))
+    roof_shell.curveTo(
+        ctx.px(0.25), ctx.py(0.24), ctx.px(0.35), ctx.py(0.18), ctx.center_x, ctx.py(0.17)
+    )
+    roof_shell.curveTo(
+        ctx.px(0.65), ctx.py(0.18), ctx.px(0.75), ctx.py(0.24), ctx.px(0.77), ctx.py(0.34)
+    )
+    roof_shell.lineTo(ctx.px(0.77), ctx.py(0.58))
+    roof_shell.curveTo(
+        ctx.px(0.75), ctx.py(0.70), ctx.px(0.65), ctx.py(0.785), ctx.center_x, ctx.py(0.79)
+    )
     roof_shell.closePath()
     drawing.add(roof_shell)
 
     windshield = Polygon(
         [
-            px(0.34),
-            py(0.73),
-            px(0.66),
-            py(0.73),
-            px(0.72),
-            py(0.60),
-            px(0.28),
-            py(0.60),
+            ctx.px(0.34),
+            ctx.py(0.73),
+            ctx.px(0.66),
+            ctx.py(0.73),
+            ctx.px(0.72),
+            ctx.py(0.60),
+            ctx.px(0.28),
+            ctx.py(0.60),
         ],
-        fillColor=hex_color("#f6f9ff"),
-        strokeColor=color_row_border,
+        fillColor=ctx.hex_color("#f6f9ff"),
+        strokeColor=ctx.color_row_border,
         strokeWidth=0.75,
     )
     rear_window = Polygon(
         [
-            px(0.31),
-            py(0.31),
-            px(0.69),
-            py(0.31),
-            px(0.62),
-            py(0.20),
-            px(0.38),
-            py(0.20),
+            ctx.px(0.31),
+            ctx.py(0.31),
+            ctx.px(0.69),
+            ctx.py(0.31),
+            ctx.px(0.62),
+            ctx.py(0.20),
+            ctx.px(0.38),
+            ctx.py(0.20),
         ],
-        fillColor=hex_color("#f6f9ff"),
-        strokeColor=color_row_border,
+        fillColor=ctx.hex_color("#f6f9ff"),
+        strokeColor=ctx.color_row_border,
         strokeWidth=0.75,
     )
     drawing.add(windshield)
     drawing.add(rear_window)
 
-    hood_seam = Path(strokeColor=color_row_border, strokeWidth=0.82)
-    hood_seam.moveTo(px(0.27), py(0.83))
-    hood_seam.curveTo(px(0.37), py(0.79), px(0.63), py(0.79), px(0.73), py(0.83))
+
+def _draw_vehicle_seams(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import Line, Path
+
+    hood_seam = Path(strokeColor=ctx.color_row_border, strokeWidth=0.82)
+    hood_seam.moveTo(ctx.px(0.27), ctx.py(0.83))
+    hood_seam.curveTo(
+        ctx.px(0.37), ctx.py(0.79), ctx.px(0.63), ctx.py(0.79), ctx.px(0.73), ctx.py(0.83)
+    )
     drawing.add(hood_seam)
 
-    hatch_seam = Path(strokeColor=color_row_border, strokeWidth=0.82)
-    hatch_seam.moveTo(px(0.30), py(0.15))
-    hatch_seam.curveTo(px(0.40), py(0.18), px(0.60), py(0.18), px(0.70), py(0.15))
+    hatch_seam = Path(strokeColor=ctx.color_row_border, strokeWidth=0.82)
+    hatch_seam.moveTo(ctx.px(0.30), ctx.py(0.15))
+    hatch_seam.curveTo(
+        ctx.px(0.40), ctx.py(0.18), ctx.px(0.60), ctx.py(0.18), ctx.px(0.70), ctx.py(0.15)
+    )
     drawing.add(hatch_seam)
 
-    door_left_x = px(0.37)
-    door_right_x = px(0.63)
-    belt_low_y = py(0.42)
-    belt_high_y = py(0.56)
+    door_left_x = ctx.px(0.37)
+    door_right_x = ctx.px(0.63)
+    belt_low_y = ctx.py(0.42)
+    belt_high_y = ctx.py(0.56)
     drawing.add(
         Line(
             door_left_x,
             belt_low_y,
             door_left_x,
             belt_high_y,
-            strokeColor=color_row_border,
+            strokeColor=ctx.color_row_border,
             strokeWidth=0.72,
         ),
     )
@@ -199,84 +256,94 @@ def _draw_vehicle_shell(
             belt_low_y,
             door_right_x,
             belt_high_y,
-            strokeColor=color_row_border,
+            strokeColor=ctx.color_row_border,
             strokeWidth=0.72,
         ),
     )
     drawing.add(
         Line(
-            center_x,
-            py(0.18),
-            center_x,
-            py(0.79),
-            strokeColor=color_row_border,
+            ctx.center_x,
+            ctx.py(0.18),
+            ctx.center_x,
+            ctx.py(0.79),
+            strokeColor=ctx.color_row_border,
             strokeWidth=0.92,
         ),
     )
     drawing.add(
         Line(
-            px(0.29),
-            py(0.47),
-            px(0.71),
-            py(0.47),
-            strokeColor=color_row_border,
+            ctx.px(0.29),
+            ctx.py(0.47),
+            ctx.px(0.71),
+            ctx.py(0.47),
+            strokeColor=ctx.color_row_border,
             strokeWidth=0.62,
         ),
     )
 
-    mirror_fill = hex_color("#ffffff")
+
+def _draw_vehicle_mirrors_and_lights(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import Circle, Polygon
+
+    mirror_fill = ctx.hex_color("#ffffff")
     mirror_left = Polygon(
         [
-            px(0.15),
-            py(0.70),
-            px(0.07),
-            py(0.67),
-            px(0.12),
-            py(0.63),
+            ctx.px(0.15),
+            ctx.py(0.70),
+            ctx.px(0.07),
+            ctx.py(0.67),
+            ctx.px(0.12),
+            ctx.py(0.63),
         ],
         fillColor=mirror_fill,
-        strokeColor=color_row_border,
+        strokeColor=ctx.color_row_border,
         strokeWidth=0.8,
     )
     mirror_right = Polygon(
         [
-            px(0.85),
-            py(0.70),
-            px(0.93),
-            py(0.67),
-            px(0.88),
-            py(0.63),
+            ctx.px(0.85),
+            ctx.py(0.70),
+            ctx.px(0.93),
+            ctx.py(0.67),
+            ctx.px(0.88),
+            ctx.py(0.63),
         ],
         fillColor=mirror_fill,
-        strokeColor=color_row_border,
+        strokeColor=ctx.color_row_border,
         strokeWidth=0.8,
     )
     drawing.add(mirror_left)
     drawing.add(mirror_right)
 
-    lamp_fill = hex_color("#fff7d9")
-    tail_fill = hex_color("#ffe3e6")
+    lamp_fill = ctx.hex_color("#fff7d9")
+    tail_fill = ctx.hex_color("#ffe3e6")
     for lx, ly, fill in (
-        (px(0.24), py(0.90), lamp_fill),
-        (px(0.76), py(0.90), lamp_fill),
-        (px(0.24), py(0.08), tail_fill),
-        (px(0.76), py(0.08), tail_fill),
+        (ctx.px(0.24), ctx.py(0.90), lamp_fill),
+        (ctx.px(0.76), ctx.py(0.90), lamp_fill),
+        (ctx.px(0.24), ctx.py(0.08), tail_fill),
+        (ctx.px(0.76), ctx.py(0.08), tail_fill),
     ):
         drawing.add(
             Circle(
                 lx,
                 ly,
-                max(2.2, car_w * 0.022),
+                max(2.2, ctx.car_w * 0.022),
                 fillColor=fill,
-                strokeColor=color_row_border,
+                strokeColor=ctx.color_row_border,
                 strokeWidth=0.58,
             ),
         )
 
-    front_axle_y = y0 + (car_h * 0.84)
-    rear_axle_y = y0 + (car_h * 0.16)
-    wheel_x_left = x0 + (car_w * 0.14)
-    wheel_x_right = x0 + (car_w * 0.86)
+
+def _draw_vehicle_wheels(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import Line, Rect
+
+    tire_w = max(10.0, ctx.car_w * 0.11)
+    tire_h = max(20.0, ctx.car_h * 0.12)
+    front_axle_y = ctx.y0 + (ctx.car_h * 0.84)
+    rear_axle_y = ctx.y0 + (ctx.car_h * 0.16)
+    wheel_x_left = ctx.x0 + (ctx.car_w * 0.14)
+    wheel_x_right = ctx.x0 + (ctx.car_w * 0.86)
     for axle_y in (front_axle_y, rear_axle_y):
         drawing.add(
             Line(
@@ -284,12 +351,12 @@ def _draw_vehicle_shell(
                 axle_y,
                 wheel_x_right,
                 axle_y,
-                strokeColor=color_row_border,
+                strokeColor=ctx.color_row_border,
                 strokeWidth=0.7,
             ),
         )
-    wheel_fill = hex_color("#f7f9fd")
-    wheel_stroke = hex_color(REPORT_COLORS["axis"])
+    wheel_fill = ctx.hex_color("#f7f9fd")
+    wheel_stroke = ctx.hex_color(REPORT_COLORS["axis"])
     for wx, wy in (
         (wheel_x_left, front_axle_y),
         (wheel_x_right, front_axle_y),
@@ -309,25 +376,30 @@ def _draw_vehicle_shell(
                 strokeWidth=1.0,
             ),
         )
+
+
+def _draw_vehicle_orientation_labels(drawing: Any, ctx: _VehicleShellContext) -> None:
+    from reportlab.graphics.shapes import String
+
     drawing.add(
         String(
-            center_x,
-            y0 + car_h + 10.5,
+            ctx.center_x,
+            ctx.y0 + ctx.car_h + 10.5,
             "DIAGRAM_LABEL_FRONT",
             fontName="Helvetica-Bold",
             fontSize=7.5,
-            fillColor=color_text_primary,
+            fillColor=ctx.color_text_primary,
             textAnchor="middle",
         ),
     )
     drawing.add(
         String(
-            center_x,
-            y0 - 11.5,
+            ctx.center_x,
+            ctx.y0 - 11.5,
             "DIAGRAM_LABEL_REAR",
             fontName="Helvetica-Bold",
             fontSize=7.5,
-            fillColor=color_text_primary,
+            fillColor=ctx.color_text_primary,
             textAnchor="middle",
         ),
     )
