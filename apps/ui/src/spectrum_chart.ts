@@ -1,5 +1,14 @@
-import { spectrumDbDisplayRangeFromDataBounds } from "./spectrum";
 import { getSpectrumCssVars } from "./spectrum_css_vars";
+import {
+  buildSpectrumChartTickValues,
+  calculateSpectrumChartRanges,
+  createSpectrumChartBox,
+  findClosestSpectrumChartIndex,
+  normalizeSpectrumChartData,
+  projectSpectrumChartValue,
+  type SpectrumChartBox,
+  type SpectrumChartRange,
+} from "./spectrum_chart_model";
 import {
   computed,
   effect,
@@ -67,15 +76,9 @@ export interface CreateSpectrumChartDeps {
 }
 
 const DEFAULT_HEIGHT = 360;
-const EMPTY_DATA: SpectrumAlignedData = [[]];
 const HOVER_POINT_RADIUS = 4;
 const X_TICK_COUNT = 6;
 const Y_TICK_COUNT = 6;
-
-type ChartRange = {
-  max: number;
-  min: number;
-};
 
 type ChartState = {
   plugins: readonly SpectrumChartPlugin[];
@@ -100,10 +103,13 @@ export function createSpectrumChart(
     plugins: plugins.value,
     text: deps.text.value,
   };
-  let currentData = normalizeData(deps.data.value);
-  let currentXRange: ChartRange | null = null;
-  let currentYRange: ChartRange | null = null;
-  let currentBbox = createChartBox(width.value, height.value);
+  let currentData = normalizeSpectrumChartData(deps.data.value);
+  let currentXRange: SpectrumChartRange | null = null;
+  let currentYRange: SpectrumChartRange | null = null;
+  let currentBbox: SpectrumChartBox = createSpectrumChartBox(
+    width.value,
+    height.value,
+  );
   let disposed = false;
   let forceAxesRecalc = true;
 
@@ -149,14 +155,14 @@ export function createSpectrumChart(
     },
     valToPos(value, scale) {
       if (scale === "x") {
-        return projectValue(
+        return projectSpectrumChartValue(
           value,
           currentXRange ?? { min: 0, max: 1 },
           currentBbox.left,
           currentBbox.width,
         );
       }
-      return projectValue(
+      return projectSpectrumChartValue(
         value,
         currentYRange ?? { min: -120, max: 0 },
         currentBbox.top + currentBbox.height,
@@ -181,47 +187,12 @@ export function createSpectrumChart(
   }
 
   function recalculateRanges(): void {
-    const freqAxis = currentData[0] ?? [];
-    const xMin = freqAxis[0] ?? 0;
-    const xMax = freqAxis[freqAxis.length - 1] ?? Math.max(1, xMin);
-    currentXRange = {
-      min: xMin,
-      max: xMax > xMin ? xMax : xMin + 1,
-    };
-
-    let dataMin = Number.POSITIVE_INFINITY;
-    let dataMax = Number.NEGATIVE_INFINITY;
-    let sawValue = false;
-    const visibleSeries = getVisibleSeriesIndexes();
-    const sourceIndexes = visibleSeries.length
-      ? visibleSeries
-      : Array.from(
-          { length: Math.max(0, currentData.length - 1) },
-          (_, index) => index + 1,
-        );
-    for (const seriesIndex of sourceIndexes) {
-      const series = currentData[seriesIndex];
-      if (!series) {
-        continue;
-      }
-      for (const value of series) {
-        if (!Number.isFinite(value)) {
-          continue;
-        }
-        sawValue = true;
-        dataMin = Math.min(dataMin, value);
-        dataMax = Math.max(dataMax, value);
-      }
-    }
-    if (!sawValue) {
-      currentYRange = { min: -120, max: 0 };
-      return;
-    }
-    const [min, max] = spectrumDbDisplayRangeFromDataBounds(dataMin, dataMax);
-    currentYRange = {
-      min,
-      max: max > min ? max : min + 1,
-    };
+    const ranges = calculateSpectrumChartRanges(
+      currentData,
+      getVisibleSeriesIndexes(),
+    );
+    currentXRange = ranges.x;
+    currentYRange = ranges.y;
   }
 
   function resizeCanvas(cssWidth: number, cssHeight: number): void {
@@ -233,7 +204,7 @@ export function createSpectrumChart(
     canvas.style.width = `${renderWidth}px`;
     canvas.style.height = `${renderHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    currentBbox = createChartBox(renderWidth, renderHeight);
+    currentBbox = createSpectrumChartBox(renderWidth, renderHeight);
   }
 
   function clearCanvas(cssWidth: number, cssHeight: number): void {
@@ -263,7 +234,10 @@ export function createSpectrumChart(
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
 
-    for (const value of buildTickValues(currentXRange, X_TICK_COUNT)) {
+    for (const value of buildSpectrumChartTickValues(
+      currentXRange,
+      X_TICK_COUNT,
+    )) {
       const x = plotContext.valToPos(value, "x");
       ctx.beginPath();
       ctx.moveTo(x, top);
@@ -274,7 +248,10 @@ export function createSpectrumChart(
 
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    for (const value of buildTickValues(currentYRange, Y_TICK_COUNT)) {
+    for (const value of buildSpectrumChartTickValues(
+      currentYRange,
+      Y_TICK_COUNT,
+    )) {
       const y = plotContext.valToPos(value, "y");
       ctx.beginPath();
       ctx.moveTo(left, y);
@@ -431,7 +408,12 @@ export function createSpectrumChart(
       return;
     }
     updateCursorIndex(
-      findClosestIndex(currentData[0] ?? [], x, currentXRange, currentBbox),
+      findClosestSpectrumChartIndex(
+        currentData[0] ?? [],
+        x,
+        currentXRange,
+        currentBbox,
+      ),
     );
   }
 
@@ -482,7 +464,7 @@ export function createSpectrumChart(
       renderChart(true);
     },
     setData(data: SpectrumAlignedData, resetScales = true): void {
-      currentData = normalizeData(data);
+      currentData = normalizeSpectrumChartData(data);
       renderChart(resetScales);
     },
     setSeriesIsolation(seriesIdx: number | null): void {
@@ -503,31 +485,6 @@ function computeWidth(measureEl: HTMLElement): number {
   return Math.max(320, Math.floor(measureEl.getBoundingClientRect().width));
 }
 
-function createChartBox(
-  width: number,
-  height: number,
-): {
-  height: number;
-  left: number;
-  top: number;
-  width: number;
-} {
-  const left = 54;
-  const right = 16;
-  const top = 16;
-  const bottom = 36;
-  return {
-    top,
-    left,
-    width: Math.max(1, width - left - right),
-    height: Math.max(1, height - top - bottom),
-  };
-}
-
-function normalizeData(data: SpectrumAlignedData): SpectrumAlignedData {
-  return data.length ? data : EMPTY_DATA;
-}
-
 function requireCanvasContext(
   canvas: HTMLCanvasElement,
 ): CanvasRenderingContext2D {
@@ -538,66 +495,10 @@ function requireCanvasContext(
   return context;
 }
 
-function projectValue(
-  value: number,
-  range: ChartRange,
-  start: number,
-  span: number,
-): number {
-  const denominator = range.max - range.min || 1;
-  return start + ((value - range.min) / denominator) * span;
-}
-
-function buildTickValues(range: ChartRange, count: number): number[] {
-  if (count <= 1) {
-    return [range.min];
-  }
-  const step = (range.max - range.min) / (count - 1 || 1);
-  const ticks: number[] = [];
-  for (let index = 0; index < count; index += 1) {
-    ticks.push(range.min + step * index);
-  }
-  return ticks;
-}
-
 function formatHzTick(value: number): string {
   return value >= 100 ? value.toFixed(0) : value.toFixed(1);
 }
 
 function formatDbTick(value: number): string {
   return value.toFixed(0);
-}
-
-function findClosestIndex(
-  freqAxis: readonly number[],
-  x: number,
-  xRange: ChartRange | null,
-  bbox: { left: number; width: number },
-): number | null {
-  if (freqAxis.length === 0 || xRange === null) {
-    return null;
-  }
-  const freqValue =
-    xRange.min +
-    ((x - bbox.left) / (bbox.width || 1)) * (xRange.max - xRange.min);
-  let low = 0;
-  let high = freqAxis.length - 1;
-  while (low < high) {
-    const mid = Math.floor((low + high) / 2);
-    const nextValue = freqAxis[mid];
-    if ((nextValue ?? 0) < freqValue) {
-      low = mid + 1;
-    } else {
-      high = mid;
-    }
-  }
-  const candidate = low;
-  const previous = Math.max(0, candidate - 1);
-  const candidateDistance = Math.abs(
-    (freqAxis[candidate] ?? freqValue) - freqValue,
-  );
-  const previousDistance = Math.abs(
-    (freqAxis[previous] ?? freqValue) - freqValue,
-  );
-  return previousDistance <= candidateDistance ? previous : candidate;
 }
