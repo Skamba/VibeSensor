@@ -125,6 +125,27 @@ def test_validate_car_library_rows_flags_major_invariant_breaks() -> None:
     assert "implausible final_drive_ratio" in issues[0].message
 
 
+def test_validate_car_library_rows_flags_gear_ratio_order() -> None:
+    entry = _make_valid_car_library_entry()
+    entry["gearboxes"][0]["gear_ratios"] = [3.5, 3.2, 3.4]
+
+    issues = validate_car_library_rows([entry], allowlist={})
+
+    assert [issue.rule for issue in issues] == ["gear_ratio_order"]
+    assert "descending gear ratios" in issues[0].message
+
+
+def test_validate_car_library_rows_flags_tire_plausibility() -> None:
+    entry = _make_valid_car_library_entry()
+    entry["tire_options"][0]["front"] = {"width_mm": 125.0, "aspect_pct": 20.0, "rim_in": 18.0}
+    entry["tire_options"][0]["rear"] = {"width_mm": 125.0, "aspect_pct": 20.0, "rim_in": 18.0}
+
+    issues = validate_car_library_rows([entry], allowlist={})
+
+    assert [issue.rule for issue in issues] == ["tire_diameter_range", "tire_diameter_range"]
+    assert all("implausible diameter_mm" in issue.message for issue in issues)
+
+
 def test_validate_vehicle_configurations_flags_missing_metadata_for_populated_fields() -> None:
     config = _make_valid_vehicle_configuration()
     broken = replace(config, final_drive_rear_metadata=None)
