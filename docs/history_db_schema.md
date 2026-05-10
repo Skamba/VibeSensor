@@ -18,7 +18,7 @@ application settings and client names in a single SQLite file located at
 repositories over the same database file:
 
 - `_engine.py`: shared SQLite connection/lock/cursor ownership, schema
-  initialization/migrations, incompatible-schema backup/export protection, and
+  initialization, incompatible-schema backup/export protection, and
   corruption detection.
 - `_run_repository.py`: run persistence composed from `_run_lifecycle.py`,
   `_sample_io.py`, and `_queries.py` over the shared engine.
@@ -126,11 +126,11 @@ home for persisted sensor name/location semantics.
 | `name` | TEXT | Legacy display name |
 | `updated_at` | TEXT | Last update timestamp |
 
-## Schema upgrades / migrations
+## Schema version policy
 
-Schema versioning uses SQLite's `PRAGMA user_version`. On startup the shared
-SQLite history engine creates the current tables first, then checks the stored
-integer version:
+Schema versioning uses SQLite's `PRAGMA user_version`. The current schema is the
+only supported runtime schema. On startup the shared SQLite history engine checks
+the stored integer version:
 
 | Stored version | Action |
 |----------------|--------|
@@ -138,20 +138,14 @@ integer version:
 | `0` with a legacy `schema_meta` table present | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` without requiring destructive deletion |
 | `0` with unexpected user tables | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` |
 | `15` | No action needed beyond ensuring current tables/indexes exist |
-| `14` | Add `runs.whole_run_artifact_manifest_json`, then stamp `user_version = 15` |
-| `13` | Add `runs.raw_capture_manifest_json`, add `runs.whole_run_artifact_manifest_json`, then stamp `user_version = 15` |
-| `12` | Add raw-capture and whole-run manifest columns, then stamp `user_version = 15` |
-| `11` | Add `runs.car_name`, raw-capture manifest, and whole-run manifest columns, then stamp `user_version = 15` |
-| Older unsupported values (for example `1`, `4`, `8`, `9`, or `10`) | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` |
+| Any older value, including `11`-`14` | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` |
 | Newer than `15` | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` (downgrade not supported) |
 
-### Schema versioning policy
-
-Older incompatible database versions are not migrated. Before rejecting them,
-the engine writes a backup copy under `history-db-backups/` next to the live
-database and, when a readable `runs` table exists, exports a best-effort JSONL
-summary of stored runs. The server then raises a clear error without requiring
-destructive deletion.
+There are no in-place migrations from older history DB versions. Before
+rejecting a populated non-current database, the engine writes a backup copy under
+`history-db-backups/` next to the live database and, when a readable `runs` table
+exists, exports a best-effort JSONL summary of stored runs. The server then
+raises a clear error; reset or reinstall to create a fresh current-schema DB.
 
 ## Performance settings
 

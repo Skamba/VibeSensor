@@ -69,3 +69,69 @@ def test_schema_version_future_creates_backup_before_rejection(tmp_path: Path) -
         (tmp_path / "history-db-backups").glob("history.incompatible-v99-newer-schema-*.db")
     )
     assert len(backups) == 1
+
+
+@pytest.mark.parametrize("version", [11, 12, 13, 14])
+def test_previous_schema_versions_are_rejected_with_backup(tmp_path: Path, version: int) -> None:
+    db_path = tmp_path / f"history-v{version}.db"
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute(
+            """
+            CREATE TABLE runs (
+                run_id TEXT PRIMARY KEY,
+                status TEXT,
+                start_time_utc TEXT,
+                created_at TEXT,
+                metadata_json TEXT
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO runs (run_id, status, start_time_utc, created_at, metadata_json) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                "run-previous",
+                "complete",
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:00:00Z",
+                json.dumps({"run_id": "run-previous"}),
+            ),
+        )
+        conn.execute(f"PRAGMA user_version = {version}")
+        conn.commit()
+    finally:
+        conn.close()
+
+    with pytest.raises(RuntimeError, match=f"schema v{version} is incompatible"):
+        create_history_persistence_adapters(db_path)
+
+    backup_dir = tmp_path / "history-db-backups"
+    backups = list(backup_dir.glob(f"history-v{version}.incompatible-v{version}-*.db"))
+    exports = list(
+        backup_dir.glob(f"history-v{version}.incompatible-v{version}-*.run-summaries.jsonl")
+    )
+    assert len(backups) == 1
+    assert len(exports) == 1
+    assert '"run_id":"run-previous"' in exports[0].read_text(encoding="utf-8")
+
+
+def test_legacy_schema_meta_table_fails_fast_with_clear_guidance(tmp_path: Path) -> None:
+    db_path = tmp_path / "history-schema-meta.db"
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute("CREATE TABLE schema_meta (schema_version INTEGER NOT NULL)")
+        conn.execute("INSERT INTO schema_meta (schema_version) VALUES (7)")
+        conn.commit()
+    finally:
+        conn.close()
+
+    with pytest.raises(RuntimeError, match="legacy schema_meta table incompatible"):
+        create_history_persistence_adapters(db_path)
+
+    backups = list(
+        (tmp_path / "history-db-backups").glob(
+            "history-schema-meta.incompatible-v0-legacy-schema-meta-*.db"
+        )
+    )
+    assert len(backups) == 1
