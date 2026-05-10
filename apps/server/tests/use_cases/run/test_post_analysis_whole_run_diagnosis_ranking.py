@@ -46,7 +46,11 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisWholeRunBuilderConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
 
@@ -405,43 +409,47 @@ def test_execute_post_analysis_persists_whole_run_diagnosis_summaries() -> None:
                 ),
             },
         )(),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id="run-diagnosis-ranking",
-            metadata=_run_metadata("run-diagnosis-ranking"),
-            language="en",
-            samples=_samples(),
-            total_summary_row_count=1,
-            stride=1,
-            context_samples=_samples(),
-            raw_capture=_empty_raw_capture(raw_capture_manifest),
-            raw_capture_manifest=raw_capture_manifest,
-        ),
-        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(
-            type(
-                "Bundle",
-                (),
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id="run-diagnosis-ranking",
+                metadata=_run_metadata("run-diagnosis-ranking"),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+                context_samples=_samples(),
+                raw_capture=_empty_raw_capture(raw_capture_manifest),
+                raw_capture_manifest=raw_capture_manifest,
+            ),
+            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
+                artifact_builder=lambda **_kwargs: _spectral_result(
+                    type(
+                        "Bundle",
+                        (),
+                        {
+                            "manifest": spectral_manifest,
+                            "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
+                        },
+                    )()
+                ),
+                context_builder=lambda **_kwargs: context_bundle,
+                order_trace_builder=lambda **_kwargs: order_trace_bundle,
+                order_trace_summary_builder=lambda **_kwargs: order_trace_summary_bundle,
+                order_family_summary_builder=lambda **_kwargs: order_family_bundle,
+                spatial_coherence_builder=lambda **_kwargs: spatial_bundle,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis(
                 {
-                    "manifest": spectral_manifest,
-                    "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
-                },
-            )()
-        ),
-        whole_run_context_builder=lambda **_kwargs: context_bundle,
-        whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
-        whole_run_order_trace_summary_builder=lambda **_kwargs: order_trace_summary_bundle,
-        whole_run_order_family_summary_builder=lambda **_kwargs: order_family_bundle,
-        whole_run_spatial_coherence_builder=lambda **_kwargs: spatial_bundle,
-        analysis_runner=lambda _run: make_persisted_analysis(
-            {
-                "analysis_metadata": {
-                    "analyzed_sample_count": 1,
-                    "total_sample_count": 1,
-                    "sampling_method": "full",
-                    "raw_backed_sample_count": 48,
-                    "raw_capture_mode": "raw_backed",
-                },
-                "run_suitability": [],
-            }
+                    "analysis_metadata": {
+                        "analyzed_sample_count": 1,
+                        "total_sample_count": 1,
+                        "sampling_method": "full",
+                        "raw_backed_sample_count": 48,
+                        "raw_capture_mode": "raw_backed",
+                    },
+                    "run_suitability": [],
+                }
+            ),
         ),
     )
 

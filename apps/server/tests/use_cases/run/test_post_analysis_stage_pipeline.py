@@ -25,6 +25,8 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralCoverageSummary,
 )
 from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisExecutionRunner,
     resolve_whole_run_builders,
     run_build_post_analysis_input_stage,
     run_load_run_stage,
@@ -111,6 +113,25 @@ def _raw_capture_manifest_with_sensor(run_id: str) -> RawCaptureManifest:
         total_bytes=2048 * 3 * 2,
         created_at="2025-01-01T00:00:00Z",
         run_start_monotonic_us=1_000_000,
+    )
+
+
+def test_post_analysis_execution_runner_stage_order_is_explicit() -> None:
+    runner = PostAnalysisExecutionRunner(
+        run_id="run-stage-order",
+        db=object(),
+        config=PostAnalysisExecutionConfig(
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
+        ),
+        analysis_start=0.0,
+    )
+
+    assert runner.stage_names == (
+        "LoadRunStage",
+        "BuildPostAnalysisInputStage",
+        "WholeRunPipelineStages",
+        "BuildReportFactsStage",
+        "PersistAnalysisSummaryStage",
     )
 
 

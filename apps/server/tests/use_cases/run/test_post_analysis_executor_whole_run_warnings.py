@@ -15,7 +15,11 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
-from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    PostAnalysisWholeRunBuilderConfig,
+    execute_post_analysis,
+)
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
 
@@ -60,80 +64,86 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
     result = execute_post_analysis(
         run_id="run-whole-run-warning",
         db=FakeDB(),
-        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-            run_id=run_id,
-            metadata=_run_metadata(run_id),
-            language="en",
-            samples=_samples(),
-            total_summary_row_count=1,
-            stride=1,
-            raw_capture=RawRunCapture(manifest=raw_capture_manifest, sensors=()),
-            raw_capture_manifest=raw_capture_manifest,
-        ),
-        whole_run_artifact_builder=lambda **_kwargs: WholeRunSpectralBuildResult(
-            bundle=None,
-            coverage_summary=WholeRunSpectralCoverageSummary(
-                total_sensor_window_count=4,
-                full_sensor_window_count=2,
-                partial_sensor_window_count=1,
-                missing_sensor_window_count=1,
-                empty_sensor_window_count=0,
-                gap_count=1,
-                overlap_count=0,
-                dropped_chunk_count=2,
-                late_packet_chunk_count=1,
-                queue_overflow_chunk_count=2,
-                invalid_chunk_count=0,
-                write_error_chunk_count=0,
-                sample_rate_mismatch_sensor_count=1,
-                sample_rate_unverified_sensor_count=2,
-                unanchored_sensor_count=1,
-                legacy_sensor_count=0,
-                sync_unverified_sensor_count=1,
-                stale_sync_sensor_count=1,
-                high_rtt_sensor_count=0,
-                coverage_confidence="partial",
-                warnings=(
-                    RunContextWarning(
-                        code=WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
-                        severity="warn",
-                        applies_to="whole_run",
-                        title=i18n_ref("RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE"),
-                        detail=i18n_ref(
-                            "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL",
-                            partial="1",
-                            missing="1",
-                            gaps="1",
-                            overlaps="0",
-                            dropped="2",
-                            late="1",
-                            udp_ingest="0",
-                            queue_overflow="2",
-                            invalid="0",
-                            write_errors="0",
-                            mismatches="1",
-                            unverified_rates="2",
-                            legacy="0",
-                            unanchored="1",
-                            sync_unverified="1",
-                            missing_sync="0",
-                            stale="1",
-                            high_rtt="0",
+        config=PostAnalysisExecutionConfig(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+                raw_capture=RawRunCapture(manifest=raw_capture_manifest, sensors=()),
+                raw_capture_manifest=raw_capture_manifest,
+            ),
+            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
+                artifact_builder=lambda **_kwargs: WholeRunSpectralBuildResult(
+                    bundle=None,
+                    coverage_summary=WholeRunSpectralCoverageSummary(
+                        total_sensor_window_count=4,
+                        full_sensor_window_count=2,
+                        partial_sensor_window_count=1,
+                        missing_sensor_window_count=1,
+                        empty_sensor_window_count=0,
+                        gap_count=1,
+                        overlap_count=0,
+                        dropped_chunk_count=2,
+                        late_packet_chunk_count=1,
+                        queue_overflow_chunk_count=2,
+                        invalid_chunk_count=0,
+                        write_error_chunk_count=0,
+                        sample_rate_mismatch_sensor_count=1,
+                        sample_rate_unverified_sensor_count=2,
+                        unanchored_sensor_count=1,
+                        legacy_sensor_count=0,
+                        sync_unverified_sensor_count=1,
+                        stale_sync_sensor_count=1,
+                        high_rtt_sensor_count=0,
+                        coverage_confidence="partial",
+                        warnings=(
+                            RunContextWarning(
+                                code=WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
+                                severity="warn",
+                                applies_to="whole_run",
+                                title=i18n_ref(
+                                    "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE"
+                                ),
+                                detail=i18n_ref(
+                                    "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL",
+                                    partial="1",
+                                    missing="1",
+                                    gaps="1",
+                                    overlaps="0",
+                                    dropped="2",
+                                    late="1",
+                                    udp_ingest="0",
+                                    queue_overflow="2",
+                                    invalid="0",
+                                    write_errors="0",
+                                    mismatches="1",
+                                    unverified_rates="2",
+                                    legacy="0",
+                                    unanchored="1",
+                                    sync_unverified="1",
+                                    missing_sync="0",
+                                    stale="1",
+                                    high_rtt="0",
+                                ),
+                            ),
                         ),
                     ),
                 ),
+                context_builder=lambda **_kwargs: None,
             ),
-        ),
-        whole_run_context_builder=lambda **_kwargs: None,
-        analysis_runner=lambda _run: make_persisted_analysis(
-            {
-                "analysis_metadata": {
-                    "analyzed_sample_count": 1,
-                    "total_sample_count": 1,
-                    "sampling_method": "full",
-                },
-                "run_suitability": [],
-            }
+            analysis_runner=lambda _run: make_persisted_analysis(
+                {
+                    "analysis_metadata": {
+                        "analyzed_sample_count": 1,
+                        "total_sample_count": 1,
+                        "sampling_method": "full",
+                    },
+                    "run_suitability": [],
+                }
+            ),
         ),
     )
 
