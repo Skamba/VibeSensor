@@ -79,6 +79,8 @@ Those derivative outputs are materialized locally from the tracked inputs and ar
 
 Fresh checkouts can materialize only the missing derivative files with `npm run setup:generated-contracts`. That setup command is safe to rerun, reuses the shared UI bootstrap helper, and intentionally leaves the authoritative `make sync-contracts` / `npm run sync:generated-contracts` refresh flow unchanged for stale-derivative updates.
 
+`make clean` and `make pristine` may remove the derivative files because they are local generated outputs. Restore them with `make setup`, `make ui-typecheck`, `make sync-contracts`, or `npm run setup:generated-contracts` depending on the workflow you are about to run.
+
 `npm run build` and `npm run typecheck` no longer regenerate those files automatically. They run `npm run check:contracts` first and fail fast with guidance to `make sync-contracts` if the local derivative copy is missing or stale. CI contract drift and human-facing regeneration should still use `make sync-contracts`.
 
 The release-smoke artifact helper is the intentional narrow exception: after the same commit already passed `backend-contract-drift` and `frontend-typecheck`, `tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts` still regenerates the UI-only derivatives for that fresh checkout but switches to `npm run build:prevalidated-contracts` so the late packaged smoke path does not repeat `check:contracts`.

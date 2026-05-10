@@ -26,6 +26,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Backend layer DAG, enforced by `apps/server/pyproject.toml` and `tools/dev/verify_backend_static_guards.py`: `domain` imports no project layers; `shared` may import `domain`; `use_cases` may import `domain, shared`; `infra` may import `domain, shared`; `adapters` may import `domain, shared, infra, use_cases`; `app` may import all. `shared -> domain` and `infra -> domain` are allowed; inward leakage such as `use_cases -> adapters` is not.
 
 ## Validation router
+- Cleanup: `make clean` removes fast regenerated build/test/generated outputs; `make pristine` removes ignored generated/cache/runtime outputs and then requires `make setup` for native dev.
 - Start with `make plan-validation`; run planned non-Docker jobs with `./.venv/bin/python tools/tests/plan_validation.py --run`, or use `--act` / `./tools/tests/run_ci_with_act.sh` only when GitHub workflow or Docker parity is needed.
 - Use `./tools/tests/run_ci_with_act.sh --full-stack` only when you must force all gated CI jobs.
 - Docs or instruction-only changes: run `make docs-lint` plus `make plan-validation`.

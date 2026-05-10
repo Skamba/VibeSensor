@@ -8,7 +8,7 @@ from types import ModuleType
 
 from tests._paths import REPO_ROOT
 
-_CHECK_HYGIENE = REPO_ROOT / "tools" / "dev" / "check_hygiene.py"
+_CHECK_HYGIENE = REPO_ROOT / "tools" / "dev" / "hygiene" / "checks.py"
 
 
 def load_check_hygiene_module(

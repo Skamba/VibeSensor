@@ -54,6 +54,18 @@ If you want the browser to open automatically on local desktop workflows, use
 If you prefer the source-mounted Docker workflow instead of the native path,
 run `make dev`.
 
+## Cleanup workflow
+
+- `make clean` removes fast-regenerated build outputs, test caches, static UI
+  output, and generated UI contract derivatives. It keeps dependency installs
+  and local runtime data.
+- `make pristine` runs `make clean`, then removes ignored generated/cache/runtime
+  outputs including `.venv`, UI `node_modules`, Pi image output/cache dirs,
+  artifacts, and tmp dirs. It intentionally keeps local secret files such as
+  `.secrets.act` and server Wi-Fi secret env files.
+- After `make pristine`, run `make setup` to recreate the native dev checkout
+  and materialize missing generated UI contract derivatives.
+
 ## Hooks and local safeguards
 
 `make setup` enables the versioned repo hooks automatically. If you skipped that

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean pristine format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -12,12 +12,45 @@ PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 BACKEND_BENCHMARK_TARGETS ?= tests/infra/workers/benchmark_compute_all.py tests/use_cases/diagnostics/benchmark_whole_run_spectra.py tests/use_cases/updates/benchmark_update_status_codec.py
+UI_GENERATED_DERIVATIVES := \
+	$(UI_DIR)/src/constants.ts \
+	$(UI_DIR)/src/generated/http_api_contracts.ts \
+	$(UI_DIR)/src/contracts/ws_payload_schema.generated.ts \
+	$(UI_DIR)/src/contracts/ws_payload_types.ts
+CLEAN_PATHS := \
+	$(SERVER_DIR)/build \
+	$(SERVER_DIR)/dist \
+	$(SERVER_DIR)/vibesensor.egg-info \
+	$(SERVER_DIR)/.mypy_cache \
+	$(SERVER_DIR)/.pytest_cache \
+	$(SERVER_DIR)/.ruff_cache \
+	$(SERVER_DIR)/.import_linter_cache \
+	$(SERVER_DIR)/vibesensor/static \
+	$(UI_DIR)/dist \
+	$(UI_DIR)/test-results \
+	$(UI_DIR)/playwright-report \
+	.pytest_cache \
+	.ruff_cache \
+	.mypy_cache \
+	.coverage \
+	htmlcov \
+	infra/pi-image/pi-gen/.cache \
+	tools/dev/.ruff_cache \
+	$(UI_GENERATED_DERIVATIVES)
 
 # Prefer the repo venv after setup, but still allow bootstrap targets to run
 # against the pinned host interpreter before `.venv` exists.
 define RESOLVE_PYTHON
 PYTHON="$(VENV_PYTHON)"; \
 if [ ! -x "$$PYTHON" ]; then PYTHON="$(PYTHON_BOOTSTRAP)"; fi;
+endef
+
+define CREATE_VENV
+if command -v uv >/dev/null 2>&1; then \
+	uv venv --seed --python "$(PYTHON_VERSION)" "$(VENV_DIR)"; \
+else \
+	"$(PYTHON_BOOTSTRAP)" -m venv "$(VENV_DIR)"; \
+fi
 endef
 
 help: ## Show the available make targets and what each one does
@@ -32,7 +65,7 @@ setup: ## Install backend dev dependencies and UI node_modules
 		echo "Recreating .venv for Python $(PYTHON_VERSION)"; \
 		rm -rf "$(VENV_DIR)"; \
 	fi
-	@if [ ! -x "$(VENV_PYTHON)" ]; then "$(PYTHON_BOOTSTRAP)" -m venv "$(VENV_DIR)"; fi
+	@if [ ! -x "$(VENV_PYTHON)" ]; then $(CREATE_VENV); fi
 	"$(VENV_PYTHON)" -m pip install --upgrade pip
 	"$(VENV_PYTHON)" -m pip install -e "./apps/server[dev]"
 	cd $(UI_DIR) && node ../../tools/ui/ensure_ui_bootstrap.mjs
@@ -41,8 +74,11 @@ setup: ## Install backend dev dependencies and UI node_modules
 dev: ## Start the source-mounted Docker dev stack with backend reload + Vite HMR
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
-clean: ## Remove local build, package, and Pi image cache artifacts
-	rm -rf $(SERVER_DIR)/build $(SERVER_DIR)/dist $(SERVER_DIR)/vibesensor.egg-info infra/pi-image/pi-gen/.cache
+clean: ## Remove fast local build, test cache, static UI, and generated derivative outputs
+	rm -rf $(CLEAN_PATHS)
+
+pristine: clean ## Remove all ignored generated/cache/runtime outputs; keep local secrets
+	git clean -fdX -e .secrets.act -e apps/server/wifi-secrets.env
 
 format: ## Run Ruff formatter over backend and tooling files
 	@$(RESOLVE_PYTHON) \
