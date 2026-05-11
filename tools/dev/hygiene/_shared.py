@@ -245,6 +245,8 @@ _UI_VITEST_CONFIG = _UI_ROOT / "vitest.config.ts"
 
 _UI_PLAYWRIGHT_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.config.ts"
 
+_UI_PLAYWRIGHT_REGRESSION_CONFIG = _UI_ROOT / "playwright.regression.config.ts"
+
 _UI_PLAYWRIGHT_MOCK_SMOKE_CONFIG = _UI_ROOT / "playwright.smoke.msw.config.ts"
 
 _UI_PLAYWRIGHT_VISUAL_CONFIG = _UI_ROOT / "playwright.config.ts"

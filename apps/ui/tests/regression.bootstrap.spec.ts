@@ -29,7 +29,7 @@ function parseElapsedSeconds(value: string): number {
   return minutes * 60 + seconds;
 }
 
-test("dark mode theme smoke keeps shared readiness and warning surfaces wired", async ({
+test("dark mode theme regression keeps shared readiness and warning surfaces wired", async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "dark" });
@@ -203,7 +203,7 @@ test("dark mode theme smoke keeps shared readiness and warning surfaces wired", 
   expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
 });
 
-test("ui bootstrap smoke: tabs, ws state, recording, history", async ({
+test("ui bootstrap regression: tabs, ws state, recording, history", async ({
   page,
 }) => {
   let startCalls = 0;

@@ -94,7 +94,8 @@ cd apps/ui && npm run test:visual:audit
 | Layer | Runner | Use for |
 |---|---|---|
 | Unit/integration | `npm run test:unit` | logic below browser boundary, payload decoders, runtime helpers, feature workflows, pure view helpers |
-| Smoke | `npm run test:smoke` | end-to-end flows against a real Vite dev/preview server |
+| Smoke | `npm run test:smoke` | critical boot/happy-path flows against a real Vite dev server |
+| Browser regression | `npm run test:regression` | broader Playwright UI regressions moved out of smoke |
 | Visual/snapshot | `npm run test:visual` | rendered-state regression baselines |
 
 - `make ui-typecheck` materializes generated UI contracts, then runs format/lint/type gates.

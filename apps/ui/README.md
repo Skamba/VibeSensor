@@ -503,13 +503,14 @@ frame instead of the normal payload.
 
 ## Test layers
 
-The UI has two complementary test layers; pick the one that matches the seam
+The UI has complementary test layers; pick the one that matches the seam
 under test.
 
 | Layer | Runner | What it covers | Command |
 |-------|--------|----------------|---------|
 | **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
-| **Smoke** | Playwright (Chromium) | End-to-end UI flows against a real Vite dev/preview server; file pattern `tests/smoke*.spec.ts` | `npm run test:smoke` |
+| **Smoke** | Playwright (Chromium) | Critical boot/happy-path flows against a real Vite dev server; explicit file pattern `tests/smoke.critical.spec.ts` | `npm run test:smoke` |
+| **Browser regression** | Playwright (Chromium) | Broader browser state, error-path, layout, and liveness regressions moved out of smoke; file pattern `tests/regression*.spec.ts` | `npm run test:regression` |
 | **Visual / snapshot** | Playwright (Chromium) | Rendered-state regression baselines in `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
 
 Vitest is the canonical fast test layer; reach for it whenever the test does not
@@ -523,12 +524,13 @@ make ui-test                 # same unit suite from the repo root
 ```
 
 Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
-`smoke*.spec.ts`, `visual.spec.ts`, and `msw-browser.smoke.spec.ts` files via
-[`vitest.config.ts`](./vitest.config.ts). New logic-level tests should land as
-`tests/<feature>_*.spec.ts`; new browser flows should land as
-`tests/smoke.<feature>.spec.ts`. The hygiene suite also guards that every
-committed `tests/*.spec.ts` file matches exactly one of those runner ownership
-patterns.
+`smoke*.spec.ts`, `regression*.spec.ts`, `visual.spec.ts`, and
+`msw-browser.smoke.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts).
+New logic-level tests should land as `tests/<feature>_*.spec.ts`; new browser
+regressions should land as `tests/regression.<feature>.spec.ts`. Add to
+`tests/smoke.critical.spec.ts` only when a flow is required for boot or a core
+happy path. The hygiene suite guards that every committed `tests/*.spec.ts` file
+matches exactly one runner ownership pattern.
 
 ## Visual Tests
 
