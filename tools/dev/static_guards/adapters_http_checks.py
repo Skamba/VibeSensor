@@ -388,9 +388,9 @@ def _check_ws_broadcast_uses_projection_module() -> list[str]:
     ws_projection_path = (
         VIBESENSOR_DIR / "infra" / "runtime" / "ws_payload_projection.py"
     )
-    container_path = VIBESENSOR_DIR / "app" / "container.py"
+    live_composition_path = VIBESENSOR_DIR / "app" / "composition" / "live.py"
     source = _read_text(ws_broadcast_path)
-    container_source = _read_text(container_path)
+    live_composition_source = _read_text(live_composition_path)
     failures: list[str] = []
     if not ws_projection_path.exists():
         failures.append(
@@ -427,18 +427,19 @@ def _check_ws_broadcast_uses_projection_module() -> list[str]:
             f"{ws_broadcast_path.relative_to(REPO_ROOT)} must accept a LiveWsPayloadSource collaborator"
         )
     if (
-        "LiveWsPayloadProjector(" not in container_source
-        or "payload_source=ws_payload_projector" not in container_source
+        "LiveWsPayloadProjector(" not in live_composition_source
+        or "payload_source=ws_payload_projector" not in live_composition_source
     ):
         failures.append(
-            f"{container_path.relative_to(REPO_ROOT)} must keep the concrete LiveWsPayloadProjector wired behind the broadcaster's payload_source port"
+            f"{live_composition_path.relative_to(REPO_ROOT)} must keep the concrete LiveWsPayloadProjector wired behind the broadcaster's payload_source port"
         )
     return failures
 
 
 def _check_runtime_settings_use_explicit_reader_ports() -> list[str]:
     ports_path = VIBESENSOR_DIR / "shared" / "ports.py"
-    container_path = VIBESENSOR_DIR / "app" / "container.py"
+    live_composition_path = VIBESENSOR_DIR / "app" / "composition" / "live.py"
+    settings_composition_path = VIBESENSOR_DIR / "app" / "composition" / "settings.py"
     runtime_state_path = VIBESENSOR_DIR / "app" / "runtime_state.py"
     logger_path = VIBESENSOR_DIR / "use_cases" / "run" / "logger.py"
     recorder_runtime_path = (
@@ -447,7 +448,8 @@ def _check_runtime_settings_use_explicit_reader_ports() -> list[str]:
     recorder_types_path = VIBESENSOR_DIR / "use_cases" / "run" / "_recorder_types.py"
     metadata_path = VIBESENSOR_DIR / "use_cases" / "run" / "run_metadata_builder.py"
     ports_source = _read_text(ports_path)
-    container_source = _read_text(container_path)
+    live_composition_source = _read_text(live_composition_path)
+    settings_composition_source = _read_text(settings_composition_path)
     runtime_state_source = _read_text(runtime_state_path)
     logger_source = _read_text(logger_path)
     recorder_runtime_source = _read_text(recorder_runtime_path)
@@ -462,20 +464,35 @@ def _check_runtime_settings_use_explicit_reader_ports() -> list[str]:
             f"{ports_path.relative_to(REPO_ROOT)} must define a focused LanguageReader protocol for runtime-facing language access"
         )
     if (
-        "language_provider" in container_source
-        or "_language_provider" in container_source
+        "language_provider" in live_composition_source
+        or "_language_provider" in live_composition_source
+        or "language_provider" in settings_composition_source
+        or "_language_provider" in settings_composition_source
     ):
         failures.append(
-            f"{container_path.relative_to(REPO_ROOT)} must not use ad hoc language-provider lambdas once runtime reader ports exist"
+            "app composition must not use ad hoc language-provider lambdas once runtime reader ports exist"
         )
-    for marker in (
-        "language_reader: LanguageReader",
-        "language_reader=self.ui_preferences",
-        "language_reader=runtime_settings.language_reader",
-    ):
-        if marker not in container_source:
+    required_markers = (
+        (
+            settings_composition_path,
+            settings_composition_source,
+            "language_reader: LanguageReader",
+        ),
+        (
+            settings_composition_path,
+            settings_composition_source,
+            "language_reader=self.ui_preferences",
+        ),
+        (
+            live_composition_path,
+            live_composition_source,
+            "language_reader=runtime_settings.language_reader",
+        ),
+    )
+    for path, source, marker in required_markers:
+        if marker not in source:
             failures.append(
-                f"{container_path.relative_to(REPO_ROOT)} must wire explicit runtime language-reader ports ({marker})"
+                f"{path.relative_to(REPO_ROOT)} must wire explicit runtime language-reader ports ({marker})"
             )
     if (
         "settings_store: SettingsReader" in runtime_state_source
