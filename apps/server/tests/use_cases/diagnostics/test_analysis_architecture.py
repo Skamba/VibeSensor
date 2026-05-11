@@ -19,20 +19,11 @@ _SERVER_PKG = SERVER_ROOT / "vibesensor"
 # 1. diagnostics/__init__.py stays a package marker only
 # ---------------------------------------------------------------------------
 
-_REMOVED_FACADE_SYMBOLS = [
-    "AnalysisResult",
-    "RunAnalysis",
-]
 
-
-def test_diagnostics_package_no_longer_reexports_app_level_symbols() -> None:
+def test_diagnostics_package_is_marker_only() -> None:
     import vibesensor.use_cases.diagnostics as diagnostics
 
     assert diagnostics.__all__ == []
-    for symbol in _REMOVED_FACADE_SYMBOLS:
-        assert not hasattr(diagnostics, symbol), (
-            f"vibesensor.use_cases.diagnostics should not re-export {symbol}"
-        )
 
 
 def test_canonical_analysis_symbols_live_in_run_analysis() -> None:

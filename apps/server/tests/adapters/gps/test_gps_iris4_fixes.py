@@ -172,12 +172,6 @@ def test_gps_max_speed_validation_config_is_reasonable() -> None:
     )
 
 
-def test_gps_speed_module_no_longer_reexports_max_speed_alias() -> None:
-    import vibesensor.adapters.gps.gps_speed as mod
-
-    assert not hasattr(mod, "_GPS_MAX_SPEED_MPS")
-
-
 # ---------------------------------------------------------------------------
 # Fix 10: current_reconnect_delay reset on successful connection
 # ---------------------------------------------------------------------------

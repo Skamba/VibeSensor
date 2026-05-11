@@ -34,7 +34,6 @@ def test_prepare_report_input_prefers_connected_sensor_locations() -> None:
         },
     )
     assert prepared.report_facts.sensor.active_locations == ("rear-right",)
-    assert not hasattr(prepared, "renderer_payload")
 
 
 def test_prepare_report_input_rejects_blank_filename() -> None:

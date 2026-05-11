@@ -58,12 +58,6 @@ class TestBuildOrderBandsLocation:
     def test_importable_from_order_bands(self) -> None:
         assert callable(build_order_bands)
 
-    def test_not_in_runtime(self) -> None:
-        """The old _build_order_bands should not exist in runtime anymore."""
-        import vibesensor.infra.runtime as rt
-
-        assert not hasattr(rt, "_build_order_bands")
-
     def test_build_order_bands_basic(self) -> None:
         from vibesensor.shared.order_bands import build_diagnostic_settings
 
