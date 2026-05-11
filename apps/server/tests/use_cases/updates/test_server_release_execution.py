@@ -3,12 +3,23 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from test_support.update_status import build_update_status_harness
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefreshResult
-from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
+from vibesensor.use_cases.updates.models import (
+    UpdateExecutionOutcome,
+    UpdatePhase,
+    UpdateRequest,
+    UpdateTransport,
+)
+from vibesensor.use_cases.updates.run_models import (
+    InstallServerReleasePlan,
+    PlannedUpdateRun,
+    PreparedUpdateRun,
+)
 from vibesensor.use_cases.updates.server_release_execution import (
     ServerReleaseExecutionCoordinator,
 )
@@ -58,6 +69,17 @@ class _RecordingDeployment:
         self.deployed_release = staged_release
 
 
+def _workflow(release: object, prepared_transport: object) -> tuple[PlannedUpdateRun, object]:
+    plan = InstallServerReleasePlan(release=release)
+    return (
+        PlannedUpdateRun(
+            prepared=PreparedUpdateRun(prepared_transport=prepared_transport),
+            execution_plan=plan,
+        ),
+        plan,
+    )
+
+
 @pytest.mark.asyncio
 async def test_execute_deploys_staged_release_after_successful_refresh(tmp_path: Path) -> None:
     status = _build_status_tracker(tmp_path / "update-state.json")
@@ -65,18 +87,28 @@ async def test_execute_deploys_staged_release_after_successful_refresh(tmp_path:
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
     firmware_refresher = _StaticFirmwareRefresher(FirmwareRefreshResult.success())
     deployment = _RecordingDeployment()
+    completion = MagicMock()
+    completion.complete_success = AsyncMock()
     coordinator = ServerReleaseExecutionCoordinator(
+        completion=completion,
         stager=_StaticStager(staged_release),
         firmware_refresher=firmware_refresher,
         deployment=deployment,
         status=status,
     )
+    prepared_transport = object()
+    workflow, plan = _workflow(release, prepared_transport)
 
-    await coordinator.execute(release)
+    result = await coordinator.execute(workflow, plan)
 
+    assert result == UpdateExecutionOutcome.installed
     assert firmware_refresher.pinned_tags == ["server-v2026.4.4"]
     assert deployment.deployed_release is staged_release
     assert status.status.issues == []
+    completion.complete_success.assert_awaited_once_with(
+        prepared_transport,
+        message="Update completed successfully",
+    )
 
 
 @pytest.mark.asyncio
@@ -91,17 +123,22 @@ async def test_execute_records_firmware_refresh_failure_and_still_deploys(tmp_pa
         ),
     )
     deployment = _RecordingDeployment()
+    completion = MagicMock()
+    completion.complete_success = AsyncMock()
     coordinator = ServerReleaseExecutionCoordinator(
+        completion=completion,
         stager=_StaticStager(staged_release),
         firmware_refresher=firmware_refresher,
         deployment=deployment,
         status=status,
     )
+    workflow, plan = _workflow(release, object())
 
-    await coordinator.execute(release)
+    await coordinator.execute(workflow, plan)
 
     assert deployment.deployed_release is staged_release
     assert firmware_refresher.pinned_tags == ["server-v2026.4.4"]
     assert status.status.issues[-1].message == "ESP firmware cache refresh failed (exit 4)"
     assert status.status.issues[-1].detail == "download timed out"
     assert "ESP firmware refresh failed; continuing with existing cache" in status.status.log_tail
+    completion.complete_success.assert_awaited_once()

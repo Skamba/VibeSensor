@@ -72,15 +72,15 @@ def _build_manager_with_cancellation_cleanup(
     tracker = build_update_status_tracker(state_store=state_store)
     reporter = UpdateTerminalStateReporter(status=tracker)
     prepared_transport = SimpleNamespace(cleanup_after_update=AsyncMock())
+
+    async def plan_with_cancellation(_request, *, on_prepared=None):
+        prepared = PreparedUpdateRun(prepared_transport=prepared_transport)
+        if on_prepared is not None:
+            on_prepared(prepared)
+        raise asyncio.CancelledError
+
     workflow = UpdateWorkflow(
-        preparation=SimpleNamespace(
-            prepare=AsyncMock(
-                return_value=PreparedUpdateRun(prepared_transport=prepared_transport),
-            )
-        ),
-        release_planner=SimpleNamespace(
-            plan=AsyncMock(side_effect=asyncio.CancelledError()),
-        ),
+        planner=SimpleNamespace(plan=AsyncMock(side_effect=plan_with_cancellation)),
         workflow_executor=SimpleNamespace(execute=AsyncMock()),
         finalizer=UpdateWorkflowFinalizer(
             transport_coordinator=UpdateTransportCoordinator(
