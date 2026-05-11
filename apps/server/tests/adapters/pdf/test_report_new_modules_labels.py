@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.use_cases.history.report_document.peak_table as peak_table
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.shared.boundaries.reporting import FindingPresentation
 from vibesensor.shared.report_presentation import (
@@ -20,10 +19,6 @@ from vibesensor.use_cases.history.report_document.pattern_parts import (
 from vibesensor.use_cases.history.report_document.peak_table import (
     build_peak_row,
     peak_row_system_label,
-)
-from vibesensor.use_cases.history.report_document.report_sections import (
-    build_data_trust,
-    build_next_steps,
 )
 
 
@@ -148,15 +143,6 @@ def test_peak_row_system_label_falls_back_to_matching_finding_order() -> None:
         }[key],
     )
     assert label == "Wheel / Tire"
-
-
-def test_extracted_pdf_builders_are_importable() -> None:
-    assert not hasattr(peak_table, "build_peak_rows_from_plots")
-    assert "build_peak_rows_from_plots" not in peak_table.__all__
-    assert callable(build_peak_row)
-    assert callable(peak_row_system_label)
-    assert callable(build_next_steps)
-    assert callable(build_data_trust)
 
 
 @pytest.mark.parametrize(

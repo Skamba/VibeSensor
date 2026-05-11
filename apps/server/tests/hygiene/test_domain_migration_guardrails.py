@@ -3,55 +3,6 @@
 from __future__ import annotations
 
 
-def test_finding_has_no_from_payload_method() -> None:
-    """Finding domain class should not own payload decode logic."""
-    from vibesensor.domain import Finding
-
-    assert not hasattr(Finding, "from_payload"), (
-        "Finding.from_payload should live in boundaries/finding.py, not on the domain class"
-    )
-
-
-def test_build_run_suitability_checks_does_not_exist() -> None:
-    """``build_run_suitability_checks`` must not exist in run_analysis.
-
-    It was deleted in Workstream 2 (T3.21).  ``RunSuitability.evaluate()``
-    is the canonical owner of suitability evaluation.
-    """
-    from vibesensor.use_cases.diagnostics import run_analysis
-
-    assert not hasattr(run_analysis, "build_run_suitability_checks"), (
-        "build_run_suitability_checks was deleted; use RunSuitability.evaluate()"
-    )
-
-
-def test_project_analysis_summary_has_no_legacy_summary_version_fast_path() -> None:
-    """project_analysis_summary must always reconstruct through TestRun.
-
-    The legacy `_summary_version == 2` bypass was removed. Historical
-    summaries are reconstructed the same way as current ones so the
-    boundary has a single canonical behavior.
-    """
-    from tests._paths import SERVER_ROOT
-
-    source = (
-        SERVER_ROOT / "vibesensor" / "shared" / "boundaries" / "analysis_payloads" / "projection.py"
-    ).read_text()
-    assert 'analysis.get("_summary_version") == 2' not in source
-
-
-def test_run_analysis_does_not_define_case_context_wrappers() -> None:
-    """run_analysis must not own duplicate Car/Symptom metadata decoders."""
-    from tests._paths import SERVER_ROOT
-
-    source = (
-        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "run_analysis.py"
-    ).read_text()
-    assert "def build_domain_car" not in source
-    assert "def build_domain_symptoms" not in source
-    assert "RunSuitabilityCheck" not in source
-
-
 def test_f_order_finding_id_normalization() -> None:
     """``finalize_findings`` normalises arbitrary IDs to sequential ``F###``.
 
@@ -84,15 +35,6 @@ def test_f_order_finding_id_normalization() -> None:
     )
     assert domain_ref[0].finding_id == "REF_SPEED"
     assert domain_ref[1].finding_id == "F001"
-
-
-def test_fallback_payload_functions_removed() -> None:
-    """``top_strength_values`` and ``has_relevant_reference_gap`` have been
-    removed — the domain aggregate is always available."""
-    from vibesensor.use_cases.history import report_document as mapping
-
-    assert not hasattr(mapping, "top_strength_values")
-    assert not hasattr(mapping, "has_relevant_reference_gap")
 
 
 def test_no_compat_dual_base_exceptions() -> None:

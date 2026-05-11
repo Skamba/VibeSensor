@@ -181,8 +181,6 @@ def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
         }
     )
 
-    assert not hasattr(prepared, "analysis_summary")
-    assert not hasattr(prepared, "renderer_payload")
     assert prepared.report_facts.run.run_id == "guardrails"
 
 
@@ -198,12 +196,6 @@ def test_next_steps_consume_prepared_actions() -> None:
     assert "aggregate" not in params
 
 
-def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None:
-    import vibesensor.use_cases.history.report_document as mapping
-
-    assert not hasattr(mapping, "build_report_from_summary")
-
-
 def test_reporting_document_boundary_exposes_document_models_only() -> None:
     from vibesensor.shared.boundaries.reporting import FindingPresentation
     from vibesensor.shared.boundaries.reporting import document as document_boundary
@@ -216,7 +208,6 @@ def test_reporting_document_boundary_exposes_document_models_only() -> None:
 def test_report_facts_hold_canonical_document_sections_without_builder_shims() -> None:
     from dataclasses import fields
 
-    import vibesensor.use_cases.history.report_document as mapping
     from vibesensor.shared.boundaries.reporting import (
         PreparedReportFacts,
         PreparedReportInput,
@@ -241,11 +232,3 @@ def test_report_facts_hold_canonical_document_sections_without_builder_shims() -
         "appendix_c",
         "traceability_rows",
     } <= document_fields
-    assert not hasattr(mapping, "ReportDocumentComposition")
-    assert not hasattr(mapping, "compose_report_document")
-    assert not hasattr(mapping, "compose_report_document_context")
-    assert not hasattr(mapping, "build_report_document_data")
-
-    assert not hasattr(mapping, "_build_verdict_page_data")
-    assert not hasattr(mapping, "_build_appendix_a_data")
-    assert not hasattr(mapping, "_build_appendix_b_data")

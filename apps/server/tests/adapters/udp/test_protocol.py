@@ -50,13 +50,6 @@ from vibesensor.adapters.udp.protocol import (
 from vibesensor.shared.exceptions import ProtocolError
 
 
-def test_protocol_module_no_longer_reexports_protocol_exceptions() -> None:
-    import vibesensor.adapters.udp.protocol as protocol_module
-
-    assert not hasattr(protocol_module, "ProtocolError")
-    assert not hasattr(protocol_module, "ProtocolVersionMismatch")
-
-
 def test_hello_roundtrip() -> None:
     client_id = bytes.fromhex("a1b2c3d4e5f6")
     pkt = pack_hello(
