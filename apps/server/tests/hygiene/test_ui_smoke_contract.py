@@ -18,11 +18,7 @@ _UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
 _CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _EXPECTED_CORE_SMOKE_SPECS = {
-    "smoke.bootstrap.spec.ts",
-    "smoke.settings.spec.ts",
-    "smoke.history.spec.ts",
-    "smoke.cars.spec.ts",
-    "smoke.esp-flash.spec.ts",
+    "smoke.critical.spec.ts",
 }
 
 
@@ -108,6 +104,7 @@ def test_ui_tooling_covers_playwright_configs_and_ignores_generated_results() ->
 
     assert playwright_configs == {
         "playwright.config.ts",
+        "playwright.regression.config.ts",
         "playwright.smoke.config.ts",
         "playwright.smoke.msw.config.ts",
         "playwright.visual-audit.config.ts",
@@ -151,6 +148,8 @@ def test_core_ui_smoke_specs_exist() -> None:
 
     missing = _EXPECTED_CORE_SMOKE_SPECS - smoke_specs
     assert not missing, f"Missing core smoke specs: {sorted(missing)}"
+    extra = smoke_specs - _EXPECTED_CORE_SMOKE_SPECS
+    assert not extra, f"Unexpected non-critical smoke specs: {sorted(extra)}"
 
 
 def test_ui_smoke_failure_artifact_contract() -> None:
