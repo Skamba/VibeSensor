@@ -4,37 +4,32 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
-import os
 import subprocess
 import sys
 import tempfile
 import threading
 import time
-import traceback
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
+
+from fuzz_artifacts import write_processing_failure_artifact
+from fuzz_common import terminate_processes, worker_prefix, worker_seed
+from fuzz_processing_assertions import is_sorted_desc, json_no_nan
+from fuzz_processing_scenarios import (
+    fft_case_strategy,
+    make_freq_slice,
+    processor_case_strategy,
+    strength_case_strategy,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _load_repo_tooling_support():
-    helper_path = REPO_ROOT / "tools" / "repo_tooling_support.py"
-    spec = importlib.util.spec_from_file_location("repo_tooling_support", helper_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Unable to load repo tooling helpers from {helper_path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-_repo_tooling_support = _load_repo_tooling_support()
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "fuzz"
 
 TargetName = Literal["strength", "fft", "processor", "all"]
@@ -121,54 +116,10 @@ def _parse_args() -> FuzzConfig:
     )
 
 
-def _write_failure_artifact(
-    *,
-    target: str,
-    case: Mapping[str, object] | None,
-    output: Mapping[str, object] | None,
-    exc: BaseException,
-    artifact_dir: Path,
-) -> Path | None:
-    if case is None:
-        return None
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
-    artifact_path = (
-        artifact_dir / f"{target}-fuzz-failure-{timestamp}-{os.getpid()}.json"
-    )
-    payload: dict[str, object] = {
-        "target": target,
-        "exception_type": type(exc).__name__,
-        "exception_message": str(exc),
-        "traceback": traceback.format_exc(),
-        "case": case,
-        "output": output,
-    }
-    artifact_path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False),
-        encoding="utf-8",
-    )
-    return artifact_path
-
-
-def _json_no_nan(value: object) -> None:
-    json.dumps(value, ensure_ascii=False, allow_nan=False)
-
-
-def _is_sorted_desc(values: Sequence[float]) -> bool:
-    return all(left >= right for left, right in zip(values, values[1:], strict=False))
-
-
 def _float_or_none(value: object) -> float | None:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return float(value)
     return None
-
-
-def _worker_seed(base_seed: int | None, worker_index: int) -> int | None:
-    if base_seed is None:
-        return None
-    return base_seed + worker_index
 
 
 def _run_local_target(
@@ -183,12 +134,6 @@ def _run_local_target(
     worker_index = config.worker_index if config.worker_index is not None else 0
     total_examples = worker_fn(worker_index, deadline, stop_event)
     return time.monotonic() - start, total_examples
-
-
-def _worker_prefix(worker_index: int | None) -> str:
-    if worker_index is None:
-        return ""
-    return f"[worker {worker_index}] "
 
 
 def _build_worker_command(
@@ -213,245 +158,12 @@ def _build_worker_command(
         str(result_file),
     ]
     if config.seed is not None:
-        cmd.extend(["--seed", str(_worker_seed(config.seed, worker_index))])
+        cmd.extend(["--seed", str(worker_seed(config.seed, worker_index))])
     return cmd
 
 
 def _terminate_processes(processes: Sequence[subprocess.Popen[str]]) -> None:
-    _repo_tooling_support.terminate_processes(processes)
-
-
-def _strength_case_strategy(st: Any) -> Any:
-    @st.composite
-    def _build(draw: Any) -> dict[str, object]:
-        axis_count = draw(st.integers(min_value=0, max_value=3))
-        lengths = draw(
-            st.lists(
-                st.integers(min_value=0, max_value=192),
-                min_size=axis_count,
-                max_size=axis_count,
-            )
-        )
-        axis_spectra = [
-            draw(
-                st.lists(
-                    st.floats(
-                        min_value=-1.0,
-                        max_value=4.0,
-                        allow_nan=False,
-                        allow_infinity=False,
-                    ),
-                    min_size=length,
-                    max_size=length,
-                )
-            )
-            for length in lengths
-        ]
-        axis_count_for_mean = draw(
-            st.one_of(
-                st.none(),
-                st.integers(min_value=1, max_value=4),
-            )
-        )
-        freq_step_hz = draw(
-            st.floats(
-                min_value=0.1, max_value=12.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        start_hz = draw(
-            st.floats(
-                min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        center_idx = draw(
-            st.integers(min_value=0, max_value=max(0, min(lengths or [0]) - 1))
-        )
-        bandwidth_hz = draw(
-            st.floats(
-                min_value=0.05, max_value=8.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        epsilon_g = draw(
-            st.one_of(
-                st.none(),
-                st.floats(
-                    min_value=1e-12,
-                    max_value=0.1,
-                    allow_nan=False,
-                    allow_infinity=False,
-                ),
-            )
-        )
-        return {
-            "axis_spectra": axis_spectra,
-            "axis_count_for_mean": axis_count_for_mean,
-            "freq_step_hz": freq_step_hz,
-            "start_hz": start_hz,
-            "center_idx": center_idx,
-            "bandwidth_hz": bandwidth_hz,
-            "epsilon_g": epsilon_g,
-        }
-
-    return _build()
-
-
-def _fft_case_strategy(st: Any) -> Any:
-    @st.composite
-    def _build(draw: Any) -> dict[str, object]:
-        sample_rate_hz = draw(st.integers(min_value=32, max_value=4096))
-        fft_n = draw(st.sampled_from((32, 64, 128, 256, 512)))
-        spectrum_min_hz = draw(
-            st.floats(
-                min_value=0.0, max_value=40.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        max_band_hz = max(float(sample_rate_hz) / 2.0, spectrum_min_hz + 1.0)
-        spectrum_max_hz = draw(
-            st.floats(
-                min_value=max(spectrum_min_hz + 0.1, 1.0),
-                max_value=max_band_hz,
-                allow_nan=False,
-                allow_infinity=False,
-            )
-        )
-        spike_filter_enabled = draw(st.booleans())
-        spike_col = draw(st.integers(min_value=0, max_value=fft_n - 1))
-        spike_axis = draw(st.integers(min_value=0, max_value=2))
-        dc_offset = draw(
-            st.floats(
-                min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        base_block = draw(
-            st.lists(
-                st.lists(
-                    st.floats(
-                        min_value=-8.0,
-                        max_value=8.0,
-                        allow_nan=False,
-                        allow_infinity=False,
-                    ),
-                    min_size=fft_n,
-                    max_size=fft_n,
-                ),
-                min_size=3,
-                max_size=3,
-            )
-        )
-        spike_value = draw(
-            st.floats(
-                min_value=-64.0, max_value=64.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        return {
-            "sample_rate_hz": sample_rate_hz,
-            "fft_n": fft_n,
-            "spectrum_min_hz": spectrum_min_hz,
-            "spectrum_max_hz": spectrum_max_hz,
-            "spike_filter_enabled": spike_filter_enabled,
-            "spike_col": spike_col,
-            "spike_axis": spike_axis,
-            "dc_offset": dc_offset,
-            "base_block": base_block,
-            "spike_value": spike_value,
-        }
-
-    return _build()
-
-
-def _processor_case_strategy(st: Any) -> Any:
-    @st.composite
-    def _build(draw: Any) -> dict[str, object]:
-        sample_rate_hz = draw(st.integers(min_value=64, max_value=800))
-        waveform_seconds = draw(st.integers(min_value=1, max_value=4))
-        waveform_display_hz = draw(st.integers(min_value=1, max_value=120))
-        fft_n = draw(st.sampled_from((32, 64, 128, 256)))
-        spectrum_min_hz = draw(
-            st.floats(
-                min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False
-            )
-        )
-        spectrum_max_hz = draw(
-            st.floats(
-                min_value=max(spectrum_min_hz + 0.5, 5.0),
-                max_value=min(float(sample_rate_hz) / 2.0, 250.0),
-                allow_nan=False,
-                allow_infinity=False,
-            )
-        )
-        accel_scale = draw(
-            st.one_of(
-                st.none(),
-                st.floats(
-                    min_value=1e-5,
-                    max_value=0.05,
-                    allow_nan=False,
-                    allow_infinity=False,
-                ),
-            )
-        )
-        clients = draw(
-            st.lists(
-                st.from_regex(r"[a-z][a-z0-9_-]{1,10}", fullmatch=True),
-                min_size=1,
-                max_size=3,
-                unique=True,
-            )
-        )
-        chunks: list[dict[str, object]] = []
-        for client_id in clients:
-            chunk_count = draw(st.integers(min_value=1, max_value=3))
-            t0_us = 1_000_000
-            for _ in range(chunk_count):
-                row_count = draw(st.integers(min_value=0, max_value=fft_n * 2))
-                rows = draw(
-                    st.lists(
-                        st.lists(
-                            st.floats(
-                                min_value=-32.0,
-                                max_value=32.0,
-                                allow_nan=False,
-                                allow_infinity=False,
-                            ),
-                            min_size=3,
-                            max_size=3,
-                        ),
-                        min_size=row_count,
-                        max_size=row_count,
-                    )
-                )
-                sample_rate_override = draw(
-                    st.one_of(st.none(), st.integers(min_value=1, max_value=4096))
-                )
-                include_t0 = draw(st.booleans())
-                t0_increment = draw(st.integers(min_value=0, max_value=500_000))
-                if include_t0:
-                    t0_us += t0_increment
-                chunks.append(
-                    {
-                        "client_id": client_id,
-                        "rows": rows,
-                        "sample_rate_hz": sample_rate_override,
-                        "t0_us": t0_us if include_t0 else None,
-                    }
-                )
-        return {
-            "sample_rate_hz": sample_rate_hz,
-            "waveform_seconds": waveform_seconds,
-            "waveform_display_hz": waveform_display_hz,
-            "fft_n": fft_n,
-            "spectrum_min_hz": spectrum_min_hz,
-            "spectrum_max_hz": spectrum_max_hz,
-            "accel_scale_g_per_lsb": accel_scale,
-            "clients": clients,
-            "chunks": chunks,
-        }
-
-    return _build()
-
-
-def _make_freq_slice(length: int, *, start_hz: float, step_hz: float) -> list[float]:
-    return [start_hz + (step_hz * idx) for idx in range(length)]
+    terminate_processes(processes, repo_root=REPO_ROOT)
 
 
 def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, object]:
@@ -473,7 +185,7 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
         current_case: dict[str, object] | None = None
         current_output: dict[str, object] | None = None
         worker_examples = 0
-        worker_seed = _worker_seed(config.seed, worker_index)
+        worker_seed_value = worker_seed(config.seed, worker_index)
 
         @settings(
             max_examples=config.batch_examples,
@@ -487,7 +199,7 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
             ),
             phases=(Phase.generate, Phase.target, Phase.shrink),
         )
-        @given(case=_strength_case_strategy(st))
+        @given(case=strength_case_strategy(st))
         def _fuzz(case: dict[str, object]) -> None:
             nonlocal current_case, current_output, worker_examples
             worker_examples += 1
@@ -521,7 +233,7 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
             floor_amp = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
             assert np.isfinite(floor_amp) and floor_amp >= 0.0
 
-            freq_hz = _make_freq_slice(
+            freq_hz = make_freq_slice(
                 len(combined),
                 start_hz=float(case["start_hz"]),
                 step_hz=float(case["freq_step_hz"]),
@@ -561,20 +273,20 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
                 for peak in metrics["top_peaks"]
                 if isinstance(peak, Mapping) and "vibration_strength_db" in peak
             ]
-            assert _is_sorted_desc(peak_strengths), (
+            assert is_sorted_desc(peak_strengths), (
                 "strength peaks not sorted by descending dB"
             )
-            _json_no_nan(metrics)
+            json_no_nan(metrics)
 
-        if worker_seed is not None:
-            _fuzz = seed(worker_seed)(_fuzz)
+        if worker_seed_value is not None:
+            _fuzz = seed(worker_seed_value)(_fuzz)
 
         try:
             while not stop_event.is_set() and time.monotonic() < deadline:
                 _fuzz()
         except BaseException as exc:
             stop_event.set()
-            artifact_path = _write_failure_artifact(
+            artifact_path = write_processing_failure_artifact(
                 target="strength",
                 case=current_case,
                 output=current_output,
@@ -612,7 +324,7 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
         current_case: dict[str, object] | None = None
         current_output: dict[str, object] | None = None
         worker_examples = 0
-        worker_seed = _worker_seed(config.seed, worker_index)
+        worker_seed_value = worker_seed(config.seed, worker_index)
 
         @settings(
             max_examples=config.batch_examples,
@@ -626,7 +338,7 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
             ),
             phases=(Phase.generate, Phase.target, Phase.shrink),
         )
-        @given(case=_fft_case_strategy(st))
+        @given(case=fft_case_strategy(st))
         def _fuzz(case: dict[str, object]) -> None:
             nonlocal current_case, current_output, worker_examples
             worker_examples += 1
@@ -685,17 +397,17 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
             TypeAdapter(VibrationStrengthMetrics).validate_python(
                 result["strength_metrics"]
             )
-            _json_no_nan(current_output)
+            json_no_nan(current_output)
 
-        if worker_seed is not None:
-            _fuzz = seed(worker_seed)(_fuzz)
+        if worker_seed_value is not None:
+            _fuzz = seed(worker_seed_value)(_fuzz)
 
         try:
             while not stop_event.is_set() and time.monotonic() < deadline:
                 _fuzz()
         except BaseException as exc:
             stop_event.set()
-            artifact_path = _write_failure_artifact(
+            artifact_path = write_processing_failure_artifact(
                 target="fft",
                 case=current_case,
                 output=current_output,
@@ -740,7 +452,7 @@ def _run_processor_target(
         current_case: dict[str, object] | None = None
         current_output: dict[str, object] | None = None
         worker_examples = 0
-        worker_seed = _worker_seed(config.seed, worker_index)
+        worker_seed_value = worker_seed(config.seed, worker_index)
 
         @settings(
             max_examples=config.batch_examples,
@@ -754,7 +466,7 @@ def _run_processor_target(
             ),
             phases=(Phase.generate, Phase.target, Phase.shrink),
         )
-        @given(case=_processor_case_strategy(st))
+        @given(case=processor_case_strategy(st))
         def _fuzz(case: dict[str, object]) -> None:
             nonlocal current_case, current_output, worker_examples
             worker_examples += 1
@@ -803,12 +515,12 @@ def _run_processor_target(
             for client_id in clients:
                 metrics = processor.compute_metrics(client_id)
                 TypeAdapter(ClientMetrics).validate_python(metrics)
-                _json_no_nan(metrics)
+                json_no_nan(metrics)
                 metrics_by_client[client_id] = metrics
 
                 spectrum_payload = processor.spectrum_payload(client_id)
                 TypeAdapter(SpectrumSeriesPayload).validate_python(spectrum_payload)
-                _json_no_nan(spectrum_payload)
+                json_no_nan(spectrum_payload)
                 spectrum_by_client[client_id] = spectrum_payload
 
                 xyz = processor.latest_sample_xyz(client_id)
@@ -819,19 +531,19 @@ def _run_processor_target(
             compute_all_result = processor.compute_all(clients)
             for metrics in compute_all_result.values():
                 TypeAdapter(ClientMetrics).validate_python(metrics)
-            _json_no_nan(compute_all_result)
+            json_no_nan(compute_all_result)
 
             multi = processor.multi_spectrum_payload(clients)
             TypeAdapter(SpectraPayload).validate_python(multi)
-            _json_no_nan(multi)
+            json_no_nan(multi)
 
             time_alignment = processor.time_alignment_info(clients)
             TypeAdapter(TimeAlignmentPayload).validate_python(time_alignment)
-            _json_no_nan(time_alignment)
+            json_no_nan(time_alignment)
 
             intake_stats = processor.intake_stats()
             TypeAdapter(IntakeStatsPayload).validate_python(intake_stats)
-            _json_no_nan(intake_stats)
+            json_no_nan(intake_stats)
 
             fresh_clients = processor.clients_with_recent_data(clients, max_age_s=60.0)
             assert set(fresh_clients).issubset(set(clients))
@@ -847,15 +559,15 @@ def _run_processor_target(
                 "fresh_clients": fresh_clients,
             }
 
-        if worker_seed is not None:
-            _fuzz = seed(worker_seed)(_fuzz)
+        if worker_seed_value is not None:
+            _fuzz = seed(worker_seed_value)(_fuzz)
 
         try:
             while not stop_event.is_set() and time.monotonic() < deadline:
                 _fuzz()
         except BaseException as exc:
             stop_event.set()
-            artifact_path = _write_failure_artifact(
+            artifact_path = write_processing_failure_artifact(
                 target="processor",
                 case=current_case,
                 output=current_output,
@@ -881,7 +593,7 @@ def _run_processor_target(
 
 
 def _print_target_summary(config: FuzzConfig, summary: Mapping[str, object]) -> None:
-    prefix = _worker_prefix(config.worker_index)
+    prefix = worker_prefix(config.worker_index)
     print(
         f"{prefix}{str(summary['target']).capitalize()} fuzz passed: "
         f"{float(summary['elapsed_s']):.1f}s with {int(summary['examples'])} randomized examples "
