@@ -1,8 +1,4 @@
 smoke:
-  apps/server/tests/hygiene/test_hotspot_script_guardrails.py:
-    test_hotspot_script_has_no_runtime_apt_get: Hotspot bootstrap must stay in the compact offline-first critical path.
-    test_hotspot_script_prefers_repo_venv_hotspot_config_cli: Hotspot config CLI wiring is part of the critical provisioning path.
-    test_hotspot_script_err_trap_logs_to_stderr: Hotspot failure reporting must stay observable in the compact guardrail path.
   apps/server/tests/hygiene/test_install_offline_artifact_guardrails.py:
     test_install_pi_requires: Pi install artifact prerequisites stay in the compact install path.
     test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints: Offline install CLIs stay in the compact install path.
