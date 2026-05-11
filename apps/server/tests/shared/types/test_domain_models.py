@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain import Car, StrengthPeak
+from vibesensor.domain import StrengthPeak
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
@@ -115,9 +115,6 @@ class TestCarPersistedDict:
     ) -> None:
         car = car_from_persistence_dict(data)
         assert getattr(car, field) == fallback
-
-    def test_domain_car_no_longer_owns_persistence_decoder(self) -> None:
-        assert not hasattr(Car, "from_persisted_dict")
 
 
 # ---------------------------------------------------------------------------

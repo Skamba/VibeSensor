@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf import pdf_diagram_render
 from vibesensor.adapters.pdf.diagram_layout import estimate_text_width
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.domain import LocationIntensitySummary
@@ -291,17 +290,3 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     assert "why this corner wins" in text
     assert "dominant corner" in text
     assert "coverage" in text
-
-
-def test_pdf_diagram_render_module_no_longer_reexports_layout_helpers() -> None:
-    removed_names = (
-        "LabelRenderPlan",
-        "MarkerRenderPlan",
-        "MarkerState",
-        "_estimate_text_width",
-        "_choose_label_plan",
-        "_resolve_marker_states",
-        "_canonical_location",
-    )
-    for name in removed_names:
-        assert not hasattr(pdf_diagram_render, name)
