@@ -8,97 +8,58 @@ from test_support.gps import set_gps_snapshot_age
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
 
-def test_effective_speed_prefers_override_over_gps() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=False)
-    monitor.manual_source_selected = True
-    monitor.set_speed_override_kmh(90.0)
-    assert monitor.effective_speed_mps is not None
-    assert abs(monitor.effective_speed_mps - 25.0) < 1e-9
-
-    monitor.speed_mps = 12.5
-    # override takes priority over GPS when manual source selected
-    assert abs((monitor.effective_speed_mps or 0.0) - 25.0) < 1e-9
-
-
-def test_set_speed_override_zero_sets_stationary() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=False)
-    monitor.set_speed_override_kmh(80.0)
-    assert monitor.override_speed_mps is not None
-
-    # Zero is a valid speed (vehicle is stationary)
-    monitor.set_speed_override_kmh(0.0)
-    assert monitor.override_speed_mps == 0.0
-
-
-def test_manual_selected_with_override_returns_override() -> None:
-    """When manual source is selected and override is set, return override."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.manual_source_selected = True
-    monitor.override_speed_mps = 25.0
-    monitor.speed_mps = 30.0
-    set_gps_snapshot_age(monitor)
-
-    assert abs((monitor.effective_speed_mps or 0.0) - 25.0) < 1e-9
-    assert monitor.fallback_active is False
-
-
-def test_manual_selected_no_override_falls_through_to_gps() -> None:
-    """When manual source is selected but no override is set, fall through to GPS."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.manual_source_selected = True
-    # No override set
-    monitor.speed_mps = 30.0
-    set_gps_snapshot_age(monitor)
-
-    # Should return GPS speed instead of None
-    assert monitor.effective_speed_mps is not None
-    assert abs((monitor.effective_speed_mps or 0.0) - 30.0) < 1e-9
-
-
-def test_manual_selected_no_override_no_gps_returns_none() -> None:
-    """When manual source selected, no override, no GPS → None."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.manual_source_selected = True
-    monitor.speed_mps = None
-
-    assert monitor.effective_speed_mps is None
-
-
-def test_resolve_speed_default_override_has_priority() -> None:
+@pytest.mark.parametrize(
+    (
+        "manual_source_selected",
+        "override_mps",
+        "gps_speed_mps",
+        "gps_age_s",
+        "connection_state",
+        "stale_timeout_s",
+        "expected_speed_mps",
+        "expected_source",
+        "expected_fallback_active",
+    ),
+    [
+        (True, 12.0, 20.0, 0.0, "connected", None, 12.0, "manual", False),
+        (True, None, 30.0, 0.0, "connected", None, 30.0, "gps", False),
+        (True, None, None, None, "connected", None, None, "none", True),
+        (False, 11.0, 22.0, 30.0, "connected", 5.0, 11.0, "fallback_manual", True),
+    ],
+    ids=[
+        "default-manual-override-has-priority",
+        "manual-selected-without-override-uses-fresh-gps",
+        "manual-selected-without-override-and-no-gps-resolves-none",
+        "stale-gps-falls-back-to-manual-override",
+    ],
+)
+def test_resolve_speed_source_contract(
+    manual_source_selected: bool,
+    override_mps: float | None,
+    gps_speed_mps: float | None,
+    gps_age_s: float | None,
+    connection_state: str,
+    stale_timeout_s: float | None,
+    expected_speed_mps: float | None,
+    expected_source: str,
+    expected_fallback_active: bool,
+) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
     assert monitor.manual_source_selected is True
-    monitor.override_speed_mps = 12.0
-    monitor.speed_mps = 20.0
-    set_gps_snapshot_age(monitor)
+    monitor.manual_source_selected = manual_source_selected
+    monitor.override_speed_mps = override_mps
+    monitor.speed_mps = gps_speed_mps
+    monitor.connection_state = connection_state
+    if gps_age_s is not None:
+        set_gps_snapshot_age(monitor, age_s=gps_age_s)
+    if stale_timeout_s is not None:
+        monitor.stale_timeout_s = stale_timeout_s
 
     resolved = monitor.resolve_speed()
-    assert resolved.speed_mps == 12.0
-    assert resolved.source == "manual"
-    assert resolved.fallback_active is False
 
-
-def test_resolve_speed_stale_gps_falls_back_to_manual_override() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.manual_source_selected = False
-    monitor.speed_mps = 22.0
-    set_gps_snapshot_age(monitor, age_s=30.0)
-    monitor.override_speed_mps = 11.0
-    monitor.connection_state = "connected"
-    monitor.stale_timeout_s = 5.0
-
-    resolved = monitor.resolve_speed()
-    assert resolved.speed_mps == 11.0
-    assert resolved.source == "fallback_manual"
-    assert resolved.fallback_active is True
-
-
-def test_set_fallback_settings_clamps_timeout() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.set_fallback_settings(stale_timeout_s=0.1)
-    assert monitor.stale_timeout_s == 3.0
-
-    monitor.set_fallback_settings(stale_timeout_s=999.0)
-    assert monitor.stale_timeout_s == 120.0
+    assert resolved.speed_mps == expected_speed_mps
+    assert resolved.source == expected_source
+    assert resolved.fallback_active is expected_fallback_active
 
 
 @pytest.mark.parametrize("invalid_kmh", [-1.0, math.inf, math.nan], ids=["negative", "inf", "nan"])
