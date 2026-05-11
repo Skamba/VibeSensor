@@ -21,15 +21,6 @@ def _health_client(fake_state):
         yield client, fake_state, app
 
 
-def test_health_route_registered(_health_client):
-    """Verify /api/health is registered as a GET route in the API router."""
-
-    _client, _state, app = _health_client
-    routes = {r.path: r.methods for r in app.router.routes if hasattr(r, "methods")}
-    assert "/api/health" in routes
-    assert "GET" in routes["/api/health"]
-
-
 def test_health_endpoint_response_shape(_health_client):
     """Verify GET /api/health returns typed degradation, data-loss, and persistence state."""
 

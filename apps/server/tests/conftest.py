@@ -373,12 +373,3 @@ def fake_state() -> FakeState:
         "last_completed_run_error": None,
     }
     return state
-
-
-@pytest.fixture
-def route_paths(fake_state: FakeState) -> set[str]:
-    """All registered URL paths from the assembled router."""
-    from vibesensor.adapters.http import create_router
-
-    router = create_router(fake_state)
-    return {r.path for r in router.routes}
