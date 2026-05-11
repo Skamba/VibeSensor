@@ -6,7 +6,7 @@ import asyncio
 import time as real_time
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -18,12 +18,81 @@ from vibesensor.infra.runtime.registry import DataUpdateResult
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
+class RecordingRegistry:
+    def __init__(
+        self,
+        *,
+        results: list[DataUpdateResult] | None = None,
+        sample_rate_hz: int | None = 800,
+        update_error: Exception | None = None,
+    ) -> None:
+        self._results = list(results or [])
+        self._sample_rate_hz = sample_rate_hz
+        self._update_error = update_error
+        self.update_calls: list[tuple[object, tuple[str, int], float]] = []
+        self.queue_drops: list[str | None] = []
+        self.parse_errors: list[str | None] = []
+
+    def update_from_data(self, msg, addr: tuple[str, int], now_ts: float) -> DataUpdateResult:
+        self.update_calls.append((msg, addr, now_ts))
+        if self._update_error is not None:
+            raise self._update_error
+        if self._results:
+            return self._results.pop(0)
+        return DataUpdateResult()
+
+    def get(self, _client_id: str):
+        return SimpleNamespace(sample_rate_hz=self._sample_rate_hz)
+
+    def note_server_queue_drop(self, client_id: str | None) -> None:
+        self.queue_drops.append(client_id)
+
+    def note_parse_error(self, client_id: str | None) -> None:
+        self.parse_errors.append(client_id)
+
+
+class RecordingProcessor:
+    def __init__(self) -> None:
+        self.ingested: list[tuple[str, np.ndarray, int | None, int]] = []
+        self.flushed: list[str] = []
+
+    def ingest(
+        self,
+        client_id: str,
+        samples: np.ndarray,
+        *,
+        sample_rate_hz: int | None,
+        t0_us: int,
+    ) -> None:
+        self.ingested.append((client_id, samples, sample_rate_hz, t0_us))
+
+    def flush_client_buffer(self, client_id: str) -> None:
+        self.flushed.append(client_id)
+
+
+class RecordingRawCaptureSink:
+    def __init__(self) -> None:
+        self.captured: list[tuple[str, int | None, int, np.ndarray]] = []
+        self.late_losses: list[str] = []
+
+    def capture_raw_samples(
+        self,
+        *,
+        client_id: str,
+        sample_rate_hz: int | None,
+        t0_us: int,
+        samples: np.ndarray,
+    ) -> None:
+        self.captured.append((client_id, sample_rate_hz, t0_us, samples))
+
+    def note_late_packet_loss(self, *, client_id: str) -> None:
+        self.late_losses.append(client_id)
+
+
 @pytest.mark.asyncio
 async def test_datagram_received_queues_work_before_processing(fake_transport, drain_queue) -> None:
-    registry = Mock()
-    registry.update_from_data.return_value = DataUpdateResult()
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
     pkt = pack_data(
@@ -34,10 +103,10 @@ async def test_datagram_received_queues_work_before_processing(fake_transport, d
     )
 
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
-    assert processor.ingest.call_count == 0
+    assert processor.ingested == []
 
     await drain_queue(proto, timeout=1.0)
-    assert processor.ingest.call_count == 1
+    assert len(processor.ingested) == 1
 
 
 @pytest.mark.asyncio
@@ -45,15 +114,15 @@ async def test_parse_to_ingest_keeps_representative_sensor_frames_as_read_only_v
     fake_transport,
     drain_queue,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.side_effect = [
-        DataUpdateResult(),
-        DataUpdateResult(),
-        DataUpdateResult(),
-    ]
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
-    processor = Mock()
-    raw_capture_sink = Mock()
+    registry = RecordingRegistry(
+        results=[
+            DataUpdateResult(),
+            DataUpdateResult(),
+            DataUpdateResult(),
+        ],
+    )
+    processor = RecordingProcessor()
+    raw_capture_sink = RecordingRawCaptureSink()
     proto = DataDatagramProtocol(
         registry=registry,
         processor=processor,
@@ -80,15 +149,15 @@ async def test_parse_to_ingest_keeps_representative_sensor_frames_as_read_only_v
 
     await drain_queue(proto, timeout=1.0)
 
-    assert processor.ingest.call_count == 3
-    assert raw_capture_sink.capture_raw_samples.call_count == 3
-    for ingest_call, raw_capture_call in zip(
-        processor.ingest.call_args_list,
-        raw_capture_sink.capture_raw_samples.call_args_list,
+    assert len(processor.ingested) == 3
+    assert len(raw_capture_sink.captured) == 3
+    for ingest_record, raw_capture_record in zip(
+        processor.ingested,
+        raw_capture_sink.captured,
         strict=True,
     ):
-        ingest_samples = ingest_call.args[1]
-        raw_capture_samples = raw_capture_call.kwargs["samples"]
+        ingest_samples = ingest_record[1]
+        raw_capture_samples = raw_capture_record[3]
         assert ingest_samples is raw_capture_samples
         assert ingest_samples.shape == (frame_samples, 3)
         assert ingest_samples.dtype == np.dtype("<i2")
@@ -101,10 +170,8 @@ async def test_datagram_queue_backpressure_drops_when_full(
     fake_transport,
     drain_queue,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.return_value = DataUpdateResult()
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=1)
     proto.connection_made(fake_transport)
     pkt = pack_data(
@@ -116,14 +183,14 @@ async def test_datagram_queue_backpressure_drops_when_full(
     proto.datagram_received(pkt, ("127.0.0.1", 10001))
     proto.datagram_received(pkt, ("127.0.0.1", 10002))
     await drain_queue(proto)
-    assert processor.ingest.call_count == 1
-    registry.note_server_queue_drop.assert_called_once_with("010203040506")
-    registry.note_parse_error.assert_not_called()
+    assert len(processor.ingested) == 1
+    assert registry.queue_drops == ["010203040506"]
+    assert registry.parse_errors == []
 
 
 def test_ingest_diagnostics_tracks_udp_backpressure() -> None:
-    registry = Mock()
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     ingest_diagnostics = IngestDiagnosticsCollector()
     proto = DataDatagramProtocol(
         registry=registry,
@@ -159,10 +226,8 @@ async def test_ingest_diagnostics_tracks_client_timing(
     drain_queue,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.side_effect = [DataUpdateResult(), DataUpdateResult()]
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
-    processor = Mock()
+    registry = RecordingRegistry(results=[DataUpdateResult(), DataUpdateResult()])
+    processor = RecordingProcessor()
     ingest_diagnostics = IngestDiagnosticsCollector()
     proto = DataDatagramProtocol(
         registry=registry,
@@ -210,9 +275,11 @@ async def test_ingest_diagnostics_tracks_client_timing(
     assert client_snapshot.last_ack_latency_ms == pytest.approx(50.0, abs=0.001)
 
 
-def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
-    registry = Mock()
-    processor = Mock()
+def test_datagram_queue_backpressure_rate_limits_drop_warnings(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(
         registry=registry,
         processor=processor,
@@ -231,52 +298,51 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
     def _fake_monotonic() -> float:
         return next(monotonic_ticks, 116.0)
 
-    with (
-        patch(
-            "vibesensor.adapters.udp.udp_data_rx.time.monotonic",
-            side_effect=_fake_monotonic,
-        ),
-        patch("vibesensor.adapters.udp.udp_data_rx.LOGGER.warning") as warning_log,
+    caplog.set_level("WARNING", logger="vibesensor.adapters.udp.udp_data_rx")
+    with patch(
+        "vibesensor.adapters.udp.udp_data_rx.time.monotonic",
+        side_effect=_fake_monotonic,
     ):
         proto.datagram_received(pkt, ("127.0.0.1", 10002))
         proto.datagram_received(pkt, ("127.0.0.1", 10003))
         proto.datagram_received(pkt, ("127.0.0.1", 10004))
         proto.datagram_received(pkt, ("127.0.0.1", 10005))
 
-    assert registry.note_server_queue_drop.call_count == 4
-    assert warning_log.call_count == 2
-    assert warning_log.call_args_list[0].args[0] == (
-        "UDP ingest queue full; dropping packet from %s (client=%s)"
-    )
-    assert "suppressed %d additional drop warnings" in warning_log.call_args_list[1].args[0]
-    assert warning_log.call_args_list[1].args[-1] == 2
+    assert registry.queue_drops == ["010203040506"] * 4
+    warnings = [
+        record.message
+        for record in caplog.records
+        if "UDP ingest queue full; dropping packet" in record.message
+    ]
+    assert len(warnings) == 2
+    assert "client=010203040506" in warnings[0]
+    assert "suppressed 2 additional drop warnings" in warnings[1]
 
 
 def test_datagram_received_ignores_empty_and_non_data_packets() -> None:
-    registry = Mock()
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=4)
 
     proto.datagram_received(b"", ("127.0.0.1", 10001))
     proto.datagram_received(b"\x01not-data", ("127.0.0.1", 10001))
 
-    registry.note_server_queue_drop.assert_not_called()
-    registry.note_parse_error.assert_not_called()
-    registry.update_from_data.assert_not_called()
-    processor.ingest.assert_not_called()
+    assert registry.queue_drops == []
+    assert registry.parse_errors == []
+    assert registry.update_calls == []
+    assert processor.ingested == []
 
 
 @pytest.mark.asyncio
 async def test_duplicate_data_still_sends_ack_but_skips_ingest(fake_transport, drain_queue) -> None:
     """A duplicate DATA frame should be ACKed but NOT ingested."""
-    registry = Mock()
-    # First call: new frame; second call: duplicate
-    registry.update_from_data.side_effect = [
-        DataUpdateResult(),
-        DataUpdateResult(is_duplicate=True),
-    ]
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
-    processor = Mock()
+    registry = RecordingRegistry(
+        results=[
+            DataUpdateResult(),
+            DataUpdateResult(is_duplicate=True),
+        ],
+    )
+    processor = RecordingProcessor()
 
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
@@ -290,18 +356,15 @@ async def test_duplicate_data_still_sends_ack_but_skips_ingest(fake_transport, d
 
     await drain_queue(proto)
 
-    # Ingest should be called only once (for the non-duplicate)
-    assert processor.ingest.call_count == 1
-    # ACK should be sent for both (2 DATA_ACK packets)
+    assert len(processor.ingested) == 1
     assert len(fake_transport.sent) == 2
 
 
 @pytest.mark.asyncio
 async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_queue) -> None:
     """Exception in processing should log the client ID without crashing."""
-    registry = Mock()
-    registry.update_from_data.side_effect = RuntimeError("boom")
-    processor = Mock()
+    registry = RecordingRegistry(update_error=RuntimeError("boom"))
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
@@ -312,17 +375,15 @@ async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_qu
 
     await drain_queue(proto, timeout=1.0)
 
-    # Should not crash – the error is caught and logged
-    assert processor.ingest.call_count == 0
+    assert processor.ingested == []
 
 
 @pytest.mark.asyncio
 async def test_process_queue_propagates_unexpected_exception(
     fake_transport,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.side_effect = RuntimeError("boom")
-    processor = Mock()
+    registry = RecordingRegistry(update_error=RuntimeError("boom"))
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
@@ -334,7 +395,7 @@ async def test_process_queue_propagates_unexpected_exception(
     consumer = asyncio.create_task(proto.process_queue())
     with pytest.raises(RuntimeError, match="boom"):
         await asyncio.wait_for(consumer, timeout=1.0)
-    assert processor.ingest.call_count == 0
+    assert processor.ingested == []
 
 
 @pytest.mark.asyncio
@@ -342,17 +403,17 @@ async def test_malformed_data_packet_marks_registry_and_skips_ack(
     fake_transport,
     drain_queue,
 ) -> None:
-    registry = Mock()
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
     proto.datagram_received(b"\x02\x01", ("127.0.0.1", 12345))
     await drain_queue(proto)
 
-    registry.note_parse_error.assert_called_once()
-    registry.update_from_data.assert_not_called()
-    processor.ingest.assert_not_called()
+    assert registry.parse_errors == [None]
+    assert registry.update_calls == []
+    assert processor.ingested == []
     assert fake_transport.sent == []
 
 
@@ -361,8 +422,8 @@ async def test_process_queue_propagates_parse_bug(
     fake_transport,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    registry = Mock()
-    processor = Mock()
+    registry = RecordingRegistry()
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
@@ -376,7 +437,7 @@ async def test_process_queue_propagates_parse_bug(
     with pytest.raises(RuntimeError, match="parse bug"):
         await asyncio.wait_for(consumer, timeout=1.0)
 
-    registry.note_parse_error.assert_not_called()
+    assert registry.parse_errors == []
 
 
 @pytest.mark.asyncio
@@ -384,10 +445,11 @@ async def test_reset_detected_flushes_buffer_before_ingest(
     fake_transport,
     drain_queue,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.return_value = DataUpdateResult(reset_detected=True)
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=1600)
-    processor = Mock()
+    registry = RecordingRegistry(
+        results=[DataUpdateResult(reset_detected=True)],
+        sample_rate_hz=1600,
+    )
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
@@ -400,8 +462,8 @@ async def test_reset_detected_flushes_buffer_before_ingest(
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
     await drain_queue(proto)
 
-    processor.flush_client_buffer.assert_called_once_with("010203040506")
-    processor.ingest.assert_called_once()
+    assert processor.flushed == ["010203040506"]
+    assert len(processor.ingested) == 1
     assert len(fake_transport.sent) == 1
 
 
@@ -411,10 +473,11 @@ async def test_process_queue_exports_trace_span(
     drain_queue,
     tmp_path: Path,
 ) -> None:
-    registry = Mock()
-    registry.update_from_data.return_value = DataUpdateResult(reset_detected=True)
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=1600)
-    processor = Mock()
+    registry = RecordingRegistry(
+        results=[DataUpdateResult(reset_detected=True)],
+        sample_rate_hz=1600,
+    )
+    processor = RecordingProcessor()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
 
