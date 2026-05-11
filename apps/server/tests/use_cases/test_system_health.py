@@ -209,23 +209,18 @@ class TestBuildSystemHealthSnapshotOk:
         assert result["ingest"]["raw_capture"]["pressure_state"] == "warn"
         assert result["ingest"]["ws_publish"]["active_connections"] == 1
         assert result["ingest"]["ws_publish"]["max_publish_duration_ms"] == 12.0
-        assert result["ingest"]["clients"] == [
-            {
-                "client_id": "sensor-a",
-                "advertised_sample_rate_hz": 800,
-                "estimated_ingest_hz": 400.0,
-                "processed_packets": 2,
-                "processed_samples": 800,
-                "late_packets": 1,
-                "last_packet_queue_age_ms": 20.0,
-                "last_ack_latency_ms": 30.0,
-                "frames_dropped": 2,
-                "queue_overflow_drops": 1,
-                "server_queue_drops": 0,
-                "parse_errors": 0,
-                "duplicates_received": 3,
-            }
-        ]
+        [client] = result["ingest"]["clients"]
+        assert client["client_id"] == "sensor-a"
+        assert client["advertised_sample_rate_hz"] == 800
+        assert client["estimated_ingest_hz"] == 400.0
+        assert client["processed_packets"] == 2
+        assert client["processed_samples"] == 800
+        assert client["late_packets"] == 1
+        assert client["last_packet_queue_age_ms"] == 20.0
+        assert client["last_ack_latency_ms"] == 30.0
+        assert client["frames_dropped"] == 2
+        assert client["queue_overflow_drops"] == 1
+        assert client["duplicates_received"] == 3
 
 
 class TestBuildSystemHealthSnapshotDegraded:

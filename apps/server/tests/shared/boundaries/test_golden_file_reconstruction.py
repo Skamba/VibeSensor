@@ -1,4 +1,4 @@
-"""Boundary reconstruction regression tests built from canonical test fixtures."""
+"""Boundary reconstruction contract tests built from canonical diagnostics fixtures."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappin
 
 @pytest.fixture(scope="module")
 def golden_summary() -> dict:
-    """Build a representative summary via the canonical typed diagnostics path."""
+    """Representative boundary payload: retained broad coverage guards compatibility."""
     return summarize_sensor_frames(
         run_metadata_from_mapping(standard_metadata()),
         sensor_frames_from_mappings(
@@ -39,7 +39,7 @@ def golden_summary() -> dict:
 
 
 class TestGoldenFileReconstruction:
-    """Reconstruct a canonical summary fixture into the typed test-run model."""
+    """Reconstruct the canonical summary boundary shape into the typed test-run model."""
 
     def test_test_run_from_summary_does_not_raise(self, golden_summary: dict) -> None:
         test_run = _reconstruct(golden_summary)
