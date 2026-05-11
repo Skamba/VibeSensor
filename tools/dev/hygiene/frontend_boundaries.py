@@ -194,6 +194,57 @@ def check_frontend_component_use_computed_guardrails() -> list[str]:
     return errors
 
 
+def check_ui_vite_server_contract() -> list[str]:
+    errors: list[str] = []
+    package_json = json.loads(_UI_PACKAGE_JSON_PATH.read_text(encoding="utf-8"))
+    scripts = package_json.get("scripts")
+    if not isinstance(scripts, Mapping):
+        return ["apps/ui/package.json must define a scripts mapping."]
+    for script_name, expected in {
+        "dev": "vite",
+        "dev:open": "vite --open",
+        "preview": "vite preview",
+        "wiki:screenshots": "node update-wiki-screenshots.mjs",
+    }.items():
+        if scripts.get(script_name) != expected:
+            errors.append(
+                f"apps/ui/package.json script {script_name!r} must stay {expected!r}."
+            )
+
+    vite_config = (ROOT / "apps/ui/vite.config.ts").read_text(encoding="utf-8")
+    if "preview:" not in vite_config or vite_config.count("strictPort: true") < 2:
+        errors.append(
+            "apps/ui/vite.config.ts must pin strict dev and preview ports in Vite config."
+        )
+
+    smoke_config = (ROOT / "apps/ui/playwright.smoke.config.ts").read_text(
+        encoding="utf-8"
+    )
+    if "--strictPort" not in smoke_config:
+        errors.append(
+            "apps/ui/playwright.smoke.config.ts must fail fast on Vite port conflicts."
+        )
+
+    helper_path = ROOT / "apps/ui/playwright-preview-helpers.mjs"
+    helper_text = helper_path.read_text(encoding="utf-8")
+    if "--strictPort" not in helper_text:
+        errors.append(
+            "apps/ui/playwright-preview-helpers.mjs must fail fast on preview port conflicts."
+        )
+    for rel_path in (
+        "apps/ui/take-screenshot.mjs",
+        "apps/ui/update-snapshots.mjs",
+        "apps/ui/update-wiki-screenshots.mjs",
+    ):
+        if "./playwright-preview-helpers.mjs" not in (ROOT / rel_path).read_text(
+            encoding="utf-8"
+        ):
+            errors.append(
+                f"{rel_path} must use playwright-preview-helpers.mjs for preview startup."
+            )
+    return errors
+
+
 def _ui_production_package_names() -> set[str]:
     lockfile = json.loads(
         (ROOT / "apps/ui/package-lock.json").read_text(encoding="utf-8")

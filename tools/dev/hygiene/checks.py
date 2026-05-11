@@ -7,12 +7,17 @@ import sys
 from . import layout_checks as _layout_checks
 from ._shared import ROOT, ListCheckSpec
 from .ci_workflow import (
+    check_changed_scope_command_docs,
     check_ci_command_sync,
     check_ci_job_sync,
     check_ci_lite_job_sync,
+    check_pi_image_workflow_contract,
 )
 from .contract_sync import check_contract_sync_entrypoint
-from .docker_ci import check_docker_ci_dependency_hygiene
+from .docker_ci import (
+    check_docker_ci_dependency_hygiene,
+    check_docker_dev_workflow_hygiene,
+)
 from .frontend_boundaries import (
     check_frontend_component_use_computed_guardrails,
     check_frontend_dom_registry_guardrails,
@@ -20,10 +25,13 @@ from .frontend_boundaries import (
     check_frontend_legacy_test_dom_bridge_guardrails,
     check_frontend_manual_chunk_packages,
     check_frontend_raw_html_boundaries,
+    check_ui_vite_server_contract,
 )
 from .repo_sync import _git_tracked_files, check_line_endings, check_path_indirections
 from .runtime_policy import (
     check_dependency_reproducibility_hygiene,
+    check_github_actions_python_runtime_usage,
+    check_hotspot_script_guardrails,
     check_python_policy_alignment,
     check_runtime_policy_drift,
 )
@@ -79,6 +87,16 @@ _LIST_CHECK_SPECS = (
         success_message="CI-lite entrypoints match the workflow-backed non-Docker subset.",
     ),
     ListCheckSpec(
+        runner=check_changed_scope_command_docs,
+        failure_heading="Changed-scope command documentation drift detected:",
+        success_message="Changed-scope ACT command documentation checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_pi_image_workflow_contract,
+        failure_heading="Pi image workflow contract drift detected:",
+        success_message="Pi image workflow contract checks passed.",
+    ),
+    ListCheckSpec(
         runner=check_contract_sync_entrypoint,
         failure_heading="Contract sync entrypoint drift detected:",
         success_message="Contract sync entrypoint checks passed.",
@@ -89,6 +107,11 @@ _LIST_CHECK_SPECS = (
         success_message="Docker/CI dependency hygiene checks passed.",
     ),
     ListCheckSpec(
+        runner=check_docker_dev_workflow_hygiene,
+        failure_heading="Docker dev workflow hygiene drift detected:",
+        success_message="Docker dev workflow hygiene checks passed.",
+    ),
+    ListCheckSpec(
         runner=check_python_policy_alignment,
         failure_heading="Python policy alignment drift detected:",
         success_message="Python policy alignment checks passed.",
@@ -97,6 +120,16 @@ _LIST_CHECK_SPECS = (
         runner=check_runtime_policy_drift,
         failure_heading="Runtime policy drift detected:",
         success_message="Runtime policy drift checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_github_actions_python_runtime_usage,
+        failure_heading="GitHub Actions Python runtime drift detected:",
+        success_message="GitHub Actions Python runtime checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_hotspot_script_guardrails,
+        failure_heading="Hotspot script guardrail drift detected:",
+        success_message="Hotspot script guardrails passed.",
     ),
     ListCheckSpec(
         runner=check_dependency_reproducibility_hygiene,
@@ -132,6 +165,11 @@ _LIST_CHECK_SPECS = (
         runner=check_frontend_component_use_computed_guardrails,
         failure_heading="Frontend component useComputed guardrail drift detected:",
         success_message="Frontend component useComputed guardrails passed.",
+    ),
+    ListCheckSpec(
+        runner=check_ui_vite_server_contract,
+        failure_heading="UI Vite server contract drift detected:",
+        success_message="UI Vite server contract checks passed.",
     ),
     ListCheckSpec(
         runner=check_test_inventory_ownership,

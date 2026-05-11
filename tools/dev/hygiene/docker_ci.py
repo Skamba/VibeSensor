@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Mapping
 from pathlib import Path
@@ -127,6 +128,87 @@ def _validate_ui_dev_compose_node_image(expected_node: str) -> list[str]:
             f"{actual_node!r} does not match .nvmrc {expected_node!r}."
         ]
     return []
+
+
+def check_docker_dev_workflow_hygiene() -> list[str]:
+    errors: list[str] = []
+
+    package_json = json.loads(
+        (ROOT / "apps/ui/package.json").read_text(encoding="utf-8")
+    )
+    scripts = package_json.get("scripts")
+    if not isinstance(scripts, Mapping):
+        return ["apps/ui/package.json must define a scripts mapping."]
+    expected_scripts = {
+        "dev:docker": "sh ./dev-docker.sh",
+        "lint:unused": "knip --config knip.jsonc",
+        "format:check": "biome check . --linter-enabled=false --assist-enabled=false",
+    }
+    for script_name, expected in expected_scripts.items():
+        if scripts.get(script_name) != expected:
+            errors.append(
+                f"apps/ui/package.json script {script_name!r} must stay {expected!r}."
+            )
+
+    makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    if (
+        "dev:" not in makefile_text
+        or "docker-compose.dev.yml up --build" not in makefile_text
+    ):
+        errors.append(
+            "Makefile dev target must start the source-mounted Docker dev stack with docker-compose.dev.yml."
+        )
+    if _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD not in makefile_text:
+        errors.append(
+            "Makefile setup must reuse tools/ui/ensure_ui_bootstrap.mjs for UI dependencies."
+        )
+    if "cd $(UI_DIR) && npm ci" in makefile_text:
+        errors.append("Makefile setup must not bypass the shared UI bootstrap helper.")
+    if 'cd $(UI_DIR) && PYTHON="$$PYTHON" npm run test:unit' not in makefile_text:
+        errors.append(
+            "Makefile ui-test target must run the UI unit suite from apps/ui."
+        )
+
+    compose = _load_yaml_mapping(ROOT / "docker-compose.dev.yml")
+    services = compose.get("services")
+    ui_service = (
+        services.get("vibesensor-ui-dev") if isinstance(services, Mapping) else None
+    )
+    if not isinstance(ui_service, Mapping):
+        errors.append("docker-compose.dev.yml must define services.vibesensor-ui-dev.")
+        return errors
+    if ui_service.get("command") != [
+        "npm",
+        "run",
+        "dev:docker",
+        "--",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5173",
+    ]:
+        errors.append(
+            "docker-compose.dev.yml vibesensor-ui-dev must run npm run dev:docker on 0.0.0.0:5173."
+        )
+
+    healthcheck = ui_service.get("healthcheck")
+    test_command = healthcheck.get("test") if isinstance(healthcheck, Mapping) else None
+    if (
+        not isinstance(test_command, list)
+        or test_command[:3] != ["CMD", "node", "-e"]
+        or not any(
+            isinstance(token, str) and "127.0.0.1:5173/" in token
+            for token in test_command
+        )
+    ):
+        errors.append(
+            "docker-compose.dev.yml vibesensor-ui-dev healthcheck must probe the Vite dev server on 127.0.0.1:5173."
+        )
+    if not isinstance(healthcheck, Mapping) or healthcheck.get("start_period") != "75s":
+        errors.append(
+            "docker-compose.dev.yml vibesensor-ui-dev healthcheck must keep a 75s start period."
+        )
+    return errors
 
 
 def check_docker_ci_dependency_hygiene() -> list[str]:

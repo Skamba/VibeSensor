@@ -205,21 +205,6 @@ def test_act_pull_request_event_helper_writes_non_empty_changed_scope_shas(
     assert merge_base_calls == [("base-sha", "head-sha")]
 
 
-def test_act_wrapper_distinguishes_changed_scope_and_full_stack_modes() -> None:
-    wrapper_text = (REPO_ROOT / "tools" / "tests" / "run_ci_with_act.sh").read_text(
-        encoding="utf-8"
-    )
-    docs_text = (REPO_ROOT / "docs" / "testing.md").read_text(encoding="utf-8")
-    ai_guidance = (REPO_ROOT / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
-
-    assert "run changed-scope CI jobs" in wrapper_text
-    assert "--full-stack # force all CI jobs through ci-scope" in wrapper_text
-    assert "VIBESENSOR_CI_FORCE_FULL_STACK=1" in wrapper_text
-    assert "changed-scope ACT run" in docs_text
-    assert "forced full-stack ACT run" in docs_text
-    assert "--full-stack" in ai_guidance
-
-
 def test_documented_act_job_examples_use_raw_workflow_job_ids() -> None:
     workflow = yaml.safe_load(_CI_WORKFLOW.read_text(encoding="utf-8"))
     raw_workflow_job_ids = set(workflow["jobs"])
