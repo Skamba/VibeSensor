@@ -9,17 +9,16 @@ from vibesensor.domain import Finding, SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document import AppendixAData, RankedCandidateRow
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+from vibesensor.shared.report_confidence_presentation import confidence_pct_text, proof_caveat_text
 from vibesensor.shared.report_diagnostics import check_state, has_warning_code, nonpass_detail_lines
 from vibesensor.shared.report_presentation import (
     append_unique_line,
     candidate_signal_text,
-    confidence_pct_text,
     display_location,
     display_speed_band,
     has_source_overlap,
     human_source,
     is_transient_primary,
-    proof_caveat_text,
     uses_shared_overlap_wording,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning

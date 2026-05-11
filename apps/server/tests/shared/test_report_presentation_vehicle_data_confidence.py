@@ -6,7 +6,10 @@ from vibesensor.domain import (
     diagnosis_assessment_from_components,
 )
 from vibesensor.report_i18n import tr as report_tr
-from vibesensor.shared.report_presentation import confidence_caveat_text, confidence_reason_text
+from vibesensor.shared.report_confidence_presentation import (
+    confidence_caveat_text,
+    confidence_reason_text,
+)
 
 
 def test_confidence_reason_text_mentions_user_confirmed_vehicle_data_scope() -> None:

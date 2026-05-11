@@ -11,12 +11,12 @@ from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
 from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
+from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_presentation import (
     coverage_label,
     coverage_notes,
     display_location,
     display_speed_band,
-    proof_caveat_text,
     runner_up_corner,
 )
 from vibesensor.shared.time_utils import (
