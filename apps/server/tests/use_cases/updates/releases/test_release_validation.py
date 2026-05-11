@@ -26,6 +26,41 @@ from vibesensor.use_cases.updates.releases.release_validation import (
 _BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS = ("httpx", "msgspec", "pydantic", "tenacity")
 
 
+def _firmware_manifest(
+    *,
+    name: str | None = "esp32dev",
+    segments: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
+    environment: dict[str, object] = {}
+    if name is not None:
+        environment["name"] = name
+    environment["segments"] = segments if segments is not None else []
+    return {"generated_from": "deadbeef", "environments": [environment]}
+
+
+def _firmware_segment(*, sha256: str | None = None) -> dict[str, str]:
+    return {
+        "file": "esp32dev/firmware.bin",
+        "offset": "0x10000",
+        "sha256": sha256 if sha256 is not None else hashlib.sha256(b"firmware").hexdigest(),
+    }
+
+
+def _write_firmware_dist(
+    tmp_path: Path,
+    *,
+    manifest: dict[str, object],
+    firmware_bytes: bytes | None = b"firmware",
+) -> Path:
+    dist_dir = tmp_path / "dist"
+    env_dir = dist_dir / "esp32dev"
+    env_dir.mkdir(parents=True)
+    if firmware_bytes is not None:
+        (env_dir / "firmware.bin").write_bytes(firmware_bytes)
+    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return dist_dir
+
+
 def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> None:
     config_path = build_release_smoke_config(
         SERVER_ROOT / "config.dev.yaml",
@@ -50,39 +85,20 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
 
 
 def test_validate_firmware_dist_accepts_generated_manifest(tmp_path: Path) -> None:
-    dist_dir = tmp_path / "dist"
-    env_dir = dist_dir / "esp32dev"
-    env_dir.mkdir(parents=True)
-    firmware_bin = env_dir / "firmware.bin"
-    firmware_bin.write_bytes(b"firmware")
-    manifest = {
-        "generated_from": "deadbeef",
-        "environments": [
-            {
-                "name": "esp32dev",
-                "segments": [
-                    {
-                        "file": "esp32dev/firmware.bin",
-                        "offset": "0x10000",
-                        "sha256": hashlib.sha256(b"firmware").hexdigest(),
-                    },
-                ],
-            },
-        ],
-    }
-    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+    dist_dir = _write_firmware_dist(
+        tmp_path,
+        manifest=_firmware_manifest(segments=[_firmware_segment()]),
+    )
 
     assert validate_firmware_dist(dist_dir) == []
 
 
 def test_validate_firmware_dist_reports_missing_firmware_bin(tmp_path: Path) -> None:
-    dist_dir = tmp_path / "dist"
-    dist_dir.mkdir(parents=True)
-    manifest = {
-        "generated_from": "deadbeef",
-        "environments": [{"name": "esp32dev", "segments": []}],
-    }
-    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+    dist_dir = _write_firmware_dist(
+        tmp_path,
+        manifest=_firmware_manifest(),
+        firmware_bytes=None,
+    )
 
     errors = validate_firmware_dist(dist_dir)
     assert any("must contain at least one segment" in error for error in errors)
@@ -99,25 +115,10 @@ def test_validate_firmware_dist_reports_invalid_manifest_json(tmp_path: Path) ->
 
 
 def test_validate_firmware_dist_reports_missing_environment_name(tmp_path: Path) -> None:
-    dist_dir = tmp_path / "dist"
-    env_dir = dist_dir / "esp32dev"
-    env_dir.mkdir(parents=True)
-    (env_dir / "firmware.bin").write_bytes(b"firmware")
-    manifest = {
-        "generated_from": "deadbeef",
-        "environments": [
-            {
-                "segments": [
-                    {
-                        "file": "esp32dev/firmware.bin",
-                        "offset": "0x10000",
-                        "sha256": hashlib.sha256(b"firmware").hexdigest(),
-                    },
-                ],
-            },
-        ],
-    }
-    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+    dist_dir = _write_firmware_dist(
+        tmp_path,
+        manifest=_firmware_manifest(name=None, segments=[_firmware_segment()]),
+    )
 
     errors = validate_firmware_dist(dist_dir)
 
@@ -125,26 +126,10 @@ def test_validate_firmware_dist_reports_missing_environment_name(tmp_path: Path)
 
 
 def test_validate_firmware_dist_reports_checksum_mismatch(tmp_path: Path) -> None:
-    dist_dir = tmp_path / "dist"
-    env_dir = dist_dir / "esp32dev"
-    env_dir.mkdir(parents=True)
-    (env_dir / "firmware.bin").write_bytes(b"firmware")
-    manifest = {
-        "generated_from": "deadbeef",
-        "environments": [
-            {
-                "name": "esp32dev",
-                "segments": [
-                    {
-                        "file": "esp32dev/firmware.bin",
-                        "offset": "0x10000",
-                        "sha256": "0" * 64,
-                    },
-                ],
-            },
-        ],
-    }
-    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+    dist_dir = _write_firmware_dist(
+        tmp_path,
+        manifest=_firmware_manifest(segments=[_firmware_segment(sha256="0" * 64)]),
+    )
 
     errors = validate_firmware_dist(dist_dir)
 
