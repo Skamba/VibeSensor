@@ -8,10 +8,10 @@ import pytest
 from test_support.check_hygiene_loader import load_check_hygiene_module
 
 _FOLLOW_UP_PLAYWRIGHT_SPECS = {
-    "tests/smoke.realtime-logging-summary.spec.ts",
-    "tests/smoke.settings-car-feedback-reset.spec.ts",
-    "tests/smoke.settings-obd-scan-timeout.spec.ts",
-    "tests/smoke.settings-shell.spec.ts",
+    "tests/regression.realtime-logging-summary.spec.ts",
+    "tests/regression.settings-car-feedback-reset.spec.ts",
+    "tests/regression.settings-obd-scan-timeout.spec.ts",
+    "tests/regression.settings-shell.spec.ts",
 }
 
 
@@ -45,12 +45,12 @@ def test_follow_up_browser_specs_stay_playwright_owned(
     hygiene_module: ModuleType,
 ) -> None:
     runner_specs = hygiene_module.ui_runner_owned_specs()
-    smoke_specs = runner_specs["playwright-smoke"]
+    regression_specs = runner_specs["playwright-regression"]
 
-    missing = _FOLLOW_UP_PLAYWRIGHT_SPECS - smoke_specs
+    missing = _FOLLOW_UP_PLAYWRIGHT_SPECS - regression_specs
     assert not missing, (
         "Previously migrated browser-flow follow-up specs should stay on the "
-        f"Playwright smoke runner: {sorted(missing)}"
+        f"Playwright regression runner: {sorted(missing)}"
     )
 
     vitest_overlap = _FOLLOW_UP_PLAYWRIGHT_SPECS & runner_specs["vitest"]

@@ -24,6 +24,8 @@
     "preview": "vite preview",
     "typecheck": "npm run check:contracts && tsc --noEmit",
     "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "pretest:regression": "npm run sync:generated-contracts",
+    "test:regression": "npx playwright test --config=playwright.regression.config.ts --project=laptop-light",
     "pretest:smoke": "npm run sync:generated-contracts",
     "test:smoke": "npx playwright test --config=playwright.smoke.config.ts --project=laptop-light",
     "test:smoke:mock": "npx playwright test --config=playwright.smoke.msw.config.ts --project=laptop-light",
