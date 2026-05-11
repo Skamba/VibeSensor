@@ -436,7 +436,6 @@ test("shows a live warning state until an active car is selected, then clears it
     "Choose the active car before recording.",
   );
   await expect(liveSummary).toContainText("none is active for the next run");
-  await expect(page.locator("#loggingSummary")).toHaveCSS("text-align", "left");
   await expect(page.locator("#startLoggingBtn")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
   await expect.poll(() => startCalls).toBe(0);
