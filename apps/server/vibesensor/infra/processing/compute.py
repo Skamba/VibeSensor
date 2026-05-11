@@ -5,13 +5,14 @@ import time
 
 import numpy as np
 
+from vibesensor.infra.processing.fft_preparation import prepare_fft_windows
 from vibesensor.infra.processing.models import (
     MetricsComputationResult,
     MetricsSnapshot,
     ProcessorConfig,
     SpectrumByAxis,
 )
-from vibesensor.shared.fft_analysis import AXES, SpectralAnalysisComputer, medfilt3
+from vibesensor.shared.fft_analysis import AXES, SpectralAnalysisComputer
 from vibesensor.shared.types.payload_types import AxisMetrics, ClientMetrics
 from vibesensor.shared.types.processing_profile import (
     PROCESSING_FILTER_MEDIAN_3_SAMPLE,
@@ -36,22 +37,11 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
             spectrum_max_hz=config.spectrum_max_hz,
         )
 
-    def _filtered_windows(self, snapshot: MetricsSnapshot) -> tuple[np.ndarray, np.ndarray | None]:
-        fft_block = snapshot.fft_block
-        if fft_block is None:
-            return medfilt3(snapshot.time_window), None
-
-        if snapshot.time_window.shape[1] >= fft_block.shape[1]:
-            filtered_source = medfilt3(snapshot.time_window)
-            return filtered_source, filtered_source[:, -fft_block.shape[1] :]
-
-        filtered_source = medfilt3(fft_block)
-        return filtered_source[:, -snapshot.time_window.shape[1] :], filtered_source
-
     def compute(self, snapshot: MetricsSnapshot) -> MetricsComputationResult:
         t0 = time.monotonic()
-        time_window, fft_input = self._filtered_windows(snapshot)
-        time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
+        prepared_windows = prepare_fft_windows(snapshot)
+        fft_input = prepared_windows.fft_input
+        time_window_detrended = prepared_windows.time_window_detrended
 
         metrics: ClientMetrics = {}
         if time_window_detrended.size > 0:

@@ -9,11 +9,11 @@ from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     ClientMetrics,
-    FloatArray,
     MetricsSnapshot,
     ProcessorConfig,
 )
-from vibesensor.infra.processing.snapshot_builder import check_cache_hit, compute_snapshot_window
+from vibesensor.infra.processing.snapshot_builder import check_cache_hit
+from vibesensor.infra.processing.snapshot_window_preparation import prepare_snapshot_windows
 from vibesensor.infra.processing.time_align import analysis_time_range
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 
@@ -61,30 +61,20 @@ class BufferStoreSnapshotReader:
             if cache_hit is not None:
                 return cache_hit
 
-            window = compute_snapshot_window(
-                count=buf.count,
-                capacity=buf.capacity,
+            prepared_windows = prepare_snapshot_windows(
+                buf=buf,
+                config=self._config,
+                buffer_mutator=self._buffer_mutator,
                 sample_rate_hz=sr,
-                waveform_seconds=self._config.waveform_seconds,
-                fft_n=self._config.fft_n,
             )
-
-            fft_block: FloatArray | None = None
-            if window.needs_separate_fft_block:
-                fft_block = self._buffer_mutator.copy_latest(buf, self._config.fft_n)
-                time_window = fft_block[:, -window.n_time :]
-            else:
-                time_window = self._buffer_mutator.copy_latest(buf, window.n_time)
-                if buf.count >= self._config.fft_n:
-                    fft_block = time_window[:, -self._config.fft_n :]
             return MetricsSnapshot(
                 client_id=client_id,
                 sample_rate_hz=sr,
                 ingest_generation=buf.ingest_generation,
                 buffer_epoch=buf.buffer_epoch,
                 reset_generation=buf.reset_generation,
-                time_window=time_window,
-                fft_block=fft_block,
+                time_window=prepared_windows.time_window,
+                fft_block=prepared_windows.fft_block,
                 analysis_time_range=self._analysis_time_range(buf, sample_rate_hz=sr),
             )
 
