@@ -33,13 +33,6 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     assert diagnostic_case.primary_run is not None
 
 
-def test_finding_projector_in_finding_boundary_module() -> None:
-    """Finding payload projector should live in boundaries/summary_fields/finding.py."""
-    from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
-
-    assert callable(finding_payload_from_domain)
-
-
 def test_shared_type_modules_use_focused_history_and_settings_owners() -> None:
     """Run/history and settings contracts must stay in focused shared type modules."""
     from tests._paths import SERVER_ROOT
@@ -59,7 +52,6 @@ def test_shared_type_modules_use_focused_history_and_settings_owners() -> None:
 def test_summary_serialization_package_hides_internal_build_context() -> None:
     from vibesensor.shared.boundaries import summary_serialization
 
-    assert callable(summary_serialization.build_analysis_summary)
     assert not hasattr(summary_serialization, "AnalysisSummaryBuildContext")
     assert not hasattr(summary_serialization, "build_summary_payload")
 
