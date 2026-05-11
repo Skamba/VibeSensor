@@ -1,4 +1,4 @@
-"""Focused PDF style-token regressions for report chrome branding."""
+"""Stable PDF style-token contracts for report chrome branding."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from vibesensor.adapters.pdf.pdf_style import (
 
 
 def test_pdf_theme_tokens_align_with_website_palette() -> None:
+    """PDF reports intentionally share the website's stable brand palette."""
+
     assert REPORT_COLORS["brand"] == "#7c3aed"
     assert REPORT_COLORS["brand_surface"] == "#ede9fe"
     assert REPORT_COLORS["warning"] == "#b7791f"
@@ -22,6 +24,8 @@ def test_pdf_theme_tokens_align_with_website_palette() -> None:
 
 
 def test_pdf_typography_and_radius_shift_toward_website_chrome() -> None:
+    """PDF report chrome keeps compact type and card radius as a design contract."""
+
     assert FS_TITLE == 13
     assert FS_H2 == 10
     assert FS_CARD_TITLE == 9.0

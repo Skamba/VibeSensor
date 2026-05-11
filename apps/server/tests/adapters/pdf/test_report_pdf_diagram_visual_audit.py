@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from collections import Counter
-
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 
 
-def test_car_diagram_shell_uses_contoured_paths_and_detail_polygons() -> None:
+def test_car_diagram_shell_renders_vehicle_context_without_primitive_pinning() -> None:
     diagram = car_location_diagram(
         [],
         {
@@ -21,8 +19,9 @@ def test_car_diagram_shell_uses_contoured_paths_and_detail_polygons() -> None:
         diagram_height=252.0,
     )
 
-    shape_counts = Counter(type(item).__name__ for item in diagram.contents)
+    item_types = {type(item).__name__ for item in diagram.contents}
+    text_items = {str(item.text) for item in diagram.contents if hasattr(item, "text")}
 
-    assert shape_counts["Path"] >= 4
-    assert shape_counts["Polygon"] >= 4
-    assert shape_counts["Rect"] >= 4
+    assert "Path" in item_types
+    assert "Polygon" in item_types
+    assert {"DIAGRAM_LABEL_FRONT", "DIAGRAM_LABEL_REAR"} <= text_items

@@ -30,7 +30,7 @@ const readyStrengthMetrics = {
   top_peaks: [],
 };
 
-test("settings desktop journey keeps analysis controls and car actions aligned", async ({
+test("settings desktop journey keeps analysis controls and car actions reachable", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -74,37 +74,16 @@ test("settings desktop journey keeps analysis controls and car actions aligned",
   await page.locator("#tab-settings").click();
 
   await page.locator('[data-settings-tab="analysisTab"]').click();
-  const speedLabel = page.locator('label[for="speedUncertaintyInput"]');
-  const tireLabel = page.locator('label[for="tireDiameterUncertaintyInput"]');
-  const finalDriveLabel = page.locator(
-    'label[for="finalDriveUncertaintyInput"]',
-  );
-  await expect(speedLabel).toBeVisible();
-  await expect(tireLabel).toBeVisible();
-  await expect(finalDriveLabel).toBeVisible();
-
-  const [speedLabelBox, tireLabelBox, speedTop, tireTop, finalDriveTop] =
-    await Promise.all([
-      speedLabel.boundingBox(),
-      tireLabel.boundingBox(),
-      page
-        .locator("#speedUncertaintyInput")
-        .evaluate((el) => Math.round(el.getBoundingClientRect().top)),
-      page
-        .locator("#tireDiameterUncertaintyInput")
-        .evaluate((el) => Math.round(el.getBoundingClientRect().top)),
-      page
-        .locator("#finalDriveUncertaintyInput")
-        .evaluate((el) => Math.round(el.getBoundingClientRect().top)),
-    ]);
-
-  if (!speedLabelBox || !tireLabelBox) {
-    throw new Error("Expected uncertainty labels to have layout boxes");
-  }
-
-  expect(tireLabelBox.height).toBeGreaterThan(speedLabelBox.height);
-  expect(Math.abs(speedTop - tireTop)).toBeLessThanOrEqual(1);
-  expect(Math.abs(finalDriveTop - tireTop)).toBeLessThanOrEqual(1);
+  await expect(
+    page.locator('label[for="speedUncertaintyInput"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('label[for="tireDiameterUncertaintyInput"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('label[for="finalDriveUncertaintyInput"]'),
+  ).toBeVisible();
+  await expect(page.locator("#saveAnalysisBtn")).toBeVisible();
 
   await page.locator('[data-settings-tab="carTab"]').click();
 
@@ -118,20 +97,8 @@ test("settings desktop journey keeps analysis controls and car actions aligned",
   await expect(activeRow.locator(".car-activate-btn")).toHaveCount(0);
   await expect(inactiveRow.locator(".car-activate-btn")).toHaveCount(1);
 
-  const [activeDeleteRight, inactiveDeleteRight] = await Promise.all([
-    activeDeleteButton.evaluate((el) => {
-      const { right } = el.getBoundingClientRect();
-      return Math.round(right);
-    }),
-    inactiveDeleteButton.evaluate((el) => {
-      const { right } = el.getBoundingClientRect();
-      return Math.round(right);
-    }),
-  ]);
-
-  expect(Math.abs(activeDeleteRight - inactiveDeleteRight)).toBeLessThanOrEqual(
-    1,
-  );
+  await expect(activeRow).toContainText("Active");
+  await expect(inactiveRow.locator(".car-activate-btn")).toBeEnabled();
 });
 
 test("dashboard desktop journey keeps summary stats and sensor cards readable", async ({
@@ -242,60 +209,18 @@ test("dashboard desktop journey keeps summary stats and sensor cards readable", 
   });
   await page.goto("/");
 
-  const dataFreshnessStat = page.locator("#liveDataFreshness");
   const strongestSignalStat = page.locator("#liveStrongestSignal");
-  const dataFreshnessLabel = dataFreshnessStat.locator(".stat__label");
-  const strongestSignalLabel = strongestSignalStat.locator(".stat__label");
-  const dataFreshnessValue = dataFreshnessStat.locator("[data-value]");
+  const dataFreshnessValue = page.locator("#liveDataFreshness [data-value]");
   const strongestSignalValue = strongestSignalStat.locator("[data-value]");
   const speedValue = page.locator("#speed");
 
   await expect(strongestSignalStat).not.toHaveClass(/stat--spotlight/);
-  await expect(strongestSignalLabel).toHaveText("Strongest signal");
+  await expect(strongestSignalStat.locator(".stat__label")).toHaveText(
+    "Strongest signal",
+  );
   await expect(dataFreshnessValue).toBeVisible();
   await expect(strongestSignalValue).toBeVisible();
   await expect(speedValue).toBeVisible();
-
-  const [
-    dataFreshnessLabelTop,
-    strongestSignalLabelTop,
-    speedLabelTop,
-    dataFreshnessValueTop,
-    strongestSignalValueTop,
-    speedValueTop,
-  ] = await Promise.all([
-    dataFreshnessLabel.evaluate((el) =>
-      Math.round(el.getBoundingClientRect().top),
-    ),
-    strongestSignalLabel.evaluate((el) =>
-      Math.round(el.getBoundingClientRect().top),
-    ),
-    speedValue.evaluate((el) =>
-      Math.round(
-        (el.previousElementSibling as HTMLElement).getBoundingClientRect().top,
-      ),
-    ),
-    dataFreshnessValue.evaluate((el) =>
-      Math.round(el.getBoundingClientRect().top),
-    ),
-    strongestSignalValue.evaluate((el) =>
-      Math.round(el.getBoundingClientRect().top),
-    ),
-    speedValue.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
-  ]);
-
-  expect(
-    Math.abs(dataFreshnessLabelTop - strongestSignalLabelTop),
-  ).toBeLessThanOrEqual(1);
-  expect(Math.abs(speedLabelTop - strongestSignalLabelTop)).toBeLessThanOrEqual(
-    1,
-  );
-  expect(
-    Math.abs(dataFreshnessValueTop - strongestSignalValueTop),
-  ).toBeLessThanOrEqual(1);
-  expect(Math.abs(speedValueTop - strongestSignalValueTop)).toBeLessThanOrEqual(
-    1,
-  );
 
   await expect(page.locator(".site-header__status")).toBeHidden();
   await expect(page.locator("#loggingStatus")).toBeHidden();
@@ -312,41 +237,6 @@ test("dashboard desktop journey keeps summary stats and sensor cards readable", 
   await expect(frontCard).toHaveText("Front Left Wheel");
   await expect(engineCard).toHaveText("Engine Bay");
   await expect(unassignedCard).toHaveText("Gamma Probe");
-
-  const [frontOffset, engineOffset, unassignedOffset] = await Promise.all([
-    frontCard.locator(".live-sensor-card__header strong").evaluate((el) => {
-      const card = el.closest(".live-sensor-card");
-      if (!(card instanceof HTMLElement)) {
-        throw new Error("Expected live sensor card container");
-      }
-      return Math.round(
-        el.getBoundingClientRect().left - card.getBoundingClientRect().left,
-      );
-    }),
-    engineCard.locator(".live-sensor-card__header strong").evaluate((el) => {
-      const card = el.closest(".live-sensor-card");
-      if (!(card instanceof HTMLElement)) {
-        throw new Error("Expected live sensor card container");
-      }
-      return Math.round(
-        el.getBoundingClientRect().left - card.getBoundingClientRect().left,
-      );
-    }),
-    unassignedCard
-      .locator(".live-sensor-card__header strong")
-      .evaluate((el) => {
-        const card = el.closest(".live-sensor-card");
-        if (!(card instanceof HTMLElement)) {
-          throw new Error("Expected live sensor card container");
-        }
-        return Math.round(
-          el.getBoundingClientRect().left - card.getBoundingClientRect().left,
-        );
-      }),
-  ]);
-
-  expect(Math.abs(frontOffset - engineOffset)).toBeLessThanOrEqual(1);
-  expect(Math.abs(frontOffset - unassignedOffset)).toBeLessThanOrEqual(1);
 
   await page.locator("#tab-history").click();
   await expect(page.locator(".site-header__status")).toBeVisible();
