@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { apiJson } from "../src/api/http";
+import { scanSettingsObdDevices } from "../src/api/settings";
 import {
   createDeferred,
   installTimerHarness,
@@ -77,6 +78,29 @@ describe("apiJson", () => {
       await expect(request).resolves.toEqual({ ok: true });
       expect(requestedPath).toBe("/timeout/custom");
       expect(requestedMethod).toBe("POST");
+      expect(timerHarness.pendingDelays()).toEqual([]);
+    } finally {
+      timerHarness.restore();
+    }
+  });
+
+  test("settings OBD scan uses the extended scan timeout without wall-clock delay", async () => {
+    const timerHarness = installTimerHarness();
+    const response = createDeferred<HttpResponse<{ devices: [] }>>();
+    mswServer.use(
+      http.post(
+        uiTestUrl("/api/settings/obd/scan"),
+        async () => await response.promise,
+      ),
+    );
+
+    try {
+      const request = scanSettingsObdDevices();
+
+      expect(timerHarness.pendingDelays()).toEqual([20_000]);
+
+      response.resolve(HttpResponse.json({ devices: [] }));
+      await expect(request).resolves.toEqual({ devices: [] });
       expect(timerHarness.pendingDelays()).toEqual([]);
     } finally {
       timerHarness.restore();
