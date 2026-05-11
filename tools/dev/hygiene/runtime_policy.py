@@ -569,6 +569,190 @@ def check_runtime_policy_drift() -> list[str]:
     return errors
 
 
+_BARE_PYTHON_RE = re.compile(r"(?<![\w$\"'/.-])python(?:\s|$)")
+
+
+def check_github_actions_python_runtime_usage() -> list[str]:
+    errors: list[str] = []
+    workflow_paths = (
+        ROOT / ".github/workflows/main-release.yml",
+        ROOT / ".github/workflows/weekly-pi-image.yml",
+        ROOT / ".github/workflows/manual-pi-image-arm.yml",
+        ROOT / ".github/workflows/ci.yml",
+    )
+    for workflow_path in workflow_paths:
+        workflow_text = workflow_path.read_text(encoding="utf-8")
+        if "python3 " in workflow_text:
+            errors.append(
+                f"{workflow_path.relative_to(ROOT)} must not invoke ambient python3."
+            )
+
+    main_release = _load_yaml_mapping(ROOT / ".github/workflows/main-release.yml")
+    release_job = (
+        main_release.get("jobs", {}).get("release")
+        if isinstance(main_release.get("jobs"), Mapping)
+        else None
+    )
+    release_steps = (
+        release_job.get("steps") if isinstance(release_job, Mapping) else None
+    )
+    if not isinstance(release_steps, list):
+        errors.append("main-release workflow must define jobs.release.steps.")
+    else:
+        setup_index = next(
+            (
+                index
+                for index, step in enumerate(release_steps)
+                if isinstance(step, Mapping) and step.get("id") == "setup-python"
+            ),
+            None,
+        )
+        if setup_index is None:
+            errors.append(
+                "main-release release job must set up the configured Python runtime."
+            )
+        else:
+            for step in release_steps[setup_index + 1 :]:
+                if not isinstance(step, Mapping):
+                    continue
+                run_script = step.get("run")
+                if isinstance(run_script, str) and _BARE_PYTHON_RE.search(run_script):
+                    errors.append(
+                        "main-release steps after setup-python must use steps.setup-python.outputs.python-path, "
+                        f"not bare python: {step.get('name')!r}."
+                    )
+            for step_name in ("Compute version", "Build UI"):
+                step_index = next(
+                    (
+                        index
+                        for index, step in enumerate(release_steps)
+                        if isinstance(step, Mapping) and step.get("name") == step_name
+                    ),
+                    None,
+                )
+                if step_index is None or setup_index >= step_index:
+                    errors.append(
+                        f"main-release must run setup-python before {step_name!r}."
+                    )
+
+    build_pi_image = _load_yaml_mapping(
+        ROOT / ".github/actions/build-pi-image/action.yml"
+    )
+    build_text = (ROOT / ".github/actions/build-pi-image/action.yml").read_text(
+        encoding="utf-8"
+    )
+    if "python3 " in build_text:
+        errors.append(
+            ".github/actions/build-pi-image/action.yml must not invoke ambient python3."
+        )
+    action_outputs = build_pi_image.get("outputs")
+    python_path_output = (
+        action_outputs.get("python-path")
+        if isinstance(action_outputs, Mapping)
+        else None
+    )
+    if (
+        not isinstance(python_path_output, Mapping)
+        or python_path_output.get("value")
+        != "${{ steps.setup-python.outputs.python-path }}"
+    ):
+        errors.append(
+            ".github/actions/build-pi-image/action.yml must expose steps.setup-python.outputs.python-path."
+        )
+    action_steps = (
+        build_pi_image.get("runs", {}).get("steps")
+        if isinstance(build_pi_image.get("runs"), Mapping)
+        else None
+    )
+    if isinstance(action_steps, list):
+        build_step = next(
+            (
+                step
+                for step in action_steps
+                if isinstance(step, Mapping) and step.get("name") == "Build Pi image"
+            ),
+            None,
+        )
+        env = build_step.get("env") if isinstance(build_step, Mapping) else None
+        if (
+            not isinstance(env, Mapping)
+            or env.get("VS_PYTHON_BIN")
+            != "${{ steps.setup-python.outputs.python-path }}"
+        ):
+            errors.append(
+                ".github/actions/build-pi-image/action.yml Build Pi image step must pass VS_PYTHON_BIN from setup-python."
+            )
+    else:
+        errors.append(
+            ".github/actions/build-pi-image/action.yml must define composite steps."
+        )
+
+    script_requirements = (
+        (
+            ROOT / "infra/pi-image/pi-gen/lib/app_artifacts.sh",
+            (
+                '"${VS_PYTHON_BIN}" -m venv .build-venv',
+                'PYTHON="${VS_PYTHON_BIN}" npm run sync:generated-contracts',
+                'PYTHON="${VS_PYTHON_BIN}" npm run build',
+            ),
+            ("python3 -m venv",),
+        ),
+        (
+            ROOT / "infra/pi-image/pi-gen/lib/pi_gen_repo.sh",
+            ("\"${VS_PYTHON_BIN}\" - <<'PY'",),
+            ("python3 - <<'PY'",),
+        ),
+        (
+            ROOT / "infra/pi-image/pi-gen/lib/prereqs.sh",
+            ('require_cmd "${VS_PYTHON_BIN}"',),
+            (),
+        ),
+    )
+    for path, required, forbidden in script_requirements:
+        text = path.read_text(encoding="utf-8")
+        for needle in required:
+            if needle not in text:
+                errors.append(
+                    f"{path.relative_to(ROOT)} must use the configured VS_PYTHON_BIN runtime."
+                )
+        for needle in forbidden:
+            if needle in text:
+                errors.append(
+                    f"{path.relative_to(ROOT)} must not fall back to ambient python3."
+                )
+
+    return errors
+
+
+def check_hotspot_script_guardrails() -> list[str]:
+    errors: list[str] = []
+    script_path = ROOT / "apps/server/scripts/hotspot_nmcli.sh"
+    script_text = script_path.read_text(encoding="utf-8")
+    if "apt-get" in script_text:
+        errors.append(
+            "apps/server/scripts/hotspot_nmcli.sh must not install packages at runtime."
+        )
+    if ".venv/bin/vibesensor-hotspot-config" not in script_text:
+        errors.append(
+            "apps/server/scripts/hotspot_nmcli.sh must resolve hotspot config from the bundled server venv."
+        )
+    if (
+        'HOTSPOT_CONFIG_EXPORTS="$("${HOTSPOT_CONFIG_CLI}" "${CONFIG_PATH}")"'
+        not in script_text
+    ):
+        errors.append(
+            "apps/server/scripts/hotspot_nmcli.sh must capture hotspot config CLI output before eval."
+        )
+    if (
+        'echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}" >&2'
+        not in script_text
+    ):
+        errors.append(
+            "apps/server/scripts/hotspot_nmcli.sh ERR trap must log to stderr so eval command substitutions stay clean."
+        )
+    return errors
+
+
 def check_dependency_reproducibility_hygiene() -> list[str]:
     errors: list[str] = []
 
