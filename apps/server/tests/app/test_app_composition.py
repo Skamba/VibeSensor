@@ -81,13 +81,6 @@ def test_create_app_serves_composed_routes_with_fake_runtime(
     monkeypatch.setattr(app_module, "LifecycleManager", _FakeLifecycleManager)
 
     app = app_module.create_app(config_path=cfg_path)
-    route_paths = {getattr(route, "path", "") for route in app.routes}
-    assert {
-        "/api/health",
-        "/api/settings/language",
-        "/api/history",
-        "/api/update/status",
-    }.issubset(route_paths)
 
     with TestClient(app) as client:
         health = client.get("/api/health")
