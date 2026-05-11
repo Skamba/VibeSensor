@@ -6,11 +6,11 @@ report_limit: 10
 allowlist:
   # Projection regressions intentionally stay together so report-shape drift is reviewed in one place.
   apps/server/tests/adapters/pdf/test_report_document_projection.py: High-density report projection regression matrix kept together by document-output seam.
-  # Settings smoke keeps the full multi-tab settings journey in one browser spec.
-  apps/ui/tests/smoke.settings.spec.ts: End-to-end settings smoke journey intentionally spans multiple settings tabs in one spec.
+  # Settings browser regression keeps the moved multi-tab matrix outside smoke.
+  apps/ui/tests/regression.settings.spec.ts: Multi-tab settings browser regression matrix moved out of smoke but intentionally stays aggregated.
   # Metrics log helper coverage still lives as one dense helper-focused module.
   apps/server/tests/use_cases/run/test_metrics_log_helpers.py: Helper-focused metrics log regression coverage intentionally stays aggregated in one module.
   # Maintenance mounted-DOM coverage now lives in one Node-side regression owner instead of four legacy bridge specs.
   apps/ui/tests/maintenance_feature_signal.spec.ts: Mounted maintenance regression matrix intentionally stays together while replacing the deleted legacy createPanel Playwright split.
-  # Cars smoke covers the end-to-end car selection and wizard browser journey in one spec.
-  apps/ui/tests/smoke.cars.spec.ts: End-to-end cars smoke journey intentionally stays together across library selection, manual entry, and wizard flows.
+  # Cars browser regression keeps the moved car-selection matrix outside smoke.
+  apps/ui/tests/regression.cars.spec.ts: Cars browser regression matrix moved out of smoke but intentionally stays together across library selection, manual entry, and wizard flows.

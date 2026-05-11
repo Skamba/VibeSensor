@@ -1,19 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const configuredSmokeWorkers = Number.parseInt(
-  process.env.PLAYWRIGHT_SMOKE_WORKERS ?? "1",
+const configuredRegressionWorkers = Number.parseInt(
+  process.env.PLAYWRIGHT_REGRESSION_WORKERS ?? "1",
   10,
 );
 
 export default defineConfig({
   testDir: "tests",
-  // Keep smoke explicit. Broader browser regressions live in playwright.regression.config.ts.
-  testMatch: ["smoke.critical.spec.ts"],
-  outputDir: "test-results/playwright-smoke",
-  timeout: 15_000,
+  testMatch: ["regression*.spec.ts"],
+  outputDir: "test-results/playwright-regression",
+  timeout: 20_000,
   workers:
-    Number.isFinite(configuredSmokeWorkers) && configuredSmokeWorkers > 0
-      ? configuredSmokeWorkers
+    Number.isFinite(configuredRegressionWorkers) &&
+    configuredRegressionWorkers > 0
+      ? configuredRegressionWorkers
       : 1,
   use: {
     baseURL: "http://127.0.0.1:4173",

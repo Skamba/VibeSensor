@@ -217,6 +217,9 @@ def ui_runner_owned_specs() -> dict[str, set[str]]:
     return {
         "vitest": vitest_include - vitest_exclude,
         "playwright-smoke": _resolve_playwright_specs(_UI_PLAYWRIGHT_SMOKE_CONFIG),
+        "playwright-regression": _resolve_playwright_specs(
+            _UI_PLAYWRIGHT_REGRESSION_CONFIG
+        ),
         "playwright-mock-smoke": _resolve_playwright_specs(
             _UI_PLAYWRIGHT_MOCK_SMOKE_CONFIG
         ),
@@ -346,8 +349,8 @@ def _test_inventory_guidance(rel_path: str) -> str:
         return (
             "Move it under apps/ui/tests/ and update apps/ui/vitest.config.ts or the "
             "Playwright testMatch config in apps/ui/playwright.smoke.config.ts, "
-            "apps/ui/playwright.smoke.msw.config.ts, or apps/ui/playwright.config.ts "
-            "so exactly one UI runner owns it."
+            "apps/ui/playwright.regression.config.ts, apps/ui/playwright.smoke.msw.config.ts, "
+            "or apps/ui/playwright.config.ts so exactly one UI runner owns it."
         )
     if name.startswith("test_") and rel_path.endswith(".py"):
         return (
