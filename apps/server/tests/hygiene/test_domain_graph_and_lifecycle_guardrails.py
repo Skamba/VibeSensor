@@ -89,10 +89,9 @@ def test_canonical_domain_graph_relationships() -> None:
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
 
     # RunStatus is associated with Run lifecycle
-    from vibesensor.domain.run_status import RunStatus, transition_run
+    from vibesensor.domain.run_status import RunStatus
 
     assert issubclass(RunStatus, str)  # StrEnum
-    assert callable(transition_run)
 
     # DrivingPhase and DrivingSegment relationship
     field_type(DrivingSegment, "phase")  # DrivingPhase or equivalent
