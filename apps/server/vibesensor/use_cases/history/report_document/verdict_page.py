@@ -13,6 +13,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     PatternEvidence,
     VerdictPageData,
 )
+from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
     action_status_text,
@@ -21,7 +22,6 @@ from vibesensor.shared.report_presentation import (
     human_source,
     location_confidence_text,
     presented_location_confidence_key,
-    proof_caveat_text,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 
