@@ -3,10 +3,9 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-import numpy as np
-
 from vibesensor.infra.processing.buffer_capacity import OverflowResult, evaluate_overflow
 from vibesensor.infra.processing.models import FloatArray, ProcessorConfig
+from vibesensor.infra.processing.sample_validation import normalize_sample_chunk
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,17 +41,12 @@ class IngestChunkPreparer:
         client_id: str,
         samples: FloatArray,
     ) -> FloatArray | None:
-        chunk: FloatArray = np.asarray(samples, dtype=np.float32)
-        if self._accel_scale_g_per_lsb is not None:
-            chunk = chunk * np.float32(self._accel_scale_g_per_lsb)
-        if chunk.ndim != 2 or chunk.shape[1] != 3:
-            LOGGER.warning(
-                "Dropping malformed sample chunk for %s with shape %s",
-                client_id,
-                chunk.shape,
-            )
-            return None
-        return chunk
+        return normalize_sample_chunk(
+            client_id=client_id,
+            samples=samples,
+            accel_scale_g_per_lsb=self._accel_scale_g_per_lsb,
+            logger=LOGGER,
+        )
 
     def apply_overflow_policy(
         self,
