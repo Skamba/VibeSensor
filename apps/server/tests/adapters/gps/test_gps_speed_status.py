@@ -106,64 +106,57 @@ class TestStatusSnapshot:
 
 
 class TestFallback:
-    def test_fresh_gps_no_fallback(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        assert m.effective_speed_mps == pytest.approx(10.0)
-        assert m.fallback_active is False
-
-    def test_stale_gps_triggers_manual_fallback(self) -> None:
-        """When GPS is primary and stale, a manual override becomes the fallback."""
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = False
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-        m.override_speed_mps = 25.0
-        assert m.effective_speed_mps == pytest.approx(25.0)
-        assert m.fallback_active is True
-
-    def test_stale_gps_no_override_returns_none(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-        # No override set
-        assert m.effective_speed_mps is None
-        assert m.fallback_active is True
-
-    def test_disconnected_with_override_returns_override(self) -> None:
-        """With manual source selected, override takes priority."""
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = True
-        m.connection_state = "disconnected"
-        m.override_speed_mps = 25.0
-        assert m.effective_speed_mps == pytest.approx(25.0)
-        assert m.fallback_active is False
-
-    def test_disconnected_no_override_returns_none(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.connection_state = "disconnected"
-        assert m.effective_speed_mps is None
-        assert m.fallback_active is True
-
-    def test_override_always_wins(self) -> None:
-        """When override_speed_mps is set AND speed_source is manual, override takes priority."""
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = True
-        m.override_speed_mps = 25.0
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        assert m.effective_speed_mps == pytest.approx(25.0)
-
-    def test_default_override_wins(self) -> None:
-        """Default state (manual_source_selected=True) prioritizes override."""
+    @pytest.mark.parametrize(
+        (
+            "connection_state",
+            "manual_source_selected",
+            "gps_speed_mps",
+            "gps_age_s",
+            "override_mps",
+            "expected_speed_mps",
+            "expected_fallback_active",
+        ),
+        [
+            ("connected", True, 10.0, 0.0, None, 10.0, False),
+            ("connected", False, 10.0, 999.0, 25.0, 25.0, True),
+            ("connected", True, 10.0, 999.0, None, None, True),
+            ("disconnected", True, None, None, 25.0, 25.0, False),
+            ("disconnected", True, None, None, None, None, True),
+            ("connected", True, 10.0, 0.0, 25.0, 25.0, False),
+        ],
+        ids=[
+            "fresh-gps-no-fallback",
+            "stale-gps-uses-manual-fallback",
+            "stale-gps-without-override-resolves-none",
+            "manual-override-beats-disconnected-gps",
+            "disconnected-gps-without-override-resolves-none",
+            "default-manual-override-beats-fresh-gps",
+        ],
+    )
+    def test_effective_speed_fallback_contract(
+        self,
+        connection_state: str,
+        manual_source_selected: bool,
+        gps_speed_mps: float | None,
+        gps_age_s: float | None,
+        override_mps: float | None,
+        expected_speed_mps: float | None,
+        expected_fallback_active: bool,
+    ) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         assert m.manual_source_selected is True
-        m.override_speed_mps = 25.0
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        assert m.effective_speed_mps == pytest.approx(25.0)
-        assert m.fallback_active is False
+        m.connection_state = connection_state
+        m.manual_source_selected = manual_source_selected
+        m.speed_mps = gps_speed_mps
+        if gps_age_s is not None:
+            set_gps_snapshot_age(m, age_s=gps_age_s)
+        m.override_speed_mps = override_mps
+
+        if expected_speed_mps is None:
+            assert m.effective_speed_mps is None
+        else:
+            assert m.effective_speed_mps == pytest.approx(expected_speed_mps)
+        assert m.fallback_active is expected_fallback_active
 
     def test_stale_timeout_respected(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -186,30 +179,29 @@ class TestFallback:
 
 
 class TestSetFallbackSettings:
-    def test_default_values(self) -> None:
+    @pytest.mark.parametrize(
+        ("initial_timeout_s", "update_timeout_s", "expected_timeout_s"),
+        [
+            pytest.param(None, None, DEFAULT_STALE_TIMEOUT_S, id="default-value"),
+            pytest.param(None, 30.0, 30.0, id="explicit-timeout"),
+            pytest.param(None, 0.5, MIN_STALE_TIMEOUT_S, id="clamped-low"),
+            pytest.param(None, 999.0, MAX_STALE_TIMEOUT_S, id="clamped-high"),
+            pytest.param(42.0, None, 42.0, id="none-update-is-noop"),
+        ],
+    )
+    def test_stale_timeout_settings_contract(
+        self,
+        initial_timeout_s: float | None,
+        update_timeout_s: float | None,
+        expected_timeout_s: float,
+    ) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        assert m.stale_timeout_s == DEFAULT_STALE_TIMEOUT_S
+        if initial_timeout_s is not None:
+            m.stale_timeout_s = initial_timeout_s
 
-    def test_set_stale_timeout(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(stale_timeout_s=30.0)
-        assert m.stale_timeout_s == 30.0
+        m.set_fallback_settings(stale_timeout_s=update_timeout_s)
 
-    def test_stale_timeout_clamped_low(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(stale_timeout_s=0.5)
-        assert m.stale_timeout_s == MIN_STALE_TIMEOUT_S
-
-    def test_stale_timeout_clamped_high(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(stale_timeout_s=999.0)
-        assert m.stale_timeout_s == MAX_STALE_TIMEOUT_S
-
-    def test_none_args_are_noop(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.stale_timeout_s = 42.0
-        m.set_fallback_settings(stale_timeout_s=None)
-        assert m.stale_timeout_s == 42.0
+        assert m.stale_timeout_s == expected_timeout_s
 
 
 # ---------------------------------------------------------------------------
@@ -218,19 +210,20 @@ class TestSetFallbackSettings:
 
 
 class TestIsGpsStale:
-    def test_no_update_ts_is_stale(self) -> None:
+    @pytest.mark.parametrize(
+        ("age_s", "expected_stale"),
+        [
+            pytest.param(None, True, id="no-update-timestamp-is-stale"),
+            pytest.param(0.0, False, id="fresh-update-is-not-stale"),
+            pytest.param(DEFAULT_STALE_TIMEOUT_S + 1, True, id="old-update-is-stale"),
+        ],
+    )
+    def test_gps_stale_contract(self, age_s: float | None, expected_stale: bool) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        assert m._is_gps_stale() is True
+        if age_s is not None:
+            set_gps_snapshot_age(m, age_s=age_s)
 
-    def test_fresh_update_not_stale(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        set_gps_snapshot_age(m)
-        assert m._is_gps_stale() is False
-
-    def test_old_update_is_stale(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        set_gps_snapshot_age(m, age_s=m.stale_timeout_s + 1)
-        assert m._is_gps_stale() is True
+        assert m._is_gps_stale() is expected_stale
 
 
 # ---------------------------------------------------------------------------
@@ -243,17 +236,21 @@ class TestSpeedSourceConfigFallback:
         cfg = SpeedSourceConfig.default()
         assert cfg.stale_timeout_s == 10.0
 
-    def test_from_dict_camel_case(self) -> None:
-        cfg = SpeedSourceConfig.from_dict(
-            {"speedSource": "gps", "staleTimeoutS": 30},
-        )
-        assert cfg.stale_timeout_s == 30.0
-
-    def test_from_dict_clamps_timeout(self) -> None:
-        cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 0.1})
-        assert cfg.stale_timeout_s == 3.0
-        cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 999})
-        assert cfg.stale_timeout_s == 120.0
+    @pytest.mark.parametrize(
+        ("payload", "expected_timeout_s"),
+        [
+            pytest.param({"speedSource": "gps", "staleTimeoutS": 30}, 30.0, id="camel-case"),
+            pytest.param({"staleTimeoutS": 0.1}, 3.0, id="clamped-low"),
+            pytest.param({"staleTimeoutS": 999}, 120.0, id="clamped-high"),
+        ],
+    )
+    def test_from_dict_stale_timeout_contract(
+        self,
+        payload: dict[str, object],
+        expected_timeout_s: float,
+    ) -> None:
+        cfg = SpeedSourceConfig.from_dict(payload)
+        assert cfg.stale_timeout_s == expected_timeout_s
 
     def test_to_dict_includes_stale_timeout(self) -> None:
         cfg = SpeedSourceConfig.default()

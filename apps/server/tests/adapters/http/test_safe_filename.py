@@ -13,19 +13,18 @@ class TestSafeFilename:
     @pytest.mark.parametrize(
         ("input_name", "expected"),
         [
-            ("run-2026-01-01_abc", "run-2026-01-01_abc"),
-            ("", "download"),
-            ("///", "___"),
+            pytest.param("run-2026-01-01_abc", "run-2026-01-01_abc", id="safe-name-kept"),
+            pytest.param("", "download", id="empty-name-uses-download"),
+            pytest.param("///", "___", id="path-separators-replaced"),
+            pytest.param(
+                "run/with spaces & $pecial",
+                "run_with_spaces____pecial",
+                id="special-characters-replaced",
+            ),
         ],
     )
-    def test_exact_output(self, input_name: str, expected: str) -> None:
+    def test_normalization_contract(self, input_name: str, expected: str) -> None:
         assert _safe_filename(input_name) == expected
-
-    def test_special_chars_replaced(self) -> None:
-        result = _safe_filename("run/with spaces & $pecial")
-        assert "/" not in result
-        assert " " not in result
-        assert "$" not in result
 
     def test_long_name_truncated(self) -> None:
         result = _safe_filename("a" * 500)
