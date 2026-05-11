@@ -11,8 +11,8 @@ from _paths import SERVER_ROOT
 from vibesensor import report_i18n
 from vibesensor.adapters.pdf.diagram_layout import canonical_location
 from vibesensor.domain import DiagnosisAssessment
+from vibesensor.shared.report_confidence_presentation import confidence_reason_text
 from vibesensor.shared.report_presentation import (
-    confidence_reason_text,
     display_location,
     display_speed_band,
     order_label_human,
