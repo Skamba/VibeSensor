@@ -58,8 +58,6 @@ def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
         shared_report_projection.PrimaryReportFacts,
     )
     assert isinstance(document, shared_report_document.ReportDocument)
-    assert not hasattr(prepared, "renderer_payload")
-    assert not hasattr(prepared, "presentation")
 
 
 def test_prepare_report_input_exposes_canonical_report_facts() -> None:
@@ -102,10 +100,3 @@ def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> Non
 
     with pytest.raises(ValueError, match="findings or top_causes"):
         prepare_persisted_report_input(analysis)
-
-
-def test_report_document_reexports_boundary_types() -> None:
-    assert not hasattr(report_document, "PreparedReportInput")
-    assert not hasattr(report_document, "Report")
-    assert not hasattr(report_document, "build_report_document_data")
-    assert not hasattr(report_document, "compose_report_document_context")

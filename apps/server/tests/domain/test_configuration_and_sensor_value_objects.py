@@ -79,12 +79,6 @@ class TestConfigurationSnapshot:
         assert snap.feature_interval_s == 0.5
         assert snap.final_drive_ratio == 3.73
 
-    def test_snapshot_no_longer_carries_raw_metadata_blob(self) -> None:
-        snap = configuration_snapshot_from_metadata(
-            run_metadata_from_mapping(_metadata(sensor_model="MPU6050"))
-        )
-        assert not hasattr(snap, "metadata")
-
     def test_empty_snapshot_equality(self) -> None:
         assert ConfigurationSnapshot() == ConfigurationSnapshot()
 
@@ -92,7 +86,6 @@ class TestConfigurationSnapshot:
         md = _metadata(sensor_model="MPU6050", custom_key="custom_value")
         snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(md))
         assert snap.sensor_model == "MPU6050"
-        assert not hasattr(snap, "metadata")
 
     def test_case_snapshot_accessible_via_capture(self) -> None:
         snap_a = configuration_snapshot_from_metadata(

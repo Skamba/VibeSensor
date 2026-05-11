@@ -7,7 +7,6 @@ import asyncio
 import numpy as np
 import pytest
 
-import vibesensor.adapters.simulator.scripted_scenarios as scripted_scenarios
 from vibesensor.adapters.simulator import scripted_speed_sync
 from vibesensor.adapters.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
@@ -65,11 +64,6 @@ def test_scripted_scenario_catalog_exposes_ten_complex_runs() -> None:
         "driveline-coastdown",
         "dual-fault-recovery",
     } <= set(scripted_scenario_names())
-
-
-def test_scripted_scenario_runner_module_no_longer_reexports_library_symbols() -> None:
-    assert not hasattr(scripted_scenarios, "SCRIPTED_SCENARIOS")
-    assert not hasattr(scripted_scenarios, "apply_phase")
 
 
 def test_scripted_scenarios_include_explicit_steady_speed_hold_phases() -> None:

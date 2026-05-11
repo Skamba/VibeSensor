@@ -74,6 +74,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Backend pytest uses `pytest-randomly`; reproduce order failures with the printed `--randomly-seed=<seed>`. Disable it only to isolate tooling, not to hide order-dependence.
 - Use `pytest-httpx` for backend outbound HTTP boundary tests.
 - Put AST/import guards in `tools/dev/verify_backend_static_guards.py`; repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`. Both run via `make lint`.
+- Temporary migration/absence tests must name the stable boundary they protect and be removed once positive current-behavior coverage exists.
 - New test-looking files must map to a runner or be explicitly allowed in `tools/dev/test_inventory_allowlist.yml`.
 - Marker policy lives in `tools/dev/test_marker_policy_allowlist.yml`. Use `smoke`, `long_sim`, and `e2e` sparingly.
 - Oversized test/spec guardrails live in `tools/dev/check_hygiene.py`; intentional exceptions require a reason in `tools/dev/oversized_test_allowlist.yml`.
