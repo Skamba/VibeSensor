@@ -343,3 +343,177 @@ def check_ci_lite_job_sync() -> list[str]:
         if f"tools/tests/run_ci_parallel.py {flag}" not in makefile_text:
             errors.append(f"Makefile {target} must invoke run_ci_parallel.py {flag}.")
     return errors
+
+
+def check_changed_scope_command_docs() -> list[str]:
+    errors: list[str] = []
+    wrapper_text = (ROOT / "tools/tests/run_ci_with_act.sh").read_text(encoding="utf-8")
+    if (
+        "--full-stack" not in wrapper_text
+        or "VIBESENSOR_CI_FORCE_FULL_STACK=1" not in wrapper_text
+    ):
+        errors.append(
+            "tools/tests/run_ci_with_act.sh must expose --full-stack and set VIBESENSOR_CI_FORCE_FULL_STACK=1."
+        )
+    for path in (
+        ROOT / "docs/testing.md",
+        ROOT / ".github/copilot-instructions.md",
+    ):
+        text = path.read_text(encoding="utf-8")
+        if "run_ci_with_act.sh" not in text or "--full-stack" not in text:
+            errors.append(
+                f"{path.relative_to(ROOT)} must document changed-scope and full-stack ACT usage."
+            )
+    return errors
+
+
+def _named_step(steps: Sequence[object], name: str) -> Mapping[str, object] | None:
+    return next(
+        (
+            step
+            for step in steps
+            if isinstance(step, Mapping) and step.get("name") == name
+        ),
+        None,
+    )
+
+
+def check_pi_image_workflow_contract() -> list[str]:
+    errors: list[str] = []
+    weekly = _load_yaml_mapping(ROOT / ".github/workflows/weekly-pi-image.yml")
+    weekly_jobs = weekly.get("jobs")
+    weekly_job = (
+        weekly_jobs.get("build-and-release")
+        if isinstance(weekly_jobs, Mapping)
+        else None
+    )
+    if not isinstance(weekly_job, Mapping):
+        errors.append("weekly-pi-image workflow must define jobs.build-and-release.")
+    else:
+        if weekly_job.get("runs-on") != "ubuntu-24.04-arm":
+            errors.append(
+                "weekly-pi-image build-and-release must use ubuntu-24.04-arm."
+            )
+        steps = weekly_job.get("steps")
+        if not isinstance(steps, list):
+            errors.append("weekly-pi-image build-and-release must define steps.")
+        else:
+            if any(
+                isinstance(step, Mapping)
+                and step.get("uses") == "docker/setup-qemu-action@v4"
+                for step in steps
+            ):
+                errors.append(
+                    "weekly-pi-image must not install QEMU on the native ARM runner."
+                )
+            source_step = _named_step(steps, "Compute weekly source SHA")
+            if (
+                source_step is None
+                or source_step.get("id") != "source"
+                or "git rev-parse HEAD" not in str(source_step.get("run", ""))
+            ):
+                errors.append(
+                    "weekly-pi-image must compute a source SHA from git rev-parse HEAD."
+                )
+            build_step = _named_step(steps, "Build weekly Pi image workflow artifact")
+            build_with = (
+                build_step.get("with") if isinstance(build_step, Mapping) else None
+            )
+            if (
+                not isinstance(build_with, Mapping)
+                or build_step.get("uses") != "./.github/actions/build-pi-image"
+            ):
+                errors.append(
+                    "weekly-pi-image must build through ./.github/actions/build-pi-image."
+                )
+            elif (
+                build_with.get("release-dir-name") != "weekly-pi-image"
+                or build_with.get("release-artifact-name")
+                != "VibeSensor-${{ steps.metadata.outputs.build_label }}.img.zip"
+                or build_with.get("workflow-artifact-name")
+                != "weekly-pi-image-${{ steps.metadata.outputs.build_label }}"
+                or build_with.get("include-published-artifact") != "true"
+            ):
+                errors.append(
+                    "weekly-pi-image build action inputs must keep weekly release and workflow artifact naming."
+                )
+            publish_step = _named_step(steps, "Publish weekly Pi image release")
+            publish_script = str(publish_step.get("run", "")) if publish_step else ""
+            if (
+                "${{ steps.assets.outputs.artifact_name }}" in publish_script
+                or "${GITHUB_SHA}" in publish_script
+                or "${{ steps.build-image.outputs.release-artifact-name }}"
+                not in publish_script
+                or '--target "${{ steps.source.outputs.sha }}"' not in publish_script
+            ):
+                errors.append(
+                    "weekly-pi-image publish step must target the computed source SHA and build-image artifact output."
+                )
+
+    manual = _load_yaml_mapping(ROOT / ".github/workflows/manual-pi-image-arm.yml")
+    manual_jobs = manual.get("jobs")
+    manual_job = (
+        manual_jobs.get("build-image") if isinstance(manual_jobs, Mapping) else None
+    )
+    if not isinstance(manual_job, Mapping):
+        errors.append("manual-pi-image-arm workflow must define jobs.build-image.")
+    else:
+        if manual_job.get("runs-on") != "ubuntu-24.04-arm":
+            errors.append("manual-pi-image-arm build-image must use ubuntu-24.04-arm.")
+        steps = manual_job.get("steps")
+        build_step = (
+            _named_step(steps, "Build ARM Pi image workflow artifact")
+            if isinstance(steps, list)
+            else None
+        )
+        build_with = build_step.get("with") if isinstance(build_step, Mapping) else None
+        if (
+            not isinstance(build_with, Mapping)
+            or build_step.get("uses") != "./.github/actions/build-pi-image"
+        ):
+            errors.append(
+                "manual-pi-image-arm must build through ./.github/actions/build-pi-image."
+            )
+        elif (
+            build_with.get("release-dir-name") != "manual-pi-image-arm"
+            or build_with.get("release-artifact-name")
+            != "${{ steps.metadata.outputs.artifact_prefix }}.img.zip"
+            or build_with.get("workflow-artifact-name")
+            != "manual-pi-image-arm-${{ steps.metadata.outputs.build_label }}"
+            or "include-published-artifact" in build_with
+        ):
+            errors.append(
+                "manual-pi-image-arm build action inputs must stay artifact-only with manual naming."
+            )
+        if isinstance(steps, list) and _named_step(
+            steps, "Publish weekly Pi image release"
+        ):
+            errors.append("manual-pi-image-arm must not publish weekly releases.")
+
+    actrc = (ROOT / ".actrc").read_text(encoding="utf-8")
+    if "ubuntu-24.04-arm" in actrc:
+        errors.append(
+            ".actrc must not map ubuntu-24.04-arm; local ACT cannot emulate those workflows."
+        )
+    for path in (
+        ROOT / "docs/testing.md",
+        ROOT / ".github/copilot-instructions.md",
+        ROOT / "infra/pi-image/pi-gen/README.md",
+    ):
+        text = path.read_text(encoding="utf-8")
+        missing = [
+            needle
+            for needle in (
+                "ubuntu-24.04-arm",
+                "not mapped",
+                "BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh",
+                "BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh",
+                "./infra/pi-image/pi-gen/validate-image.sh",
+            )
+            if needle not in text
+        ]
+        if missing:
+            errors.append(
+                f"{path.relative_to(ROOT)} must document native ARM Pi image ACT limits and local build commands; missing {missing}."
+            )
+    return errors
