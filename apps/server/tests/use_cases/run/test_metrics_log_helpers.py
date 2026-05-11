@@ -34,6 +34,16 @@ def _started_snapshot(logger) -> ActiveRunSnapshot:
     return snapshot
 
 
+def _started_snapshot_with_sample(logger) -> ActiveRunSnapshot:
+    snapshot = _started_snapshot(logger)
+    logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
+    return snapshot
+
+
 def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     logger = make_logger()
 
@@ -301,11 +311,8 @@ def test_finalize_preserves_run_metadata_from_recording_start(
 ) -> None:
     logger = make_logger(settings_reader=mutable_fake_settings, history_db=fake_history_db)
 
-    snapshot = _started_snapshot(logger)
+    snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     mutable_fake_settings.values["tire_width_mm"] = 315.0
     logger.stop_recording()
@@ -322,12 +329,7 @@ def test_append_records_surfaces_create_run_failure_in_status(
 ) -> None:
     logger = make_logger(history_db=failing_create_run_db)
 
-    snapshot = _started_snapshot(logger)
-    run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
+    _started_snapshot_with_sample(logger)
     status = logger.status()
 
     assert status.write_error is not None
@@ -341,17 +343,16 @@ def test_append_records_clears_write_error_after_successful_retry(
 ) -> None:
     logger = make_logger(history_db=failing_append_once_db)
 
-    snapshot = _started_snapshot(logger)
-    run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
+    snapshot = _started_snapshot_with_sample(logger)
     failed_status = logger.status()
     assert failed_status.write_error is not None
     assert "history append_samples failed" in str(failed_status.write_error)
 
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
     recovered_status = logger.status()
     assert recovered_status.write_error is None
 
@@ -433,11 +434,8 @@ def test_stop_recording_does_not_block_on_post_analysis(
     )
     logger = make_logger(history_db=history_db.run_repository)
 
-    snapshot = _started_snapshot(logger)
+    snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     started = time.monotonic()
     logger.stop_recording()
@@ -472,11 +470,8 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     )
     logger = make_logger(history_db=history_db.run_repository)
 
-    snapshot = _started_snapshot(logger)
+    snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     logger.stop_recording()
 
@@ -604,12 +599,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
 
     scheduled: list[str] = []
     logger = make_logger(history_db=fake_history_db)
-    snapshot = _started_snapshot(logger)
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    snapshot = _started_snapshot_with_sample(logger)
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
@@ -721,12 +711,7 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
 
     history_db = create_history_persistence_adapters(tmp_path / "history.db")
     logger = make_logger(history_db=history_db_factory(history_db.run_repository))
-    snapshot = _started_snapshot(logger)
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    snapshot = _started_snapshot_with_sample(logger)
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status=raw_capture_status,
@@ -759,12 +744,7 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
     history_db = create_history_persistence_adapters(tmp_path / "history.db")
     scheduled: list[str] = []
     logger = make_logger(history_db=history_db.run_repository)
-    snapshot = _started_snapshot(logger)
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    snapshot = _started_snapshot_with_sample(logger)
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
@@ -796,12 +776,7 @@ def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata
 
     scheduled: list[str] = []
     logger = make_logger(history_db=fake_history_db)
-    snapshot = _started_snapshot(logger)
-    logger._sample_flush.append_records(
-        snapshot.run_id,
-        snapshot.start_time_utc,
-        snapshot.start_mono_s,
-    )
+    snapshot = _started_snapshot_with_sample(logger)
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="failed",
@@ -832,11 +807,8 @@ def test_post_analysis_uses_run_language_from_metadata(
         language_reader=SimpleNamespace(language="nl"),
     )
 
-    snapshot = _started_snapshot(logger)
+    snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     def _analysis_runner(run):
         assert run.run_id == snapshot.run_id
@@ -926,11 +898,8 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = create_history_persistence_adapters(tmp_path / "history.db")
     logger = make_logger(history_db=history_db.run_repository, persist_history_db=True)
 
-    snapshot = _started_snapshot(logger)
+    snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
-    start_time_utc = snapshot.start_time_utc
-    start_mono = snapshot.start_mono_s
-    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     logger.stop_recording()
 
     assert history_db.run_repository.get_run(run_id) is not None
