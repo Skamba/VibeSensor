@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, type Route } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 import type { LoggingStatusPayload } from "../src/api/types";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
@@ -272,73 +272,6 @@ function defaultSettingsPayload(path: string): Record<string, unknown> {
     return { cars: [], active_car_id: null };
   }
   return {};
-}
-
-export type SemanticSurfaceStyles = {
-  backgroundColor: string;
-  borderColor: string;
-  expectedBackgroundColor: string;
-  expectedBorderColor: string;
-};
-
-export type SemanticToneStyles = {
-  backgroundColor: string;
-  borderColor: string;
-  color: string;
-  expectedBackgroundColor: string;
-  expectedBorderColor: string;
-  expectedColor: string;
-};
-
-export async function readSemanticToneStyles(
-  locator: Locator,
-  vars: {
-    surfaceVar: string;
-    borderVar?: string;
-    textVar?: string;
-  },
-): Promise<SemanticToneStyles> {
-  return locator.evaluate((element, vars) => {
-    const probe = document.createElement("div");
-    probe.style.background = `var(${vars.surfaceVar})`;
-    probe.style.border = vars.borderVar
-      ? `1px solid var(${vars.borderVar})`
-      : "1px solid transparent";
-    probe.style.color = vars.textVar ? `var(${vars.textVar})` : "inherit";
-    probe.style.position = "absolute";
-    probe.style.visibility = "hidden";
-    probe.style.pointerEvents = "none";
-    document.body.appendChild(probe);
-    const elementStyles = getComputedStyle(element);
-    const probeStyles = getComputedStyle(probe);
-    const result = {
-      backgroundColor: elementStyles.backgroundColor,
-      borderColor: elementStyles.borderTopColor,
-      color: elementStyles.color,
-      expectedBackgroundColor: probeStyles.backgroundColor,
-      expectedBorderColor: probeStyles.borderTopColor,
-      expectedColor: probeStyles.color,
-    };
-    probe.remove();
-    return result;
-  }, vars);
-}
-
-export async function readSemanticSurfaceStyles(
-  locator: Locator,
-  surfaceVar: string,
-  borderVar: string,
-): Promise<SemanticSurfaceStyles> {
-  const styles = await readSemanticToneStyles(locator, {
-    surfaceVar,
-    borderVar,
-  });
-  return {
-    backgroundColor: styles.backgroundColor,
-    borderColor: styles.borderColor,
-    expectedBackgroundColor: styles.expectedBackgroundColor,
-    expectedBorderColor: styles.expectedBorderColor,
-  };
 }
 
 export async function activateWizardCloseButton(page: Page): Promise<void> {

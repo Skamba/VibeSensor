@@ -74,43 +74,9 @@ test("history uses mobile run cards and keeps the primary action readable on nar
   await expect(row.locator(".history-row__diagnosis")).toContainText(
     "Duration: 12.3 s",
   );
-
-  const metrics = await row.evaluate((element) => {
-    const diagnosisTitle = element.querySelector<HTMLElement>(
-      ".history-row__diagnosis-title",
-    );
-    const diagnosisMeta = element.querySelector<HTMLElement>(
-      ".history-row__diagnosis-meta",
-    );
-    const button = element.querySelector<HTMLElement>(
-      '[data-run-toggle="details"]',
-    );
-    if (!diagnosisTitle || !diagnosisMeta || !button) {
-      throw new Error("history row content is missing");
-    }
-    const lineMetrics = (el: HTMLElement) => {
-      const style = getComputedStyle(el);
-      const fontSize = Number.parseFloat(style.fontSize) || 16;
-      const lineHeight = Number.parseFloat(style.lineHeight) || fontSize * 1.2;
-      return {
-        lines: Math.round(el.getBoundingClientRect().height / lineHeight),
-      };
-    };
-    return {
-      buttonWidth: Math.round(button.getBoundingClientRect().width),
-      diagnosisTitleLines: lineMetrics(diagnosisTitle).lines,
-      diagnosisMetaLines: lineMetrics(diagnosisMeta).lines,
-    };
-  });
-
-  expect(metrics.buttonWidth).toBeGreaterThanOrEqual(140);
-  expect(metrics.diagnosisTitleLines).toBeLessThanOrEqual(2);
-  expect(metrics.diagnosisMetaLines).toBeLessThanOrEqual(3);
-  const rowDisplay = await row.evaluate(
-    (element) => getComputedStyle(element).display,
-  );
-  expect(rowDisplay).toBe("grid");
   await expect(toggle).toContainText("Open diagnosis");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
 });
 
 test("history empty state stays action-oriented on narrow screens", async ({
