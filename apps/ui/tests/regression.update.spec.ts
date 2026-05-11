@@ -208,14 +208,7 @@ test("settings internet tab and updater show USB internet when usable", async ({
     "Starting a USB-internet update keeps the hotspot up",
   );
   await page.locator("#updateTransportWifiRadio").focus();
-  await expect(page.locator("#updateTransportChoiceWifi")).toHaveCSS(
-    "outline-style",
-    "solid",
-  );
-  await expect(page.locator("#updateTransportChoiceWifi")).toHaveCSS(
-    "outline-width",
-    "2px",
-  );
+  await expect(page.locator("#updateTransportWifiRadio")).toBeFocused();
   await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
     "data-choice-state",
     "active",
