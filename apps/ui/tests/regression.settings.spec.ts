@@ -1,5 +1,6 @@
 import { expect, test, type Route } from "@playwright/test";
 
+import { createDeferred } from "./async_test_helpers";
 import {
   bootLiveDashboard,
   cancelPrompt,
@@ -819,6 +820,19 @@ test("manual OBD scan sorts named devices first and background rescans progressi
   page,
 }) => {
   let scanCalls = 0;
+  const refreshedScanPayload = {
+    devices: [
+      {
+        mac_address: "5340ac571177",
+        name: "Pim's iPhone",
+        paired: false,
+        trusted: false,
+        connected: false,
+        rfcomm_channel: null,
+      },
+    ],
+  };
+  const refreshedScan = createDeferred<typeof refreshedScanPayload>();
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/language": { language: "en" },
@@ -877,19 +891,7 @@ test("manual OBD scan sorts named devices first and background rescans progressi
             ],
           };
         }
-        await new Promise((resolve) => setTimeout(resolve, 2_500));
-        return {
-          devices: [
-            {
-              mac_address: "5340ac571177",
-              name: "Pim's iPhone",
-              paired: false,
-              trusted: false,
-              connected: false,
-              rfcomm_channel: null,
-            },
-          ],
-        };
+        return await refreshedScan.promise;
       },
     }),
   });
@@ -910,6 +912,9 @@ test("manual OBD scan sorts named devices first and background rescans progressi
   await expect
     .poll(() => scanCalls, { timeout: 5_000 })
     .toBeGreaterThanOrEqual(2);
+  await expect(deviceNames.nth(1)).toHaveText("53-40-AC-57-11-77");
+
+  refreshedScan.resolve(refreshedScanPayload);
   await expect(deviceNames.nth(1)).toHaveText("Pim's iPhone");
 });
 

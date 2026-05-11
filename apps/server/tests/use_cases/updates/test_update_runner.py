@@ -35,7 +35,7 @@ class _StaticRunner(CommandRunner):
 class _BlockingStream:
     async def read(self, n: int = -1) -> bytes:
         del n
-        await asyncio.sleep(60)
+        await asyncio.Event().wait()
         return b""
 
 
@@ -46,19 +46,21 @@ class _CancellableProcess:
         self.stdout = _BlockingStream()
         self.stderr = _BlockingStream()
         self.wait_called = asyncio.Event()
+        self._exited = asyncio.Event()
         self.killed = False
 
     def kill(self) -> None:
         self.killed = True
         self.returncode = -9
+        if not self.block_wait:
+            self._exited.set()
 
     async def wait(self) -> int:
         self.wait_called.set()
         if self.block_wait:
-            await asyncio.sleep(60)
+            await asyncio.Event().wait()
         if self.returncode is None:
-            await asyncio.sleep(60)
-        await asyncio.sleep(0)
+            await self._exited.wait()
         return self.returncode if self.returncode is not None else 0
 
 
