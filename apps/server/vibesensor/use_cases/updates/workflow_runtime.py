@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING
 from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
+from vibesensor.use_cases.updates.firmware_refresh_execution import (
+    RefreshFirmwareExecutionCoordinator,
+)
 from vibesensor.use_cases.updates.installer import UpdateInstaller
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.release_deployment import (
@@ -29,6 +32,7 @@ from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.runtime import UpdateTransportRuntime
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
+from vibesensor.use_cases.updates.workflow_planner import UpdateWorkflowPlanner
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.status import UpdateTerminalStateReporter
@@ -48,17 +52,19 @@ def build_update_workflow(
         config.release_fetcher_config,
     )
     return UpdateWorkflow(
-        preparation=_build_preparation(
-            commands=core.commands,
-            status=core.status,
-            transport=transport,
-            config=config,
-        ),
-        release_planner=UpdateReleasePlanner(
-            status=core.status,
-            current_version_provider=core.current_version_provider,
-            resolver=ServerReleaseResolver(
-                release_fetcher=release_fetcher,
+        planner=UpdateWorkflowPlanner(
+            preparation=_build_preparation(
+                commands=core.commands,
+                status=core.status,
+                transport=transport,
+                config=config,
+            ),
+            release_planner=UpdateReleasePlanner(
+                status=core.status,
+                current_version_provider=core.current_version_provider,
+                resolver=ServerReleaseResolver(
+                    release_fetcher=release_fetcher,
+                ),
             ),
         ),
         workflow_executor=_build_workflow_executor(
@@ -109,23 +115,28 @@ def _build_workflow_executor(
         repo=config.repo,
         timeout_s=execution_config.firmware_refresh_timeout_s,
     )
+    completion = UpdateCompletionCoordinator(
+        restart_scheduler=UpdateRestartScheduler(
+            commands=commands,
+            status=status,
+            service_name=execution_config.service_name,
+            restart_unit=execution_config.restart_unit,
+        ),
+        reporter=reporter,
+        status=status,
+    )
     installer = UpdateInstaller(
         commands=commands,
         status=status,
         config=config.installer_config,
     )
     return UpdateWorkflowExecutor(
-        completion=UpdateCompletionCoordinator(
-            restart_scheduler=UpdateRestartScheduler(
-                commands=commands,
-                status=status,
-                service_name=execution_config.service_name,
-                restart_unit=execution_config.restart_unit,
-            ),
-            reporter=reporter,
-            status=status,
+        refresh_execution=RefreshFirmwareExecutionCoordinator(
+            completion=completion,
+            firmware_refresher=firmware_refresher,
         ),
         server_release_execution=ServerReleaseExecutionCoordinator(
+            completion=completion,
             stager=ServerReleaseStager(
                 status=status,
                 release_fetcher=release_fetcher,
@@ -137,5 +148,4 @@ def _build_workflow_executor(
             ),
             status=status,
         ),
-        firmware_refresher=firmware_refresher,
     )
