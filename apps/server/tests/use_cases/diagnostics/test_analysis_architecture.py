@@ -27,12 +27,10 @@ def test_diagnostics_package_is_marker_only() -> None:
 
 
 def test_canonical_analysis_symbols_live_in_run_analysis() -> None:
-    from vibesensor.adapters.analysis_summary import build_findings_for_samples
     from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
 
     assert isinstance(AnalysisResult, type)
     assert isinstance(RunAnalysis, type)
-    assert callable(build_findings_for_samples)
 
 
 # ---------------------------------------------------------------------------

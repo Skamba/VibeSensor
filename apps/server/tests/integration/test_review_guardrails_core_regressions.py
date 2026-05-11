@@ -23,20 +23,20 @@ from vibesensor.shared.types.car_config import new_car_id
 
 
 class TestDomainModelsPublicAPI:
-    """Verify that formerly-private helpers are importable by their public names."""
+    """Verify public helpers through their observable normalization behavior."""
 
-    def test_as_float_or_none_importable(self) -> None:
+    def test_as_float_or_none_normalizes_numeric_inputs(self) -> None:
         assert as_float_or_none(3.14) == 3.14
         assert as_float_or_none(None) is None
         assert as_float_or_none("") is None
         assert as_float_or_none(float("nan")) is None
         assert as_float_or_none(float("inf")) is None
 
-    def test_as_int_or_none_importable(self) -> None:
+    def test_as_int_or_none_rounds_numeric_inputs(self) -> None:
         assert as_int_or_none(3.7) == 4
         assert as_int_or_none(None) is None
 
-    def test_new_car_id_importable(self) -> None:
+    def test_new_car_id_returns_non_empty_identifier(self) -> None:
         car_id = new_car_id()
         assert isinstance(car_id, str) and len(car_id) > 0
 
@@ -54,9 +54,6 @@ class TestDomainModelsPublicAPI:
 
 class TestBuildOrderBandsLocation:
     """Verify order-band helpers stay in the shared module and keep basic behavior."""
-
-    def test_importable_from_order_bands(self) -> None:
-        assert callable(build_order_bands)
 
     def test_build_order_bands_basic(self) -> None:
         from vibesensor.shared.order_bands import build_diagnostic_settings

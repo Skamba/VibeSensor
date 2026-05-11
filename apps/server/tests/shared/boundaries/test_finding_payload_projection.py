@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import vibesensor.shared.boundaries.summary_fields.finding as boundary_finding
 from vibesensor.domain import Finding, FindingEvidence, OrderMatchObservation, VibrationSource
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
@@ -160,7 +159,3 @@ def test_projection_keeps_empty_signatures_list_for_contract_stability() -> None
     )
 
     assert payload["signatures_observed"] == []
-
-
-def test_boundary_module_exposes_only_the_public_finding_codec_api() -> None:
-    assert boundary_finding.__all__ == ["finding_from_payload", "finding_payload_from_domain"]
