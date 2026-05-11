@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
+from vibesensor.shared.report_confidence_presentation import confidence_reason_text
 from vibesensor.shared.report_presentation import (
-    confidence_reason_text,
     display_speed_band,
     human_source,
     strength_label,
