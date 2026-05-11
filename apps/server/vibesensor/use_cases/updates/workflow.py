@@ -7,10 +7,9 @@ from dataclasses import dataclass
 
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
 from vibesensor.use_cases.updates.models import UpdateRequest
-from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
-from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
+from vibesensor.use_cases.updates.workflow_planner import UpdateWorkflowPlanner
 
 __all__ = ["UpdateWorkflow"]
 
@@ -19,8 +18,7 @@ __all__ = ["UpdateWorkflow"]
 class UpdateWorkflow:
     """Run one update request through the canonical workflow lifecycle."""
 
-    preparation: UpdatePreparationCoordinator
-    release_planner: UpdateReleasePlanner
+    planner: UpdateWorkflowPlanner
     workflow_executor: UpdateWorkflowExecutor
     finalizer: UpdateWorkflowFinalizer
 
@@ -30,9 +28,13 @@ class UpdateWorkflow:
         request: UpdateRequest,
     ) -> None:
         prepared: PreparedUpdateRun | None = None
+
+        def remember_prepared(value: PreparedUpdateRun) -> None:
+            nonlocal prepared
+            prepared = value
+
         try:
-            prepared = await self.preparation.prepare(request)
-            planned = await self.release_planner.plan(prepared)
+            planned = await self.planner.plan(request, on_prepared=remember_prepared)
             await self.workflow_executor.execute(planned)
         finally:
             await self.finalizer.finalize(
