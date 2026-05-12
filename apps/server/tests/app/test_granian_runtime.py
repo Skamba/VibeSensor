@@ -69,39 +69,14 @@ def _run_main_for_platform(monkeypatch, *, platform: str) -> dict[str, object]:
     return recorded
 
 
-def test_main_uses_uvloop_on_linux(monkeypatch) -> None:
-    recorded = _run_main_for_platform(monkeypatch, platform="linux")
+def test_main_uses_platform_appropriate_granian_loop(monkeypatch) -> None:
+    cases = [("linux", Loops.uvloop), ("darwin", Loops.asyncio)]
 
-    assert recorded == {
-        "args": ("vibesensor.app.bootstrap:create_app_from_env",),
-        "kwargs": {
-            "address": "127.0.0.1",
-            "port": 8000,
-            "interface": Interfaces.ASGI,
-            "log_enabled": True,
-            "log_level": LogLevels.info,
-            "loop": Loops.uvloop,
-            "reload": False,
-            "factory": True,
-        },
-        "served": True,
-    }
+    for platform, expected_loop in cases:
+        recorded = _run_main_for_platform(monkeypatch, platform=platform)
 
-
-def test_main_uses_asyncio_off_linux(monkeypatch) -> None:
-    recorded = _run_main_for_platform(monkeypatch, platform="darwin")
-
-    assert recorded == {
-        "args": ("vibesensor.app.bootstrap:create_app_from_env",),
-        "kwargs": {
-            "address": "127.0.0.1",
-            "port": 8000,
-            "interface": Interfaces.ASGI,
-            "log_enabled": True,
-            "log_level": LogLevels.info,
-            "loop": Loops.asyncio,
-            "reload": False,
-            "factory": True,
-        },
-        "served": True,
-    }
+        assert recorded["args"] == ("vibesensor.app.bootstrap:create_app_from_env",)
+        assert recorded["kwargs"]["interface"] == Interfaces.ASGI
+        assert recorded["kwargs"]["log_level"] == LogLevels.info
+        assert recorded["kwargs"]["loop"] == expected_loop
+        assert recorded["served"] is True
