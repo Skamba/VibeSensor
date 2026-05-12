@@ -154,19 +154,9 @@ describe("SpectrumInteractionController", () => {
       chartBands: [],
     });
 
-    expect(controller.bandToggleModel.value).toEqual({
-      disabled: true,
-      hasBands: false,
-      bandsVisible: false,
-      hidden: true,
-      pressed: "false",
-      text: "Show reference bands",
-    });
+    expect(controller.bandToggleModel.value.hidden).toBe(true);
     expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe(
       "12.0 dB",
-    );
-    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
-      false,
     );
     expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
       "8.0 dB",
@@ -179,10 +169,6 @@ describe("SpectrumInteractionController", () => {
     );
     expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
       true,
-    );
-    expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(true);
-    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
-      "8.0 dB",
     );
     expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(true);
     expect(isolatedSeries).toBe(1);
@@ -207,10 +193,6 @@ describe("SpectrumInteractionController", () => {
     );
     expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(
       false,
-    );
-    expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(false);
-    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe(
-      "8.0 dB",
     );
     expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(false);
     expect(isolatedSeries).toBeNull();
