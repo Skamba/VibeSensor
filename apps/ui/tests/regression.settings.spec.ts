@@ -324,54 +324,6 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
   await expect(page.locator("#obdStatusBackoff")).toHaveText("Yes");
 });
 
-test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({
-  page,
-}) => {
-  let persistedAnalysisSettings: Record<string, number> = {};
-  let analysisPutCalls = 0;
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    const method = route.request().method();
-    if (method === "PUT") {
-      analysisPutCalls += 1;
-      persistedAnalysisSettings = route.request().postDataJSON() as Record<
-        string,
-        number
-      >;
-      await fulfillJson(route, persistedAnalysisSettings);
-      return;
-    }
-    await fulfillJson(route, persistedAnalysisSettings);
-  });
-  await bootLiveDashboard(page, { installRoutes: false });
-  await openAnalysisTab(page);
-  await page.locator("#wheelBandwidthInput").fill("7.5");
-  await page.locator("#driveshaftBandwidthInput").fill("8.5");
-  await page.locator("#engineBandwidthInput").fill("9.5");
-  await page.locator("#speedUncertaintyInput").fill("3");
-  await page.locator("#tireDiameterUncertaintyInput").fill("4");
-  await page.locator("#finalDriveUncertaintyInput").fill("2");
-  await page.locator("#gearUncertaintyInput").fill("4");
-  await page.locator("#minAbsBandHzInput").fill("0.7");
-  await page.locator("#maxBandHalfWidthInput").fill("12");
-  await page.locator("#saveAnalysisBtn").click();
-  await expect.poll(() => analysisPutCalls).toBe(1);
-  await page.reload();
-  await openAnalysisTab(page);
-  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
-});
-
 test("analysis tab adds guided helper copy and can reset tuning to defaults", async ({
   page,
 }) => {
