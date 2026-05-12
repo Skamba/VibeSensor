@@ -16,7 +16,7 @@ from math import pi
 
 import numpy as np
 import pytest
-from test_support.core import wait_until
+from test_support.polling import wait_until
 
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.workers.worker_pool import WorkerPool

@@ -23,7 +23,7 @@ from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
-from test_support.core import async_wait_until
+from test_support.polling import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import (

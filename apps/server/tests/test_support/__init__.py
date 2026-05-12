@@ -54,7 +54,6 @@ from test_support.core import (
     assert_summary_sections,
     assert_top_cause_contract,
     engine_hz,
-    extract_pdf_text,
     profile_circ,
     profile_metadata,
     profile_wheel_hz,
@@ -72,6 +71,8 @@ from test_support.fault_scenarios import (
     make_profile_speed_sweep_fault_samples,
     make_speed_sweep_fault_samples,
 )
+from test_support.pdf import extract_pdf_text
+from test_support.polling import async_wait_until, wait_until
 from test_support.sample_scenarios import (
     make_clipped_samples,
     make_clock_skew_samples,
@@ -139,6 +140,8 @@ __all__ = [
     "assert_top_cause_contract",
     "engine_hz",
     "extract_pdf_text",
+    "async_wait_until",
+    "wait_until",
     "profile_circ",
     "profile_metadata",
     "profile_wheel_hz",

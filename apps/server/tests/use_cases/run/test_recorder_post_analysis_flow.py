@@ -6,8 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from test_support.core import wait_until
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.polling import wait_until
 
 from tests.use_cases.run.test_metrics_log_helpers import (
     _started_snapshot,
