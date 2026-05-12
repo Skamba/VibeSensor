@@ -1,3 +1,5 @@
+import { expect } from "vitest";
+
 export type TimerHarness = {
   pendingDelays(): number[];
   restore(): void;
@@ -72,4 +74,34 @@ export async function flushAsyncWork(rounds = 12): Promise<void> {
 
 export async function flushSignalUpdates(rounds = 12): Promise<void> {
   await flushAsyncWork(rounds);
+}
+
+export async function resolveAfterDisposal<T>(options: {
+  dispose(): void;
+  resolve(value: T): void;
+  start(): Promise<unknown>;
+  value: T;
+}): Promise<void> {
+  const pending = options.start();
+  await flushAsyncWork();
+  options.dispose();
+  options.resolve(options.value);
+  await pending;
+  await flushAsyncWork();
+}
+
+export async function expectSingleInFlightOperation<T>(options: {
+  callCount(): number;
+  resolve(value: T): void;
+  start(): Promise<unknown>;
+  value: T;
+}): Promise<void> {
+  const first = options.start();
+  const second = options.start();
+  await flushAsyncWork();
+
+  expect(options.callCount()).toBe(1);
+  options.resolve(options.value);
+  await Promise.all([first, second]);
+  await flushAsyncWork();
 }
