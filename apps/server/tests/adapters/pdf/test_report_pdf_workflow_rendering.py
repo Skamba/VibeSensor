@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
-from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
+from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import (
     RUN_END,
     ambiguous_primary_location_summary,

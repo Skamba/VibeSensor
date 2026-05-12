@@ -9,7 +9,7 @@ from _report_pdf_test_helpers import (
     extract_media_box,
     sample,
 )
-from test_support.core import extract_pdf_text
+from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import (
     RUN_END,
     minimal_summary,
