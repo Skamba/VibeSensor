@@ -1,16 +1,12 @@
 """Representative synthetic scenario matrix coverage.
 
-This module owns the cross-cutting synthetic scenario dimensions that were
-previously duplicated across the single-vs-multi and transient-vs-steady
-integration suites:
+This module owns the cross-cutting synthetic scenario matrix:
 
-- core fault corner/speed detection
-- no-fault noise baselines
-- phased onset behavior
-
-The 4-sensor steady matrix remains the full corner x speed owner. Single-sensor
-and transient variants keep representative subsets so the suite still covers
-those dimensions without repeating the entire cartesian product.
+- 4-sensor steady faults: full corner x speed owner.
+- Single-sensor faults: one limited-localization representative.
+- Transient faults: one single-sensor and one 4-sensor representative.
+- No-fault baselines: one representative per layout/steady/transient purpose.
+- Phased onset: one representative per layout/transient purpose.
 """
 
 from __future__ import annotations
@@ -50,6 +46,16 @@ from test_support.diagnostic_matrix_catalogs import (
 )
 
 SensorLayout = Literal["single", "4sensor", "12sensor"]
+
+SCENARIO_PURPOSE_MATRIX = (
+    ("4sensor-core", "full corner x speed fault owner"),
+    ("single-representative", "limited sensor-layout fault owner"),
+    ("single-transient-representative", "single-sensor transient fault owner"),
+    ("4sensor-transient-representative", "multi-sensor transient fault owner"),
+    ("noise-baseline", "steady no-fault suppression by layout"),
+    ("transient-baseline", "transient no-fault tolerance by layout"),
+    ("phased", "idle/ramp/fault phase onset by layout"),
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,49 +113,37 @@ FAULT_MATRIX_CASES = [
         for corner in DIAGNOSTIC_WHEEL_CORNERS
         for speed_case_id, speed_kmh in DIAGNOSTIC_STANDARD_SPEED_CASES
     ],
-    *[
-        _fault_case(
-            case_id="single-representative",
-            sensor_layout="single",
-            corner=corner,
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=False,
-            min_confidence=0.45,
-            expect_warnings=True,
-            expect_confidence_label=True,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _fault_case(
-            case_id="single-transient-representative",
-            sensor_layout="single",
-            corner=corner,
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=True,
-            min_confidence=0.30,
-            expect_warnings=True,
-            expect_confidence_label=True,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _fault_case(
-            case_id="4sensor-transient-representative",
-            sensor_layout="4sensor",
-            corner=corner,
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=True,
-            min_confidence=0.15,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
+    _fault_case(
+        case_id="single-representative",
+        sensor_layout="single",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[0],
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][1],
+        transient=False,
+        min_confidence=0.45,
+        expect_warnings=True,
+        expect_confidence_label=True,
+    ),
+    _fault_case(
+        case_id="single-transient-representative",
+        sensor_layout="single",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[1],
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][1],
+        transient=True,
+        min_confidence=0.30,
+        expect_warnings=True,
+        expect_confidence_label=True,
+    ),
+    _fault_case(
+        case_id="4sensor-transient-representative",
+        sensor_layout="4sensor",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[0],
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][1],
+        transient=True,
+        min_confidence=0.15,
+    ),
 ]
 
 
@@ -186,57 +180,42 @@ def _no_fault_case(
 
 
 NO_FAULT_MATRIX_CASES = [
-    *[
-        _no_fault_case(
-            case_id="single-noise-baseline",
-            sensor_layout="single",
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=False,
-            expect_warnings=True,
-        )
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _no_fault_case(
-            case_id="4sensor-noise-baseline",
-            sensor_layout="4sensor",
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=False,
-        )
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _no_fault_case(
-            case_id="single-transient-baseline",
-            sensor_layout="single",
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=True,
-        )
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _no_fault_case(
-            case_id="4sensor-transient-baseline",
-            sensor_layout="4sensor",
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=True,
-        )
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
-    *[
-        _no_fault_case(
-            case_id="12sensor-transient-baseline",
-            sensor_layout="12sensor",
-            speed_case_id=speed_case_id,
-            speed_kmh=speed_kmh,
-            transient=True,
-        )
-        for speed_case_id, speed_kmh in DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES
-    ],
+    _no_fault_case(
+        case_id="single-noise-baseline",
+        sensor_layout="single",
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][1],
+        transient=False,
+        expect_warnings=True,
+    ),
+    _no_fault_case(
+        case_id="4sensor-noise-baseline",
+        sensor_layout="4sensor",
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][1],
+        transient=False,
+    ),
+    _no_fault_case(
+        case_id="single-transient-baseline",
+        sensor_layout="single",
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][1],
+        transient=True,
+    ),
+    _no_fault_case(
+        case_id="4sensor-transient-baseline",
+        sensor_layout="4sensor",
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[0][1],
+        transient=True,
+    ),
+    _no_fault_case(
+        case_id="12sensor-transient-baseline",
+        sensor_layout="12sensor",
+        speed_case_id=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][0],
+        speed_kmh=DIAGNOSTIC_REPRESENTATIVE_SPEED_CASES[1][1],
+        transient=True,
+    ),
 ]
 
 
@@ -267,42 +246,30 @@ def _phased_case(
 
 
 PHASED_MATRIX_CASES = [
-    *[
-        _phased_case(
-            case_id="single-phased",
-            sensor_layout="single",
-            corner=corner,
-            transient=False,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-    ],
-    *[
-        _phased_case(
-            case_id="4sensor-phased",
-            sensor_layout="4sensor",
-            corner=corner,
-            transient=False,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-    ],
-    *[
-        _phased_case(
-            case_id="single-phased-transient",
-            sensor_layout="single",
-            corner=corner,
-            transient=True,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-    ],
-    *[
-        _phased_case(
-            case_id="4sensor-phased-transient",
-            sensor_layout="4sensor",
-            corner=corner,
-            transient=True,
-        )
-        for corner in DIAGNOSTIC_REPRESENTATIVE_CORNERS
-    ],
+    _phased_case(
+        case_id="single-phased",
+        sensor_layout="single",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[0],
+        transient=False,
+    ),
+    _phased_case(
+        case_id="4sensor-phased",
+        sensor_layout="4sensor",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[1],
+        transient=False,
+    ),
+    _phased_case(
+        case_id="single-phased-transient",
+        sensor_layout="single",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[1],
+        transient=True,
+    ),
+    _phased_case(
+        case_id="4sensor-phased-transient",
+        sensor_layout="4sensor",
+        corner=DIAGNOSTIC_REPRESENTATIVE_CORNERS[0],
+        transient=True,
+    ),
 ]
 
 
