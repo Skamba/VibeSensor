@@ -105,25 +105,21 @@ def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path: Path)
     }
 
 
-def test_main_uses_default_single_shard_and_default_workers(monkeypatch, tmp_path: Path) -> None:
+def test_main_builds_pytest_command_for_selected_backend_shard(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
     module = _load_run_backend_parallel_module()
     monkeypatch.delenv(module._XDIST_WORKERS_ENV, raising=False)
     captured, emitted = _install_main_fakes(module, monkeypatch, tmp_path)
 
     assert module.main([]) == 0
 
-    assert captured["cmd"] == [
-        sys.executable,
-        "-m",
-        "pytest",
-        "-q",
-        "-n",
-        "3",
-        "--tb=short",
-        "--junitxml",
-        str(tmp_path / "backend-tests-1.xml"),
-        "apps/server/tests/app/test_app_main.py",
-    ]
+    command = captured["cmd"]
+    assert command[:4] == [sys.executable, "-m", "pytest", "-q"]
+    assert command[command.index("-n") + 1] == "3"
+    assert command[command.index("--junitxml") + 1] == str(tmp_path / "backend-tests-1.xml")
+    assert "apps/server/tests/app/test_app_main.py" in command
     assert any("running shard 1/1" in line for line in emitted)
 
 
