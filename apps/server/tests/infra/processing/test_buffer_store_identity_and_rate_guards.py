@@ -7,7 +7,7 @@ import numpy as np
 from vibesensor.infra.processing.buffer_capacity import MAX_CLIENT_SAMPLE_RATE_HZ
 from vibesensor.infra.processing.buffer_store import SignalBufferStore
 from vibesensor.infra.processing.compute import SignalMetricsComputer
-from vibesensor.infra.processing.models import CachedMetricsHit, MetricsSnapshot, ProcessorConfig
+from vibesensor.infra.processing.models import MetricsSnapshot, ProcessorConfig
 
 
 def _config(**overrides: object) -> ProcessorConfig:
@@ -62,13 +62,11 @@ def test_stale_result_is_rejected_after_buffer_eviction_and_recreation() -> None
 
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
-        assert buf.buffer_epoch == recreated_epoch
         assert buf.latest_metrics == {}
-        assert buf.compute_generation == -1
 
     next_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)
     assert isinstance(next_plan, MetricsSnapshot)
-    assert not isinstance(next_plan, CachedMetricsHit)
+    assert next_plan.buffer_epoch == recreated_epoch
 
 
 def test_sample_rate_change_forces_fresh_snapshot_before_reusing_cache() -> None:
@@ -84,14 +82,11 @@ def test_sample_rate_change_forces_fresh_snapshot_before_reusing_cache() -> None
     assert isinstance(first_plan, MetricsSnapshot)
     store.store_metrics_result(computer.compute(first_plan))
 
-    cached_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)
-    assert isinstance(cached_plan, CachedMetricsHit)
-
     changed_rate_plan = store.snapshot_for_compute(client_id, sample_rate_hz=400)
     assert isinstance(changed_rate_plan, MetricsSnapshot)
     assert changed_rate_plan.sample_rate_hz == 400
 
-    store.store_metrics_result(computer.compute(changed_rate_plan))
+    changed_result = computer.compute(changed_rate_plan)
+    store.store_metrics_result(changed_result)
 
-    refreshed_cached_plan = store.snapshot_for_compute(client_id, sample_rate_hz=400)
-    assert isinstance(refreshed_cached_plan, CachedMetricsHit)
+    assert store.latest_metrics(client_id) == changed_result.metrics

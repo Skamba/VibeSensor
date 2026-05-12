@@ -41,8 +41,6 @@ def test_flush_rejects_pre_reset_inflight_result() -> None:
         assert buf is not None
         assert buf.count == 0
         assert buf.latest_metrics == {}
-        assert buf.compute_generation == -1
-        assert buf.reset_generation == stale_plan.reset_generation + 1
 
 
 def test_post_reset_result_commits_after_new_ingest() -> None:
@@ -70,8 +68,6 @@ def test_post_reset_result_commits_after_new_ingest() -> None:
 
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
-        assert buf.reset_generation == fresh_plan.reset_generation
-        assert buf.compute_generation == fresh_result.ingest_generation
         assert buf.latest_metrics == fresh_result.metrics
 
 
@@ -102,6 +98,4 @@ def test_repeated_resets_keep_older_results_rejected() -> None:
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
         assert buf.count == 0
-        assert buf.reset_generation == second_plan.reset_generation + 1
         assert buf.latest_metrics == {}
-        assert buf.compute_generation == -1

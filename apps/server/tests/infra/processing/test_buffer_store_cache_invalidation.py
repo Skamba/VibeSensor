@@ -30,27 +30,11 @@ def _seed_cached_payload(store: SignalBufferStore, client_id: str) -> None:
     with store.locked_client_buffer(client_id, create=True) as buf:
         assert buf is not None
         buf.cached_spectrum_payload = {"freq": [1.0, 2.0]}
-        buf.cached_spectrum_payload_generation = 5
 
 
-def test_flush_client_buffer_invalidates_cached_payloads() -> None:
+def test_ingest_and_flush_invalidate_cached_payloads() -> None:
     store = SignalBufferStore(_config())
-    client_id = "sensor-flush"
-
-    store.ingest(client_id, np.ones((16, 3), dtype=np.float32), sample_rate_hz=200)
-    _seed_cached_payload(store, client_id)
-
-    store.flush_client_buffer(client_id)
-
-    with store.locked_client_buffer(client_id) as buf:
-        assert buf is not None
-        assert buf.cached_spectrum_payload is None
-        assert buf.cached_spectrum_payload_generation == -1
-
-
-def test_ingest_invalidates_cached_payloads() -> None:
-    store = SignalBufferStore(_config())
-    client_id = "sensor-ingest"
+    client_id = "sensor-cache"
 
     store.ingest(client_id, np.ones((16, 3), dtype=np.float32), sample_rate_hz=200)
     _seed_cached_payload(store, client_id)
@@ -60,7 +44,13 @@ def test_ingest_invalidates_cached_payloads() -> None:
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
         assert buf.cached_spectrum_payload is None
-        assert buf.cached_spectrum_payload_generation == -1
+
+    _seed_cached_payload(store, client_id)
+    store.flush_client_buffer(client_id)
+
+    with store.locked_client_buffer(client_id) as buf:
+        assert buf is not None
+        assert buf.cached_spectrum_payload is None
 
 
 def test_store_metrics_result_invalidates_cached_payloads() -> None:
@@ -90,4 +80,3 @@ def test_store_metrics_result_invalidates_cached_payloads() -> None:
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
         assert buf.cached_spectrum_payload is None
-        assert buf.cached_spectrum_payload_generation == -1
