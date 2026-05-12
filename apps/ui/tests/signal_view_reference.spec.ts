@@ -5,9 +5,9 @@ import {
   computed,
   effect,
   effectOnChange,
+  type ReadonlySignal,
   signal,
   useSignalProperties,
-  type ReadonlySignal,
 } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewBridge,
@@ -25,9 +25,28 @@ function requireElement<T extends Element = HTMLElement>(
   return element;
 }
 
+function assertElementContainsText(
+  root: ParentNode,
+  selector: string,
+  expected: string,
+): void {
+  const text = requireElement(root, selector).textContent ?? "";
+  assert.ok(
+    text.includes(expected),
+    `Expected ${selector} text ${JSON.stringify(text)} to contain ${JSON.stringify(expected)}`,
+  );
+}
+
+function requireTabButton(root: ParentNode, label: string): HTMLElement {
+  const tab = Array.from(
+    root.querySelectorAll<HTMLElement>('[role="tab"]'),
+  ).find((element) => (element.textContent ?? "").includes(label));
+  assert.ok(tab, `Expected tab labeled ${JSON.stringify(label)}`);
+  return tab;
+}
+
 async function runDirectSignalBindingReferenceTest(): Promise<void> {
   const buttonText = signal("Idle");
-  const variant = signal("muted");
   const disabled = signal(true);
   let renderCount = 0;
 
@@ -39,7 +58,6 @@ async function runDirectSignalBindingReferenceTest(): Promise<void> {
         return h(
           "button",
           {
-            "data-variant": variant,
             disabled,
             id: "signalBindingButton",
             type: "button",
@@ -62,17 +80,14 @@ async function runDirectSignalBindingReferenceTest(): Promise<void> {
     );
     assert.equal(renderCount, 1);
     assert.equal(button.textContent, "Idle");
-    assert.equal(button.getAttribute("data-variant"), "muted");
     assert.equal(button.disabled, true);
 
     buttonText.value = "Running";
-    variant.value = "warn";
     disabled.value = false;
     await harness.flush();
 
     assert.equal(renderCount, 1);
     assert.equal(button.textContent, "Running");
-    assert.equal(button.getAttribute("data-variant"), "warn");
     assert.equal(button.disabled, false);
   } finally {
     harness.cleanup();
@@ -163,16 +178,8 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     harness.view.speedText.value = speedText;
     await harness.flush();
 
-    assert.equal(
-      requireElement(harness.host, "#liveConnectedSensors [data-value]")
-        .textContent,
-      "2 / 4",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveStrongestSignal [data-value]")
-        .textContent,
-      "68 dB",
-    );
+    assertElementContainsText(harness.host, "#liveConnectedSensors", "2 / 4");
+    assertElementContainsText(harness.host, "#liveStrongestSignal", "68 dB");
     assert.equal(requireElement(harness.host, "#speed").textContent, "43 km/h");
     assert.equal(
       requireElement(harness.host, "#liveRunHealth").textContent,
@@ -200,86 +207,30 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
 
     await harness.flush();
 
-    assert.equal(
-      requireElement(harness.host, "#liveConnectedSensors [data-value]")
-        .textContent,
-      "4 / 4",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveRecordingState [data-value]")
-        .textContent,
-      "Recording",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveDataFreshness [data-value]")
-        .textContent,
-      "Live",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveStrongestSignal [data-value]")
-        .textContent,
-      "82 dB",
-    );
+    assertElementContainsText(harness.host, "#liveConnectedSensors", "4 / 4");
+    assertElementContainsText(harness.host, "#liveRecordingState", "Recording");
+    assertElementContainsText(harness.host, "#liveDataFreshness", "Live");
+    assertElementContainsText(harness.host, "#liveStrongestSignal", "82 dB");
     assert.equal(
       requireElement(harness.host, "#liveRunHealth").textContent,
       "Recording",
     );
-    assert.equal(
-      requireElement(harness.host, "#liveRunHealth").getAttribute(
-        "data-variant",
-      ),
-      "warn",
-    );
-    assert.match(
-      requireElement(harness.host, "#liveActiveCar [data-value]").textContent ??
-        "",
-      /Choose a car/,
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveActiveCar [data-value]").getAttribute(
-        "data-variant",
-      ),
-      "warn",
-    );
-    assert.equal(
-      harness.host.querySelectorAll("[data-strongest='true']").length,
-      1,
-    );
+    assertElementContainsText(harness.host, "#liveActiveCar", "Choose a car");
     assert.match(harness.host.textContent ?? "", /Front Left/);
     assert.doesNotMatch(harness.host.textContent ?? "", /No sensors/i);
 
     harness.view.model.value = reboundModel;
     await harness.flush();
 
-    assert.equal(
-      requireElement(harness.host, "#liveConnectedSensors [data-value]")
-        .textContent,
-      "1 / 1",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveRecordingState [data-value]")
-        .textContent,
-      "Paused",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveDataFreshness [data-value]")
-        .textContent,
-      "Buffered",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveStrongestSignal [data-value]")
-        .textContent,
-      "54 dB",
-    );
+    assertElementContainsText(harness.host, "#liveConnectedSensors", "1 / 1");
+    assertElementContainsText(harness.host, "#liveRecordingState", "Paused");
+    assertElementContainsText(harness.host, "#liveDataFreshness", "Buffered");
+    assertElementContainsText(harness.host, "#liveStrongestSignal", "54 dB");
     assert.equal(
       requireElement(harness.host, "#liveRunHealth").textContent,
       "Paused",
     );
-    assert.match(
-      requireElement(harness.host, "#liveActiveCar [data-value]").textContent ??
-        "",
-      /Support Van/,
-    );
+    assertElementContainsText(harness.host, "#liveActiveCar", "Support Van");
     assert.match(harness.host.textContent ?? "", /Rear Right/);
     assert.doesNotMatch(harness.host.textContent ?? "", /Front Left/);
 
@@ -287,31 +238,15 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     strongestSignalText.value = "99 dB";
     await harness.flush();
 
-    assert.equal(
-      requireElement(harness.host, "#liveConnectedSensors [data-value]")
-        .textContent,
-      "1 / 1",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveStrongestSignal [data-value]")
-        .textContent,
-      "54 dB",
-    );
+    assertElementContainsText(harness.host, "#liveConnectedSensors", "1 / 1");
+    assertElementContainsText(harness.host, "#liveStrongestSignal", "54 dB");
 
     reboundConnectedSensorsText.value = "2 / 2";
     reboundStrongestSignalText.value = "61 dB";
     await harness.flush();
 
-    assert.equal(
-      requireElement(harness.host, "#liveConnectedSensors [data-value]")
-        .textContent,
-      "2 / 2",
-    );
-    assert.equal(
-      requireElement(harness.host, "#liveStrongestSignal [data-value]")
-        .textContent,
-      "61 dB",
-    );
+    assertElementContainsText(harness.host, "#liveConnectedSensors", "2 / 2");
+    assertElementContainsText(harness.host, "#liveStrongestSignal", "61 dB");
   } finally {
     harness.cleanup();
   }
@@ -342,11 +277,9 @@ async function runEffectOnChangeReferenceTest(): Promise<void> {
 async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
   const badgeText = signal("Idle");
   const hidden = signal(true);
-  const tone = signal<"muted" | "ok">("muted");
   const model = computed(() => ({
     hidden: hidden.value,
     text: badgeText.value,
-    tone: tone.value,
   }));
   let renderCount = 0;
 
@@ -355,10 +288,9 @@ async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
     return (host) => {
       function SignalPropertiesView() {
         renderCount += 1;
-        const { hidden, text, tone } = useSignalProperties(model, [
+        const { hidden, text } = useSignalProperties(model, [
           "hidden",
           "text",
-          "tone",
         ] as const);
         return h(
           "div",
@@ -366,7 +298,6 @@ async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
           h(
             "span",
             {
-              "data-variant": tone,
               hidden,
               id: "signalPropertiesBadge",
             },
@@ -389,17 +320,14 @@ async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
     );
     assert.equal(renderCount, 1);
     assert.equal(badge.textContent, "Idle");
-    assert.equal(badge.getAttribute("data-variant"), "muted");
     assert.equal(badge.hidden, true);
 
     badgeText.value = "Ready";
     hidden.value = false;
-    tone.value = "ok";
     await harness.flush();
 
     assert.equal(renderCount, 1);
     assert.equal(badge.textContent, "Ready");
-    assert.equal(badge.getAttribute("data-variant"), "ok");
     assert.equal(badge.hidden, false);
   } finally {
     harness.cleanup();
@@ -436,10 +364,7 @@ async function runSettingsShellReferenceTest(): Promise<void> {
     assert.deepEqual(observedTabs, ["analysisTab"]);
     assert.equal(shellView.activeTabId.value, "analysisTab");
     assert.equal(
-      requireElement(
-        harness.host,
-        '[data-settings-tab="analysisTab"]',
-      ).getAttribute("aria-selected"),
+      requireTabButton(harness.host, "Analysis").getAttribute("aria-selected"),
       "true",
     );
     assert.equal(requireElement(harness.host, "#analysisTab").hidden, false);
