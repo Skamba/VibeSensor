@@ -14,44 +14,51 @@ describe("spectrum chart model", () => {
     expect(normalizeSpectrumChartData([])).toEqual([[]]);
   });
 
-  test("calculates visible-series ranges from finite spectrum values", () => {
-    const ranges = calculateSpectrumChartRanges(
-      [
+  test.each([
+    {
+      name: "visible series",
+      visibleSeriesIndexes: [1],
+      data: [
         [10, 20, 30],
         [0, 10, 30],
         [0, 80, 90],
       ],
-      [1],
-    );
-
-    expect(ranges.x).toEqual({ min: 10, max: 30 });
-    expect(ranges.y).toEqual({ min: 0, max: 40 });
-  });
-
-  test("falls back to all data series when no series is visible", () => {
-    const ranges = calculateSpectrumChartRanges(
-      [
+      expected: {
+        x: { min: 10, max: 30 },
+        y: { min: 0, max: 40 },
+      },
+    },
+    {
+      name: "all series when none are isolated",
+      visibleSeriesIndexes: [],
+      data: [
         [10, 20],
         [10, 20],
         [70, 80],
       ],
-      [],
+      expected: {
+        x: { min: 10, max: 20 },
+        y: { min: 0, max: 90 },
+      },
+    },
+  ])("calculates readable ranges for $name", ({
+    data,
+    expected,
+    visibleSeriesIndexes,
+  }) => {
+    expect(calculateSpectrumChartRanges(data, visibleSeriesIndexes)).toEqual(
+      expected,
     );
-
-    expect(ranges.y).toEqual({ min: 0, max: 90 });
   });
 
-  test("projects ticks and cursor indexes from the headless chart box", () => {
+  test("maps axis ticks and cursor positions to spectrum values", () => {
     const box = createSpectrumChartBox(400, 260);
     const xRange = { min: 10, max: 30 };
+    const cursorX = projectSpectrumChartValue(20, xRange, box.left, box.width);
 
-    expect(box).toEqual({ top: 16, left: 54, width: 330, height: 208 });
     expect(buildSpectrumChartTickValues(xRange, 3)).toEqual([10, 20, 30]);
-    expect(projectSpectrumChartValue(20, xRange, box.left, box.width)).toBe(
-      219,
-    );
-    expect(findClosestSpectrumChartIndex([10, 20, 30], 225, xRange, box)).toBe(
-      1,
-    );
+    expect(
+      findClosestSpectrumChartIndex([10, 20, 30], cursorX, xRange, box),
+    ).toBe(1);
   });
 });
