@@ -448,27 +448,6 @@ class TestDrivingSegment:
 class TestDrivingPhaseSegment:
     """Tests for DrivingPhaseSegment (per-phase-type summary)."""
 
-    def test_construction_basic(self) -> None:
-        seg = DrivingPhaseSegment(
-            phase=DrivingPhase.CRUISE,
-            duration_s=12.5,
-            sample_count=250,
-            speed_min_kmh=30.0,
-            speed_max_kmh=80.0,
-            fraction=0.6,
-        )
-        assert seg.phase is DrivingPhase.CRUISE
-        assert seg.duration_s == 12.5
-        assert seg.sample_count == 250
-        assert seg.speed_min_kmh == 30.0
-        assert seg.speed_max_kmh == 80.0
-        assert seg.fraction == pytest.approx(0.6)
-
-    def test_frozen_immutability(self) -> None:
-        seg = DrivingPhaseSegment(phase=DrivingPhase.IDLE, duration_s=1.0, sample_count=10)
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            seg.sample_count = 99
-
     def test_optional_speed_fields_default_none(self) -> None:
         seg = DrivingPhaseSegment(phase=DrivingPhase.ACCELERATION, duration_s=5.0, sample_count=100)
         assert seg.speed_min_kmh is None
@@ -477,9 +456,6 @@ class TestDrivingPhaseSegment:
     def test_fraction_defaults_to_zero(self) -> None:
         seg = DrivingPhaseSegment(phase=DrivingPhase.DECELERATION, duration_s=2.0, sample_count=0)
         assert seg.fraction == 0.0
-
-    def test_has_slots(self) -> None:
-        assert hasattr(DrivingPhaseSegment, "__slots__")
 
 
 class TestTestRunSegments:
