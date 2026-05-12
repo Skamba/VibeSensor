@@ -1,269 +1,160 @@
-"""Hygiene tests: field parity between domain objects and boundary TypedDicts.
-
-Boundary serializers (``finding_payload_from_domain``, ``finding_from_payload``,
-etc.) manually bridge domain dataclass fields to boundary TypedDict keys.
-Without compile-time enforcement, adding a field on one side and forgetting the
-other creates silent data loss.  These tests catch drift immediately.
-
-Three test patterns are used depending on the mapping complexity:
-
-* **Strict** — domain fields and payload keys are identical sets.
-* **Mapped** — explicit rename map + documented extra-only sets on each side.
-* **Structural** — domain uses rich nested objects that the payload "explodes"
-  into multiple flat keys; an explicit coverage map verifies every domain field
-  is accounted for.
-"""
+"""Behavior checks for domain-to-boundary payload codecs."""
 
 from __future__ import annotations
 
-import dataclasses
+from pydantic import TypeAdapter
 
-from vibesensor.domain import Finding, FindingEvidence
+from vibesensor.domain import (
+    ConfidenceAssessment,
+    Finding,
+    FindingEvidence,
+    RunSuitability,
+    Signature,
+    SuitabilityCheck,
+    VibrationSource,
+)
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.domain.run_suitability import SuitabilityCheck
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.summary_fields.origin import SuspectedVibrationOrigin
-from vibesensor.shared.types.analysis_views import (
-    FindingEvidenceMetrics,
-    LocationHotspotPayload,
-    MatchedPoint,
+from vibesensor.shared.boundaries.runs.suitability import (
+    run_suitability_from_payload,
+    run_suitability_payload,
 )
-from vibesensor.shared.types.history_analysis_contracts import FindingPayload, RunSuitabilityCheck
+from vibesensor.shared.boundaries.summary_fields.finding import (
+    finding_from_payload,
+    finding_payload_from_domain,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    FindingPayload,
+    RunSuitabilityCheck,
+)
 
 
-def _dc_fields(cls: type) -> set[str]:
-    return {f.name for f in dataclasses.fields(cls)}
+def test_finding_payload_round_trips_domain_summary_boundary() -> None:
+    """Finding codec owns rich domain-to-public payload field mapping."""
+
+    location = LocationHotspot(
+        strongest_location="front_left_wheel",
+        dominance_ratio=1.8,
+        localization_confidence=0.74,
+        weak_spatial_separation=True,
+        ambiguous=True,
+        alternative_locations=("front_right_wheel",),
+        location_count=4,
+    )
+    finding = Finding(
+        finding_id="FIND-WHEEL-1",
+        finding_key="wheel_order",
+        suspected_source=VibrationSource.WHEEL_TIRE,
+        confidence=0.82,
+        frequency_hz=43.5,
+        order="1.0x wheel",
+        severity="warn",
+        strongest_location="front_left_wheel",
+        strongest_speed_band="80-90 km/h",
+        peak_classification="wheel_order",
+        dominant_phase="cruise",
+        ranking_score=0.91,
+        dominance_ratio=1.8,
+        diffuse_excitation=False,
+        weak_spatial_separation=True,
+        vibration_strength_db=16.4,
+        cruise_fraction=0.67,
+        phases_detected=("acceleration", "cruise"),
+        matched_points=(
+            OrderMatchObservation(
+                predicted_hz=42.0,
+                matched_hz=43.5,
+                rel_error=0.035,
+                amp=0.18,
+                location="front_left_wheel",
+                t_s=12.5,
+                speed_kmh=86.0,
+                phase="cruise",
+            ),
+        ),
+        evidence=FindingEvidence(
+            match_rate=0.76,
+            global_match_rate=0.61,
+            focused_speed_band="80-90 km/h",
+            mean_relative_error=0.034,
+            mean_noise_floor_db=-48.0,
+            possible_samples=28,
+            matched_samples=22,
+            snr_db=9.5,
+            presence_ratio=0.72,
+            burstiness=0.12,
+            spatial_concentration=0.86,
+            frequency_correlation=0.8,
+            speed_uniformity=0.78,
+            spatial_uniformity=0.69,
+            phases_with_evidence=2,
+            phase_confidences=(("acceleration", 0.71), ("cruise", 0.86)),
+            vibration_strength_db=16.4,
+        ),
+        location=location,
+        confidence_assessment=ConfidenceAssessment(
+            raw_confidence=0.82,
+            label_key="CONFIDENCE_HIGH",
+            tone="success",
+            pct_text="82%",
+            reason="clear repeated order support",
+            weak_spatial=True,
+        ),
+        origin=VibrationOrigin.from_analysis_inputs(
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            hotspot=location,
+            dominance_ratio=1.8,
+            speed_band="80-90 km/h",
+            dominant_phase="cruise",
+            reason="wheel order dominates the cruise band",
+        ),
+        signatures=(
+            Signature.from_label(
+                "wheel order",
+                source=VibrationSource.WHEEL_TIRE,
+                support_score=0.82,
+            ),
+        ),
+    )
+
+    payload = TypeAdapter(FindingPayload).validate_python(finding_payload_from_domain(finding))
+    decoded = finding_from_payload(payload)
+
+    assert payload["finding_id"] == finding.finding_id
+    assert payload["evidence_metrics"]["vibration_strength_db"] == 16.4
+    assert payload["location_hotspot"]["ambiguous_locations"] == ["front_right_wheel"]
+    assert payload["matched_points"][0]["matched_hz"] == 43.5
+    assert payload["phase_evidence"]["phases_detected"] == ["acceleration", "cruise"]
+    assert decoded == finding
 
 
-def _td_fields(cls: type) -> set[str]:
-    return set(cls.__required_keys__ | cls.__optional_keys__)
+def test_run_suitability_payload_round_trips_domain_boundary() -> None:
+    """Run suitability codecs own check-key/detail translation."""
 
+    suitability = RunSuitability(
+        checks=(
+            SuitabilityCheck(
+                check_key="SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                state="warn",
+                details=(("sat_count", 3),),
+            ),
+        ),
+    )
 
-# ---------------------------------------------------------------------------
-# 1. OrderMatchObservation ↔ MatchedPoint  (strict 1:1)
-# ---------------------------------------------------------------------------
+    payload = TypeAdapter(list[RunSuitabilityCheck]).validate_python(
+        run_suitability_payload(suitability)
+    )
+    decoded = run_suitability_from_payload(payload)
 
-
-class TestOrderMatchObservationParity:
-    """MatchedPoint payload must have the same fields as OrderMatchObservation."""
-
-    def test_field_names_match(self) -> None:
-        dc = _dc_fields(OrderMatchObservation)
-        td = _td_fields(MatchedPoint)
-        assert dc == td, (
-            f"OrderMatchObservation ↔ MatchedPoint field drift!\n"
-            f"  domain-only: {dc - td}\n"
-            f"  payload-only: {td - dc}"
-        )
-
-
-# ---------------------------------------------------------------------------
-# 2. FindingEvidence ↔ FindingEvidenceMetrics  (mapped + extras)
-# ---------------------------------------------------------------------------
-
-
-class TestFindingEvidenceParity:
-    """FindingEvidenceMetrics payload fields must cover FindingEvidence domain fields."""
-
-    # Domain field → payload key renames
-    RENAME_MAP: dict[str, str] = {
-        "phase_confidences": "per_phase_confidence",
-    }
-    # Domain fields with no payload counterpart (intentional)
-    DOMAIN_ONLY: set[str] = set()
-    # Payload keys with no domain counterpart (pipeline-produced metrics)
-    PAYLOAD_ONLY: set[str] = {
-        "median_intensity_db",
-        "p95_intensity_db",
-        "max_intensity_db",
-        "run_noise_baseline_db",
-        "median_relative_to_run_noise",
-        "p95_relative_to_run_noise",
-        "sample_count",
-        "total_samples",
-    }
-
-    def test_all_domain_fields_covered(self) -> None:
-        dc = _dc_fields(FindingEvidence)
-        td = _td_fields(FindingEvidenceMetrics)
-        mapped_dc = {self.RENAME_MAP.get(f, f) for f in dc} - self.DOMAIN_ONLY
-        uncovered = mapped_dc - td - self.DOMAIN_ONLY
-        assert not uncovered, f"Domain fields missing from FindingEvidenceMetrics: {uncovered}"
-
-    def test_no_unexpected_payload_keys(self) -> None:
-        dc = _dc_fields(FindingEvidence)
-        td = _td_fields(FindingEvidenceMetrics)
-        reverse_rename = {v: k for k, v in self.RENAME_MAP.items()}
-        mapped_td = {reverse_rename.get(f, f) for f in td}
-        unexpected = mapped_td - dc - self.PAYLOAD_ONLY
-        assert not unexpected, (
-            f"Payload keys with no domain counterpart and not in PAYLOAD_ONLY: {unexpected}"
-        )
-
-
-# ---------------------------------------------------------------------------
-# 3. LocationHotspot ↔ LocationHotspotPayload  (mapped + extras)
-# ---------------------------------------------------------------------------
-
-
-class TestLocationHotspotParity:
-    """LocationHotspotPayload fields must cover LocationHotspot domain fields."""
-
-    RENAME_MAP: dict[str, str] = {
-        "strongest_location": "top_location",
-        "ambiguous": "ambiguous_location",
-        "alternative_locations": "ambiguous_locations",
-    }
-    PAYLOAD_ONLY: set[str] = set()
-
-    def test_all_domain_fields_covered(self) -> None:
-        dc = _dc_fields(LocationHotspot)
-        td = _td_fields(LocationHotspotPayload)
-        mapped_dc = {self.RENAME_MAP.get(f, f) for f in dc}
-        uncovered = mapped_dc - td
-        assert not uncovered, f"Domain fields missing from LocationHotspotPayload: {uncovered}"
-
-    def test_no_unexpected_payload_keys(self) -> None:
-        dc = _dc_fields(LocationHotspot)
-        td = _td_fields(LocationHotspotPayload)
-        reverse_rename = {v: k for k, v in self.RENAME_MAP.items()}
-        mapped_td = {reverse_rename.get(f, f) for f in td}
-        unexpected = mapped_td - dc - self.PAYLOAD_ONLY
-        assert not unexpected, f"Payload keys not in domain or PAYLOAD_ONLY: {unexpected}"
-
-
-# ---------------------------------------------------------------------------
-# 4. SuitabilityCheck ↔ RunSuitabilityCheck  (mapped + extras)
-# ---------------------------------------------------------------------------
-
-
-class TestSuitabilityCheckParity:
-    """RunSuitabilityCheck payload must cover SuitabilityCheck domain fields."""
-
-    RENAME_MAP: dict[str, str] = {
-        "details": "explanation",  # details → i18n explanation
-    }
-    PAYLOAD_ONLY: set[str] = set()
-
-    def test_all_domain_fields_covered(self) -> None:
-        dc = _dc_fields(SuitabilityCheck)
-        td = _td_fields(RunSuitabilityCheck)
-        mapped_dc = {self.RENAME_MAP.get(f, f) for f in dc}
-        uncovered = mapped_dc - td
-        assert not uncovered, f"Domain fields missing from RunSuitabilityCheck: {uncovered}"
-
-    def test_no_unexpected_payload_keys(self) -> None:
-        dc = _dc_fields(SuitabilityCheck)
-        td = _td_fields(RunSuitabilityCheck)
-        reverse_rename = {v: k for k, v in self.RENAME_MAP.items()}
-        mapped_td = {reverse_rename.get(f, f) for f in td}
-        unexpected = mapped_td - dc - self.PAYLOAD_ONLY
-        assert not unexpected, f"Payload keys not in domain or PAYLOAD_ONLY: {unexpected}"
-
-
-# ---------------------------------------------------------------------------
-# 5. VibrationOrigin ↔ SuspectedVibrationOrigin  (mapped + extras)
-# ---------------------------------------------------------------------------
-
-
-class TestVibrationOriginParity:
-    """SuspectedVibrationOrigin payload must cover VibrationOrigin domain fields."""
-
-    RENAME_MAP: dict[str, str] = {
-        "reason": "explanation",
-    }
-    # hotspot is a rich domain object exploded into flat payload keys
-    DOMAIN_ONLY: set[str] = {
-        "hotspot",
-    }
-    PAYLOAD_ONLY: set[str] = {
-        "location",  # derived from hotspot.strongest_location
-        "alternative_locations",  # derived from hotspot.alternative_locations
-        "weak_spatial_separation",  # derived from hotspot
-    }
-
-    def test_all_domain_fields_covered(self) -> None:
-        dc = _dc_fields(VibrationOrigin)
-        td = _td_fields(SuspectedVibrationOrigin)
-        mapped_dc = {self.RENAME_MAP.get(f, f) for f in dc} - self.DOMAIN_ONLY
-        uncovered = mapped_dc - td
-        assert not uncovered, f"Domain fields missing from SuspectedVibrationOrigin: {uncovered}"
-
-    def test_no_unexpected_payload_keys(self) -> None:
-        dc = _dc_fields(VibrationOrigin)
-        td = _td_fields(SuspectedVibrationOrigin)
-        reverse_rename = {v: k for k, v in self.RENAME_MAP.items()}
-        mapped_td = {reverse_rename.get(f, f) for f in td}
-        unexpected = mapped_td - dc - self.PAYLOAD_ONLY
-        assert not unexpected, f"Payload keys not in domain or PAYLOAD_ONLY: {unexpected}"
-
-
-# ---------------------------------------------------------------------------
-# 6. Finding ↔ FindingPayload  (structural coverage map)
-# ---------------------------------------------------------------------------
-
-
-class TestFindingPayloadCoverage:
-    """Every Finding domain field must be accounted for in FindingPayload.
-
-    The mapping is not 1:1 — domain uses rich nested objects while the
-    payload flattens them into multiple keys.  This test verifies that
-    every domain field falls into exactly one of:
-
-    * Direct-mapped (same name or explicit rename in payload)
-    * Exploded (a nested object whose child fields appear as flat keys)
-    """
-
-    # Domain field name → payload key(s) it maps to.
-    # For exploded objects, the list of resulting payload keys.
-    DOMAIN_TO_PAYLOAD: dict[str, list[str]] = {
-        "finding_id": ["finding_id"],
-        "finding_key": ["finding_key"],
-        "suspected_source": ["suspected_source"],
-        "confidence": ["confidence"],
-        "frequency_hz": ["frequency_hz"],
-        "order": ["order"],
-        "severity": ["severity"],
-        "strongest_location": ["strongest_location"],
-        "strongest_speed_band": ["strongest_speed_band"],
-        "peak_classification": ["peak_classification"],
-        "kind": ["finding_kind"],
-        "dominant_phase": ["dominant_phase"],
-        "ranking_score": ["ranking_score"],
-        "dominance_ratio": ["dominance_ratio"],
-        "diffuse_excitation": ["diffuse_excitation"],
-        "weak_spatial_separation": ["weak_spatial_separation"],
-        "vibration_strength_db": [],  # nested inside amplitude_metric
-        "cruise_fraction": ["phase_evidence"],
-        "phases_detected": ["phase_evidence"],
-        "matched_points": ["matched_points"],
-        # Rich objects exploded into flat payload keys
-        "evidence": ["evidence_metrics"],
-        "location": ["location_hotspot"],
-        "confidence_assessment": [
-            "confidence_label_key",
-            "confidence_tone",
-            "confidence_pct",
-        ],
-        "origin": [],  # serialised via separate origin boundary
-        "signatures": ["signatures_observed"],
-    }
-
-    def test_all_domain_fields_accounted_for(self) -> None:
-        dc = _dc_fields(Finding)
-        accounted = set(self.DOMAIN_TO_PAYLOAD.keys())
-        missing = dc - accounted
-        assert not missing, (
-            f"Finding domain fields not in DOMAIN_TO_PAYLOAD map: {missing}\n"
-            "Add them to the coverage map with their payload key(s)."
-        )
-
-    def test_mapped_payload_keys_exist(self) -> None:
-        td = _td_fields(FindingPayload)
-        for domain_field, payload_keys in self.DOMAIN_TO_PAYLOAD.items():
-            for pk in payload_keys:
-                assert pk in td, (
-                    f"Domain field '{domain_field}' maps to payload key "
-                    f"'{pk}' which does not exist in FindingPayload"
-                )
+    assert payload == [
+        {
+            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+            "state": "warn",
+            "explanation": {
+                "_i18n_key": "SUITABILITY_SATURATION_WARN",
+                "sat_count": 3,
+            },
+        }
+    ]
+    assert decoded == suitability
