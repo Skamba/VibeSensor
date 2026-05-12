@@ -8,7 +8,6 @@ from tests_e2e.e2e_helpers import (
     wait_run_status,
 )
 
-SHORT_RUN_DURATION_S = 0.8
 FORBIDDEN_PLACEHOLDERS = (" null ", " none ", " nan ", " undefined ", "{{", "}}")
 
 
@@ -45,7 +44,7 @@ def _cleanup_clients(base_url: str) -> None:
 
 
 def _wait_complete(base_url: str, run_id: str) -> dict:
-    return wait_run_status(base_url, run_id, statuses=("complete", "error"), timeout_s=120.0)
+    return wait_run_status(base_url, run_id, statuses=("complete",), timeout_s=120.0)
 
 
 def _assert_no_placeholders(text: str) -> None:
