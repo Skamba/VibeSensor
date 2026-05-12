@@ -7,6 +7,7 @@ import type { EspFlashFeatureDeps } from "../src/app/features/esp_flash_feature"
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import type { UpdateFeatureDeps } from "../src/app/features/update_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
+import { type ReadonlySignal, signal } from "../src/app/ui_signals";
 import type {
   EspFlashPanelActionHandlers,
   EspFlashPanelRenderModel,
@@ -22,9 +23,8 @@ import type {
   UpdatePanelRenderModel,
   UpdatePanelView,
 } from "../src/app/views/update_panel";
-import { signal, type ReadonlySignal } from "../src/app/ui_signals";
-import { flushAsyncWork } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
+import { flushAsyncWork } from "./async_test_helpers";
 import { installMountedDomGlobals } from "./dom_render_test_support";
 import {
   createEspFlashPort,
@@ -39,6 +39,102 @@ import { createTestQueryClient } from "./query_client_test_support";
 type FeatureServices = UpdateFeatureDeps["services"];
 
 const activeMaintenanceCleanups: Array<() => void> = [];
+const MAINTENANCE_TEST_TRANSLATIONS: Readonly<Record<string, string>> = {
+  "maintenance.readiness.blocked": "Blocked",
+  "maintenance.readiness.ready": "Ready",
+  "maintenance.readiness.running": "Running",
+  "maintenance.stage_state.active": "Active",
+  "maintenance.stage_state.attention": "Needs attention",
+  "maintenance.stage_state.done": "Complete",
+  "maintenance.stage_state.upcoming": "Upcoming",
+  "settings.esp_flash.auto_detect": "Auto-detect",
+  "settings.esp_flash.history_empty_title": "No flash attempts yet",
+  "settings.esp_flash.journey.detail.done": "Confirm flash finished.",
+  "settings.esp_flash.journey.detail.erasing": "Erase old firmware.",
+  "settings.esp_flash.journey.detail.flashing": "Write firmware.",
+  "settings.esp_flash.journey.detail.preparing": "Prepare the device.",
+  "settings.esp_flash.journey.detail.validating": "Validate the selected port.",
+  "settings.esp_flash.journey_terminal.failed": "Flash failed.",
+  "settings.esp_flash.journey_title": "Flash progress",
+  "settings.esp_flash.logs_failed_title": "Flash log failed",
+  "settings.esp_flash.logs_idle_title": "Flash log idle",
+  "settings.esp_flash.logs_running_title": "Flash log running",
+  "settings.esp_flash.phase.done": "Done",
+  "settings.esp_flash.phase.erasing": "Erasing",
+  "settings.esp_flash.phase.flashing": "Flashing",
+  "settings.esp_flash.phase.preparing": "Preparing",
+  "settings.esp_flash.phase.validating": "Validating",
+  "settings.esp_flash.readiness.current_step": "Current step",
+  "settings.esp_flash.readiness.one_port": "1 port available",
+  "settings.esp_flash.readiness.summary.ready_ports": "Ready ports",
+  "settings.esp_flash.recovery.flashing.detail":
+    "Reconnect the ESP and retry flashing.",
+  "settings.esp_flash.recovery.title": "Flash recovery",
+  "settings.esp_flash.retry": "Retry flash",
+  "settings.esp_flash.start": "Start flash",
+  "settings.esp_flash.start_readiness.item.connection_blocked":
+    "No ESP port found.",
+  "settings.esp_flash.start_readiness.item.connection_ready": "ESP port ready.",
+  "settings.esp_flash.start_readiness.summary_blocked": "Flash blocked",
+  "settings.esp_flash.start_readiness.summary_ready": "Ready to flash",
+  "settings.esp_flash.start_readiness.summary_running": "Flash running",
+  "settings.internet.card_title": "USB internet",
+  "settings.internet.summary.not_detected": "No USB internet detected",
+  "settings.update.attempt_title": "Latest update attempt",
+  "settings.update.current_status_summary.ready": "Update service ready",
+  "settings.update.current_status_title": "Current update status",
+  "settings.update.details_caption_usb": "USB internet details",
+  "settings.update.details_caption_wifi": "Wi-Fi details",
+  "settings.update.health.subsystem_state.unhealthy": "Unhealthy",
+  "settings.update.health.subsystems": "Subsystems",
+  "settings.update.health_card_title": "Update health",
+  "settings.update.issues": "Update issues",
+  "settings.update.issues_empty_title": "No update issues",
+  "settings.update.journey.detail.checking": "Check for a release.",
+  "settings.update.journey.detail.connecting_usb_internet": "Use USB internet.",
+  "settings.update.journey.detail.connecting_wifi": "Connect to Wi-Fi.",
+  "settings.update.journey.detail.done": "Finish update.",
+  "settings.update.journey.detail.downloading": "Download update.",
+  "settings.update.journey.detail.installing": "Install update.",
+  "settings.update.journey.detail.restoring_hotspot": "Restore hotspot.",
+  "settings.update.journey.detail.stopping_hotspot": "Stop hotspot.",
+  "settings.update.journey.detail.validating": "Validate update request.",
+  "settings.update.journey_intro": "Update progress details",
+  "settings.update.journey_title": "Update progress",
+  "settings.update.log_empty_title": "No update log yet",
+  "settings.update.log_failed_title": "Update log failed",
+  "settings.update.log_running_title": "Update log running",
+  "settings.update.phase.checking": "Checking",
+  "settings.update.phase.connecting_usb_internet": "Connecting USB internet",
+  "settings.update.phase.connecting_wifi": "Connecting Wi-Fi",
+  "settings.update.phase.done": "Done",
+  "settings.update.phase.downloading": "Downloading",
+  "settings.update.phase.installing": "Installing",
+  "settings.update.phase.restoring_hotspot": "Restoring hotspot",
+  "settings.update.phase.stopping_hotspot": "Stopping hotspot",
+  "settings.update.phase.validating": "Validating",
+  "settings.update.preflight_note_usb":
+    "USB internet will be used for update checks.",
+  "settings.update.readiness.item.connection_usb_ready":
+    "USB internet ready on {interface}.",
+  "settings.update.readiness.item.connection_wifi_ready":
+    "Wi-Fi connection ready.",
+  "settings.update.readiness.item.health_blocked":
+    "Health blocks update start.",
+  "settings.update.readiness.summary_ready": "Ready to update",
+  "settings.update.recovery.title": "Update recovery",
+  "settings.update.recovery.wifi.detail":
+    "Reconnect Wi-Fi or use USB internet.",
+  "settings.update.recovery.wifi.title": "Restore network connection",
+  "settings.update.retry": "Retry update",
+  "settings.update.start": "Start update",
+  "settings.update.transport.selected_badge": "Selected",
+  "settings.update.transport.usb_summary_interface":
+    "USB interface {interface}",
+  "settings.update.transport.usb_summary_unavailable":
+    "USB internet unavailable",
+  "settings.update.transport.wifi_summary": "Use Wi-Fi for the update.",
+};
 
 function requireElement<T extends Element = HTMLElement>(
   root: ParentNode,
@@ -126,8 +222,19 @@ function createFeatureServices(): FeatureServices {
   return {
     requestConfirmation: async () => true,
     showError: () => {},
-    t: (key: string) => key,
+    t: (key: string, vars?: Record<string, unknown>) =>
+      translateMaintenanceTestText(key, vars),
   };
+}
+
+function translateMaintenanceTestText(
+  key: string,
+  vars?: Record<string, unknown>,
+): string {
+  const template = MAINTENANCE_TEST_TRANSLATIONS[key] ?? key;
+  return template.replaceAll(/\{([a-zA-Z0-9_]+)\}/g, (_, name: string) =>
+    String(vars?.[name] ?? ""),
+  );
 }
 
 function createFeatureNavigationHarness(defaultTabId: string) {
