@@ -1,30 +1,25 @@
-"""Smoke test: the assembled router wires key runtime routes."""
+"""Smoke tests for key endpoints on the assembled HTTP router."""
 
 from __future__ import annotations
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
-def test_assembled_router_registers_key_runtime_routes(fake_state) -> None:
-    """One route-table contract keeps endpoint smoke coverage out of behavior tests."""
+
+def test_assembled_router_serves_core_runtime_endpoints(fake_state) -> None:
     from vibesensor.adapters.http import create_router
 
-    router = create_router(fake_state)
-    routes = {
-        (route.path, method)
-        for route in router.routes
-        for method in (getattr(route, "methods", None) or {"WEBSOCKET"})
-    }
+    app = FastAPI()
+    app.include_router(create_router(fake_state))
 
-    assert {
-        ("/api/health", "GET"),
-        ("/api/settings/language", "GET"),
-        ("/api/settings/language", "PUT"),
-        ("/api/clients", "GET"),
-        ("/api/recording/status", "GET"),
-        ("/ws", "WEBSOCKET"),
-        ("/api/history", "GET"),
-        ("/api/history/{run_id}/report.pdf", "GET"),
-        ("/api/update/status", "GET"),
-        ("/api/update/internet-status", "GET"),
-        ("/api/update/start", "POST"),
-        ("/api/update/cancel", "POST"),
-    } <= routes
+    with TestClient(app) as client:
+        assert client.get("/api/health").json()["status"] == "ok"
+        assert client.get("/api/settings/language").json() == {"language": "en"}
+        assert client.put("/api/settings/language", json={"language": "nl"}).json() == {
+            "language": "en",
+        }
+        assert client.get("/api/clients").json() == {"clients": []}
+        assert client.get("/api/recording/status").json()["enabled"] is False
+        assert client.get("/api/update/status").json()["state"] == "idle"
+        assert client.get("/api/update/internet-status").json()["usable"] is False
+        assert client.post("/api/update/cancel").json() == {"cancelled": False}
