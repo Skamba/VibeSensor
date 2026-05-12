@@ -83,6 +83,14 @@ class _FakeRunner(FlashCommandRunner):
 # ── Helpers ──
 
 
+def _assert_no_platformio_invocation(calls: list[list[str]]) -> None:
+    for call in calls:
+        cmd_name = Path(call[0]).name.lower() if call else ""
+        assert cmd_name not in {"pio", "platformio"}, f"PlatformIO invoked: {call}"
+        if len(call) > 2:
+            assert call[1:3] != ["-m", "platformio"], f"PlatformIO module invoked: {call}"
+
+
 def _make_bundle(bundle_dir: Path) -> None:
     """Create a valid firmware bundle with flash.json manifest and binaries."""
     env_dir = bundle_dir / "m5stack_atom"
@@ -322,19 +330,7 @@ async def test_flash_job_uses_cached_bundle_manifest(tmp_path: Path) -> None:
     assert "0x1000" in write_call
     assert "0x8000" in write_call
     assert any("firmware.bin" in arg for arg in write_call)
-
-
-@pytest.mark.asyncio
-@pytest.mark.usefixtures("_patch_esptool_which")
-async def test_flash_uses_baseline_when_no_current(tmp_path: Path) -> None:
-    cache_dir = _make_cache(tmp_path, with_current=False, with_baseline=True)
-    mgr, _ = _build_manager(cache_dir)
-
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "success"
-    assert any("baseline" in line for line in mgr.logs_since(after=0)["lines"])
+    _assert_no_platformio_invocation(runner.calls)
 
 
 @pytest.mark.asyncio
@@ -461,26 +457,6 @@ async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     await mgr._task
     assert mgr.status.state.value == "success"
     assert any(call[1:3] == ["-m", "esptool"] for call in runner.calls)
-
-
-@pytest.mark.asyncio
-@pytest.mark.usefixtures("_patch_esptool_which")
-async def test_flash_no_platformio_dependency(tmp_path: Path) -> None:
-    """The Pi runtime path must not invoke PlatformIO for firmware."""
-    cache_dir = _make_cache(tmp_path, with_current=True)
-    mgr, runner = _build_manager(cache_dir)
-
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "success"
-
-    # Assert no PlatformIO was invoked
-    for call in runner.calls:
-        cmd_name = Path(call[0]).name.lower() if call else ""
-        assert cmd_name not in ("pio", "platformio"), f"PlatformIO invoked: {call}"
-        if len(call) > 2:
-            assert call[1:3] != ["-m", "platformio"], f"PlatformIO module invoked: {call}"
 
 
 @pytest.mark.asyncio

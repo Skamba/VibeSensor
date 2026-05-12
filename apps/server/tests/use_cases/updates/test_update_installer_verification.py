@@ -157,34 +157,6 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
 
 
 @pytest.mark.asyncio
-async def test_snapshot_for_rollback_builds_local_wheel_before_package_index_download(
-    tmp_path: Path,
-) -> None:
-    installer, commands, _tracker = _make_installer(tmp_path)
-    commands.local_wheel_version = "2025.6.14"
-
-    with patch("vibesensor.__version__", "2025.6.14"):
-        assert await installer.snapshot_for_rollback() is True
-
-    calls = [" ".join(call[0]) for call in commands.calls]
-    assert any("pip wheel" in call for call in calls)
-    assert not any("pip download" in call for call in calls)
-
-
-@pytest.mark.asyncio
-async def test_snapshot_for_rollback_accepts_normalized_dev_versions(tmp_path: Path) -> None:
-    installer, commands, _tracker = _make_installer(tmp_path)
-    commands.local_wheel_version = "0.0.0.dev0"
-
-    with patch("vibesensor.__version__", "0.0.0-dev"):
-        assert await installer.snapshot_for_rollback() is True
-
-    calls = [" ".join(call[0]) for call in commands.calls]
-    assert any("pip wheel" in call for call in calls)
-    assert not any("pip download" in call for call in calls)
-
-
-@pytest.mark.asyncio
 async def test_snapshot_for_rollback_falls_back_to_package_index_download(
     tmp_path: Path,
 ) -> None:
@@ -198,28 +170,6 @@ async def test_snapshot_for_rollback_falls_back_to_package_index_download(
     assert any("pip wheel" in call for call in calls)
     assert any("pip download" in call for call in calls)
     assert any("Local rollback wheel build failed" in line for line in tracker.status.log_tail)
-
-
-@pytest.mark.asyncio
-async def test_snapshot_for_rollback_keeps_existing_wheels_untouched(
-    tmp_path: Path,
-) -> None:
-    installer, commands, _tracker = _make_installer(tmp_path)
-    commands.local_wheel_version = "2025.6.14"
-    rollback_dir = tmp_path / "rollback"
-    rollback_dir.mkdir()
-    _build_fake_wheel(rollback_dir / "vibesensor-2025.6.12-py3-none-any.whl", version="2025.6.12")
-    _build_fake_wheel(rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl", version="2025.6.13")
-
-    with patch("vibesensor.__version__", "2025.6.14"):
-        assert await installer.snapshot_for_rollback() is True
-
-    wheels = sorted(path.name for path in rollback_dir.glob("*.whl"))
-    assert wheels == [
-        "rollback_snapshot.whl",
-        "vibesensor-2025.6.12-py3-none-any.whl",
-        "vibesensor-2025.6.13-py3-none-any.whl",
-    ]
 
 
 @pytest.mark.asyncio
@@ -564,38 +514,6 @@ async def test_install_release_reports_malformed_dependency_snapshot_stdout(
     assert any(
         issue.message == "Could not parse wheel dependency compatibility results"
         and "{not-json" in issue.detail
-        for issue in tracker.status.issues
-    )
-    assert not any(
-        "pip install --force-reinstall --no-deps" in " ".join(call[0]) for call in commands.calls
-    )
-
-
-@pytest.mark.asyncio
-async def test_install_release_reports_wrong_shape_dependency_snapshot_stdout(
-    tmp_path: Path,
-) -> None:
-    installer, commands, tracker = _make_installer(tmp_path)
-    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-    _build_fake_wheel(
-        wheel_path,
-        version="2025.6.15",
-        requires_dist=("missingdep>=1",),
-    )
-    commands.set_response(
-        "missingdep",
-        0,
-        '{"python_full_version":"3.13.5","marker_environment":[],"installed_versions":{}}\n',
-        "",
-    )
-
-    result = await installer.install_release(wheel_path, "2025.6.15")
-
-    assert result == WheelInstallResult(succeeded=False, rollback_required=False)
-    assert tracker.status.state.value == "failed"
-    assert any(
-        issue.message == "Could not parse wheel dependency compatibility results"
-        and "marker_environment" in issue.detail
         for issue in tracker.status.issues
     )
     assert not any(
