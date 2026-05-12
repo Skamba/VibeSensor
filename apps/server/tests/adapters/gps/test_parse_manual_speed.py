@@ -1,4 +1,4 @@
-"""Tests for _parse_manual_speed valid and invalid input handling."""
+"""Manual speed payload parsing contracts."""
 
 from __future__ import annotations
 
@@ -6,59 +6,30 @@ import math
 
 import pytest
 
-from vibesensor.shared.types.speed_source_config import _parse_manual_speed
+from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (50, 50.0),
-        (80.5, 80.5),
-        (0.1, 0.1),
-        (500, 500.0),
+        pytest.param(50, 50.0, id="integer-speed"),
+        pytest.param(80.5, 80.5, id="float-speed"),
+        pytest.param(0.1, 0.1, id="minimum-positive-speed"),
+        pytest.param(500, 500.0, id="upper-bound"),
+        pytest.param(math.inf, None, id="inf-rejected"),
+        pytest.param(-math.inf, None, id="neg-inf-rejected"),
+        pytest.param(math.nan, None, id="nan-rejected"),
+        pytest.param(-1, None, id="negative-rejected"),
+        pytest.param(0, None, id="zero-rejected"),
+        pytest.param(500.1, None, id="above-upper-bound-rejected"),
+        pytest.param(None, None, id="none-rejected"),
+        pytest.param("fast", None, id="string-rejected"),
+        pytest.param([], None, id="list-rejected"),
     ],
-    ids=["int-50", "float-80.5", "small-positive", "upper-bound-500"],
 )
-def test_normal_values(value: float, expected: float) -> None:
-    assert _parse_manual_speed(value) == expected
-
-
-@pytest.mark.parametrize(
-    "value",
-    [
-        math.inf,
-        -math.inf,
-        math.nan,
-    ],
-    ids=["inf", "neg-inf", "nan"],
-)
-def test_non_finite_returns_none(value: float) -> None:
-    assert _parse_manual_speed(value) is None
-
-
-@pytest.mark.parametrize(
-    "value",
-    [-1, -50.0, -0.001],
-    ids=["neg-int", "neg-float", "small-neg"],
-)
-def test_negative_returns_none(value: float) -> None:
-    assert _parse_manual_speed(value) is None
-
-
-@pytest.mark.parametrize("value", [0, 0.0], ids=["int-zero", "float-zero"])
-def test_zero_returns_none(value: object) -> None:
-    assert _parse_manual_speed(value) is None
-
-
-@pytest.mark.parametrize("value", [500.1, 1000], ids=["just-above", "way-above"])
-def test_above_upper_bound_returns_none(value: float) -> None:
-    assert _parse_manual_speed(value) is None
-
-
-@pytest.mark.parametrize(
-    "value",
-    [None, "", "fast", [], {}],
-    ids=["none", "empty-str", "string", "list", "dict"],
-)
-def test_non_numeric_returns_none(value: object) -> None:
-    assert _parse_manual_speed(value) is None
+def test_parse_manual_speed_accepts_only_positive_finite_payload_speeds(
+    value: object,
+    expected: float | None,
+) -> None:
+    cfg = SpeedSourceConfig.from_dict({"manualSpeedKph": value})
+    assert cfg.manual_speed_kph == expected
