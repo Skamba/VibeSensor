@@ -1,15 +1,12 @@
-"""Core metadata, vehicle-profile, frequency helpers, and polling utilities for tests."""
+"""Core metadata, vehicle-profile, and frequency helpers for tests."""
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import math
 import re
-import time
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from functools import cache
-from io import BytesIO
 from typing import Any
 
 from vibesensor.domain import TireSpec
@@ -367,48 +364,6 @@ def engine_hz(
     """Rough engine-1x Hz from speed (2-stroke assumption for simplicity)."""
     whz = wheel_hz(speed_kmh)
     return whz * final_drive * gear_ratio
-
-
-# ---------------------------------------------------------------------------
-# Polling helpers
-# ---------------------------------------------------------------------------
-
-
-def wait_until(
-    predicate: Callable[[], object], timeout_s: float = 2.0, step_s: float = 0.02
-) -> bool:
-    """Poll *predicate* until it returns truthy, or *timeout_s* expires."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(step_s)
-    return False
-
-
-async def async_wait_until(
-    predicate: Callable[[], object], timeout_s: float = 2.0, step_s: float = 0.02
-) -> bool:
-    """Async version of :func:`wait_until` — yields to the event loop between polls."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        await asyncio.sleep(step_s)
-    return False
-
-
-# ---------------------------------------------------------------------------
-# PDF text extraction helper
-# ---------------------------------------------------------------------------
-
-
-def extract_pdf_text(pdf_bytes: bytes) -> str:
-    """Extract all text from a PDF byte string using pypdf."""
-    from pypdf import PdfReader
-
-    reader = PdfReader(BytesIO(pdf_bytes))
-    return "\n".join((page.extract_text() or "") for page in reader.pages)
 
 
 # ---------------------------------------------------------------------------

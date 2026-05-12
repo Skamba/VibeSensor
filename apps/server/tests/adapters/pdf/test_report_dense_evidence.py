@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
+from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf

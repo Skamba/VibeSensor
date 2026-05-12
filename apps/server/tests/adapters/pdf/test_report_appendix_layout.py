@@ -6,7 +6,7 @@ import json
 
 import pytest
 from _paths import SERVER_ROOT
-from test_support.core import extract_pdf_text
+from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting.document import (
