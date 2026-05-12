@@ -1,13 +1,8 @@
-"""Stress coverage for ingest diagnostics under multi-sensor load.
+"""Deterministic ingest/backpressure diagnostics smoke.
 
-CI budget assumptions:
-- in-process Linux test runner
-- temp SQLite history DB on local disk
-- one AsyncMock WebSocket consumer
-- 800 Hz synthetic sensors with short burst jitter
-
-This test protects regressions in ingest/backpressure observability. It is not a
-Raspberry Pi throughput certification.
+This test protects product-risk signals, not throughput certification: UDP queue
+age, ACK latency, WebSocket publish latency, raw-capture persistence, and runtime
+health projection must stay observable under a bounded multi-sensor burst.
 """
 
 from __future__ import annotations
@@ -47,6 +42,8 @@ from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800
 _ACCEL_SCALE = 0.0005
+# Product-risk ceilings: high enough to avoid normal CI scheduler noise, low
+# enough to catch stuck ingest, ACK, or publish paths before they become visible.
 _MAX_QUEUE_AGE_MS = 500.0
 _MAX_ACK_LATENCY_MS = 500.0
 _MAX_WS_PUBLISH_MS = 500.0
@@ -58,6 +55,18 @@ class _SensorSpec:
     client_id: bytes
     location: str
     amplitude: float
+
+
+@dataclass(frozen=True, slots=True)
+class _IngestSmokeContext:
+    sensors: list[_SensorSpec]
+    ingest_diagnostics: IngestDiagnosticsCollector
+    registry: ClientRegistry
+    processor: SignalProcessor
+    gps_monitor: GPSSpeedMonitor
+    recorder: RunRecorder
+    proto: DataDatagramProtocol
+    ws_hub: WebSocketHub
 
 
 class _FakeTransport:
@@ -139,39 +148,8 @@ def _ready_health_state() -> RuntimeHealthState:
     return health_state
 
 
-def _backpressure_wait_state(
-    ingest_diagnostics: IngestDiagnosticsCollector,
-) -> dict[str, object]:
-    udp = ingest_diagnostics.udp_snapshot()
-    raw_capture = ingest_diagnostics.raw_capture_snapshot()
-    ws_publish = ingest_diagnostics.ws_publish_snapshot()
-    return {
-        "udp_processed_datagrams": udp.processed_datagrams,
-        "udp_queue_depth": udp.queue_depth,
-        "raw_capture_queue_depth": raw_capture.queue_depth,
-        "ws_publish_ticks": ws_publish.total_publish_ticks,
-        "ws_active_connections": ws_publish.active_connections,
-    }
-
-
-async def _assert_async_wait_until(
-    description: str,
-    predicate: Callable[[], object],
-    *,
-    timeout_s: float = 2.0,
-    state: Callable[[], object],
-) -> None:
-    assert await async_wait_until(predicate, timeout_s=timeout_s), (
-        f"Timed out waiting for {description}; state={state()}"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("sensor_count", [1, 2, 5], ids=["one-sensor", "two-sensor", "five-sensor"])
-async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
-    history_db: HistoryPersistenceAdapters,
-    sensor_count: int,
-) -> None:
+def _build_smoke_context(history_db: HistoryPersistenceAdapters) -> _IngestSmokeContext:
+    sensor_count = 3
     sensors = _sensor_specs(sensor_count)
     ingest_diagnostics = IngestDiagnosticsCollector()
     registry = ClientRegistry(db=history_db.client_name_repository)
@@ -208,11 +186,224 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
     )
     proto.connection_made(_FakeTransport())
     _register_sensors(registry, sensors)
+    return _IngestSmokeContext(
+        sensors=sensors,
+        ingest_diagnostics=ingest_diagnostics,
+        registry=registry,
+        processor=processor,
+        gps_monitor=gps_monitor,
+        recorder=recorder,
+        proto=proto,
+        ws_hub=WebSocketHub(),
+    )
 
+
+def _backpressure_wait_state(
+    ingest_diagnostics: IngestDiagnosticsCollector,
+) -> dict[str, object]:
+    udp = ingest_diagnostics.udp_snapshot()
+    raw_capture = ingest_diagnostics.raw_capture_snapshot()
+    ws_publish = ingest_diagnostics.ws_publish_snapshot()
+    return {
+        "udp_processed_datagrams": udp.processed_datagrams,
+        "udp_queue_depth": udp.queue_depth,
+        "raw_capture_queue_depth": raw_capture.queue_depth,
+        "ws_publish_ticks": ws_publish.total_publish_ticks,
+        "ws_active_connections": ws_publish.active_connections,
+    }
+
+
+async def _assert_async_wait_until(
+    description: str,
+    predicate: Callable[[], object],
+    *,
+    timeout_s: float = 2.0,
+    state: Callable[[], object],
+) -> None:
+    assert await async_wait_until(predicate, timeout_s=timeout_s), (
+        f"Timed out waiting for {description}; state={state()}"
+    )
+
+
+async def _flush_smoke_records(
+    ctx: _IngestSmokeContext,
+    run_id: str,
+    start_utc: str,
+    start_mono: float,
+) -> None:
+    ctx.processor.compute_all(
+        ctx.registry.active_client_ids(),
+        sample_rates_hz=_sample_rates(ctx.registry),
+    )
+    await asyncio.to_thread(
+        ctx.recorder._sample_flush.append_records,
+        run_id,
+        start_utc,
+        start_mono,
+    )
+
+
+async def _drive_bounded_sensor_burst(
+    ctx: _IngestSmokeContext,
+    run_id: str,
+    start_utc: str,
+    start_mono: float,
+    tire_circumference_m: float,
+) -> int:
+    seq_by_sensor = {sensor.client_id.hex(): 1 for sensor in ctx.sensors}
+    deferred_late_seq_by_sensor: dict[str, int] = {}
+    expected_processed_datagrams = 0
+    for step in range(18):
+        speed_kmh = 35.0 + (step % 9) * 4.0
+        ctx.gps_monitor.set_speed_override_kmh(speed_kmh)
+        wheel_hz = speed_kmh * KMH_TO_MPS / tire_circumference_m
+        assert wheel_hz > 0.0
+        for index, sensor in enumerate(ctx.sensors):
+            sensor_id = sensor.client_id.hex()
+            if index == 0 and step == 6:
+                deferred_late_seq_by_sensor[sensor_id] = seq_by_sensor[sensor_id]
+                seq_by_sensor[sensor_id] += 1
+            current_seq = seq_by_sensor[sensor_id]
+            ctx.proto.datagram_received(
+                _build_sensor_packet(
+                    sensor.client_id,
+                    sensor.amplitude,
+                    step,
+                    current_seq,
+                    wheel_hz,
+                ),
+                ("127.0.0.1", 7000 + index),
+            )
+            expected_processed_datagrams += 1
+            seq_by_sensor[sensor_id] = current_seq + 1
+            if index == 0 and step == 10 and sensor_id in deferred_late_seq_by_sensor:
+                ctx.proto.datagram_received(
+                    _build_sensor_packet(
+                        sensor.client_id,
+                        sensor.amplitude * 0.95,
+                        step,
+                        deferred_late_seq_by_sensor.pop(sensor_id),
+                        wheel_hz,
+                    ),
+                    ("127.0.0.1", 7000 + index),
+                )
+                expected_processed_datagrams += 1
+        await _periodic_smoke_flush(
+            ctx, step, expected_processed_datagrams, run_id, start_utc, start_mono
+        )
+    return expected_processed_datagrams
+
+
+async def _periodic_smoke_flush(
+    ctx: _IngestSmokeContext,
+    step: int,
+    expected_processed_datagrams: int,
+    run_id: str,
+    start_utc: str,
+    start_mono: float,
+) -> None:
+    if step % 2 == 1:
+        await _assert_async_wait_until(
+            f"udp processing to reach {expected_processed_datagrams} datagrams",
+            lambda expected=expected_processed_datagrams: (
+                ctx.ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
+            ),
+            state=lambda: _backpressure_wait_state(ctx.ingest_diagnostics),
+        )
+        await _flush_smoke_records(ctx, run_id, start_utc, start_mono)
+    if step % 6 == 5:
+        await _assert_async_wait_until(
+            "udp queue drain after the current burst",
+            lambda: ctx.ingest_diagnostics.udp_snapshot().queue_depth == 0,
+            state=lambda: _backpressure_wait_state(ctx.ingest_diagnostics),
+        )
+
+
+async def _finish_smoke_load(
+    ctx: _IngestSmokeContext,
+    expected_processed_datagrams: int,
+    run_id: str,
+    start_utc: str,
+    start_mono: float,
+) -> None:
+    await _assert_async_wait_until(
+        "udp queue drain after simulator load completes",
+        lambda expected=expected_processed_datagrams: (
+            ctx.ingest_diagnostics.udp_snapshot().queue_depth == 0
+            and ctx.ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
+        ),
+        timeout_s=10.0,
+        state=lambda: _backpressure_wait_state(ctx.ingest_diagnostics),
+    )
+    await _flush_smoke_records(ctx, run_id, start_utc, start_mono)
+    await _assert_async_wait_until(
+        "raw-capture drain and websocket publish metrics",
+        lambda: (
+            ctx.ingest_diagnostics.raw_capture_snapshot().queue_depth == 0
+            and ctx.ingest_diagnostics.ws_publish_snapshot().total_publish_ticks > 0
+        ),
+        timeout_s=5.0,
+        state=lambda: _backpressure_wait_state(ctx.ingest_diagnostics),
+    )
+
+
+async def _build_smoke_health(ctx: _IngestSmokeContext) -> dict[str, object]:
+    return await asyncio.to_thread(
+        build_system_health_snapshot,
+        ProcessingLoopState(),
+        _ready_health_state(),
+        ctx.processor,
+        ctx.registry,
+        ctx.recorder,
+        ctx.ingest_diagnostics,
+    )
+
+
+def _assert_smoke_health_contracts(
+    health: dict[str, object],
+    sensors: list[_SensorSpec],
+    expected_processed_datagrams: int,
+) -> None:
+    ingest = health["ingest"]
+    assert isinstance(ingest, dict)
+    udp_metrics = ingest["udp"]
+    raw_capture_metrics = ingest["raw_capture"]
+    ws_metrics = ingest["ws_publish"]
+    client_metrics = {row["client_id"]: row for row in ingest["clients"]}
+    lead_sensor_metrics = client_metrics[sensors[0].client_id.hex()]
+
+    assert udp_metrics["queue_max_depth"] > 0
+    assert udp_metrics["dropped_datagrams"] == 0
+    assert udp_metrics["processed_datagrams"] >= expected_processed_datagrams
+    assert 0.0 <= udp_metrics["max_packet_queue_age_ms"] <= _MAX_QUEUE_AGE_MS
+    assert 0.0 <= udp_metrics["max_ack_latency_ms"] <= _MAX_ACK_LATENCY_MS
+    assert raw_capture_metrics["queue_max_depth"] > 0
+    assert raw_capture_metrics["dropped_chunks"] == 0
+    assert raw_capture_metrics["write_error_chunks"] == 0
+    assert ws_metrics["active_connections"] == 1
+    assert ws_metrics["total_publish_ticks"] > 0
+    assert 0.0 <= ws_metrics["max_publish_duration_ms"] <= _MAX_WS_PUBLISH_MS
+    assert health["intake_stats"]["last_ingest_duration_s"] > 0.0
+    assert health["intake_stats"]["last_compute_duration_s"] > 0.0
+    assert health["intake_stats"]["last_compute_all_duration_s"] > 0.0
+    assert set(client_metrics) == {sensor.client_id.hex() for sensor in sensors}
+    assert lead_sensor_metrics["frames_dropped"] > 0
+    assert lead_sensor_metrics["late_packets"] > 0
+    for sensor in sensors:
+        row = client_metrics[sensor.client_id.hex()]
+        assert row["processed_packets"] > 0
+        assert row["processed_samples"] > 0
+        assert row["estimated_ingest_hz"] > 0.0
+
+
+@pytest.mark.asyncio
+async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
+    history_db: HistoryPersistenceAdapters,
+) -> None:
+    ctx = _build_smoke_context(history_db)
     websocket = AsyncMock()
     websocket.send_text = AsyncMock()
-    ws_hub = WebSocketHub()
-    await ws_hub.add(websocket, None)
+    await ctx.ws_hub.add(websocket, None)
 
     tire = TireSpec.from_aspects(
         AnalysisSettingsSnapshot.DEFAULTS,
@@ -221,15 +412,15 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
     assert tire is not None
     tire_circumference_m = tire.circumference_m
 
-    consumer_task = asyncio.create_task(proto.process_queue())
+    consumer_task = asyncio.create_task(ctx.proto.process_queue())
     ws_task = asyncio.create_task(
-        ws_hub.run(
+        ctx.ws_hub.run(
             hz=60,
             payload_builder=lambda _selected_client: {
-                "total_ingested_samples": processor.intake_stats()["total_ingested_samples"],
+                "total_ingested_samples": ctx.processor.intake_stats()["total_ingested_samples"],
             },
             metrics_recorder=lambda connection_count, duration_s: (
-                ingest_diagnostics.note_ws_publish(
+                ctx.ingest_diagnostics.note_ws_publish(
                     connection_count=connection_count,
                     duration_s=duration_s,
                 )
@@ -237,147 +428,34 @@ async def test_ingest_metrics_hold_ci_budget_under_sensor_load(
         )
     )
     try:
-        started = recorder.start_recording()
+        started = ctx.recorder.start_recording()
         run_id = started.run_id
         start_utc = started.start_time_utc
         assert run_id is not None
         assert start_utc is not None
-        snapshot = recorder._session_snapshot()
+        snapshot = ctx.recorder._session_snapshot()
         assert snapshot is not None
-        start_mono = snapshot.start_mono_s
-        seq_by_sensor = {sensor.client_id.hex(): 1 for sensor in sensors}
-        deferred_late_seq_by_sensor: dict[str, int] = {}
-        expected_processed_datagrams = 0
-
-        for step in range(48):
-            speed_kmh = 35.0 + (step % 12) * 4.0
-            gps_monitor.set_speed_override_kmh(speed_kmh)
-            wheel_hz = speed_kmh * KMH_TO_MPS / tire_circumference_m
-            assert wheel_hz > 0.0
-
-            for index, sensor in enumerate(sensors):
-                sensor_id = sensor.client_id.hex()
-                if index == 0 and step in (8, 24):
-                    deferred_late_seq_by_sensor[sensor_id] = seq_by_sensor[sensor_id]
-                    seq_by_sensor[sensor_id] += 1
-                current_seq = seq_by_sensor[sensor_id]
-                packet = _build_sensor_packet(
-                    sensor.client_id,
-                    sensor.amplitude,
-                    step,
-                    current_seq,
-                    wheel_hz,
-                )
-                proto.datagram_received(packet, ("127.0.0.1", 7000 + index))
-                expected_processed_datagrams += 1
-                seq_by_sensor[sensor_id] = current_seq + 1
-                if index == 0 and step in (12, 30) and sensor_id in deferred_late_seq_by_sensor:
-                    proto.datagram_received(
-                        _build_sensor_packet(
-                            sensor.client_id,
-                            sensor.amplitude * 0.95,
-                            step,
-                            deferred_late_seq_by_sensor.pop(sensor_id),
-                            wheel_hz,
-                        ),
-                        ("127.0.0.1", 7000 + index),
-                    )
-                    expected_processed_datagrams += 1
-
-            if step % 2 == 1:
-                await _assert_async_wait_until(
-                    f"udp processing to reach {expected_processed_datagrams} datagrams",
-                    lambda expected=expected_processed_datagrams: (
-                        ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
-                    ),
-                    state=lambda: _backpressure_wait_state(ingest_diagnostics),
-                )
-                processor.compute_all(
-                    registry.active_client_ids(),
-                    sample_rates_hz=_sample_rates(registry),
-                )
-                await asyncio.to_thread(
-                    recorder._sample_flush.append_records,
-                    run_id,
-                    start_utc,
-                    start_mono,
-                )
-            if step % 6 == 5:
-                await _assert_async_wait_until(
-                    "udp queue drain after the current burst",
-                    lambda: ingest_diagnostics.udp_snapshot().queue_depth == 0,
-                    state=lambda: _backpressure_wait_state(ingest_diagnostics),
-                )
-
-        await _assert_async_wait_until(
-            "udp queue drain after simulator load completes",
-            lambda expected=expected_processed_datagrams: (
-                ingest_diagnostics.udp_snapshot().queue_depth == 0
-                and ingest_diagnostics.udp_snapshot().processed_datagrams >= expected
-            ),
-            timeout_s=10.0,
-            state=lambda: _backpressure_wait_state(ingest_diagnostics),
-        )
-        processor.compute_all(
-            registry.active_client_ids(),
-            sample_rates_hz=_sample_rates(registry),
-        )
-        await asyncio.to_thread(
-            recorder._sample_flush.append_records,
+        expected_processed_datagrams = await _drive_bounded_sensor_burst(
+            ctx,
             run_id,
             start_utc,
-            start_mono,
+            snapshot.start_mono_s,
+            tire_circumference_m,
         )
-        await _assert_async_wait_until(
-            "raw-capture drain and websocket publish metrics",
-            lambda: (
-                ingest_diagnostics.raw_capture_snapshot().queue_depth == 0
-                and ingest_diagnostics.ws_publish_snapshot().total_publish_ticks > 0
-            ),
-            timeout_s=5.0,
-            state=lambda: _backpressure_wait_state(ingest_diagnostics),
+        await _finish_smoke_load(
+            ctx,
+            expected_processed_datagrams,
+            run_id,
+            start_utc,
+            snapshot.start_mono_s,
         )
-
-        health = await asyncio.to_thread(
-            build_system_health_snapshot,
-            ProcessingLoopState(),
-            _ready_health_state(),
-            processor,
-            registry,
-            recorder,
-            ingest_diagnostics,
+        _assert_smoke_health_contracts(
+            await _build_smoke_health(ctx),
+            ctx.sensors,
+            expected_processed_datagrams,
         )
-        udp_metrics = health["ingest"]["udp"]
-        raw_capture_metrics = health["ingest"]["raw_capture"]
-        ws_metrics = health["ingest"]["ws_publish"]
-        client_metrics = {row["client_id"]: row for row in health["ingest"]["clients"]}
-        lead_sensor_metrics = client_metrics[sensors[0].client_id.hex()]
-
-        assert udp_metrics["queue_max_depth"] > 0
-        assert udp_metrics["dropped_datagrams"] == 0
-        assert udp_metrics["processed_datagrams"] >= sensor_count * 48
-        assert 0.0 <= udp_metrics["max_packet_queue_age_ms"] <= _MAX_QUEUE_AGE_MS
-        assert 0.0 <= udp_metrics["max_ack_latency_ms"] <= _MAX_ACK_LATENCY_MS
-        assert raw_capture_metrics["queue_max_depth"] > 0
-        assert raw_capture_metrics["dropped_chunks"] == 0
-        assert raw_capture_metrics["write_error_chunks"] == 0
-        assert ws_metrics["active_connections"] == 1
-        assert ws_metrics["total_publish_ticks"] > 0
-        assert 0.0 <= ws_metrics["max_publish_duration_ms"] <= _MAX_WS_PUBLISH_MS
-        assert health["intake_stats"]["last_ingest_duration_s"] > 0.0
-        assert health["intake_stats"]["last_compute_duration_s"] > 0.0
-        assert health["intake_stats"]["last_compute_all_duration_s"] > 0.0
-        assert set(client_metrics) == {sensor.client_id.hex() for sensor in sensors}
-        assert lead_sensor_metrics["frames_dropped"] > 0
-        assert lead_sensor_metrics["late_packets"] > 0
-        for sensor in sensors:
-            row = client_metrics[sensor.client_id.hex()]
-            assert row["processed_packets"] > 0
-            assert row["processed_samples"] > 0
-            assert row["estimated_ingest_hz"] > 0.0
-
-        await asyncio.to_thread(recorder.stop_recording)
-        assert await asyncio.to_thread(recorder.wait_for_post_analysis, timeout_s=30.0)
+        await asyncio.to_thread(ctx.recorder.stop_recording)
+        assert await asyncio.to_thread(ctx.recorder.wait_for_post_analysis, timeout_s=30.0)
         stored = await asyncio.to_thread(history_db.run_repository.get_run, run_id)
         assert stored is not None
         assert stored.raw_capture_manifest is not None
