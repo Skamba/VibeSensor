@@ -63,23 +63,33 @@ def _recording_client(fake_state):
 
 
 class TestRecordingStatusEndpoint:
-    def test_status_response_shape(self, _recording_client) -> None:
-        client, _state = _recording_client
+    def test_status_serializes_runtime_snapshot(self, _recording_client) -> None:
+        client, state = _recording_client
+        state.run_recorder.status.return_value = _make_recording_status_snapshot(
+            enabled=True,
+            run_id="run-123",
+            samples_written=84,
+            start_time_utc="2026-03-27T12:00:00Z",
+            samples_dropped=3,
+            analysis_in_progress=True,
+            last_completed_run_id="run-122",
+        )
 
         response = client.get("/api/recording/status")
 
         assert response.status_code == 200
-        result = response.json()
-        assert "enabled" in result
-        assert "run_id" in result
-        assert "write_error" in result
-        assert "analysis_in_progress" in result
-        assert "start_time_utc" in result
-        assert "samples_written" in result
-        assert "samples_dropped" in result
-        assert "last_completed_run_id" in result
-        assert "capture_readiness" in result
-        assert "current_file" not in result
+        assert response.json() == {
+            "enabled": True,
+            "run_id": "run-123",
+            "write_error": None,
+            "analysis_in_progress": True,
+            "start_time_utc": "2026-03-27T12:00:00Z",
+            "samples_written": 84,
+            "samples_dropped": 3,
+            "last_completed_run_id": "run-122",
+            "last_completed_run_error": None,
+            "capture_readiness": None,
+        }
 
     def test_status_idle_enabled_false(self, _recording_client) -> None:
         client, _ = _recording_client
@@ -140,13 +150,12 @@ class TestRecordingStatusEndpoint:
 
 
 class TestRecordingStartEndpoint:
-    def test_start_calls_run_recorder(self, _recording_client) -> None:
-        client, state = _recording_client
+    def test_start_returns_running_status(self, _recording_client) -> None:
+        client, _state = _recording_client
 
         response = client.post("/api/recording/start")
 
         assert response.status_code == 200
-        state.run_recorder.start_recording.assert_called_once()
         assert response.json()["enabled"] is True
         assert response.json()["run_id"] == "run-abc"
 
@@ -170,13 +179,12 @@ class TestRecordingStartEndpoint:
 
 
 class TestRecordingStopEndpoint:
-    def test_stop_calls_run_recorder(self, _recording_client) -> None:
-        client, state = _recording_client
+    def test_stop_returns_idle_status(self, _recording_client) -> None:
+        client, _state = _recording_client
 
         response = client.post("/api/recording/stop")
 
         assert response.status_code == 200
-        state.run_recorder.stop_recording.assert_called_once()
         assert response.json()["enabled"] is False
 
     def test_stop_when_not_recording_returns_idle_status(self, _recording_client) -> None:

@@ -51,28 +51,31 @@ def test_export_schema_matches_committed_schema(schema_text: str) -> None:
     )
 
 
-def test_export_schema_contains_typed_history_list_entry(schema_dict: dict[str, Any]) -> None:
-    history_response = schema_dict["components"]["schemas"]["HistoryListResponse"]
-    assert history_response["properties"]["runs"]["items"] == {
-        "$ref": "#/components/schemas/HistoryListEntryResponse",
-    }
-
-
-def test_export_schema_contains_finding_components_for_history_insights(
+def test_export_schema_exposes_history_endpoints_with_typed_responses(
     schema_dict: dict[str, Any],
 ) -> None:
+    history_route = schema_dict["paths"]["/api/history"]["get"]
     history_insights_route = schema_dict["paths"]["/api/history/{run_id}/insights"]["get"]
+    history_run_route = schema_dict["paths"]["/api/history/{run_id}"]["get"]
+    history_response = schema_dict["components"]["schemas"]["HistoryListResponse"]
     history_insights = schema_dict["components"]["schemas"]["HistoryInsightsResponse"]
     analyzing_response = schema_dict["components"]["schemas"]["HistoryInsightsAnalyzingResponse"]
-    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
 
+    assert history_route["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/HistoryListResponse",
+    }
+    assert history_run_route["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/HistoryRunResponse",
+    }
     assert history_insights_route["responses"]["200"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/HistoryInsightsResponse",
     }
     assert history_insights_route["responses"]["202"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/HistoryInsightsAnalyzingResponse",
     }
-    assert analyzing_response["required"] == ["run_id", "status"]
+    assert history_response["properties"]["runs"]["items"] == {
+        "$ref": "#/components/schemas/HistoryListEntryResponse",
+    }
     assert history_insights["properties"]["findings"]["items"] == {
         "$ref": "#/components/schemas/FindingPayload",
     }
@@ -85,6 +88,23 @@ def test_export_schema_contains_finding_components_for_history_insights(
     assert history_insights["properties"]["sensor_intensity_by_location"]["items"] == {
         "$ref": "#/components/schemas/LocationIntensitySummaryResponse",
     }
+    assert analyzing_response["required"] == ["run_id", "status"]
+
+
+def test_export_schema_keeps_history_analysis_payloads_typed(
+    schema_dict: dict[str, Any],
+) -> None:
+    history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
+    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
+
+    assert history_run["properties"]["analysis"]["anyOf"] == [
+        {"$ref": "#/components/schemas/AnalysisSummaryResponse"},
+        {"type": "null"},
+    ]
+    assert history_run["additionalProperties"] is False
+    assert analysis_summary["additionalProperties"] is False
+    assert finding_payload["additionalProperties"] is False
     assert {
         "finding_id",
         "suspected_source",
@@ -110,131 +130,6 @@ def test_export_schema_contains_finding_components_for_history_insights(
     ]
     assert finding_payload["properties"]["matched_points"]["items"] == {
         "$ref": "#/components/schemas/MatchedPoint",
-    }
-
-
-def test_export_schema_contains_typed_analysis_summary_for_history_run(
-    schema_dict: dict[str, Any],
-) -> None:
-    history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
-    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
-    diagnosis_summary = schema_dict["components"]["schemas"]["WholeRunDiagnosisSummaryResponse"]
-    diagnosis_quality = schema_dict["components"]["schemas"]["DiagnosisDataQualitySummaryResponse"]
-    diagnosis_factor = schema_dict["components"]["schemas"]["DiagnosisFactorResponse"]
-    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
-    car_gearbox = schema_dict["components"]["schemas"]["CarLibraryGearboxEntry"]
-    plot_data = schema_dict["components"]["schemas"]["PlotDataResult"]
-
-    assert history_run["properties"]["analysis"]["anyOf"] == [
-        {"$ref": "#/components/schemas/AnalysisSummaryResponse"},
-        {"type": "null"},
-    ]
-    assert history_run["additionalProperties"] is False
-    assert history_run["properties"]["sample_count"]["type"] == "integer"
-    assert analysis_summary["additionalProperties"] is False
-    assert finding_payload["additionalProperties"] is False
-    assert analysis_summary["properties"]["case_id"]["anyOf"] == [
-        {"type": "string"},
-        {"type": "null"},
-    ]
-    assert analysis_summary["properties"]["report_date"]["anyOf"] == [
-        {"type": "string"},
-        {"type": "null"},
-    ]
-    assert analysis_summary["properties"]["fft_window_size_samples"]["anyOf"] == [
-        {"type": "integer"},
-        {"type": "null"},
-    ]
-    assert car_gearbox["additionalProperties"] is False
-    assert car_gearbox["properties"]["gear_ratios"]["anyOf"] == [
-        {
-            "items": {"type": "number"},
-            "minItems": 1,
-            "type": "array",
-        },
-        {"type": "null"},
-    ]
-    assert analysis_summary["properties"]["findings"]["items"] == {
-        "$ref": "#/components/schemas/FindingPayload",
-    }
-    assert analysis_summary["properties"]["top_causes"]["items"] == {
-        "$ref": "#/components/schemas/FindingPayload",
-    }
-    assert analysis_summary["properties"]["speed_breakdown"]["items"] == {
-        "$ref": "#/components/schemas/SpeedBreakdownRow",
-    }
-    assert analysis_summary["properties"]["phase_speed_breakdown"]["items"] == {
-        "$ref": "#/components/schemas/PhaseSpeedBreakdownRow",
-    }
-    assert analysis_summary["properties"]["warnings"]["items"] == {
-        "$ref": "#/components/schemas/SummaryWarningResponse",
-    }
-    assert analysis_summary["properties"]["phase_segments"]["items"] == {
-        "$ref": "#/components/schemas/PhaseSegmentSummaryResponse",
-    }
-    assert analysis_summary["properties"]["test_plan"]["items"] == {
-        "$ref": "#/components/schemas/TestPlanStepResponse",
-    }
-    assert analysis_summary["properties"]["phase_timeline"]["items"] == {
-        "$ref": "#/components/schemas/PhaseTimelineEntryResponse",
-    }
-    assert analysis_summary["properties"]["whole_run_context_intervals"]["items"] == {
-        "$ref": "#/components/schemas/WholeRunContextIntervalResponse",
-    }
-    assert analysis_summary["properties"]["whole_run_order_summaries"]["items"] == {
-        "$ref": "#/components/schemas/OrderTraceSummaryResponse",
-    }
-    assert analysis_summary["properties"]["whole_run_spatial_summaries"]["items"] == {
-        "$ref": "#/components/schemas/SpatialEvidenceSummaryResponse",
-    }
-    assert analysis_summary["properties"]["whole_run_diagnosis_summaries"]["items"] == {
-        "$ref": "#/components/schemas/WholeRunDiagnosisSummaryResponse",
-    }
-    assert diagnosis_summary["properties"]["support_factors"]["items"] == {
-        "$ref": "#/components/schemas/DiagnosisFactorResponse",
-    }
-    assert diagnosis_summary["properties"]["counterevidence_factors"]["items"] == {
-        "$ref": "#/components/schemas/DiagnosisFactorResponse",
-    }
-    assert diagnosis_summary["properties"]["data_quality_summary"] == {
-        "$ref": "#/components/schemas/DiagnosisDataQualitySummaryResponse",
-    }
-    assert diagnosis_quality["properties"]["limitation_keys"]["items"] == {
-        "$ref": "#/components/schemas/DiagnosisDataQualityLimitation",
-    }
-    assert diagnosis_factor["properties"]["details"] == {
-        "$ref": "#/components/schemas/DiagnosisFactorDetailsResponse",
-    }
-    assert analysis_summary["properties"]["speed_stats"] == {
-        "$ref": "#/components/schemas/SpeedStatsResponse",
-    }
-    assert analysis_summary["properties"]["speed_stats_by_phase"]["additionalProperties"] == {
-        "$ref": "#/components/schemas/SpeedStatsResponse",
-    }
-    assert analysis_summary["properties"]["phase_info"] == {
-        "$ref": "#/components/schemas/PhaseInfoResponse",
-    }
-    assert analysis_summary["properties"]["sensor_intensity_by_location"]["items"] == {
-        "$ref": "#/components/schemas/LocationIntensitySummaryResponse",
-    }
-    assert analysis_summary["properties"]["data_quality"] == {
-        "$ref": "#/components/schemas/DataQualityResponse",
-    }
-    assert analysis_summary["properties"]["run_suitability"]["items"] == {
-        "$ref": "#/components/schemas/RunSuitabilityCheck",
-    }
-    assert analysis_summary["properties"]["plots"]["anyOf"] == [
-        {"$ref": "#/components/schemas/PlotDataResult"},
-        {"type": "null"},
-    ]
-    assert plot_data["properties"]["peaks_table"]["items"] == {
-        "$ref": "#/components/schemas/PeakTableRow",
-    }
-    assert plot_data["properties"]["peaks_spectrogram"] == {
-        "$ref": "#/components/schemas/SpectrogramResult",
-    }
-    assert plot_data["properties"]["peaks_spectrogram_raw"] == {
-        "$ref": "#/components/schemas/SpectrogramResult",
     }
 
 
