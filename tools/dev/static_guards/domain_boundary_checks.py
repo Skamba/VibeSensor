@@ -112,6 +112,70 @@ _CHECK_DOMAIN_IMPORT_DIRECTION = _import_prefix_check(
 )
 
 
+def _class_field_names(path: Path, class_name: str) -> set[str]:
+    tree = _parse_python(path)
+    if tree is None:
+        return set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef) or node.name != class_name:
+            continue
+        fields: set[str] = set()
+        for child in node.body:
+            if isinstance(child, ast.AnnAssign) and isinstance(child.target, ast.Name):
+                fields.add(child.target.id)
+        return fields
+    return set()
+
+
+def _check_finding_stays_run_scoped() -> list[str]:
+    fields = _class_field_names(VIBESENSOR_DIR / "domain" / "finding.py", "Finding")
+    cross_run_indicators = {
+        "case_id",
+        "diagnosis",
+        "diagnoses",
+        "test_runs",
+        "runs",
+        "case",
+    }
+    leaked = sorted(fields & cross_run_indicators)
+    if not leaked:
+        return []
+    return [
+        f"vibesensor.domain.Finding must stay run-scoped; remove fields: {', '.join(leaked)}"
+    ]
+
+
+def _check_run_capture_uses_run_id_boundary() -> list[str]:
+    path = VIBESENSOR_DIR / "domain" / "run_capture.py"
+    fields = _class_field_names(path, "RunCapture")
+    failures: list[str] = []
+    if "run_id" not in fields:
+        failures.append(
+            "vibesensor.domain.RunCapture must keep run_id as its lifecycle boundary"
+        )
+    if "run" in fields:
+        failures.append(
+            "vibesensor.domain.RunCapture must not hold a mutable Run object"
+        )
+
+    tree = _parse_python(path)
+    if tree is None:
+        return failures
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or node.module is None:
+            continue
+        names = {alias.name for alias in node.names}
+        if "Run" not in names:
+            continue
+        if node.module == "vibesensor.domain.run" or (
+            node.level == 1 and node.module == "run"
+        ):
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)}:{node.lineno}: imports mutable Run"
+            )
+    return failures
+
+
 def _check_domain_code_does_not_access_raw_tire_fields() -> list[str]:
     raw_tire_fields = {"tire_width_mm", "tire_aspect_pct", "rim_in"}
     allowed_files = {"snapshots.py", "car.py", "tire_spec.py", "order_reference.py"}
