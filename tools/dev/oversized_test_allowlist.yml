@@ -4,8 +4,6 @@
 threshold_lines: 700
 report_limit: 10
 allowlist:
-  # Projection regressions intentionally stay together so report-shape drift is reviewed in one place.
-  apps/server/tests/adapters/pdf/test_report_document_projection.py: High-density report projection regression matrix kept together by document-output seam.
   # Settings browser regression keeps the moved multi-tab matrix outside smoke.
   apps/ui/tests/regression.settings.spec.ts: Multi-tab settings browser regression matrix moved out of smoke but intentionally stays aggregated.
   # Metrics log helper coverage still lives as one dense helper-focused module.
