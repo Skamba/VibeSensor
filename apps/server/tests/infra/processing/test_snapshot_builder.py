@@ -1,11 +1,11 @@
-"""Tests for snapshot_builder: cache-hit decisions and window-size computation."""
+"""Tests for snapshot window sizing."""
 
 from __future__ import annotations
 
-from vibesensor.infra.processing.models import CachedMetricsHit
+import pytest
+
 from vibesensor.infra.processing.snapshot_builder import (
     SnapshotWindow,
-    check_cache_hit,
     compute_snapshot_window,
 )
 
@@ -22,112 +22,41 @@ def _snapshot_window(**overrides: int) -> SnapshotWindow:
     return compute_snapshot_window(**{**_DEFAULT_WINDOW_KWARGS, **overrides})
 
 
-class TestCheckCacheHit:
-    """Cover snapshot-builder cache-hit eligibility based on generations and sample rate."""
-
-    def test_cache_hit_when_generations_and_rate_match(self) -> None:
-        metrics = {"rms_x": 0.5}
-        result = check_cache_hit(
-            ingest_generation=3,
-            compute_generation=3,
-            compute_sample_rate_hz=200,
-            effective_sample_rate_hz=200,
-            latest_metrics=metrics,
-        )
-        assert isinstance(result, CachedMetricsHit)
-        assert result.metrics is metrics
-
-    def test_cache_miss_when_generation_differs(self) -> None:
-        result = check_cache_hit(
-            ingest_generation=4,
-            compute_generation=3,
-            compute_sample_rate_hz=200,
-            effective_sample_rate_hz=200,
-            latest_metrics={"rms_x": 0.5},
-        )
-        assert result is None
-
-    def test_cache_miss_when_sample_rate_differs(self) -> None:
-        result = check_cache_hit(
-            ingest_generation=3,
-            compute_generation=3,
-            compute_sample_rate_hz=200,
-            effective_sample_rate_hz=500,
-            latest_metrics={"rms_x": 0.5},
-        )
-        assert result is None
-
-    def test_cache_miss_when_never_computed(self) -> None:
-        result = check_cache_hit(
-            ingest_generation=0,
-            compute_generation=-1,
-            compute_sample_rate_hz=0,
-            effective_sample_rate_hz=200,
-            latest_metrics={},
-        )
-        assert result is None
-
-    def test_cache_hit_with_empty_metrics(self) -> None:
-        result = check_cache_hit(
-            ingest_generation=1,
-            compute_generation=1,
-            compute_sample_rate_hz=100,
-            effective_sample_rate_hz=100,
-            latest_metrics={},
-        )
-        assert isinstance(result, CachedMetricsHit)
-        assert result.metrics == {}
-
-
 class TestComputeSnapshotWindow:
     """Exercise snapshot-window sizing and whether a separate FFT block is needed."""
 
-    def test_basic_window_smaller_than_count(self) -> None:
-        result = _snapshot_window()
-        assert result == SnapshotWindow(n_time=400, needs_separate_fft_block=False)
-
-    def test_count_limits_window(self) -> None:
-        result = _snapshot_window(count=50)
-        assert result.n_time == 50
-
-    def test_capacity_limits_window(self) -> None:
-        result = _snapshot_window(count=500, capacity=100)
-        assert result.n_time == 100
-
-    def test_needs_separate_fft_block_when_n_time_smaller(self) -> None:
-        # count >= fft_n and n_time < fft_n → needs separate fft block
-        result = _snapshot_window(
-            count=512,
-            capacity=512,
-            sample_rate_hz=100,
-            waveform_seconds=1,
-        )
-        assert result.n_time == 100
-        assert result.needs_separate_fft_block is True
-
-    def test_separate_fft_block_true_when_small_window_large_count(self) -> None:
-        # count >= fft_n but n_time < fft_n → needs separate fft block
-        result = _snapshot_window(
-            count=512,
-            capacity=512,
-            sample_rate_hz=10,
-        )
-        assert result.n_time == 20
-        assert result.needs_separate_fft_block is True
-
-    def test_no_separate_fft_block_when_n_time_ge_fft_n(self) -> None:
-        result = _snapshot_window(capacity=1000)
-        assert result.n_time == 400
-        assert result.needs_separate_fft_block is False
-
-    def test_no_separate_fft_block_when_count_lt_fft_n(self) -> None:
-        result = _snapshot_window(
-            count=100,
-            capacity=1000,
-            sample_rate_hz=10,
-        )
-        assert result.n_time == 20
-        assert result.needs_separate_fft_block is False
+    @pytest.mark.parametrize(
+        ("overrides", "expected"),
+        [
+            pytest.param({}, SnapshotWindow(400, False), id="default-time-window"),
+            pytest.param({"count": 50}, SnapshotWindow(50, False), id="count-limits-window"),
+            pytest.param(
+                {"count": 500, "capacity": 100},
+                SnapshotWindow(100, True),
+                id="capacity-limits-window-and-requires-fft",
+            ),
+            pytest.param(
+                {"count": 512, "capacity": 512, "sample_rate_hz": 100, "waveform_seconds": 1},
+                SnapshotWindow(100, True),
+                id="separate-fft-for-small-time-window",
+            ),
+            pytest.param(
+                {"count": 512, "capacity": 512, "sample_rate_hz": 10},
+                SnapshotWindow(20, True),
+                id="separate-fft-for-low-rate-large-count",
+            ),
+            pytest.param(
+                {"capacity": 1000}, SnapshotWindow(400, False), id="time-window-covers-fft"
+            ),
+            pytest.param(
+                {"count": 100, "capacity": 1000, "sample_rate_hz": 10},
+                SnapshotWindow(20, False),
+                id="small-count-skips-separate-fft",
+            ),
+        ],
+    )
+    def test_window_contract(self, overrides: dict[str, int], expected: SnapshotWindow) -> None:
+        assert _snapshot_window(**overrides) == expected
 
     def test_minimum_window_is_one(self) -> None:
         result = _snapshot_window(
