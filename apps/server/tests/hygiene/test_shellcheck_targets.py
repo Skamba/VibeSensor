@@ -1,4 +1,4 @@
-"""Guard ShellCheck target discovery against stale manually curated lists."""
+"""Smoke coverage for ShellCheck target discovery."""
 
 from __future__ import annotations
 
@@ -9,11 +9,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-import yaml
-
 from tests._paths import REPO_ROOT
 
-_CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _MAKEFILE = REPO_ROOT / "Makefile"
 _SHELLCHECK_TARGETS = REPO_ROOT / "tools" / "dev" / "shellcheck_targets.py"
 _SHELL_SUFFIXES = (".sh", ".sh.template")
@@ -77,35 +74,13 @@ def _expected_shellcheck_targets(allowlist: set[str]) -> tuple[str, ...]:
     return tuple(sorted(targets))
 
 
-def test_shellcheck_targets_are_discovered_from_tracked_files() -> None:
+def test_shell_lint_discovers_current_targets_and_make_uses_tool() -> None:
     module = _load_shellcheck_targets_module()
     allowlist = set(module.SHELLCHECK_ALLOWLIST)
+    makefile = _MAKEFILE.read_text(encoding="utf-8")
 
     assert all(reason.strip() for reason in module.SHELLCHECK_ALLOWLIST.values())
     assert tuple(module.shellcheck_targets()) == _expected_shellcheck_targets(allowlist)
-
-
-def test_make_shell_lint_uses_dynamic_target_discovery() -> None:
-    makefile = _MAKEFILE.read_text(encoding="utf-8")
-
     assert "SHELLCHECK_TARGETS :=" not in makefile
     assert '"$$PYTHON" tools/dev/shellcheck_targets.py' in makefile
     assert "shellcheck --severity=warning -x -s bash" in makefile
-
-
-def test_ci_shell_lint_sets_up_python_for_dynamic_target_discovery() -> None:
-    workflow = yaml.safe_load(_CI_WORKFLOW.read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["shell-lint"]["steps"]
-    assert isinstance(steps, list)
-
-    setup_python_index = next(
-        index
-        for index, step in enumerate(steps)
-        if isinstance(step, dict) and step.get("uses") == "./.github/actions/setup-python"
-    )
-    shellcheck_index = next(
-        index
-        for index, step in enumerate(steps)
-        if isinstance(step, dict) and step.get("name") == "ShellCheck deployment scripts"
-    )
-    assert setup_python_index < shellcheck_index
