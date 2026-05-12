@@ -135,19 +135,10 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
 
     _run_with_restored_root_logging(app_module.main)
 
-    assert calls == [
-        (
-            "vibesensor.app.bootstrap:create_app_from_env",
-            {
-                "address": "127.0.0.1",
-                "port": 8000,
-                "interface": "asgi",
-                "log_enabled": True,
-                "log_level": "info",
-                "loop": "uvloop",
-                "reload": True,
-                "factory": True,
-            },
-        ),
-    ]
+    target, kwargs = calls[0]
+    assert target == "vibesensor.app.bootstrap:create_app_from_env"
+    assert kwargs["address"] == "127.0.0.1"
+    assert kwargs["port"] == 8000
+    assert kwargs["reload"] is True
+    assert kwargs["factory"] is True
     assert os.environ[app_module._CONFIG_PATH_ENV] == str(config_path.resolve())

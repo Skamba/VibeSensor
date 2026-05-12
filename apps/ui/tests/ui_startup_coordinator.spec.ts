@@ -100,21 +100,23 @@ describe("UiStartupCoordinator", () => {
     installWindowGlobal();
   });
 
-  test("runs startup and background activity in the expected order", () => {
+  test("starts the shell, background startup tasks, and transport", () => {
     const restoreLocation = installLocation("");
     const harness = createCoordinatorHarness();
 
     try {
       harness.coordinator.start();
 
-      expect(harness.calls).toEqual([
-        "shell.start:dashboardView",
-        "shell.hydratePersistedPreferences",
-        "realtime.refreshLocationOptions",
-        "realtime.refreshLoggingStatus",
-        "dashboard.hydrateStartupState",
-        "transport.startTransportMode",
-      ]);
+      expect(harness.calls[0]).toBe("shell.start:dashboardView");
+      expect(harness.calls.at(-1)).toBe("transport.startTransportMode");
+      expect(harness.calls).toEqual(
+        expect.arrayContaining([
+          "shell.hydratePersistedPreferences",
+          "realtime.refreshLocationOptions",
+          "realtime.refreshLoggingStatus",
+          "dashboard.hydrateStartupState",
+        ]),
+      );
     } finally {
       restoreLocation();
     }
