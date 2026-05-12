@@ -1,8 +1,10 @@
-"""Guard: workflow-backed CI manifest expands backend shard matrix variants."""
+"""Guard meaningful local-CI manifest contracts without pinning CI topology."""
 
 from __future__ import annotations
 
 import importlib.util
+import re
+import shlex
 import sys
 
 from tests._paths import REPO_ROOT
@@ -19,149 +21,57 @@ def _load_ci_manifest_module():
     return module
 
 
-def test_backend_shard_matrix_expands_to_logical_local_jobs() -> None:
-    module = _load_ci_manifest_module()
-
-    backend_shard_jobs = tuple(
-        job_name for job_name in module.all_job_names() if job_name.startswith("backend-tests")
-    )
-    assert backend_shard_jobs == (
-        "backend-tests-1",
-        "backend-tests-2",
-        "backend-tests-3",
-        "backend-tests-4",
-        "backend-tests-5",
-    )
+def _backend_shard_index(job_name: str) -> int:
+    match = re.fullmatch(r"backend-tests-(\d+)", job_name)
+    assert match is not None, f"unexpected backend shard job name: {job_name}"
+    return int(match.group(1))
 
 
-def test_backend_shard_matrix_preserves_shard_specific_commands() -> None:
-    module = _load_ci_manifest_module()
-
-    job = module.ci_workflow_jobs()["backend-tests-3"]
-    commands = [
-        spec.command
-        for spec in job.local_runnable_steps("python")
-        if spec.label == "Backend tests shard 3/5"
-    ]
-    assert len(commands) == 1
-    assert "env " in commands[0]
-    assert "VIBESENSOR_BACKEND_XDIST_WORKERS=3" in commands[0]
-    assert "VIBESENSOR_BACKEND_SHARD_TIMEOUT_S=780" in commands[0]
-    assert "--shards 5" in commands[0]
-    assert "--shard-index 3" in commands[0]
-    assert "backend-tests-3.xml" in commands[0]
-
-
-def test_backend_quality_jobs_are_split_into_focused_gates() -> None:
-    module = _load_ci_manifest_module()
-
-    job_names = set(module.all_job_names())
-    assert "ci-scope" not in job_names
-    assert "ui-build-artifact" not in job_names
-    assert "backend-quality" not in job_names
-    assert {
-        "backend-lint",
-        "repo-hygiene",
-        "backend-static-guards",
-        "backend-preflight",
-        "docs-lint",
-        "backend-contract-drift",
-    }.issubset(job_names)
-
-
-def test_contributing_docs_reference_focused_backend_ci_gates() -> None:
-    module = _load_ci_manifest_module()
-    job_names = set(module.all_job_names())
-    contributing_text = (REPO_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-
-    assert "backend-quality" not in contributing_text
-    focused_gate_names = {
-        "backend-lint",
-        "repo-hygiene",
-        "backend-static-guards",
-        "backend-preflight",
-        "docs-lint",
-        "backend-contract-drift",
-    }
-    assert focused_gate_names.issubset(job_names)
-    for gate_name in focused_gate_names:
-        assert gate_name in contributing_text
-
-
-def test_ci_fast_jobs_are_lint_docs_static_and_typecheck_gates() -> None:
-    module = _load_ci_manifest_module()
-
-    fast_jobs = set(module.ci_fast_job_names())
-
-    assert {
-        "backend-lint",
-        "repo-hygiene",
-        "shell-lint",
-        "backend-static-guards",
-        "backend-preflight",
-        "docs-lint",
-        "backend-contract-drift",
-        "backend-typecheck",
-        "frontend-quality",
-        "frontend-typecheck",
-    } == fast_jobs
-    assert not any(job_name.startswith("backend-tests-") for job_name in fast_jobs)
-    assert {
-        "ui-unit",
-        "ui-smoke",
-        "release-smoke",
-        "firmware-native-tests",
-        "e2e",
-    }.isdisjoint(fast_jobs)
-
-
-def test_ci_lite_jobs_are_non_docker_blocking_jobs_except_e2e() -> None:
-    module = _load_ci_manifest_module()
-
-    lite_jobs = set(module.ci_lite_job_names())
-
-    assert "e2e" not in lite_jobs
-    assert {
-        "backend-tests-1",
-        "backend-tests-2",
-        "backend-tests-3",
-        "backend-tests-4",
-        "backend-tests-5",
-        "ui-smoke",
-        "release-smoke",
-        "firmware-native-tests",
-    }.issubset(lite_jobs)
-
-
-def test_workflow_manifest_preserves_local_job_needs() -> None:
+def test_backend_shard_matrix_expands_to_runnable_logical_local_jobs() -> None:
     module = _load_ci_manifest_module()
 
     jobs = module.ci_workflow_jobs()
+    backend_shard_jobs = sorted(
+        (job_name for job_name in jobs if job_name.startswith("backend-tests-")),
+        key=_backend_shard_index,
+    )
 
-    assert jobs["ui-unit"].needs == ("frontend-typecheck",)
-    assert jobs["ui-smoke"].needs == ("frontend-typecheck",)
-    assert set(jobs["firmware-native-tests"].needs) == {
-        "backend-lint",
-        "repo-hygiene",
-        "backend-static-guards",
-        "backend-preflight",
-        "docs-lint",
-        "backend-contract-drift",
-    }
-    assert set(jobs["release-smoke"].needs) == {
-        "backend-lint",
-        "repo-hygiene",
-        "backend-static-guards",
-        "backend-preflight",
-        "docs-lint",
-        "backend-contract-drift",
-        "backend-typecheck",
-        "frontend-quality",
-        "frontend-typecheck",
-    }
-    assert "ci-scope" not in jobs["release-smoke"].needs
-    assert "ui-build-artifact" not in jobs["release-smoke"].needs
-    assert jobs["release-smoke"].workflow_only_needs == ("ui-build-artifact",)
+    assert backend_shard_jobs, "backend shard matrix did not expand for local runner"
+    assert [_backend_shard_index(job_name) for job_name in backend_shard_jobs] == list(
+        range(1, len(backend_shard_jobs) + 1)
+    )
+    for job_name in backend_shard_jobs:
+        shard_index = _backend_shard_index(job_name)
+        commands = [
+            shlex.split(spec.command)
+            for spec in jobs[job_name].local_runnable_steps("python")
+            if "tools/tests/run_backend_parallel.py" in spec.command
+        ]
+        assert len(commands) == 1
+        command = commands[0]
+        assert "--shards" in command
+        assert command[command.index("--shards") + 1] == str(len(backend_shard_jobs))
+        assert "--shard-index" in command
+        assert command[command.index("--shard-index") + 1] == str(shard_index)
+        assert any(token.endswith(f"backend-tests-{shard_index}.xml") for token in command)
+
+
+def test_manifest_public_job_sets_exclude_workflow_only_and_expensive_fast_jobs() -> None:
+    module = _load_ci_manifest_module()
+
+    all_jobs = set(module.all_job_names())
+    fast_jobs = set(module.ci_fast_job_names())
+    lite_jobs = set(module.ci_lite_job_names())
+
+    assert {"ci-scope", "ui-build-artifact"}.isdisjoint(all_jobs)
+    assert fast_jobs < all_jobs
+    assert lite_jobs < all_jobs
+    assert not any(job_name.startswith("backend-tests-") for job_name in fast_jobs)
+    assert {"ui-unit", "ui-smoke", "release-smoke", "firmware-native-tests", "e2e"}.isdisjoint(
+        fast_jobs
+    )
+    assert "e2e" not in lite_jobs
+    assert any(job_name.startswith("backend-tests-") for job_name in lite_jobs)
 
 
 def test_release_smoke_local_manifest_builds_ui_static_instead_of_downloading_artifact() -> None:
@@ -173,6 +83,7 @@ def test_release_smoke_local_manifest_builds_ui_static_instead_of_downloading_ar
     assert any("tools/tests/run_release_smoke.py" in command for command in runnable_commands)
     assert all("--skip-ui-build" not in command for command in runnable_commands)
     assert all("ui-static.tar.gz" not in command for command in runnable_commands)
+    assert job.workflow_only_needs == ("ui-build-artifact",)
 
 
 def test_skipped_external_actions_are_explicit_and_substituted() -> None:
@@ -206,16 +117,23 @@ def test_common_local_jobs_declare_shared_workspace_write_sets() -> None:
     module = _load_ci_manifest_module()
 
     jobs = module.ci_workflow_jobs()
-    assert set(jobs["frontend-typecheck"].workspace_write_sets) == {"ui-generated-contracts"}
-    assert set(jobs["backend-contract-drift"].workspace_write_sets) == {"ui-generated-contracts"}
-    assert set(jobs["release-smoke"].workspace_write_sets) == {
-        "ui-generated-contracts",
-        "ui-dist",
+    write_sets_by_job = {job_name: set(job.workspace_write_sets) for job_name, job in jobs.items()}
+    jobs_by_write_set: dict[str, set[str]] = {}
+    for job_name, write_sets in write_sets_by_job.items():
+        for write_set in write_sets:
+            jobs_by_write_set.setdefault(write_set, set()).add(job_name)
+
+    assert jobs_by_write_set["ui-generated-contracts"] >= {
+        "frontend-typecheck",
+        "backend-contract-drift",
+        "release-smoke",
+    }
+    assert jobs_by_write_set["ui-test-results"] >= {"ui-unit", "ui-smoke"}
+    assert {
         "server-static",
         "server-dist",
         "release-smoke-artifacts",
-    }
-    assert set(jobs["ui-smoke"].workspace_write_sets) == {"ui-test-results"}
+    }.issubset(write_sets_by_job["release-smoke"])
 
 
 def test_shell_lint_declares_host_shellcheck_prerequisite() -> None:
