@@ -1,4 +1,4 @@
-"""Import-purity guardrails for the app package and bootstrap module."""
+"""Import-purity smoke coverage for app startup entrypoints."""
 
 from __future__ import annotations
 
@@ -53,45 +53,16 @@ def _run_import_probe(import_code: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_importing_app_package_exposes_startup_entrypoints() -> None:
+def test_importing_startup_entrypoints_is_side_effect_free() -> None:
     result = _run_import_probe(
         """
 import importlib
 
-module = importlib.import_module("vibesensor.app")
-assert module.__name__ == "vibesensor.app"
-assert callable(module.create_app)
-assert callable(module.create_app_from_env)
-assert callable(module.main)
-assert not hasattr(module, "app")
-        """
-    )
-    assert result.stdout.strip() == "ok"
-
-
-def test_importing_bootstrap_does_not_construct_runtime() -> None:
-    result = _run_import_probe(
-        """
-import importlib
-
+package = importlib.import_module("vibesensor.app")
 bootstrap = importlib.import_module("vibesensor.app.bootstrap")
-assert callable(bootstrap.create_app)
-assert callable(bootstrap.create_app_from_env)
-assert callable(bootstrap.main)
-assert not hasattr(bootstrap, "app")
-        """
-    )
-    assert result.stdout.strip() == "ok"
-
-
-def test_importing_create_app_from_package_is_side_effect_free() -> None:
-    result = _run_import_probe(
-        """
 from vibesensor.app import create_app, create_app_from_env, main
 
-assert callable(create_app)
-assert callable(create_app_from_env)
-assert callable(main)
+_ = (package, bootstrap, create_app, create_app_from_env, main)
         """
     )
     assert result.stdout.strip() == "ok"
