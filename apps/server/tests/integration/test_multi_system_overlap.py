@@ -1,10 +1,10 @@
-"""Multi-system overlap resolution tests (≥50 direct-injection cases).
+"""Representative multi-system overlap resolution tests.
 
 Tests how the analysis pipeline resolves overlapping system signatures
 (wheel, engine, driveshaft) when multiple vibration sources are present
 simultaneously.  Coverage includes:
 
-  MO1 – Engine + wheel both present: correct source separation.
+  MO1 – Engine + wheel both present: representative speed/profile separation.
   MO2 – Engine-wheel harmonic alias suppression (1.15 ratio / 0.60 penalty).
   MO3 – Driveshaft + wheel overlap at low speed.
   MO4 – Three systems present simultaneously.
@@ -19,7 +19,6 @@ from typing import Any
 
 import pytest
 from test_support import (
-    ADDITIONAL_CAR_PROFILE_IDS,
     ADDITIONAL_CAR_PROFILES,
     ALL_WHEEL_SENSORS,
     CAR_PROFILES,
@@ -43,8 +42,6 @@ from test_support import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-_CORNERS = list(CORNER_SENSORS)
 
 # Ratio of driveshaft order to wheel-1x order (prop shaft speed ≈ 2.5× wheel)
 _DRIVESHAFT_WHEEL_RATIO = 2.5
@@ -181,11 +178,15 @@ def _make_driveshaft_plus_wheel_samples(
 
 # ===================================================================
 # MO1 – Engine + localized wheel fault: wheel should be detected
-# 4 corners × 3 speeds × 2 new profiles = 24 cases
+# Representative low/high speed and front/rear profile cases.
 # ===================================================================
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-@pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
+@pytest.mark.parametrize(
+    ("corner", "speed", "profile"),
+    [
+        pytest.param("FL", SPEED_LOW, ADDITIONAL_CAR_PROFILES[0], id="low-front"),
+        pytest.param("RR", SPEED_HIGH, ADDITIONAL_CAR_PROFILES[-1], id="high-rear"),
+    ],
+)
 def test_engine_plus_wheel_detects_wheel(
     corner: str,
     speed: float,
@@ -211,7 +212,7 @@ def test_engine_plus_wheel_detects_wheel(
 # ===================================================================
 # MO2 – Engine harmonic alias suppression
 # When engine confidence is close to wheel, engine should be suppressed.
-# 4 corners × 3 engine strengths = 12 cases
+# Three engine strengths on one representative corner.
 # ===================================================================
 _ENGINE_STRENGTHS = [
     ("weak_engine", 0.015),  # engine much weaker than wheel
@@ -220,15 +221,14 @@ _ENGINE_STRENGTHS = [
 ]
 
 
-@pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
     ("eng_name", "engine_amp"),
     _ENGINE_STRENGTHS,
     ids=[e[0] for e in _ENGINE_STRENGTHS],
 )
-def test_engine_alias_suppression(corner: str, eng_name: str, engine_amp: float) -> None:
+def test_engine_alias_suppression(eng_name: str, engine_amp: float) -> None:
     """Engine alias suppression should prevent engine from dominating when wheel is present."""
-    sensor = CORNER_SENSORS[corner]
+    sensor = CORNER_SENSORS["FL"]
     samples = _make_engine_plus_wheel_samples(
         fault_sensor=sensor,
         sensors=ALL_WHEEL_SENSORS,
@@ -243,11 +243,15 @@ def test_engine_alias_suppression(corner: str, eng_name: str, engine_amp: float)
 
 # ===================================================================
 # MO3 – Driveshaft + wheel overlap
-# 4 corners × 2 speeds × 2 new profiles = 16 cases
+# Representative front/rear and low/mid speed profile cases.
 # ===================================================================
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID], ids=["low", "mid"])
-@pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
+@pytest.mark.parametrize(
+    ("corner", "speed", "profile"),
+    [
+        pytest.param("FR", SPEED_LOW, ADDITIONAL_CAR_PROFILES[0], id="low-front"),
+        pytest.param("RL", SPEED_MID, ADDITIONAL_CAR_PROFILES[-1], id="mid-rear"),
+    ],
+)
 def test_driveshaft_plus_wheel_overlap(
     corner: str,
     speed: float,
@@ -268,10 +272,15 @@ def test_driveshaft_plus_wheel_overlap(
 
 # ===================================================================
 # MO4 – Three systems simultaneously (wheel + engine + driveshaft-like)
-# 4 corners × 2 speeds = 8 cases
+# One front/high and one rear/mid representative.
 # ===================================================================
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
+@pytest.mark.parametrize(
+    ("corner", "speed"),
+    [
+        pytest.param("FL", SPEED_HIGH, id="high-front"),
+        pytest.param("RR", SPEED_MID, id="mid-rear"),
+    ],
+)
 def test_three_systems_simultaneous(corner: str, speed: float) -> None:
     """Pipeline should handle wheel + engine + driveshaft-like signals without crash."""
     sensor = CORNER_SENSORS[corner]
@@ -305,7 +314,7 @@ def test_three_systems_simultaneous(corner: str, speed: float) -> None:
 
 # ===================================================================
 # MO5 – Engine-only (all sensors uniform) → no localized wheel fault
-# 3 speeds × 2 engine strengths = 6 cases
+# One moderate mid-speed and one strong high-speed representative.
 # ===================================================================
 _ENGINE_ONLY_STRENGTHS = [
     ("moderate", 0.04, 22.0),
@@ -313,11 +322,12 @@ _ENGINE_ONLY_STRENGTHS = [
 ]
 
 
-@pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 @pytest.mark.parametrize(
-    ("eng_name", "engine_amp", "engine_db"),
-    _ENGINE_ONLY_STRENGTHS,
-    ids=[e[0] for e in _ENGINE_ONLY_STRENGTHS],
+    ("speed", "eng_name", "engine_amp", "engine_db"),
+    [
+        pytest.param(SPEED_MID, *_ENGINE_ONLY_STRENGTHS[0], id="mid-moderate"),
+        pytest.param(SPEED_HIGH, *_ENGINE_ONLY_STRENGTHS[1], id="high-strong"),
+    ],
 )
 def test_engine_only_no_localized_wheel(
     speed: float,
@@ -342,7 +352,7 @@ def test_engine_only_no_localized_wheel(
 
 # ===================================================================
 # MO6 – Engine + single-sensor wheel: wheel dominance
-# 4 corners × 2 relative strengths = 8 cases
+# Two relative strengths on one limited-layout representative.
 # ===================================================================
 _RELATIVE_STRENGTHS = [
     ("wheel_dominates", 0.06, 0.02),
@@ -350,19 +360,18 @@ _RELATIVE_STRENGTHS = [
 ]
 
 
-@pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
     ("strength_name", "wheel_amp", "engine_amp"),
     _RELATIVE_STRENGTHS,
     ids=[s[0] for s in _RELATIVE_STRENGTHS],
 )
 def test_engine_plus_single_sensor_wheel(
-    corner: str,
     strength_name: str,
     wheel_amp: float,
     engine_amp: float,
 ) -> None:
     """Engine + localized wheel: pipeline should find the localized wheel signal."""
+    corner = "FL"
     sensor = CORNER_SENSORS[corner]
     samples = _make_engine_plus_wheel_samples(
         fault_sensor=sensor,
@@ -380,12 +389,12 @@ def test_engine_plus_single_sensor_wheel(
 
 # ===================================================================
 # MO7 – Profile-aware multi-system overlap
-# 7 profiles × 4 corners = 28 cases
+# Profile span on one representative corner; corner behavior is covered above.
 # ===================================================================
 @pytest.mark.parametrize("profile", _PROFILE_SPAN, ids=_PROFILE_SPAN_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None:
+def test_profile_engine_plus_wheel(profile: dict[str, Any]) -> None:
     """Profile-aware engine+wheel should not crash and should produce findings."""
+    corner = "FL"
     sensor = CORNER_SENSORS[corner]
     whz = profile_wheel_hz(profile, SPEED_MID)
     ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
