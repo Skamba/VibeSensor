@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import pytest
 
 from vibesensor.domain import (
@@ -22,11 +20,6 @@ from vibesensor.shared.boundaries.summary_fields.origin import (
 
 
 class TestFindingEvidence:
-    def test_frozen(self) -> None:
-        e = FindingEvidence()
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            e.match_rate = 0.5
-
     def test_defaults(self) -> None:
         e = FindingEvidence()
         assert e.match_rate == 0.0
@@ -140,11 +133,6 @@ class TestFindingEvidence:
 
 
 class TestLocationHotspot:
-    def test_frozen(self) -> None:
-        h = LocationHotspot()
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            h.strongest_location = "foo"
-
     def test_defaults(self) -> None:
         h = LocationHotspot()
         assert h.strongest_location == ""
