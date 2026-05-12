@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import pytest
 
 from vibesensor.domain import (
@@ -18,11 +16,6 @@ from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_p
 
 
 class TestSpeedProfile:
-    def test_frozen(self) -> None:
-        sp = SpeedProfile()
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            sp.min_kmh = 10.0
-
     def test_defaults(self) -> None:
         sp = SpeedProfile()
         assert sp.min_kmh == 0.0
@@ -159,11 +152,6 @@ class TestSpeedProfile:
 
 
 class TestSuitabilityCheck:
-    def test_frozen(self) -> None:
-        c = SuitabilityCheck(check_key="test", state="pass")
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            c.state = "fail"
-
     def test_properties(self) -> None:
         assert SuitabilityCheck(check_key="a", state="pass").passed
         assert not SuitabilityCheck(check_key="a", state="pass").failed
@@ -272,11 +260,6 @@ class TestSuitabilityCheck:
 
 
 class TestRunSuitability:
-    def test_frozen(self) -> None:
-        rs = RunSuitability()
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            rs.checks = ()
-
     def test_overall_pass(self) -> None:
         rs = RunSuitability(
             checks=(

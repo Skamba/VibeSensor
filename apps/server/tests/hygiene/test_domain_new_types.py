@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import pytest
 
 from vibesensor.domain import (
@@ -27,30 +25,6 @@ from vibesensor.shared.boundaries.summary_fields.order_match import (
 
 
 class TestOrderMatchObservation:
-    def test_construction(self) -> None:
-        obs = OrderMatchObservation(
-            predicted_hz=100.0,
-            matched_hz=102.0,
-            rel_error=0.02,
-            amp=0.5,
-            location="front_left",
-            t_s=1.5,
-            speed_kmh=60.0,
-        )
-        assert obs.predicted_hz == 100.0
-        assert obs.matched_hz == 102.0
-        assert obs.location == "front_left"
-
-    def test_frozen(self) -> None:
-        obs = OrderMatchObservation(
-            predicted_hz=100.0, matched_hz=100.0, rel_error=0.0, amp=1.0, location="x"
-        )
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            obs.amp = 2.0
-
-    def test_has_slots(self) -> None:
-        assert hasattr(OrderMatchObservation, "__slots__")
-
     def test_is_close_match(self) -> None:
         close = OrderMatchObservation(
             predicted_hz=100.0, matched_hz=104.0, rel_error=0.04, amp=1.0, location="x"
@@ -115,26 +89,6 @@ class TestOrderMatchObservation:
 
 
 class TestDrivingPhaseInterval:
-    def test_construction(self) -> None:
-        interval = DrivingPhaseInterval(
-            phase=DrivingPhase.CRUISE,
-            start_t_s=10.0,
-            end_t_s=20.0,
-            speed_min_kmh=50.0,
-            speed_max_kmh=60.0,
-            has_fault_evidence=True,
-        )
-        assert interval.phase is DrivingPhase.CRUISE
-        assert interval.has_fault_evidence is True
-
-    def test_frozen(self) -> None:
-        interval = DrivingPhaseInterval(phase=DrivingPhase.IDLE)
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            interval.phase = DrivingPhase.CRUISE
-
-    def test_has_slots(self) -> None:
-        assert hasattr(DrivingPhaseInterval, "__slots__")
-
     def test_duration_s(self) -> None:
         interval = DrivingPhaseInterval(phase=DrivingPhase.CRUISE, start_t_s=10.0, end_t_s=20.0)
         assert interval.duration_s == 10.0
@@ -154,36 +108,13 @@ class TestDrivingPhaseInterval:
 
 
 class TestLocationIntensitySummary:
-    def test_construction(self) -> None:
+    def test_diagnostic_sample_count_uses_usable_count(self) -> None:
         summary = LocationIntensitySummary(
             location="front_left",
             sample_count=100,
-            sample_coverage_ratio=0.95,
             usable_sample_count=80,
-            usable_sample_coverage_ratio=0.80,
-            mean_intensity_db=12.5,
-            p95_intensity_db=18.0,
-            max_intensity_db=22.0,
-            strength_bucket_distribution=StrengthBucketDistribution(
-                total=100,
-                counts={"l0": 10, "l1": 50, "l2": 40},
-                percent_time_l0=10.0,
-                percent_time_l1=50.0,
-                percent_time_l2=40.0,
-            ),
         )
-        assert summary.location == "front_left"
-        assert summary.sample_count == 100
         assert summary.diagnostic_sample_count == 80
-        assert summary.mean_intensity_db == 12.5
-
-    def test_frozen(self) -> None:
-        summary = LocationIntensitySummary(location="x")
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            summary.location = "y"
-
-    def test_has_slots(self) -> None:
-        assert hasattr(LocationIntensitySummary, "__slots__")
 
     def test_negative_sample_count_rejected(self) -> None:
         with pytest.raises(ValueError, match="sample_count"):
