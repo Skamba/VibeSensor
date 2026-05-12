@@ -1,9 +1,6 @@
 file_threshold_lines: 1200
 function_threshold_lines: 200
-files:
-  apps/server/tests/adapters/pdf/test_report_document_projection.py:
-    max_lines: 1217
-    reason: High-density report projection regression matrix kept together by document-output seam.
+files: {}
 functions:
   tools/dev/hygiene/docker_ci.py::check_docker_ci_dependency_hygiene:
     max_lines: 637
