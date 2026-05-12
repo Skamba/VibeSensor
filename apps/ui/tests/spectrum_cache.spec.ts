@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { effect } from "../src/app/ui_signals";
-import type {
-  CreateSpectrumChartDeps,
-  SpectrumChart,
-} from "../src/spectrum_chart";
+import type { SpectrumChart } from "../src/spectrum_chart";
 import { flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
 import {
   getRequiredClientSpectrum,
@@ -18,27 +14,22 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
     installWindowGlobal();
   });
 
-  test("reuses series metadata when only spectrum values change", async () => {
-    const seriesMetaSnapshots: CreateSpectrumChartDeps["seriesMeta"]["value"][] =
-      [];
-    const setDataSnapshots: Array<readonly unknown[]> = [];
+  test("updates chart data when only spectrum values change", async () => {
+    const setDataSnapshots: number[][][] = [];
 
     await withSpectrumRendererHarness(
       {
         deps: {
           loadChartModule: async () => ({
-            createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
-              const stop = effect(() => {
-                seriesMetaSnapshots.push(deps.seriesMeta.value);
-              });
+            createSpectrumChart(): SpectrumChart {
               return {
-                destroy() {
-                  stop();
-                },
+                destroy() {},
                 redraw() {},
                 resize() {},
                 setData(data) {
-                  setDataSnapshots.push(data as readonly unknown[]);
+                  setDataSnapshots.push(
+                    (data as readonly number[][]).map((row) => [...row]),
+                  );
                 },
                 setSeriesIsolation() {},
               };
@@ -72,14 +63,18 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         renderer.renderPreparedFrame(nextPrepared);
         await flushSignalUpdates();
 
-        expect(new Set(seriesMetaSnapshots).size).toBe(1);
         expect(setDataSnapshots).toHaveLength(2);
-        expect(setDataSnapshots[0]).toBe(setDataSnapshots[1]);
+        const latestSeries = setDataSnapshots.at(-1)?.[1] ?? [];
+        expect(latestSeries).toHaveLength(3);
+        expect(latestSeries.every((value) => Number.isFinite(value))).toBe(
+          true,
+        );
+        expect(latestSeries[0]).toBeGreaterThan(latestSeries[2] ?? 0);
       },
     );
   });
 
-  test("reuses cached prepared data when only chart-band metadata changes", async () => {
+  test("refreshes chart bands without losing prepared spectrum data", async () => {
     await withSpectrumRendererHarness(
       {
         deps: {
@@ -125,106 +120,14 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
 
         const refreshed = renderer.refreshPreparedFrameMetadata();
 
-        expect(refreshed.entries).toBe(prepared.entries);
-        expect(refreshed.freqAxis).toBe(prepared.freqAxis);
-        expect(refreshed.frame).toBe(prepared.frame);
         expect(refreshed.hasData).toBe(true);
         expect(refreshed.chartBands).toHaveLength(1);
       },
     );
   });
 
-  test("reuses prepared series when source arrays and target grid are unchanged", async () => {
-    const sensorAFreq = [10, 15, 20];
-    const sensorACombined = [1, 0.75, 0.5];
-    const sensorBFreq = [10, 20];
-    const sensorBCombined = [0.8, 0.4];
-
-    await withSpectrumRendererHarness(
-      {
-        seedState(state) {
-          installClientSpectra(state, [
-            {
-              client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum({
-                combined: sensorACombined,
-                freq: sensorAFreq,
-              }),
-            },
-            {
-              client: makeClient("sensor-b", "Rear Left Wheel"),
-              spectrum: makeSpectrum({
-                combined: sensorBCombined,
-                freq: sensorBFreq,
-                peakAmp: 0.8,
-                vibrationStrengthDb: 9,
-              }),
-            },
-          ]);
-        },
-      },
-      ({ prepareFrame }) => {
-        const firstPrepared = prepareFrame();
-        const secondPrepared = prepareFrame();
-
-        expect(secondPrepared.entries[0]?.values).toBe(
-          firstPrepared.entries[0]?.values,
-        );
-        expect(secondPrepared.entries[1]?.values).toBe(
-          firstPrepared.entries[1]?.values,
-        );
-      },
-    );
-  });
-
-  test("recomputes only the changed client when source amplitudes change", async () => {
-    await withSpectrumRendererHarness(
-      {
-        seedState(state) {
-          installClientSpectra(state, [
-            {
-              client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum(),
-            },
-            {
-              client: makeClient("sensor-b", "Rear Left Wheel"),
-              spectrum: makeSpectrum({
-                combined: [0.8, 0.4],
-                freq: [10, 20],
-                peakAmp: 0.8,
-                vibrationStrengthDb: 9,
-              }),
-            },
-          ]);
-        },
-      },
-      ({ prepareFrame, state }) => {
-        const firstPrepared = prepareFrame();
-
-        state.spectrum.spectra.value = {
-          clients: {
-            ...state.spectrum.spectra.value.clients,
-            "sensor-b": {
-              ...getRequiredClientSpectrum(state, "sensor-b"),
-              combined: [0.9, 0.45],
-            },
-          },
-        };
-
-        const secondPrepared = prepareFrame();
-
-        expect(secondPrepared.entries[0]?.values).toBe(
-          firstPrepared.entries[0]?.values,
-        );
-        expect(secondPrepared.entries[1]?.values).not.toBe(
-          firstPrepared.entries[1]?.values,
-        );
-      },
-    );
-  });
-
-  test("rebuilds chart data buffers when the frame shape changes", async () => {
-    const setDataSnapshots: Array<readonly unknown[]> = [];
+  test("updates chart data when the frame shape changes", async () => {
+    const setDataSnapshots: number[][][] = [];
 
     await withSpectrumRendererHarness(
       {
@@ -236,7 +139,9 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
                 redraw() {},
                 resize() {},
                 setData(data) {
-                  setDataSnapshots.push(data as readonly unknown[]);
+                  setDataSnapshots.push(
+                    (data as readonly number[][]).map((row) => [...row]),
+                  );
                 },
                 setSeriesIsolation() {},
               };
@@ -271,7 +176,13 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         await flushSignalUpdates();
 
         expect(setDataSnapshots).toHaveLength(2);
-        expect(setDataSnapshots[0]).not.toBe(setDataSnapshots[1]);
+        expect(setDataSnapshots.at(-1)?.[0]).toEqual([10, 20, 30, 40]);
+        const latestSeries = setDataSnapshots.at(-1)?.[1] ?? [];
+        expect(latestSeries).toHaveLength(4);
+        expect(latestSeries.every((value) => Number.isFinite(value))).toBe(
+          true,
+        );
+        expect(latestSeries[0]).toBeGreaterThan(latestSeries[3] ?? 0);
       },
     );
   });

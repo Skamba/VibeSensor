@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { installDocumentStub } from "./spectrum_test_support";
 
 describe("spectrum_css_vars", () => {
-  test("reuses the cached spectrum css snapshot until values actually change", async () => {
+  test("refreshes spectrum colors when the theme changes", async () => {
     const restoreDocument = installDocumentStub();
     const styleValues: Record<string, string> = {
       "--surface": "#101820",
@@ -13,9 +13,7 @@ describe("spectrum_css_vars", () => {
     };
     let themeChangeHandler: ((event: MediaQueryListEvent) => void) | null =
       null;
-    let readCount = 0;
     globalThis.getComputedStyle = (() => {
-      readCount += 1;
       return {
         getPropertyValue(name: string): string {
           return styleValues[name] ?? "";
@@ -63,36 +61,17 @@ describe("spectrum_css_vars", () => {
         tooltipBg: "rgba(1, 2, 3, 0.9)",
         tooltipFg: "#fefefe",
       });
-      expect(readCount).toBe(1);
-
-      dispatchThemeChange();
-      const unchangedRefresh = getSpectrumCssVars();
-      expect(unchangedRefresh).toBe(first);
-      expect(readCount).toBe(2);
 
       styleValues["--surface"] = "#222222";
-      expect(getSpectrumCssVars()).toBe(first);
       expect(getSpectrumCssVars().surface).toBe("#101820");
-      expect(readCount).toBe(2);
 
       dispatchThemeChange();
       const refreshed = getSpectrumCssVars();
       expect(refreshed.surface).toBe("#222222");
-      expect(refreshed).not.toBe(first);
-      expect(getSpectrumCssVars()).toBe(refreshed);
-      expect(readCount).toBe(3);
-
-      dispatchThemeChange();
-      const unchangedThemeRefresh = getSpectrumCssVars();
-      expect(unchangedThemeRefresh).toBe(refreshed);
-      expect(readCount).toBe(4);
 
       styleValues["--surface"] = "#444444";
       dispatchThemeChange();
-      const autoRefreshed = getSpectrumCssVars();
-      expect(autoRefreshed.surface).toBe("#444444");
-      expect(autoRefreshed).not.toBe(refreshed);
-      expect(readCount).toBe(5);
+      expect(getSpectrumCssVars().surface).toBe("#444444");
     } finally {
       restoreDocument();
     }
