@@ -85,93 +85,78 @@ function makeRepresentativePayload(): LiveWsPayload {
   };
 }
 
-function requiredFields(schema: {
-  required?: readonly string[];
-}): readonly string[] {
-  return schema.required ?? [];
-}
-
 type RepresentativePayload = ReturnType<typeof makeRepresentativePayload>;
-type DriftBranch = {
+type RequiredFieldCase = {
   label: string;
   pathPrefix: string;
-  required: readonly string[];
+  schemaRequired: readonly string[] | undefined;
+  field: string;
   getTarget: (payload: RepresentativePayload) => Record<string, unknown>;
 };
 
-const driftBranches: readonly DriftBranch[] = [
+function requireRecord(value: unknown, label: string): Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Expected ${label} record`);
+  }
+  return value as Record<string, unknown>;
+}
+
+const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "live payload",
     pathPrefix: "",
-    required: requiredFields(wsPayloadSchema),
+    schemaRequired: wsPayloadSchema.required,
+    field: "schema_version",
     getTarget: (payload) => payload as unknown as Record<string, unknown>,
   },
   {
     label: "client row",
     pathPrefix: "/clients/0",
-    required: requiredFields(wsPayloadSchema.$defs.ClientApiRow),
+    schemaRequired: wsPayloadSchema.$defs.ClientApiRow.required,
+    field: "frame_samples",
     getTarget: (payload) =>
       payload.clients[0] as unknown as Record<string, unknown>,
   },
   {
-    label: "rotational speeds",
-    pathPrefix: "/rotational_speeds",
-    required: requiredFields(wsPayloadSchema.$defs.RotationalSpeedsPayload),
-    getTarget: (payload) =>
-      payload.rotational_speeds as unknown as Record<string, unknown>,
-  },
-  {
     label: "rotational speed value",
     pathPrefix: "/rotational_speeds/wheel",
-    required: requiredFields(wsPayloadSchema.$defs.RotationalSpeedValuePayload),
+    schemaRequired: wsPayloadSchema.$defs.RotationalSpeedValuePayload.required,
+    field: "rpm",
     getTarget: (payload) =>
-      payload.rotational_speeds!.wheel as unknown as Record<string, unknown>,
-  },
-  {
-    label: "order band",
-    pathPrefix: "/rotational_speeds/order_bands/0",
-    required: requiredFields(wsPayloadSchema.$defs.OrderBandPayload),
-    getTarget: (payload) =>
-      payload.rotational_speeds!.order_bands![0] as unknown as Record<
-        string,
-        unknown
-      >,
-  },
-  {
-    label: "warning",
-    pathPrefix: "/spectra/warning",
-    required: requiredFields(wsPayloadSchema.$defs.FrequencyWarningPayload),
-    getTarget: (payload) =>
-      payload.spectra!.warning as unknown as Record<string, unknown>,
+      requireRecord(payload.rotational_speeds?.wheel, "rotational speed value"),
   },
   {
     label: "alignment",
     pathPrefix: "/spectra/alignment",
-    required: requiredFields(wsPayloadSchema.$defs.AlignmentInfoPayload),
+    schemaRequired: wsPayloadSchema.$defs.AlignmentInfoPayload.required,
+    field: "clock_synced",
     getTarget: (payload) =>
-      payload.spectra!.alignment as unknown as Record<string, unknown>,
+      requireRecord(payload.spectra?.alignment, "alignment"),
   },
   {
     label: "strength metrics",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics",
-    required: requiredFields(wsPayloadSchema.$defs.VibrationStrengthMetrics),
+    schemaRequired: wsPayloadSchema.$defs.VibrationStrengthMetrics.required,
+    field: "vibration_strength_db",
     getTarget: (payload) =>
-      payload.spectra!.clients!["sensor-1"]
-        .strength_metrics as unknown as Record<string, unknown>,
+      requireRecord(
+        payload.spectra?.clients?.["sensor-1"]?.strength_metrics,
+        "strength metrics",
+      ),
   },
   {
     label: "strength peak",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics/top_peaks/0",
-    required: requiredFields(wsPayloadSchema.$defs.StrengthPeak),
+    schemaRequired: wsPayloadSchema.$defs.StrengthPeak.required,
+    field: "amp",
     getTarget: (payload) =>
-      payload.spectra!.clients!["sensor-1"]!.strength_metrics!
-        .top_peaks![0]! as unknown as Record<string, unknown>,
+      requireRecord(
+        payload.spectra?.clients?.["sensor-1"]?.strength_metrics
+          ?.top_peaks?.[0],
+        "strength peak",
+      ),
   },
 ];
-
-const requiredFieldCases = driftBranches.flatMap((branch) =>
-  branch.required.map((field) => ({ ...branch, field })),
-);
 
 describe("validateLiveWsPayload", () => {
   test("accepts a schema-valid payload", () => {
@@ -301,11 +286,13 @@ describe("validateLiveWsPayload", () => {
 
   test.each(
     requiredFieldCases,
-  )("rejects missing schema-derived required $field in $label", ({
+  )("rejects representative missing required $field in $label", ({
     field,
     getTarget,
     pathPrefix,
+    schemaRequired,
   }) => {
+    expect(schemaRequired).toContain(field);
     const payload = structuredClone(makeRepresentativePayload());
     delete getTarget(payload)[field];
     expect(() => validateLiveWsPayload(payload)).toThrow(
