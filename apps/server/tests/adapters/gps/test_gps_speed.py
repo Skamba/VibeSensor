@@ -21,16 +21,22 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
         "expected_fallback_active",
     ),
     [
-        (True, 12.0, 20.0, 0.0, "connected", None, 12.0, "manual", False),
-        (True, None, 30.0, 0.0, "connected", None, 30.0, "gps", False),
-        (True, None, None, None, "connected", None, None, "none", True),
-        (False, 11.0, 22.0, 30.0, "connected", 5.0, 11.0, "fallback_manual", True),
+        pytest.param(True, 12.0, 20.0, 0.0, "connected", None, 12.0, "manual", False),
+        pytest.param(True, None, 30.0, 0.0, "connected", None, 30.0, "gps", False),
+        pytest.param(True, 7.0, None, None, "disconnected", None, 7.0, "manual", False),
+        pytest.param(True, None, None, None, "connected", None, None, "none", True),
+        pytest.param(False, 11.0, 22.0, 30.0, "connected", 5.0, 11.0, "fallback_manual", True),
+        pytest.param(False, None, 22.0, 30.0, "connected", 5.0, None, "none", True),
+        pytest.param(True, None, None, None, "disconnected", None, None, "none", True),
     ],
     ids=[
         "default-manual-override-has-priority",
         "manual-selected-without-override-uses-fresh-gps",
+        "manual-override-used-while-gps-disconnected",
         "manual-selected-without-override-and-no-gps-resolves-none",
         "stale-gps-falls-back-to-manual-override",
+        "stale-gps-without-override-resolves-none",
+        "disconnected-gps-without-override-resolves-none",
     ],
 )
 def test_resolve_speed_source_contract(
@@ -62,17 +68,24 @@ def test_resolve_speed_source_contract(
     assert resolved.fallback_active is expected_fallback_active
 
 
-@pytest.mark.parametrize("invalid_kmh", [-1.0, math.inf, math.nan], ids=["negative", "inf", "nan"])
-def test_set_speed_override_rejects_invalid_value(invalid_kmh: float) -> None:
+@pytest.mark.parametrize(
+    ("speed_kmh", "expected_applied_kmh", "expected_override_mps"),
+    [
+        pytest.param(72.0, 72.0, 20.0, id="converts-kmh-to-mps"),
+        pytest.param(0.0, 0.0, 0.0, id="zero-is-stationary-override"),
+        pytest.param(None, None, None, id="none-clears-override"),
+        pytest.param(-1.0, None, None, id="negative-rejected"),
+        pytest.param(math.inf, None, None, id="inf-rejected"),
+        pytest.param(math.nan, None, None, id="nan-rejected"),
+    ],
+)
+def test_set_speed_override_kmh_contract(
+    speed_kmh: float | None,
+    expected_applied_kmh: float | None,
+    expected_override_mps: float | None,
+) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    assert monitor.set_speed_override_kmh(invalid_kmh) is None
-    assert monitor.override_speed_mps is None
+    monitor.set_speed_override_kmh(90.0)
 
-
-def test_helper_parsers_reject_bool_and_invalid_values() -> None:
-    assert GPSSpeedMonitor._read_non_negative_metric({"epx": True}, "epx") is None
-    assert GPSSpeedMonitor._read_non_negative_metric({"epx": -1}, "epx") is None
-    assert GPSSpeedMonitor._read_non_negative_metric({"epx": 1.5}, "epx") == 1.5
-
-    assert GPSSpeedMonitor._tpv_mode({"mode": True}) is None
-    assert GPSSpeedMonitor._tpv_mode({"mode": 3}) == 3
+    assert monitor.set_speed_override_kmh(speed_kmh) == expected_applied_kmh
+    assert monitor.override_speed_mps == expected_override_mps

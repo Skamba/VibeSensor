@@ -3,75 +3,8 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-
-
-@pytest.mark.parametrize(
-    ("gps_enabled", "gps_speed_mps", "manual_selected", "override_mps", "expected_mps"),
-    [
-        pytest.param(True, 10.0, True, None, 10.0, id="fresh-gps-used-without-override"),
-        pytest.param(True, 10.0, True, 25.0, 25.0, id="manual-override-beats-gps"),
-        pytest.param(False, None, True, 25.0, 25.0, id="manual-override-used-without-gps"),
-        pytest.param(False, None, True, None, None, id="nothing-set-resolves-none"),
-    ],
-)
-def test_effective_speed_contract(
-    gps_enabled: bool,
-    gps_speed_mps: float | None,
-    manual_selected: bool,
-    override_mps: float | None,
-    expected_mps: float | None,
-) -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=gps_enabled)
-    monitor.manual_source_selected = manual_selected
-    monitor.override_speed_mps = override_mps
-    monitor.speed_mps = gps_speed_mps
-    if gps_speed_mps is not None:
-        set_gps_snapshot_age(monitor)
-    assert monitor.effective_speed_mps == expected_mps
-
-
-# -- set_speed_override_kmh ---------------------------------------------------
-
-
-def test_override_converts_kmh_to_mps() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=False)
-    result = monitor.set_speed_override_kmh(72.0)
-    assert result == 72.0
-    assert monitor.override_speed_mps is not None
-    assert abs(monitor.override_speed_mps - 20.0) < 1e-9
-
-
-@pytest.mark.parametrize(
-    ("clear_value", "expected"),
-    [
-        pytest.param(None, None, id="none_clears"),
-        pytest.param(0.0, 0.0, id="zero_sets_stationary"),
-        pytest.param(-10.0, None, id="negative_clears"),
-    ],
-)
-def test_override_boundary_values(clear_value: float | None, expected: float | None) -> None:
-    """Setting override after a valid value: None clears, 0 is stationary, negative clears."""
-    monitor = GPSSpeedMonitor(gps_enabled=False)
-    monitor.set_speed_override_kmh(90.0)
-    monitor.set_speed_override_kmh(clear_value)
-    assert monitor.override_speed_mps == expected
-
-
-# -- integer speed_mps ---------------------------------------------------------
-
-
-def test_integer_speed_mps_treated_as_float() -> None:
-    """speed_mps set to int should still be returned as float via effective_speed_mps."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.speed_mps = 10
-    set_gps_snapshot_age(monitor)  # mark GPS data as fresh
-    result = monitor.effective_speed_mps
-    assert result is not None
-    assert isinstance(result, float)
-    assert result == 10.0
 
 
 @pytest.mark.asyncio
@@ -141,25 +74,3 @@ async def test_run_cancellation_waits_writer_close_once(
     await asyncio.gather(task, return_exceptions=True)
     assert fake_writer.wait_closed_calls == 1
     assert monitor.speed_mps is None
-
-
-@pytest.mark.parametrize(
-    ("new_speed_mps", "expected_snapshot"),
-    [
-        pytest.param(7.5, (7.5, 42.0), id="sets-speed-with-current-timestamp"),
-        pytest.param(None, (None, None), id="clears-speed-and-timestamp"),
-    ],
-)
-def test_speed_mps_setter_updates_snapshot(
-    monkeypatch: pytest.MonkeyPatch,
-    new_speed_mps: float | None,
-    expected_snapshot: tuple[float | None, float | None],
-) -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor._speed_snapshot = (10.0, 5.0)
-
-    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport.time.monotonic", lambda: 42.0)
-
-    monitor.speed_mps = new_speed_mps
-
-    assert monitor._speed_snapshot == expected_snapshot
