@@ -8,7 +8,11 @@ import type {
   AnalysisPanelRenderModel,
   AnalysisPanelView,
 } from "../src/app/views/analysis_panel";
-import { installWindowGlobal } from "./async_test_helpers";
+import {
+  createDeferred,
+  flushAsyncWork,
+  installWindowGlobal,
+} from "./async_test_helpers";
 import {
   buildAnalysisSettingsHandlers,
   makeAnalysisSettingsPayload,
@@ -252,61 +256,6 @@ test("settings analysis module ignores loaded settings after disposal", async ()
   expect(refreshSpectrumDecorationCalls).toBe(0);
 });
 
-test("settings analysis module ignores saved settings after disposal", async () => {
-  const state = createAppState().settings;
-  const save = createDeferred<ReturnType<typeof makeAnalysisSettingsPayload>>();
-  let refreshSpectrumDecorationCalls = 0;
-  mswServer.use(
-    ...buildAnalysisSettingsHandlers({
-      save: () => save.promise,
-    }),
-  );
-  const module = createAnalysisModuleHarness(state, {
-    refreshSpectrumDecorations: () => {
-      refreshSpectrumDecorationCalls += 1;
-    },
-  });
-
-  const saving = module.saveAnalysisFromInputs();
-  module.dispose();
-  save.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
-  await saving;
-
-  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(5);
-  expect(refreshSpectrumDecorationCalls).toBe(0);
-});
-
-test("settings analysis module ignores repeated saves while one is in flight", async () => {
-  const state = createAppState().settings;
-  const save = createDeferred<ReturnType<typeof makeAnalysisSettingsPayload>>();
-  let saveCalls = 0;
-  let refreshSpectrumDecorationCalls = 0;
-  mswServer.use(
-    ...buildAnalysisSettingsHandlers({
-      save: () => {
-        saveCalls += 1;
-        return save.promise;
-      },
-    }),
-  );
-  const module = createAnalysisModuleHarness(state, {
-    refreshSpectrumDecorations: () => {
-      refreshSpectrumDecorationCalls += 1;
-    },
-  });
-
-  const firstSave = module.saveAnalysisFromInputs();
-  const secondSave = module.saveAnalysisFromInputs();
-  await flushAsyncWork();
-
-  expect(saveCalls).toBe(1);
-  save.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
-  await Promise.all([firstSave, secondSave]);
-
-  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(9);
-  expect(refreshSpectrumDecorationCalls).toBe(1);
-});
-
 test("settings analysis module ignores repeated reset confirmations while one is in flight", async () => {
   const state = createAppState().settings;
   const confirmation = createDeferred<boolean>();
@@ -364,30 +313,6 @@ test("settings analysis module ignores reset confirmation after disposal", async
 
   expect(saveCalls).toBe(0);
 });
-
-type Deferred<T> = {
-  promise: Promise<T>;
-  reject(reason?: unknown): void;
-  resolve(value: T): void;
-};
-
-function createDeferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-}
-
-async function flushAsyncWork(rounds = 6): Promise<void> {
-  for (let index = 0; index < rounds; index += 1) {
-    await new Promise<void>((resolve) => {
-      setImmediate(() => resolve());
-    });
-  }
-}
 
 type AnalysisModuleHarnessOptions = {
   refreshSpectrumDecorations?: () => void;

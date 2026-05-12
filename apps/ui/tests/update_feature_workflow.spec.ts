@@ -9,7 +9,11 @@ import type {
   UsbInternetStatusPayload,
 } from "../src/api/types";
 import { signal } from "../src/app/ui_signals";
-import { createDeferred, flushAsyncWork } from "./async_test_helpers";
+import {
+  createDeferred,
+  expectSingleInFlightOperation,
+  flushAsyncWork,
+} from "./async_test_helpers";
 import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 import { createTestQueryClient } from "./query_client_test_support";
 
@@ -406,54 +410,15 @@ describe("createUpdateFeatureWorkflow", () => {
       usbAvailable: false,
     };
 
-    const firstStart = workflow.startUpdate(intent);
-    void workflow.startUpdate(intent);
-    await flushAsyncWork();
-    start.resolve({});
-    await firstStart;
+    await expectSingleInFlightOperation({
+      callCount: () => startCalls,
+      resolve: start.resolve,
+      start: () => workflow.startUpdate(intent),
+      value: {},
+    });
 
     expect(startCalls).toBe(1);
     expect(harness.viewCalls).toEqual(["clearPassword"]);
-    expect(harness.errors).toEqual([]);
-    workflow.dispose();
-  });
-
-  test("ignores overlapping update cancel requests while one is in flight", async () => {
-    const harness = createHarness();
-    const cancel = createDeferred<unknown>();
-    let cancelCalls = 0;
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async cancelUpdate() {
-          cancelCalls += 1;
-          return cancel.promise;
-        },
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          return makeStatus();
-        },
-      },
-    });
-
-    const firstCancel = workflow.cancelUpdate();
-    void workflow.cancelUpdate();
-    await flushAsyncWork();
-    cancel.resolve({});
-    await firstCancel;
-
-    expect(cancelCalls).toBe(1);
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });

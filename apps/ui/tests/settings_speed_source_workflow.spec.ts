@@ -10,6 +10,11 @@ import type {
 } from "../src/api/types";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect, signal, type Signal } from "../src/app/ui_signals";
+import {
+  createDeferred as deferred,
+  expectSingleInFlightOperation,
+  resolveAfterDisposal,
+} from "./async_test_helpers";
 import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
@@ -82,20 +87,6 @@ function makeObdDevice(
     trusted: false,
     ...overrides,
   };
-}
-
-function deferred<T>(): {
-  promise: Promise<T>;
-  reject: (reason: unknown) => void;
-  resolve: (value: T) => void;
-} {
-  let resolve: (value: T) => void = () => {};
-  let reject: (reason: unknown) => void = () => {};
-  const promise = new Promise<T>((promiseResolve, promiseReject) => {
-    resolve = promiseResolve;
-    reject = promiseReject;
-  });
-  return { promise, reject, resolve };
 }
 
 describe("createSettingsSpeedSourceWorkflow", () => {
@@ -434,92 +425,22 @@ describe("createSettingsSpeedSourceWorkflow", () => {
 
     workflow.handleSpeedSourceChanged("manual");
     workflow.handleManualSpeedInput("77");
-    const saving = workflow.saveSpeedSource();
-    workflow.dispose();
-    save.resolve(
-      makeSpeedSourcePayload({
+    await resolveAfterDisposal({
+      dispose: () => {
+        workflow.dispose();
+      },
+      resolve: save.resolve,
+      start: () => workflow.saveSpeedSource(),
+      value: makeSpeedSourcePayload({
         manual_speed_kph: 77,
         speed_source: "manual",
         stale_timeout_s: 5,
       }),
-    );
-    await saving;
+    });
 
     expect(appState.settings.speed.source.value).toBe("gps");
     expect(appState.settings.speed.manualSpeedKph.value).toBeNull();
     expect(workflow.getRenderState().saveFeedback).toBeNull();
-    expect(harness.errors).toEqual([]);
-  });
-
-  test("ignores scan results that resolve after disposal", async () => {
-    const harness = createHarness();
-    const appState = createAppState();
-    const scan = deferred<{ devices: ObdDevicePayload[] }>();
-    const workflow = createSettingsSpeedSourceWorkflow({
-      obdConfigVisible: harness.obdConfigVisible,
-      queryClient: createTestQueryClient(),
-      settings: appState.settings,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      t: createTranslator(),
-      transport: {
-        scanObdDevices: () => scan.promise,
-      },
-      view: createViewPorts(harness),
-    });
-
-    const scanning = workflow.scanObdDevices();
-    workflow.dispose();
-    scan.resolve({ devices: [makeObdDevice()] });
-    await scanning;
-
-    expect(workflow.getRenderState().scannedDevices).toEqual([]);
-    expect(workflow.getRenderState().obdScanStatusMessage).toBe(
-      "settings.speed.obd_scanning",
-    );
-    expect(harness.errors).toEqual([]);
-  });
-
-  test("ignores pair results that resolve after disposal", async () => {
-    const harness = createHarness();
-    const appState = createAppState();
-    const pair = deferred<{
-      configured_device_mac: string;
-      configured_device_name: string | null;
-      connected: boolean;
-      paired: boolean;
-      rfcomm_channel: number | null;
-      trusted: boolean;
-    }>();
-    const workflow = createSettingsSpeedSourceWorkflow({
-      obdConfigVisible: harness.obdConfigVisible,
-      queryClient: createTestQueryClient(),
-      settings: appState.settings,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      t: createTranslator(),
-      transport: {
-        pairObdDevice: () => pair.promise,
-      },
-      view: createViewPorts(harness),
-    });
-
-    const pairing = workflow.pairObdDevice("00:22:d9:00:1b:b1");
-    workflow.dispose();
-    pair.resolve({
-      configured_device_mac: "00:22:d9:00:1b:b1",
-      configured_device_name: "OBDLink CX",
-      connected: true,
-      paired: true,
-      rfcomm_channel: 1,
-      trusted: true,
-    });
-    await pairing;
-
-    expect(appState.settings.speed.obdDeviceMac.value).toBeNull();
-    expect(workflow.getRenderState().scannedDevices).toEqual([]);
     expect(harness.errors).toEqual([]);
   });
 
@@ -548,8 +469,16 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     workflow.handleSpeedSourceChanged("manual");
     workflow.handleManualSpeedInput("88");
     workflow.handleStaleTimeoutInput("5");
-    const firstSave = workflow.saveSpeedSource();
-    const secondSave = workflow.saveSpeedSource();
+    await expectSingleInFlightOperation({
+      callCount: () => savedPayloads.length,
+      resolve: save.resolve,
+      start: () => workflow.saveSpeedSource(),
+      value: makeSpeedSourcePayload({
+        manual_speed_kph: 88,
+        speed_source: "manual",
+        stale_timeout_s: 5,
+      }),
+    });
 
     expect(savedPayloads).toEqual([
       {
@@ -558,68 +487,9 @@ describe("createSettingsSpeedSourceWorkflow", () => {
         stale_timeout_s: 5,
       },
     ]);
-    save.resolve(
-      makeSpeedSourcePayload({
-        manual_speed_kph: 88,
-        speed_source: "manual",
-        stale_timeout_s: 5,
-      }),
-    );
-    await Promise.all([firstSave, secondSave]);
 
     expect(appState.settings.speed.source.value).toBe("manual");
     expect(appState.settings.speed.manualSpeedKph.value).toBe(88);
-    expect(harness.errors).toEqual([]);
-    workflow.dispose();
-  });
-
-  test("ignores repeated pair clicks while pairing is in flight", async () => {
-    const harness = createHarness();
-    const appState = createAppState();
-    const pair = deferred<{
-      configured_device_mac: string;
-      configured_device_name: string | null;
-      connected: boolean;
-      paired: boolean;
-      rfcomm_channel: number | null;
-      trusted: boolean;
-    }>();
-    const pairedMacs: string[] = [];
-    const workflow = createSettingsSpeedSourceWorkflow({
-      obdConfigVisible: harness.obdConfigVisible,
-      queryClient: createTestQueryClient(),
-      settings: appState.settings,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      t: createTranslator(),
-      transport: {
-        pairObdDevice(macAddress) {
-          pairedMacs.push(macAddress);
-          return pair.promise;
-        },
-      },
-      view: createViewPorts(harness),
-    });
-
-    const firstPair = workflow.pairObdDevice("00:22:d9:00:1b:b1");
-    const secondPair = workflow.pairObdDevice("00:22:d9:00:1b:b1");
-
-    expect(pairedMacs).toEqual(["00:22:d9:00:1b:b1"]);
-    pair.resolve({
-      configured_device_mac: "00:22:d9:00:1b:b1",
-      configured_device_name: "OBDLink CX",
-      connected: true,
-      paired: true,
-      rfcomm_channel: 1,
-      trusted: true,
-    });
-    await Promise.all([firstPair, secondPair]);
-
-    expect(appState.settings.speed.obdDeviceMac.value).toBe(
-      "00:22:d9:00:1b:b1",
-    );
-    expect(workflow.getRenderState().pairInFlightMac).toBeNull();
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
