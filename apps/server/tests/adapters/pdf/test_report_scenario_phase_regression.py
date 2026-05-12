@@ -7,6 +7,7 @@ from test_support.core import standard_metadata
 from test_support.sample_scenarios import (
     build_phased_samples,
     build_speed_sweep_samples,
+    max_order_source_conf,
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
@@ -180,7 +181,25 @@ class TestOrderFindingsPhaseFiltering:
             {"t_s": float(idx), "speed_kmh": 0.0, "vibration_strength_db": 5.0} for idx in range(10)
         ]
         summary = summarize_run_data(standard_metadata(), samples, include_samples=False)
-        assert "findings" in summary
+        assert [
+            (finding["finding_id"], finding["finding_kind"], finding["suspected_source"])
+            for finding in summary["findings"]
+        ] == [
+            ("REF_SPEED", "reference", "unknown"),
+            ("REF_ENGINE", "reference", "engine"),
+        ]
+        assert max_order_source_conf(summary) == 0.0
+        assert summary["phase_info"] == {
+            "phase_counts": {"idle": 10},
+            "phase_pcts": {"idle": 100.0},
+            "total_samples": 10,
+            "segment_count": 1,
+            "has_cruise": False,
+            "has_acceleration": False,
+            "cruise_pct": 0.0,
+            "idle_pct": 100.0,
+            "speed_unknown_pct": 0.0,
+        }
 
     def test_phase_filtering_does_not_break_full_pipeline(self) -> None:
         summary = summarize_run_data(
@@ -188,10 +207,28 @@ class TestOrderFindingsPhaseFiltering:
             build_phased_samples([(5, 0.0, 0.0), (20, 10.0, 80.0)]),
             include_samples=False,
         )
-        assert "findings" in summary
-        for finding in summary["findings"]:
-            assert "finding_id" in finding
-            assert "confidence" in finding
+        assert summary["findings"] == []
+        assert summary["phase_info"]["phase_counts"] == {"idle": 5, "acceleration": 20}
+        assert summary["phase_info"]["has_acceleration"] is True
+        assert summary["phase_info"]["has_cruise"] is False
+        assert summary["phase_speed_breakdown"] == [
+            {
+                "phase": "idle",
+                "count": 5,
+                "mean_speed_kmh": None,
+                "max_speed_kmh": None,
+                "mean_vibration_strength_db": 15.0,
+                "max_vibration_strength_db": 15.0,
+            },
+            {
+                "phase": "acceleration",
+                "count": 20,
+                "mean_speed_kmh": 45.0,
+                "max_speed_kmh": 80.0,
+                "mean_vibration_strength_db": 15.0,
+                "max_vibration_strength_db": 15.0,
+            },
+        ]
 
 
 class TestPhaseSpeedBreakdown:
@@ -203,14 +240,24 @@ class TestPhaseSpeedBreakdown:
             build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
             include_samples=False,
         )
-        phase_speed_breakdown = summary.get("phase_speed_breakdown")
-        assert phase_speed_breakdown is not None
-        assert isinstance(phase_speed_breakdown, list)
-        assert len(phase_speed_breakdown) >= 1
-        for row in phase_speed_breakdown:
-            assert "phase" in row
-            assert "count" in row
-            assert row["count"] > 0
+        assert summary["phase_speed_breakdown"] == [
+            {
+                "phase": "idle",
+                "count": 5,
+                "mean_speed_kmh": None,
+                "max_speed_kmh": None,
+                "mean_vibration_strength_db": 15.0,
+                "max_vibration_strength_db": 15.0,
+            },
+            {
+                "phase": "acceleration",
+                "count": 15,
+                "mean_speed_kmh": 45.0,
+                "max_speed_kmh": 80.0,
+                "mean_vibration_strength_db": 15.0,
+                "max_vibration_strength_db": 15.0,
+            },
+        ]
 
     def test_amp_vs_phase_in_plots(self) -> None:
         summary = summarize_run_data(
@@ -218,15 +265,22 @@ class TestPhaseSpeedBreakdown:
             build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
             include_samples=False,
         )
-        amp_vs_phase = summary.get("plots", {}).get("amp_vs_phase")
-        assert amp_vs_phase is not None
-        assert isinstance(amp_vs_phase, list)
-        assert len(amp_vs_phase) >= 1
-        for row in amp_vs_phase:
-            assert "phase" in row
-            assert "count" in row
-            assert "mean_vib_db" in row
-            assert row["count"] > 0
+        assert summary["plots"]["amp_vs_phase"] == [
+            {
+                "phase": "idle",
+                "count": 5,
+                "mean_vib_db": 15.0,
+                "max_vib_db": 15.0,
+                "mean_speed_kmh": None,
+            },
+            {
+                "phase": "acceleration",
+                "count": 15,
+                "mean_vib_db": 15.0,
+                "max_vib_db": 15.0,
+                "mean_speed_kmh": 45.0,
+            },
+        ]
 
 
 class TestPhaseInfoInSummary:
@@ -238,10 +292,17 @@ class TestPhaseInfoInSummary:
             build_speed_sweep_samples(n=20, vib_db=18.0),
             include_samples=False,
         )
-        phase_info = summary.get("phase_info")
-        assert phase_info is not None
-        assert "total_samples" in phase_info
-        assert phase_info["total_samples"] == 20
+        assert summary["phase_info"] == {
+            "phase_counts": {"acceleration": 20},
+            "phase_pcts": {"acceleration": 100.0},
+            "total_samples": 20,
+            "segment_count": 1,
+            "has_cruise": False,
+            "has_acceleration": True,
+            "cruise_pct": 0.0,
+            "idle_pct": 0.0,
+            "speed_unknown_pct": 0.0,
+        }
 
     def test_phase_info_propagated_to_all_dependents(self) -> None:
         summary = summarize_run_data(
@@ -249,17 +310,20 @@ class TestPhaseInfoInSummary:
             build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
             include_samples=False,
         )
-        phase_info = summary.get("phase_info")
-        assert phase_info is not None
-        assert "phase_counts" in phase_info
-        assert phase_info["total_samples"] == 20
+        assert summary["phase_info"]["phase_counts"] == {"idle": 5, "acceleration": 15}
+        assert summary["phase_info"]["phase_pcts"] == {"idle": 25.0, "acceleration": 75.0}
+        assert summary["phase_info"]["total_samples"] == 20
 
-        phase_speed_breakdown = summary.get("phase_speed_breakdown")
-        assert phase_speed_breakdown is not None
-        assert sum(int(row["count"]) for row in phase_speed_breakdown) == 20
+        assert [row["phase"] for row in summary["phase_speed_breakdown"]] == [
+            "idle",
+            "acceleration",
+        ]
+        assert sum(int(row["count"]) for row in summary["phase_speed_breakdown"]) == 20
 
-        for location_row in summary.get("sensor_intensity_by_location", []):
-            assert "phase_intensity" in location_row
+        assert summary["sensor_intensity_by_location"][0]["phase_intensity"] == {
+            "idle": {"count": 5, "mean_intensity_db": 15.0, "max_intensity_db": 15.0},
+            "acceleration": {"count": 15, "mean_intensity_db": 15.0, "max_intensity_db": 15.0},
+        }
 
     def test_phase_segments_serialized_in_summary(self) -> None:
         summary = summarize_run_data(
@@ -267,15 +331,28 @@ class TestPhaseInfoInSummary:
             build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
             include_samples=False,
         )
-        phase_segments = summary.get("phase_segments")
-        assert phase_segments is not None
-        assert isinstance(phase_segments, list)
-        assert len(phase_segments) >= 1
-        for segment in phase_segments:
-            assert isinstance(segment, dict)
-            for key in ("phase", "start_idx", "end_idx", "start_t_s", "end_t_s", "sample_count"):
-                assert key in segment
-        assert sum(int(segment["sample_count"]) for segment in phase_segments) == 20
+        assert summary["phase_segments"] == [
+            {
+                "phase": "idle",
+                "start_idx": 0,
+                "end_idx": 4,
+                "start_t_s": 0.0,
+                "end_t_s": 4.0,
+                "speed_min_kmh": 0.0,
+                "speed_max_kmh": 0.0,
+                "sample_count": 5,
+            },
+            {
+                "phase": "acceleration",
+                "start_idx": 5,
+                "end_idx": 19,
+                "start_t_s": 5.0,
+                "end_t_s": 19.0,
+                "speed_min_kmh": 10.0,
+                "speed_max_kmh": 80.0,
+                "sample_count": 15,
+            },
+        ]
 
     def test_phase_segments_consistent_with_phase_info(self) -> None:
         summary = summarize_run_data(
@@ -293,7 +370,7 @@ class TestPhaseInfoInSummary:
             metadata=standard_metadata(),
             samples=build_phased_samples([(10, 0.0, 0.0), (10, 60.0, 60.0)]),
         )
-        assert isinstance(findings, tuple)
+        assert findings == ()
 
 
 class TestSpeedStatsByPhase:
@@ -305,7 +382,26 @@ class TestSpeedStatsByPhase:
             build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
             include_samples=False,
         )
-        assert isinstance(summary.get("speed_stats_by_phase"), dict)
+        assert summary["speed_stats_by_phase"] == {
+            "idle": {
+                "min_kmh": None,
+                "max_kmh": None,
+                "mean_kmh": None,
+                "stddev_kmh": None,
+                "range_kmh": None,
+                "steady_speed": False,
+                "sample_count": 5,
+            },
+            "acceleration": {
+                "min_kmh": 10.0,
+                "max_kmh": 80.0,
+                "mean_kmh": 45.0,
+                "stddev_kmh": pytest.approx(22.360679774997898),
+                "range_kmh": 70.0,
+                "steady_speed": False,
+                "sample_count": 15,
+            },
+        }
 
     def test_speed_stats_by_phase_keys_are_phase_labels(self) -> None:
         summary = summarize_run_data(
@@ -329,16 +425,55 @@ class TestSpeedStatsByPhase:
             {"t_s": float(idx), "speed_kmh": 0.5, "vibration_strength_db": 5.0} for idx in range(10)
         ]
         summary = summarize_run_data(standard_metadata(), samples, include_samples=False)
-        assert "idle" in summary["speed_stats_by_phase"]
-        assert summary["speed_stats_by_phase"]["idle"]["sample_count"] == 10
+        assert summary["speed_stats_by_phase"] == {
+            "idle": {
+                "min_kmh": 0.5,
+                "max_kmh": 0.5,
+                "mean_kmh": 0.5,
+                "stddev_kmh": 0.0,
+                "range_kmh": 0.0,
+                "steady_speed": True,
+                "sample_count": 10,
+            },
+        }
 
     def test_speed_stats_by_phase_cruise_has_valid_speed_range(self) -> None:
         summary = summarize_run_data(
             standard_metadata(),
-            build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
+            build_phased_samples(
+                [(5, 0.0, 0.0), (6, 20.0, 80.0), (12, 72.0, 74.0), (4, 74.0, 30.0)]
+            ),
             include_samples=False,
         )
         non_idle = {
             key: value for key, value in summary["speed_stats_by_phase"].items() if key != "idle"
         }
-        assert any(value.get("min_kmh") is not None for value in non_idle.values())
+        assert non_idle == {
+            "acceleration": {
+                "min_kmh": 20.0,
+                "max_kmh": 80.0,
+                "mean_kmh": 50.0,
+                "stddev_kmh": pytest.approx(22.44994432064365),
+                "range_kmh": 60.0,
+                "steady_speed": False,
+                "sample_count": 6,
+            },
+            "cruise": {
+                "min_kmh": pytest.approx(72.18181818181819),
+                "max_kmh": 74.0,
+                "mean_kmh": pytest.approx(73.0909090909091),
+                "stddev_kmh": pytest.approx(0.6030226891555259),
+                "range_kmh": pytest.approx(1.818181818181813),
+                "steady_speed": True,
+                "sample_count": 11,
+            },
+            "deceleration": {
+                "min_kmh": 30.0,
+                "max_kmh": 74.0,
+                "mean_kmh": 56.0,
+                "stddev_kmh": pytest.approx(18.6785676348292),
+                "range_kmh": 44.0,
+                "steady_speed": False,
+                "sample_count": 5,
+            },
+        }
