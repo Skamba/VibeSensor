@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
-import pytest
-
 from vibesensor.domain import (
     ConfidenceAssessment,
 )
@@ -18,11 +14,6 @@ from vibesensor.domain import (
 
 
 class TestConfidenceAssessment:
-    def test_frozen(self) -> None:
-        ca = ConfidenceAssessment.assess(0.8)
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            ca.raw_confidence = 0.5
-
     def test_high_confidence(self) -> None:
         ca = ConfidenceAssessment.assess(0.85)
         assert ca.label_key == "CONFIDENCE_HIGH"

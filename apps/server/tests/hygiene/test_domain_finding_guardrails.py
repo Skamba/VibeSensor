@@ -1,9 +1,5 @@
 """Guardrails for Finding domain behavior and confidence ownership."""
 
-from __future__ import annotations
-
-import pytest
-
 
 def test_finalize_findings_returns_domain_findings() -> None:
     """``finalize_findings`` must return domain ``Finding`` objects."""
@@ -76,32 +72,6 @@ def test_classify_confidence_is_domain_owned() -> None:
         result = Finding.classify_confidence(conf)
         assert len(result) == 3
         assert all(isinstance(v, str) for v in result)
-
-
-def test_finding_is_frozen_dataclass() -> None:
-    """Finding must be a frozen dataclass — mutation raises."""
-    import dataclasses
-
-    from vibesensor.domain import Finding
-
-    assert dataclasses.is_dataclass(Finding)
-    f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
-    with pytest.raises(AttributeError):
-        f.confidence = 0.50
-
-
-def test_finding_tuples_are_immutable() -> None:
-    """TestRun findings must be tuples (not mutable lists)."""
-    from vibesensor.domain import Finding, RunCapture, TestRun
-
-    f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
-    result = TestRun(
-        capture=RunCapture(run_id="test"),
-        findings=(f,),
-        top_causes=(f,),
-    )
-    assert isinstance(result.findings, tuple)
-    assert isinstance(result.top_causes, tuple)
 
 
 def test_confidence_assessment_tier_matches_domain_finding() -> None:

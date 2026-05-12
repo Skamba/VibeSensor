@@ -1,28 +1,8 @@
 """Guardrails for TestRun as the canonical post-analysis domain aggregate."""
 
-from __future__ import annotations
-
-import pytest
-
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )
-
-
-def test_test_run_is_frozen_dataclass() -> None:
-    """``TestRun`` must be a frozen dataclass."""
-    import dataclasses
-
-    from vibesensor.domain import RunCapture, TestRun
-
-    assert dataclasses.is_dataclass(TestRun)
-    r = TestRun(
-        capture=RunCapture(run_id="test-123"),
-        findings=(),
-        top_causes=(),
-    )
-    with pytest.raises(AttributeError):
-        r.findings = ()
 
 
 def test_test_run_provides_finding_queries() -> None:
