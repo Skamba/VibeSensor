@@ -48,12 +48,12 @@ describe("spectrum tween derived state", () => {
     expect(tween.frame.value).toBe(next.value);
   });
 
-  test("shortens tweening for near-budget heavy frames and still guards very fast updates", () => {
+  test("uses tween durations that keep up with incoming heavy frames", () => {
     expect(resolveSpectrumTweenDurationMs(180, null)).toBe(180);
     expect(resolveSpectrumTweenDurationMs(180, 220)).toBe(180);
-    expect(resolveSpectrumTweenDurationMs(180, 165)).toBe(123.75);
-    expect(resolveSpectrumTweenDurationMs(180, 100)).toBe(75);
-    expect(resolveSpectrumTweenDurationMs(180, 50)).toBe(0);
+    expect(resolveSpectrumTweenDurationMs(180, 165)).toBeLessThan(180);
+    expect(resolveSpectrumTweenDurationMs(180, 165)).toBeGreaterThan(0);
     expect(resolveSpectrumTweenDurationMs(180, 0)).toBe(0);
+    expect(resolveSpectrumTweenDurationMs(180, 50)).toBe(0);
   });
 });

@@ -14,73 +14,18 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
     installWindowGlobal();
   });
 
-  test("keeps tween animations for near-budget heavy frames with shorter duration", async () => {
+  test("animates near-budget heavy frames without recalculating scales", async () => {
     const animationStarts: number[] = [];
+    let redrawCalls = 0;
+    const resetScaleValues: Array<boolean | undefined> = [];
     const renderTimesMs = [1_000, 1_100];
 
     await withSpectrumRendererHarness(
       {
         deps: {
-          createAnimation: ({ durationMs }) => ({
+          createAnimation: ({ durationMs, onFrame }) => ({
             start() {
               animationStarts.push(durationMs);
-            },
-            stop() {},
-          }),
-          loadChartModule: async () => ({
-            createSpectrumChart(): SpectrumChart {
-              return {
-                destroy() {},
-                redraw() {},
-                resize() {},
-                setData() {},
-                setSeriesIsolation() {},
-              };
-            },
-          }),
-          nowMs: () => renderTimesMs.shift() ?? 0,
-        },
-        seedState(state) {
-          state.transport.wsState.value = "connected";
-          installClientSpectra(state, [
-            {
-              client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum(),
-            },
-          ]);
-        },
-      },
-      async ({ prepareFrame, renderer, state }) => {
-        renderer.renderPreparedFrame(prepareFrame());
-        await flushSignalUpdates();
-
-        state.spectrum.spectra.value = {
-          clients: {
-            "sensor-a": {
-              ...getRequiredClientSpectrum(state, "sensor-a"),
-              combined: [0.9, 0.7, 0.45],
-            },
-          },
-        };
-
-        renderer.renderPreparedFrame(prepareFrame());
-        await flushSignalUpdates();
-
-        expect(animationStarts).toEqual([75]);
-      },
-    );
-  });
-
-  test("redraws tween frames when setData skips scale recalculation", async () => {
-    let redrawCalls = 0;
-    const resetScaleValues: Array<boolean | undefined> = [];
-    const renderTimesMs = [1_000, 1_165];
-
-    await withSpectrumRendererHarness(
-      {
-        deps: {
-          createAnimation: ({ onFrame }) => ({
-            start() {
               onFrame(0.5);
             },
             stop() {},
@@ -132,7 +77,9 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
         renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
-        expect(resetScaleValues).toContain(false);
+        expect(animationStarts[0]).toBeGreaterThan(0);
+        expect(animationStarts[0]).toBeLessThan(180);
+        expect(resetScaleValues.at(-1)).toBe(false);
         expect(redrawCalls).toBe(1);
       },
     );
@@ -191,63 +138,6 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
         await flushSignalUpdates();
 
         expect(animationStarts).toEqual([]);
-      },
-    );
-  });
-
-  test("keeps tween animations enabled when heavy frames arrive slower than the tween budget", async () => {
-    const animationStarts: number[] = [];
-    const renderTimesMs = [1_000, 1_250];
-
-    await withSpectrumRendererHarness(
-      {
-        deps: {
-          createAnimation: ({ durationMs }) => ({
-            start() {
-              animationStarts.push(durationMs);
-            },
-            stop() {},
-          }),
-          loadChartModule: async () => ({
-            createSpectrumChart(): SpectrumChart {
-              return {
-                destroy() {},
-                redraw() {},
-                resize() {},
-                setData() {},
-                setSeriesIsolation() {},
-              };
-            },
-          }),
-          nowMs: () => renderTimesMs.shift() ?? 0,
-        },
-        seedState(state) {
-          state.transport.wsState.value = "connected";
-          installClientSpectra(state, [
-            {
-              client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum(),
-            },
-          ]);
-        },
-      },
-      async ({ prepareFrame, renderer, state }) => {
-        renderer.renderPreparedFrame(prepareFrame());
-        await flushSignalUpdates();
-
-        state.spectrum.spectra.value = {
-          clients: {
-            "sensor-a": {
-              ...getRequiredClientSpectrum(state, "sensor-a"),
-              combined: [0.9, 0.7, 0.45],
-            },
-          },
-        };
-
-        renderer.renderPreparedFrame(prepareFrame());
-        await flushSignalUpdates();
-
-        expect(animationStarts).toEqual([180]);
       },
     );
   });

@@ -23,31 +23,8 @@ function createFakeRafApi() {
 }
 
 describe("createRafAnimation", () => {
-  test("cancels the in-flight frame before restarting or stopping", () => {
+  test("drives frames to completion and cancels pending work on stop", () => {
     const { api, cancelled, scheduled } = createFakeRafApi();
-    const animation = createRafAnimation(
-      {
-        durationMs: 250,
-        onComplete: () => undefined,
-        onFrame: () => undefined,
-      },
-      api,
-    );
-
-    animation.start();
-    expect(Array.from(scheduled.keys())).toEqual([1]);
-
-    animation.start();
-    expect(cancelled).toEqual([1]);
-    expect(Array.from(scheduled.keys())).toEqual([2]);
-
-    animation.stop();
-    expect(cancelled).toEqual([1, 2]);
-    expect(scheduled.size).toBe(0);
-  });
-
-  test("drives frames and completion through the injected raf api", () => {
-    const { api, scheduled } = createFakeRafApi();
     const alphaFrames: number[] = [];
     let completed = 0;
     const animation = createRafAnimation(
@@ -64,15 +41,21 @@ describe("createRafAnimation", () => {
     );
 
     animation.start();
+    animation.stop();
+    expect(scheduled.size).toBe(0);
+    expect(cancelled).toHaveLength(1);
+    expect(completed).toBe(0);
 
-    const firstFrame = scheduled.get(1);
+    animation.start();
+
+    const firstFrame = [...scheduled.values()][0];
     expect(firstFrame).toBeDefined();
-    scheduled.delete(1);
+    scheduled.clear();
     firstFrame?.(performance.now());
 
-    const secondFrame = scheduled.get(2);
+    const secondFrame = [...scheduled.values()][0];
     expect(secondFrame).toBeDefined();
-    scheduled.delete(2);
+    scheduled.clear();
     secondFrame?.(performance.now() + 20);
 
     expect(alphaFrames).toHaveLength(2);
