@@ -73,6 +73,8 @@ from .domain_boundary_checks import (
     _check_domain_and_use_cases_do_not_read_raw_aspects_dict_keys,
     _check_domain_code_does_not_access_raw_tire_fields,
     _check_domain_does_not_import_outer_packages,
+    _check_finding_stays_run_scoped,
+    _check_run_capture_uses_run_id_boundary,
     _check_run_lifecycle_only,
     _check_run_status_from_domain_only,
     _check_signature_confinement,
@@ -310,6 +312,8 @@ CHECKS: tuple[Check, ...] = (
     ),
     ("Signature stays out of adapter layers", _check_signature_confinement),
     ("Domain import direction stays inward", _CHECK_DOMAIN_IMPORT_DIRECTION),
+    ("Finding stays run-scoped", _check_finding_stays_run_scoped),
+    ("RunCapture uses run_id boundary", _check_run_capture_uses_run_id_boundary),
     (
         "Domain code avoids raw tire field access",
         _check_domain_code_does_not_access_raw_tire_fields,
