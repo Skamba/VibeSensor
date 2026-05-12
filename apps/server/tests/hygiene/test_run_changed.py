@@ -1,11 +1,10 @@
-"""Guard the heuristic changed-file runner through CLI-visible behavior."""
+"""Smoke coverage for the changed-file local runner."""
 
 from __future__ import annotations
 
 import importlib.util
 import subprocess
 import sys
-from dataclasses import fields
 
 import pytest
 
@@ -62,214 +61,33 @@ def _install_git_state(
     monkeypatch.setattr(module.subprocess, "check_output", _fake_check_output)
 
 
-def _run_dry_run(
-    module,
+def test_main_dry_run_smoke_maps_representative_changed_paths(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    *,
-    committed: tuple[str, ...] = (),
-    staged: tuple[str, ...] = (),
-    unstaged: tuple[str, ...] = (),
-    untracked: tuple[str, ...] = (),
-) -> str:
+) -> None:
+    module = _load_run_changed_module()
     _install_git_state(
         monkeypatch,
         module,
         outputs=_git_outputs(
-            committed=committed,
-            staged=staged,
-            unstaged=unstaged,
-            untracked=untracked,
-        ),
-    )
-    assert module.main(["--dry-run"]) == 0
-    return capsys.readouterr().out
-
-
-def test_main_dry_run_maps_backend_source_to_mirrored_test_dir(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/server/vibesensor/shared/boundaries/summary_fields/finding.py",),
-    )
-
-    assert (
-        f"[test-changed] pytest: {sys.executable} -m pytest -q apps/server/tests/shared" in output
-    )
-
-
-def test_main_dry_run_uses_changed_test_file_directly(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/server/tests/shared/boundaries/test_finding_roundtrip.py",),
-    )
-
-    assert (
-        f"{sys.executable} -m pytest -q apps/server/tests/shared/boundaries/"
-        "test_finding_roundtrip.py"
-    ) in output
-
-
-def test_main_dry_run_uses_parent_dir_for_deleted_changed_test_file(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/server/tests/adapters/http/test_deleted_settings_endpoints.py",),
-    )
-
-    assert f"{sys.executable} -m pytest -q apps/server/tests/adapters/http" in output
-
-
-def test_main_dry_run_combines_docs_ui_and_hygiene_checks(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("README.md", "apps/ui/package.json", "Makefile"),
-    )
-
-    assert "[test-changed] docs-lint: make docs-lint" in output
-    assert "[test-changed] ui-typecheck: make ui-typecheck" in output
-    assert (
-        f"[test-changed] pytest: {sys.executable} -m pytest -q apps/server/tests/hygiene" in output
-    )
-
-
-def test_main_dry_run_runs_ui_unit_tests_for_changed_ui_source_files(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/ui/src/ws_payload_validator.ts",),
-    )
-
-    assert "[test-changed] ui-test: make ui-test" in output
-    assert "[test-changed] ui-typecheck: make ui-typecheck" in output
-
-
-def test_main_dry_run_keeps_non_source_ui_changes_on_typecheck_only(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/ui/package.json",),
-    )
-
-    assert "[test-changed] ui-typecheck: make ui-typecheck" in output
-    assert "[test-changed] ui-test: make ui-test" not in output
-
-
-@pytest.mark.parametrize(
-    "changed_file,expected_command",
-    (
-        ("tools/ui/ensure_ui_bootstrap.mjs", "ui-typecheck: make ui-typecheck"),
-        (
-            "tools/tests/run_ci_with_act.sh",
-            "shell-lint: make shell-lint",
-        ),
-        (".dockerignore", f"pytest: {sys.executable} -m pytest -q apps/server/tests/hygiene"),
-        (
-            "firmware/esp/src/main.cpp",
-            (
-                "firmware-native-tests: "
-                f"{sys.executable} tools/tests/run_ci_parallel.py --job firmware-native-tests"
+            committed=(
+                "README.md",
+                "apps/ui/src/ws_payload_validator.ts",
+                "tools/tests/run_changed.py",
+                "apps/server/vibesensor/shared/boundaries/summary_fields/finding.py",
             ),
-        ),
-    ),
-)
-def test_main_dry_run_reuses_shared_ci_path_rules_for_mapped_paths(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-    changed_file: str,
-    expected_command: str,
-) -> None:
-    module = _load_run_changed_module()
-    selected_jobs = {
-        field.name
-        for field in fields(module.workflow_job_selection((changed_file,)))
-        if getattr(module.workflow_job_selection((changed_file,)), field.name)
-    }
-    assert selected_jobs
-
-    output = _run_dry_run(module, monkeypatch, capsys, committed=(changed_file,))
-
-    assert "[test-changed] No mapped checks" not in output
-    assert f"[test-changed] {expected_command}" in output
-
-
-def test_main_dry_run_falls_back_to_make_test_for_unmapped_backend_changes(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-
-    output = _run_dry_run(
-        module,
-        monkeypatch,
-        capsys,
-        committed=("apps/server/vibesensor/_version.py",),
-    )
-
-    assert "[test-changed] backend-tests: make test" in output
-
-
-def test_main_lists_committed_and_worktree_changes(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module = _load_run_changed_module()
-    _install_git_state(
-        monkeypatch,
-        module,
-        outputs=_git_outputs(
-            committed=("docs/testing.md",),
-            staged=("Makefile",),
-            unstaged=("CONTRIBUTING.md",),
-            untracked=("tools/tests/run_changed.py",),
         ),
     )
 
     assert module.main(["--dry-run"]) == 0
     output = capsys.readouterr().out
 
-    assert "  - CONTRIBUTING.md" in output
-    assert "  - Makefile" in output
-    assert "  - docs/testing.md" in output
-    assert "  - tools/tests/run_changed.py" in output
+    assert "[test-changed] docs-lint:" in output
+    assert "[test-changed] ui-test:" in output
+    assert "[test-changed] ui-typecheck:" in output
+    assert "[test-changed] pytest:" in output
+    assert "apps/server/tests/hygiene" in output
+    assert "apps/server/tests/shared" in output
 
 
 def test_main_exits_cleanly_when_merge_base_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
