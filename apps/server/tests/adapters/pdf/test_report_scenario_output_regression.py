@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from test_support.core import standard_metadata
 from test_support.findings import make_ref_finding
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
@@ -18,13 +19,24 @@ class TestPlotDataKeyFix:
     """Plot payload keys should stay populated when their source tables do."""
 
     def test_amp_vs_speed_populated(self) -> None:
+        # 30 samples from 30-120 km/h produce ten speed bins centered from 35-125 km/h.
         summary = summarize_run_data(
             standard_metadata(),
             build_speed_sweep_samples(n=30, vib_db=20.0),
         )
         amp_points = summary.get("plots", {}).get("amp_vs_speed", [])
-        if summary.get("speed_breakdown"):
-            assert len(amp_points) > 0
+        assert amp_points == [
+            (35.0, 20.0),
+            (45.0, 20.0),
+            (55.0, 20.0),
+            (65.0, 20.0),
+            (75.0, 20.0),
+            (85.0, 20.0),
+            (95.0, 20.0),
+            (105.0, 20.0),
+            (115.0, 20.0),
+            (125.0, 20.0),
+        ]
 
 
 class TestMultiSensorLocalization:
@@ -60,11 +72,24 @@ class TestMultiSensorLocalization:
             )
 
         summary = summarize_run_data(standard_metadata(), samples, include_samples=False)
-        assert len(summary.get("sensor_locations", [])) >= 2
-        intensities = summary.get("sensor_intensity_by_location", [])
-        if len(intensities) >= 2:
-            top_location = intensities[0].get("location")
-            assert "Front-Left" in str(top_location) or "front" in str(top_location).lower()
+        assert summary.get("sensor_locations") == ["Front-Left Wheel", "Rear-Right Wheel"]
+
+        intensities = summary["sensor_intensity_by_location"]
+        assert [row["location"] for row in intensities] == ["Front-Left Wheel", "Rear-Right Wheel"]
+        assert [row["sample_count"] for row in intensities] == [30, 30]
+
+        diagnostic_findings = [
+            finding
+            for finding in summary["findings"]
+            if not str(finding.get("finding_id", "")).startswith("REF_")
+        ]
+        assert len(diagnostic_findings) == 1
+        finding = diagnostic_findings[0]
+        assert finding["suspected_source"] == "wheel/tire"
+        assert finding["confidence_label_key"] == "CONFIDENCE_HIGH"
+        assert finding["strongest_location"] == "Front-Left Wheel"
+        assert finding["strongest_speed_band"] == "40-50 km/h"
+        assert finding["dominance_ratio"] == pytest.approx(3.0)
 
 
 class TestReportMetadataCompleteness:
@@ -77,9 +102,9 @@ class TestReportMetadataCompleteness:
             include_samples=False,
         )
         template = build_report_document(prepare_report_input(summary))
-        assert template.duration_text is not None
-        assert template.sample_count > 0
-        assert template.sensor_count >= 1
+        assert template.duration_text == "00:19.0"
+        assert template.sample_count == 20
+        assert template.sensor_count == 1
 
     def test_next_steps_have_enriched_fields(self) -> None:
         summary = summarize_run_data(
@@ -88,8 +113,16 @@ class TestReportMetadataCompleteness:
             include_samples=False,
         )
         template = build_report_document(prepare_report_input(summary))
-        for step in template.next_steps:
-            assert step.action
+        assert [step.action for step in template.next_steps] == [
+            (
+                "Add sensor locations (e.g. near each wheel, engine bay) "
+                "to improve spatial separation."
+            ),
+            (
+                "Ensure tire size, engine RPM, and speed references are complete "
+                "for accurate order matching."
+            ),
+        ]
 
 
 class TestReferenceFindingDistinguishability:
