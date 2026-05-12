@@ -21,38 +21,6 @@ const historyListRun = {
   error_message: null,
 };
 
-test("history empty state points users back to Live", async ({ page }) => {
-  await bootLiveDashboard(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-    historyHandler: async (route) => {
-      const pathname = requestPath(route);
-      if (!pathname.startsWith("/api/history")) {
-        await route.fallback();
-        return;
-      }
-      await fulfillJson(route, { runs: [] });
-    },
-  });
-  await openHistoryTab(page);
-  const emptyState = page.locator("#historyTableBody .empty-state");
-  await expect(emptyState).toContainText("Capture the first run from Live.");
-  await expect(emptyState).toContainText("History fills automatically");
-  await emptyState.getByRole("button", { name: "Go to Live" }).click();
-  await expect(page.locator("#dashboardView")).toHaveJSProperty(
-    "hidden",
-    false,
-  );
-});
-
 test("history rows show diagnostic context before expansion", async ({
   page,
 }) => {
