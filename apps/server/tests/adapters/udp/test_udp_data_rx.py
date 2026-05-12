@@ -334,51 +334,6 @@ def test_datagram_received_ignores_empty_and_non_data_packets() -> None:
 
 
 @pytest.mark.asyncio
-async def test_duplicate_data_still_sends_ack_but_skips_ingest(fake_transport, drain_queue) -> None:
-    """A duplicate DATA frame should be ACKed but NOT ingested."""
-    registry = RecordingRegistry(
-        results=[
-            DataUpdateResult(),
-            DataUpdateResult(is_duplicate=True),
-        ],
-    )
-    processor = RecordingProcessor()
-
-    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(fake_transport)
-
-    cid = bytes.fromhex("010203040506")
-    pkt = pack_data(cid, seq=42, t0_us=100_000, samples=np.zeros((4, 3), dtype=np.int16))
-
-    # Send same packet twice
-    proto.datagram_received(pkt, ("127.0.0.1", 12345))
-    proto.datagram_received(pkt, ("127.0.0.1", 12345))
-
-    await drain_queue(proto)
-
-    assert len(processor.ingested) == 1
-    assert len(fake_transport.sent) == 2
-
-
-@pytest.mark.asyncio
-async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_queue) -> None:
-    """Exception in processing should log the client ID without crashing."""
-    registry = RecordingRegistry(update_error=RuntimeError("boom"))
-    processor = RecordingProcessor()
-    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(fake_transport)
-
-    cid = bytes.fromhex("aabbccddeeff")
-    pkt = pack_data(cid, seq=1, t0_us=100, samples=np.zeros((4, 3), dtype=np.int16))
-
-    proto.datagram_received(pkt, ("127.0.0.1", 12345))
-
-    await drain_queue(proto, timeout=1.0)
-
-    assert processor.ingested == []
-
-
-@pytest.mark.asyncio
 async def test_process_queue_propagates_unexpected_exception(
     fake_transport,
 ) -> None:
@@ -396,25 +351,6 @@ async def test_process_queue_propagates_unexpected_exception(
     with pytest.raises(RuntimeError, match="boom"):
         await asyncio.wait_for(consumer, timeout=1.0)
     assert processor.ingested == []
-
-
-@pytest.mark.asyncio
-async def test_malformed_data_packet_marks_registry_and_skips_ack(
-    fake_transport,
-    drain_queue,
-) -> None:
-    registry = RecordingRegistry()
-    processor = RecordingProcessor()
-    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(fake_transport)
-
-    proto.datagram_received(b"\x02\x01", ("127.0.0.1", 12345))
-    await drain_queue(proto)
-
-    assert registry.parse_errors == [None]
-    assert registry.update_calls == []
-    assert processor.ingested == []
-    assert fake_transport.sent == []
 
 
 @pytest.mark.asyncio

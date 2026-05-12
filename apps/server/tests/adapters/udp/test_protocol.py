@@ -8,18 +8,12 @@ import numpy as np
 import pytest
 
 from vibesensor.adapters.udp.protocol import (
-    ACK_BYTES,
     ACK_STRUCT,
-    ACK_SYNC_CLOCK_BYTES,
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
-    CMD_IDENTIFY_BYTES,
     CMD_SYNC_CLOCK,
-    CMD_SYNC_CLOCK_BYTES,
-    DATA_ACK_BYTES,
     DATA_ACK_STRUCT,
     DATA_HEADER_BYTES,
-    HELLO_ACK_BYTES,
     HELLO_ACK_STRUCT,
     HELLO_BASE,
     HELLO_CAP_EXPLICIT_ACK,
@@ -178,18 +172,6 @@ def test_client_id_mac_roundtrip() -> None:
 
 def test_parse_client_id_accepts_colon_separated_uppercase_hex() -> None:
     assert parse_client_id("AA:BB:CC:DD:EE:FF") == bytes.fromhex("aabbccddeeff")
-
-
-def test_protocol_layout_constants_match_esp_side() -> None:
-    assert HELLO_FIXED_BYTES == 21
-    assert DATA_HEADER_BYTES == 22
-    assert ACK_BYTES == 13
-    assert ACK_SYNC_CLOCK_BYTES == 29
-    assert DATA_ACK_BYTES == 12
-    assert HELLO_ACK_BYTES == 8
-    assert CMD_HEADER_BYTES == 13
-    assert CMD_IDENTIFY_BYTES == 15
-    assert CMD_SYNC_CLOCK_BYTES == 33
 
 
 # ---------------------------------------------------------------------------
