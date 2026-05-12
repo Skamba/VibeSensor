@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from test_support.core import async_wait_until
+from test_support.polling import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.gps.transport_lifecycle import (

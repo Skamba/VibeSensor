@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 
 import { render } from "preact";
-import { expect } from "vitest";
 
 import type { EspFlashFeatureDeps } from "../src/app/features/esp_flash_feature";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
@@ -23,17 +22,7 @@ import type {
   UpdatePanelRenderModel,
   UpdatePanelView,
 } from "../src/app/views/update_panel";
-import type { TimerHarness } from "./async_test_helpers";
-import { flushAsyncWork } from "./async_test_helpers";
 import { installMountedDomGlobals } from "./dom_render_test_support";
-import {
-  createEspFlashPort,
-  createHealthyUpdateStatus,
-  createIdleUpdateStatus,
-  createUsbInternetStatus,
-} from "./maintenance_payload_test_support";
-import { http } from "./msw/http";
-import { createUiMswTestScope } from "./msw/node";
 import { createTestQueryClient } from "./query_client_test_support";
 
 type FeatureServices = UpdateFeatureDeps["services"];
@@ -255,12 +244,6 @@ function createFeatureNavigationHarness(defaultTabId: string) {
   };
 }
 
-function pendingPollDelays(timers: TimerHarness): number[] {
-  return timers
-    .pendingDelays()
-    .filter((delay) => delay !== 10_000 && delay >= 100);
-}
-
 function createMountedHost(): HTMLElement {
   const host = globalThis.document.createElement("div");
   globalThis.document.body.appendChild(host);
@@ -480,29 +463,6 @@ async function createUpdateFeatureDeps() {
   };
 }
 
-function installFeatureFetchMock(
-  handler: (
-    url: URL,
-    method: string,
-    body: string,
-  ) => Promise<Response> | Response,
-): () => void {
-  const scope = createUiMswTestScope();
-  scope.server.use(
-    http.all("*", async ({ request }) => {
-      const requestBody =
-        request.method === "GET" || request.method === "HEAD"
-          ? ""
-          : await request.text();
-      return await handler(new URL(request.url), request.method, requestBody);
-    }),
-  );
-
-  return () => {
-    scope.close();
-  };
-}
-
 export function installMaintenanceFeatureGlobals(): () => void {
   drainMaintenanceCleanups();
   const restoreDomGlobals = installMountedDomGlobals();
@@ -510,40 +470,6 @@ export function installMaintenanceFeatureGlobals(): () => void {
     drainMaintenanceCleanups();
     restoreDomGlobals();
   };
-}
-
-async function expectPollDelays(
-  timers: TimerHarness,
-  expected: number[],
-): Promise<void> {
-  for (let attempt = 0; attempt < 25; attempt += 1) {
-    const actual = pendingPollDelays(timers);
-    if (
-      actual.length === expected.length &&
-      actual.every((delay, index) => delay === expected[index])
-    ) {
-      return;
-    }
-    await flushAsyncWork(1);
-  }
-  expect(pendingPollDelays(timers)).toEqual(expected);
-}
-
-async function expectTimerDelays(
-  timers: TimerHarness,
-  expected: number[],
-): Promise<void> {
-  for (let attempt = 0; attempt < 25; attempt += 1) {
-    const actual = timers.pendingDelays();
-    if (
-      actual.length === expected.length &&
-      actual.every((delay, index) => delay === expected[index])
-    ) {
-      return;
-    }
-    await flushAsyncWork(1);
-  }
-  expect(timers.pendingDelays()).toEqual(expected);
 }
 
 export async function createEspFlashFeatureHarness() {

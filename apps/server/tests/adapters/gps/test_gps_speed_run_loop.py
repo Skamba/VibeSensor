@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 
 import pytest
-from test_support.core import async_wait_until
+from test_support.polling import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
