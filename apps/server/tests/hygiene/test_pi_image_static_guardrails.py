@@ -1,71 +1,114 @@
-"""Static guardrails for pi-image layout and packaged entrypoint contracts."""
+"""Deployment contracts for Pi image validation and systemd hardening."""
 
 from __future__ import annotations
+
+import shlex
+import subprocess
+from collections import defaultdict
+from collections.abc import Mapping
+from pathlib import Path
 
 import pytest
 from _paths import REPO_ROOT
 
-
-@pytest.mark.smoke
-def test_pi_gen_pipeline_split_files_exist() -> None:
-    pi_gen_root = REPO_ROOT / "infra" / "pi-image" / "pi-gen"
-
-    assert (pi_gen_root / "validate-image.sh").is_file()
-    assert (pi_gen_root / "lib" / "app_artifacts.sh").is_file()
-    assert (pi_gen_root / "lib" / "stage_assembly.sh").is_file()
-    assert (pi_gen_root / "lib" / "image_validation.sh").is_file()
-    assert (pi_gen_root / "templates" / "stage0-bootstrap-raspberrypi.gpg").is_file()
-    assert (
-        pi_gen_root / "templates" / "stage-vibesensor" / "00-vibesensor" / "00-run.sh.template"
-    ).is_file()
+_IMAGE_VALIDATION_SCRIPT = REPO_ROOT / "infra/pi-image/pi-gen/lib/image_validation.sh"
+_SERVER_SERVICE = REPO_ROOT / "apps/server/systemd/vibesensor.service"
 
 
-@pytest.mark.smoke
-def test_server_systemd_uses_console_script_entrypoint() -> None:
-    service_text = (REPO_ROOT / "apps" / "server" / "systemd" / "vibesensor.service").read_text(
-        encoding="utf-8"
-    )
-
-    assert (
-        "ExecStart=__VENV_DIR__/bin/vibesensor-server --config /etc/vibesensor/config.yaml"
-        in service_text
+def _run_image_validation_script(
+    command: str, *, check: bool = True
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            "bash",
+            "-lc",
+            f'set -euo pipefail; source "{_IMAGE_VALIDATION_SCRIPT}"; {command}',
+        ],
+        check=check,
+        capture_output=True,
+        text=True,
     )
 
 
-@pytest.mark.smoke
-def test_server_systemd_keeps_steady_state_privileges_narrow() -> None:
-    service_text = (REPO_ROOT / "apps" / "server" / "systemd" / "vibesensor.service").read_text(
-        encoding="utf-8"
-    )
+def _read_systemd_section(unit_path: Path, section_name: str) -> Mapping[str, list[str]]:
+    section: str | None = None
+    values: defaultdict[str, list[str]] = defaultdict(list)
+    for raw_line in unit_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line[1:-1]
+            continue
+        if section == section_name and "=" in line:
+            key, value = line.split("=", 1)
+            values[key].append(value)
+    return values
 
-    assert "AmbientCapabilities=CAP_NET_BIND_SERVICE\n" in service_text
-    assert "CapabilityBoundingSet=CAP_NET_BIND_SERVICE\n" in service_text
-    assert "CAP_SETUID" not in service_text
-    assert "CAP_SETGID" not in service_text
-    assert "CAP_DAC_OVERRIDE" not in service_text
-    assert "CAP_FOWNER" not in service_text
-    assert "CAP_AUDIT_WRITE" not in service_text
-    assert "NoNewPrivileges=true" in service_text
-    assert "PrivateTmp=true" in service_text
-    assert "ProtectSystem=full" in service_text
-    assert "ReadWritePaths=/var/lib/vibesensor /var/log/vibesensor __VENV_DIR__" in service_text
-    assert (
-        "ExecStartPre=/usr/bin/chown -R __SERVICE_USER__:__SERVICE_USER__ __PI_DIR__"
-        not in service_text
-    )
-    assert (
-        "ExecStartPre=/usr/bin/chown -R __SERVICE_USER__:__SERVICE_USER__ "
-        "/var/log/vibesensor /var/lib/vibesensor"
-    ) in service_text
-    assert "ExecStartPre=/usr/bin/test -w __VENV_DIR__" in service_text
+
+def _only_value(section: Mapping[str, list[str]], key: str) -> str:
+    values = section[key]
+    assert len(values) == 1
+    return values[0]
 
 
 @pytest.mark.smoke
-def test_pi_image_validation_checks_current_packaged_static_data_layout() -> None:
-    validation_text = (
-        REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
-    ).read_text(encoding="utf-8")
+def test_server_systemd_runs_packaged_server_with_narrow_steady_state_privileges() -> None:
+    service = _read_systemd_section(_SERVER_SERVICE, "Service")
 
-    assert "vehicle_configurations" in validation_text
-    assert "car_sources" in validation_text
-    assert "car_library.json" not in validation_text
+    assert _only_value(service, "User") == "__SERVICE_USER__"
+    assert _only_value(service, "PermissionsStartOnly") == "true"
+    assert _only_value(service, "NoNewPrivileges") == "true"
+    assert _only_value(service, "PrivateTmp") == "true"
+    assert _only_value(service, "ProtectSystem") == "full"
+    assert shlex.split(_only_value(service, "ExecStart")) == [
+        "__VENV_DIR__/bin/vibesensor-server",
+        "--config",
+        "/etc/vibesensor/config.yaml",
+    ]
+    assert set(shlex.split(_only_value(service, "ReadWritePaths"))) == {
+        "/var/lib/vibesensor",
+        "/var/log/vibesensor",
+        "__VENV_DIR__",
+    }
+    assert shlex.split(_only_value(service, "AmbientCapabilities")) == ["CAP_NET_BIND_SERVICE"]
+    assert shlex.split(_only_value(service, "CapabilityBoundingSet")) == ["CAP_NET_BIND_SERVICE"]
+
+    prestart_commands = [shlex.split(value) for value in service["ExecStartPre"]]
+    assert ["/usr/bin/test", "-r", "/etc/vibesensor/config.yaml"] in prestart_commands
+    assert [
+        "/usr/bin/chown",
+        "-R",
+        "__SERVICE_USER__:__SERVICE_USER__",
+        "/var/log/vibesensor",
+        "/var/lib/vibesensor",
+    ] in prestart_commands
+    for writable_path in ("/var/log/vibesensor", "/var/lib/vibesensor", "__VENV_DIR__"):
+        assert ["/usr/bin/test", "-w", writable_path] in prestart_commands
+
+
+@pytest.mark.smoke
+def test_image_validation_accepts_wheel_static_data_and_rejects_source_tree(
+    tmp_path: Path,
+) -> None:
+    rootfs = tmp_path / "rootfs"
+    data_dir = (
+        rootfs / "opt/VibeSensor/apps/server/.venv/lib/python3.13/site-packages/vibesensor/data"
+    )
+    (data_dir / "vehicle_configurations").mkdir(parents=True)
+    (data_dir / "car_sources").mkdir()
+    (data_dir / "report_i18n.json").write_text("{}", encoding="utf-8")
+    (data_dir / "vehicle_configurations/example.json").write_text("{}", encoding="utf-8")
+    (data_dir / "car_sources/example.json").write_text("{}", encoding="utf-8")
+
+    result = _run_image_validation_script(f'assert_wheel_static_data_contract "{rootfs}"')
+    assert result.returncode == 0
+
+    (rootfs / "opt/VibeSensor/apps/server/vibesensor").mkdir()
+    result = _run_image_validation_script(
+        f'assert_wheel_static_data_contract "{rootfs}"',
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "source tree still present" in result.stdout
