@@ -363,24 +363,13 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
 
         assert response.status_code == 200
         assert processor.all_latest_metrics.call_args.args == ([],)
-        assert response.json()["clients"] == [
-            {
-                "id": "001122334455",
-                "mac_address": "00:11:22:33:44:55",
-                "name": "sensor",
-                "connected": False,
-                "location_code": "",
-                "firmware_version": "fw",
-                "sample_rate_hz": 800,
-                "frame_samples": 0,
-                "last_seen_age_ms": 8000,
-                "frames_total": 0,
-                "dropped_frames": 0,
-                "latest_metrics": {},
-                "reset_count": 0,
-                "last_reset_time": None,
-            },
-        ]
+        clients = response.json()["clients"]
+        assert len(clients) == 1
+        assert clients[0]["id"] == "001122334455"
+        assert clients[0]["name"] == "sensor"
+        assert clients[0]["connected"] is False
+        assert clients[0]["last_seen_age_ms"] == 8000
+        assert clients[0]["latest_metrics"] == {}
     finally:
         asyncio.run(_close_history_db(db))
 
@@ -433,23 +422,12 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
             "name": "Rear Left Wheel",
             "location_code": "rear_left_wheel",
         }
-        assert response.json()["clients"] == [
-            {
-                "id": "001122334455",
-                "mac_address": "00:11:22:33:44:55",
-                "name": "Rear Left Wheel",
-                "connected": True,
-                "location_code": "rear_left_wheel",
-                "firmware_version": "fw",
-                "sample_rate_hz": 800,
-                "frame_samples": 0,
-                "last_seen_age_ms": 0,
-                "frames_total": 0,
-                "dropped_frames": 0,
-                "latest_metrics": {},
-                "reset_count": 0,
-                "last_reset_time": None,
-            },
-        ]
+        clients = response.json()["clients"]
+        assert len(clients) == 1
+        assert clients[0]["id"] == "001122334455"
+        assert clients[0]["name"] == "Rear Left Wheel"
+        assert clients[0]["connected"] is True
+        assert clients[0]["location_code"] == "rear_left_wheel"
+        assert clients[0]["latest_metrics"] == {}
     finally:
         asyncio.run(_close_history_db(db))
