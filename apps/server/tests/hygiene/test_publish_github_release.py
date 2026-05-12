@@ -23,6 +23,11 @@ def _load_publish_github_release_module():
     return module
 
 
+def _option_value(command: list[str], option: str) -> str:
+    assert option in command
+    return command[command.index(option) + 1]
+
+
 def test_existing_release_id_uses_repo_endpoint_without_repo_flag(monkeypatch) -> None:
     module = _load_publish_github_release_module()
     commands: list[list[str]] = []
@@ -55,114 +60,78 @@ def test_existing_release_id_uses_repo_endpoint_without_repo_flag(monkeypatch) -
         )
         == 123
     )
-    assert commands == [["gh", "api", "repos/owner/repo/releases/tags/server-v2026.3.28"]]
+    command = commands[0]
+    assert command[:2] == ["gh", "api"]
+    assert "repos/owner/repo/releases/tags/server-v2026.3.28" in command
+    assert "-R" not in command
     assert timeouts == [12.0]
 
 
-def test_main_creates_release_without_repo_flag_and_uploads_with_repo_flag(
+def test_main_creates_or_updates_release_with_repo_endpoint_and_uploads_assets(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
     module = _load_publish_github_release_module()
-    commands: list[list[str]] = []
     notes_file = tmp_path / "notes.md"
     notes_file.write_text("release notes\n", encoding="utf-8")
     asset_file = tmp_path / "artifact.zip"
     asset_file.write_text("artifact", encoding="utf-8")
-
-    monkeypatch.setattr(module, "_existing_release_id", lambda repo, tag, *, timeout_s: None)
-
-    def _fake_run(
-        command: list[str],
-        *,
-        check: bool = True,
-        capture_output: bool = False,
-        context: str,
-        timeout_s: float,
-    ):
-        commands.append(list(command))
-        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-    monkeypatch.setattr(module, "_run", _fake_run)
-
-    module.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--tag",
-            "server-v2026.3.28",
-            "--target",
-            "abc123",
-            "--title",
-            "Release 2026.3.28",
-            "--notes-file",
-            str(notes_file),
-            "--asset",
-            str(asset_file),
-        ]
+    cases = (
+        (None, "POST", "repos/owner/repo/releases"),
+        (77, "PATCH", "repos/owner/repo/releases/77"),
     )
 
-    create_command, upload_command = commands
-    assert create_command[:2] == ["gh", "api"]
-    assert "-R" not in create_command
-    assert "repos/owner/repo/releases" in create_command
-    assert "--method" in create_command
-    assert create_command[create_command.index("--method") + 1] == "POST"
+    for existing_release_id, method, endpoint in cases:
+        commands: list[list[str]] = []
+        monkeypatch.setattr(
+            module,
+            "_existing_release_id",
+            lambda repo, tag, *, timeout_s, release_id=existing_release_id: release_id,
+        )
 
-    assert upload_command[:3] == ["gh", "release", "upload"]
-    assert upload_command[-2:] == ["-R", "owner/repo"]
-    assert str(asset_file) in upload_command
+        def _fake_run(
+            command: list[str],
+            *,
+            check: bool = True,
+            capture_output: bool = False,
+            context: str,
+            timeout_s: float,
+            recorded_commands: list[list[str]] = commands,
+        ):
+            recorded_commands.append(list(command))
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
+        monkeypatch.setattr(module, "_run", _fake_run)
 
-def test_main_updates_existing_release_without_repo_flag(monkeypatch, tmp_path: Path) -> None:
-    module = _load_publish_github_release_module()
-    commands: list[list[str]] = []
-    notes_file = tmp_path / "notes.md"
-    notes_file.write_text("release notes\n", encoding="utf-8")
-    asset_file = tmp_path / "artifact.zip"
-    asset_file.write_text("artifact", encoding="utf-8")
+        module.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--tag",
+                "server-v2026.3.28",
+                "--target",
+                "abc123",
+                "--title",
+                "Release 2026.3.28",
+                "--notes-file",
+                str(notes_file),
+                "--asset",
+                str(asset_file),
+            ]
+        )
 
-    monkeypatch.setattr(module, "_existing_release_id", lambda repo, tag, *, timeout_s: 77)
+        release_command, upload_command = commands
+        assert release_command[:2] == ["gh", "api"]
+        assert "-R" not in release_command
+        assert endpoint in release_command
+        assert _option_value(release_command, "--method") == method
+        assert "--input" in release_command
 
-    def _fake_run(
-        command: list[str],
-        *,
-        check: bool = True,
-        capture_output: bool = False,
-        context: str,
-        timeout_s: float,
-    ):
-        commands.append(list(command))
-        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-    monkeypatch.setattr(module, "_run", _fake_run)
-
-    module.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--tag",
-            "server-v2026.3.28",
-            "--target",
-            "abc123",
-            "--title",
-            "Release 2026.3.28",
-            "--notes-file",
-            str(notes_file),
-            "--asset",
-            str(asset_file),
-        ]
-    )
-
-    update_command, upload_command = commands
-    assert update_command[:2] == ["gh", "api"]
-    assert "-R" not in update_command
-    assert "repos/owner/repo/releases/77" in update_command
-    assert "--method" in update_command
-    assert update_command[update_command.index("--method") + 1] == "PATCH"
-
-    assert upload_command[:3] == ["gh", "release", "upload"]
-    assert upload_command[-2:] == ["-R", "owner/repo"]
+        assert upload_command[:3] == ["gh", "release", "upload"]
+        assert "server-v2026.3.28" in upload_command
+        assert str(asset_file) in upload_command
+        assert "--clobber" in upload_command
+        assert _option_value(upload_command, "-R") == "owner/repo"
 
 
 def test_run_reports_timeout_with_command_context(monkeypatch) -> None:
