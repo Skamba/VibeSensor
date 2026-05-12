@@ -1,4 +1,4 @@
-"""Tests for WS schema export and payload optimization (freq deduplication)."""
+"""WebSocket payload projection behavior not covered by generated schema drift checks."""
 
 from __future__ import annotations
 
@@ -7,109 +7,8 @@ import json
 import numpy as np
 import pytest
 
-from vibesensor.cli.ws_schema_export import export_schema
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
-from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
-from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
-
-# ---------------------------------------------------------------------------
-# Schema export check
-# ---------------------------------------------------------------------------
-
-
-def test_schema_export_check_passes() -> None:
-    """Verify the exported schema exposes the live WS contract shape consumers use."""
-    generated = export_schema()
-    parsed = json.loads(generated)
-    assert parsed["title"] == "LiveWsPayload"
-    assert parsed["type"] == "object"
-
-    properties = parsed["properties"]
-    assert set(properties) == {
-        "schema_version",
-        "server_time",
-        "speed_mps",
-        "clients",
-        "selected_client_id",
-        "rotational_speeds",
-        "spectra",
-    }
-    assert set(parsed["required"]) == {
-        "schema_version",
-        "server_time",
-        "speed_mps",
-        "clients",
-        "selected_client_id",
-        "rotational_speeds",
-    }
-    assert properties["spectra"] == {"$ref": "#/$defs/SpectraPayload"}
-    assert properties["rotational_speeds"]["anyOf"] == [
-        {"$ref": "#/$defs/RotationalSpeedsPayload"},
-        {"type": "null"},
-    ]
-
-    rotational_speeds = parsed["$defs"]["RotationalSpeedsPayload"]
-    assert set(rotational_speeds["required"]) == {
-        "basis_speed_source",
-        "wheel",
-        "driveshaft",
-        "engine",
-        "order_bands",
-    }
-
-    spectra = parsed["$defs"]["SpectraPayload"]
-    assert set(spectra["properties"]) == {
-        "alignment",
-        "clients",
-        "frame_fingerprint",
-        "freq",
-        "warning",
-    }
-
-
-# ---------------------------------------------------------------------------
-# build_ws_payload includes schema_version
-# ---------------------------------------------------------------------------
-
-
-class _StubPayloadSource:
-    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
-        payload: LiveWsPayload = {
-            "schema_version": SCHEMA_VERSION,
-            "server_time": "2026-04-05T00:00:00Z",
-            "speed_mps": None,
-            "clients": [],
-            "selected_client_id": None,
-            "rotational_speeds": {
-                "basis_speed_source": None,
-                "wheel": {"rpm": None, "mode": None, "reason": None},
-                "driveshaft": {"rpm": None, "mode": None, "reason": None},
-                "engine": {"rpm": None, "mode": None, "reason": None},
-                "order_bands": None,
-            },
-        }
-        if include_heavy:
-            payload["spectra"] = {"freq": [], "clients": {}}
-        return payload
-
-
-def test_build_ws_payload_includes_schema_version() -> None:
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=10,
-        ui_heavy_push_hz=4,
-        payload_source=_StubPayloadSource(),
-    )
-
-    payload = ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
-
-    assert "schema_version" in payload
-    assert payload["schema_version"] == SCHEMA_VERSION
-
-
-# ---------------------------------------------------------------------------
-# multi_spectrum_payload – freq deduplication
-# ---------------------------------------------------------------------------
 
 
 class TestMultiSpectrumFreqDedup:

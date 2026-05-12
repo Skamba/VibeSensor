@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.shared.types.payload_types import (
     SCHEMA_VERSION,
@@ -64,60 +66,43 @@ class _StubPayloadSource:
         return self._payloads[index]
 
 
-def test_build_ws_payload_preserves_shared_payload_and_explicit_selection() -> None:
-    payload_source = _StubPayloadSource(
-        [_shared_payload(clients=[_client_row("aaaaaaaaaaaa", "front-left")])]
-    )
+@pytest.mark.parametrize(
+    ("clients", "selected_client", "expected_selected"),
+    [
+        pytest.param(
+            [_client_row("aaaaaaaaaaaa", "front-left")],
+            "aaaaaaaaaaaa",
+            "aaaaaaaaaaaa",
+            id="explicit-selection",
+        ),
+        pytest.param(
+            [
+                _client_row("aaaaaaaaaaaa", "front-left"),
+                _client_row("bbbbbbbbbbbb", "rear-right"),
+            ],
+            None,
+            "aaaaaaaaaaaa",
+            id="auto-selects-first-client",
+        ),
+        pytest.param([], None, None, id="no-clients"),
+    ],
+)
+def test_build_ws_payload_resolves_selected_client_per_shared_payload(
+    clients: list[ClientApiRow],
+    selected_client: str | None,
+    expected_selected: str | None,
+) -> None:
+    payload_source = _StubPayloadSource([_shared_payload(clients=clients)])
     ws_broadcast = WsBroadcastService(
         ui_push_hz=10,
         ui_heavy_push_hz=4,
         payload_source=payload_source,
     )
 
-    payload = ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
+    payload = ws_broadcast.build_payload(selected_client=selected_client)
 
-    assert payload["schema_version"] == SCHEMA_VERSION
-    assert payload["server_time"] == "2026-04-05T00:00:00Z"
-    assert payload["speed_mps"] == 12.5
-    assert payload["clients"][0]["id"] == "aaaaaaaaaaaa"
-    assert payload["selected_client_id"] == "aaaaaaaaaaaa"
-    assert payload["rotational_speeds"]["basis_speed_source"] == "gps"
-    assert "spectra" in payload
-
-
-def test_build_ws_payload_auto_selects_first_client() -> None:
-    payload_source = _StubPayloadSource(
-        [
-            _shared_payload(
-                clients=[
-                    _client_row("aaaaaaaaaaaa", "front-left"),
-                    _client_row("bbbbbbbbbbbb", "rear-right"),
-                ]
-            )
-        ]
-    )
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=10,
-        ui_heavy_push_hz=4,
-        payload_source=payload_source,
-    )
-
-    payload = ws_broadcast.build_payload(selected_client=None)
-
-    assert payload["selected_client_id"] == "aaaaaaaaaaaa"
-
-
-def test_build_ws_payload_no_clients_keeps_selection_empty() -> None:
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=10,
-        ui_heavy_push_hz=4,
-        payload_source=_StubPayloadSource([_shared_payload(clients=[])]),
-    )
-
-    payload = ws_broadcast.build_payload(selected_client=None)
-
-    assert payload["clients"] == []
-    assert payload["selected_client_id"] is None
+    assert payload["clients"] == clients
+    assert payload["selected_client_id"] == expected_selected
 
 
 def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
