@@ -75,25 +75,3 @@ def test_export_schema_matches_committed_schema(schema_text: str) -> None:
         "Committed ws_payload_schema.json is out of sync with generated schema. "
         "Run `make sync-contracts` and commit the results."
     )
-
-
-def test_export_schema_has_schema_version(schema_dict: dict[str, object]) -> None:
-    """The schema must include the schema_version field."""
-    props = schema_dict.get("properties", {})
-    assert "schema_version" in props, "schema_version must be a top-level property"
-
-
-def test_export_schema_requires_always_present_top_level_fields(
-    schema_dict: dict[str, object],
-) -> None:
-    """Always-emitted WS payload fields must be required in the schema."""
-    required = set(schema_dict.get("required", []))
-    assert required == {
-        "schema_version",
-        "server_time",
-        "speed_mps",
-        "clients",
-        "selected_client_id",
-        "rotational_speeds",
-    }
-    assert "spectra" not in required

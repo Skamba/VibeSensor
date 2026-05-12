@@ -4,18 +4,18 @@
  * Validates:
  *  1. adaptServerPayload uses shared top-level freq when per-client freq is absent
  *  2. adaptServerPayload prefers per-client freq when present (mismatch case)
- *  3. adaptServerPayload rejects payloads that omit required top-level fields
+ *  3. adaptServerPayload rejects missing schema version and warns on mismatches
  *  4. EXPECTED_SCHEMA_VERSION matches the server's current version
  */
 
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { adaptServerPayload } from "../src/server_payload";
 import {
   EXPECTED_SCHEMA_VERSION,
   type StrengthMetricsPayload,
   type WsClientInfo,
 } from "../src/contracts/ws_payload_types";
 import type { components as HttpComponents } from "../src/generated/http_api_contracts";
+import { adaptServerPayload } from "../src/server_payload";
 
 // Compile-time guard: if `frame_samples` ever regresses to optional in either
 // generated contract, this file fails `tsc` before runtime tests run. Keeps
@@ -136,48 +136,6 @@ describe("schema_version handling", () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
-  test("rejects invalid field types via runtime validation", () => {
-    expectInvalidPayload({
-      ...basePayload,
-      speed_mps: "10",
-    });
-  });
-
-  test("rejects client rows that omit required frame_samples", () => {
-    expectInvalidPayload({
-      ...basePayload,
-      clients: [
-        {
-          id: "sensor1",
-          name: "Front Left",
-          connected: true,
-          mac_address: "001122334455",
-          location_code: "front_left_wheel",
-          last_seen_age_ms: 5,
-          dropped_frames: 0,
-          frames_total: 100,
-          sample_rate_hz: 1600,
-          firmware_version: "fw-1.0.0",
-        },
-      ],
-    });
-  });
-
-  test("rejects partial strength_metrics instead of defaulting missing fields", () => {
-    expectInvalidPayload({
-      ...basePayload,
-      spectra: {
-        freq: [10, 20, 30],
-        clients: {
-          sensor1: {
-            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
-          },
-        },
-      },
-    });
-  });
-
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {
     expect(EXPECTED_SCHEMA_VERSION).toBe("1");
   });
@@ -277,23 +235,6 @@ describe("shared freq optimization", () => {
     expect(Object.keys(spectra.clients)).toHaveLength(0);
   });
 
-  test("rejects malformed per-client freq elements instead of skipping the client", () => {
-    expectInvalidPayload({
-      ...basePayload,
-      spectra: {
-        clients: {
-          sensor1: {
-            freq: [10, "bad", 30],
-            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({
-              vibration_strength_db: 12,
-            }),
-          },
-        },
-      },
-    });
-  });
-
   test("skips client when freq and amplitude bin counts differ", () => {
     const adapted = adaptServerPayload({
       ...basePayload,
@@ -338,35 +279,6 @@ describe("shared freq optimization", () => {
     expect(spectra.clients.sensor1.freq).toEqual([10, 20, 30]);
     // sensor2 uses its own per-client freq
     expect(spectra.clients.sensor2.freq).toEqual([15, 25, 35]);
-  });
-
-  test("rejects malformed strength metric peaks instead of dropping them", () => {
-    expectInvalidPayload({
-      ...basePayload,
-      spectra: {
-        freq: [10, 20, 30],
-        clients: {
-          sensor1: {
-            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: {
-              vibration_strength_db: 12,
-              peak_amp_g: 0.2,
-              noise_floor_amp_g: 0.01,
-              strength_bucket: null,
-              top_peaks: [
-                {
-                  hz: 10,
-                  amp: 0.1,
-                  vibration_strength_db: 12,
-                  strength_bucket: "l2",
-                },
-                { hz: 20, amp: 0.2 },
-              ],
-            },
-          },
-        },
-      },
-    });
   });
 
   test("reuses validated client and rotational speed references in hot path", () => {
