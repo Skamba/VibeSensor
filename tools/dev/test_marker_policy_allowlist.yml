@@ -18,6 +18,4 @@ long_sim:
   apps/server/tests/integration/test_report_pipeline.py:
     TestPdfReportValidation: The realistic 20-second PDF validation suite must stay out of fast E2E lanes.
     TestPdfLanguageParity: The realistic 20-second EN/NL PDF parity suite must stay out of fast E2E lanes.
-  apps/server/tests/integration/test_sim_ingestion.py:
-    TestSimulatorIngestion: The live-server simulator ingestion suite must stay out of fast E2E lanes.
 e2e_file_exemptions: {}

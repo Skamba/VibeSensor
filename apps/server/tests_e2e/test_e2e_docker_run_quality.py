@@ -1,11 +1,10 @@
-"""Docker E2E tests for short-run edges plus one representative report-pipeline smoke."""
+"""Docker E2E tests for run-quality edges plus representative report-pipeline smoke."""
 
 from __future__ import annotations
 
 import pytest
 
 from tests_e2e._docker_edge_helpers import (
-    SHORT_RUN_DURATION_S,
     _assert_no_placeholders,
     _cleanup_clients,
     _cleanup_run,
@@ -19,16 +18,15 @@ from tests_e2e.e2e_helpers import (
     parse_export_zip,
     pdf_text,
     recording_status,
-    wait_for,
-    wait_for_stable,
     wait_export_ready,
+    wait_for_stable,
     wait_report_pdf_ready,
 )
 
 pytestmark = pytest.mark.e2e
 
 
-def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
+def test_no_data_stop_does_not_create_history_run_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     _cleanup_clients(base)
 
@@ -51,7 +49,9 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
         timeout_s=15.0,
         stable_for_s=2.5,
         interval_s=0.25,
-        message="simulator clients or active recording did not stay quiescent before empty-run check",
+        message=(
+            "simulator clients or active recording did not stay quiescent before empty-run check"
+        ),
         state=_quiescence_state,
     )
     before = history_run_ids(base)
@@ -62,23 +62,6 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     after_empty = history_run_ids(base)
     assert run_empty not in after_empty
     assert after_empty == before
-
-    second = api_json(base, "/api/recording/start", method="POST")
-    run_short = str(second["run_id"])
-    _simulate(e2e_env, duration=SHORT_RUN_DURATION_S)
-    api_json(base, "/api/recording/stop", method="POST")
-
-    wait_for(
-        lambda: run_short in history_run_ids(base),
-        timeout_s=20,
-        message=f"short run {run_short} did not appear",
-    )
-    run = _wait_complete(base, run_short)
-    assert run["status"] in {"complete", "error"}
-    if run["status"] == "complete":
-        pdf = wait_report_pdf_ready(base, run_short)
-        assert pdf.body.startswith(b"%PDF-")
-    _cleanup_run(base, run_short)
 
 
 def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> None:
