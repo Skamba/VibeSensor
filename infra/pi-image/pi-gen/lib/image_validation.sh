@@ -48,6 +48,62 @@ python_version_meets_floor() {
   [ "${actual_minor}" -ge "${floor_minor}" ]
 }
 
+assert_wheel_static_data_contract() {
+  local root_mnt="$1"
+  local venv_site_packages_glob="${root_mnt}/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/data"
+  local venv_data_dir=""
+  local first_vehicle_shard=""
+  local first_car_source=""
+  local candidate=""
+
+  for candidate in ${venv_site_packages_glob}; do
+    if [ -d "${candidate}" ]; then
+      venv_data_dir="${candidate}"
+      break
+    fi
+  done
+  if [ -z "${venv_data_dir}" ]; then
+    echo "Validation failed: missing site-packages/vibesensor/data directory under ${root_mnt}/opt/VibeSensor/apps/server/.venv"
+    exit 1
+  fi
+
+  if [ ! -f "${venv_data_dir}/report_i18n.json" ]; then
+    echo "Validation failed: missing ${venv_data_dir}/report_i18n.json"
+    exit 1
+  fi
+
+  if [ ! -d "${venv_data_dir}/vehicle_configurations" ]; then
+    echo "Validation failed: missing ${venv_data_dir}/vehicle_configurations"
+    exit 1
+  fi
+
+  first_vehicle_shard="$(
+    find "${venv_data_dir}/vehicle_configurations" -type f -name "*.json" -print -quit
+  )"
+  if [ -z "${first_vehicle_shard}" ]; then
+    echo "Validation failed: no vehicle configuration shards found under ${venv_data_dir}/vehicle_configurations"
+    exit 1
+  fi
+
+  if [ ! -d "${venv_data_dir}/car_sources" ]; then
+    echo "Validation failed: missing ${venv_data_dir}/car_sources"
+    exit 1
+  fi
+
+  first_car_source="$(
+    find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" -print -quit
+  )"
+  if [ -z "${first_car_source}" ]; then
+    echo "Validation failed: no car source packs found under ${venv_data_dir}/car_sources"
+    exit 1
+  fi
+
+  if [ -d "${root_mnt}/opt/VibeSensor/apps/server/vibesensor" ]; then
+    echo "Validation failed: source tree still present at ${root_mnt}/opt/VibeSensor/apps/server/vibesensor"
+    exit 1
+  fi
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -246,65 +302,11 @@ validate_image_artifact() {
     exit 1
   fi
 
-  # Static data ships inside the installed `vibesensor` package wheel
-  # (site-packages/vibesensor/data/*). The source tree under
-  # /opt/VibeSensor/apps/server/vibesensor is intentionally removed after install,
-  # so check the wheel-install path instead. `shopt -s nullglob` avoids literal
-  # glob strings when the path is missing; the explicit -f check then fails.
-  local venv_site_packages_glob="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/data"
-  local venv_data_dir=""
-  for candidate in ${venv_site_packages_glob}; do
-    if [ -d "${candidate}" ]; then
-      venv_data_dir="${candidate}"
-      break
-    fi
-  done
-  if [ -z "${venv_data_dir}" ]; then
-    echo "Validation failed: missing site-packages/vibesensor/data directory under ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv"
-    exit 1
-  fi
-
-  if [ ! -f "${venv_data_dir}/report_i18n.json" ]; then
-    echo "Validation failed: missing ${venv_data_dir}/report_i18n.json"
-    exit 1
-  fi
-
-  if [ ! -d "${venv_data_dir}/vehicle_configurations" ]; then
-    echo "Validation failed: missing ${venv_data_dir}/vehicle_configurations"
-    exit 1
-  fi
-
-  local first_vehicle_shard=""
-  first_vehicle_shard="$(
-    find "${venv_data_dir}/vehicle_configurations" -type f -name "*.json" -print -quit
-  )"
-  if [ -z "${first_vehicle_shard}" ]; then
-    echo "Validation failed: no vehicle configuration shards found under ${venv_data_dir}/vehicle_configurations"
-    exit 1
-  fi
-
-  if [ ! -d "${venv_data_dir}/car_sources" ]; then
-    echo "Validation failed: missing ${venv_data_dir}/car_sources"
-    exit 1
-  fi
-
-  local first_car_source=""
-  first_car_source="$(
-    find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" -print -quit
-  )"
-  if [ -z "${first_car_source}" ]; then
-    echo "Validation failed: no car source packs found under ${venv_data_dir}/car_sources"
-    exit 1
-  fi
+  assert_wheel_static_data_contract "${ROOT_MNT}"
 
   ROOTFS_PYPROJECT="${ROOT_MNT}/opt/VibeSensor/apps/server/pyproject.toml"
   if [ ! -f "${ROOTFS_PYPROJECT}" ]; then
     echo "Validation failed: missing ${ROOTFS_PYPROJECT}"
-    exit 1
-  fi
-
-  if [ -d "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor" ]; then
-    echo "Validation failed: source tree still present at ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor"
     exit 1
   fi
 

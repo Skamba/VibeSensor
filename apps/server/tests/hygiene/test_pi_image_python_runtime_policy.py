@@ -91,13 +91,33 @@ def test_pi_image_stage_records_runtime_python_metadata_before_cleanup() -> None
     assert text.index(metadata_write) < text.index(cleanup_block)
 
 
-def test_image_validation_reports_and_checks_embedded_python_runtime_metadata() -> None:
-    text = _IMAGE_VALIDATION_SCRIPT.read_text(encoding="utf-8")
+def test_image_validation_reads_embedded_python_runtime_metadata(
+    tmp_path: Path,
+) -> None:
+    metadata = tmp_path / ".vibesensor-python-runtime.env"
+    metadata.write_text(
+        "\n".join(
+            [
+                "system_python=/usr/bin/python3",
+                "system_python_version=3.13.4",
+                "venv_python=/opt/VibeSensor/apps/server/.venv/bin/python",
+                "venv_python_version=3.13.4",
+                "supported_python_floor=3.13",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
-    assert ".vibesensor-python-runtime.env" in text
-    assert "Validation failed: image runtime Python " in text
-    assert "validated_venv_python_version=${VALIDATED_IMAGE_PYTHON_VERSION}" in text
-    assert "validated_supported_python_floor=>=${VALIDATED_IMAGE_PYTHON_FLOOR}" in text
+    result = _run_image_validation_script(f'read_env_file_value "{metadata}" "venv_python_version"')
+    missing_key = _run_image_validation_script(
+        f'read_env_file_value "{metadata}" "missing_key"',
+        check=False,
+    )
+
+    assert result.stdout.strip() == "3.13.4"
+    assert missing_key.returncode == 1
+    assert missing_key.stdout == ""
 
 
 def test_write_version_info_includes_validated_image_python_metadata(tmp_path: Path) -> None:
