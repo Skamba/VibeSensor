@@ -15,7 +15,6 @@ from vibesensor.use_cases.updates.models import (
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:
@@ -26,13 +25,30 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
     )
 
 
+class RecordingTransportCoordinator:
+    def __init__(self, prepared_transport: object) -> None:
+        self.prepared_transport = prepared_transport
+        self.requests: list[UpdateRequest] = []
+        self.error: UpdateTransportError | None = None
+
+    async def prepare(self, request: UpdateRequest) -> object:
+        self.requests.append(request)
+        if self.error is not None:
+            raise self.error
+        return self.prepared_transport
+
+
 def _build_preparation(
     tmp_path: Path,
-) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock, AsyncMock]:
+) -> tuple[
+    UpdatePreparationCoordinator,
+    UpdateStatusTracker,
+    object,
+    RecordingTransportCoordinator,
+]:
     status = build_update_status_harness(tmp_path / "state.json")
-    prepared_transport = AsyncMock()
-    transport_coordinator = MagicMock(spec=UpdateTransportCoordinator)
-    transport_coordinator.prepare = AsyncMock(return_value=prepared_transport)
+    prepared_transport = object()
+    transport_coordinator = RecordingTransportCoordinator(prepared_transport)
     preparation = UpdatePreparationCoordinator(
         status=status,
         commands=MagicMock(),
@@ -58,14 +74,14 @@ async def test_prepare_stops_after_validation_failure(tmp_path: Path) -> None:
     ):
         await preparation.prepare(_wifi_request())
 
-    transport_coordinator.prepare.assert_not_awaited()
+    assert transport_coordinator.requests == []
 
 
 @pytest.mark.asyncio
 async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> None:
     preparation, _tracker, _prepared_transport, transport_coordinator = _build_preparation(tmp_path)
     request = _wifi_request()
-    transport_coordinator.prepare.side_effect = UpdateTransportError("transport failed")
+    transport_coordinator.error = UpdateTransportError("transport failed")
 
     with (
         patch(
@@ -76,7 +92,7 @@ async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
     ):
         await preparation.prepare(request)
 
-    transport_coordinator.prepare.assert_awaited_once_with(request)
+    assert transport_coordinator.requests == [request]
 
 
 @pytest.mark.asyncio
@@ -91,5 +107,5 @@ async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
         prepared = await preparation.prepare(request)
 
     assert isinstance(prepared, PreparedUpdateRun)
-    transport_coordinator.prepare.assert_awaited_once_with(request)
+    assert transport_coordinator.requests == [request]
     assert prepared.prepared_transport is prepared_transport
