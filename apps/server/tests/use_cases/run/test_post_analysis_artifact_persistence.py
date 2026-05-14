@@ -1,21 +1,39 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import Any
-
-from test_support.persisted_analysis import make_persisted_analysis
+from test_support.post_analysis_artifacts import (
+    RecordingPostAnalysisDB,
+)
+from test_support.post_analysis_artifacts import (
+    analysis_payload as _analysis_payload,
+)
+from test_support.post_analysis_artifacts import (
+    artifact as _artifact,
+)
+from test_support.post_analysis_artifacts import (
+    context_bundle as _context_bundle,
+)
+from test_support.post_analysis_artifacts import (
+    execute_artifact_persistence as _execute_artifact_persistence,
+)
+from test_support.post_analysis_artifacts import (
+    manifest as _manifest,
+)
+from test_support.post_analysis_artifacts import (
+    order_trace_bundle as _order_trace_bundle,
+)
+from test_support.post_analysis_artifacts import (
+    samples as _samples,
+)
+from test_support.post_analysis_artifacts import (
+    spatial_samples as _spatial_samples,
+)
+from test_support.post_analysis_artifacts import (
+    window_policy as _window_policy,
+)
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
-    WholeRunArtifactFile,
-    WholeRunArtifactManifest,
     WholeRunContextInterval,
-    WholeRunContextWindowLabel,
-    WholeRunWindowPolicy,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
     OrderTracePoint,
@@ -32,7 +50,6 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
-    WholeRunOrderTraceArtifactBundle,
 )
 from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
@@ -40,326 +57,11 @@ from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
 )
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
-    WholeRunContextArtifactBundle,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
     WholeRunSpatialCoherenceArtifactBundle,
 )
-from vibesensor.use_cases.diagnostics.whole_run_spectra import (
-    WholeRunSpectralBuildResult,
-    WholeRunSpectralCoverageSummary,
-)
-from vibesensor.use_cases.run.post_analysis_executor import (
-    PostAnalysisExecutionConfig,
-    PostAnalysisWholeRunBuilderConfig,
-    execute_post_analysis,
-)
-from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
-from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
-
-
-def _run_metadata(run_id: str) -> RunMetadata:
-    return run_metadata_from_mapping(
-        {
-            "run_id": run_id,
-            "start_time_utc": "2025-01-01T00:00:00Z",
-            "sensor_model": "fixture-sensor",
-            "raw_sample_rate_hz": 800,
-            "sample_rate_hz": 800,
-            "feature_interval_s": 1.0,
-            "language": "en",
-        }
-    )
-
-
-def _samples() -> list:
-    return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
-
-
-def _spatial_samples() -> list:
-    return sensor_frames_from_mappings(
-        [
-            {
-                "t_s": 0.0,
-                "client_id": "sensor-front",
-                "location": "front-left",
-                "vibration_strength_db": 10.0,
-            },
-            {
-                "t_s": 0.0,
-                "client_id": "sensor-rear",
-                "location": "rear-left",
-                "vibration_strength_db": 9.0,
-            },
-        ]
-    )
-
-
-def _raw_manifest(run_id: str) -> RawCaptureManifest:
-    return RawCaptureManifest(
-        run_id=run_id,
-        relative_dir=f"raw-runs/{run_id}",
-        sensors=(),
-        total_samples=0,
-        total_bytes=0,
-        created_at="2025-01-01T00:00:00Z",
-    )
-
-
-def _window_policy() -> WholeRunWindowPolicy:
-    return WholeRunWindowPolicy(
-        sample_rate_hz=800,
-        window_size_samples=2048,
-        stride_samples=200,
-        overlap_samples=1848,
-        feature_interval_s=0.25,
-    )
-
-
-def _artifact(
-    key: str,
-    path: str,
-    *,
-    record_count: int = 1,
-    file_format: str = "jsonl",
-    sensor_id: str | None = None,
-) -> WholeRunArtifactFile:
-    return WholeRunArtifactFile(
-        artifact_key=key,
-        relative_path=path,
-        file_format=file_format,
-        record_count=record_count,
-        sensor_id=sensor_id,
-    )
-
-
-def _manifest(
-    run_id: str,
-    artifacts: Sequence[WholeRunArtifactFile],
-    *,
-    total_window_count: int,
-    policy: WholeRunWindowPolicy,
-    algorithm_versions: Mapping[str, int] | None = None,
-    configuration: Mapping[str, object] | None = None,
-) -> WholeRunArtifactManifest:
-    return WholeRunArtifactManifest(
-        run_id=run_id,
-        relative_dir=f"whole-run-artifacts/{run_id}",
-        window_policy=policy,
-        total_window_count=total_window_count,
-        algorithm_versions=dict(algorithm_versions or {}),
-        configuration=dict(configuration or {}),
-        artifacts=tuple(artifacts),
-        created_at="2025-01-01T00:00:00Z",
-    )
-
-
-def _spectral_result(
-    manifest: WholeRunArtifactManifest,
-    artifact_contents: Mapping[str, bytes],
-) -> WholeRunSpectralBuildResult:
-    bundle = type(
-        "Bundle",
-        (),
-        {"manifest": manifest, "artifact_contents": dict(artifact_contents)},
-    )()
-    return WholeRunSpectralBuildResult(
-        bundle=bundle,
-        coverage_summary=WholeRunSpectralCoverageSummary(
-            total_sensor_window_count=0,
-            full_sensor_window_count=0,
-            partial_sensor_window_count=0,
-            missing_sensor_window_count=0,
-            empty_sensor_window_count=0,
-            gap_count=0,
-            overlap_count=0,
-            dropped_chunk_count=0,
-            late_packet_chunk_count=0,
-            queue_overflow_chunk_count=0,
-            invalid_chunk_count=0,
-            write_error_chunk_count=0,
-            sample_rate_mismatch_sensor_count=0,
-            sample_rate_unverified_sensor_count=0,
-            unanchored_sensor_count=0,
-            legacy_sensor_count=0,
-            sync_unverified_sensor_count=0,
-            stale_sync_sensor_count=0,
-            high_rtt_sensor_count=0,
-            coverage_confidence="unavailable",
-        ),
-    )
-
-
-def _raw_capture(manifest: RawCaptureManifest) -> RawRunCapture:
-    return RawRunCapture(manifest=manifest, sensors=())
-
-
-def _context_labels(window_count: int) -> tuple[WholeRunContextWindowLabel, ...]:
-    return tuple(
-        WholeRunContextWindowLabel(
-            window_index=index,
-            segment_index=0,
-            phase=DrivingPhase.CRUISE,
-            context_coverage="full",
-            speed_validity="measured",
-            rpm_validity="measured",
-            load_state="steady",
-            speed_kmh=60.0 + index,
-            speed_band="60-80 km/h",
-            speed_source="gps",
-            engine_rpm=1200.0 + index * 20.0,
-            engine_rpm_source="obd2",
-        )
-        for index in range(window_count)
-    )
-
-
-def _context_bundle(
-    run_id: str,
-    *,
-    policy: WholeRunWindowPolicy,
-    window_count: int,
-    labels: tuple[WholeRunContextWindowLabel, ...] | None = None,
-    intervals: tuple[WholeRunContextInterval, ...] = (),
-) -> WholeRunContextArtifactBundle:
-    return WholeRunContextArtifactBundle(
-        manifest=_manifest(
-            run_id,
-            (
-                _artifact(
-                    WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
-                    "context/window-labels.jsonl",
-                    record_count=window_count,
-                ),
-            ),
-            total_window_count=window_count,
-            policy=policy,
-        ),
-        artifact_contents={
-            WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY: b'{"window_index":0}\n' * window_count,
-        },
-        labels=labels or _context_labels(window_count),
-        intervals=intervals,
-    )
-
-
-def _order_trace_bundle(
-    run_id: str,
-    *,
-    policy: WholeRunWindowPolicy,
-    total_window_count: int,
-    points: tuple[OrderTracePoint, ...],
-    artifact_contents: bytes = b"{}\n",
-) -> WholeRunOrderTraceArtifactBundle:
-    return WholeRunOrderTraceArtifactBundle(
-        manifest=_manifest(
-            run_id,
-            (
-                _artifact(
-                    WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
-                    "orders/trace-points.jsonl",
-                    record_count=len(points),
-                ),
-            ),
-            total_window_count=total_window_count,
-            policy=policy,
-        ),
-        artifact_contents={WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: artifact_contents},
-        points=points,
-    )
-
-
-def _analysis_payload(**metadata: object) -> object:
-    base: dict[str, object] = {
-        "analyzed_sample_count": 1,
-        "total_sample_count": 1,
-        "sampling_method": "full",
-    }
-    base.update(metadata)
-    return make_persisted_analysis(
-        {
-            "analysis_metadata": base,
-            "run_suitability": [],
-        }
-    )
-
-
-class RecordingPostAnalysisDB:
-    def __init__(self) -> None:
-        self.stored: dict[str, Any] = {}
-
-    async def astore_whole_run_artifacts(
-        self,
-        run_id: str,
-        manifest: WholeRunArtifactManifest,
-        *,
-        artifact_contents: Mapping[str, bytes],
-    ) -> WholeRunArtifactManifest:
-        self.stored["whole_run_run_id"] = run_id
-        self.stored["whole_run_manifest"] = manifest
-        self.stored["whole_run_artifact_contents"] = dict(artifact_contents)
-        return manifest
-
-    async def astore_analysis(self, run_id: str, analysis: object) -> None:
-        self.stored["analysis_run_id"] = run_id
-        self.stored["analysis"] = (
-            analysis.to_json_object() if hasattr(analysis, "to_json_object") else analysis
-        )
-
-    async def astore_analysis_error(self, run_id: str, error: str) -> None:
-        raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
-
-
-def _execute_artifact_persistence(
-    *,
-    run_id: str,
-    db: RecordingPostAnalysisDB,
-    policy: WholeRunWindowPolicy,
-    spectral_manifest: WholeRunArtifactManifest,
-    spectral_contents: Mapping[str, bytes],
-    context_builder=None,
-    order_trace_builder=None,
-    order_trace_summary_builder=None,
-    order_family_summary_builder=None,
-    spatial_coherence_builder=None,
-    samples: list | None = None,
-    context_samples: list | None = None,
-    total_summary_row_count: int = 1,
-    analysis_payload: object | None = None,
-) -> PostAnalysisExecutionSuccess:
-    raw_capture_manifest = _raw_manifest(run_id)
-    result = execute_post_analysis(
-        run_id=run_id,
-        db=db,
-        config=PostAnalysisExecutionConfig(
-            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-                run_id=run_id,
-                metadata=_run_metadata(run_id),
-                language="en",
-                samples=samples or _samples(),
-                total_summary_row_count=total_summary_row_count,
-                stride=1,
-                context_samples=context_samples,
-                raw_capture=_raw_capture(raw_capture_manifest),
-                raw_capture_manifest=raw_capture_manifest,
-            ),
-            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
-                artifact_builder=lambda **_kwargs: _spectral_result(
-                    spectral_manifest,
-                    spectral_contents,
-                ),
-                context_builder=context_builder,
-                order_trace_builder=order_trace_builder,
-                order_trace_summary_builder=order_trace_summary_builder,
-                order_family_summary_builder=order_family_summary_builder,
-                spatial_coherence_builder=spatial_coherence_builder,
-            ),
-            analysis_runner=lambda _run: analysis_payload or _analysis_payload(),
-        ),
-    )
-    assert isinstance(result, PostAnalysisExecutionSuccess)
-    return result
 
 
 def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata() -> None:
@@ -664,7 +366,7 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
         order_trace_builder=lambda **_kwargs: order_trace_bundle,
         order_trace_summary_builder=lambda **_kwargs: None,
         order_family_summary_builder=lambda **_kwargs: None,
-        samples=_spatial_samples(),
+        samples_payload=_spatial_samples(),
         total_summary_row_count=2,
     )
 
@@ -852,7 +554,7 @@ def test_execute_post_analysis_persists_whole_run_diagnosis_summaries() -> None:
         ),
         spatial_coherence_builder=lambda **_kwargs: spatial_bundle,
         context_samples=_samples(),
-        analysis_payload=_analysis_payload(
+        analysis=_analysis_payload(
             raw_backed_sample_count=48,
             raw_capture_mode="raw_backed",
         ),
