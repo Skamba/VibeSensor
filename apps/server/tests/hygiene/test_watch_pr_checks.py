@@ -11,6 +11,7 @@ import pytest
 from tests._paths import REPO_ROOT
 
 _WATCH_PR_CHECKS = REPO_ROOT / "tools" / "watch_pr_checks.py"
+pytestmark = pytest.mark.dev_tooling
 
 
 def _load_watch_pr_checks_module():

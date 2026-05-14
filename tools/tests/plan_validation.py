@@ -42,6 +42,7 @@ _CI_MANIFEST = _load_module("ci_manifest_for_plan_validation", _CI_MANIFEST_PATH
 _RUN_CHANGED = _load_module("run_changed_for_plan_validation", _RUN_CHANGED_PATH)
 
 BACKEND_TEST_JOBS = tuple(f"backend-tests-{index}" for index in range(1, 6))
+BACKEND_TOOLING_TEST_JOB = "backend-tooling-tests"
 
 
 @dataclass(frozen=True)
@@ -124,9 +125,9 @@ SELECTION_MAPPINGS = (
     SelectionMapping("ui_smoke", ("ui-smoke",), ("ui-smoke",), ("ui-smoke",)),
     SelectionMapping(
         "backend_tests",
-        ("backend-tests",),
-        BACKEND_TEST_JOBS,
-        ("backend-tests",),
+        ("backend-tests", BACKEND_TOOLING_TEST_JOB),
+        (*BACKEND_TEST_JOBS, BACKEND_TOOLING_TEST_JOB),
+        ("backend-tests", BACKEND_TOOLING_TEST_JOB),
     ),
     SelectionMapping(
         "release_smoke",

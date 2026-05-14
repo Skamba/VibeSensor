@@ -30,7 +30,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Start with `make plan-validation`; run planned non-Docker jobs with `./.venv/bin/python tools/tests/plan_validation.py --run`, or use `--act` / `./tools/tests/run_ci_with_act.sh` only when GitHub workflow or Docker parity is needed.
 - Use `./tools/tests/run_ci_with_act.sh --full-stack` only when you must force all gated CI jobs.
 - Docs or instruction-only changes: run `make docs-lint` plus `make plan-validation`.
-- Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`; broad synthetic matrices are opt-in via `make test-diagnostic-matrix`.
+- Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`; broad synthetic matrices use `make test-diagnostic-matrix`, and dev/CI tooling tests use `make test-tooling`.
 - Backend API/contracts/shared UI constants: add `make sync-contracts` and `make ui-typecheck`.
 - Frontend logic/contracts/composition: `make ui-typecheck`; add `cd apps/ui && npm run build`, `npm run test:unit`, or `npm run test:visual` when the changed seam requires it.
 - Firmware: `cd firmware/esp && pio run`; for protocol/native parity add `python tools/firmware/generate_protocol_contract_fixtures.py --check` and `cd firmware/esp && pio test -e native`.
