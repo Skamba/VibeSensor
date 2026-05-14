@@ -130,6 +130,239 @@ def _validate_ui_dev_compose_node_image(expected_node: str) -> list[str]:
     return []
 
 
+def _check_setup_backend_cache_contract(
+    backend_action_steps: list[object],
+) -> list[str]:
+    errors: list[str] = []
+    cache_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping)
+            and step.get("id") == "backend-venv-cache"
+            and step.get("uses") == "actions/cache@v5"
+        ),
+        None,
+    )
+    if cache_step is None:
+        errors.append(
+            ".github/actions/setup-backend/action.yml must restore a repo-local backend virtualenv via actions/cache@v5."
+        )
+    else:
+        raw_with = cache_step.get("with")
+        if not isinstance(raw_with, Mapping):
+            errors.append(
+                ".github/actions/setup-backend/action.yml backend virtualenv cache step must define a path and key."
+            )
+        else:
+            path = raw_with.get("path")
+            key = raw_with.get("key")
+            restore_keys = raw_with.get("restore-keys")
+            if path != ".venv":
+                errors.append(
+                    ".github/actions/setup-backend/action.yml must cache the repo-local .venv path."
+                )
+            if not isinstance(key, str) or any(
+                token not in key
+                for token in (
+                    "backend-venv",
+                    "runner.os",
+                    "runner.arch",
+                    ".python-version",
+                    "apps/server/pyproject.toml",
+                    ".github/actions/setup-python/action.yml",
+                    ".github/actions/setup-backend/action.yml",
+                )
+            ):
+                errors.append(
+                    ".github/actions/setup-backend/action.yml backend virtualenv cache key must include OS/arch plus .python-version, apps/server/pyproject.toml, and both setup action files."
+                )
+            if restore_keys is not None:
+                errors.append(
+                    ".github/actions/setup-backend/action.yml backend virtualenv cache must not use restore-keys that could hide dependency changes."
+                )
+
+    hit_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping)
+            and step.get("name") == "Report backend virtualenv cache hit"
+        ),
+        None,
+    )
+    if (
+        hit_step is None
+        or hit_step.get("if")
+        != "${{ steps.backend-venv-cache.outputs.cache-hit == 'true' }}"
+    ):
+        errors.append(
+            ".github/actions/setup-backend/action.yml must report backend virtualenv cache hits."
+        )
+    miss_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping)
+            and step.get("name") == "Report backend virtualenv cache miss"
+        ),
+        None,
+    )
+    if (
+        miss_step is None
+        or miss_step.get("if")
+        != "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
+    ):
+        errors.append(
+            ".github/actions/setup-backend/action.yml must report backend virtualenv cache misses."
+        )
+    return errors
+
+
+def _check_setup_backend_action_contract() -> list[str]:
+    errors: list[str] = []
+    action_file = ROOT / ".github" / "actions" / "setup-backend" / "action.yml"
+    if not action_file.exists():
+        return [
+            "Missing shared backend setup composite action at .github/actions/setup-backend/action.yml."
+        ]
+
+    backend_action = _load_yaml_mapping(action_file)
+    outputs = backend_action.get("outputs")
+    if (
+        not isinstance(outputs, Mapping)
+        or not isinstance(outputs.get("python-path"), Mapping)
+        or outputs["python-path"].get("value")
+        != "${{ steps.backend-python.outputs.python-path }}"
+    ):
+        errors.append(
+            ".github/actions/setup-backend/action.yml must expose outputs.python-path from the backend-python step."
+        )
+
+    backend_action_steps = _load_action_steps(action_file)
+    _extend_step_requirement_errors(
+        errors,
+        backend_action_steps,
+        (
+            WorkflowStepRequirement(
+                uses=_LOCAL_PYTHON_SETUP_ACTION,
+                error_message=(
+                    ".github/actions/setup-backend/action.yml must delegate Python setup to "
+                    f"{_LOCAL_PYTHON_SETUP_ACTION}."
+                ),
+            ),
+            WorkflowStepRequirement(
+                uses_prefix="actions/setup-python@",
+                forbidden=True,
+                error_message=(
+                    ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
+                ),
+            ),
+        ),
+    )
+    errors.extend(_check_setup_backend_cache_contract(backend_action_steps))
+
+    retry_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping) and step.get("name") == "Prepare retry helper"
+        ),
+        None,
+    )
+    retry_run = retry_step.get("run") if isinstance(retry_step, Mapping) else None
+    if not isinstance(retry_run, str) or retry_run.count("retry_command()") != 1:
+        errors.append(
+            ".github/actions/setup-backend/action.yml must define a single retry_command helper for network installs."
+        )
+
+    install_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping) and step.get("name") == "Install dependencies"
+        ),
+        None,
+    )
+    if install_step is None:
+        errors.append(
+            ".github/actions/setup-backend/action.yml is missing its Install dependencies step."
+        )
+    else:
+        raw_if = install_step.get("if")
+        run = install_step.get("run")
+        if raw_if != "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}":
+            errors.append(
+                ".github/actions/setup-backend/action.yml must only install backend dependencies when the backend virtualenv cache misses."
+            )
+        if not isinstance(run, str) or any(
+            needle not in run
+            for needle in (
+                'source "${RUNNER_TEMP}/setup-backend-retry.sh"',
+                "rm -rf .venv",
+                'retry_command 3 "${{ steps.setup-python.outputs.python-path }}" -m venv .venv',
+                "retry_command 3 .venv/bin/python -m pip install --upgrade pip",
+                'retry_command 3 .venv/bin/python -m pip install -e "./apps/server[dev]"',
+            )
+        ):
+            errors.append(
+                ".github/actions/setup-backend/action.yml Install dependencies step must source the retry helper, recreate .venv from the configured Python runtime, and install the editable backend dev environment into it."
+            )
+
+    backend_python_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping) and step.get("id") == "backend-python"
+        ),
+        None,
+    )
+    if backend_python_step is None:
+        errors.append(
+            ".github/actions/setup-backend/action.yml must expose the cached backend virtualenv interpreter via a backend-python step."
+        )
+    else:
+        run = backend_python_step.get("run")
+        if not isinstance(run, str) or any(
+            needle not in run
+            for needle in (
+                "${GITHUB_WORKSPACE}/.venv/bin/python",
+                'echo "${GITHUB_WORKSPACE}/.venv/bin" >> "${GITHUB_PATH}"',
+                'echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "${GITHUB_ENV}"',
+                'echo "python-path=${backend_python}" >> "${GITHUB_OUTPUT}"',
+            )
+        ):
+            errors.append(
+                ".github/actions/setup-backend/action.yml backend-python step must publish the cached .venv interpreter and prepend it to GITHUB_PATH."
+            )
+
+    platformio_step = next(
+        (
+            step
+            for step in backend_action_steps
+            if isinstance(step, Mapping)
+            and step.get("name") == "Install PlatformIO dependencies"
+        ),
+        None,
+    )
+    platformio_run = (
+        platformio_step.get("run") if isinstance(platformio_step, Mapping) else None
+    )
+    if (
+        platformio_step is None
+        or platformio_step.get("if") != "${{ inputs.include-platformio == 'true' }}"
+        or not isinstance(platformio_run, str)
+        or 'source "${RUNNER_TEMP}/setup-backend-retry.sh"' not in platformio_run
+        or 'retry_command 3 "${{ steps.backend-python.outputs.python-path }}" -m pip install "platformio>=6,<7"'
+        not in platformio_run
+    ):
+        errors.append(
+            ".github/actions/setup-backend/action.yml must install PlatformIO only when requested and through the configured backend Python with retry_command."
+        )
+
+    return errors
+
+
 def check_docker_dev_workflow_hygiene() -> list[str]:
     errors: list[str] = []
 
@@ -295,140 +528,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                         ".github/actions/setup-python/action.yml must cache against apps/server/pyproject.toml."
                     )
 
-    action_file = ROOT / ".github" / "actions" / "setup-backend" / "action.yml"
-    if not action_file.exists():
-        errors.append(
-            "Missing shared backend setup composite action at .github/actions/setup-backend/action.yml."
-        )
-    else:
-        backend_action_steps = _load_action_steps(action_file)
-        _extend_step_requirement_errors(
-            errors,
-            backend_action_steps,
-            (
-                WorkflowStepRequirement(
-                    uses=_LOCAL_PYTHON_SETUP_ACTION,
-                    error_message=(
-                        ".github/actions/setup-backend/action.yml must delegate Python setup to "
-                        f"{_LOCAL_PYTHON_SETUP_ACTION}."
-                    ),
-                ),
-                WorkflowStepRequirement(
-                    uses_prefix="actions/setup-python@",
-                    forbidden=True,
-                    error_message=(
-                        ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
-                    ),
-                ),
-            ),
-        )
-        cache_step = next(
-            (
-                step
-                for step in backend_action_steps
-                if isinstance(step, Mapping)
-                and step.get("id") == "backend-venv-cache"
-                and step.get("uses") == "actions/cache@v5"
-            ),
-            None,
-        )
-        if cache_step is None:
-            errors.append(
-                ".github/actions/setup-backend/action.yml must restore a repo-local backend virtualenv via actions/cache@v5."
-            )
-        else:
-            raw_with = cache_step.get("with")
-            if not isinstance(raw_with, Mapping):
-                errors.append(
-                    ".github/actions/setup-backend/action.yml backend virtualenv cache step must define a path and key."
-                )
-            else:
-                path = raw_with.get("path")
-                key = raw_with.get("key")
-                restore_keys = raw_with.get("restore-keys")
-                if path != ".venv":
-                    errors.append(
-                        ".github/actions/setup-backend/action.yml must cache the repo-local .venv path."
-                    )
-                if not isinstance(key, str) or any(
-                    token not in key
-                    for token in (
-                        "backend-venv",
-                        "runner.os",
-                        "runner.arch",
-                        ".python-version",
-                        "apps/server/pyproject.toml",
-                        ".github/actions/setup-python/action.yml",
-                        ".github/actions/setup-backend/action.yml",
-                    )
-                ):
-                    errors.append(
-                        ".github/actions/setup-backend/action.yml backend virtualenv cache key must include OS/arch plus .python-version, apps/server/pyproject.toml, and both setup action files."
-                    )
-                if restore_keys is not None:
-                    errors.append(
-                        ".github/actions/setup-backend/action.yml backend virtualenv cache must not use restore-keys that could hide dependency changes."
-                    )
-
-        install_step = next(
-            (
-                step
-                for step in backend_action_steps
-                if isinstance(step, Mapping)
-                and step.get("name") == "Install dependencies"
-            ),
-            None,
-        )
-        if install_step is None:
-            errors.append(
-                ".github/actions/setup-backend/action.yml is missing its Install dependencies step."
-            )
-        else:
-            raw_if = install_step.get("if")
-            run = install_step.get("run")
-            if raw_if != "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}":
-                errors.append(
-                    ".github/actions/setup-backend/action.yml must only install backend dependencies when the backend virtualenv cache misses."
-                )
-            if not isinstance(run, str) or any(
-                needle not in run
-                for needle in (
-                    "rm -rf .venv",
-                    '"${{ steps.setup-python.outputs.python-path }}" -m venv .venv',
-                    ".venv/bin/python -m pip install --upgrade pip",
-                    '.venv/bin/python -m pip install -e "./apps/server[dev]"',
-                )
-            ):
-                errors.append(
-                    ".github/actions/setup-backend/action.yml Install dependencies step must recreate .venv from the configured Python runtime and install the editable backend dev environment into it."
-                )
-
-        backend_python_step = next(
-            (
-                step
-                for step in backend_action_steps
-                if isinstance(step, Mapping) and step.get("id") == "backend-python"
-            ),
-            None,
-        )
-        if backend_python_step is None:
-            errors.append(
-                ".github/actions/setup-backend/action.yml must expose the cached backend virtualenv interpreter via a backend-python step."
-            )
-        else:
-            run = backend_python_step.get("run")
-            if not isinstance(run, str) or any(
-                needle not in run
-                for needle in (
-                    "${GITHUB_WORKSPACE}/.venv/bin/python",
-                    'echo "${GITHUB_WORKSPACE}/.venv/bin" >> "${GITHUB_PATH}"',
-                    'echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "${GITHUB_ENV}"',
-                    'echo "python-path=${backend_python}" >> "${GITHUB_OUTPUT}"',
-                )
-            ):
-                errors.append(
-                    ".github/actions/setup-backend/action.yml backend-python step must publish the cached .venv interpreter and prepend it to GITHUB_PATH."
-                )
+    errors.extend(_check_setup_backend_action_contract())
 
     if "backend-quality" in jobs:
         errors.append(
