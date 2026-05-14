@@ -98,7 +98,7 @@ function makeUpdateCancelPayload(
   };
 }
 
-export function makeEspFlashPortsPayload(
+function makeEspFlashPortsPayload(
   overrides: Partial<EspFlashPortsPayload> = {},
 ): EspFlashPortsPayload {
   return {
@@ -126,7 +126,7 @@ export function makeEspFlashStatusPayload(
   };
 }
 
-export function makeEspFlashLogsPayload(
+function makeEspFlashLogsPayload(
   overrides: Partial<EspFlashLogsPayload> = {},
 ): EspFlashLogsPayload {
   return {
@@ -137,7 +137,7 @@ export function makeEspFlashLogsPayload(
   };
 }
 
-export function makeEspFlashHistoryPayload(
+function makeEspFlashHistoryPayload(
   overrides: Partial<EspFlashHistoryPayload> = {},
 ): EspFlashHistoryPayload {
   return {

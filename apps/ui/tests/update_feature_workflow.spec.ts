@@ -422,4 +422,37 @@ describe("createUpdateFeatureWorkflow", () => {
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
+
+  test("refreshes status after a successful update cancel", async () => {
+    const harness = createHarness();
+    let statusRequests = 0;
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async cancelUpdate() {},
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          statusRequests += 1;
+          return makeStatus();
+        },
+      },
+    });
+
+    await workflow.cancelUpdate();
+
+    expect(statusRequests).toBe(1);
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
 });

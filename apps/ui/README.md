@@ -585,8 +585,9 @@ python3 tools/wiki/generate_wiki.py --output-dir /tmp/vibesensor-wiki
   `tests/signal_view_reference.spec.ts` contains the reference panel coverage
   for direct signal JSX bindings, computed-driven output assertions, and
   effect-backed subscription seams.
-- That Vitest spec also pairs with `tests/maintenance_feature_signal.spec.ts`,
-  which exercises the mounted maintenance feature harness. Both run under
+- That Vitest spec also pairs with the focused mounted maintenance feature specs
+  `tests/maintenance_update_signal.spec.ts` and
+  `tests/maintenance_esp_flash_signal.spec.ts`. They run under
   `npm run test:unit` alongside the rest of the unit suite.
 - Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating signals
   or when waiting on effect-owned side effects.
