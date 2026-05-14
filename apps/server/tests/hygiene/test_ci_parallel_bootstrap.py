@@ -9,9 +9,12 @@ import threading
 import time
 from pathlib import Path
 
+import pytest
+
 from tests._paths import REPO_ROOT
 
 _CI_PARALLEL = REPO_ROOT / "tools" / "tests" / "run_ci_parallel.py"
+pytestmark = pytest.mark.dev_tooling
 
 
 def _load_ci_parallel_module():

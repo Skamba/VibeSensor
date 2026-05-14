@@ -42,6 +42,7 @@ _INSTALL_STEP_NAMES = frozenset(
 _CI_LITE_EXCLUDED_JOBS = frozenset({"e2e"})
 _CI_FAST_EXCLUDED_JOBS = frozenset(
     {
+        "backend-tooling-tests",
         "e2e",
         "firmware-native-tests",
         "release-smoke",

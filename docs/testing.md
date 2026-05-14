@@ -12,6 +12,7 @@ High-traffic validation router. Keep this concise; use Makefile targets and scri
 - Larger non-Docker gate: `make test-ci-lite` for workflow jobs except e2e.
 - Backend iteration: `make test` or targeted `pytest -q apps/server/tests/<module>/`.
 - Broad synthetic diagnostic matrices: `make test-diagnostic-matrix` (default backend CI excludes `diagnostic_matrix` cases).
+- Dev/CI tooling orchestration tests: `make test-tooling` (default backend shards exclude `dev_tooling` cases).
 - UI validation: `make ui-typecheck`; add UI test/build commands below when the changed seam requires them.
 - Firmware and Pi image validation: use the narrow commands below; avoid hardware/full image builds unless required.
 - Local `shell-lint` parity needs host `shellcheck`; `make doctor` reports prerequisites. Use ACT for the workflow-managed install path.
@@ -26,6 +27,7 @@ make plan-validation
 make docs-lint
 make test-changed
 make test-diagnostic-matrix
+make test-tooling
 make test-ci-fast
 make test-ci-lite
 make test-all
@@ -80,6 +82,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - New test-looking files must map to a runner or be explicitly allowed in `tools/dev/test_inventory_allowlist.yml`.
 - Marker policy lives in `tools/dev/test_marker_policy_allowlist.yml`. Use `smoke`, `long_sim`, and `e2e` sparingly.
 - `diagnostic_matrix` marks broad synthetic axis matrices; run them with `make test-diagnostic-matrix` or `tools/tests/run_backend_parallel.py --include-diagnostic-matrix`.
+- `dev_tooling` marks developer/CI tooling orchestration tests; run them with `make test-tooling`. Default backend shards and `make test` exclude them.
 - Oversized test/spec guardrails live in `tools/dev/check_hygiene.py`; intentional exceptions require a reason in `tools/dev/oversized_test_allowlist.yml`.
 - For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
@@ -135,6 +138,7 @@ Use the wrapper unless raw ACT flags are necessary. The default wrapper mode is 
 ./tools/tests/run_ci_with_act.sh --full-stack
 ./tools/tests/run_ci_with_act.sh -j backend-lint
 ./tools/tests/run_ci_with_act.sh -j backend-tests
+./tools/tests/run_ci_with_act.sh -j backend-tooling-tests
 ./tools/tests/run_ci_with_act.sh --base-ref main -j backend-lint
 ```
 
@@ -147,11 +151,12 @@ act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json
 act pull_request -W .github/workflows/ci.yml -e /tmp/vibesensor-act-event.json --env VIBESENSOR_CI_FORCE_FULL_STACK=1
 act -j backend-lint -W .github/workflows/ci.yml
 act -j backend-tests -W .github/workflows/ci.yml
+act -j backend-tooling-tests -W .github/workflows/ci.yml
 ```
 
-- ACT `-j` uses raw workflow job IDs such as `backend-tests`, not local shard IDs like `backend-tests-1`.
+- ACT `-j` uses raw workflow job IDs such as `backend-tests` and `backend-tooling-tests`, not local shard IDs like `backend-tests-1`.
 - No ACT secrets are currently required. If needed later, copy `.secrets.act.example` to `.secrets.act`; never commit it.
-- `run_ci_parallel.py` is a faster non-container local runner. It respects selected GitHub `needs`, reports omitted prerequisites, and expands backend matrix shards as `backend-tests-1` through `backend-tests-5`.
+- `run_ci_parallel.py` is a faster non-container local runner. It respects selected GitHub `needs`, reports omitted prerequisites, expands backend matrix shards as `backend-tests-1` through `backend-tests-5`, and keeps tooling tests in `backend-tooling-tests`.
 - Changed-path gating lives in `tools/tests/ci_path_rules.py` and `tools/tests/ci_changed_scope.py`; update workflow wiring and focused hygiene tests together.
 
 ## CI job reference
@@ -161,6 +166,7 @@ Blocking job names come from `.github/workflows/ci.yml`. Common local job select
 ```bash
 ./.venv/bin/python tools/tests/run_ci_parallel.py --ci-lite
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck
+./.venv/bin/python tools/tests/run_ci_parallel.py --job backend-tooling-tests
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job frontend-quality --job frontend-typecheck --job ui-unit --job ui-smoke
 ./.venv/bin/python tools/tests/run_ci_parallel.py --job release-smoke
 ```
