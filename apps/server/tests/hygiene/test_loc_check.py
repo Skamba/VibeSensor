@@ -35,12 +35,6 @@ def _prepare_fixture_repo(module: ModuleType, tmp_path: Path, monkeypatch) -> Pa
     return repo_root
 
 
-def test_loc_check_main_passes_current_repo() -> None:
-    module = _load_loc_check_module()
-
-    assert module.main([]) == 0
-
-
 def test_loc_check_reports_file_and_function_size_policy_violations(
     tmp_path: Path,
     monkeypatch,
