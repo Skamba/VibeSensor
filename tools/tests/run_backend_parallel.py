@@ -50,6 +50,7 @@ _DURATION_CACHE_ENV = "VIBESENSOR_BACKEND_DURATION_CACHE"
 _XDIST_WORKERS_ENV = "VIBESENSOR_BACKEND_XDIST_WORKERS"
 _SHARD_TIMEOUT_ENV = "VIBESENSOR_BACKEND_SHARD_TIMEOUT_S"
 _INCLUDE_DIAGNOSTIC_MATRIX_ENV = "VIBESENSOR_INCLUDE_DIAGNOSTIC_MATRIX"
+_INCLUDE_DEV_TOOLING_ENV = "VIBESENSOR_INCLUDE_DEV_TOOLING"
 _DEFAULT_DURATION = 1.0
 _DEFAULT_XDIST_WORKERS = 3
 _DEFAULT_SHARD_TIMEOUT_S = 900
@@ -100,8 +101,22 @@ def _shard_timeout_default(env: Mapping[str, str] | None = None) -> int:
 
 
 def _include_diagnostic_matrix_default(env: Mapping[str, str] | None = None) -> bool:
+    return _flag_default(
+        _INCLUDE_DIAGNOSTIC_MATRIX_ENV,
+        env=env,
+    )
+
+
+def _include_dev_tooling_default(env: Mapping[str, str] | None = None) -> bool:
+    return _flag_default(
+        _INCLUDE_DEV_TOOLING_ENV,
+        env=env,
+    )
+
+
+def _flag_default(env_name: str, *, env: Mapping[str, str] | None = None) -> bool:
     source = os.environ if env is None else env
-    raw = source.get(_INCLUDE_DIAGNOSTIC_MATRIX_ENV, "")
+    raw = source.get(env_name, "")
     if raw == "":
         return False
     normalized = raw.lower()
@@ -109,9 +124,7 @@ def _include_diagnostic_matrix_default(env: Mapping[str, str] | None = None) -> 
         return True
     if normalized in {"0", "false", "no", "off"}:
         return False
-    raise SystemExit(
-        f"{_INCLUDE_DIAGNOSTIC_MATRIX_ENV} must be one of 1/0, true/false, yes/no, or on/off"
-    )
+    raise SystemExit(f"{env_name} must be one of 1/0, true/false, yes/no, or on/off")
 
 
 def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
@@ -335,6 +348,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"them unless {_INCLUDE_DIAGNOSTIC_MATRIX_ENV}=1."
         ),
     )
+    parser.add_argument(
+        "--include-dev-tooling",
+        action="store_true",
+        default=_include_dev_tooling_default(),
+        help=(
+            "Include tests marked dev_tooling. Default backend CI excludes "
+            f"them unless {_INCLUDE_DEV_TOOLING_ENV}=1."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
@@ -351,8 +373,15 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+    excluded_markers = []
+    if not args.include_diagnostic_matrix:
+        excluded_markers.append("diagnostic_matrix")
+    if not args.include_dev_tooling:
+        excluded_markers.append("dev_tooling")
     marker_args = (
-        [] if args.include_diagnostic_matrix else ["-m", "not diagnostic_matrix"]
+        ["-m", " and ".join(f"not {marker}" for marker in excluded_markers)]
+        if excluded_markers
+        else []
     )
     collected = collect_test_ids([*marker_args, "apps/server/tests"])
     grouped_tests = _group_tests_by_path(collected)

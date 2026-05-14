@@ -16,6 +16,7 @@ import pytest
 from tests._paths import REPO_ROOT
 
 _MAIN_RELEASE_SCRIPT = REPO_ROOT / "tools" / "release" / "main_release.py"
+pytestmark = pytest.mark.dev_tooling
 
 
 def _load_main_release_module():

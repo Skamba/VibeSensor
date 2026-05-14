@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean pristine format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay test-diagnostic-matrix plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean pristine format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay test-diagnostic-matrix test-tooling plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -112,7 +112,7 @@ typecheck: typecheck-backend ui-typecheck
 
 test: ## Run the fast backend pytest suite
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m pytest -q apps/server/tests
+	"$$PYTHON" -m pytest -q -m "not dev_tooling" apps/server/tests
 
 test-changed: ## Run heuristic checks for files changed vs origin/main
 	@$(RESOLVE_PYTHON) \
@@ -125,6 +125,10 @@ test-golden-replay: ## Run fast generated dense post-run golden replay tests
 test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices excluded from default backend CI
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_backend_parallel.py --include-diagnostic-matrix
+
+test-tooling: ## Run developer/CI tooling tests excluded from default backend shards
+	@$(RESOLVE_PYTHON) \
+	"$$PYTHON" -m pytest -q -m dev_tooling apps/server/tests/hygiene
 
 plan-validation: ## Plan changed-file validation from CI path rules
 	@$(RESOLVE_PYTHON) \

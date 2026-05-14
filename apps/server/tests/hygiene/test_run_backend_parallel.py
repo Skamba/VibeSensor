@@ -7,12 +7,14 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
 import yaml
 
 from tests._paths import REPO_ROOT
 
 _CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _RUN_BACKEND_PARALLEL = REPO_ROOT / "tools" / "tests" / "run_backend_parallel.py"
+pytestmark = pytest.mark.dev_tooling
 
 
 def _load_run_backend_parallel_module():
@@ -122,8 +124,9 @@ def test_main_builds_pytest_command_for_selected_backend_shard(
     assert command[:4] == [sys.executable, "-m", "pytest", "-q"]
     assert command[command.index("-n") + 1] == "3"
     assert command[command.index("--junitxml") + 1] == str(tmp_path / "backend-tests-1.xml")
-    assert captured["collect_args"] == ["-m", "not diagnostic_matrix", "apps/server/tests"]
-    assert command[command.index("-m", 2) + 1] == "not diagnostic_matrix"
+    excluded_markers = "not diagnostic_matrix and not dev_tooling"
+    assert captured["collect_args"] == ["-m", excluded_markers, "apps/server/tests"]
+    assert command[command.index("-m", 2) + 1] == excluded_markers
     assert "apps/server/tests/app/test_app_main.py" in command
     assert any("running shard 1/1" in line for line in emitted)
 
@@ -156,7 +159,7 @@ def test_main_can_include_diagnostic_matrix(monkeypatch, tmp_path: Path) -> None
     assert module.main(["--include-diagnostic-matrix"]) == 0
 
     command = captured["cmd"]
-    assert captured["collect_args"] == ["apps/server/tests"]
+    assert captured["collect_args"] == ["-m", "not dev_tooling", "apps/server/tests"]
     assert "not diagnostic_matrix" not in command
 
 
@@ -167,7 +170,29 @@ def test_main_reads_diagnostic_matrix_env(monkeypatch, tmp_path: Path) -> None:
 
     assert module.main([]) == 0
 
-    assert captured["collect_args"] == ["apps/server/tests"]
+    assert captured["collect_args"] == ["-m", "not dev_tooling", "apps/server/tests"]
+
+
+def test_main_can_include_dev_tooling(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.delenv(module._INCLUDE_DEV_TOOLING_ENV, raising=False)
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+
+    assert module.main(["--include-dev-tooling"]) == 0
+
+    command = captured["cmd"]
+    assert captured["collect_args"] == ["-m", "not diagnostic_matrix", "apps/server/tests"]
+    assert "not dev_tooling" not in command
+
+
+def test_main_reads_dev_tooling_env(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.setenv(module._INCLUDE_DEV_TOOLING_ENV, "1")
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+
+    assert module.main([]) == 0
+
+    assert captured["collect_args"] == ["-m", "not diagnostic_matrix", "apps/server/tests"]
 
 
 def test_main_passes_configured_shard_timeout(monkeypatch, tmp_path: Path) -> None:
