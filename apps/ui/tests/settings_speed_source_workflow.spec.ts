@@ -265,6 +265,65 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     workflow.dispose();
   });
 
+  test("rejects manual speed values outside the production workflow bounds", async () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const savedPayloads: SpeedSourceRequest[] = [];
+    const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      transport: {
+        async saveSpeedSource(payload) {
+          savedPayloads.push(payload);
+          return makeSpeedSourcePayload({
+            manual_speed_kph: payload.manual_speed_kph,
+            speed_source: "manual",
+            stale_timeout_s: payload.stale_timeout_s ?? 5,
+          });
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    workflow.handleSpeedSourceChanged("manual");
+    workflow.handleManualSpeedInput("9999");
+    await workflow.saveSpeedSource();
+
+    expect(savedPayloads).toEqual([]);
+    expect(harness.focuses).toEqual(["manual"]);
+    expect(workflow.getRenderState()).toMatchObject({
+      manualSpeedFeedback: {
+        body: "settings.speed.manual_invalid",
+        compact: true,
+        tone: "error",
+      },
+      saveFeedback: {
+        body: "settings.speed.manual_invalid",
+        detail: "settings.speed.validation_active_detail:settings.speed.gps",
+        title: "settings.speed.save_failed_title",
+        tone: "error",
+      },
+    });
+
+    workflow.handleManualSpeedInput("500");
+    await workflow.saveSpeedSource();
+
+    expect(savedPayloads).toEqual([
+      {
+        manual_speed_kph: 500,
+        speed_source: "manual",
+      },
+    ]);
+    expect(workflow.getRenderState().manualSpeedFeedback).toBeNull();
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
   test("scans and pairs OBD devices without DOM bindings", async () => {
     const harness = createHarness();
     const appState = createAppState();
