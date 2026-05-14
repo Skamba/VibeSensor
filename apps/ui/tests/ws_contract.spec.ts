@@ -145,6 +145,12 @@ describe("schema_version handling", () => {
 // Shared freq optimization (Part A1)
 // ---------------------------------------------------------------------------
 describe("shared freq optimization", () => {
+  test("returns null spectra when the payload omits spectra", () => {
+    const adapted = adaptServerPayload({ ...basePayload });
+
+    expect(adapted.spectra).toBeNull();
+  });
+
   test("uses shared top-level freq when per-client freq is absent", () => {
     const adapted = adaptServerPayload({
       ...basePayload,
@@ -252,6 +258,26 @@ describe("shared freq optimization", () => {
     });
     const spectra = requireSpectra(adapted);
     expect(Object.keys(spectra.clients)).toHaveLength(0);
+  });
+
+  test("skips client when strength metrics are missing", () => {
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      spectra: {
+        clients: {
+          bad: { freq: [10], combined_spectrum_amp_g: [0.01] },
+          good: {
+            freq: [10, 20],
+            combined_spectrum_amp_g: [0.01, 0.02],
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 5 }),
+          },
+        },
+      },
+    });
+
+    const spectra = requireSpectra(adapted);
+    expect(spectra.clients).not.toHaveProperty("bad");
+    expect(spectra.clients).toHaveProperty("good");
   });
 
   test("handles mixed: some clients with per-client freq, some without", () => {

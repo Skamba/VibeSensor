@@ -44,7 +44,7 @@ function getFreqFingerprint(frame: SpectrumHeavyFrame): string {
   return frame._freqFingerprint;
 }
 
-export function areHeavyFramesCompatible(
+function areHeavyFramesCompatible(
   previous: SpectrumHeavyFrame | null,
   next: SpectrumHeavyFrame,
 ): boolean {
@@ -75,7 +75,7 @@ export function areHeavyFramesCompatible(
   return true;
 }
 
-export function interpolateHeavyFrame(
+function interpolateHeavyFrame(
   previous: SpectrumHeavyFrame,
   next: SpectrumHeavyFrame,
   alpha: number,
