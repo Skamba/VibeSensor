@@ -47,6 +47,10 @@ class TestIsSpeedPlausible:
         assert is_speed_plausible(60.0, cfg) is False
         assert is_speed_plausible(40.0, cfg) is True
 
+    def test_default_max_speed_bound_remains_vehicle_plausible(self) -> None:
+        max_speed_mps = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
+        assert 100.0 < max_speed_mps <= 200.0
+
 
 class TestEvaluateSpeedSample:
     """Zero-speed transition confirmation logic."""

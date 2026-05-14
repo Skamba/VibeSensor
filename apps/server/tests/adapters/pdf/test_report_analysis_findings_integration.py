@@ -37,6 +37,19 @@ def test_speed_breakdown_basic() -> None:
     assert "90-100 km/h" in labels
 
 
+def test_speed_breakdown_uses_fixed_10kmh_bins_at_boundaries() -> None:
+    samples = [
+        {"speed_kmh": 79.9, "strength_peak_band_rms_amp_g": 0.01},
+        {"speed_kmh": 80.1, "strength_peak_band_rms_amp_g": 0.02},
+    ]
+
+    rows = _speed_breakdown(sensor_frames_from_mappings(samples))
+    labels = {row.speed_range for row in rows}
+
+    assert "70-80 km/h" in labels
+    assert "80-90 km/h" in labels
+
+
 def test_speed_breakdown_empty() -> None:
     assert _speed_breakdown([]) == []
 
