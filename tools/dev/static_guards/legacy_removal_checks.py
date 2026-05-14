@@ -149,7 +149,7 @@ def _check_settings_snapshot_legacy_decode_removed() -> list[str]:
 def _check_udp_hello_legacy_compat_removed() -> list[str]:
     protocol_path = VIBESENSOR_DIR / "adapters" / "udp" / "protocol.py"
     control_path = VIBESENSOR_DIR / "adapters" / "udp" / "udp_control_tx.py"
-    protocol_tests = TESTS_DIR / "adapters" / "udp" / "test_protocol.py"
+    protocol_tests = TESTS_DIR / "adapters" / "udp" / "test_protocol_validation.py"
     control_tests = TESTS_DIR / "adapters" / "udp" / "test_udp_control_tx.py"
     violations: list[str] = []
 
