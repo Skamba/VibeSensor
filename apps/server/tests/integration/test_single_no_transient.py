@@ -1,8 +1,8 @@
-"""Single-sensor synthetic scenarios that stay distinct after matrix consolidation.
+"""Opt-in single-sensor synthetic diagnostic matrix.
 
 Representative corner/speed, no-fault baseline, and phased-onset coverage now
 lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
-single-sensor-specific behavior axes that still earn their own tests.
+single-sensor-specific behavior axes available outside default backend CI.
 """
 
 from __future__ import annotations
@@ -32,6 +32,8 @@ from test_support import (
     profile_metadata,
     run_analysis,
 )
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]

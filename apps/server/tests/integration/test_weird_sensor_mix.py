@@ -1,7 +1,7 @@
-"""Weird-sensor-mix direct-injection tests.
+"""Opt-in weird-sensor-mix diagnostic matrix.
 
-154 parameterized cases covering ambiguity-aware localization with
-non-standard sensor topologies (cabin-only, mixed, sparse).
+Ambiguity-aware localization across non-standard topologies stays available
+outside default backend CI; the core matrix keeps default wheel/no-fault risks.
 """
 
 from __future__ import annotations
@@ -78,6 +78,8 @@ from test_support.diagnostic_matrix_catalogs import (
 )
 from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import make_diffuse_samples, make_noise_samples
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 # ===================================================================
 # 1. test_cabin_only_no_exact_corner — 45 cases

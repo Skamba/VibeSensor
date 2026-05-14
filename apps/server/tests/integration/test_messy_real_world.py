@@ -1,8 +1,7 @@
-"""Messy synthetic scenarios with optimized profile coverage.
+"""Opt-in messy synthetic diagnostic matrix.
 
 These tests keep the real-world data-quality dimensions that are distinct from
-the core scenario matrix while avoiding a full profile cross-product on every
-edge case.
+the core scenario matrix while staying out of default backend CI.
 """
 
 from __future__ import annotations
@@ -65,6 +64,8 @@ from test_support.diagnostic_matrix_catalogs import (
 from test_support.diagnostic_matrix_catalogs import (
     MESSY_CABIN_OVERLAP_MIXES as _CABIN_OVERLAP_MIXES,
 )
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 # F.1 – Persistent wheel fault + sensor dropout (4 corners = 4 cases)
 
