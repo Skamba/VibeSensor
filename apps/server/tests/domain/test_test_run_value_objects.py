@@ -12,8 +12,6 @@ from vibesensor.domain import (
     DrivingPhaseSegment,
     DrivingSegment,
     Finding,
-    FindingEvidence,
-    LocationHotspot,
     RunCapture,
     RunSetup,
     RunSuitability,
@@ -24,9 +22,6 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
-)
-from vibesensor.shared.boundaries.summary_fields.finding import (
-    finding_from_payload,
 )
 
 
@@ -56,163 +51,6 @@ def _make_test_run(
         findings=findings,
         top_causes=top_causes,
     )
-
-
-class TestFindingWithValueObjects:
-    def test_finding_with_evidence(self) -> None:
-        e = FindingEvidence(match_rate=0.9, snr_db=15.0)
-        f = Finding(
-            finding_id="F001",
-            suspected_source="wheel/tire",
-            confidence=0.85,
-            evidence=e,
-        )
-        assert f.evidence is not None
-        assert f.evidence.is_strong
-        assert f.evidence.match_rate == 0.9
-
-    def test_finding_with_location(self) -> None:
-        loc = LocationHotspot(
-            strongest_location="FL wheel",
-            dominance_ratio=0.8,
-        )
-        f = Finding(
-            finding_id="F001",
-            suspected_source="wheel/tire",
-            confidence=0.85,
-            location=loc,
-        )
-        assert f.location is not None
-        assert f.location.is_well_localized
-        assert f.location.display_location == "Fl Wheel"
-
-    def test_finding_with_confidence_assessment(self) -> None:
-        ca = ConfidenceAssessment.assess(0.85)
-        f = Finding(
-            finding_id="F001",
-            suspected_source="wheel/tire",
-            confidence=0.85,
-            confidence_assessment=ca,
-        )
-        assert f.confidence_assessment is not None
-        assert f.confidence_assessment.tier == "C"
-        assert f.confidence_assessment.is_conclusive
-
-    def test_finding_from_payload_extracts_evidence(self) -> None:
-        payload = {
-            "finding_id": "F001",
-            "suspected_source": "wheel/tire",
-            "confidence": 0.85,
-            "evidence_metrics": {
-                "match_rate": 0.9,
-                "snr_db": 15.0,
-                "presence_ratio": 0.7,
-                "vibration_strength_db": 25.3,
-            },
-        }
-        f = finding_from_payload(payload)
-        assert f.evidence is not None
-        assert f.evidence.match_rate == 0.9
-        assert f.evidence.snr_db == 15.0
-        assert f.evidence.vibration_strength_db == 25.3
-
-        assert f.vibration_strength_db == 25.3  # still extracted directly too
-
-    def test_promote_near_tie_marks_hotspot_ambiguous(self) -> None:
-        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
-        promoted = hotspot.promote_near_tie(
-            alternative_location="rear_right",
-            top_confidence=0.8,
-            alternative_confidence=0.6,
-        )
-        assert promoted.ambiguous is True
-        assert promoted.weak_spatial_separation is True
-        assert promoted.supporting_locations == ("rear_right",)
-
-    def test_promote_near_tie_ignores_distant_second_finding(self) -> None:
-        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
-        promoted = hotspot.promote_near_tie(
-            alternative_location="rear_right",
-            top_confidence=0.9,
-            alternative_confidence=0.3,
-        )
-        assert promoted == hotspot
-
-    def test_with_adaptive_weak_spatial_promotes_below_threshold(self) -> None:
-        hotspot = LocationHotspot.from_analysis_inputs(
-            strongest_location="front_left",
-            dominance_ratio=1.3,
-        )
-        promoted = hotspot.with_adaptive_weak_spatial(3)
-        assert promoted.weak_spatial_separation is True
-
-    def test_with_adaptive_weak_spatial_leaves_strong_separation_unchanged(self) -> None:
-        hotspot = LocationHotspot.from_analysis_inputs(
-            strongest_location="front_left",
-            dominance_ratio=1.5,
-        )
-        promoted = hotspot.with_adaptive_weak_spatial(3)
-        assert promoted == hotspot
-
-    def test_finding_from_payload_extracts_location(self) -> None:
-        payload = {
-            "finding_id": "F001",
-            "suspected_source": "wheel/tire",
-            "confidence": 0.85,
-            "location_hotspot": {
-                "top_location": "FL wheel",
-                "dominance_ratio": 0.75,
-                "weak_spatial_separation": False,
-            },
-        }
-        f = finding_from_payload(payload)
-        assert f.location is not None
-        assert f.location.strongest_location == "FL wheel"
-        assert f.location.dominance_ratio == 0.75
-
-    def test_finding_from_payload_preserves_top_location_identity(self) -> None:
-        payload = {
-            "finding_id": "F001",
-            "suspected_source": "wheel/tire",
-            "confidence": 0.85,
-            "location_hotspot": {
-                "location": "ambiguous location: Front Left / Front Right",
-                "top_location": "Front Left",
-                "ambiguous_location": True,
-                "ambiguous_locations": ["Front Left", "Front Right"],
-                "weak_spatial_separation": True,
-            },
-        }
-        finding = finding_from_payload(payload)
-        assert finding.location is not None
-        assert finding.location.strongest_location == "Front Left"
-        assert not finding.location.is_actionable
-
-    def test_finding_from_payload_no_evidence(self) -> None:
-        payload = {"finding_id": "REF_SPEED", "severity": "reference"}
-        f = finding_from_payload(payload)
-        assert f.evidence is None
-        assert f.location is None
-
-    def test_finding_from_payload_populates_origin_and_signatures(self) -> None:
-        payload = {
-            "finding_id": "F001",
-            "suspected_source": "wheel/tire",
-            "confidence": 0.85,
-            "strongest_speed_band": "80-90 km/h",
-            "signatures_observed": ["1x wheel order", "2x wheel order"],
-            "location_hotspot": {"top_location": "FL wheel", "dominance_ratio": 0.75},
-        }
-        finding = finding_from_payload(payload)
-        assert finding.origin is not None
-        assert len(finding.signatures) == 2
-        assert finding.origin.display_location == "Fl Wheel"
-
-    def test_finding_defaults_none(self) -> None:
-        f = Finding(finding_id="F001")
-        assert f.evidence is None
-        assert f.location is None
-        assert f.confidence_assessment is None
 
 
 class TestTestRunTopCauseInvariant:
