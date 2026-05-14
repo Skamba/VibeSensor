@@ -12,4 +12,5 @@ Backend test rules. Use `docs/testing.md` for the concise test map and command r
 - Do not create per-file fake runtime classes. Use shared `FakeState` from `conftest.py` and customize it via constructor arguments.
 - Do not add private production bridge/shim methods solely for test access; test sub-components directly.
 - Oversized test/spec guardrails live in `tools/dev/check_hygiene.py`; intentional exceptions belong in `tools/dev/oversized_test_allowlist.yml`.
+- Mark dev/CI tooling orchestration tests `dev_tooling`; default backend shards exclude them, and `make test-tooling` runs them.
 - Focused validation: `pytest -q apps/server/tests/<module>/` from repo root, or `../.venv/bin/python -m pytest tests/<module>/ -q` from `apps/server` when the repo-managed backend environment must be pinned.

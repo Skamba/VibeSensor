@@ -626,6 +626,37 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  backend-tooling-tests:
+    name: Backend tooling tests
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_tests == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up configured backend Python runtime
+        uses: ./.github/actions/setup-backend
+
+      - name: Prepare backend tooling test artifacts
+        run: mkdir -p artifacts/ai/logs/ci
+
+      - name: Backend tooling tests
+        run: >-
+          python -m pytest -q -m dev_tooling apps/server/tests/hygiene
+          --junitxml artifacts/ai/logs/ci/backend-tooling-tests.xml
+
+      - name: Upload backend tooling test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-tooling-test-artifacts
+          path: artifacts/ai/logs/ci/
+          if-no-files-found: ignore
+          retention-days: 7
+
   e2e:
     name: E2E
     needs:

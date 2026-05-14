@@ -7,9 +7,12 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
+
 from tests._paths import REPO_ROOT
 
 _RUN_E2E_PARALLEL = REPO_ROOT / "tools" / "tests" / "run_e2e_parallel.py"
+pytestmark = pytest.mark.dev_tooling
 
 
 def _load_run_e2e_parallel_module():
