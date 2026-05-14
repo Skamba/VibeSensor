@@ -3,6 +3,4 @@
 # explicit instead of accidental.
 threshold_lines: 700
 report_limit: 10
-allowlist:
-  # Cars browser regression keeps the moved car-selection matrix outside smoke.
-  apps/ui/tests/regression.cars.spec.ts: Cars browser regression matrix moved out of smoke but intentionally stays together across library selection, manual entry, and wizard flows.
+allowlist: {}
