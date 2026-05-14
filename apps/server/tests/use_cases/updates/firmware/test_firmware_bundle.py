@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from test_support.firmware_bundles import write_firmware_bundle
 
 from vibesensor.use_cases.updates.firmware.firmware_bundle import (
     flash_manifest_record_from_json,
@@ -77,4 +78,40 @@ def test_validate_bundle_rejects_corrupt_manifest_json(tmp_path: Path) -> None:
     (bundle_dir / "flash.json").write_text("{not-json", encoding="utf-8")
 
     with pytest.raises(ValueError, match="Firmware manifest is corrupt"):
+        validate_bundle(bundle_dir)
+
+
+def test_validate_bundle_succeeds(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    write_firmware_bundle(bundle_dir)
+
+    manifest = validate_bundle(bundle_dir)
+
+    assert len(manifest.environments) == 1
+    assert manifest.environments[0].name == "m5stack_atom"
+
+
+def test_validate_bundle_fails_missing_manifest(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "empty"
+    bundle_dir.mkdir()
+
+    with pytest.raises(ValueError, match="missing manifest"):
+        validate_bundle(bundle_dir)
+
+
+def test_validate_bundle_fails_missing_binary(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    write_firmware_bundle(bundle_dir)
+    (bundle_dir / "m5stack_atom" / "firmware.bin").unlink()
+
+    with pytest.raises(ValueError, match="missing referenced binary"):
+        validate_bundle(bundle_dir)
+
+
+def test_validate_bundle_fails_checksum_mismatch(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    write_firmware_bundle(bundle_dir)
+    (bundle_dir / "m5stack_atom" / "firmware.bin").write_bytes(b"corrupted")
+
+    with pytest.raises(ValueError, match="Checksum mismatch"):
         validate_bundle(bundle_dir)

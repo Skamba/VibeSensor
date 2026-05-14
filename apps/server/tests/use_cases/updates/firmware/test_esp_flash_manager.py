@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 from test_support import response_payload
+from test_support.firmware_bundles import write_firmware_bundle
 
 from vibesensor.adapters.http.updates import create_update_routes
 from vibesensor.shared.exceptions import ConfigurationError, UpdateError
@@ -18,7 +18,6 @@ from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     SerialPortInfo,
     SerialPortProvider,
 )
-from vibesensor.use_cases.updates.firmware.firmware_bundle import validate_bundle
 from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 
@@ -91,49 +90,12 @@ def _assert_no_platformio_invocation(calls: list[list[str]]) -> None:
             assert call[1:3] != ["-m", "platformio"], f"PlatformIO module invoked: {call}"
 
 
-def _make_bundle(bundle_dir: Path) -> None:
-    """Create a valid firmware bundle with flash.json manifest and binaries."""
-    env_dir = bundle_dir / "m5stack_atom"
-    env_dir.mkdir(parents=True, exist_ok=True)
-    bins = {}
-    for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
-        content = f"fake-{name}".encode()
-        (env_dir / name).write_bytes(content)
-        bins[name] = hashlib.sha256(content).hexdigest()
-    manifest = {
-        "generated_from": "test",
-        "environments": [
-            {
-                "name": "m5stack_atom",
-                "segments": [
-                    {
-                        "file": "m5stack_atom/firmware.bin",
-                        "offset": "0x10000",
-                        "sha256": bins["firmware.bin"],
-                    },
-                    {
-                        "file": "m5stack_atom/bootloader.bin",
-                        "offset": "0x1000",
-                        "sha256": bins["bootloader.bin"],
-                    },
-                    {
-                        "file": "m5stack_atom/partitions.bin",
-                        "offset": "0x8000",
-                        "sha256": bins["partitions.bin"],
-                    },
-                ],
-            },
-        ],
-    }
-    (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-
-
 def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bool = False) -> Path:
     """Create a firmware cache directory with optional current/baseline bundles."""
     cache_dir = tmp_path / "fw-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     if with_current:
-        _make_bundle(cache_dir / "current")
+        write_firmware_bundle(cache_dir / "current")
         meta = {
             "tag": "fw-main-abc1234",
             "asset": "vibesensor-fw-main-abc1234.zip",
@@ -146,7 +108,7 @@ def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bo
             encoding="utf-8",
         )
     if with_baseline:
-        _make_bundle(cache_dir / "baseline")
+        write_firmware_bundle(cache_dir / "baseline")
         meta = {
             "tag": "baseline",
             "asset": "embedded",
@@ -200,40 +162,6 @@ def _patch_esptool_which(monkeypatch) -> None:
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
-
-
-# ── Firmware Cache Tests ──
-
-
-def test_validate_bundle_succeeds(tmp_path: Path) -> None:
-    bundle_dir = tmp_path / "bundle"
-    _make_bundle(bundle_dir)
-    manifest = validate_bundle(bundle_dir)
-    assert len(manifest.environments) == 1
-    assert manifest.environments[0].name == "m5stack_atom"
-
-
-def test_validate_bundle_fails_missing_manifest(tmp_path: Path) -> None:
-    bundle_dir = tmp_path / "empty"
-    bundle_dir.mkdir()
-    with pytest.raises(ValueError, match="missing manifest"):
-        validate_bundle(bundle_dir)
-
-
-def test_validate_bundle_fails_missing_binary(tmp_path: Path) -> None:
-    bundle_dir = tmp_path / "bundle"
-    _make_bundle(bundle_dir)
-    (bundle_dir / "m5stack_atom" / "firmware.bin").unlink()
-    with pytest.raises(ValueError, match="missing referenced binary"):
-        validate_bundle(bundle_dir)
-
-
-def test_validate_bundle_fails_checksum_mismatch(tmp_path: Path) -> None:
-    bundle_dir = tmp_path / "bundle"
-    _make_bundle(bundle_dir)
-    (bundle_dir / "m5stack_atom" / "firmware.bin").write_bytes(b"corrupted")
-    with pytest.raises(ValueError, match="Checksum mismatch"):
-        validate_bundle(bundle_dir)
 
 
 def test_cache_active_bundle_uses_current_over_baseline(tmp_path: Path) -> None:
