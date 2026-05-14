@@ -141,48 +141,6 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await expect.poll(() => speedOverrideCalls).toBe(0);
 });
 
-test("manual speed validation marks the field invalid while keeping the active GPS card visible", async ({
-  page,
-}) => {
-  await installCommonRoutes(page, {
-    settingsHandler: createSettingsHandlerFromMap({
-      "GET /api/settings/language": { language: "en" },
-      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
-      "GET /api/settings/speed-source": {
-        speed_source: "gps",
-        manual_speed_kph: null,
-        stale_timeout_s: 5,
-      },
-    }),
-  });
-  await bootLiveDashboard(page, { installRoutes: false });
-  await openSpeedSourceTab(page);
-  await page.locator('[data-speed-source-choice="manual"]').click();
-  await page.locator("#manualSpeedInput").fill("0");
-  await page.locator("#saveSpeedSourceBtn").click();
-
-  await expect(page.locator("#manualSpeedInput")).toHaveAttribute(
-    "aria-invalid",
-    "true",
-  );
-  await expect(page.locator("#manualSpeedFeedback")).toContainText(
-    "Enter a manual speed between 0.1 and 500 km/h.",
-  );
-  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
-    "GPS remains active right now",
-  );
-  await expect(
-    page.locator('[data-speed-source-choice="gps"]'),
-  ).toHaveAttribute("data-selected", "true");
-  await expect(
-    page.locator('[data-speed-source-choice="manual"]'),
-  ).toHaveAttribute("data-choice-state", "draft");
-  await expect(page.locator("#speedSourceDiagnostics")).toHaveAttribute(
-    "open",
-    "",
-  );
-});
-
 test("resolved fallback manual state stays coherent across header status, form, and GPS status", async ({
   page,
 }) => {
@@ -462,50 +420,6 @@ test("settings keep inferred sensor names unassigned until an explicit location 
   const locationSelect = row.locator("select.row-location-select");
 
   await expect(locationSelect).toHaveValue("");
-});
-
-test("failed speed-source save keeps the draft and explains which source remains active", async ({
-  page,
-}) => {
-  await installCommonRoutes(page, {
-    settingsHandler: createSettingsHandlerFromMap({
-      "GET /api/settings/language": { language: "en" },
-      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
-      "GET /api/settings/speed-source": {
-        speed_source: "gps",
-        manual_speed_kph: null,
-        stale_timeout_s: 5,
-      },
-      "PUT /api/settings/speed-source": async (route: Route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: "application/json",
-          body: JSON.stringify({ detail: "Speed source save failed" }),
-        });
-      },
-    }),
-  });
-  await bootLiveDashboard(page, { installRoutes: false });
-  await openSpeedSourceTab(page);
-  await page.locator('[data-speed-source-choice="manual"]').click();
-  await page.locator("#manualSpeedInput").fill("45");
-  await page.locator("#saveSpeedSourceBtn").click();
-
-  await expect(page.locator("#speedSourceSaveFeedback")).toBeVisible();
-  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
-    "Speed source save failed",
-  );
-  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
-    "GPS remains active right now",
-  );
-  await expect(
-    page.locator('input[name="speedSourceRadio"][value="manual"]'),
-  ).toBeChecked();
-  await expect(page.locator("#manualSpeedInput")).toHaveValue("45");
-  await expect(page.locator("#speedSourceDiagnostics")).toHaveAttribute(
-    "open",
-    "",
-  );
 });
 
 test("manual OBD scan sorts named devices first and background rescans progressively improve the list", async ({

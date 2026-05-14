@@ -324,6 +324,46 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     workflow.dispose();
   });
 
+  test("keeps the manual draft when a speed-source save fails", async () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      transport: {
+        async saveSpeedSource() {
+          throw new Error("Speed source save failed");
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    workflow.handleSpeedSourceChanged("manual");
+    workflow.handleManualSpeedInput("45");
+    await workflow.saveSpeedSource();
+
+    expect(workflow.getRenderState()).toMatchObject({
+      manualSpeedInputValue: "45",
+      saveFeedback: {
+        body: "Speed source save failed",
+        detail: "settings.speed.save_failed_detail:settings.speed.gps",
+        title: "settings.speed.save_failed_title",
+        tone: "error",
+      },
+      selectedMode: "manual",
+    });
+    expect(appState.settings.speed.source.value).toBe("gps");
+    expect(appState.settings.speed.manualSpeedKph.value).toBeNull();
+    expect(harness.focuses).toEqual([]);
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
+
   test("scans and pairs OBD devices without DOM bindings", async () => {
     const harness = createHarness();
     const appState = createAppState();
