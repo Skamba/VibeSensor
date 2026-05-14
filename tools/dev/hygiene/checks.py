@@ -35,6 +35,7 @@ from .runtime_policy import (
     check_python_policy_alignment,
     check_runtime_policy_drift,
 )
+from .static_text import check_static_text_hygiene
 from .layout_checks import (
     check_oversized_test_files,
     check_test_inventory_ownership,
@@ -135,6 +136,11 @@ _LIST_CHECK_SPECS = (
         runner=check_dependency_reproducibility_hygiene,
         failure_heading="Dependency reproducibility hygiene drift detected:",
         success_message="Dependency reproducibility hygiene checks passed.",
+    ),
+    ListCheckSpec(
+        runner=check_static_text_hygiene,
+        failure_heading="Static docs/config text hygiene drift detected:",
+        success_message="Static docs/config text hygiene checks passed.",
     ),
     ListCheckSpec(
         runner=check_frontend_generated_contract_boundaries,
