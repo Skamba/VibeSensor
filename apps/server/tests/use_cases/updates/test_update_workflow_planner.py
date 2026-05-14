@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
 from vibesensor.shared.exceptions import UpdatePreparationError
@@ -18,13 +16,40 @@ def _request() -> UpdateRequest:
     )
 
 
-def _planner() -> tuple[UpdateWorkflowPlanner, MagicMock, MagicMock, PreparedUpdateRun]:
+class RecordingPreparation:
+    def __init__(self, prepared: PreparedUpdateRun) -> None:
+        self.prepared = prepared
+        self.requests: list[UpdateRequest] = []
+        self.error: UpdatePreparationError | None = None
+
+    async def prepare(self, request: UpdateRequest) -> PreparedUpdateRun:
+        self.requests.append(request)
+        if self.error is not None:
+            raise self.error
+        return self.prepared
+
+
+class RecordingReleasePlanner:
+    def __init__(self, result: PlannedUpdateRun) -> None:
+        self.result = result
+        self.prepared_runs: list[PreparedUpdateRun] = []
+
+    async def plan(self, prepared: PreparedUpdateRun) -> PlannedUpdateRun:
+        self.prepared_runs.append(prepared)
+        return self.result
+
+
+def _planner() -> tuple[
+    UpdateWorkflowPlanner,
+    RecordingPreparation,
+    RecordingReleasePlanner,
+    PreparedUpdateRun,
+    PlannedUpdateRun,
+]:
     prepared = PreparedUpdateRun(prepared_transport=object())
-    planning_result = MagicMock(spec=PlannedUpdateRun)
-    preparation = MagicMock()
-    preparation.prepare = AsyncMock(return_value=prepared)
-    release_planner = MagicMock()
-    release_planner.plan = AsyncMock(return_value=planning_result)
+    planning_result = PlannedUpdateRun(prepared=prepared, execution_plan=object())
+    preparation = RecordingPreparation(prepared)
+    release_planner = RecordingReleasePlanner(planning_result)
     return (
         UpdateWorkflowPlanner(
             preparation=preparation,
@@ -33,29 +58,30 @@ def _planner() -> tuple[UpdateWorkflowPlanner, MagicMock, MagicMock, PreparedUpd
         preparation,
         release_planner,
         prepared,
+        planning_result,
     )
 
 
 @pytest.mark.asyncio
 async def test_plan_prepares_transport_before_release_planning() -> None:
-    planner, preparation, release_planner, prepared = _planner()
+    planner, preparation, release_planner, prepared, planning_result = _planner()
     request = _request()
     observed: list[PreparedUpdateRun] = []
 
     result = await planner.plan(request, on_prepared=observed.append)
 
-    assert result is release_planner.plan.return_value
+    assert result is planning_result
     assert observed == [prepared]
-    preparation.prepare.assert_awaited_once_with(request)
-    release_planner.plan.assert_awaited_once_with(prepared)
+    assert preparation.requests == [request]
+    assert release_planner.prepared_runs == [prepared]
 
 
 @pytest.mark.asyncio
 async def test_plan_stops_before_release_planning_when_preparation_fails() -> None:
-    planner, preparation, release_planner, _prepared = _planner()
-    preparation.prepare.side_effect = UpdatePreparationError("validation failed")
+    planner, preparation, release_planner, _prepared, _planning_result = _planner()
+    preparation.error = UpdatePreparationError("validation failed")
 
     with pytest.raises(UpdatePreparationError, match="validation failed"):
         await planner.plan(_request())
 
-    release_planner.plan.assert_not_awaited()
+    assert release_planner.prepared_runs == []
