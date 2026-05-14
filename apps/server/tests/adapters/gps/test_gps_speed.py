@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 import math
 
 import pytest
 from test_support.gps import set_gps_snapshot_age
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.gps.gps_speed import MAX_MANUAL_SPEED_KMH, GPSSpeedMonitor
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 
 @pytest.mark.parametrize(
@@ -26,22 +28,37 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
         pytest.param(True, 7.0, None, None, "disconnected", None, 7.0, "manual", False),
         pytest.param(True, None, None, None, "connected", None, None, "none", True),
         pytest.param(False, 11.0, 22.0, 30.0, "connected", 5.0, 11.0, "fallback_manual", True),
+        pytest.param(
+            False,
+            False,
+            22.0,
+            30.0,
+            "connected",
+            5.0,
+            None,
+            "none",
+            True,
+            id="stale-gps-bool-fallback-override-is-ignored",
+        ),
         pytest.param(False, None, 22.0, 30.0, "connected", 5.0, None, "none", True),
+        pytest.param(
+            True,
+            True,
+            None,
+            None,
+            "connected",
+            None,
+            None,
+            "none",
+            True,
+            id="manual-bool-override-is-ignored",
+        ),
         pytest.param(True, None, None, None, "disconnected", None, None, "none", True),
-    ],
-    ids=[
-        "default-manual-override-has-priority",
-        "manual-selected-without-override-uses-fresh-gps",
-        "manual-override-used-while-gps-disconnected",
-        "manual-selected-without-override-and-no-gps-resolves-none",
-        "stale-gps-falls-back-to-manual-override",
-        "stale-gps-without-override-resolves-none",
-        "disconnected-gps-without-override-resolves-none",
     ],
 )
 def test_resolve_speed_source_contract(
     manual_source_selected: bool,
-    override_mps: float | None,
+    override_mps: float | None | bool,
     gps_speed_mps: float | None,
     gps_age_s: float | None,
     connection_state: str,
@@ -53,7 +70,7 @@ def test_resolve_speed_source_contract(
     monitor = GPSSpeedMonitor(gps_enabled=True)
     assert monitor.manual_source_selected is True
     monitor.manual_source_selected = manual_source_selected
-    monitor.override_speed_mps = override_mps
+    monitor.override_speed_mps = override_mps  # type: ignore[assignment]
     monitor.speed_mps = gps_speed_mps
     monitor.connection_state = connection_state
     if gps_age_s is not None:
@@ -89,3 +106,24 @@ def test_set_speed_override_kmh_contract(
 
     assert monitor.set_speed_override_kmh(speed_kmh) == expected_applied_kmh
     assert monitor.override_speed_mps == expected_override_mps
+
+
+def test_set_speed_override_kmh_clamps_above_manual_limit(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.speed_resolution"):
+        applied_kmh = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH + 100.0)
+
+    assert applied_kmh == MAX_MANUAL_SPEED_KMH
+    assert monitor.override_speed_mps == MAX_MANUAL_SPEED_KMH * KMH_TO_MPS
+    assert "exceeds cap" in caplog.text
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.speed_resolution"):
+        applied_kmh = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH)
+
+    assert applied_kmh == MAX_MANUAL_SPEED_KMH
+    assert monitor.override_speed_mps == MAX_MANUAL_SPEED_KMH * KMH_TO_MPS
+    assert "exceeds cap" not in caplog.text
