@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from test_support.findings import make_finding_payload
+from test_support.raw_capture_assertions import warning_codes
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
@@ -94,9 +95,9 @@ def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -
 
     assert prepared.report_facts.evidence.data_basis == "partial_raw_backed"
     assert "raw_replay_incomplete" in prepared.report_facts.confidence.caveat_keys
-    assert WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE in [
-        warning.code for warning in prepared.report_facts.decision.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE in warning_codes(
+        prepared.report_facts.decision.warnings
+    )
     assert any(
         "Partially raw-backed replay" in row.value
         for row in document.verdict_page.proof_snapshot_rows
@@ -151,9 +152,9 @@ def test_prepare_persisted_report_input_surfaces_legacy_sample_timing_warning() 
         )
     )
 
-    assert WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK in [
-        warning.code for warning in prepared.report_facts.decision.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK in warning_codes(
+        prepared.report_facts.decision.warnings
+    )
 
 
 def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> None:
@@ -213,9 +214,9 @@ def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> 
 
     document = build_report_document(prepared)
 
-    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
-        warning.code for warning in prepared.report_facts.decision.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in warning_codes(
+        prepared.report_facts.decision.warnings
+    )
     assert any(
         "late or out-of-order packets quarantined from live processing" in (row.detail or "")
         for row in document.data_trust
@@ -271,9 +272,9 @@ def test_prepare_persisted_report_input_surfaces_sync_unverified_warning() -> No
         )
     )
 
-    assert WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED in [
-        warning.code for warning in prepared.report_facts.decision.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED in warning_codes(
+        prepared.report_facts.decision.warnings
+    )
 
 
 def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -> None:
@@ -349,9 +350,9 @@ def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -
 
     document = build_report_document(prepared)
 
-    assert WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE in [
-        warning.code for warning in prepared.report_facts.decision.warnings
-    ]
+    assert WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE in warning_codes(
+        prepared.report_facts.decision.warnings
+    )
     assert any(
         "Whole-run raw coverage was incomplete for some time-aligned windows" in (row.detail or "")
         for row in document.data_trust

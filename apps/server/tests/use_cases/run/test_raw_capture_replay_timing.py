@@ -4,6 +4,7 @@ import math
 
 import numpy as np
 import pytest
+from test_support.raw_capture_assertions import warning_codes
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
@@ -463,7 +464,7 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
     assert result.raw_replay.raw_capture_mode == "partial_raw_backed"
     assert result.raw_replay.partial_window_count == 1
     assert result.raw_replay.gap_count == 1
-    assert [warning.code for warning in result.raw_replay.warnings] == [
+    assert warning_codes(result.raw_replay.warnings) == [
         WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
         WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     ]
@@ -516,9 +517,7 @@ def test_build_post_analysis_input_warns_when_replay_falls_back_to_legacy_sample
 
     assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.timing_fallback_count == 1
-    assert [warning.code for warning in result.raw_replay.warnings] == [
-        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK
-    ]
+    assert warning_codes(result.raw_replay.warnings) == [WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK]
     assert result.raw_replay_window_coverages[0].reason == "timing_fallback"
 
 
@@ -565,9 +564,7 @@ def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anc
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay.replay_confidence == "fallback"
     assert result.raw_replay.unanchored_sensor_count == 1
-    assert [warning.code for warning in result.raw_replay.warnings] == [
-        WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK
-    ]
+    assert warning_codes(result.raw_replay.warnings) == [WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK]
     assert result.samples[0].vibration_strength_db == 11.0
     assert result.samples[0].dominant_freq_hz == 13.0
 
@@ -626,7 +623,7 @@ def test_build_post_analysis_input_falls_back_when_sync_proof_is_stale() -> None
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay.sync_unverified_sensor_count == 1
     assert result.raw_replay.stale_sync_sensor_count == 1
-    assert [warning.code for warning in result.raw_replay.warnings] == [
+    assert warning_codes(result.raw_replay.warnings) == [
         WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
         WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     ]
