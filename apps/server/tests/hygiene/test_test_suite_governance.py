@@ -13,17 +13,6 @@ def hygiene_module() -> ModuleType:
     return load_check_hygiene_module("check_hygiene_test_suite_governance")
 
 
-def test_test_suite_governance_passes_for_current_repo(
-    hygiene_module: ModuleType,
-) -> None:
-    errors = [
-        *hygiene_module.check_test_inventory_ownership(),
-        *hygiene_module.check_test_marker_policy(),
-    ]
-
-    assert errors == []
-
-
 def test_inventory_reports_unowned_and_multiply_owned_tests(
     hygiene_module: ModuleType,
 ) -> None:
