@@ -1,8 +1,8 @@
-"""Multi-sensor transient scenarios that stay distinct after matrix consolidation.
+"""Opt-in multi-sensor transient diagnostic matrix.
 
 Representative corner/speed, no-fault baseline, and phased-onset coverage now
 lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
-multi-sensor transient behaviors that remain unique.
+multi-sensor transient axes available outside default backend CI.
 """
 
 from __future__ import annotations
@@ -60,6 +60,8 @@ from test_support.diagnostic_matrix_catalogs import (
 from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_WHEEL_CORNERS as _CORNERS,
 )
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 # Helpers
 

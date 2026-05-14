@@ -34,7 +34,10 @@ def _install_main_fakes(module, monkeypatch, tmp_path: Path) -> tuple[dict[str, 
     monkeypatch.setattr(
         module,
         "collect_test_ids",
-        lambda _pytest_args: ["apps/server/tests/app/test_app_main.py::test_fast"],
+        lambda pytest_args: (
+            captured.setdefault("collect_args", list(pytest_args))
+            and ["apps/server/tests/app/test_app_main.py::test_fast"]
+        ),
     )
     monkeypatch.setattr(module, "_load_duration_cache", lambda _path: {})
     monkeypatch.setattr(module, "_observed_durations_from_junit", lambda _path, _selected: {})
@@ -119,6 +122,8 @@ def test_main_builds_pytest_command_for_selected_backend_shard(
     assert command[:4] == [sys.executable, "-m", "pytest", "-q"]
     assert command[command.index("-n") + 1] == "3"
     assert command[command.index("--junitxml") + 1] == str(tmp_path / "backend-tests-1.xml")
+    assert captured["collect_args"] == ["-m", "not diagnostic_matrix", "apps/server/tests"]
+    assert command[command.index("-m", 2) + 1] == "not diagnostic_matrix"
     assert "apps/server/tests/app/test_app_main.py" in command
     assert any("running shard 1/1" in line for line in emitted)
 
@@ -141,6 +146,28 @@ def test_main_cli_overrides_env_xdist_workers(monkeypatch, tmp_path: Path) -> No
     assert module.main(["--xdist-workers", "2"]) == 0
 
     assert captured["cmd"][4:6] == ["-n", "2"]
+
+
+def test_main_can_include_diagnostic_matrix(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.delenv(module._INCLUDE_DIAGNOSTIC_MATRIX_ENV, raising=False)
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+
+    assert module.main(["--include-diagnostic-matrix"]) == 0
+
+    command = captured["cmd"]
+    assert captured["collect_args"] == ["apps/server/tests"]
+    assert "not diagnostic_matrix" not in command
+
+
+def test_main_reads_diagnostic_matrix_env(monkeypatch, tmp_path: Path) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.setenv(module._INCLUDE_DIAGNOSTIC_MATRIX_ENV, "1")
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+
+    assert module.main([]) == 0
+
+    assert captured["collect_args"] == ["apps/server/tests"]
 
 
 def test_main_passes_configured_shard_timeout(monkeypatch, tmp_path: Path) -> None:
