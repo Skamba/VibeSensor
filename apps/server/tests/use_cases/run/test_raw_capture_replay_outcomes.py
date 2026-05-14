@@ -4,6 +4,7 @@ import math
 from dataclasses import replace
 
 import numpy as np
+from test_support.raw_capture_assertions import warning_codes
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
@@ -246,9 +247,7 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
     assert result.raw_replay.replay_confidence == "fallback"
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay_window_coverages[0].reason == "fft_no_valid_bins"
-    assert WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE in [
-        warning.code for warning in result.raw_replay.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE in warning_codes(result.raw_replay.warnings)
     assert rebuilt.vibration_strength_db is None
     assert rebuilt.dominant_freq_hz is None
     assert rebuilt.top_peaks == ()
@@ -304,9 +303,7 @@ def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> 
     assert result.raw_replay.write_error_chunk_count == 0
     assert result.raw_replay.replay_confidence == "partial"
     assert result.raw_replay.raw_capture_mode == "partial_raw_backed"
-    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
-        warning.code for warning in result.raw_replay.warnings
-    ]
+    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in warning_codes(result.raw_replay.warnings)
 
 
 def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None:
@@ -345,9 +342,7 @@ def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None
     assert result.raw_replay.raw_capture_loss_policy_severity == "fatal"
     assert result.raw_replay.raw_capture_loss_policy_reason == "raw_capture_queue_overflow_fatal"
     assert result.raw_replay.raw_capture_loss_policy_gate_whole_run is True
-    assert WARNING_CODE_RAW_CAPTURE_LOSS_POLICY in [
-        warning.code for warning in result.raw_replay.warnings
-    ]
+    assert WARNING_CODE_RAW_CAPTURE_LOSS_POLICY in warning_codes(result.raw_replay.warnings)
 
 
 def test_build_post_analysis_input_falls_back_when_raw_capture_missing() -> None:
