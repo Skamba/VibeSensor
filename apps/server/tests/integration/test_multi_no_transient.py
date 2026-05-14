@@ -1,8 +1,8 @@
-"""Multi-sensor steady scenarios that stay distinct after matrix consolidation.
+"""Opt-in multi-sensor steady diagnostic matrix.
 
 Representative corner/speed, no-fault baseline, and phased-onset coverage now
 lives in ``test_synthetic_scenario_matrix.py``. This module keeps the
-multi-sensor-specific steady-state behaviors that remain unique.
+multi-sensor-specific steady-state axes available outside default backend CI.
 """
 
 from __future__ import annotations
@@ -50,6 +50,8 @@ from test_support.diagnostic_matrix_catalogs import (
     DIAGNOSTIC_WEAK_SIGNAL_CORNERS,
     DIAGNOSTIC_WHEEL_CORNERS,
 )
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 # Helpers
 

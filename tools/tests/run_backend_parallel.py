@@ -49,6 +49,7 @@ LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci"
 _DURATION_CACHE_ENV = "VIBESENSOR_BACKEND_DURATION_CACHE"
 _XDIST_WORKERS_ENV = "VIBESENSOR_BACKEND_XDIST_WORKERS"
 _SHARD_TIMEOUT_ENV = "VIBESENSOR_BACKEND_SHARD_TIMEOUT_S"
+_INCLUDE_DIAGNOSTIC_MATRIX_ENV = "VIBESENSOR_INCLUDE_DIAGNOSTIC_MATRIX"
 _DEFAULT_DURATION = 1.0
 _DEFAULT_XDIST_WORKERS = 3
 _DEFAULT_SHARD_TIMEOUT_S = 900
@@ -96,6 +97,21 @@ def _shard_timeout_default(env: Mapping[str, str] | None = None) -> int:
     if value <= 0:
         raise SystemExit(f"{_SHARD_TIMEOUT_ENV} must be > 0")
     return value
+
+
+def _include_diagnostic_matrix_default(env: Mapping[str, str] | None = None) -> bool:
+    source = os.environ if env is None else env
+    raw = source.get(_INCLUDE_DIAGNOSTIC_MATRIX_ENV, "")
+    if raw == "":
+        return False
+    normalized = raw.lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise SystemExit(
+        f"{_INCLUDE_DIAGNOSTIC_MATRIX_ENV} must be one of 1/0, true/false, yes/no, or on/off"
+    )
 
 
 def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
@@ -310,6 +326,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"{_SHARD_TIMEOUT_ENV} or {_DEFAULT_SHARD_TIMEOUT_S}."
         ),
     )
+    parser.add_argument(
+        "--include-diagnostic-matrix",
+        action="store_true",
+        default=_include_diagnostic_matrix_default(),
+        help=(
+            "Include tests marked diagnostic_matrix. Default backend CI excludes "
+            f"them unless {_INCLUDE_DIAGNOSTIC_MATRIX_ENV}=1."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
@@ -326,7 +351,10 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    collected = collect_test_ids(["apps/server/tests"])
+    marker_args = (
+        [] if args.include_diagnostic_matrix else ["-m", "not diagnostic_matrix"]
+    )
+    collected = collect_test_ids([*marker_args, "apps/server/tests"])
     grouped_tests = _group_tests_by_path(collected)
 
     duration_cache_path = _duration_cache_path(os.environ)
@@ -373,6 +401,7 @@ def main(argv: list[str] | None = None) -> int:
         "--tb=short",
         "--junitxml",
         str(junit_path),
+        *marker_args,
         *selected_targets,
     ]
     started = time.monotonic()
