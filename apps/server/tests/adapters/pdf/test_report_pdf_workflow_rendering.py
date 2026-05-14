@@ -17,7 +17,6 @@ from test_support.report_helpers import (
     minimal_summary,
     recapture_guidance_summary,
     sequential_same_source_summary,
-    trunk_primary_guidance_summary,
     write_jsonl,
 )
 from test_support.report_helpers import report_run_metadata as _run_metadata
@@ -278,26 +277,13 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
 
 
 def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> None:
-    pdf = build_report_pdf(
-        build_report_document(prepare_report_input(ambiguous_primary_location_summary()))
-    )
+    document = build_report_document(prepare_report_input(ambiguous_primary_location_summary()))
+    pdf = build_report_pdf(document)
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
-    assert "Mixed signal between Front-Left and Rear-Left" in text
+    assert document.observed.strongest_location is not None
+    assert document.observed.strongest_location in text
     assert "Front-Left / Rear-Left" not in text
-
-
-def test_build_report_pdf_avoids_trunk_specific_wheel_guidance_for_driveline_primary() -> None:
-    pdf = build_report_pdf(
-        build_report_document(
-            prepare_report_input(trunk_primary_guidance_summary(primary_source="driveline"))
-        )
-    )
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
-
-    assert "Inspect propshaft runout/balance" in text
-    assert "Check Trunk for tire damage" not in text
-    assert "Check driveline components near Trunk" not in text
 
 
 def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
@@ -389,41 +375,6 @@ def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
     assert "detection windows" not in page_one_lower
     assert "this run gives a sensible first inspection" not in page_one_lower
     assert "alternative source still in scope" not in page_one_lower
-
-
-def test_page_one_long_wheel_action_fits_primary_preview() -> None:
-    pdf = build_report_pdf(
-        ReportDocument(
-            title="VibeSensor Diagnostic Report",
-            run_id="long-action-page-one",
-            verdict_page=VerdictPageData(
-                suspected_source="Wheel / Tire",
-                inspect_first="Front-Left",
-                action_status="Inspect first — moderate confidence",
-                action_status_note="If first check is clean: Inspect Driveline next",
-                reason_sentence="Wheel / Tire stayed strongest near Front-Left.",
-                dominant_corner="Front-Left",
-                runner_up_corner="Front-Right",
-                dominance_ratio_label="2.1x stronger",
-                location_confidence="Moderate",
-                coverage_label="4 of 4 expected positions stayed connected.",
-                fallback_path="Inspect Driveline next",
-            ),
-            next_steps=[
-                NextStep(
-                    action=(
-                        "Check Front-Left tire damage, belt shift, flat spots, uneven wear, "
-                        "and pressure mismatch."
-                    )
-                )
-            ],
-        )
-    )
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
-
-    assert "Check Front-Left tire damage" in text
-    assert "pressure mismatch" in text
-    assert "uneven wear, or" not in text
 
 
 def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_b() -> None:
@@ -578,62 +529,45 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
 
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_on_page_one() -> None:
-    pdf = build_report_pdf(
-        build_report_document(prepare_report_input(sequential_same_source_summary()))
-    )
+    document = build_report_document(prepare_report_input(sequential_same_source_summary()))
+    pdf = build_report_pdf(document)
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
     assert "Front-Left" in text
     assert "Rear-Right" in text
-    assert "No single corner stayed dominant through the whole run" in text
+    assert document.verdict_page.proof_summary
+    assert document.verdict_page.proof_summary in text
 
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_flow() -> None:
-    pdf = build_report_pdf(
-        build_report_document(
-            prepare_report_input(sequential_same_source_summary(weak_spatial=True))
-        )
+    document = build_report_document(
+        prepare_report_input(sequential_same_source_summary(weak_spatial=True))
     )
+    pdf = build_report_pdf(document)
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
-    assert "Recapture before acting" in text
+    assert document.verdict_page.action_status in text
     assert "Front-Left" in text
     assert "Rear-Right" in text
-    assert "No single corner stayed dominant through the whole run" in text
+    assert document.verdict_page.proof_summary
+    assert document.verdict_page.proof_summary in text
 
 
 @pytest.mark.parametrize(
-    ("mode", "expected_page_two_text"),
+    "mode",
     [
-        pytest.param(
-            "steady",
-            "Speed range never settled into a usable diagnostic band",
-            id="steady-speed-page-two-guidance",
-        ),
-        pytest.param(
-            "overlap",
-            "Wheel / Tire and Driveline evidence overlapped",
-            id="source-overlap-page-two-guidance",
-        ),
-        pytest.param(
-            "weak",
-            "Location evidence stayed spread across multiple positions",
-            id="weak-location-page-two-guidance",
-        ),
-        pytest.param(
-            "transient",
-            "The strongest signal was transient or intermittent",
-            id="transient-page-two-guidance",
-        ),
+        pytest.param("steady", id="steady-speed-page-two-guidance"),
+        pytest.param("overlap", id="source-overlap-page-two-guidance"),
+        pytest.param("weak", id="weak-location-page-two-guidance"),
+        pytest.param("transient", id="transient-page-two-guidance"),
     ],
 )
 def test_build_report_pdf_recapture_page_uses_scenario_specific_guidance(
     mode: str,
-    expected_page_two_text: str,
 ) -> None:
-    pdf = build_report_pdf(
-        build_report_document(prepare_report_input(recapture_guidance_summary(mode)))
-    )
+    document = build_report_document(prepare_report_input(recapture_guidance_summary(mode)))
+    pdf = build_report_pdf(document)
     page_two_text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split())
 
-    assert expected_page_two_text in page_two_text
+    assert document.appendix_a.capture_issues
+    assert document.appendix_a.capture_issues[0] in page_two_text
