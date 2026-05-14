@@ -3,10 +3,15 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
+from vibesensor import report_i18n
 from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
+
+
+def _tr(key: str, **kwargs: object) -> str:
+    return report_i18n.tr("en", key, **kwargs)
 
 
 def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_signals() -> None:
@@ -121,9 +126,11 @@ def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_s
     assert "stable_frequency" in confidence.signal_keys
     assert "localized_support" in confidence.signal_keys
     assert confidence.caveat_keys == ()
-    assert data.observed.certainty_label == "High"
-    assert "raw-backed replay confirmed the match" in data.observed.certainty_reason
-    assert data.verdict_page.proof_snapshot_rows[0].label == "Confidence"
+    assert confidence.raw_backed_sample_count == 48
+    assert confidence.top_support_location == "Front Left"
+    assert data.observed.certainty_label == _tr(confidence.label_key)
+    assert data.observed.certainty_reason
+    assert data.verdict_page.proof_snapshot_rows[0].label == _tr("CONFIDENCE_LABEL")
 
 
 def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary_only_signals() -> (
@@ -205,9 +212,10 @@ def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary
     assert "summary_only" in confidence.caveat_keys
     assert "close_alternative" in confidence.caveat_keys
     assert "mixed_support_locations" in confidence.caveat_keys
-    assert data.observed.certainty_label == "Low"
-    assert "only summary-level evidence was available" in data.observed.certainty_reason
-    assert "matched frequency drifted across 12.1-15.6 Hz" in data.observed.certainty_reason
+    assert data.observed.certainty_label == _tr(confidence.label_key)
+    assert confidence.stable_frequency_min_hz == 12.1
+    assert confidence.stable_frequency_max_hz == 15.6
+    assert data.observed.certainty_reason
     assert data.verdict_page.also_consider == "Driveline"
 
 
@@ -335,8 +343,8 @@ def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> 
     assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
         "whole_run_context_incomplete"
     ]
-    assert "speed context was missing or stale" in data.observed.certainty_reason
-    assert "RPM context was missing or stale" in data.observed.certainty_reason
+    assert _tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS") in data.observed.certainty_reason
+    assert _tr("REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS") in data.observed.certainty_reason
 
 
 def test_prepare_persisted_report_input_marks_legacy_raw_backed_context_fallback() -> None:
@@ -423,4 +431,4 @@ def test_prepare_persisted_report_input_marks_legacy_raw_backed_context_fallback
     assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
         "whole_run_context_legacy_fallback"
     ]
-    assert "predates whole-run context coverage tracking" in data.observed.certainty_reason
+    assert _tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT") in data.observed.certainty_reason

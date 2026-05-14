@@ -3,8 +3,47 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
+from vibesensor import report_i18n
 from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.use_cases.history.report_document import build_report_document
+
+
+def _tr(key: str, **kwargs: object) -> str:
+    return report_i18n.tr("en", key, **kwargs)
+
+
+def _support_quality_reason(
+    *,
+    count: str,
+    duration: str,
+    quality_text: str,
+) -> str:
+    return "; ".join(
+        [
+            _tr("REPORT_SUPPORT_WINDOW_SUMMARY_FULL", count=count, duration=duration),
+            quality_text,
+        ]
+    )
+
+
+def _assert_whole_run_candidate_reasons(document: ReportDocument) -> None:
+    appendix_a = document.appendix_a
+    assert appendix_a.ranked_candidates[0].reason == _support_quality_reason(
+        count="12",
+        duration="6.0",
+        quality_text=_tr(
+            "REPORT_FINDING_DATA_QUALITY_LIMITED",
+            usable="10",
+            excluded="1",
+            limitations=_tr("REPORT_DATA_QUALITY_LIMIT_SPEED_CONTEXT"),
+        ),
+    )
+    assert appendix_a.ranked_candidates[1].reason == _support_quality_reason(
+        count="9",
+        duration="4.5",
+        quality_text=_tr("REPORT_FINDING_DATA_QUALITY_CLEAN", usable="9", excluded="0"),
+    )
 
 
 def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() -> None:
@@ -187,9 +226,7 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
     assert document.appendix_b.runner_up_corner == "Front-Left"
     assert document.appendix_a.ranked_candidates[0].source_name == "Driveline"
     assert document.appendix_a.ranked_candidates[1].source_name == "Wheel / Tire"
-    assert "quality limited" in document.appendix_a.ranked_candidates[0].reason
-    assert "speed context" in document.appendix_a.ranked_candidates[0].reason
-    assert "quality clean" in document.appendix_a.ranked_candidates[1].reason
+    _assert_whole_run_candidate_reasons(document)
     assert prepared.report_facts.confidence.signal_keys == ("raw_backed",)
     assert prepared.report_facts.confidence.caveat_keys == ("close_alternative",)
     assert any(
