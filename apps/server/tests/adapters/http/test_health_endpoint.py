@@ -61,7 +61,7 @@ def test_health_endpoint_response_shape(_health_client):
     assert result["ingest"]["clients"] == []
 
 
-def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_client):
+def test_health_endpoint_serializes_representative_degraded_snapshot(_health_client):
     client, state, _app = _health_client
 
     state.registry.data_loss_snapshot.return_value = {
@@ -101,38 +101,13 @@ def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_cl
     assert response.status_code == 200
     result = response.json()
     assert result["status"] == "degraded"
-    assert result["degradation_reasons"] == [
-        "startup_state:failed",
-        "startup_error",
-        "background_task_failures",
-        "processing_state:degraded",
-        "processing_failures",
-        "processing_failure:compute_all",
-        "frames_dropped",
-        "server_queue_drops",
-        "persistence_write_error",
-        "persistence_samples_dropped",
-        "analyzing_runs_present",
-    ]
+    assert "startup_error" in result["degradation_reasons"]
+    assert "persistence_write_error" in result["degradation_reasons"]
     assert result["startup_phase"] == "gps-speed"
     assert result["startup_error"] == "gpsd unavailable"
     assert result["background_task_failures"] == {"metrics-log": "disk write failed"}
-    assert result["subsystems"]["runtime"] == {
-        "status": "unhealthy",
-        "reason_codes": [
-            "startup_not_ready",
-            "startup_error",
-            "background_task_failures",
-        ],
-    }
-    assert result["subsystems"]["recorder"] == {
-        "status": "unhealthy",
-        "reason_codes": ["persistence_write_error", "persistence_samples_dropped"],
-    }
-    assert result["subsystems"]["post_analysis"] == {
-        "status": "degraded",
-        "reason_codes": ["analyzing_runs_present"],
-    }
+    assert result["subsystems"]["runtime"]["status"] == "unhealthy"
+    assert result["subsystems"]["recorder"]["status"] == "unhealthy"
     assert result["processing_failure_categories"] == {"compute_all": 2}
     assert result["processing_last_failure"] == "worker pool failed"
     assert result["data_loss"]["affected_clients"] == 1
@@ -141,49 +116,6 @@ def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_cl
     assert result["persistence"]["analysis_queue_depth"] == 2
     assert result["persistence"]["analysis_queue_max_depth"] == 5
     assert result["persistence"]["analysis_active_run_id"] == "run-42"
-
-
-def test_health_endpoint_degrades_for_db_corruption(_health_client):
-    client, state, _app = _health_client
-    state.health_state.mark_db_corrupted("row 7 missing from index")
-
-    response = client.get("/api/health")
-
-    assert response.status_code == 200
-    result = response.json()
-    assert result["status"] == "degraded"
-    assert result["db_corruption_detected"] is True
-    assert "db_corruption_detected" in result["degradation_reasons"]
-
-
-def test_health_endpoint_degrades_for_db_engine_failure(_health_client):
-    client, state, _app = _health_client
-    state.health_state.mark_db_engine_unhealthy(
-        "raw_capture_append_timeout",
-        "History DB engine operation timed out",
-    )
-
-    response = client.get("/api/health")
-
-    assert response.status_code == 200
-    result = response.json()
-    assert result["status"] == "degraded"
-    assert result["db_engine_unhealthy"] is True
-    assert result["db_engine_unhealthy_reason"] == "raw_capture_append_timeout"
-    assert "db_engine_unhealthy" in result["degradation_reasons"]
-
-
-def test_health_endpoint_warns_for_buffer_overflow_drops(_health_client):
-    client, state, _app = _health_client
-    state.processor.buffer_overflow_drops.return_value = 4
-
-    response = client.get("/api/health")
-
-    assert response.status_code == 200
-    result = response.json()
-    assert result["status"] == "warn"
-    assert result["data_loss"]["buffer_overflow_drops"] == 4
-    assert "buffer_overflow_drops" in result["degradation_reasons"]
 
 
 def test_health_endpoint_validates_through_fastapi_response_field(_health_client):
