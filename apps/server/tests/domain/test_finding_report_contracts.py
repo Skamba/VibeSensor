@@ -82,3 +82,18 @@ def test_report_serializes_core_metadata_for_document_consumers() -> None:
     assert document.sample_count == report.sample_count
     assert document.sensor_count == report.sensor_count
     assert document.lang == report.lang
+
+
+def test_report_rejects_empty_run_id() -> None:
+    with pytest.raises(ValueError, match="run_id must be non-empty"):
+        Report(run_id="")
+
+
+def test_report_rejects_negative_duration() -> None:
+    with pytest.raises(ValueError, match="duration_s must be non-negative"):
+        Report(run_id="r1", duration_s=-1.0)
+
+
+def test_report_allows_zero_duration() -> None:
+    report = Report(run_id="r1", duration_s=0.0)
+    assert report.duration_s == 0.0

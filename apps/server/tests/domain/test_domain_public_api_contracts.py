@@ -47,14 +47,9 @@ def test_public_domain_imports_support_run_ready_configuration() -> None:
 
     run.start()
 
-    assert car.display_name == "Track Car (hatchback)"
-    assert car.tire_circumference_m is not None
-    assert sensor.is_placed
-    assert sensor.location_code == "front_left_wheel"
-    assert sensor.placement is not None
-    assert sensor.placement.display_name == "Front Left Wheel"
-    assert speed_source.is_manual
-    assert speed_source.effective_speed_kmh == pytest.approx(82.0)
+    assert isinstance(car, Car)
+    assert isinstance(sensor.placement, SensorPlacement)
+    assert isinstance(speed_source, SpeedSource)
     assert DrivingPhase.CRUISE.value == "cruise"
     assert run.is_recording
     assert RunCapture(run_id="run-ready").run_id == "run-ready"

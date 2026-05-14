@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
+import pytest
+
 from vibesensor.domain import Car, CarSnapshot
 from vibesensor.domain.tire_spec import AxleTireSetup
 from vibesensor.shared.order_reference_settings import (
@@ -127,6 +129,78 @@ class TestOrderReferenceSpecFromSettings:
 
 
 class TestCarOrderReferenceSpec:
+    @pytest.mark.parametrize(
+        (
+            "car",
+            "expected_name",
+            "expected_car_type",
+            "expected_display_name",
+            "expected_tire_width_mm",
+            "expected_tire_aspect_pct",
+            "expected_rim_in",
+        ),
+        [
+            pytest.param(
+                Car(),
+                "Unnamed Car",
+                "sedan",
+                "Unnamed Car (sedan)",
+                None,
+                None,
+                None,
+                id="defaults",
+            ),
+            pytest.param(
+                Car(name="Track Tool", car_type="coupe"),
+                "Track Tool",
+                "coupe",
+                "Track Tool (coupe)",
+                None,
+                None,
+                None,
+                id="custom-type",
+            ),
+            pytest.param(
+                Car(name="Test", aspects=_order_settings()),
+                "Test",
+                "sedan",
+                "Test (sedan)",
+                285.0,
+                30.0,
+                21.0,
+                id="tire-aspects",
+            ),
+        ],
+    )
+    def test_car_derived_properties(
+        self,
+        car: Car,
+        expected_name: str,
+        expected_car_type: str,
+        expected_display_name: str,
+        expected_tire_width_mm: float | None,
+        expected_tire_aspect_pct: float | None,
+        expected_rim_in: float | None,
+    ) -> None:
+        assert car.name == expected_name
+        assert car.car_type == expected_car_type
+        assert car.display_name == expected_display_name
+        assert car.tire_width_mm == expected_tire_width_mm
+        assert car.tire_aspect_pct == expected_tire_aspect_pct
+        assert car.rim_in == expected_rim_in
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            pytest.param("tire_width_mm", id="width"),
+            pytest.param("tire_aspect_pct", id="aspect"),
+            pytest.param("rim_in", id="rim"),
+        ],
+    )
+    def test_car_rejects_zero_tire_dimension(self, key: str) -> None:
+        with pytest.raises(ValueError, match="positive finite"):
+            Car(aspects={key: 0.0})
+
     def test_car_with_tire_aspects_has_spec(self) -> None:
         car = Car(
             aspects=_order_settings(final_drive_ratio=3.08),
