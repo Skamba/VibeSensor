@@ -442,6 +442,12 @@ class FakeState:
         )
 
 
+def make_app_from_state(state: FakeState) -> FastAPI:
+    app = FastAPI()
+    app.include_router(create_router(state))
+    return app
+
+
 def _build_app_router_and_state(
     language: str = "en",
     sample_count: int = 20,
