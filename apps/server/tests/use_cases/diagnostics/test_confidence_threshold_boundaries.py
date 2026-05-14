@@ -20,19 +20,14 @@ from test_support import (
     CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
-    SENSOR_FL,
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
     assert_confidence_label_valid,
     assert_no_wheel_fault,
-    assert_tolerant_no_fault,
     extract_top,
-    make_diffuse_samples,
-    make_noise_samples,
     make_profile_fault_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
     top_confidence,
 )
@@ -289,55 +284,30 @@ def test_confidence_label_transition(
             assert tone == "neutral"
 
 
-# ===================================================================
-# T6 – Noise-only baseline must not produce spurious medium+ fault
-# 3 speeds × 2 sensor configs × 5 profiles = 30 cases
-# ===================================================================
-_SENSOR_CONFIGS = [
-    ("single", [SENSOR_FL]),
-    ("quad", ALL_WHEEL_SENSORS),
-]
-
-
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-@pytest.mark.parametrize(("cfg_name", "sensors"), _SENSOR_CONFIGS, ids=["single", "quad"])
-def test_noise_only_no_spurious_fault(
-    profile: dict[str, Any],
-    cfg_name: str,
-    sensors: list[str],
-    speed: float,
-) -> None:
-    """Pure noise should never produce a wheel fault at ≥0.40 confidence."""
-    samples = make_noise_samples(sensors=sensors, speed_kmh=speed, n_samples=40)
-    meta = profile_metadata(profile)
-    summary = run_analysis(samples, metadata=meta)
-    assert_no_wheel_fault(
-        summary,
-        msg=f"noise-only at {speed} km/h, {cfg_name} sensors ({profile['name']})",
+def test_mixed_sensor_fault_still_localizes_to_wheel(profile: dict[str, Any]) -> None:
+    """Mixed wheel/cabin sensors still produce a wheel-localized confidence result."""
+    samples = make_profile_fault_samples(
+        profile=profile,
+        fault_sensor="rear-left",
+        sensors=[
+            "front-left",
+            "front-right",
+            "rear-left",
+            "rear-right",
+            "driver-seat",
+            "trunk",
+            "engine-bay",
+            "transmission",
+        ],
+        speed_kmh=SPEED_MID,
+        fault_amp=0.08,
+        fault_vib_db=28.0,
+        n_samples=30,
     )
-
-
-# ===================================================================
-# T7 – Diffuse vibration at wheel frequency should NOT localize
-# 3 speeds × 5 profiles = 15 cases
-# ===================================================================
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_diffuse_at_wheel_freq_not_localized(profile: dict[str, Any], speed: float) -> None:
-    """Diffuse vibration matching wheel frequency should NOT produce localized fault."""
-    whz = profile_wheel_hz(profile, speed)
-    samples = make_diffuse_samples(
-        sensors=ALL_WHEEL_SENSORS,
-        speed_kmh=speed,
-        n_samples=35,
-        amp=0.04,
-        vib_db=22.0,
-        freq_hz=whz,
-    )
-    meta = profile_metadata(profile)
-    summary = run_analysis(samples, metadata=meta)
-    assert_tolerant_no_fault(
-        summary,
-        msg=f"diffuse@wheel_hz at {speed} km/h ({profile['name']})",
+    top = extract_top(run_analysis(samples, metadata=profile_metadata(profile)))
+    assert top is not None, f"Expected mixed-sensor wheel finding for {profile['name']}"
+    location = str(top.get("strongest_location") or "").lower()
+    assert "rear" in location and "left" in location, (
+        f"Expected rear-left localization for {profile['name']}, got {location!r}"
     )

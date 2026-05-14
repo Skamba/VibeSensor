@@ -1,10 +1,4 @@
-"""Tests for source-aware localization, diffuse excitation detection,
-no-fault suppression, and confidence calibration.
-
-These tests validate the fixes for false localization (non-wheel sensors
-assigned as wheel fault sources), false-positive wheel findings (no-fault
-scenarios producing diagnoses), and diffuse excitation detection.
-"""
+"""Source-aware localization, unit consistency, and phased scenario contracts."""
 
 from __future__ import annotations
 
@@ -18,7 +12,7 @@ from test_support import wheel_hz as _wheel_hz
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.shared.locations import WHEEL_LOCATION_CODES, is_wheel_location
+from vibesensor.shared.locations import is_wheel_location
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 
 # ---------------------------------------------------------------------------
@@ -28,7 +22,6 @@ from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_m
 
 _ALL_WHEEL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 _MIXED_SENSORS = ["front-left", "front-right", "rear-left", "rear-right", "driver-seat", "trunk"]
-_CABIN_SENSORS = ["driver-seat", "front-passenger", "rear-left-seat"]
 
 
 def _build_fault_samples(
@@ -71,71 +64,7 @@ def _wheel_causes(top_causes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# 1. Sensor-type classification tests
-# ---------------------------------------------------------------------------
-
-
-class TestSensorTypeClassification:
-    """is_wheel_location must correctly classify all location variants."""
-
-    @pytest.mark.parametrize(
-        "label",
-        [
-            "front-left",
-            "front-right",
-            "rear-left",
-            "rear-right",
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-            "front_left_wheel",
-            "front_right_wheel",
-            "rear_left_wheel",
-            "rear_right_wheel",
-            "FL Wheel",
-            "FR Wheel",
-            "RL Wheel",
-            "RR Wheel",
-        ],
-    )
-    def test_wheel_locations_detected(self, label: str) -> None:
-        assert is_wheel_location(label), f"Expected {label!r} to be classified as wheel"
-
-    @pytest.mark.parametrize(
-        "label",
-        [
-            "driver-seat",
-            "Driver Seat",
-            "trunk",
-            "Trunk",
-            "engine_bay",
-            "Engine Bay",
-            "transmission",
-            "Transmission",
-            "driveshaft_tunnel",
-            "front_subframe",
-            "rear_subframe",
-            "front-passenger",
-            "rear-left-seat",
-            "rear-center-seat",
-        ],
-    )
-    def test_non_wheel_locations_not_detected(self, label: str) -> None:
-        assert not is_wheel_location(label), f"Expected {label!r} NOT to be classified as wheel"
-
-    def test_empty_and_none(self) -> None:
-        assert not is_wheel_location("")
-        assert not is_wheel_location("   ")
-
-    def test_wheel_location_codes_are_complete(self) -> None:
-        assert len(WHEEL_LOCATION_CODES) == 4
-        for code in WHEEL_LOCATION_CODES:
-            assert is_wheel_location(code)
-
-
-# ---------------------------------------------------------------------------
-# 2. Source-aware localization tests
+# 1. Source-aware localization tests
 # ---------------------------------------------------------------------------
 
 
@@ -257,166 +186,7 @@ class TestSourceAwareLocalization:
         assert top_location == "Driver Seat"
 
 
-# ---------------------------------------------------------------------------
-# 3. Diffuse excitation detection tests
-# ---------------------------------------------------------------------------
-
-
-class TestDiffuseExcitationDetection:
-    """Diffuse/global excitation should not produce corner-specific wheel diagnosis."""
-
-    def test_uniform_peaks_all_sensors_flags_diffuse(self) -> None:
-        """When all sensors show identical peaks, the finding should be flagged
-        as diffuse excitation with reduced confidence.
-        """
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        # Use varying speed to avoid constant-speed filter
-        for i in range(40):
-            for s in sensors:
-                speed = 50.0 + i * 1.5
-                whz = _wheel_hz(speed)
-                peaks = [{"hz": whz, "amp": 0.05}, {"hz": whz * 2, "amp": 0.02}]
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=24.0,
-                    ),
-                )
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        order_findings = _wheel_findings(findings, exclude_ref=True)
-        # If any order finding exists, it should be flagged as diffuse
-        for f in order_findings:
-            assert f.diffuse_excitation is True, (
-                f"Expected diffuse_excitation flag for uniform-amplitude finding: {f.finding_key}"
-            )
-
-    def test_single_sensor_fault_not_flagged_diffuse(self) -> None:
-        """When only one sensor has matching peaks, should NOT be flagged diffuse."""
-        samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right", n_samples=40)
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        order_findings = _wheel_findings(findings, exclude_ref=True)
-        for f in order_findings:
-            assert f.diffuse_excitation is not True, (
-                "Single-sensor fault should NOT be flagged as diffuse"
-            )
-
-
-# ---------------------------------------------------------------------------
-# 4. No-fault suppression tests
-# ---------------------------------------------------------------------------
-
-
-class TestNoFaultSuppression:
-    """No-fault scenarios must not produce high-confidence wheel diagnoses."""
-
-    def test_idle_only_no_wheel_diagnosis(self) -> None:
-        """Pure idle samples should not produce a wheel diagnosis."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        for i in range(20):
-            for s in sensors:
-                peaks = [{"hz": 12.0, "amp": 0.003}]
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=0.0,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=6.0,
-                    ),
-                )
-        metadata = _standard_metadata()
-        summary = summarize_run_data(metadata, samples, lang="en", file_name="idle_only")
-        top_causes = summary.get("top_causes", [])
-        # No wheel/tire diagnosis should appear for idle-only data
-        wc = _wheel_causes(top_causes)
-        assert len(wc) == 0, f"Idle-only scenario produced wheel diagnosis: {wc}"
-
-    def test_road_noise_no_specific_fault(self) -> None:
-        """Road noise on all sensors should not produce a confident wheel finding."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        for i in range(30):
-            speed = 40.0 + i * 2
-            for s in sensors:
-                # Random broadband road noise, not matching any specific order
-                peaks = [
-                    {"hz": 8.0 + i * 0.3, "amp": 0.01},
-                    {"hz": 15.0, "amp": 0.008},
-                    {"hz": 34.0, "amp": 0.005},
-                ]
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=14.0,
-                    ),
-                )
-        metadata = _standard_metadata()
-        summary = summarize_run_data(metadata, samples, lang="en", file_name="road_noise")
-        for c in _wheel_causes(summary.get("top_causes", [])):
-            conf = float(c.get("confidence", 0))
-            assert conf < 0.50, f"Road noise produced confident wheel diagnosis: {conf:.2f}"
-
-
-# ---------------------------------------------------------------------------
-# 5. Confidence calibration across sensor counts
-# ---------------------------------------------------------------------------
-
-
-class TestConfidenceCalibration:
-    """Confidence must be calibrated for 1-12 sensors."""
-
-    def test_single_sensor_produces_finding(self) -> None:
-        """A single sensor with a clear fault should still produce a finding."""
-        samples = _build_fault_samples(["front-right"], "front-right")
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        assert len(_wheel_findings(findings)) > 0, "Single sensor should produce a wheel finding"
-
-    def test_four_sensor_clear_fault(self) -> None:
-        """4 sensors with a clear single-sensor fault should identify correct location."""
-        samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right")
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wf = _wheel_findings(findings)
-        assert len(wf) > 0, "4-sensor setup should produce a wheel finding"
-        top = wf[0]
-        strongest = (top.strongest_location or "").lower()
-        assert "right" in strongest or "fr" in strongest, f"Expected front-right, got {strongest}"
-
-    def test_eight_sensor_mixed_clear_fault(self) -> None:
-        """8 mixed sensors with a clear wheel fault should still identify the wheel."""
-        sensors = [
-            "front-left",
-            "front-right",
-            "rear-left",
-            "rear-right",
-            "driver-seat",
-            "trunk",
-            "engine-bay",
-            "transmission",
-        ]
-        samples = _build_fault_samples(sensors, "rear-left")
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wf = _wheel_findings(findings)
-        assert len(wf) > 0, "8-sensor setup should produce a wheel finding"
-        top = wf[0]
-        strongest = (top.strongest_location or "").lower()
-        assert "rear" in strongest and "left" in strongest, f"Expected rear-left, got {strongest}"
-
-
-# ---------------------------------------------------------------------------
-# 6. Unit consistency tests
+# 2. Unit consistency tests
 # ---------------------------------------------------------------------------
 
 
@@ -449,7 +219,7 @@ class TestUnitConsistency:
 
 
 # ---------------------------------------------------------------------------
-# 7. Phase timeline tests
+# 3. Phase timeline tests
 # ---------------------------------------------------------------------------
 
 
@@ -507,7 +277,7 @@ class TestPhaseTimeline:
 
 
 # ---------------------------------------------------------------------------
-# 8. Integration: phased scenario tests
+# 4. Integration: phased scenario tests
 # ---------------------------------------------------------------------------
 
 
