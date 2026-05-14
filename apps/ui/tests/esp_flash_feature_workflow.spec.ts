@@ -370,4 +370,33 @@ describe("createEspFlashFeatureWorkflow", () => {
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
+
+  test("refreshes status after a successful flash cancel", async () => {
+    const harness = createHarness();
+    let statusRequests = 0;
+    const workflow = createEspFlashFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async cancelEspFlash() {},
+        async getEspFlashHistory() {
+          return { attempts: [] };
+        },
+        async getEspFlashStatus() {
+          statusRequests += 1;
+          return makeStatus();
+        },
+      },
+    });
+
+    await workflow.cancelFlash();
+
+    expect(statusRequests).toBe(1);
+    expect(harness.errors).toEqual([]);
+    workflow.dispose();
+  });
 });
