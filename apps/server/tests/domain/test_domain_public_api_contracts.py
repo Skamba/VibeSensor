@@ -5,7 +5,26 @@ from __future__ import annotations
 import pytest
 from test_support.settings_services import build_settings_services
 
-from vibesensor.domain import Car, DrivingPhase, Run, Sensor, SensorPlacement, SpeedSource
+import vibesensor.domain as domain
+from vibesensor.domain import (
+    Car,
+    DrivingPhase,
+    Finding,
+    Run,
+    RunCapture,
+    RunStatus,
+    Sensor,
+    SensorPlacement,
+    SpeedSource,
+    SuitabilityCheck,
+    speed_bin_label,
+    transition_run,
+)
+
+
+def test_domain_facade_all_exports_are_importable() -> None:
+    missing = [name for name in domain.__all__ if not hasattr(domain, name)]
+    assert not missing
 
 
 def test_public_domain_imports_support_run_ready_configuration() -> None:
@@ -38,6 +57,11 @@ def test_public_domain_imports_support_run_ready_configuration() -> None:
     assert speed_source.effective_speed_kmh == pytest.approx(82.0)
     assert DrivingPhase.CRUISE.value == "cruise"
     assert run.is_recording
+    assert RunCapture(run_id="run-ready").run_id == "run-ready"
+    assert Finding(finding_id="F001").finding_id == "F001"
+    assert SuitabilityCheck("SUITABILITY_CHECK_SPEED_VARIATION", "pass").passed is True
+    assert transition_run(None, RunStatus.RECORDING) is RunStatus.RECORDING
+    assert speed_bin_label(83.0) == "80-90 km/h"
 
 
 def test_default_car_profile_becomes_analysis_ready_after_selection() -> None:
