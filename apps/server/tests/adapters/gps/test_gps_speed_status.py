@@ -57,6 +57,38 @@ from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
             id="connected-fresh-gps-with-fix-quality",
         ),
         pytest.param(
+            lambda m: _configure_connected_2d_fix_without_accuracy(m),
+            {
+                "gps_enabled": True,
+                "connection_state": "connected",
+                "raw_speed_kmh": pytest.approx(36.0, abs=0.1),
+                "effective_speed_kmh": pytest.approx(36.0, abs=0.1),
+                "fix_dimension": "2d",
+                "speed_confidence": "low",
+                "speed_source": "gps",
+                "fallback_active": False,
+                "reconnect_delay_s": None,
+                "stale_timeout_s": DEFAULT_STALE_TIMEOUT_S,
+            },
+            id="connected-2d-fix-without-accuracy-is-low-confidence",
+        ),
+        pytest.param(
+            lambda m: _configure_connected_3d_fix(m),
+            {
+                "gps_enabled": True,
+                "connection_state": "connected",
+                "raw_speed_kmh": pytest.approx(36.0, abs=0.1),
+                "effective_speed_kmh": pytest.approx(36.0, abs=0.1),
+                "fix_dimension": "3d",
+                "speed_confidence": "high",
+                "speed_source": "gps",
+                "fallback_active": False,
+                "reconnect_delay_s": None,
+                "stale_timeout_s": DEFAULT_STALE_TIMEOUT_S,
+            },
+            id="connected-3d-fix-is-high-confidence",
+        ),
+        pytest.param(
             lambda m: _configure_stale_fallback(m),
             {
                 "gps_enabled": True,
@@ -114,6 +146,20 @@ def _configure_connected_fix(monitor: GPSSpeedMonitor) -> None:
     monitor.last_epx_m = 4.2
     monitor.last_epy_m = 5.1
     monitor.last_epv_m = 8.0
+    set_gps_snapshot_age(monitor)
+
+
+def _configure_connected_2d_fix_without_accuracy(monitor: GPSSpeedMonitor) -> None:
+    monitor.connection_state = "connected"
+    monitor.speed_mps = 10.0
+    monitor.last_fix_mode = 2
+    set_gps_snapshot_age(monitor)
+
+
+def _configure_connected_3d_fix(monitor: GPSSpeedMonitor) -> None:
+    monitor.connection_state = "connected"
+    monitor.speed_mps = 10.0
+    monitor.last_fix_mode = 3
     set_gps_snapshot_age(monitor)
 
 
