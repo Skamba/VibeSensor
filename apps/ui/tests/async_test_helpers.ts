@@ -1,25 +1,10 @@
 import { expect } from "vitest";
+export { createDeferred, type Deferred } from "./deferred_test_helpers";
 
 export type TimerHarness = {
   pendingDelays(): number[];
   restore(): void;
 };
-
-export type Deferred<T> = {
-  promise: Promise<T>;
-  resolve(value: T): void;
-  reject(reason?: unknown): void;
-};
-
-export function createDeferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-}
 
 export function installWindowGlobal(): void {
   (globalThis as { window?: Window & typeof globalThis }).window =

@@ -4,8 +4,6 @@
 threshold_lines: 700
 report_limit: 10
 allowlist:
-  # Settings browser regression keeps the moved multi-tab matrix outside smoke.
-  apps/ui/tests/regression.settings.spec.ts: Multi-tab settings browser regression matrix moved out of smoke but intentionally stays aggregated.
   # Maintenance mounted-DOM coverage now lives in one Node-side regression owner instead of four legacy bridge specs.
   apps/ui/tests/maintenance_feature_signal.spec.ts: Mounted maintenance regression matrix intentionally stays together while replacing the deleted legacy createPanel Playwright split.
   # Cars browser regression keeps the moved car-selection matrix outside smoke.

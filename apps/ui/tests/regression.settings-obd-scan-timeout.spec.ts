@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { createDeferred } from "./async_test_helpers";
+import { createDeferred } from "./deferred_test_helpers";
 import {
   createSettingsHandlerFromMap,
   gpsStatus,
