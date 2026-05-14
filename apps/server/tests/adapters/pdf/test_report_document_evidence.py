@@ -8,12 +8,17 @@ from test_support.report_helpers import (
     minimal_summary,
 )
 
+from vibesensor import report_i18n
 from vibesensor.shared.boundaries.reporting import (
     prepare_persisted_report_input,
     prepare_report_input,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
+
+
+def _tr(key: str, **kwargs: object) -> str:
+    return report_i18n.tr("en", key, **kwargs)
 
 
 def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
@@ -95,25 +100,47 @@ def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
     data = build_report_document(prepared)
 
     assert [row.label for row in data.verdict_page.proof_snapshot_rows] == [
-        "Confidence",
-        "Evidence basis",
-        "Support",
-        "Stable frequency",
+        _tr("CONFIDENCE_LABEL"),
+        _tr("REPORT_EVIDENCE_BASIS_LABEL"),
+        _tr("REPORT_SUPPORT_WINDOW_SUMMARY_LABEL"),
+        _tr("REPORT_STABLE_FREQUENCY_LABEL"),
     ]
-    assert "Medium (" in data.verdict_page.proof_snapshot_rows[0].value
-    assert "Raw-backed replay" in data.verdict_page.proof_snapshot_rows[1].value
-    assert data.verdict_page.proof_snapshot_rows[2].value == "3 supporting windows"
-    assert data.verdict_page.proof_snapshot_rows[3].value == "15.1-15.4 Hz matched band"
+    assert data.verdict_page.proof_snapshot_rows[0].value.startswith(
+        f"{_tr('CONFIDENCE_MEDIUM')} ("
+    )
+    assert data.verdict_page.proof_snapshot_rows[1].value == _tr(
+        "REPORT_EVIDENCE_BASIS_RAW",
+        samples="24",
+    )
+    assert data.verdict_page.proof_snapshot_rows[2].value == _tr(
+        "REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY",
+        count="3",
+    )
+    assert data.verdict_page.proof_snapshot_rows[3].value == _tr(
+        "REPORT_STABLE_FREQUENCY_BAND",
+        low="15.1",
+        high="15.4",
+    )
     assert [row.label for row in data.appendix_c.evidence_snapshot_rows] == [
-        "Confidence",
-        "Evidence basis",
-        "Support",
-        "Stable frequency",
-        "Strongest sensors",
-        "Caveat",
+        _tr("CONFIDENCE_LABEL"),
+        _tr("REPORT_EVIDENCE_BASIS_LABEL"),
+        _tr("REPORT_SUPPORT_WINDOW_SUMMARY_LABEL"),
+        _tr("REPORT_STABLE_FREQUENCY_LABEL"),
+        _tr("REPORT_SUPPORTING_SENSORS_LABEL"),
+        _tr("REPORT_COUNTEREVIDENCE_LABEL"),
     ]
-    assert data.appendix_c.evidence_snapshot_rows[4].value == "Front-Left (2), Rear-Left (1)"
-    assert "driveline" in data.appendix_c.evidence_snapshot_rows[5].value.lower()
+    assert data.appendix_c.evidence_snapshot_rows[4].value == ", ".join(
+        [
+            _tr("REPORT_SUPPORTING_SENSOR_ENTRY", location="Front-Left", count="2"),
+            _tr("REPORT_SUPPORTING_SENSOR_ENTRY", location="Rear-Left", count="1"),
+        ]
+    )
+    assert data.appendix_c.evidence_snapshot_rows[5].value == "; ".join(
+        [
+            _tr("REPORT_COUNTEREVIDENCE_ALT_SOURCE", source="Driveline"),
+            _tr("REPORT_COUNTEREVIDENCE_WEAK_SPATIAL"),
+        ]
+    )
 
 
 def test_build_report_document_focuses_appendix_c_on_primary_proof_windows() -> None:
@@ -281,7 +308,8 @@ def test_build_report_document_uses_supporting_window_location_proof_in_appendix
     assert data.proof_location_hotspot_rows[0].location == "Front Left"
     assert data.appendix_b.dominant_corner == "Front-Left"
     assert data.appendix_b.runner_up_corner == "Rear-Left"
-    assert "raw-backed replay" in (data.appendix_b.proof_basis_note or "").lower()
+    assert prepared.report_facts.evidence.data_basis == "raw_backed"
+    assert prepared.report_facts.evidence.raw_backed_sample_count == 24
 
 
 def test_build_report_document_builds_sensor_observation_matrix_rows() -> None:
