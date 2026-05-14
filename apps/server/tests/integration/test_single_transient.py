@@ -1,8 +1,8 @@
-"""Single-sensor transient scenarios that stay distinct after matrix consolidation.
+"""Opt-in single-sensor transient diagnostic matrix.
 
 Representative steady-vs-transient corner/speed, no-fault baseline, and
 phased-onset coverage now lives in ``test_synthetic_scenario_matrix.py``.
-This module keeps the single-sensor transient behaviors that remain unique.
+This module keeps single-sensor transient axes available outside default backend CI.
 """
 
 from __future__ import annotations
@@ -31,6 +31,8 @@ from test_support import (
     profile_wheel_hz,
     run_analysis,
 )
+
+pytestmark = pytest.mark.diagnostic_matrix
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
