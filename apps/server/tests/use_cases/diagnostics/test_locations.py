@@ -3,7 +3,13 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.shared.locations import LOCATION_OPTIONS, all_locations, label_for_code
+from vibesensor.shared.locations import (
+    LOCATION_OPTIONS,
+    WHEEL_LOCATION_CODES,
+    all_locations,
+    is_wheel_location,
+    label_for_code,
+)
 
 
 def test_location_options_are_unique_and_short() -> None:
@@ -20,6 +26,65 @@ def test_location_lookup_roundtrip() -> None:
     assert options
     for row in options:
         assert label_for_code(row["code"]) == row["label"]
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "front-left",
+        "front-right",
+        "rear-left",
+        "rear-right",
+        "Front Left",
+        "Front Right",
+        "Rear Left",
+        "Rear Right",
+        "front_left_wheel",
+        "front_right_wheel",
+        "rear_left_wheel",
+        "rear_right_wheel",
+        "FL Wheel",
+        "FR Wheel",
+        "RL Wheel",
+        "RR Wheel",
+    ],
+)
+def test_wheel_location_labels_are_detected(label: str) -> None:
+    assert is_wheel_location(label), f"Expected {label!r} to be classified as wheel"
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "driver-seat",
+        "Driver Seat",
+        "trunk",
+        "Trunk",
+        "engine_bay",
+        "Engine Bay",
+        "transmission",
+        "Transmission",
+        "driveshaft_tunnel",
+        "front_subframe",
+        "rear_subframe",
+        "front-passenger",
+        "rear-left-seat",
+        "rear-center-seat",
+    ],
+)
+def test_non_wheel_location_labels_are_not_detected(label: str) -> None:
+    assert not is_wheel_location(label), f"Expected {label!r} not to be classified as wheel"
+
+
+def test_empty_location_labels_are_not_wheels() -> None:
+    assert not is_wheel_location("")
+    assert not is_wheel_location("   ")
+
+
+def test_wheel_location_codes_are_complete() -> None:
+    assert len(WHEEL_LOCATION_CODES) == 4
+    for code in WHEEL_LOCATION_CODES:
+        assert is_wheel_location(code)
 
 
 class TestSetLocationRequestAcceptsEmptyCode:

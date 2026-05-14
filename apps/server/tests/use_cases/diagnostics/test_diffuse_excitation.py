@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from test_support import make_sample as _make_sample
+from test_support import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
+from test_support import standard_metadata as _standard_metadata
+from test_support import wheel_hz as _wheel_hz
+
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
@@ -99,3 +107,67 @@ class TestDetectDiffuseExcitation:
         )
         assert isinstance(is_diff, bool)
         assert penalty <= 1.0
+
+
+def _wheel_findings(findings: tuple | list, *, exclude_ref: bool = False) -> list:
+    return [
+        f
+        for f in findings
+        if (not exclude_ref or not f.finding_id.startswith("REF_"))
+        and f.finding_key.startswith("wheel_")
+    ]
+
+
+class TestDiffuseExcitationFindingFlags:
+    def test_uniform_peaks_all_sensors_flags_diffuse(self) -> None:
+        sensors = ["front-left", "front-right", "rear-left", "rear-right"]
+        samples: list[dict[str, Any]] = []
+        for i in range(40):
+            speed = 50.0 + i * 1.5
+            whz = _wheel_hz(speed)
+            for sensor in sensors:
+                samples.append(
+                    _make_sample(
+                        t_s=float(i),
+                        speed_kmh=speed,
+                        client_name=sensor,
+                        top_peaks=[
+                            {"hz": whz, "amp": 0.05},
+                            {"hz": whz * 2, "amp": 0.02},
+                        ],
+                        vibration_strength_db=24.0,
+                    ),
+                )
+
+        findings = build_findings_for_samples(
+            metadata=_standard_metadata(),
+            samples=samples,
+            lang="en",
+        )
+
+        for finding in _wheel_findings(findings, exclude_ref=True):
+            assert finding.diffuse_excitation is True, (
+                f"Expected diffuse excitation flag for {finding.finding_key}"
+            )
+
+    def test_single_sensor_fault_not_flagged_diffuse(self) -> None:
+        samples = _make_speed_sweep_fault_samples(
+            fault_sensor="front-right",
+            sensors=["front-left", "front-right", "rear-left", "rear-right"],
+            speed_start=50.0,
+            speed_end=108.5,
+            n_steps=40,
+            samples_per_step=1,
+            fault_amp=0.08,
+            noise_amp=0.005,
+            fault_vib_db=28.0,
+            noise_vib_db=10.0,
+        )
+        findings = build_findings_for_samples(
+            metadata=_standard_metadata(),
+            samples=samples,
+            lang="en",
+        )
+
+        for finding in _wheel_findings(findings, exclude_ref=True):
+            assert finding.diffuse_excitation is not True
