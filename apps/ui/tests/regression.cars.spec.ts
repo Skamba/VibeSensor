@@ -10,6 +10,8 @@ import {
   openCarsTab,
   openHistoryTab,
   requestPath,
+  selectedCarSettings,
+  settingsCarsResponse,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
@@ -22,7 +24,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({
     settingsHandler: async (route) => {
       const path = requestPath(route);
       if (path === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [], active_car_id: null });
+        await fulfillJson(route, settingsCarsResponse([], null));
         return;
       }
       await fulfillJson(route, {});
@@ -69,6 +71,9 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({
   await activateWizardCloseButton(page);
   await openAnalysisTab(page);
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
+  await expect(page.locator("#analysisNoCarMessage")).toContainText(
+    "Select or create a car",
+  );
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
   expect(analysisPutCalls).toBe(0);
@@ -107,23 +112,19 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       const path = requestPath(route);
       if (path === "/api/settings/cars") {
         await waitForCars;
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Audit Demo Car",
-              type: "sedan",
-              aspects: {
-                tire_width_mm: 285,
-                tire_aspect_pct: 30,
-                rim_in: 21,
-                final_drive_ratio: 3.08,
-                current_gear_ratio: 0.64,
-              },
+        await fulfillJson(
+          route,
+          selectedCarSettings({
+            aspects: {
+              current_gear_ratio: 0.64,
+              final_drive_ratio: 3.08,
+              rim_in: 21,
+              tire_aspect_pct: 30,
+              tire_width_mm: 285,
             },
-          ],
-          active_car_id: "car-1",
-        });
+            name: "Audit Demo Car",
+          }),
+        );
         return;
       }
       if (path === "/api/settings/analysis") {
@@ -235,6 +236,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
     "data-state",
     "active",
   );
+  await expect(activeRow).toHaveAttribute("data-car-complete", "true");
 
   await page.locator("#tab-dashboard").click();
   await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
@@ -256,6 +258,7 @@ test("shows a live warning state until an active car is selected, then clears it
 }) => {
   let activeCarId: string | null = null;
   let startCalls = 0;
+  let activatedCarPayload: Record<string, unknown> | null = null;
   const completeAspects = {
     tire_width_mm: 245,
     tire_aspect_pct: 40,
@@ -289,6 +292,10 @@ test("shows a live warning state until an active car is selected, then clears it
         return;
       }
       if (path === "/api/settings/cars/active" && method === "PUT") {
+        activatedCarPayload = route.request().postDataJSON() as Record<
+          string,
+          unknown
+        >;
         activeCarId = "car-2";
         await fulfillJson(route, {
           cars: [
@@ -421,6 +428,7 @@ test("shows a live warning state until an active car is selected, then clears it
   await page
     .locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn')
     .click();
+  expect(activatedCarPayload).toEqual({ car_id: "car-2" });
 
   await page.locator("#tab-dashboard").click();
   await expect(page.locator("#liveActiveCar")).not.toHaveAttribute(
@@ -435,4 +443,5 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#startLoggingBtn")).toBeEnabled();
+  await expect.poll(() => startCalls).toBe(0);
 });

@@ -109,6 +109,7 @@ test("settings update tab renders readiness guidance when idle", async ({
     "Starting a Wi-Fi update temporarily pauses hotspot access",
   );
   await page.locator("#updateSsidInput").fill("Workshop Wi-Fi");
+  await expect(page.locator("#updateSsidInput")).toHaveValue("Workshop Wi-Fi");
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "All visible prerequisites are ready to start the update.",
   );
@@ -182,6 +183,7 @@ test("settings internet tab and updater show USB internet when usable", async ({
     "Existing USB internet",
   );
   await page.locator("#updateTransportChoiceUsb").click();
+  await expect(page.locator("#updateTransportUsbRadio")).toBeChecked();
   await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
     "data-selected",
     "true",
@@ -255,6 +257,7 @@ test("settings internet tab restores persisted Wi-Fi SSID after reboot", async (
   await bootLiveDashboard(page, { installRoutes: false });
   await openInternetTab(page);
   await expect(page.locator("#updateSsidInput")).toHaveValue("Workshop Wi-Fi");
+  await expect(page.locator("#updateTransportWifiRadio")).toBeChecked();
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "All visible prerequisites are ready to start the update.",
   );
@@ -318,6 +321,7 @@ test("settings internet tab toggles the Wi-Fi password field without losing the 
     "password",
   );
   await expect(page.locator("#updatePasswordInput")).toHaveValue("secret");
+  await expect(page.locator("#updateTogglePasswordBtn")).toContainText("Show");
 });
 
 test("settings update failure shows retry guidance, failed-stage retention, and latest attempt context", async ({
@@ -483,4 +487,7 @@ test("settings update recovery keeps Retry Update enabled even when readiness st
   await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "GitHub release download timed out",
+  );
 });
