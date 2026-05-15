@@ -153,6 +153,7 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     assert metadata["repo_path"] == str(installer._config.repo)
     assert "assets_verified" in metadata
     assert "has_packaged_static" in metadata
+    assert metadata["sha256"] == sha256_file(rollback_dir / "rollback_snapshot.whl")
     assert (rollback_dir / "rollback_snapshot.whl").is_file()
 
 
@@ -222,6 +223,7 @@ async def test_snapshot_for_rollback_preserves_previous_snapshot_when_metadata_w
     assert read_wheel_metadata(previous_wheel).version == "2025.6.13"
     metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
     assert metadata["version"] == "2025.6.13"
+    assert metadata["sha256"] == sha256_file(previous_wheel)
     assert any(
         issue.message == "Rollback metadata could not be written" for issue in tracker.status.issues
     )

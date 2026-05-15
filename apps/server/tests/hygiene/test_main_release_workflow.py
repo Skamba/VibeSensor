@@ -60,6 +60,9 @@ def test_main_release_workflow_uses_ci_source_and_release_artifact_contracts() -
     assert '--generated-from "${{ steps.release_source.outputs.sha }}"' in run_script
     assert "tools/publish_github_release.py" in run_script
     assert '--target "${{ steps.release_source.outputs.sha }}"' in run_script
+    publish_index = run_script.index("tools/publish_github_release.py")
+    assert run_script.index("validate-wheel-metadata") < publish_index
+    assert run_script.index("validate-firmware-manifest") < publish_index
     assert "tools/release/main_release.py cleanup-releases" in run_script
     assert "WHEEL_ESP_RELEASE_TITLE_PREFIX: Wheel / ESP release" in yaml.safe_dump(release_job)
     assert "GITHUB_SHA" not in run_script

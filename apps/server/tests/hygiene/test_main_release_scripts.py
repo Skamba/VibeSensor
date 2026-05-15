@@ -59,6 +59,8 @@ def test_compute_release_version_increments_latest_numeric_suffix() -> None:
     )
 
     assert version_info.version == "2026.4.6.10"
+    assert version_info.tag == "server-v2026.4.6.10"
+    assert version_info.bundle == "vibesensor-fw-v2026.4.6.10.zip"
 
 
 def test_build_wheel_subcommand_stamps_version_and_reports_artifact(
@@ -113,6 +115,17 @@ def test_build_wheel_subcommand_stamps_version_and_reports_artifact(
         command[:3] == ["/fake/python", "-m", "build"] and "--wheel" in command
         for command in commands
     )
+    pip_index = next(
+        index
+        for index, command in enumerate(commands)
+        if command[:4] == ["/fake/python", "-m", "pip", "install"]
+    )
+    build_index = next(
+        index
+        for index, command in enumerate(commands)
+        if command[:3] == ["/fake/python", "-m", "build"]
+    )
+    assert pip_index < build_index
 
 
 def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
@@ -189,6 +202,7 @@ def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
         ],
     }
     assert any(command[:3] == ["pio", "run", "-e"] and "envdump" in command for command in commands)
+    assert manifest_path.parent == firmware_dir / "dist"
 
 
 def test_cleanup_releases_dry_run_prints_selected_wheel_esp_releases(
@@ -271,6 +285,7 @@ def test_cleanup_releases_reports_missing_tag_and_continues(
     output = capsys.readouterr().out
     assert "Deleting superseded Wheel / ESP release server-v2026.4.5" in output
     assert "Tag server-v2026.4.5 was already absent" in output
+    assert "server-v2026.4.6" not in deleted_paths
     assert set(deleted_paths) == {"releases/2", "git/refs/tags/server-v2026.4.5"}
 
 
@@ -305,6 +320,7 @@ def test_github_request_uses_timeout_and_returns_json(
         "url": "https://api.github.com/repos/Skamba/VibeSensor/releases",
         "timeout": module.GITHUB_API_TIMEOUT_S,
     }
+    assert captured["url"].endswith("/releases")
 
 
 def test_github_request_reports_url_errors_with_method_and_path(
