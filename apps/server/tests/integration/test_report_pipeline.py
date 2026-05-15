@@ -514,7 +514,7 @@ class TestPdfLanguageParity:
             f"Confidence mismatch: EN={en_conf:.4f}, NL={nl_conf:.4f}"
         )
 
-    @pytest.mark.parametrize("field", ["source", "strongest_location"])
+    @pytest.mark.parametrize("field", ["suspected_source", "strongest_location"])
     def test_same_top_field(self, field: str) -> None:
         """EN and NL summaries should have the same top-cause field value."""
         en_top = extract_top(self.summary_en)

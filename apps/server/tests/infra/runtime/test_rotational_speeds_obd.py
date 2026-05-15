@@ -31,3 +31,15 @@ def test_build_rotational_speeds_payload_uses_measured_obd_engine_rpm() -> None:
     assert payload["wheel"]["mode"] == "calculated"
     assert payload["engine"]["mode"] == "measured"
     assert payload["engine"]["rpm"] == pytest.approx(2450.0)
+
+
+def test_build_rotational_speeds_payload_rejects_bool_engine_rpm() -> None:
+    payload = build_rotational_speeds_payload(
+        basis_speed_source="obd2",
+        speed_mps=15.0,
+        measured_engine_rpm=True,
+        analysis_settings=AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS),
+    )
+
+    assert payload["engine"]["mode"] == "calculated"
+    assert payload["engine"]["rpm"] is not None

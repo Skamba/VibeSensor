@@ -175,22 +175,25 @@ class TestBoundedSample:
 
 def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
     db = _make_history_db(tmp_path, "settings.db")
-    services = build_settings_services(db=db.settings_snapshot_repository)
+    try:
+        services = build_settings_services(db=db.settings_snapshot_repository)
 
-    # Default
-    assert services.ui_preferences.speed_unit == "kmh"
+        # Default
+        assert services.ui_preferences.speed_unit == "kmh"
 
-    # Change to mps
-    services.ui_preferences.set_speed_unit("mps")
-    assert services.ui_preferences.speed_unit == "mps"
+        # Change to mps
+        services.ui_preferences.set_speed_unit("mps")
+        assert services.ui_preferences.speed_unit == "mps"
 
-    # Reload from DB
-    services2 = build_settings_services(db=db.settings_snapshot_repository)
-    assert services2.ui_preferences.speed_unit == "mps"
+        # Reload from DB
+        services2 = build_settings_services(db=db.settings_snapshot_repository)
+        assert services2.ui_preferences.speed_unit == "mps"
 
-    # Invalid falls back
-    with pytest.raises(ValueError, match="speed_unit must be one of"):
-        services.ui_preferences.set_speed_unit("mph")  # not a valid choice
+        # Invalid falls back
+        with pytest.raises(ValueError, match="speed_unit must be one of"):
+            services.ui_preferences.set_speed_unit("mph")  # not a valid choice
+    finally:
+        db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------
@@ -201,22 +204,26 @@ def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
 def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
     total = 37
     db = _seeded_history_db(tmp_path, "r1", total)
-
-    all_rows: list[SensorFrame] = []
-    for batch in db.run_repository.iter_run_samples("r1", batch_size=10):
-        all_rows.extend(batch)
-    assert len(all_rows) == total
-    assert [r.t_s for r in all_rows] == [float(i) for i in range(total)]
+    try:
+        all_rows: list[SensorFrame] = []
+        for batch in db.run_repository.iter_run_samples("r1", batch_size=10):
+            all_rows.extend(batch)
+        assert len(all_rows) == total
+        assert [r.t_s for r in all_rows] == [float(i) for i in range(total)]
+    finally:
+        db.lifecycle.close()
 
 
 def test_iter_run_samples_offset(tmp_path: Path) -> None:
     db = _seeded_history_db(tmp_path, "r2", 20)
-
-    all_rows: list[SensorFrame] = []
-    for batch in db.run_repository.iter_run_samples("r2", batch_size=5, offset=10):
-        all_rows.extend(batch)
-    assert len(all_rows) == 10
-    assert all_rows[0].t_s == 10.0
+    try:
+        all_rows: list[SensorFrame] = []
+        for batch in db.run_repository.iter_run_samples("r2", batch_size=5, offset=10):
+            all_rows.extend(batch)
+        assert len(all_rows) == 10
+        assert [r.t_s for r in all_rows] == [float(i) for i in range(10, 20)]
+    finally:
+        db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------

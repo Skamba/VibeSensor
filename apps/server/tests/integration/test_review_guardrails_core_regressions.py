@@ -170,19 +170,45 @@ class TestModuleAllExports:
     """Verify key public modules keep non-empty __all__ exports for import guardrails."""
 
     @pytest.mark.parametrize(
-        "module_path",
+        ("module_path", "expected_exports"),
         [
-            "vibesensor.shared.types.car_config",
-            "vibesensor.shared.types.run_schema",
-            "vibesensor.shared.types.speed_source_config",
-            "vibesensor.adapters.udp.protocol",
-            "vibesensor.infra.workers.worker_pool",
-            "vibesensor.adapters.persistence.car_library",
-            "vibesensor.adapters.gps.gps_speed",
-            "vibesensor.infra.runtime.registry",
+            (
+                "vibesensor.shared.types.car_config",
+                {"CarConfigPayload", "car_to_persistence_dict", "new_car_id"},
+            ),
+            (
+                "vibesensor.shared.types.run_schema",
+                {"RUN_SCHEMA_VERSION", "RunMetadata", "RunFinalizationStageResult"},
+            ),
+            (
+                "vibesensor.shared.types.speed_source_config",
+                {"SpeedSourceConfig", "SpeedSourcePayload", "ResolvedSpeedSource"},
+            ),
+            (
+                "vibesensor.adapters.udp.protocol",
+                {"DataMessage", "pack_data", "parse_data", "parse_hello"},
+            ),
+            ("vibesensor.infra.workers.worker_pool", {"WorkerPool"}),
+            (
+                "vibesensor.adapters.persistence.car_library",
+                {"load_car_library", "resolve_variant", "CarLibraryEntry"},
+            ),
+            ("vibesensor.adapters.gps.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),
+            (
+                "vibesensor.infra.runtime.registry",
+                {"ClientRecord", "ClientRegistry", "DataUpdateResult"},
+            ),
         ],
     )
-    def test_module_has_all(self, module_path: str) -> None:
+    def test_module_has_expected_all_exports(
+        self,
+        module_path: str,
+        expected_exports: set[str],
+    ) -> None:
         mod = importlib.import_module(module_path)
         assert hasattr(mod, "__all__"), f"{module_path} is missing __all__"
-        assert len(mod.__all__) > 0, f"{module_path}.__all__ is empty"
+        exports = set(mod.__all__)
+        assert exports, f"{module_path}.__all__ is empty"
+        assert expected_exports <= exports, (
+            f"{module_path}.__all__ missing expected exports: {sorted(expected_exports - exports)}"
+        )

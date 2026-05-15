@@ -30,6 +30,11 @@ from vibesensor.infra.runtime.rotational_speeds import rotational_basis_speed_so
             {"gps_enabled": True, "resolution_source": "gps"},
             "manual",
         ),
+        (
+            "OBD2",
+            {"gps_enabled": False, "fallback_active": True},
+            "obd2",
+        ),
     ],
 )
 def test_rotational_basis_speed_source_cases(

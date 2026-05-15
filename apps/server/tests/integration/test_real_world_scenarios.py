@@ -16,7 +16,11 @@ from collections.abc import Callable
 from typing import Any
 
 from test_support import make_sample
-from test_support.assertions import assert_forbidden_systems, assert_source_is
+from test_support.assertions import (
+    assert_diagnosis_contract,
+    assert_forbidden_systems,
+    assert_source_is,
+)
 from test_support.core import (
     FINAL_DRIVE,
     GEAR_RATIO,
@@ -219,10 +223,14 @@ class TestVeryShortRecording:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_5s")
-        assert "findings" in summary
-        # Run suitability should exist
+        assert_summary_sections(summary)
         suitability = summary.get("run_suitability", [])
         assert isinstance(suitability, list)
+        assert {str(check.get("state")) for check in suitability if isinstance(check, dict)} <= {
+            "pass",
+            "warn",
+            "fail",
+        }
         # The summary must complete without crashing; any findings must be valid
         for f in summary.get("findings", []):
             if isinstance(f, dict):
@@ -240,7 +248,7 @@ class TestVeryShortRecording:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_3s")
-        assert "findings" in summary
+        assert_summary_sections(summary)
 
 
 # ===========================================================================
@@ -266,17 +274,14 @@ class TestGradualFaultOnset:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="gradual_onset")
-        assert_summary_sections(summary, min_findings=0)
-
-        # Should still detect the fault (even if lower confidence due to averaging)
-        non_ref = [
-            f
-            for f in summary.get("findings", [])
-            if isinstance(f, dict)
-            and not str(f.get("finding_id", "")).startswith("REF_")
-            and float(f.get("confidence") or 0) > 0.10
-        ]
-        assert len(non_ref) >= 1, "Gradual onset fault should be detected"
+        assert_summary_sections(summary, min_findings=1, min_top_causes=1)
+        assert_diagnosis_contract(
+            summary,
+            expected_source="wheel",
+            expected_sensor="front-left",
+            min_confidence=0.10,
+            msg="Gradual onset fault should be detected at front-left",
+        )
 
 
 # ===========================================================================

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -81,7 +82,7 @@ def _samples() -> np.ndarray:
 
 
 def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
-    tmp_path,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = build_history_db(tmp_path)
@@ -225,6 +226,10 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         prepared = prepare_persisted_report_input(summary)
         document = build_report_document(prepared)
 
-        assert any("UDP ingest queue drops" in (row.detail or "") for row in document.data_trust)
+        ingest_drop_rows = [
+            row for row in document.data_trust if "UDP ingest queue drops" in (row.detail or "")
+        ]
+        assert ingest_drop_rows
+        assert ingest_drop_rows[0].state == "warn"
     finally:
         history_db.lifecycle.close()

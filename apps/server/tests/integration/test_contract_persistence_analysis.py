@@ -140,7 +140,8 @@ def test_key_sample_fields_survive_persistence():
     read_back = db.get_run_samples(run_id)
 
     required_fields = {"t_s", "speed_kmh", "client_name", "vibration_strength_db"}
-    for row in read_back:
+    for expected, row in zip(samples, read_back, strict=True):
         payload = sensor_frame_to_json_object(row)
         for field in required_fields:
             assert field in payload, f"Missing field {field!r} after DB round-trip"
+            assert payload[field] == expected[field]

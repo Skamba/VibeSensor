@@ -83,9 +83,7 @@ class TestWorkerPool:
             return x * 10
 
         result = pool.map_unordered(_maybe_fail, [1, 2, 3])
-        assert 1 in result
-        assert 3 in result
-        assert 2 not in result  # failed item omitted
+        assert result == {1: 10, 3: 30}
 
     def test_stats(self, make_pool) -> None:
         pool = make_pool(max_workers=3)

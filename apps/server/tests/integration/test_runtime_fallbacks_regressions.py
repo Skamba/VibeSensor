@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import json
 import math
+from pathlib import Path
 
-import pytest
 from _paths import SERVER_ROOT
 from test_support.persisted_analysis import make_persisted_analysis
 
@@ -91,24 +91,30 @@ class TestStrengthFloorFallback:
 class TestStoreAnalysisErrorGuard:
     """Regression: store_analysis_error must not overwrite a completed run."""
 
-    def test_error_does_not_overwrite_complete(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_error_does_not_overwrite_complete(self, tmp_path: Path) -> None:
         db = create_history_persistence_adapters(tmp_path / "test.db")
-        run_id = "test-run-001"
-        db.run_repository.create_run(run_id, "2024-01-01T00:00:00", _metadata(run_id, test=True))
+        try:
+            run_id = "test-run-001"
+            db.run_repository.create_run(
+                run_id,
+                "2024-01-01T00:00:00",
+                _metadata(run_id, test=True),
+            )
 
-        # Complete the analysis
-        db.run_repository.store_analysis(run_id, make_persisted_analysis({"result": "ok"}))
-        run_before = db.run_repository.get_run(run_id)
-        assert run_before is not None
-        assert run_before.status.value == "complete"
+            db.run_repository.store_analysis(run_id, make_persisted_analysis({"result": "ok"}))
+            run_before = db.run_repository.get_run(run_id)
+            assert run_before is not None
+            assert run_before.status.value == "complete"
 
-        # Try to overwrite with an error
-        db.run_repository.store_analysis_error(run_id, "spurious error")
-        run_after = db.run_repository.get_run(run_id)
-        assert run_after is not None
-        assert run_after.status.value == "complete", (
-            "store_analysis_error must not overwrite a completed run"
-        )
+            db.run_repository.store_analysis_error(run_id, "spurious error")
+            run_after = db.run_repository.get_run(run_id)
+            assert run_after is not None
+            assert run_after.status.value == "complete", (
+                "store_analysis_error must not overwrite a completed run"
+            )
+            assert run_after.analysis == run_before.analysis
+        finally:
+            db.lifecycle.close()
 
 
 class TestEvidencePeakPresentFormat:

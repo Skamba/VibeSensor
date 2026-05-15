@@ -83,13 +83,14 @@ async def test_stop_logs_managed_jobs_that_outlive_cancel_timeout(
 
     monkeypatch.setattr(lifecycle_module.asyncio, "wait", _wait_pending)
 
-    with caplog.at_level(logging.WARNING):
-        await lifecycle.stop()
+    try:
+        with caplog.at_level(logging.WARNING):
+            await lifecycle.stop()
 
-    assert "managed shutdown task(s)" in caplog.text
-    assert "system-update" in caplog.text
-    assert "lingering tasks" in caplog.text
-
-    managed.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await managed
+        assert "managed shutdown task(s)" in caplog.text
+        assert "system-update" in caplog.text
+        assert "lingering tasks" in caplog.text
+    finally:
+        managed.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await managed

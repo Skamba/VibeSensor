@@ -151,4 +151,5 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
     record = registry.get(client_id.hex())
     assert record is not None
     assert record.last_t0_us == 1_105_000
-    assert isinstance(record.timing_jitter_us_ema, float)
+    assert record.timing_jitter_us_ema == 1_000.0
+    assert record.timing_drift_us_total == 5_000.0

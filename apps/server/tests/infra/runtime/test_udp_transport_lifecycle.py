@@ -69,11 +69,17 @@ async def test_shutdown_logs_transport_close_error(caplog: pytest.LogCaptureFixt
     transport = MagicMock()
     transport.close.side_effect = OSError("close boom")
     lifecycle = UdpTransportLifecycle(
-        start_udp_receiver=AsyncMock(),
+        start_udp_receiver=AsyncMock(return_value=(transport, None)),
         start_background_task=MagicMock(),
         logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
     )
-    lifecycle._data_transport = transport
+    await lifecycle.startup(
+        host="0.0.0.0",
+        port=9000,
+        registry=MagicMock(),
+        processor=MagicMock(),
+        queue_maxsize=64,
+    )
 
     with caplog.at_level(logging.WARNING):
         await lifecycle.shutdown()
