@@ -23,13 +23,18 @@ async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
     server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
     host, port = server.sockets[0].getsockname()[:2]
     task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.wait_for(client_connected.wait(), timeout=1.0)
-    task.cancel()
-    results = await asyncio.gather(task, return_exceptions=True)
-    assert isinstance(results[0], asyncio.CancelledError)
-    assert monitor.speed_mps is None
-    server.close()
-    await server.wait_closed()
+    try:
+        await asyncio.wait_for(client_connected.wait(), timeout=1.0)
+        task.cancel()
+        results = await asyncio.gather(task, return_exceptions=True)
+        assert isinstance(results[0], asyncio.CancelledError)
+        assert monitor.speed_mps is None
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        server.close()
+        await server.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -69,8 +74,14 @@ async def test_run_cancellation_waits_writer_close_once(
 
     monkeypatch.setattr(asyncio, "open_connection", _open_connection)
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=2947))
-    await asyncio.wait_for(read_started.wait(), timeout=1.0)
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    assert fake_writer.wait_closed_calls == 1
-    assert monitor.speed_mps is None
+    try:
+        await asyncio.wait_for(read_started.wait(), timeout=1.0)
+        task.cancel()
+        results = await asyncio.gather(task, return_exceptions=True)
+        assert isinstance(results[0], asyncio.CancelledError)
+        assert fake_writer.wait_closed_calls == 1
+        assert monitor.speed_mps is None
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)

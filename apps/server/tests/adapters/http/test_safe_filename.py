@@ -16,6 +16,8 @@ class TestSafeFilename:
             pytest.param("run-2026-01-01_abc", "run-2026-01-01_abc", id="safe-name-kept"),
             pytest.param("", "download", id="empty-name-uses-download"),
             pytest.param("///", "___", id="path-separators-replaced"),
+            pytest.param(".hidden", "hidden", id="leading-dot-stripped"),
+            pytest.param("...", "download", id="dot-only-name-uses-download"),
             pytest.param(
                 "run/with spaces & $pecial",
                 "run_with_spaces____pecial",
@@ -28,4 +30,4 @@ class TestSafeFilename:
 
     def test_long_name_truncated(self) -> None:
         result = _safe_filename("a" * 500)
-        assert len(result) <= 200
+        assert result == "a" * 200

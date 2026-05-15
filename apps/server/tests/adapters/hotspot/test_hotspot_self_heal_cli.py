@@ -11,7 +11,17 @@ import pytest
 from vibesensor.cli.hotspot_self_heal import main
 
 
-def test_hotspot_self_heal_cli_loads_config_and_runs_diagnostics() -> None:
+@pytest.mark.parametrize(
+    ("mode", "expected_diagnostics_only"),
+    [
+        pytest.param("diagnostics", True, id="diagnostics-mode"),
+        pytest.param("check-heal", False, id="check-heal-mode"),
+    ],
+)
+def test_hotspot_self_heal_cli_loads_config_and_runs_selected_mode(
+    mode: str,
+    expected_diagnostics_only: bool,
+) -> None:
     config = SimpleNamespace(ap=SimpleNamespace(), self_heal=SimpleNamespace())
     config.ap.self_heal = config.self_heal
 
@@ -20,7 +30,7 @@ def test_hotspot_self_heal_cli_loads_config_and_runs_diagnostics() -> None:
             "argparse.ArgumentParser.parse_args",
             return_value=SimpleNamespace(
                 config=Path("/tmp/test-config.yaml"),
-                mode="diagnostics",
+                mode=mode,
             ),
         ),
         patch("vibesensor.cli.hotspot_self_heal.load_config", return_value=config) as load_config,
@@ -32,5 +42,9 @@ def test_hotspot_self_heal_cli_loads_config_and_runs_diagnostics() -> None:
 
     assert exc_info.value.code == 0
     load_config.assert_called_once_with(Path("/tmp/test-config.yaml"))
-    run_self_heal.assert_called_once_with(config.ap, config.ap.self_heal, diagnostics_only=True)
+    run_self_heal.assert_called_once_with(
+        config.ap,
+        config.ap.self_heal,
+        diagnostics_only=expected_diagnostics_only,
+    )
     basic_config.assert_called_once()

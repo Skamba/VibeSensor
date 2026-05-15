@@ -45,7 +45,7 @@ class SpeedSourcePayload(TypedDict):
 
 def _parse_manual_speed(value: object) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
-    if isinstance(value, NUMERIC_TYPES):
+    if isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool):
         speed = float(value)
         if _isfinite(speed) and 0 < speed <= 500:
             return speed
