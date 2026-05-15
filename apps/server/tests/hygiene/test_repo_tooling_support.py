@@ -50,6 +50,12 @@ def test_normalize_shell_command_preserves_chains_and_normalizes_command_token()
         )
         == "env FOO=bar python -m pytest && echo done"
     )
+    normalized_fallback = module.normalize_shell_command(
+        "python3 -m pytest || python -m pytest",
+        command_token_normalizer=_normalize_python,
+    )
+    assert normalized_fallback.startswith("python -m pytest")
+    assert "python -m pytest" in normalized_fallback
 
 
 def test_tracked_files_prefers_git_listing(monkeypatch) -> None:
@@ -82,6 +88,10 @@ def test_tracked_files_prefers_git_listing(monkeypatch) -> None:
         "tools/dev/check_hygiene.py",
         "tools/tests/ci_workflow_manifest.py",
     ]
+    assert "tools/tests/ci_workflow_manifest.py" in module.tracked_files(
+        repo_root,
+        excluded_dirs=("tools/tests",),
+    )
 
 
 def test_ensure_repo_python_version_accepts_configured_major_minor(tmp_path: Path) -> None:
@@ -95,6 +105,7 @@ def test_ensure_repo_python_version_accepts_configured_major_minor(tmp_path: Pat
         actual_version="3.13.13",
         executable="/repo/.venv/bin/python",
     )
+    assert (tmp_path / ".python-version").read_text(encoding="utf-8") == "3.13.5\n"
 
 
 def test_ensure_repo_python_version_rejects_wrong_major_minor(tmp_path: Path) -> None:
@@ -121,3 +132,4 @@ def test_direct_local_ci_runners_enforce_repo_python_version() -> None:
     for runner_path in _DIRECT_LOCAL_CI_RUNNERS:
         text = runner_path.read_text(encoding="utf-8")
         assert "ensure_repo_python_version" in text, runner_path
+        assert "script_path=Path(__file__).resolve()" in text, runner_path

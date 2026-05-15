@@ -70,6 +70,8 @@ def test_high_value_text_patterns_have_explicit_lf_policy() -> None:
     ]
 
     assert missing_or_weak == []
+    assert {"text", "eol=lf"}.issubset(attributes["*.py"])
+    assert {"text", "eol=lf"}.issubset(attributes["*.sh"])
 
 
 def test_required_lf_patterns_cover_tracked_files() -> None:
@@ -82,3 +84,4 @@ def test_required_lf_patterns_cover_tracked_files() -> None:
     ]
 
     assert stale_patterns == []
+    assert "Makefile" in _REQUIRED_LF_PATTERNS

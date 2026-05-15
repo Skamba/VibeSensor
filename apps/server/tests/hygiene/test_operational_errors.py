@@ -19,14 +19,15 @@ _ALL_OPERATIONAL_EXCEPTIONS = (
 
 def test_operational_base_exception_is_exception() -> None:
     assert issubclass(OperationalError, Exception)
+    assert str(OperationalError("test")) == "test"
 
 
 @pytest.mark.parametrize("exc_cls", _ALL_OPERATIONAL_EXCEPTIONS, ids=lambda cls: cls.__name__)
 def test_operational_errors_catchable_by_base(exc_cls: type[OperationalError]) -> None:
     try:
         raise exc_cls("test")
-    except OperationalError:
-        pass
+    except OperationalError as exc:
+        assert str(exc) == "test"
     else:
         raise AssertionError(f"{exc_cls.__name__} not catchable as OperationalError")
 
@@ -46,3 +47,4 @@ def test_external_command_error_uses_service_unavailable_base() -> None:
 @pytest.mark.parametrize("exc_cls", _ALL_OPERATIONAL_EXCEPTIONS, ids=lambda cls: cls.__name__)
 def test_operational_errors_are_not_domain_errors(exc_cls: type[OperationalError]) -> None:
     assert not issubclass(exc_cls, VibeSensorError)
+    assert not isinstance(exc_cls("test"), VibeSensorError)
