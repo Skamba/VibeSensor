@@ -62,12 +62,14 @@ def test_pull_request_event_outputs_match_path_rules(
         ci_changed_scope._selection_for_github_event()
         == ci_changed_scope.workflow_job_selection(changed_files).github_outputs()
     )
+    assert ci_changed_scope._selection_for_github_event()["run_frontend_typecheck"] == "true"
 
 
 def test_force_full_stack_env_bypasses_changed_file_scope(
     ci_changed_scope: ModuleType,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     payload_path = tmp_path / "pull_request_event.json"
     payload_path.write_text("{}", encoding="utf-8")
@@ -87,3 +89,4 @@ def test_force_full_stack_env_bypasses_changed_file_scope(
         ci_changed_scope._selection_for_github_event()
         == ci_changed_scope.workflow_job_selection(()).github_outputs()
     )
+    assert "forcing full-stack scope" in capsys.readouterr().err

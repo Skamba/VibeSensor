@@ -128,6 +128,7 @@ def test_main_builds_pytest_command_for_selected_backend_shard(
     assert captured["collect_args"] == ["-m", excluded_markers, "apps/server/tests"]
     assert command[command.index("-m", 2) + 1] == excluded_markers
     assert "apps/server/tests/app/test_app_main.py" in command
+    assert Path(captured["log_path"]).name == "backend-tests-1.log"
     assert any("running shard 1/1" in line for line in emitted)
 
 
@@ -161,6 +162,7 @@ def test_main_can_include_diagnostic_matrix(monkeypatch, tmp_path: Path) -> None
     command = captured["cmd"]
     assert captured["collect_args"] == ["-m", "not dev_tooling", "apps/server/tests"]
     assert "not diagnostic_matrix" not in command
+    assert command[command.index("-m", 2) + 1] == "not dev_tooling"
 
 
 def test_main_reads_diagnostic_matrix_env(monkeypatch, tmp_path: Path) -> None:
@@ -183,6 +185,7 @@ def test_main_can_include_dev_tooling(monkeypatch, tmp_path: Path) -> None:
     command = captured["cmd"]
     assert captured["collect_args"] == ["-m", "not diagnostic_matrix", "apps/server/tests"]
     assert "not dev_tooling" not in command
+    assert command[command.index("-m", 2) + 1] == "not diagnostic_matrix"
 
 
 def test_main_reads_dev_tooling_env(monkeypatch, tmp_path: Path) -> None:

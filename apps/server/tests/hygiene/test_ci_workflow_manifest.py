@@ -140,3 +140,16 @@ def test_shell_lint_declares_host_shellcheck_prerequisite() -> None:
     module = _load_ci_manifest_module()
 
     assert module.ci_workflow_jobs()["shell-lint"].host_tools == ("shellcheck",)
+
+
+def test_local_needs_reference_manifest_jobs_only() -> None:
+    module = _load_ci_manifest_module()
+
+    jobs = module.ci_workflow_jobs()
+    unknown_needs = {
+        job_name: tuple(need for need in job.needs if need not in jobs)
+        for job_name, job in jobs.items()
+        if any(need not in jobs for need in job.needs)
+    }
+
+    assert unknown_needs == {}

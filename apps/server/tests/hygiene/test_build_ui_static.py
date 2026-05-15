@@ -103,6 +103,8 @@ def test_build_ui_static_builds_and_syncs_static_assets(
 
     module.main([])
 
+    assert commands[0][0] == "node"
+    assert Path(commands[0][1]).name == "ensure_ui_bootstrap.mjs"
     assert _npm_run_labels(commands) == ["sync:generated-contracts", "typecheck", "build"]
     assert any(
         command[0] == "node" and Path(command[1]).name == "ensure_ui_bootstrap.mjs"
@@ -112,6 +114,7 @@ def test_build_ui_static_builds_and_syncs_static_assets(
         encoding="utf-8"
     ) == "<!doctype html>\n<!-- build -->\n"
     metadata = json.loads((static_dir / module.UI_BUILD_METADATA_FILE).read_text(encoding="utf-8"))
+    assert set(metadata) == {"git_commit", "static_assets_hash", "ui_source_hash"}
     assert metadata["git_commit"] == "deadbeef"
     assert metadata["ui_source_hash"]
     assert metadata["static_assets_hash"]
@@ -147,6 +150,7 @@ def test_build_ui_static_passes_skip_npm_ci_to_shared_bootstrap(
 
     bootstrap_command = next(command for command in commands if command[0] == "node")
     assert "--skip-npm-ci" in bootstrap_command
+    assert _npm_run_labels(commands) == ["sync:generated-contracts", "build"]
 
 
 def test_build_ui_static_can_use_prevalidated_contract_build_path(
@@ -166,6 +170,7 @@ def test_build_ui_static_can_use_prevalidated_contract_build_path(
 
 def test_build_ui_static_rejects_prevalidated_contracts_without_skip_typecheck(
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     module, _repo, _ui_dir, _static_dir = _load_temp_build_ui_static(tmp_path)
 
@@ -173,6 +178,7 @@ def test_build_ui_static_rejects_prevalidated_contracts_without_skip_typecheck(
         module.main(["--assume-prevalidated-contracts"])
 
     assert exc_info.value.code == 2
+    assert "--assume-prevalidated-contracts requires --skip-typecheck" in capsys.readouterr().err
 
 
 def test_build_ui_static_stays_importable_without_msgspec(

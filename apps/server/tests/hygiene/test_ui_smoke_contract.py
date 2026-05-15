@@ -116,6 +116,7 @@ def test_ui_tooling_covers_playwright_configs_and_ignores_generated_results() ->
     assert "!tests/test-results" in files_includes
     assert output_dirs
     assert all(output_dir.startswith("test-results/") for output_dir in output_dirs)
+    assert all(not output_dir.endswith("/") for output_dir in output_dirs)
 
 
 def test_ui_smoke_command_and_config_alignment() -> None:
@@ -138,6 +139,7 @@ def test_ui_smoke_command_and_config_alignment() -> None:
     assert workers_env_var == "PLAYWRIGHT_SMOKE_WORKERS"
     assert workers_default == "1"
     assert _smoke_test_dir() == "tests"
+    assert _smoke_test_match_patterns() == ["smoke.critical.spec.ts"]
     assert smoke_specs
     assert all(name.startswith("smoke") for name in smoke_specs)
     assert "visual.spec.ts" not in smoke_specs

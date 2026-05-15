@@ -80,6 +80,7 @@ def test_shell_lint_discovers_current_targets_and_make_uses_tool() -> None:
     makefile = _MAKEFILE.read_text(encoding="utf-8")
 
     assert all(reason.strip() for reason in module.SHELLCHECK_ALLOWLIST.values())
+    assert set(module.SHELLCHECK_ALLOWLIST) <= set(_git_lines("ls-files"))
     assert tuple(module.shellcheck_targets()) == _expected_shellcheck_targets(allowlist)
     assert "SHELLCHECK_TARGETS :=" not in makefile
     assert '"$$PYTHON" tools/dev/shellcheck_targets.py' in makefile
