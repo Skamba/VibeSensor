@@ -197,24 +197,17 @@ class TestScenario2StopGoIntermittent:
             fault_amp=0.055,
             fault_vib_db=23.0,
         )
-        speed_band = str(
+        band_low, band_high = parse_speed_band(
             extract_top_finding(
                 summarize_run_data(
                     standard_metadata(),
                     samples_50 + samples_60,
                     include_samples=False,
                 ),
-            ).get("strongest_speed_band")
-            or "",
+            ),
         )
-        band_low = 0
-        for part in speed_band.replace("km/h", "").split("-"):
-            try:
-                band_low = int(part.strip())
-                break
-            except ValueError:
-                continue
-        assert band_low >= 40
+        assert band_low >= 40.0
+        assert band_low <= 60.0 <= band_high
 
 
 class TestScenario3HighwayRearRight:
@@ -335,17 +328,16 @@ class TestScenario4CoastDownMidRange:
         )
 
     def test_speed_band_emphasizes_midrange(self) -> None:
-        speed_band = str(
+        band_low, band_high = parse_speed_band(
             extract_top_finding(
                 summarize_run_data(
                     standard_metadata(),
                     self.build_coast_down_samples(add_harmonic=False),
                     include_samples=False,
                 ),
-            ).get("strongest_speed_band")
-            or "",
+            ),
         )
-        assert any(str(speed) in speed_band for speed in [70, 80, 90])
+        assert band_low <= 80.0 <= band_high
 
 
 class TestScenario5MixedNoiseThenFault:

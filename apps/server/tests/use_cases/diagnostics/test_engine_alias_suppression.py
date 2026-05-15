@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from test_support.findings import make_finding
 
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
@@ -29,8 +30,8 @@ class TestSuppressEngineAliases:
         ]
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if str(f.suspected_source) == "engine"]
-        if engine_findings:
-            assert engine_findings[0].effective_confidence < 0.65
+        assert len(engine_findings) == 1
+        assert engine_findings[0].effective_confidence == pytest.approx(0.39)
 
     def test_strong_engine_not_suppressed(self) -> None:
         findings = [

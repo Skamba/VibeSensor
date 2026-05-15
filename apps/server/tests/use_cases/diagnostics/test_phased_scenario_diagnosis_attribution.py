@@ -7,6 +7,7 @@ from test_support import (
     build_speed_sweep_fault_samples,
     extract_top_finding,
     make_sample,
+    parse_speed_band,
     standard_metadata,
     wheel_hz,
 )
@@ -48,17 +49,16 @@ class TestSpeedBandAttribution:
             fault_vib_db=6.0,
             noise_vib_db=6.0,
         )
-        speed_band = str(
+        band_low, band_high = parse_speed_band(
             extract_top_finding(
                 summarize_run_data(
                     standard_metadata(),
                     baseline + fault + cool,
                     include_samples=False,
                 ),
-            ).get("strongest_speed_band")
-            or "",
+            ),
         )
-        assert "120" in speed_band or "110" in speed_band
+        assert band_low <= 120.0 <= band_high
 
 
 class TestWheelVsEngineDrivelineGating:
