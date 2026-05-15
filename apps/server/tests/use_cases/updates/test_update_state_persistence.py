@@ -310,6 +310,7 @@ class TestNoSecretsInPersistedFile:
 
         assert state_path.is_file(), "State file should have been created"
         contents = state_path.read_text(encoding="utf-8")
+        assert "TestNet" in contents
         assert secret_password not in contents, "Password leaked into persisted state file!"
 
 

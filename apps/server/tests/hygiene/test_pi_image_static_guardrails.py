@@ -73,6 +73,7 @@ def test_server_systemd_runs_packaged_server_with_narrow_steady_state_privileges
     }
     assert shlex.split(_only_value(service, "AmbientCapabilities")) == ["CAP_NET_BIND_SERVICE"]
     assert shlex.split(_only_value(service, "CapabilityBoundingSet")) == ["CAP_NET_BIND_SERVICE"]
+    assert "CAP_SYS_ADMIN" not in _only_value(service, "CapabilityBoundingSet")
 
     prestart_commands = [shlex.split(value) for value in service["ExecStartPre"]]
     assert ["/usr/bin/test", "-r", "/etc/vibesensor/config.yaml"] in prestart_commands
@@ -112,3 +113,4 @@ def test_image_validation_accepts_wheel_static_data_and_rejects_source_tree(
 
     assert result.returncode == 1
     assert "source tree still present" in result.stdout
+    assert "apps/server/vibesensor" in result.stdout

@@ -82,6 +82,8 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
     assert data["logging"]["history_db_path"].endswith("history.db")
     assert data["logging"]["app_log_path"].endswith("app.log")
     assert data["update"]["rollback_dir"].endswith("rollback")
+    assert str(tmp_path) in data["logging"]["history_db_path"]
+    assert str(tmp_path) in data["update"]["rollback_dir"]
 
 
 def test_validate_firmware_dist_accepts_generated_manifest(tmp_path: Path) -> None:
@@ -410,6 +412,7 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
     assert popen_kwargs["env"]["VIBESENSOR_SERVE_STATIC"] == "0"
     assert popen_kwargs["env"]["VIBESENSOR_UPDATE_STATE_PATH"].endswith("update_status.json")
     assert popen_kwargs["stdout"] == subprocess.PIPE
+    assert recorded["config"][2:] == ("127.0.0.1", 18081)
     assert recorded["terminated"] is True
 
 

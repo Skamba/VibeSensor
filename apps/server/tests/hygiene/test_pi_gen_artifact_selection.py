@@ -38,6 +38,7 @@ def test_choose_final_artifact_prefers_current_image_priority(tmp_path: Path) ->
 
     assert result.returncode == 0, result.stderr
     assert Path(result.stdout.strip()).name == f"image_2026-03-21{_IMG_SUFFIX}.img"
+    assert result.stderr == ""
 
 
 def test_choose_final_artifact_prefers_image_prefixed_zip_over_legacy_name(tmp_path: Path) -> None:
@@ -57,3 +58,4 @@ def test_choose_final_artifact_rejects_legacy_non_image_zip_names(tmp_path: Path
 
     assert result.returncode != 0
     assert result.stdout == ""
+    assert result.stderr == ""

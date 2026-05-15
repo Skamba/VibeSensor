@@ -61,6 +61,7 @@ def test_image_validation_reads_supported_python_floor_from_pyproject(tmp_path: 
     )
 
     assert result.stdout.strip() == "3.13"
+    assert result.stderr == ""
 
 
 def test_image_validation_python_version_meets_floor() -> None:
@@ -73,6 +74,7 @@ def test_image_validation_python_version_meets_floor() -> None:
     )
 
     assert result.returncode == 1
+    assert result.stdout == ""
 
 
 def test_pi_image_stage_records_runtime_python_metadata_before_cleanup() -> None:
@@ -140,6 +142,8 @@ def test_write_version_info_includes_validated_image_python_metadata(tmp_path: P
     text = version_info.read_text(encoding="utf-8")
     assert "image_runtime_python_version=3.13.4" in text
     assert "image_runtime_python_floor=3.13" in text
+    assert "git_sha=abcdef123456" in text
+    assert "source_artifact=vibesensor-lite.img.zip" in text
 
 
 def test_pi_build_threads_validated_runtime_python_into_version_info() -> None:
@@ -147,3 +151,4 @@ def test_pi_build_threads_validated_runtime_python_into_version_info() -> None:
 
     assert '"${VALIDATED_IMAGE_PYTHON_VERSION:-}"' in text
     assert '"${VALIDATED_IMAGE_PYTHON_FLOOR:-}"' in text
+    assert "write_version_info" in text
