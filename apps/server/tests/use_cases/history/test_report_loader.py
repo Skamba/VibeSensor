@@ -35,6 +35,8 @@ def test_report_loader_enriches_analysis_with_finalization_stage_metadata() -> N
 
     enriched_metadata = enriched.to_json_object()["metadata"]
     assert isinstance(enriched_metadata, dict)
+    assert enriched_metadata["run_id"] == "run-1"
+    assert enriched_metadata["sensor_model"] == "ADXL345"
     assert enriched_metadata["finalization_stages"] == [
         {
             "stage_name": "FinalizeRawCaptureStage",

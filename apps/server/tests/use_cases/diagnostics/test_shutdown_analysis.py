@@ -115,12 +115,12 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _very_slow_analysis)
     logger.schedule_post_analysis("run-slow")
 
-    # Wait until the analysis thread has actually started
-    started.wait(timeout=2.0)
-
-    result = logger.wait_for_post_analysis(timeout_s=0.3)
-    assert result is False
-    finish.set()
+    assert started.wait(timeout=2.0)
+    try:
+        result = logger.wait_for_post_analysis(timeout_s=0.3)
+        assert result is False
+    finally:
+        finish.set()
     assert logger.wait_for_post_analysis(timeout_s=2.0) is True
 
 

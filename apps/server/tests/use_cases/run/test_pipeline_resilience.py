@@ -313,15 +313,16 @@ class TestPostAnalysisOutcomeTracking:
         assert snapshot.last_completed_run_id is None
         assert snapshot.last_completed_error is None
 
-    def test_success_tracked(self, make_worker) -> None:
-        """Successful analysis records run_id with no error."""
-        worker = make_worker(run_fn=lambda _rid: None)
+    def test_worker_runs_injected_post_analysis_function(self, make_worker) -> None:
+        run_calls: list[str] = []
+        worker = make_worker(run_fn=run_calls.append)
         worker.schedule("run-ok")
         assert worker.wait(timeout_s=2.0)
 
-        # Note: _run_post_analysis was mocked so the worker loop tracks it
-        # but the actual _run_post_analysis doesn't set the outcome.
-        # Let's test with a real-ish DB instead.
+        snapshot = worker.snapshot()
+        assert run_calls == ["run-ok"]
+        assert snapshot.queue_depth == 0
+        assert snapshot.active_run_id is None
 
     def test_outcome_after_real_analysis_success(self) -> None:
         """Last completed outcome is set after successful analysis."""
