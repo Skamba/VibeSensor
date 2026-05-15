@@ -26,7 +26,10 @@ class TestNormalizeLangConsolidation:
             ("nl-BE", "nl"),
             ("NL-NL", "nl"),
             ("  NL ", "nl"),
+            ("nl_BE.UTF-8", "nl"),
+            ("nld", "nl"),
             ("fr", "en"),
+            ("en-US", "en"),
             (None, "en"),
             (42, "en"),
             ("", "en"),
@@ -52,9 +55,10 @@ class TestMypyEnforcement:
     def test_mypy_uses_package_level_discovery(self, mypy_config: dict[str, object]) -> None:
         assert mypy_config.get("packages") == ["vibesensor"]
         assert "files" not in mypy_config
+        assert "namespace_packages" not in mypy_config
 
     def test_mypy_discovery_has_no_internal_exclude(self, mypy_config: dict[str, object]) -> None:
-        assert mypy_config.get("exclude") in (None, [])
+        assert mypy_config.get("exclude") in (None, [], "")
 
     def test_mypy_has_no_internal_ignore_errors_override(
         self,
@@ -62,12 +66,15 @@ class TestMypyEnforcement:
     ) -> None:
         overrides = mypy_config.get("overrides")
         assert isinstance(overrides, list)
-        assert not any(
-            isinstance(override, dict)
-            and override.get("ignore_errors") is True
-            and any(
-                isinstance(module_name, str) and module_name.startswith("vibesensor.")
-                for module_name in override.get("module", [])
+        offending_modules: list[str] = []
+        for override in overrides:
+            if not isinstance(override, dict) or override.get("ignore_errors") is not True:
+                continue
+            modules = override.get("module", [])
+            module_names = [modules] if isinstance(modules, str) else modules
+            offending_modules.extend(
+                module_name
+                for module_name in module_names
+                if isinstance(module_name, str) and module_name.startswith("vibesensor.")
             )
-            for override in overrides
-        )
+        assert offending_modules == []

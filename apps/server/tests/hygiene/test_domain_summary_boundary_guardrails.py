@@ -32,3 +32,10 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
     assert diagnostic_case.primary_run is not None
+    assert diagnostic_case.primary_run.run_id == "summary-case-guard"
+    assert diagnostic_case.car is not None
+    assert diagnostic_case.car.name == "Guard Car"
+    assert [finding.finding_id for finding in diagnostic_case.primary_run.findings] == ["F001"]
+    assert [
+        action.action_id for action in diagnostic_case.primary_run.test_plan.prioritized_actions
+    ] == ["check-wheel"]
