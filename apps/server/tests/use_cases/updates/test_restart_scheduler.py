@@ -25,6 +25,15 @@ async def test_schedule_uses_systemd_run_when_available(tmp_path) -> None:
 
     assert await scheduler.schedule() is True
     commands.run.assert_awaited_once()
+    assert commands.run.await_args.args[0] == [
+        "systemd-run",
+        "--unit",
+        "vibesensor-post-update-restart",
+        "--on-active=2s",
+        "systemctl",
+        "restart",
+        "vibesensor.service",
+    ]
 
 
 @pytest.mark.asyncio
@@ -46,3 +55,15 @@ async def test_schedule_falls_back_to_direct_systemctl_restart(tmp_path) -> None
 
     assert await scheduler.schedule() is True
     assert commands.run.await_count == 2
+    assert [call.args[0] for call in commands.run.await_args_list] == [
+        [
+            "systemd-run",
+            "--unit",
+            "vibesensor-post-update-restart",
+            "--on-active=2s",
+            "systemctl",
+            "restart",
+            "vibesensor.service",
+        ],
+        ["systemctl", "restart", "vibesensor.service"],
+    ]

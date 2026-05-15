@@ -89,6 +89,11 @@ def test_validate_bundle_succeeds(tmp_path: Path) -> None:
 
     assert len(manifest.environments) == 1
     assert manifest.environments[0].name == "m5stack_atom"
+    assert [(segment.file, segment.offset) for segment in manifest.environments[0].segments] == [
+        ("m5stack_atom/firmware.bin", "0x10000"),
+        ("m5stack_atom/bootloader.bin", "0x1000"),
+        ("m5stack_atom/partitions.bin", "0x8000"),
+    ]
 
 
 def test_validate_bundle_fails_missing_manifest(tmp_path: Path) -> None:
