@@ -65,19 +65,20 @@ async def test_start_marks_runtime_ready_and_tracks_running_tasks() -> None:
     )
 
     await lifecycle.start()
-    await _wait_until(lambda: "processing-loop" in lifecycle.tasks)
+    try:
+        await _wait_until(lambda: "processing-loop" in lifecycle.tasks)
 
-    assert {
-        "processing-loop",
-        "ws-broadcast",
-        "metrics-log",
-        "gps-speed",
-        "obd-speed",
-    }.issubset(set(lifecycle.tasks))
-    assert runtime_state.health_state.startup_state == "ready"
-    assert runtime_state.health_state.startup_phase == "ready"
-
-    await lifecycle.stop()
+        assert {
+            "processing-loop",
+            "ws-broadcast",
+            "metrics-log",
+            "gps-speed",
+            "obd-speed",
+        }.issubset(set(lifecycle.tasks))
+        assert runtime_state.health_state.startup_state == "ready"
+        assert runtime_state.health_state.startup_phase == "ready"
+    finally:
+        await lifecycle.stop()
 
 
 @pytest.mark.asyncio
@@ -114,11 +115,14 @@ async def test_start_records_background_task_failure_in_health_state() -> None:
     )
 
     await lifecycle.start()
-    await _wait_until(lambda: "ws-broadcast" in runtime_state.health_state.background_task_failures)
+    try:
+        await _wait_until(
+            lambda: "ws-broadcast" in runtime_state.health_state.background_task_failures
+        )
 
-    assert runtime_state.health_state.background_task_failures["ws-broadcast"] == "ws boom"
-
-    await lifecycle.stop()
+        assert runtime_state.health_state.background_task_failures["ws-broadcast"] == "ws boom"
+    finally:
+        await lifecycle.stop()
 
 
 @pytest.mark.asyncio
@@ -171,12 +175,13 @@ async def test_start_clears_restartable_failure_after_successful_retry(
     monkeypatch.setattr("vibesensor.infra.runtime.task_supervisor.anyio.sleep", _fast_sleep)
 
     await lifecycle.start()
-    await asyncio.wait_for(restart_started.wait(), timeout=1.0)
+    try:
+        await asyncio.wait_for(restart_started.wait(), timeout=1.0)
 
-    assert ws_run_calls["count"] == 2
-    assert runtime_state.health_state.background_task_failures == {}
-
-    await lifecycle.stop()
+        assert ws_run_calls["count"] == 2
+        assert runtime_state.health_state.background_task_failures == {}
+    finally:
+        await lifecycle.stop()
 
 
 @pytest.mark.asyncio
@@ -229,9 +234,10 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
     )
 
     await lifecycle.start()
-    await _wait_until(lambda: bool(lifecycle.tasks))
-
-    await lifecycle.stop()
+    try:
+        await _wait_until(lambda: bool(lifecycle.tasks))
+    finally:
+        await lifecycle.stop()
 
     assert lifecycle.tasks == []
     run_recorder.shutdown_report.assert_called_once_with(5.0)
