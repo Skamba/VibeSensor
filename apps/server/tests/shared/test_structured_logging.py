@@ -103,12 +103,14 @@ def test_configure_logging_writes_structured_json_file(tmp_path: Path) -> None:
             handler.flush()
 
         payload = json.loads(log_path.read_text(encoding="utf-8").strip().splitlines()[-1])
+        assert payload["level"] == "info"
         assert payload["message"] == "settings_change"
         assert payload["event"] == "settings_change"
         assert payload["request_id"] == request_id
         assert payload["logger"] == "vibesensor.test"
         assert payload["before"] == {"language": "en"}
         assert payload["after"] == {"language": "nl"}
+        assert "timestamp" in payload
     finally:
         for handler in list(root_logger.handlers):
             root_logger.removeHandler(handler)

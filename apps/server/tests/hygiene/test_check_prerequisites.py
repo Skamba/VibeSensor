@@ -41,6 +41,7 @@ def test_check_docker_accepts_compose_v2_and_keeps_daemon_check(monkeypatch) -> 
 
     results = module._check_docker()
 
+    assert [item.name for item in results] == ["docker", "docker compose", "docker daemon"]
     assert [(item.name, item.status, item.message) for item in results] == [
         ("docker", "OK", "installed"),
         ("docker compose", "OK", "Docker Compose version v2.39.4"),
@@ -76,6 +77,7 @@ def test_check_docker_requires_compose_v2_even_if_legacy_binary_exists(monkeypat
 
     results = module._check_docker()
 
+    assert all(item.name != "docker-compose" for item in results)
     assert [(item.name, item.status, item.message) for item in results] == [
         ("docker", "OK", "installed"),
         (
@@ -96,6 +98,7 @@ def test_check_shellcheck_reports_missing_local_ci_prerequisite(monkeypatch) -> 
 
     assert result.name == "shellcheck"
     assert result.status == "WARN"
+    assert "missing" in result.message
     assert "local shell-lint CI parity" in result.message
 
 
@@ -116,3 +119,4 @@ def test_check_shellcheck_reports_installed_version(monkeypatch) -> None:
         "OK",
         "version: 0.10.0",
     )
+    assert "ShellCheck -" not in result.message
