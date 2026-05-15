@@ -48,18 +48,23 @@ class TestPositiveIntegerClamping:
     """Zero and negative values for positive-int fields are clamped to 1."""
 
     @pytest.mark.parametrize(
-        "field",
+        ("field", "expected"),
         [
-            "sample_rate_hz",
-            "waveform_seconds",
-            "client_live_ttl_seconds",
-            "client_ttl_seconds",
+            pytest.param("sample_rate_hz", 1, id="sample-rate"),
+            pytest.param("waveform_seconds", 1, id="waveform-seconds"),
+            pytest.param("client_live_ttl_seconds", 1, id="live-ttl"),
+            pytest.param("client_ttl_seconds", 10, id="retention-ttl"),
         ],
     )
     @pytest.mark.parametrize("bad_value", [0, -1, -100])
-    def test_zero_and_negative_clamped_to_minimum(self, field: str, bad_value: int) -> None:
+    def test_zero_and_negative_clamped_to_minimum(
+        self,
+        field: str,
+        expected: int,
+        bad_value: int,
+    ) -> None:
         cfg = _make_processing(**{field: bad_value})
-        assert getattr(cfg, field) >= 1
+        assert getattr(cfg, field) == expected
 
     @pytest.mark.parametrize(
         "field",
@@ -86,7 +91,7 @@ class TestLoadConfigValidation:
         config_path = tmp_path / "config.yaml"
         _write_config(config_path, {"processing": {field: 0}})
         cfg = load_config(config_path)
-        assert getattr(cfg.processing, field) >= 1, f"{field} should be clamped to >= 1"
+        assert getattr(cfg.processing, field) == 1
 
     def test_default_config_passes_validation(self, tmp_path: Path) -> None:
         """Empty override → defaults must all pass validation unchanged."""
@@ -199,23 +204,23 @@ class TestLoggingConfigValidation:
 
     def test_zero_metrics_log_hz_clamped(self) -> None:
         cfg = self._make(metrics_log_hz=0)
-        assert cfg.metrics_log_hz >= 1
+        assert cfg.metrics_log_hz == 1
 
     def test_negative_no_data_timeout_clamped(self) -> None:
         cfg = self._make(no_data_timeout_s=-5.0)
-        assert cfg.no_data_timeout_s >= 0
+        assert cfg.no_data_timeout_s == 15.0
 
     def test_negative_shutdown_timeout_clamped(self) -> None:
         cfg = self._make(shutdown_analysis_timeout_s=-1.0)
-        assert cfg.shutdown_analysis_timeout_s >= 0
+        assert cfg.shutdown_analysis_timeout_s == 30.0
 
     def test_non_positive_run_retention_days_clamped(self) -> None:
         cfg = self._make(run_retention_days=0)
-        assert cfg.run_retention_days >= 1
+        assert cfg.run_retention_days == 7
 
     def test_non_positive_raw_capture_retention_days_clamped(self) -> None:
         cfg = self._make(raw_capture_retention_days=0)
-        assert cfg.raw_capture_retention_days >= 1
+        assert cfg.raw_capture_retention_days == 7
 
 
 class TestTracingConfigValidation:

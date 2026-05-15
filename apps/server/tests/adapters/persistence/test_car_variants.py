@@ -36,13 +36,12 @@ def test_resolve_variant_no_variant() -> None:
 
 def test_resolve_variant_inherits_base_gearboxes() -> None:
     """Variant without gearbox override inherits base gearboxes."""
-    # Find a model where first variant has no gearbox override
-    for entry in _library_entries():
-        first_v = entry["variants"][0]
-        if not first_v.get("gearboxes"):
-            resolved = resolve_variant(entry, first_v["name"])
-            assert resolved["gearboxes"] == entry["gearboxes"]
-            break
+    entry = next(entry for entry in _library_entries() if not entry["variants"][0].get("gearboxes"))
+    first_variant = entry["variants"][0]
+
+    resolved = resolve_variant(entry, first_variant["name"])
+
+    assert resolved["gearboxes"] == entry["gearboxes"]
 
 
 def test_resolve_variant_unknown_name_returns_base() -> None:
