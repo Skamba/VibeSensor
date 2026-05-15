@@ -34,16 +34,19 @@ class TestComputeAccelStatistics:
         result = _compute_accel_statistics(sensor_frames_from_mappings(samples), "ADXL345")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_x_vals"][0] == pytest.approx(0.1)
+        assert result["x_mean"] == pytest.approx(0.1)
         assert len(result["accel_mag_vals"]) == 1
         expected_mag = math.sqrt(0.1**2 + 0.2**2 + 1.0**2)
         assert result["accel_mag_vals"][0] == pytest.approx(expected_mag, rel=1e-3)
+        assert result["amp_metric_values"] == pytest.approx([12.0])
 
     def test_saturation_detected_near_limit(self) -> None:
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 15.7, "accel_y_g": 0.0, "accel_z_g": 0.0},
         ]
         result = _compute_accel_statistics(sensor_frames_from_mappings(samples), "ADXL345")
-        assert result["sat_count"] >= 1, "Near-limit value should count as saturation"
+        assert result["sensor_limit"] == pytest.approx(16.0)
+        assert result["sat_count"] == 1
 
     def test_missing_axes_handled(self) -> None:
         samples: list[dict[str, Any]] = [{"accel_x_g": 0.5}]
@@ -60,5 +63,5 @@ class TestComputeAccelStatistics:
             sensor_frames_from_mappings(samples),
             "totally_unknown_sensor",
         )
-        if result["sensor_limit"] is None:
-            assert result["sat_count"] == 0
+        assert result["sensor_limit"] is None
+        assert result["sat_count"] == 0
