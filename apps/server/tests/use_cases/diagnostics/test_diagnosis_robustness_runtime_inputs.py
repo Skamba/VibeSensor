@@ -308,6 +308,8 @@ class TestGpsSpeedValidation:
             assert monitor.speed_mps == 10.0, (
                 f"{label} speed leaked into speed_mps: {monitor.speed_mps}"
             )
+            assert monitor.resolve_speed().source == "gps"
+            assert monitor.resolve_speed().speed_mps == 10.0
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
             server.close()

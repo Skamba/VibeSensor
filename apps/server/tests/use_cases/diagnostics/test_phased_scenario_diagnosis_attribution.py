@@ -62,49 +62,38 @@ class TestSpeedBandAttribution:
 
 
 class TestWheelVsEngineDrivelineGating:
-    def test_wheel_1x_not_misclassified_as_engine(self) -> None:
+    @pytest.mark.parametrize(
+        "samples",
+        [
+            build_speed_sweep_fault_samples(
+                speed_start_kmh=40.0,
+                speed_end_kmh=120.0,
+                fault_sensor="front-right",
+                other_sensors=["front-left", "rear-left", "rear-right"],
+                n_samples=50,
+                fault_amp=0.06,
+                fault_vib_db=24.0,
+            ),
+            build_fault_samples_at_speed(
+                speed_kmh=80.0,
+                fault_sensor="rear-left",
+                other_sensors=["front-left", "front-right", "rear-right"],
+                n_samples=40,
+                fault_amp=0.05,
+                fault_vib_db=22.0,
+            ),
+        ],
+        ids=["speed-sweep", "constant-speed"],
+    )
+    def test_wheel_1x_not_misclassified_as_engine(self, samples) -> None:
         top = extract_top_finding(
             summarize_run_data(
                 standard_metadata(),
-                build_speed_sweep_fault_samples(
-                    speed_start_kmh=40.0,
-                    speed_end_kmh=120.0,
-                    fault_sensor="front-right",
-                    other_sensors=["front-left", "rear-left", "rear-right"],
-                    n_samples=50,
-                    fault_amp=0.06,
-                    fault_vib_db=24.0,
-                ),
+                samples,
                 include_samples=False,
             ),
         )
         assert "engine" not in str(top.get("suspected_source") or "").lower()
-
-    def test_constant_speed_wheel_not_engine(self) -> None:
-        findings = [
-            f
-            for f in summarize_run_data(
-                standard_metadata(),
-                build_fault_samples_at_speed(
-                    speed_kmh=80.0,
-                    fault_sensor="rear-left",
-                    other_sensors=["front-left", "front-right", "rear-right"],
-                    n_samples=40,
-                    fault_amp=0.05,
-                    fault_vib_db=22.0,
-                ),
-                include_samples=False,
-            ).get("findings", [])
-            if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-        ]
-        if findings:
-            source = str(
-                max(findings, key=lambda f: float(f.get("confidence") or 0)).get(
-                    "suspected_source",
-                )
-                or "",
-            ).lower()
-            assert "wheel" in source or "tire" in source or "unknown" in source
 
 
 class TestConfidenceWithSpatialAmbiguity:

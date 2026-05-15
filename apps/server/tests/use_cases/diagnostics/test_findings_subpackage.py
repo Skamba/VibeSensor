@@ -165,6 +165,10 @@ class TestComputeOrderConfidence:
         assert stronger > weaker
         assert CONFIDENCE_FLOOR <= weaker <= CONFIDENCE_CEILING
         assert CONFIDENCE_FLOOR <= stronger <= CONFIDENCE_CEILING
+        baseline = _compute_order_confidence(**self._BASE_INPUTS)
+        steady = _compute_order_confidence(**{**self._BASE_INPUTS, "steady_speed": True})
+        constant = _compute_order_confidence(**{**self._BASE_INPUTS, "constant_speed": True})
+        assert stronger > baseline > steady > constant
 
     def test_negligible_strength_cap_reduces_same_signal_to_cap(self) -> None:
         capped = _compute_order_confidence(
@@ -176,19 +180,6 @@ class TestComputeOrderConfidence:
 
         assert capped <= ORDER_CONFIDENCE_SETTINGS.negligible_strength_confidence_cap
         assert uncapped > capped
-
-    def test_constant_and_steady_speed_penalties_apply_in_order(self) -> None:
-        baseline = _compute_order_confidence(
-            **self._BASE_INPUTS,
-        )
-        steady = _compute_order_confidence(
-            **{**self._BASE_INPUTS, "steady_speed": True},
-        )
-        constant = _compute_order_confidence(
-            **{**self._BASE_INPUTS, "constant_speed": True},
-        )
-
-        assert baseline > steady > constant
 
     def test_confidence_minimum_inputs(self) -> None:
         conf = _compute_order_confidence(

@@ -30,6 +30,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
+    assert_confidence_label_valid,
     make_fault_samples,
     make_noise_samples,
     make_profile_fault_samples,
@@ -220,6 +221,7 @@ def test_transient_plus_persistent(
     # Sort by time for realism
     samples.sort(key=lambda s: s["t_s"])
     summary = run_analysis(samples)
+    assert_confidence_label_valid(summary)
     conf = top_confidence(summary)
     assert conf > 0.0, f"Transient + persistent at {corner} ({pos_name}) should detect the fault"
 
@@ -263,6 +265,7 @@ def test_fault_then_noise(corner: str, split_name: str, fault_n: int, noise_n: i
 
     samples = fault_phase + noise_phase
     summary = run_analysis(samples)
+    assert_confidence_label_valid(summary)
     conf = top_confidence(summary)
     assert conf > 0.0, f"Fault→noise at {corner} ({split_name}) should still detect the fault"
 
