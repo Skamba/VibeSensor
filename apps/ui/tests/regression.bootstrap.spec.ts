@@ -6,6 +6,8 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   requestPath,
+  selectedCarSettings,
+  speedSourceSettings,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -40,18 +42,7 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Test Hatch",
-              type: "Simulated setup",
-              variant: null,
-              aspects: {},
-            },
-          ],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings({ name: "Test Hatch" }));
         return;
       }
       await fulfillJson(route, {});
@@ -107,6 +98,9 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
       .locator('.capture-readiness__item[data-readiness-state="pass"]')
       .first(),
   ).toContainText(/live sensor.*streaming cleanly/i);
+  await expect(
+    page.locator('.capture-readiness__item[data-readiness-state="pass"]'),
+  ).toHaveCount(4);
 
   captureReadiness = buildCaptureReadiness({
     isReady: false,
@@ -136,6 +130,12 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
       .locator('.capture-readiness__item[data-readiness-state="fail"]')
       .first(),
   ).toContainText(/live speed sample/i);
+  await expect(
+    page.locator('.capture-readiness__item[data-readiness-state="warn"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('.capture-readiness__item[data-readiness-state="fail"]'),
+  ).toHaveCount(2);
   const banner = page.locator(".app-error-banner");
   await banner.evaluate((element) => {
     if (!(element instanceof HTMLElement)) {
@@ -147,6 +147,7 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
   });
 
   await expect(banner).toBeVisible();
+  await expect(banner).toHaveAttribute("data-variant", "warn");
   await expect(banner).toContainText("Attention needed");
 });
 
@@ -164,25 +165,11 @@ test("dashboard bootstrap defers secondary bundle until a dependent view opens",
     settingsHandler: async (route) => {
       const path = requestPath(route);
       if (path === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Test Hatch",
-              type: "Simulated setup",
-              aspects: {},
-            },
-          ],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings({ name: "Test Hatch" }));
         return;
       }
       if (path === "/api/settings/speed-source") {
-        await fulfillJson(route, {
-          speed_source: "gps",
-          manual_speed_kph: null,
-          stale_timeout_s: 5,
-        });
+        await fulfillJson(route, speedSourceSettings());
         return;
       }
       await fulfillJson(route, {});
@@ -198,6 +185,8 @@ test("dashboard bootstrap defers secondary bundle until a dependent view opens",
 
   await page.locator("#tab-settings").click();
   await expect.poll(() => secondaryBundleRequests.length).toBeGreaterThan(0);
+  expect(new Set(secondaryBundleRequests).size).toBe(1);
+  await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
 });
 
 test("saved run state points directly to History", async ({ page }) => {
@@ -237,18 +226,7 @@ test("saved run state points directly to History", async ({ page }) => {
     ],
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Test Hatch",
-              type: "Simulated setup",
-              variant: null,
-              aspects: {},
-            },
-          ],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings({ name: "Test Hatch" }));
         return;
       }
       await fulfillJson(route, {});
@@ -293,6 +271,12 @@ test("saved run state points directly to History", async ({ page }) => {
   await expect(savedSummary).toContainText(
     "Open History to review the diagnosis",
   );
+  await expect(
+    savedSummary.locator('[data-inline-state-action="open-history"]'),
+  ).toHaveText("Open History");
   await savedSummary.getByRole("button", { name: "Open History" }).click();
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
+  await expect(
+    page.locator('[data-run-row="1"][data-run="run-002"]'),
+  ).toBeVisible();
 });

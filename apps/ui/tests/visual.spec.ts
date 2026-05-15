@@ -1,9 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /** Assert the spectrum canvas has visible coloured (non-background) pixels (i.e. plotted graph data). */
-async function assertSpectrumHasData(
-  page: import("@playwright/test").Page,
-): Promise<void> {
+async function assertSpectrumHasData(page: Page): Promise<void> {
   await expect
     .poll(
       async () =>
@@ -49,7 +47,11 @@ test.describe("Live view", () => {
   test("renders the live overview dashboard", async ({ page }) => {
     await page.goto("/?demo=1");
 
-    // Verify the spectrum chart has visible graph data (not just an empty canvas)
+    await expect(page.locator("#dashboardView")).toHaveJSProperty(
+      "hidden",
+      false,
+    );
+    await expect(page.locator("#liveSensorRoster article")).toHaveCount(3);
     await assertSpectrumHasData(page);
 
     await expect(page).toHaveScreenshot("live-view.png", { fullPage: true });
@@ -59,15 +61,16 @@ test.describe("Live view", () => {
 test.describe("Settings view", () => {
   test("renders analysis tab", async ({ page }) => {
     await page.goto("/?demo=1");
-    // Navigate to Settings
     await page.click('[data-view="settingsView"]');
-    // Click the Analysis tab
     await page.click('[data-settings-tab="analysisTab"]');
-    // Wait for the analysis panel to become the active visible tabpanel.
     await expect(page.locator("#analysisTab")).toHaveJSProperty(
       "hidden",
       false,
     );
+    await expect(page.locator("#analysisGuidanceHelp")).toContainText(
+      "Safe starting point",
+    );
+    await expect(page.locator("#saveAnalysisBtn")).toBeVisible();
     await expect(page).toHaveScreenshot("settings-analysis.png", {
       fullPage: true,
     });
