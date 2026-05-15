@@ -323,9 +323,11 @@ class TestCarOrderReferenceSpec:
 
 
 def test_car_snapshot_aspects_mapping_is_immutable() -> None:
-    snap = CarSnapshot(aspects={"a": 1.0})
-    try:
+    source_aspects = {"a": 1.0}
+    snap = CarSnapshot(aspects=source_aspects)
+
+    source_aspects["a"] = 9.0
+    assert dict(snap.aspects) == {"a": 1.0}
+
+    with pytest.raises(TypeError):
         snap.aspects["b"] = 2.0
-        raise AssertionError("Should not allow mutation")  # noqa: TRY301
-    except TypeError:
-        pass  # MappingProxyType raises TypeError on mutation
