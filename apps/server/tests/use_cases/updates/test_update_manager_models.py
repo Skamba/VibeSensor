@@ -53,11 +53,15 @@ class TestUpdateJobStatus:
         data = update_status_to_builtins(status)
         assert data["state"] == "failed"
         assert data["ssid"] == "TestNet"
-        assert len(data["issues"]) == 1
+        assert data["issues"] == [
+            {"phase": "installing", "message": "Install failed", "detail": "rc=1"},
+        ]
 
     def test_log_tail_truncated(self) -> None:
         status = UpdateJobStatus(log_tail=[f"line {i}" for i in range(100)])
-        assert len(update_status_to_builtins(status)["log_tail"]) == 50
+        assert update_status_to_builtins(status)["log_tail"] == [
+            f"line {i}" for i in range(50, 100)
+        ]
 
 
 class TestUpdaterInterpreterSelection:
