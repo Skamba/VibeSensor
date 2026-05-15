@@ -24,21 +24,20 @@ from vibesensor.adapters.hotspot.parsers import (
 
 
 class TestParseActiveConnectionNames:
-    def test_parses_non_empty_lines_in_order(self) -> None:
-        assert parse_active_connection_names("Wired connection 1\nHotspot\n") == [
-            "Wired connection 1",
-            "Hotspot",
-        ]
-
     @pytest.mark.parametrize(
         ("stdout", "expected"),
         [
-            ("", []),
-            ("  \n  \n", []),
-            ("foo\n\n\n", ["foo"]),
+            pytest.param(
+                "Wired connection 1\nHotspot\n",
+                ["Wired connection 1", "Hotspot"],
+                id="preserves_order",
+            ),
+            pytest.param("", [], id="empty"),
+            pytest.param("  \n  \n", [], id="blank_lines"),
+            pytest.param("foo\n\n\n", ["foo"], id="ignores_blank_lines"),
         ],
     )
-    def test_ignores_blank_lines(self, stdout: str, expected: list[str]) -> None:
+    def test_parses_non_empty_lines_in_order(self, stdout: str, expected: list[str]) -> None:
         assert parse_active_connection_names(stdout) == expected
 
 
@@ -48,26 +47,27 @@ class TestParseActiveConnectionNames:
 
 
 class TestParseActiveConnDevice:
-    def test_found(self) -> None:
-        stdout = "Hotspot:wlan0\nWired connection 1:eth0\n"
-        active, device = parse_active_conn_device("Hotspot", stdout)
-        assert active is True
-        assert device == "wlan0"
-
-    def test_not_found(self) -> None:
-        active, device = parse_active_conn_device("Missing", "Hotspot:wlan0\n")
-        assert active is False
-        assert device is None
-
-    def test_no_device(self) -> None:
-        active, device = parse_active_conn_device("Hotspot", "Hotspot:\n")
-        assert active is True
-        assert device is None
-
-    def test_malformed_lines(self) -> None:
-        active, device = parse_active_conn_device("Hotspot", "badinput\n")
-        assert active is False
-        assert device is None
+    @pytest.mark.parametrize(
+        ("con_name", "stdout", "expected"),
+        [
+            pytest.param(
+                "Hotspot",
+                "Hotspot:wlan0\nWired connection 1:eth0\n",
+                (True, "wlan0"),
+                id="found",
+            ),
+            pytest.param("Missing", "Hotspot:wlan0\n", (False, None), id="not_found"),
+            pytest.param("Hotspot", "Hotspot:\n", (True, None), id="no_device"),
+            pytest.param("Hotspot", "badinput\n", (False, None), id="malformed_line"),
+        ],
+    )
+    def test_finds_active_connection_device(
+        self,
+        con_name: str,
+        stdout: str,
+        expected: tuple[bool, str | None],
+    ) -> None:
+        assert parse_active_conn_device(con_name, stdout) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -76,19 +76,25 @@ class TestParseActiveConnDevice:
 
 
 class TestParseIp:
-    def test_extracts_first_inet_cidr(self) -> None:
-        output = "    inet 192.168.4.1/24 brd 192.168.4.255 scope global wlan0\n"
-        assert parse_ip(output) == "192.168.4.1/24"
-
-    def test_no_inet(self) -> None:
-        assert parse_ip("    link/ether aa:bb:cc:dd:ee:ff\n") is None
-
-    def test_empty(self) -> None:
-        assert parse_ip("") is None
-
-    def test_skips_malformed_inet_row_and_uses_next_match(self) -> None:
-        output = "    inet\n    inet 10.0.0.5/24 brd 10.0.0.255 scope global wlan0\n"
-        assert parse_ip(output) == "10.0.0.5/24"
+    @pytest.mark.parametrize(
+        ("output", "expected"),
+        [
+            pytest.param(
+                "    inet 192.168.4.1/24 brd 192.168.4.255 scope global wlan0\n",
+                "192.168.4.1/24",
+                id="first_inet_cidr",
+            ),
+            pytest.param("    link/ether aa:bb:cc:dd:ee:ff\n", None, id="no_inet"),
+            pytest.param("", None, id="empty"),
+            pytest.param(
+                "    inet\n    inet 10.0.0.5/24 brd 10.0.0.255 scope global wlan0\n",
+                "10.0.0.5/24",
+                id="skips_malformed_inet",
+            ),
+        ],
+    )
+    def test_extracts_first_valid_inet_cidr(self, output: str, expected: str | None) -> None:
+        assert parse_ip(output) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -121,22 +127,28 @@ class TestExpectedIpMatch:
 
 
 class TestParseIwInfo:
-    def test_ap_mode(self) -> None:
-        output = "Interface wlan0\n\ttype AP\n\tchannel 6 (2437 MHz)\n"
-        ap, channel = parse_iw_info(output)
-        assert ap is True
-        assert channel == "6"
-
-    def test_station_mode(self) -> None:
-        output = "Interface wlan0\n\ttype managed\n\tchannel 11\n"
-        ap, channel = parse_iw_info(output)
-        assert ap is False
-        assert channel == "11"
-
-    def test_no_channel(self) -> None:
-        ap, channel = parse_iw_info("Interface wlan0\n\ttype AP\n")
-        assert ap is True
-        assert channel is None
+    @pytest.mark.parametrize(
+        ("output", "expected"),
+        [
+            pytest.param(
+                "Interface wlan0\n\ttype AP\n\tchannel 6 (2437 MHz)\n",
+                (True, "6"),
+                id="ap_mode",
+            ),
+            pytest.param(
+                "Interface wlan0\n\ttype managed\n\tchannel 11\n",
+                (False, "11"),
+                id="station_mode",
+            ),
+            pytest.param("Interface wlan0\n\ttype AP\n", (True, None), id="no_channel"),
+        ],
+    )
+    def test_parses_mode_and_channel(
+        self,
+        output: str,
+        expected: tuple[bool, str | None],
+    ) -> None:
+        assert parse_iw_info(output) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -243,41 +255,58 @@ class TestParsePort53Conflict:
 
 
 class TestHealStateStore:
-    def test_allow_first_call(self, tmp_path: Path) -> None:
-        store = HealStateStore(tmp_path / "state.json")
-        assert store.allow("restart", min_interval_s=60) is True
-
-    def test_cooldown_blocks_second_call(self, tmp_path: Path) -> None:
-        store = HealStateStore(tmp_path / "state.json")
-        assert store.allow("restart", min_interval_s=9999) is True
-        assert store.allow("restart", min_interval_s=9999) is False
-
-    def test_different_keys_independent(self, tmp_path: Path) -> None:
-        store = HealStateStore(tmp_path / "state.json")
-        assert store.allow("restart", min_interval_s=9999) is True
-        assert store.allow("reload", min_interval_s=9999) is True
-
-    def test_corrupt_state_file_recovered(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        ("initial_state", "steps"),
+        [
+            pytest.param(None, [("restart", 60, False, True)], id="allow_first_call"),
+            pytest.param(
+                None,
+                [
+                    ("restart", 9999, False, True),
+                    ("restart", 9999, False, False),
+                ],
+                id="cooldown_blocks_second_call",
+            ),
+            pytest.param(
+                None,
+                [
+                    ("restart", 9999, False, True),
+                    ("reload", 9999, False, True),
+                ],
+                id="different_keys_independent",
+            ),
+            pytest.param("NOT JSON", [("restart", 60, False, True)], id="corrupt_recovered"),
+            pytest.param(
+                None,
+                [
+                    ("restart", 9999, False, True),
+                    ("restart", 9999, True, False),
+                ],
+                id="state_persists_across_instances",
+            ),
+            pytest.param(
+                '{"restart": 9999999999, "reload": "bad", "reassociate": [1]}\n',
+                [
+                    ("restart", 9999, False, False),
+                    ("reload", 60, False, True),
+                    ("reassociate", 60, False, True),
+                ],
+                id="partial_state_keeps_numeric_entries",
+            ),
+        ],
+    )
+    def test_allow_applies_cooldown_state_rules(
+        self,
+        tmp_path: Path,
+        initial_state: str | None,
+        steps: list[tuple[str, int, bool, bool]],
+    ) -> None:
         state_path = tmp_path / "state.json"
-        state_path.write_text("NOT JSON", encoding="utf-8")
+        if initial_state is not None:
+            state_path.write_text(initial_state, encoding="utf-8")
         store = HealStateStore(state_path)
-        assert store.allow("restart", min_interval_s=60) is True
 
-    def test_state_persists_across_instances(self, tmp_path: Path) -> None:
-        state_path = tmp_path / "state.json"
-        store1 = HealStateStore(state_path)
-        assert store1.allow("restart", min_interval_s=9999) is True
-        store2 = HealStateStore(state_path)
-        assert store2.allow("restart", min_interval_s=9999) is False
-
-    def test_partial_state_file_keeps_numeric_entries(self, tmp_path: Path) -> None:
-        state_path = tmp_path / "state.json"
-        state_path.write_text(
-            '{"restart": 9999999999, "reload": "bad", "reassociate": [1]}\n',
-            encoding="utf-8",
-        )
-        store = HealStateStore(state_path)
-
-        assert store.allow("restart", min_interval_s=9999) is False
-        assert store.allow("reload", min_interval_s=60) is True
-        assert store.allow("reassociate", min_interval_s=60) is True
+        for key, min_interval_s, recreate_store, expected in steps:
+            if recreate_store:
+                store = HealStateStore(state_path)
+            assert store.allow(key, min_interval_s=min_interval_s) is expected
