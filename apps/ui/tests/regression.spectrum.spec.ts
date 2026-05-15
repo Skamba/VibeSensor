@@ -41,6 +41,7 @@ test("spectrum controls simplify the chart and update the inspector", async ({
   await expect(bandToggle).toHaveAttribute("aria-expanded", "false");
   await expect(bandLegend).toBeHidden();
   await expect(inspector).toContainText("Strongest:");
+  await expect(page.locator("#specChart canvas")).toBeVisible();
   await expect(sensorChip).not.toHaveAttribute("data-legend-state", "active");
   await expect(sensorChip).not.toHaveAttribute("data-legend-state", "muted");
   await sensorChip.click();
@@ -62,6 +63,7 @@ test("spectrum controls simplify the chart and update the inspector", async ({
   );
   await expect(bandLegend).toBeVisible();
   await expect(bandLegend).toContainText("Wheel 1x");
+  await expect(bandLegend.locator(".legend-item")).toHaveCount(4);
   const headerBottom = await page
     .locator(".site-header")
     .evaluate((el) => el.getBoundingClientRect().bottom);
@@ -219,12 +221,14 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
   await sensorChip.click();
   await expect(sensorChip).toHaveAttribute("aria-pressed", "true");
   await expect(sensorChip).toHaveAttribute("data-legend-state", "active");
+  await expect(sensorChip).toContainText("12.0 dB");
   await expect(allTracesChip).toHaveAttribute("aria-pressed", "false");
   await expect(inspector).toContainText("Focused:");
   await expect(inspector).toContainText("Front Right Wheel");
 
   await bandToggle.click();
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
+  await expect(bandToggle).toHaveAttribute("aria-expanded", "true");
   await expect(bandLegend).toBeVisible();
 
   await waitForFakeWebSocketSettled(page, trackerKey, 7);
@@ -306,6 +310,9 @@ test("spectrum band toggle stays hidden when no spectrum data is available", asy
   await page.goto("/");
 
   await expect(page.locator("#spectrumOverlay")).toBeVisible();
+  await expect(page.locator("#spectrumOverlay")).toContainText(
+    "Waiting for spectrum data",
+  );
   await expect(page.locator("#spectrumBandToggle")).toBeHidden();
   await expect(page.locator("#bandLegend")).toBeHidden();
 });

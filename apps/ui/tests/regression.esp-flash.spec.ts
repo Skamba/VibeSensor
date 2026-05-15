@@ -15,6 +15,8 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({
 }) => {
   let statusState: "idle" | "running" | "success" = "idle";
   let logCursor = 0;
+  let startCalls = 0;
+  let statusCalls = 0;
   const logs = Array.from(
     { length: 18 },
     (_, index) => `flash line ${index}: ${"output ".repeat(12)}`,
@@ -38,12 +40,14 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({
         return;
       }
       if (path === "/api/esp-flash/start") {
+        startCalls += 1;
         statusState = "running";
         logCursor = 0;
         await fulfillJson(route, { status: "started", job_id: 1 });
         return;
       }
       if (path === "/api/esp-flash/status") {
+        statusCalls += 1;
         if (statusState === "running" && logCursor >= logs.length)
           statusState = "success";
         await fulfillJson(route, {
@@ -130,6 +134,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({
     panel.scrollTop = 0;
   });
   await page.locator("#espFlashStartBtn").click();
+  await expect.poll(() => startCalls).toBe(1);
   statusState = "running";
   logCursor = 2;
   const pairedLayout = await page.evaluate(() => {
@@ -167,6 +172,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({
   expect(pairedLayout?.leftDelta ?? 0).toBeGreaterThan(40);
   expect(pairedLayout?.readinessGrouped).toBe(true);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Running");
+  await expect.poll(() => statusCalls).toBeGreaterThan(0);
   await expect(page.locator("#espFlashStartBtn")).toBeHidden();
   await expect(page.locator("#espFlashCancelBtn")).toBeVisible();
   await expect(page.locator("#espFlashReadinessPanel")).toContainText(
@@ -208,6 +214,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({
     )
     .toBe(true);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Success");
+  await expect(page.locator("#espFlashCancelBtn")).toBeHidden();
   await expect(
     page.locator(
       '#espFlashJourneyPanel .maintenance-stage[data-stage-state="done"]',
@@ -244,6 +251,10 @@ test("settings esp flash status falls back to idle when API omits state", async 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Idle");
+  await expect(page.locator("#espFlashStatusBanner")).toHaveAttribute(
+    "data-variant",
+    "muted",
+  );
   await expect(page.locator("#espFlashStartBtn")).toBeDisabled();
   await expect(page.locator("#espFlashCancelBtn")).toBeHidden();
   await expect(page.locator("#espFlashStartSummary")).toContainText(
@@ -321,6 +332,10 @@ test("settings esp flash failure shows retry guidance, retained failed stage, an
   await page.locator('[data-settings-tab="espFlashTab"]').click();
   await expect(page.locator("#espFlashStartBtn")).toHaveText("Retry flash");
   await expect(page.locator("#espFlashStartBtn")).toBeEnabled();
+  await expect(page.locator("#espFlashStatusBanner")).toHaveAttribute(
+    "data-variant",
+    "bad",
+  );
   await expect(page.locator("#espFlashStartSummary")).toContainText(
     "Recovery guidance",
   );

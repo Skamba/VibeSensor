@@ -5,6 +5,7 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   requestPath,
+  selectedCarSettings,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 12_000 });
@@ -27,10 +28,7 @@ test("history uses mobile run cards and keeps the primary action readable on nar
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings());
         return;
       }
       await fulfillJson(route, {});
@@ -67,6 +65,8 @@ test("history uses mobile run cards and keeps the primary action readable on nar
     '[data-run-toggle="details"][data-run="run-001"]',
   );
   await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toHaveAttribute("data-run", "run-001");
   await expect(row).toContainText("Track Car");
   await expect(row).toContainText("Started");
   await expect(row).toContainText("Samples");
@@ -77,6 +77,7 @@ test("history uses mobile run cards and keeps the primary action readable on nar
   await expect(toggle).toContainText("Open diagnosis");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".history-details-row")).toBeVisible();
 });
 
 test("history empty state stays action-oriented on narrow screens", async ({
@@ -99,4 +100,9 @@ test("history empty state stays action-oriented on narrow screens", async ({
   const emptyState = page.locator("#historyTableBody .empty-state");
   await expect(emptyState).toContainText("Capture the first run from Live.");
   await expect(emptyState).toContainText("Go to Live");
+  await emptyState.getByRole("button", { name: "Go to Live" }).click();
+  await expect(page.locator("#dashboardView")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
 });

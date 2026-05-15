@@ -4,7 +4,9 @@ import {
   fulfillJson,
   installCommonRoutes,
   installFakeWebSocket,
+  selectedCarSettings,
   requestPath,
+  waitForFakeWebSocketSettled,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -17,10 +19,7 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings());
         return;
       }
       await fulfillJson(route, {});
@@ -48,6 +47,9 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   await expect(guidanceHelp).toHaveAttribute("open", "");
   await expect(bandwidthInput).toHaveAttribute("aria-invalid", "true");
   await expect(bandwidthInput).toBeFocused();
+  await expect(page.locator("#wheelBandwidthGuidance")).toContainText(
+    "Wheel Bandwidth (%) must stay between 0.1% and 100%",
+  );
 
   await guidanceHelp.evaluate((element) => {
     if (!(element instanceof HTMLDetailsElement)) {
@@ -64,6 +66,7 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   await expect(guidanceHelp).toHaveAttribute("open", "");
   await expect(bandwidthInput).toHaveAttribute("aria-invalid", "true");
   await expect(bandwidthInput).toBeFocused();
+  await expect(bandwidthInput).toHaveValue("130");
 });
 
 test("sensor row actions stay wired while live updates keep arriving", async ({
@@ -71,16 +74,21 @@ test("sensor row actions stay wired while live updates keep arriving", async ({
 }) => {
   let identifyCalls = 0;
   let locationUpdateCalls = 0;
+  let identifyPath: string | null = null;
+  let locationPayload: Record<string, unknown> | null = null;
+  const trackerKey = "__sensorActionsRepeatTracker";
 
   await installCommonRoutes(page, {
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
   });
   await page.route("**/api/clients/**/location", async (route) => {
     locationUpdateCalls += 1;
+    locationPayload = route.request().postDataJSON() as Record<string, unknown>;
     await fulfillJson(route, {});
   });
   await page.route("**/api/clients/**/identify", async (route) => {
     identifyCalls += 1;
+    identifyPath = new URL(route.request().url()).pathname;
     await fulfillJson(route, {});
   });
   await installFakeWebSocket(page, {
@@ -104,6 +112,7 @@ test("sensor row actions stay wired while live updates keep arriving", async ({
     },
     repeatPayloadCount: 6,
     repeatPayloadIntervalMs: 40,
+    trackerKey,
   });
 
   await page.goto("/");
@@ -118,9 +127,14 @@ test("sensor row actions stay wired while live updates keep arriving", async ({
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
   await locationSelect.selectOption("front_left_wheel");
   await expect.poll(() => locationUpdateCalls).toBe(1);
+  expect(locationPayload).toEqual({ location_code: "front_left_wheel" });
+  await expect(locationSelect).toHaveValue("front_left_wheel");
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
 
+  await waitForFakeWebSocketSettled(page, trackerKey, 7);
+  await expect(locationSelect).toHaveValue("front_left_wheel");
   await row.locator(".row-identify").click();
   await expect.poll(() => identifyCalls).toBe(1);
+  expect(identifyPath).toBe("/api/clients/sensor-1/identify");
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
 });

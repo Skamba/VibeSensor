@@ -6,6 +6,7 @@ import {
   openHistoryTab,
   requestPath,
   installCommonRoutes,
+  selectedCarSettings,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -27,10 +28,7 @@ test("history rows show diagnostic context before expansion", async ({
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings());
         return;
       }
       await fulfillJson(route, {});
@@ -123,10 +121,7 @@ test("history preview uses dB intensity fields from insights payload", async ({
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings());
         return;
       }
       await fulfillJson(route, {});
@@ -251,6 +246,8 @@ test("history PDF download revokes object URL with safe delay", async ({
   page,
 }) => {
   let reportPdfCalls = 0;
+  let requestedPdfPath: string | null = null;
+  let revokedUrl: string | null = null;
   const revokeCallCount = () =>
     page.evaluate(
       () =>
@@ -271,6 +268,7 @@ test("history PDF download revokes object URL with safe delay", async ({
   });
   await page.route("**/api/history/**/report.pdf**", async (route) => {
     reportPdfCalls += 1;
+    requestedPdfPath = new URL(route.request().url()).pathname;
     await route.fulfill({
       status: 200,
       headers: {
@@ -283,11 +281,13 @@ test("history PDF download revokes object URL with safe delay", async ({
   await page.addInitScript(() => {
     const globalState = window as typeof window & {
       __revokeCallCount?: number;
+      __revokedUrl?: string;
     };
     globalState.__revokeCallCount = 0;
     URL.createObjectURL = (() =>
       "blob:history-download-test") as typeof URL.createObjectURL;
     URL.revokeObjectURL = ((_: string) => {
+      globalState.__revokedUrl = _;
       globalState.__revokeCallCount = (globalState.__revokeCallCount ?? 0) + 1;
     }) as typeof URL.revokeObjectURL;
   });
@@ -299,8 +299,15 @@ test("history PDF download revokes object URL with safe delay", async ({
   await expect(pdfButton).toBeVisible();
   await pdfButton.click();
   await expect.poll(() => reportPdfCalls).toBe(1);
+  expect(requestedPdfPath).toBe("/api/history/run-001/report.pdf");
   expect(await revokeCallCount()).toBe(0);
   await expect.poll(revokeCallCount, { timeout: 2_000 }).toBe(1);
+  revokedUrl = await page.evaluate(
+    () =>
+      (window as typeof window & { __revokedUrl?: string }).__revokedUrl ??
+      null,
+  );
+  expect(revokedUrl).toBe("blob:history-download-test");
 });
 
 test("history loaded insights promote the result summary above supporting evidence", async ({
@@ -309,10 +316,7 @@ test("history loaded insights promote the result summary above supporting eviden
   await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
+        await fulfillJson(route, selectedCarSettings());
         return;
       }
       await fulfillJson(route, {});
