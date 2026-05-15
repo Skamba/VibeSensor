@@ -160,17 +160,14 @@ def test_run_reports_timeout_with_command_context(monkeypatch) -> None:
 
     monkeypatch.setattr(module.subprocess, "run", _timeout)
 
-    try:
+    with pytest.raises(SystemExit) as exc_info:
         module._run(
             ["gh", "api", "repos/owner/repo/releases"],
             capture_output=True,
             context="Create release 'server-v1' in owner/repo",
             timeout_s=5,
         )
-    except SystemExit as exc:
-        message = str(exc)
-    else:
-        raise AssertionError("Expected SystemExit")
+    message = str(exc_info.value)
 
     assert "Create release 'server-v1' in owner/repo timed out after 5s" in message
     assert "command: gh api repos/owner/repo/releases" in message
@@ -191,17 +188,14 @@ def test_run_reports_nonzero_exit_with_output_excerpt(monkeypatch) -> None:
 
     monkeypatch.setattr(module.subprocess, "run", _failed)
 
-    try:
+    with pytest.raises(SystemExit) as exc_info:
         module._run(
             ["gh", "release", "upload"],
             capture_output=True,
             context="Upload 1 asset(s) to release 'server-v1' in owner/repo",
             timeout_s=30,
         )
-    except SystemExit as exc:
-        message = str(exc)
-    else:
-        raise AssertionError("Expected SystemExit")
+    message = str(exc_info.value)
 
     assert "failed with exit code 2" in message
     assert "command: gh release upload" in message
@@ -224,12 +218,9 @@ def test_existing_release_id_reports_malformed_json(monkeypatch) -> None:
 
     monkeypatch.setattr(module, "_run", _fake_run)
 
-    try:
+    with pytest.raises(SystemExit) as exc_info:
         module._existing_release_id("owner/repo", "server-v2026.3.28", timeout_s=10)
-    except SystemExit as exc:
-        message = str(exc)
-    else:
-        raise AssertionError("Expected SystemExit")
+    message = str(exc_info.value)
 
     assert "Malformed GitHub release lookup JSON" in message
     assert "server-v2026.3.28" in message
