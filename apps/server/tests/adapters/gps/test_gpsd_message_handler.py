@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import math
 
+import pytest
+
 from vibesensor.adapters.gps.gpsd_message_handler import (
     GpsdVersionInfo,
     NormalizedTpvData,
@@ -13,21 +15,17 @@ from vibesensor.adapters.gps.gpsd_message_handler import (
 )
 
 
-class TestClassifyGpsdMessage:
-    """Message classification dispatches correctly by payload class."""
-
-    def test_version_message(self) -> None:
-        msg = classify_gpsd_message({"class": "VERSION", "rev": "3.25"})
-        assert msg == GpsdVersionInfo(revision="3.25")
-
-    def test_version_without_rev(self) -> None:
-        assert classify_gpsd_message({"class": "VERSION"}) is None
-
-    def test_version_with_non_string_rev(self) -> None:
-        assert classify_gpsd_message({"class": "VERSION", "rev": 42}) is None
-
-    def test_tpv_message(self) -> None:
-        msg = classify_gpsd_message(
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param(
+            {"class": "VERSION", "rev": "3.25"},
+            GpsdVersionInfo(revision="3.25"),
+            id="version",
+        ),
+        pytest.param({"class": "VERSION"}, None, id="version_missing_rev"),
+        pytest.param({"class": "VERSION", "rev": 42}, None, id="version_invalid_rev"),
+        pytest.param(
             {
                 "class": "TPV",
                 "mode": 3,
@@ -36,95 +34,90 @@ class TestClassifyGpsdMessage:
                 "epy": 2.0,
                 "epv": 3.0,
                 "device": "/dev/ttyS0",
-            }
-        )
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.mode == 3
-        assert msg.speed == 12.5
-        assert msg.epx == 1.0
-        assert msg.epy == 2.0
-        assert msg.epv == 3.0
-        assert msg.device == "/dev/ttyS0"
-
-    def test_tpv_minimal(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV"})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.mode is None
-        assert msg.speed is None
-        assert msg.device is None
-
-    def test_unsupported_class(self) -> None:
-        assert classify_gpsd_message({"class": "SKY"}) is None
-
-    def test_missing_class(self) -> None:
-        assert classify_gpsd_message({"speed": 10.0}) is None
-
-
-class TestReadTpvMode:
-    """TPV mode extraction validates type."""
-
-    def test_valid_mode(self) -> None:
-        assert read_tpv_mode({"mode": 3}) == 3
-
-    def test_bool_rejected(self) -> None:
-        assert read_tpv_mode({"mode": True}) is None
-
-    def test_float_rejected(self) -> None:
-        assert read_tpv_mode({"mode": 3.0}) is None
-
-    def test_missing_mode(self) -> None:
-        assert read_tpv_mode({}) is None
+            },
+            NormalizedTpvData(
+                mode=3,
+                speed=12.5,
+                epx=1.0,
+                epy=2.0,
+                epv=3.0,
+                device="/dev/ttyS0",
+            ),
+            id="tpv_full",
+        ),
+        pytest.param(
+            {"class": "TPV"},
+            NormalizedTpvData(
+                mode=None,
+                speed=None,
+                epx=None,
+                epy=None,
+                epv=None,
+                device=None,
+            ),
+            id="tpv_minimal",
+        ),
+        pytest.param({"class": "SKY"}, None, id="unsupported_class"),
+        pytest.param({"speed": 10.0}, None, id="missing_class"),
+    ],
+)
+def test_classifies_gpsd_messages(payload: dict[str, object], expected: object) -> None:
+    assert classify_gpsd_message(payload) == expected
 
 
-class TestReadNonNegativeMetric:
-    """Metric extraction validates numeric range."""
-
-    def test_valid_metric(self) -> None:
-        assert read_non_negative_metric({"epx": 1.5}, "epx") == 1.5
-
-    def test_zero_accepted(self) -> None:
-        assert read_non_negative_metric({"epx": 0.0}, "epx") == 0.0
-
-    def test_negative_rejected(self) -> None:
-        assert read_non_negative_metric({"epx": -1.0}, "epx") is None
-
-    def test_nan_rejected(self) -> None:
-        assert read_non_negative_metric({"epx": math.nan}, "epx") is None
-
-    def test_inf_rejected(self) -> None:
-        assert read_non_negative_metric({"epx": math.inf}, "epx") is None
-
-    def test_bool_rejected(self) -> None:
-        assert read_non_negative_metric({"epx": True}, "epx") is None
-
-    def test_missing_field(self) -> None:
-        assert read_non_negative_metric({}, "epx") is None
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param({"mode": 3}, 3, id="valid"),
+        pytest.param({"mode": True}, None, id="bool_rejected"),
+        pytest.param({"mode": 3.0}, None, id="float_rejected"),
+        pytest.param({}, None, id="missing"),
+    ],
+)
+def test_read_tpv_mode_validates_type(
+    payload: dict[str, object],
+    expected: int | None,
+) -> None:
+    assert read_tpv_mode(payload) == expected
 
 
-class TestNormalizedTpvDataFieldExtraction:
-    """Verify end-to-end field extraction through classify_gpsd_message."""
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        pytest.param({"epx": 1.5}, 1.5, id="valid"),
+        pytest.param({"epx": 0.0}, 0.0, id="zero"),
+        pytest.param({"epx": -1.0}, None, id="negative_rejected"),
+        pytest.param({"epx": math.nan}, None, id="nan_rejected"),
+        pytest.param({"epx": math.inf}, None, id="inf_rejected"),
+        pytest.param({"epx": True}, None, id="bool_rejected"),
+        pytest.param({}, None, id="missing"),
+    ],
+)
+def test_read_non_negative_metric_validates_range(
+    payload: dict[str, object],
+    expected: float | None,
+) -> None:
+    assert read_non_negative_metric(payload, "epx") == expected
 
-    def test_speed_nan_normalized_to_none(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV", "speed": math.nan})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.speed is None
 
-    def test_speed_inf_normalized_to_none(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV", "speed": math.inf})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.speed is None
-
-    def test_speed_bool_normalized_to_none(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV", "speed": True})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.speed is None
-
-    def test_device_empty_string_normalized_to_none(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV", "device": ""})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.device is None
-
-    def test_device_non_string_normalized_to_none(self) -> None:
-        msg = classify_gpsd_message({"class": "TPV", "device": 42})
-        assert isinstance(msg, NormalizedTpvData)
-        assert msg.device is None
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param({"class": "TPV", "speed": math.nan}, id="speed_nan"),
+        pytest.param({"class": "TPV", "speed": math.inf}, id="speed_inf"),
+        pytest.param({"class": "TPV", "speed": True}, id="speed_bool"),
+        pytest.param({"class": "TPV", "device": ""}, id="empty_device"),
+        pytest.param({"class": "TPV", "device": 42}, id="non_string_device"),
+    ],
+)
+def test_tpv_field_extraction_normalizes_invalid_fields(
+    payload: dict[str, object],
+) -> None:
+    assert classify_gpsd_message(payload) == NormalizedTpvData(
+        mode=None,
+        speed=None,
+        epx=None,
+        epy=None,
+        epv=None,
+        device=None,
+    )
