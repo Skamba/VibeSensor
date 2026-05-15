@@ -116,11 +116,25 @@ async def test_cancellation_of_in_flight_append_keeps_db_usable(tmp_path: Path) 
         repo = db.run_repository
         await repo.acreate_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id))
 
-        task = asyncio.create_task(repo.aappend_samples(run_id, _frames(run_id, 200)))
-        await asyncio.sleep(0)
-        task.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await task
+        write_lock_held = asyncio.Event()
+        release_write_lock = asyncio.Event()
+
+        async def hold_write_lock() -> None:
+            async with db.lifecycle.write_transaction_cursor():
+                write_lock_held.set()
+                await release_write_lock.wait()
+
+        blocker = asyncio.create_task(hold_write_lock())
+        await write_lock_held.wait()
+        try:
+            task = asyncio.create_task(repo.aappend_samples(run_id, _frames(run_id, 200)))
+            await asyncio.sleep(0)
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        finally:
+            release_write_lock.set()
+            await blocker
 
         written = await repo.aappend_samples(run_id, _frames(run_id, 5, start=1000))
         assert written == 5

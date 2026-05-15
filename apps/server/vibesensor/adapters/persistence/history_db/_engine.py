@@ -32,6 +32,7 @@ _ENGINE_SCHEMA_CHECK_TIMEOUT_S = 30.0
 _ENGINE_QUICK_CHECK_TIMEOUT_S = 10.0
 _ENGINE_CLOSE_TIMEOUT_S = 5.0
 _ENGINE_SHUTDOWN_TIMEOUT_S = 5.0
+_THREAD_LOCK_ACQUIRE_SLICE_S = 0.05
 
 
 class HistoryDbEngineTimeoutError(TimeoutError):
@@ -102,7 +103,19 @@ async def _async_lock_context(lock: object) -> AsyncIterator[None]:
             yield
         return
     if hasattr(manager, "acquire") and hasattr(manager, "release"):
-        await asyncio.to_thread(manager.acquire)
+        while True:
+            acquire_attempt = asyncio.create_task(
+                asyncio.to_thread(manager.acquire, True, _THREAD_LOCK_ACQUIRE_SLICE_S)
+            )
+            try:
+                acquired = await acquire_attempt
+            except asyncio.CancelledError:
+                acquired = await acquire_attempt
+                if acquired:
+                    manager.release()
+                raise
+            if acquired:
+                break
         try:
             yield
         finally:
