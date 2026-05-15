@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from _report_pdf_test_helpers import assert_pdf_contains, sample
+from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import (
     RUN_END,
     suitability_by_key,
@@ -49,6 +50,8 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert summary["rows"] == 30
     assert summary["speed_breakdown"]
     assert summary["findings"]
+    assert summary["speed_breakdown"][0]["speed_range"] == "40-50 km/h"
+    assert "wheel/tire" in {finding.get("suspected_source") for finding in summary["findings"]}
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert pdf.startswith(b"%PDF")
     for text in (
@@ -73,9 +76,12 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
     assert summary["speed_breakdown"] == []
-    assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
+    speed_reference = next(f for f in summary["findings"] if f.get("finding_id") == "REF_SPEED")
+    assert speed_reference["suspected_source"] == "unknown"
     rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert rendered_pdf.startswith(b"%PDF")
+    assert_pdf_contains(rendered_pdf, "Speed Band")
+    assert_pdf_contains(rendered_pdf, "Unknown")
 
 
 def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
@@ -174,9 +180,14 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
     assert summary["raw_sample_rate_hz"] is None
-    assert any(f.get("finding_id") == "REF_SAMPLE_RATE" for f in summary["findings"])
+    sample_rate_reference = next(
+        f for f in summary["findings"] if f.get("finding_id") == "REF_SAMPLE_RATE"
+    )
+    assert sample_rate_reference["suspected_source"] == "unknown"
     rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert rendered_pdf.startswith(b"%PDF")
+    assert_pdf_contains(rendered_pdf, "Raw Sample Rate (Hz)")
+    assert_pdf_contains(rendered_pdf, "Unknown")
 
 
 def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> None:
@@ -270,4 +281,6 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     assert bool(summary["speed_stats"]["steady_speed"]) is True
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert_pdf_contains(pdf, "Speed Band")
+    assert_pdf_contains(pdf, "100-110 km/h")
+    assert "speed range never settled" not in extract_pdf_text(pdf).lower()
     assert_pdf_contains(pdf, "VibeSensor Diagnostic Report")
