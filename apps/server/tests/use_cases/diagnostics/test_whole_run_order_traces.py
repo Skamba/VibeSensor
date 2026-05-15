@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import numpy as np
+import pytest
 from test_support.report_helpers import diagnostics_context, wheel_metadata
 from test_support.sample_scenarios import make_analysis_sample
 
@@ -431,31 +432,39 @@ def test_build_whole_run_order_trace_artifact_bundle_is_deterministic() -> None:
     assert first.points == second.points
 
 
-def test_whole_run_order_summary_tracks_constant_speed_order_lock() -> None:
-    labels = _context_labels(speeds=(60.0, 60.0, 60.0), rpm_values=(1500.0, 1500.0, 1500.0))
-    summary = _wheel_1x_summary(_summary_bundle_for(context_labels=labels))
-
-    assert summary.support_ratio == 1.0
-    assert summary.lock_score > 0.95
-    assert summary.stable_frequency_min_hz == summary.stable_frequency_max_hz
-    assert summary.exemplar_interval_index == 0
-    assert [
-        (interval.start_window_index, interval.end_window_index)
-        for interval in summary.support_intervals
-    ] == [(0, 2)]
-    assert summary.phase_support[0].phase == DrivingPhase.CRUISE.value
-    assert summary.phase_support[0].support_ratio == 1.0
-
-
-def test_whole_run_order_summary_tracks_acceleration_sweep_order_lock() -> None:
-    summary = _wheel_1x_summary(_summary_bundle_for())
+@pytest.mark.parametrize(
+    ("context_labels", "stable_frequency_locked"),
+    [
+        (
+            _context_labels(speeds=(60.0, 60.0, 60.0), rpm_values=(1500.0, 1500.0, 1500.0)),
+            True,
+        ),
+        (_context_labels(), False),
+    ],
+    ids=["constant-speed", "acceleration-sweep"],
+)
+def test_whole_run_order_summary_tracks_order_lock(
+    context_labels,
+    stable_frequency_locked: bool,
+) -> None:
+    summary = _wheel_1x_summary(_summary_bundle_for(context_labels=context_labels))
 
     assert summary.support_ratio == 1.0
     assert summary.lock_score > 0.95
     assert summary.stable_frequency_min_hz is not None
     assert summary.stable_frequency_max_hz is not None
-    assert summary.stable_frequency_min_hz < summary.stable_frequency_max_hz
-    assert summary.support_intervals[0].matched_window_count == 3
+    if stable_frequency_locked:
+        assert summary.stable_frequency_min_hz == summary.stable_frequency_max_hz
+        assert summary.exemplar_interval_index == 0
+        assert [
+            (interval.start_window_index, interval.end_window_index)
+            for interval in summary.support_intervals
+        ] == [(0, 2)]
+        assert summary.phase_support[0].phase == DrivingPhase.CRUISE.value
+        assert summary.phase_support[0].support_ratio == 1.0
+    else:
+        assert summary.stable_frequency_min_hz < summary.stable_frequency_max_hz
+        assert summary.support_intervals[0].matched_window_count == 3
 
 
 def test_whole_run_order_summary_does_not_lock_fixed_resonance_to_speed_sweep() -> None:

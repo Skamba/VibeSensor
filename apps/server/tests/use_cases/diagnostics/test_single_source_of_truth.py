@@ -102,36 +102,25 @@ def test_strength_metrics_no_dead_aliases() -> None:
     assert not present, f"Dead alias fields in compute_vibration_strength_db: {present}"
 
 
-def test_constants_used_for_speed_conversion() -> None:
-    """Speed conversion must use constants, not hardcoded 3.6."""
+def test_analysis_constants_single_source_of_truth() -> None:
+    """Core analysis constants must expose the expected canonical values."""
+    import inspect
+
+    from vibesensor.shared.constants.analysis import SILENCE_DB
+    from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
     from vibesensor.shared.constants.units import KMH_TO_MPS, MPS_TO_KMH
+    from vibesensor.vibration_strength import compute_vibration_strength_db
 
     assert MPS_TO_KMH == 3.6
     assert abs(KMH_TO_MPS - 1.0 / 3.6) < 1e-15
     assert abs(MPS_TO_KMH * KMH_TO_MPS - 1.0) < 1e-15
-
-
-def test_constants_used_for_peak_detection() -> None:
-    """Peak detection defaults must come from constants module."""
-    from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
-    from vibesensor.vibration_strength import compute_vibration_strength_db
-
+    assert SILENCE_DB == -120.0
     assert PEAK_BANDWIDTH_HZ == 1.2
     assert PEAK_SEPARATION_HZ == 1.2
-
-    # Verify the function signature defaults match constants
-    import inspect
 
     sig = inspect.signature(compute_vibration_strength_db)
     assert sig.parameters["peak_bandwidth_hz"].default == PEAK_BANDWIDTH_HZ
     assert sig.parameters["peak_separation_hz"].default == PEAK_SEPARATION_HZ
-
-
-def test_silence_db_constant() -> None:
-    """SILENCE_DB must be the canonical silence floor value."""
-    from vibesensor.shared.constants.analysis import SILENCE_DB
-
-    assert SILENCE_DB == -120.0
 
 
 def test_esp_protocol_constants_match_python() -> None:
@@ -240,14 +229,19 @@ def test_protocol_docs_byte_sizes_match() -> None:
         "ACK sync clock bytes": ACK_SYNC_CLOCK_BYTES,
         "DATA_ACK bytes": DATA_ACK_BYTES,
     }
+    missing_labels: list[str] = []
+    mismatches: list[str] = []
     for label, value in expected.items():
         pattern = rf"{re.escape(label)}.*`(\d+)`"
         m = re.search(pattern, doc, re.IGNORECASE)
-        assert m, f"docs/protocol.md missing entry for '{label}'"
+        if not m:
+            missing_labels.append(label)
+            continue
         doc_value = int(m.group(1))
-        assert doc_value == value, (
-            f"docs/protocol.md says {label} = {doc_value} but code says {value}"
-        )
+        if doc_value != value:
+            mismatches.append(f"{label}: docs={doc_value} code={value}")
+    assert not missing_labels, "docs/protocol.md missing entries: " + ", ".join(missing_labels)
+    assert not mismatches, "docs/protocol.md byte-size mismatches: " + ", ".join(mismatches)
 
 
 def test_protocol_docs_match_generated_contract_reference() -> None:
