@@ -357,7 +357,11 @@ def test_workflow_job_selection_matrix(ci_path_rules: ModuleType, case: Selectio
         _all_jobs(ci_path_rules) if case.expected_jobs is _FULL_STACK else case.expected_jobs
     )
     assert expected_jobs is not None
+    selection = ci_path_rules.workflow_job_selection(case.changed_files)
     assert _selected_jobs(ci_path_rules, case.changed_files) == expected_jobs
+    assert set(selection.github_outputs()) == {
+        f"run_{field.name}" for field in fields(ci_path_rules.WorkflowJobSelection)
+    }
 
 
 def test_meaningful_tracked_files_do_not_select_empty_ci_jobs(

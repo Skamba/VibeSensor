@@ -64,7 +64,9 @@ def test_snapshot_check_treats_skipped_and_commit_status_success_as_ok() -> None
 
     assert skipped.bucket == "ok"
     assert skipped.conclusion == "SKIPPED"
+    assert skipped.label == "CI/Backend lint"
     assert commit_status.bucket == "ok"
+    assert commit_status.label == "external-ci/build"
     assert commit_status.details_url == "https://example.invalid/status"
 
 
@@ -74,6 +76,7 @@ def test_actionable_merge_issue_only_flags_real_merge_conflicts() -> None:
     assert module._actionable_merge_issue("BLOCKED", "UNKNOWN") is None
     assert module._actionable_merge_issue("UNKNOWN", "UNKNOWN") is None
     assert module._actionable_merge_issue("DIRTY", "UNKNOWN") == "merge_state=DIRTY"
+    assert module._actionable_merge_issue("dirty", "unknown") == "merge_state=DIRTY"
     assert module._actionable_merge_issue("CLEAN", "CONFLICTING") == "mergeable=CONFLICTING"
 
 

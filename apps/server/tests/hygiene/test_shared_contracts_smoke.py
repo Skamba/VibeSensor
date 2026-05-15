@@ -18,3 +18,4 @@ def test_core_processing_produces_canonical_metric_fields() -> None:
     assert isinstance(db_val, float)
     assert math.isfinite(db_val), f"vibration_strength_db must be finite, got {db_val}"
     assert db_val >= 0, f"vibration_strength_db must be non-negative, got {db_val}"
+    assert result["strength_bucket"] in {"l0", "l1", "l2", "l3", "l4", "l5"}
