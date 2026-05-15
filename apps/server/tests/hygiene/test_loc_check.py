@@ -52,4 +52,5 @@ def test_loc_check_reports_file_and_function_size_policy_violations(
     stdout = capsys.readouterr().out
     assert "file exceeds threshold" in stdout
     assert "function exceeds threshold" in stdout
+    assert "2 lines" in stdout
     assert "src/main.py::too_large" in stdout

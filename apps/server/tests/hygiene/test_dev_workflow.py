@@ -93,6 +93,7 @@ def test_dev_docker_runs_npm_ci_and_marks_lock_hash_when_node_modules_missing(
     result, commands = _run_dev_docker_script(ui_dir, tmp_path)
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert commands == [
         "ci",
         "run sync:generated-contracts",
@@ -113,6 +114,7 @@ def test_dev_docker_reinstalls_when_lock_hash_is_stale(tmp_path: Path) -> None:
     result, commands = _run_dev_docker_script(ui_dir, tmp_path)
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert commands == [
         "ci",
         "run sync:generated-contracts",
@@ -137,6 +139,7 @@ def test_dev_docker_skips_npm_ci_when_lock_hash_is_current(tmp_path: Path) -> No
     result, commands = _run_dev_docker_script(ui_dir, tmp_path)
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert commands == [
         "run sync:generated-contracts",
         "run dev -- --host 0.0.0.0 --port 5173",
@@ -157,4 +160,5 @@ def test_dev_docker_fails_fast_when_contract_regeneration_fails(tmp_path: Path) 
 
     assert result.returncode == 17
     assert commands == ["run sync:generated-contracts"]
+    assert "run dev" not in "\n".join(commands)
     assert "make sync-contracts" in result.stderr

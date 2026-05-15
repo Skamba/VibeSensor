@@ -25,6 +25,7 @@ def test_docs_lint_main_passes_current_repo() -> None:
     module = _load_docs_lint_module()
 
     assert module.main() == 0
+    assert _DOCS_LINT.is_file()
 
 
 def test_docs_lint_rejects_stale_documented_make_target(tmp_path: Path) -> None:
@@ -43,3 +44,6 @@ def test_docs_lint_rejects_stale_documented_make_target(tmp_path: Path) -> None:
     assert module._check_make_command_targets(["docs/testing.md"], tmp_path) == [
         "docs/testing.md: documented make target does not exist: removed-target"
     ]
+    assert module._check_make_command_targets(["docs/testing.md"], tmp_path)[0].startswith(
+        "docs/testing.md:"
+    )

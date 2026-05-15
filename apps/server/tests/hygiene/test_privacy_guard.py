@@ -90,4 +90,5 @@ def test_hooks_run_privacy_guard_with_repo_python_fallbacks() -> None:
         assert "tools/privacy/privacy_guard.py" in hook_text
         assert ".venv/bin/python" in hook_text
         assert "python3" in hook_text
+        assert '"${python_bin}" "${guard_script}"' in hook_text
         assert "Skipping privacy guard" not in hook_text
