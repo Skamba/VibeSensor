@@ -232,11 +232,8 @@ def test_create_run_does_not_auto_recover_recording(tmp_path: Path) -> None:
     """create_run no longer auto-recovers stale recordings — startup does that."""
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-old", "2026-01-01T00:00:00Z", _metadata("run-old"))
-    # Second create should fail (unique constraint) — old run stays recording
-    try:
+    with pytest.raises(sqlite3.IntegrityError):
         db.run_repository.create_run("run-old", "2026-01-01T00:01:00Z", _metadata("run-old"))
-    except Exception:
-        pass
     old_run = db.run_repository.get_run("run-old")
     assert old_run is not None and old_run.status.value == "recording"
 
@@ -256,13 +253,10 @@ def test_create_run_persists_case_id(tmp_path: Path) -> None:
     assert run.case_id == "case-123"
 
 
-def test_recover_stale_recording_logs_warning(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
+def test_recover_stale_recording_marks_run_error(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-old", "2026-01-01T00:00:00Z", _metadata("run-old"))
-    with caplog.at_level(logging.WARNING):
-        recovered = db.run_repository.recover_stale_recording_runs()
+    recovered = db.run_repository.recover_stale_recording_runs()
     assert recovered == 1
     run = db.run_repository.get_run("run-old")
     assert run is not None and run.status.value == "error"
