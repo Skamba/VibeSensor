@@ -36,6 +36,7 @@ def test_inventory_reports_unowned_and_multiply_owned_tests(
         "apps/ui/tests/shared.spec.ts" in error and "owned by multiple UI runners" in error
         for error in errors
     )
+    assert len(errors) == 2
 
 
 def test_marker_policy_reports_fast_lane_blind_spots(
@@ -65,3 +66,4 @@ def test_marker_policy_reports_fast_lane_blind_spots(
     assert any("marked e2e outside apps/server/tests_e2e/" in error for error in errors)
     assert any("marked benchmark but does not live" in error for error in errors)
     assert any("missing module-level pytest.mark.e2e" in error for error in errors)
+    assert len(errors) == 4

@@ -27,6 +27,7 @@ def test_processing_fuzz_assertions_are_testable_without_cli() -> None:
     assert module.is_sorted_desc([3.0, 2.0, 2.0, 1.0])
     assert not module.is_sorted_desc([1.0, 3.0])
     module.json_no_nan({"value": 1.0})
+    module.json_no_nan({"nested": [{"value": 1.0}]})
     with pytest.raises(ValueError):
         module.json_no_nan({"value": float("nan")})
 
@@ -51,6 +52,7 @@ def test_analysis_summary_assertions_are_testable_without_cli() -> None:
     )
 
     assert validated
+    assert validated[0][1]["rows"] == 2
     with pytest.raises(AssertionError, match="summary findings missing"):
         module.validate_summary(
             {"rows": 2, "run_suitability": {}},
@@ -114,6 +116,7 @@ def test_analysis_scenario_materializer_is_testable_without_cli() -> None:
     assert len(samples) == 1
     assert samples[0]["run_id"] == "fuzz-test"
     assert samples[0]["sample_rate_hz"] == 800
+    assert samples[0]["strength_bucket"] == "l1"
     assert json.dumps(samples, allow_nan=False)
 
 
@@ -124,6 +127,7 @@ def test_common_worker_helpers_are_testable_without_cli() -> None:
     assert module.worker_seed(100, 3) == 103
     assert module.worker_prefix(None) == ""
     assert module.worker_prefix(2) == "[worker 2] "
+    assert module.worker_prefix(0) == "[worker 0] "
 
 
 def test_fuzz_artifact_writers_are_testable_without_cli(tmp_path: Path) -> None:
@@ -142,6 +146,7 @@ def test_fuzz_artifact_writers_are_testable_without_cli(tmp_path: Path) -> None:
     assert processing_payload["case"] == {"value": 1.0}
     assert processing_payload["output"] == {"ok": False}
     assert processing_payload["exception_type"] == "RuntimeError"
+    assert processing_payload["exception_message"] == "boom"
 
     analysis_path = module.write_analysis_failure_artifact(
         case={"metadata": {"run_id": "fuzz-run"}, "samples": []},
@@ -154,3 +159,4 @@ def test_fuzz_artifact_writers_are_testable_without_cli(tmp_path: Path) -> None:
     analysis_payload = json.loads(analysis_path.read_text(encoding="utf-8"))
     assert analysis_payload["summary"] == {"rows": 0}
     assert analysis_payload["exception_type"] == "ValueError"
+    assert analysis_payload["exception_message"] == "bad"

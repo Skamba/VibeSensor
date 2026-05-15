@@ -42,6 +42,7 @@ def test_plan_validation_uses_ci_path_rules_for_docs_only_changes(monkeypatch) -
     assert plan.act_jobs == ("docs-lint",)
     assert plan.local_command[-2:] == ("--job", "docs-lint")
     assert plan.act_command[-2:] == ("-j", "docs-lint")
+    assert "--job" in plan.local_command
     assert plan.parity == "approximate"
     assert plan.unsupported == ()
     assert plan.github_outputs["run_docs_lint"] == "true"
@@ -61,6 +62,7 @@ def test_plan_validation_expands_backend_tests_for_local_runner(monkeypatch) -> 
     assert "backend-tests" in plan.ci_jobs
     assert "backend-tests" in plan.act_jobs
     assert all(f"backend-tests-{index}" in plan.local_jobs for index in range(1, 6))
+    assert "backend-tests-6" not in plan.local_jobs
     assert plan.github_outputs["run_backend_tests"] == "true"
 
 
@@ -80,3 +82,4 @@ def test_plan_validation_marks_release_smoke_as_approximate_not_unsupported(
     assert plan.parity == "approximate"
     assert plan.unsupported == ()
     assert any("ui-build-artifact" in note for note in plan.approximations)
+    assert "release-smoke" in plan.act_jobs
