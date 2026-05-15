@@ -115,6 +115,8 @@ def test_build_report_pdf_renders_dense_evidence_chart_text() -> None:
     assert "6/8 (75%); lock 81%" in text
     assert "12.4-12.9 Hz" in text
     assert "Reference coverage 88%" in text
+    assert "Wheel / Tire" in text
+    assert "Front-Left" in text
 
 
 def test_build_report_pdf_renders_missing_reference_caveat() -> None:
@@ -129,6 +131,8 @@ def test_build_report_pdf_renders_missing_reference_caveat() -> None:
 
     assert document.appendix_c.dense_evidence_rows[0].caveat == "Reference data unavailable"
     assert "Reference data unavailable" in text
+    assert "support 75% / reference 0%" in text
+    assert "6/8 (75%); lock 81%" in text
 
 
 def test_build_report_document_projects_dense_quality_caveat() -> None:
