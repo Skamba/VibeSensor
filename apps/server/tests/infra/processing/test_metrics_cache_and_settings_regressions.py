@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from test_support.settings_services import PersistedSettingsServices, build_settings_services
 
+from vibesensor.domain import normalize_sensor_id
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.use_cases.diagnostics._counters import counter_delta
@@ -179,7 +180,7 @@ class TestSettingsStoreRollbackDbFailure:
 
         # Sensor should not exist after rollback
         sensors = store.sensor_settings.get_sensors()
-        normalized = mac.upper().replace(":", "")
+        normalized = normalize_sensor_id(mac)
         assert normalized not in sensors
 
     def test_assign_sensor_location_rollback_existing_sensor(
@@ -196,6 +197,6 @@ class TestSettingsStoreRollbackDbFailure:
 
         # Should have original values
         sensors = store.sensor_settings.get_sensors()
-        normalized = mac.upper().replace(":", "")
+        normalized = normalize_sensor_id(mac)
         assert sensors[normalized]["name"] == "Rear Left Wheel"
         assert sensors[normalized]["location_code"] == "rear_left_wheel"

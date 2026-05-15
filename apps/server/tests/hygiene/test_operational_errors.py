@@ -24,12 +24,10 @@ def test_operational_base_exception_is_exception() -> None:
 
 @pytest.mark.parametrize("exc_cls", _ALL_OPERATIONAL_EXCEPTIONS, ids=lambda cls: cls.__name__)
 def test_operational_errors_catchable_by_base(exc_cls: type[OperationalError]) -> None:
-    try:
+    with pytest.raises(OperationalError) as exc_info:
         raise exc_cls("test")
-    except OperationalError as exc:
-        assert str(exc) == "test"
-    else:
-        raise AssertionError(f"{exc_cls.__name__} not catchable as OperationalError")
+
+    assert str(exc_info.value) == "test"
 
 
 def test_operational_error_base_is_direct_exception_subclass() -> None:
