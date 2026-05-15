@@ -86,6 +86,7 @@ def test_ui_bootstrap_helper_runs_npm_ci_and_marks_lock_hash(tmp_path: Path) -> 
     )
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert log_path.read_text(encoding="utf-8").splitlines() == ["ci"]
     assert (ui_dir / ".npm-ci-lock.sha256").read_text(encoding="utf-8").strip() == hashlib.sha256(
         (ui_dir / "package-lock.json").read_bytes()
@@ -168,6 +169,7 @@ def test_ui_bootstrap_helper_materializes_missing_generated_contracts_when_reque
 
     assert result.returncode == 0
     assert log_path.read_text(encoding="utf-8").splitlines() == ["run sync:generated-contracts"]
+    assert "generated UI contract derivatives are missing" in result.stdout
 
 
 def test_ui_bootstrap_helper_skips_generated_contract_sync_when_derivatives_exist(
@@ -196,3 +198,4 @@ def test_ui_bootstrap_helper_skips_generated_contract_sync_when_derivatives_exis
 
     assert result.returncode == 0
     assert not log_path.exists()
+    assert result.stdout.count("sync:generated-contracts") == 0
