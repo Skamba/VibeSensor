@@ -61,6 +61,11 @@ describe("ui_app_state reactivity", () => {
     const state = createAppState();
     const seenRatios: number[] = [];
 
+    expect({
+      ...state.settings.car.activeVehicleSettings.value,
+      ...state.settings.analysis.vehicleSettings.value,
+    }).toEqual(defaultAnalysisSettings);
+
     const dispose = effect(() => {
       seenRatios.push(
         state.settings.car.activeVehicleSettings.value.current_gear_ratio,
@@ -77,15 +82,6 @@ describe("ui_app_state reactivity", () => {
     expect(seenRatios).toEqual([0.64, 0.72]);
 
     dispose();
-  });
-
-  test("hydrates vehicle defaults from generated backend constants", () => {
-    const state = createAppState();
-
-    expect({
-      ...state.settings.car.activeVehicleSettings.value,
-      ...state.settings.analysis.vehicleSettings.value,
-    }).toEqual(defaultAnalysisSettings);
   });
 
   test("keeps slice notifications isolated", () => {

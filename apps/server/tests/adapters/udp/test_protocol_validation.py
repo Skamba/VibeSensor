@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import struct
+from collections.abc import Callable
 
 import numpy as np
 import pytest
@@ -65,16 +66,46 @@ def test_parse_too_short(parse_fn, short_data: bytes, match: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ("parse_fn", "header_bytes", "match"),
+    ("parse_fn", "data", "match"),
     [
-        (parse_hello, HELLO_FIXED_BYTES, "Invalid HELLO header"),
-        (parse_data, DATA_HEADER_BYTES, "Invalid DATA header"),
-        (parse_cmd, CMD_HEADER_BYTES, "Invalid CMD header"),
+        (
+            parse_hello,
+            b"\xff\x01" + b"\x00" * (HELLO_FIXED_BYTES - 2),
+            "Invalid HELLO header",
+        ),
+        (
+            parse_data,
+            b"\xff\x01" + b"\x00" * (DATA_HEADER_BYTES - 2),
+            "Invalid DATA header",
+        ),
+        (
+            parse_cmd,
+            b"\xff\x01" + b"\x00" * (CMD_HEADER_BYTES - 2),
+            "Invalid CMD header",
+        ),
+        (
+            parse_ack,
+            ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0, 0),
+            "Invalid ACK header",
+        ),
+        (
+            parse_data_ack,
+            DATA_ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0),
+            "Invalid DATA_ACK header",
+        ),
+        (
+            parse_hello_ack,
+            HELLO_ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6),
+            "Invalid HELLO_ACK header",
+        ),
     ],
-    ids=["hello", "data", "cmd"],
+    ids=["hello", "data", "cmd", "ack", "data_ack", "hello_ack"],
 )
-def test_parse_invalid_header(parse_fn, header_bytes: int, match: str) -> None:
-    data = b"\xff\x01" + b"\x00" * (header_bytes - 2)
+def test_parse_rejects_invalid_headers(
+    parse_fn: Callable[[bytes], object],
+    data: bytes,
+    match: str,
+) -> None:
     with pytest.raises(ProtocolError, match=match):
         parse_fn(data)
 
@@ -129,21 +160,6 @@ def test_pack_data_rejects_wrong_shape() -> None:
 def test_parse_wrong_size(parse_fn, short_data: bytes, match: str) -> None:
     with pytest.raises(ProtocolError, match=match):
         parse_fn(short_data)
-
-
-@pytest.mark.parametrize(
-    ("struct_", "parse_fn", "pack_args", "match"),
-    [
-        (ACK_STRUCT, parse_ack, (0xFF, 0x01, b"\x00" * 6, 0, 0), "Invalid ACK header"),
-        (DATA_ACK_STRUCT, parse_data_ack, (0xFF, 0x01, b"\x00" * 6, 0), "Invalid DATA_ACK header"),
-        (HELLO_ACK_STRUCT, parse_hello_ack, (0xFF, 0x01, b"\x00" * 6), "Invalid HELLO_ACK header"),
-    ],
-    ids=["ack", "data_ack", "hello_ack"],
-)
-def test_parse_ack_invalid_header(struct_, parse_fn, pack_args, match: str) -> None:
-    pkt = struct_.pack(*pack_args)
-    with pytest.raises(ProtocolError, match=match):
-        parse_fn(pkt)
 
 
 def test_parse_ack_rejects_unknown_extended_size() -> None:

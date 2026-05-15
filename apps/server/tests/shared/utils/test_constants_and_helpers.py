@@ -24,11 +24,8 @@ def test_kmh_to_mps_value() -> None:
     assert abs(100.0 * KMH_TO_MPS - 27.7778) < 0.001
 
 
-def test_silence_db_is_negative() -> None:
+def test_core_analysis_constants_have_expected_ranges() -> None:
     assert SILENCE_DB < 0
-
-
-def test_peak_constants_positive() -> None:
     assert PEAK_BANDWIDTH_HZ > 0
     assert PEAK_SEPARATION_HZ > 0
 
