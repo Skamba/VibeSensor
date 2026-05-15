@@ -86,6 +86,7 @@ def test_main_creates_or_updates_release_with_repo_endpoint_and_uploads_assets(
 
     for existing_release_id, method, endpoint in cases:
         commands: list[list[str]] = []
+        release_payloads: list[dict[str, object]] = []
         monkeypatch.setattr(
             module,
             "_existing_release_id",
@@ -100,8 +101,13 @@ def test_main_creates_or_updates_release_with_repo_endpoint_and_uploads_assets(
             context: str,
             timeout_s: float,
             recorded_commands: list[list[str]] = commands,
+            recorded_payloads: list[dict[str, object]] = release_payloads,
         ):
             recorded_commands.append(list(command))
+            if "--input" in command:
+                recorded_payloads.append(
+                    json.loads(Path(_option_value(command, "--input")).read_text())
+                )
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
         monkeypatch.setattr(module, "_run", _fake_run)
@@ -129,6 +135,10 @@ def test_main_creates_or_updates_release_with_repo_endpoint_and_uploads_assets(
         assert endpoint in release_command
         assert _option_value(release_command, "--method") == method
         assert "--input" in release_command
+        release_payload = release_payloads[0]
+        assert release_payload["tag_name"] == "server-v2026.3.28"
+        assert release_payload["target_commitish"] == "abc123"
+        assert release_payload["name"] == "Release 2026.3.28"
 
         assert upload_command[:3] == ["gh", "release", "upload"]
         assert "server-v2026.3.28" in upload_command

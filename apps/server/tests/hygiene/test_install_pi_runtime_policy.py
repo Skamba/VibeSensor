@@ -152,6 +152,7 @@ def test_install_pi_fails_fast_when_python3_is_below_supported_floor(tmp_path: P
     assert result.returncode == 1
     assert "requires python3 >= 3.13" in result.stderr
     assert "docs/runtime_support_matrix.md" in result.stderr
+    assert "pip install" not in result.stderr
     assert not any(call.startswith("-m venv ") for call in python_calls)
     assert pip_calls == []
     assert not (server_root / ".venv").exists()
@@ -167,3 +168,4 @@ def test_install_pi_reaches_venv_creation_with_supported_python(tmp_path: Path) 
     assert result.returncode == 41
     assert f"-m venv {server_root / '.venv'}" in python_calls
     assert pip_calls == ["install --upgrade pip"]
+    assert (server_root / ".venv" / "bin" / "pip").is_file()

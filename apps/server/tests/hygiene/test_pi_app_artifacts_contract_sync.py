@@ -79,4 +79,5 @@ esac
         "run sync:generated-contracts",
         "run build",
     ]
+    assert (ui_dir / "src/generated/http_api_contracts.ts").is_file()
     assert (server_static_dir / "index.html").read_text(encoding="utf-8") == "<!doctype html>\n"

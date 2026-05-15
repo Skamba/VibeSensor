@@ -193,6 +193,7 @@ def test_build_wrapper_app_mode_finishes_after_app_artifacts(tmp_path: Path) -> 
     assert result.returncode == 0, result.stderr
     assert "Build mode 'app' complete." in result.stdout
     assert (paths["out"] / "app-built.txt").is_file()
+    assert not (paths["out"] / "validated-artifact.txt").exists()
     assert "Final artifact:" not in result.stdout
 
 
@@ -219,6 +220,7 @@ def test_build_wrapper_reports_final_artifact_and_copies_release_files(tmp_path:
     )
     assert (release_dir / artifact.name).is_file()
     assert (release_dir / version_info.name).is_file()
+    assert (release_dir / artifact.name).read_text(encoding="utf-8") == "image\n"
     assert "Using Raspbian mirror: https://mirror.invalid/raspbian" in result.stdout
     assert f"Final artifact: {artifact}" in result.stdout
     assert f"Version info: {version_info}" in result.stdout
@@ -235,6 +237,7 @@ def test_validate_image_wrapper_uses_selected_artifact_and_reports_completion(
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == f"Validation complete for: {artifact}"
+    assert "Final artifact:" not in result.stdout
     assert (paths["out"] / "validated-artifact.txt").read_text(encoding="utf-8").strip() == str(
         artifact
     )

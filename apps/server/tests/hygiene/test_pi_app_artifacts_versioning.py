@@ -78,6 +78,7 @@ def test_compute_app_build_version_prefers_release_tag_at_head(tmp_path: Path) -
     version = _run_app_artifacts_function(repo, "compute_app_build_version")
 
     assert version == "2026.3.29"
+    assert not version.startswith("server-v")
 
 
 def test_compute_app_build_version_falls_back_to_git_sha(tmp_path: Path) -> None:
@@ -88,6 +89,7 @@ def test_compute_app_build_version_falls_back_to_git_sha(tmp_path: Path) -> None
     version = _run_app_artifacts_function(repo, "compute_app_build_version")
 
     assert version == f"0.0.0.dev0+g{git_sha}"
+    assert len(git_sha) == 12
 
 
 def test_build_app_artifacts_stamps_version_before_building_wheel() -> None:
@@ -101,3 +103,7 @@ def test_build_app_artifacts_stamps_version_before_building_wheel() -> None:
     assert stamp_call in script_text
     assert script_text.index(stamp_call) < script_text.index(build_call)
     assert 'echo "version=${app_version}"' in script_text
+    assert (
+        'git_sha="$(git -C "${REPO_ROOT}" rev-parse --short=12 HEAD 2>/dev/null || true)"'
+        in script_text
+    )
