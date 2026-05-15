@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 
-def test_prepared_report_input_has_domain_aggregate() -> None:
-    """Prepared report inputs must carry the reconstructed domain aggregate."""
-    from test_support.findings import make_finding_payload
+from test_support.findings import make_finding_payload
 
-    from vibesensor.domain import TestRun
-    from vibesensor.shared.boundaries.reporting import prepare_report_input
 
-    summary = {
-        "run_id": "test-context",
-        "findings": [make_finding_payload(finding_id="F001")],
-        "top_causes": [make_finding_payload(finding_id="F001")],
+def _report_summary(
+    *,
+    run_id: str = "guard-run",
+    finding: Mapping[str, object] | None = None,
+    **overrides: object,
+) -> dict[str, object]:
+    finding_payload = dict(finding or make_finding_payload(finding_id="F001", confidence=0.80))
+    summary: dict[str, object] = {
+        "run_id": run_id,
+        "findings": [finding_payload],
+        "top_causes": [finding_payload],
         "lang": "en",
         "metadata": {},
         "report_date": "",
@@ -24,10 +28,26 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
         "sensor_locations_connected_throughout": [],
         "most_likely_origin": {},
         "run_suitability": [],
+        "warnings": [],
+        "plots": {},
+        "test_plan": [],
+        "sensor_count_used": 2,
     }
+    summary.update(overrides)
+    return summary
+
+
+def test_prepared_report_input_has_domain_aggregate() -> None:
+    """Prepared report inputs must carry the reconstructed domain aggregate."""
+    from vibesensor.domain import TestRun
+    from vibesensor.shared.boundaries.reporting import prepare_report_input
+
+    summary = _report_summary(run_id="test-context")
     prepared = prepare_report_input(summary)
     assert isinstance(prepared.domain_test_run, TestRun)
     assert len(prepared.domain_test_run.findings) == 1
+    assert prepared.domain_test_run.run_id == "test-context"
+    assert prepared.report_facts.run.run_id == "test-context"
 
 
 def test_build_system_cards_uses_domain_findings() -> None:
@@ -78,42 +98,25 @@ def test_build_system_cards_uses_domain_findings() -> None:
 
 def test_build_report_document_produces_report_with_domain_findings() -> None:
     """build_report_document must produce report data using domain-first pipeline."""
-    from test_support.findings import make_finding_payload
-
     from vibesensor.shared.boundaries.reporting import prepare_report_input
     from vibesensor.use_cases.history.report_document import build_report_document
 
-    summary = {
-        "run_id": "test-map",
-        "file_name": "test.csv",
-        "rows": 100,
-        "duration_s": 60.0,
-        "lang": "en",
-        "metadata": {},
-        "report_date": "",
-        "record_length": "",
-        "start_time_utc": "",
-        "end_time_utc": "",
-        "warnings": [],
-        "sensor_locations": [],
-        "sensor_locations_connected_throughout": [],
-        "sensor_intensity_by_location": [],
-        "most_likely_origin": {},
-        "run_suitability": [],
-        "plots": {},
-        "test_plan": [],
-        "findings": [make_finding_payload(finding_id="F001", confidence=0.80)],
-        "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
-        "sensor_count_used": 2,
-    }
+    summary = _report_summary(
+        run_id="test-map",
+        file_name="test.csv",
+        rows=100,
+        duration_s=60.0,
+        sensor_locations=["front_left", "front_right"],
+        sensor_intensity_by_location=[],
+    )
     template = build_report_document(prepare_report_input(summary))
     assert template.run_id == "test-map"
+    assert template.sensor_count == 2
+    assert template.lang == "en"
 
 
 def test_report_mapping_business_functions_use_domain_objects() -> None:
     """Primary-candidate resolution must derive values from the domain aggregate."""
-    from test_support.findings import make_finding_payload
-
     from vibesensor.domain import VibrationSource
     from vibesensor.report_i18n import tr
     from vibesensor.shared.boundaries.reporting import prepare_report_input
@@ -125,23 +128,10 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     finding = make_finding_payload(
         finding_id="F001",
         confidence=0.80,
-        suspected_source="wheel_tire",
+        suspected_source="wheel/tire",
+        strongest_location="front_left",
     )
-    summary = {
-        "run_id": "guard-biz",
-        "findings": [finding],
-        "top_causes": [finding],
-        "lang": lang,
-        "metadata": {},
-        "report_date": "",
-        "record_length": "",
-        "start_time_utc": "",
-        "end_time_utc": "",
-        "sensor_locations": [],
-        "sensor_locations_connected_throughout": [],
-        "most_likely_origin": {},
-        "run_suitability": [],
-    }
+    summary = _report_summary(run_id="guard-biz", finding=finding, lang=lang)
 
     prepared = prepare_report_input(summary)
     primary = resolve_primary_report_candidate(
@@ -154,34 +144,20 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     assert isinstance(primary.primary_source, VibrationSource), (
         "primary_source must be a VibrationSource enum when domain aggregate is present"
     )
+    assert primary.primary_source is VibrationSource.WHEEL_TIRE
+    assert primary.primary_location == "front_left"
 
 
 def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
     """Prepared report inputs must expose explicit typed fields instead of raw dict state."""
-    from test_support.findings import make_finding_payload
-
     from vibesensor.shared.boundaries.reporting import prepare_report_input
 
-    prepared = prepare_report_input(
-        {
-            "run_id": "guardrails",
-            "findings": [make_finding_payload(finding_id="F001")],
-            "top_causes": [make_finding_payload(finding_id="F001")],
-            "lang": "en",
-            "metadata": {},
-            "report_date": "",
-            "record_length": "",
-            "start_time_utc": "",
-            "end_time_utc": "",
-            "sensor_locations": [],
-            "sensor_locations_connected_throughout": [],
-            "most_likely_origin": {},
-            "run_suitability": [],
-            "plots": {},
-        }
-    )
+    prepared = prepare_report_input(_report_summary(run_id="guardrails"), filename="guard.pdf")
 
+    assert prepared.filename == "guard.pdf"
+    assert prepared.language == "en"
     assert prepared.report_facts.run.run_id == "guardrails"
+    assert prepared.domain_test_run.run_id == "guardrails"
 
 
 def test_next_steps_consume_prepared_actions() -> None:
