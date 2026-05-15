@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 
+from _report_pdf_test_helpers import extract_pdf_pages_text
 from pypdf import PdfReader
 from test_support.pdf import extract_pdf_text
 
@@ -63,6 +64,8 @@ def test_page_one_keeps_action_ready_guidance_readable() -> None:
     report_text = _normalized_pdf_text(pdf)
 
     assert "What to do next" in page_one_text
+    assert "Action-ready" in page_one_text
+    assert "Rear-Left outranked the next location by 2.1x." in page_one_text
     assert "Check Rear-Left for tire damage" in page_one_text
     assert "pressure mismatch" in page_one_text
     assert "Check Rear-Left for imbalance" in report_text
@@ -105,10 +108,14 @@ def test_appendix_c_keeps_context_quality_and_traceability_visible() -> None:
         ],
     )
 
-    text = _normalized_pdf_text(build_report_pdf(data))
+    pdf = build_report_pdf(data)
+    pages_text = extract_pdf_pages_text(pdf)
+    text = " ".join(pages_text)
 
     assert "A steady 100-110 km/h capture" in text
     assert "More context retained in source data." in text
+    assert "Evidence and Run Context" in text
+    assert "Traceability" in text
     assert "Frame integrity" in text
     assert "Speed stayed in the diagnostic band." in text
     assert "appendix-c-content-readable" in text
@@ -143,9 +150,12 @@ def test_worksheet_keeps_ranked_sources_and_follow_up_actions_visible() -> None:
         ],
     )
 
-    text = _normalized_pdf_text(build_report_pdf(data))
+    pages_text = extract_pdf_pages_text(build_report_pdf(data))
+    text = " ".join(pages_text)
 
     assert "Engine-order evidence leads the workflow." in text
+    assert "Primary vs alternative source" in text
     assert "Body resonance" in text
     for index in range(1, 9):
         assert f"Action {index}: inspect a unique worksheet item." in text
+        assert f"Falsify action {index}." in text
