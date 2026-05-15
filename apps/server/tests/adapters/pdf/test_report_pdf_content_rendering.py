@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
-from io import BytesIO
 
 from _paths import SERVER_ROOT
-from pypdf import PdfReader
+from _report_pdf_test_helpers import extract_pdf_pages_text
 from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
@@ -83,6 +82,8 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
 
     assert i18n["REPORT_PEAK_DB_COLUMN"]["en"] in text
     assert i18n["REPORT_STRENGTH_DB_COLUMN"]["en"] in text
+    assert "Speed window" in text
+    assert "50-60 km/h" in text
 
 
 def test_pdf_additional_observations_heading_for_transient_findings() -> None:
@@ -99,8 +100,10 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
 
     pdf = build_report_pdf(data)
     text = extract_pdf_text(pdf)
+    compact_text = " ".join(text.split())
 
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
+    assert "Transient impact evidence was also seen near Front-Left." in compact_text
     assert "(22%)" not in text
 
 
@@ -126,6 +129,7 @@ def test_dutch_proof_window_speed_uses_km_u_unit() -> None:
     text = extract_pdf_text(build_report_pdf(data))
 
     assert "67 km/u" in text
+    assert "P1" in text
     assert "67 km/h" not in text
 
 
@@ -153,6 +157,7 @@ def test_worksheet_keeps_freeform_inspect_targets_verbatim() -> None:
     text = " ".join(extract_pdf_text(build_report_pdf(data)).split())
 
     assert "Front-Right engine mount/accessory area" in text
+    assert "Inspect the front-right engine mount." in text
     assert "Front Right Engine Mount/accessory Area" not in text
 
 
@@ -182,10 +187,11 @@ def test_page_one_does_not_render_support_duration_as_elapsed_runtime() -> None:
             next_steps=[NextStep(action="Check Front-Left wheel and tire first.")],
         )
     )
-    reader = PdfReader(BytesIO(pdf))
-    page_one_text = " ".join((reader.pages[0].extract_text() or "").split()).lower()
-    all_text = " ".join((page.extract_text() or "") for page in reader.pages).lower()
+    pages_text = extract_pdf_pages_text(pdf)
+    page_one_text = pages_text[0].lower()
+    all_text = " ".join(pages_text).lower()
 
     assert "00:20.3" in page_one_text
     assert "supporting windows across 65.8 s" not in page_one_text
     assert "263 supporting windows across 65.8 s" in all_text
+    assert any("263 supporting windows across 65.8 s" in page.lower() for page in pages_text[1:])

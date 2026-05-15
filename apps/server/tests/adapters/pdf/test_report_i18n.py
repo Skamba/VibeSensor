@@ -89,6 +89,7 @@ def test_all_source_referenced_keys_exist_in_json() -> None:
         for match in pattern.finditer(py_file.read_text(encoding="utf-8")):
             referenced_keys.add(match.group(1))
     assert referenced_keys, "Sanity: should find at least some keys"
+    assert len(referenced_keys) > 100
     missing = sorted(referenced_keys - set(data.keys()))
     assert missing == [], f"Keys referenced in source but missing from JSON: {missing}"
 

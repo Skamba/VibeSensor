@@ -10,6 +10,7 @@ from test_support.report_helpers import report_sample as base_sample
 
 __all__ = [
     "assert_pdf_contains",
+    "extract_pdf_pages_text",
     "extract_media_box",
     "sample",
 ]
@@ -35,6 +36,11 @@ def sample(
 def assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
     extracted = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(pdf_bytes)).pages)
     assert text in extracted
+
+
+def extract_pdf_pages_text(pdf_bytes: bytes) -> tuple[str, ...]:
+    reader = PdfReader(BytesIO(pdf_bytes))
+    return tuple(" ".join((page.extract_text() or "").split()) for page in reader.pages)
 
 
 def extract_media_box(pdf_bytes: bytes) -> tuple[float, float, float, float]:

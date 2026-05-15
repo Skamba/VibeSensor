@@ -84,5 +84,6 @@ def test_pdf_renders_confidence_row_and_explicit_caveats() -> None:
     text = extract_pdf_text(pdf)
 
     assert "Confidence" in text
+    assert "74%" in text
     assert "only summary-level evidence was available" in text
     assert "matched frequency drifted across 12.1-15.6 Hz" in text

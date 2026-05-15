@@ -56,6 +56,7 @@ def test_page_one_long_wheel_action_does_not_silently_truncate() -> None:
     assert "Check Front-Left tire for shoulder wear" in text
     assert "pressure mismatch" in text
     assert "before balancing" in text
+    assert "otherwise keep the decision path open" in text
 
 
 def test_page_one_recapture_action_does_not_silently_truncate() -> None:
@@ -88,6 +89,8 @@ def test_page_one_recapture_action_does_not_silently_truncate() -> None:
 
     assert "Repeat the same speed band" in text
     assert "separate the overlapping source paths" in text
+    assert "Best available location signal" in text
+    assert "Action status" in text
 
 
 def test_page_one_generated_alternative_caveat_names_fallback_path() -> None:
@@ -124,6 +127,7 @@ def test_page_one_generated_alternative_caveat_names_fallback_path() -> None:
     assert document.verdict_page.action_status_note == (
         "If first check is clean: Inspect Driveline next"
     )
+    assert document.verdict_page.fallback_path == "Inspect Driveline next"
     assert "alternative source still in scope" not in text
     assert "if the primary path is clean" in text
     assert "inspect driveline next" in text
@@ -192,3 +196,4 @@ def test_page_one_diagram_uses_verdict_dominant_corner() -> None:
             "suspected_source": "Engine",
         },
     )
+    assert all(finding["strongest_location"] != "Front Left" for finding in diagram_findings)
