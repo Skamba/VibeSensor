@@ -265,9 +265,12 @@ def _assert_expected_outcome(artifact: SavedFuzzArtifact) -> None:
         return
     if target == "processor":
         result, target_expect = _replay_processor_artifact(artifact)
-        assert set(cast(dict[str, object], result["compute_all_result"])) == set(
-            cast(list[str], target_expect["clients"])
-        )
+        expected_clients = set(cast(list[str], target_expect["clients"]))
+        assert set(cast(dict[str, object], result["metrics_by_client"])) == expected_clients
+        assert set(cast(dict[str, object], result["spectrum_by_client"])) == expected_clients
+        assert set(cast(dict[str, object], result["latest_xyz"])) == expected_clients
+        assert set(cast(dict[str, object], result["compute_all_result"])) == expected_clients
+        assert set(cast(list[str], result["fresh_clients"])) == expected_clients
         return
     if target == "analysis":
         summary, target_expect = _replay_analysis_artifact(artifact)

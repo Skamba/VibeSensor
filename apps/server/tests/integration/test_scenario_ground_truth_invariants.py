@@ -128,7 +128,7 @@ class TestSimulatorDeterminism:
 
 
 class TestLanguageSelectionPrecedence:
-    """Verify report-language selection prefers explicit inputs over fallback metadata."""
+    """Verify report-language selection is driven by explicit inputs."""
 
     def test_explicit_lang_overrides_metadata(self) -> None:
         summary = summarize_run_data(
@@ -145,7 +145,7 @@ class TestLanguageSelectionPrecedence:
         )
         assert summary.get("lang") == "en"
 
-    def test_metadata_language_used_when_no_explicit_lang(self) -> None:
+    def test_metadata_language_does_not_override_default_without_explicit_lang(self) -> None:
         summary = summarize_run_data(
             standard_metadata(language="nl"),
             fault_phase(
@@ -155,10 +155,10 @@ class TestLanguageSelectionPrecedence:
                 sensors=ALL_SENSORS,
                 start_t_s=0.0,
             ),
-            lang="nl",
+            lang=None,
             file_name="test",
         )
-        assert summary.get("lang") == "nl"
+        assert summary.get("lang") == "en"
 
     def test_en_default_when_no_lang_anywhere(self) -> None:
         metadata = standard_metadata()
@@ -172,7 +172,7 @@ class TestLanguageSelectionPrecedence:
                 sensors=ALL_SENSORS,
                 start_t_s=0.0,
             ),
-            lang="en",
+            lang=None,
             file_name="test",
         )
         assert summary.get("lang") == "en"

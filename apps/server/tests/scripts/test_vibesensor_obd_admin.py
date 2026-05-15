@@ -86,3 +86,22 @@ def test_find_repo_venv_python_falls_back_to_python3(
 
     assert module._find_repo_venv_python() == target_python
     assert target_python.name == "python3"
+
+
+def test_ensure_repo_venv_python_reports_checked_candidates_when_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_script_module()
+    venv_root = tmp_path / ".venv"
+
+    monkeypatch.setattr(module, "VENV_ROOT_CANDIDATES", (venv_root,))
+    monkeypatch.setattr(module, "VENV_PYTHON_BASENAMES", ("python", "python3"))
+
+    with pytest.raises(SystemExit) as exc_info:
+        module._ensure_repo_venv_python()
+
+    message = str(exc_info.value)
+    assert "Missing expected virtualenv interpreter" in message
+    assert str(venv_root / "bin" / "python") in message
+    assert str(venv_root / "bin" / "python3") in message

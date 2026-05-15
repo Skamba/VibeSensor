@@ -181,15 +181,14 @@ def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
     # Clear the name
     cleared = registry.clear_name(client_id)
     assert cleared.name == f"client-{client_id[-4:]}"
+    row = snapshot_for_api(registry, now=1.0)[0]
+    assert row["id"] == client_id
+    assert row["name"] == f"client-{client_id[-4:]}"
 
     # Verify persistence: the cleared name should NOT come back after reload
+    assert db.client_name_repository.list_client_names() == {}
     registry2 = ClientRegistry(db=db.client_name_repository)
-    rows = snapshot_for_api(registry2, now=1.0)
-    names = [r["name"] for r in rows if r["id"] == client_id]
-    # After clearing, the client may or may not appear in snapshot (depending on
-    # whether it's currently connected). If it appears, it should have the default name.
-    for name in names:
-        assert name == f"client-{client_id[-4:]}"
+    assert snapshot_for_api(registry2, now=1.0) == []
 
 
 def test_registry_clear_name_preserves_other_clients(tmp_path: Path) -> None:

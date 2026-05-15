@@ -46,12 +46,14 @@ async def test_supervisor_restarts_failed_task_and_clears_health() -> None:
                 restartable_exceptions=(RuntimeError,),
             )
         )
-        await asyncio.wait_for(restart_started.wait(), timeout=1.0)
-        assert call_count == 2
-        assert health_state.background_task_failures == {}
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
+        try:
+            await asyncio.wait_for(restart_started.wait(), timeout=1.0)
+            assert call_count == 2
+            assert health_state.background_task_failures == {}
+        finally:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
 
 @pytest.mark.asyncio

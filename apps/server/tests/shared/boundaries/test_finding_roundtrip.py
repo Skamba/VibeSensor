@@ -123,7 +123,10 @@ class TestFindingRoundtrip:
         assert restored.location is not None
         assert restored.location.strongest_location == "front-left"
         assert restored.location.dominance_ratio == pytest.approx(2.5)
+        assert restored.location.localization_confidence == pytest.approx(0.9)
+        assert restored.location.ambiguous is True
         assert restored.location.alternative_locations == ("front-right",)
+        assert restored.location.location_count == 2
 
     def test_signatures_preserved(self) -> None:
         sigs = (

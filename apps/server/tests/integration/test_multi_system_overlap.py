@@ -27,6 +27,7 @@ from test_support import (
     SPEED_LOW,
     SPEED_MID,
     assert_confidence_label_valid,
+    assert_diagnosis_contract,
     assert_no_localized_wheel,
     engine_hz,
     extract_top,
@@ -35,7 +36,6 @@ from test_support import (
     profile_metadata,
     profile_wheel_hz,
     run_analysis,
-    top_confidence,
     wheel_hz,
 )
 
@@ -203,10 +203,13 @@ def test_engine_plus_wheel_detects_wheel(
         engine_amp=0.02,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    conf = top_confidence(summary)
-    assert conf > 0.0, f"No finding when engine+wheel at {corner}/{speed}/{profile['name']}"
-    top = extract_top(summary)
-    assert top is not None
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.01,
+        msg=f"engine+wheel at {corner}/{speed}/{profile['name']}",
+    )
 
 
 # ===================================================================
@@ -237,8 +240,12 @@ def test_engine_alias_suppression(eng_name: str, engine_amp: float) -> None:
         engine_amp=engine_amp,
     )
     summary = run_analysis(samples)
-    # Pipeline should not crash even with strong engine presence
-    assert "top_causes" in summary
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        min_confidence=0.01,
+        msg=f"engine alias suppression {eng_name}",
+    )
 
 
 # ===================================================================
@@ -266,8 +273,13 @@ def test_driveshaft_plus_wheel_overlap(
         profile=profile,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    conf = top_confidence(summary)
-    assert conf > 0.0, f"No finding for driveshaft+wheel at {corner}/{speed}/{profile['name']}"
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.01,
+        msg=f"driveshaft+wheel at {corner}/{speed}/{profile['name']}",
+    )
 
 
 # ===================================================================
@@ -306,10 +318,13 @@ def test_three_systems_simultaneous(corner: str, speed: float) -> None:
     )
 
     summary = run_analysis(samples)
-    assert "top_causes" in summary
-    # Should produce at least one finding
-    conf = top_confidence(summary)
-    assert conf > 0.0, f"Three-system scenario at {corner}/{speed} produced no findings"
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.01,
+        msg=f"three-system scenario at {corner}/{speed}",
+    )
 
 
 # ===================================================================
@@ -370,7 +385,7 @@ def test_engine_plus_single_sensor_wheel(
     wheel_amp: float,
     engine_amp: float,
 ) -> None:
-    """Engine + localized wheel: pipeline should find the localized wheel signal."""
+    """Single-sensor overlap should produce a diagnosis without crashing."""
     corner = "FL"
     sensor = CORNER_SENSORS[corner]
     samples = _make_engine_plus_wheel_samples(
@@ -381,9 +396,12 @@ def test_engine_plus_single_sensor_wheel(
         engine_amp=engine_amp,
     )
     summary = run_analysis(samples)
-    conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Single-sensor wheel+engine at {corner} ({strength_name}) should produce a finding"
+    assert_diagnosis_contract(
+        summary,
+        min_confidence=0.01,
+        msg=(
+            f"single-sensor wheel+engine at {corner} ({strength_name}) should produce a diagnosis"
+        ),
     )
 
 
@@ -413,9 +431,13 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any]) -> None:
 
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
-    assert "top_causes" in summary
-    conf = top_confidence(summary)
-    assert conf > 0.0, f"Profile {profile['name']} engine+wheel at {corner} produced no findings"
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.01,
+        msg=f"profile {profile['name']} engine+wheel at {corner}",
+    )
     # Validate confidence label if above floor
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:

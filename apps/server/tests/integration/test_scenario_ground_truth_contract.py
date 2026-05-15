@@ -429,6 +429,11 @@ GROUND_TRUTH_SCENARIOS = [
 ]
 
 
+def test_ground_truth_scenario_ids_are_unique() -> None:
+    case_ids = [scenario.case_id for scenario in GROUND_TRUTH_SCENARIOS]
+    assert len(case_ids) == len(set(case_ids))
+
+
 @pytest.fixture(params=GROUND_TRUTH_SCENARIOS, ids=lambda spec: spec.case_id)
 def scenario(request: pytest.FixtureRequest) -> ScenarioSpec:
     return request.param

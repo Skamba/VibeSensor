@@ -199,24 +199,22 @@ def test_single_sensor_ramp_only_no_fault(profile: dict[str, Any]) -> None:
     assert_strict_no_fault(summary, msg="ramp-only")
 
 
-# B.9 – Fault with 2x and 3x harmonics (4 corners = 4 cases)
+# B.9 – Fault with 1x and 2x harmonics (4 corners = 4 cases)
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_single_sensor_harmonics_1x_2x_3x(corner: str, profile: dict[str, Any]) -> None:
-    """Strong fault with all three wheel harmonics."""
-    # Note: add_wheel_3x is not supported by make_profile_fault_samples;
-    # profile-aware builder covers 1x + 2x harmonics.
+def test_single_sensor_harmonics_1x_2x(corner: str, profile: dict[str, Any]) -> None:
+    """Strong fault with primary and second wheel harmonics."""
     summary, top = _run_single_fault(
         profile,
         corner,
         fault_amp=0.08,
         add_wheel_2x=True,
     )
-    assert top is not None, f"No finding for {corner} with 1x+2x+3x"
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x+3x")
-    assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x+3x")
+    assert top is not None, f"No finding for {corner} with 1x+2x"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x")
+    assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x")
 
 
 # B.10 – Long duration steady fault (2 corners × 2 durations = 4 cases)

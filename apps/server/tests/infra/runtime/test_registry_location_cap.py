@@ -48,7 +48,8 @@ def test_set_location_over_64_ascii_bytes_capped(tmp_path: Path) -> None:
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, label)
     encoded = record.location_code.encode("utf-8")
-    assert len(encoded) <= 64
+    assert len(encoded) == 64
+    assert record.location_code == "a" * 64
 
 
 def test_set_location_multibyte_truncation_safe(tmp_path: Path) -> None:
@@ -66,6 +67,7 @@ def test_set_location_multibyte_truncation_safe(tmp_path: Path) -> None:
     assert len(encoded) <= 64
     # Must decode cleanly (round-trip)
     assert encoded.decode("utf-8") == record.location_code
+    assert record.location_code == "€" * 21
 
 
 def test_set_location_strips_whitespace_before_cap(tmp_path: Path) -> None:

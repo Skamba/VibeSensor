@@ -16,12 +16,9 @@ from test_support import (
     SPEED_HIGH,
     SPEED_MID,
     SPEED_VERY_HIGH,
-    assert_confidence_between,
-    assert_confidence_label_valid,
+    assert_diagnosis_contract,
     assert_no_wheel_fault,
     assert_pairwise_monotonic,
-    assert_strongest_location,
-    assert_wheel_source,
     extract_top,
     make_diffuse_samples,
     make_fault_samples,
@@ -59,12 +56,13 @@ pytestmark = pytest.mark.diagnostic_matrix
 
 def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     """Common assertion: top finding exists at *sensor* with wheel source."""
-    top = extract_top(summary)
-    assert top is not None, f"{msg}: no finding"
-    assert_wheel_source(summary, msg=msg)
-    assert_strongest_location(summary, sensor, msg=msg)
-    assert_confidence_between(summary, 0.10, 1.0, msg=msg)
-    assert_confidence_label_valid(summary, msg=msg)
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.10,
+        msg=msg,
+    )
 
 
 # D.3 – 2-sensor pairs with fault localization (4 cases)
@@ -179,10 +177,12 @@ def test_confidence_scales_with_sensor_count(
         fault_vib_db=28.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for {label}"
-    assert_wheel_source(summary, msg=label)
-    assert_confidence_between(summary, 0.10, 1.0, msg=label)
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        min_confidence=0.10,
+        msg=label,
+    )
 
 
 @pytest.mark.parametrize(

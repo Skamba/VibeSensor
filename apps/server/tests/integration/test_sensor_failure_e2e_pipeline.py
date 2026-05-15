@@ -288,7 +288,9 @@ def test_sample_rate_mismatch_warns_in_health_but_pipeline_completes(
 
     top_causes = artifacts.analysis.get("top_causes") or []
     assert top_causes
-    assert str(top_causes[0].get("strongest_location")) == "front-left"
+    top_cause = top_causes[0]
+    assert "wheel" in str(top_cause.get("suspected_source", "")).lower()
+    assert str(top_cause.get("strongest_location")) == "front-left"
     assert artifacts.health["status"] == "warn"
     assert artifacts.health["sample_rate_mismatch_count"] == 1
     assert "sample_rate_mismatch" in artifacts.health["degradation_reasons"]
