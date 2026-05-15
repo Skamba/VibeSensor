@@ -7,6 +7,7 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   requestPath,
+  selectedCarSettings,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -27,12 +28,7 @@ test("opens the add car wizard in a focused task container and restores focus wh
   await page.setViewportSize({ width: 390, height: 844 });
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
-      "/api/settings/cars": {
-        cars: [
-          { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
-        ],
-        active_car_id: "car-1",
-      },
+      "/api/settings/cars": selectedCarSettings({ name: "Audit Demo Car" }),
     }),
   });
   await page.route("**/api/car-library/**", async (route) => {
@@ -52,6 +48,14 @@ test("opens the add car wizard in a focused task container and restores focus wh
 
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await expect(page.locator("#addCarWizard")).toBeVisible();
+  await expect(page.locator("#addCarWizard")).toHaveAttribute(
+    "aria-modal",
+    "true",
+  );
+  await expect(page.locator("#addCarWizard")).toHaveAttribute(
+    "aria-labelledby",
+    "wizardTitle",
+  );
   await expect(page.locator("#wizardProgressText")).toContainText(
     "Step 1 of 5",
   );
@@ -86,12 +90,7 @@ test("closes the add car wizard from Escape on the focused input and restores fo
   await page.setViewportSize({ width: 390, height: 844 });
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
-      "/api/settings/cars": {
-        cars: [
-          { id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} },
-        ],
-        active_car_id: "car-1",
-      },
+      "/api/settings/cars": selectedCarSettings({ name: "Audit Demo Car" }),
     }),
   });
   await page.route("**/api/car-library/**", async (route) => {
@@ -127,6 +126,8 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   ];
   let activeCarId = "car-1";
   let createdCarName = "";
+  let createdCarAspects: Record<string, number> | null = null;
+  let activatedCarId: string | null = null;
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -143,6 +144,7 @@ test("keeps the manual branch deliberate while summarizing selections and activa
           aspects: Record<string, number>;
         };
         createdCarName = body.name;
+        createdCarAspects = body.aspects;
         cars.push({
           id: "car-2",
           name: body.name,
@@ -155,6 +157,7 @@ test("keeps the manual branch deliberate while summarizing selections and activa
       if (path === "/api/settings/cars/active" && method === "PUT") {
         const body = route.request().postDataJSON() as { car_id: string };
         activeCarId = body.car_id;
+        activatedCarId = body.car_id;
         await fulfillJson(route, { cars, active_car_id: activeCarId });
         return;
       }
@@ -251,6 +254,14 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await page.locator("#wizardManualAddBtn").click();
 
   await expect.poll(() => createdCarName).toBe("BMW X5 M60i");
+  expect(createdCarAspects).toMatchObject({
+    current_gear_ratio: 0.68,
+    final_drive_ratio: 3.08,
+    rim_in: 18,
+    tire_aspect_pct: 45,
+    tire_width_mm: 245,
+  });
+  await expect.poll(() => activatedCarId).toBe("car-2");
   await expect(page.locator("#addCarWizard")).toBeHidden();
   await expect(page.locator("#wizardBackdrop")).toBeHidden();
   await expect(page.locator("#addCarBtn")).toBeFocused();
@@ -274,6 +285,8 @@ test("completes the library branch on a short mobile screen without losing the f
   ];
   let activeCarId = "car-1";
   let createdCarName = "";
+  let createdCarAspects: Record<string, number> | null = null;
+  let activatedCarId: string | null = null;
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -290,6 +303,7 @@ test("completes the library branch on a short mobile screen without losing the f
           aspects: Record<string, number>;
         };
         createdCarName = body.name;
+        createdCarAspects = body.aspects;
         cars.push({
           id: "car-2",
           name: body.name,
@@ -302,6 +316,7 @@ test("completes the library branch on a short mobile screen without losing the f
       if (path === "/api/settings/cars/active" && method === "PUT") {
         const body = route.request().postDataJSON() as { car_id: string };
         activeCarId = body.car_id;
+        activatedCarId = body.car_id;
         await fulfillJson(route, { cars, active_car_id: activeCarId });
         return;
       }
@@ -384,6 +399,14 @@ test("completes the library branch on a short mobile screen without losing the f
   await page.locator("#wizardManualAddBtn").click();
 
   await expect.poll(() => createdCarName).toBe("BMW X5");
+  expect(createdCarAspects).toMatchObject({
+    current_gear_ratio: 0.67,
+    final_drive_ratio: 3.15,
+    rim_in: 21,
+    tire_aspect_pct: 40,
+    tire_width_mm: 275,
+  });
+  await expect.poll(() => activatedCarId).toBe("car-2");
   await expect(page.locator("#addCarWizard")).toBeHidden();
   await expect(page.locator("#addCarBtn")).toBeFocused();
   const newRow = page.locator('#carListBody tr[data-car-id="car-2"]');

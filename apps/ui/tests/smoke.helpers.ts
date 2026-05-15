@@ -574,3 +574,38 @@ export function speedSourceSettings(
     ...overrides,
   };
 }
+
+const completeCarAspects = {
+  current_gear_ratio: 0.82,
+  final_drive_ratio: 3.91,
+  rim_in: 18,
+  tire_aspect_pct: 40,
+  tire_width_mm: 245,
+} as const;
+
+export function settingsCarsResponse(
+  cars: readonly Record<string, unknown>[],
+  activeCarId: string | null,
+): Record<string, unknown> {
+  return {
+    active_car_id: activeCarId,
+    cars,
+  };
+}
+
+export function selectedCarSettings(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return settingsCarsResponse(
+    [
+      {
+        aspects: completeCarAspects,
+        id: "car-1",
+        name: "Selected",
+        type: "sedan",
+        ...overrides,
+      },
+    ],
+    "car-1",
+  );
+}

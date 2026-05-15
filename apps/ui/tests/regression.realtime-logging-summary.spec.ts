@@ -50,6 +50,10 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
   const liveSummary = page.locator("#loggingSummary");
   const addCarButton = liveSummary.getByRole("button", { name: "Add a car" });
   await expect(addCarButton).toBeVisible();
+  await expect(addCarButton).toHaveAttribute(
+    "data-inline-state-action",
+    "open-add-car",
+  );
   await expect(page.locator("#spectrumPanelRoot")).toBeHidden();
 
   await page.evaluate(() => {
@@ -106,5 +110,6 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
 
   await addCarButton.click();
   await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#carTab")).toHaveJSProperty("hidden", false);
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
 });
