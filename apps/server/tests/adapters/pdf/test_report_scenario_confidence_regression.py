@@ -20,7 +20,7 @@ from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 class TestConfidenceCalibration:
     """Confidence scoring should reflect sample support and signal quality."""
 
-    def test_low_match_count_has_lower_confidence_than_high_count(self) -> None:
+    def test_order_confidence_calibration_scenarios(self) -> None:
         metadata = standard_metadata()
         low_summary = summarize_run_data(
             metadata,
@@ -49,6 +49,10 @@ class TestConfidenceCalibration:
             assert low_conf < high_conf
             assert low_conf <= high_conf * 0.85
 
+        steady_samples = build_speed_sweep_samples(speed_start_kmh=79.5, speed_end_kmh=80.5, n=24)
+        steady_summary = summarize_run_data(metadata, steady_samples, include_samples=False)
+        assert max_order_source_conf(steady_summary) <= 0.65
+
     def test_noise_floor_guard_prevents_snr_blowup_with_near_zero_floor(self) -> None:
         mean_amp = 0.002
         near_zero_floor = 1e-7
@@ -71,12 +75,6 @@ class TestConfidenceCalibration:
         snr_normal_clamped = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5)
         snr_normal_direct = min(1.0, log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10
-
-    def test_constant_speed_penalty_keeps_confidence_below_steady_sweep(self) -> None:
-        metadata = standard_metadata()
-        steady_samples = build_speed_sweep_samples(speed_start_kmh=79.5, speed_end_kmh=80.5, n=24)
-        steady_summary = summarize_run_data(metadata, steady_samples, include_samples=False)
-        assert max_order_source_conf(steady_summary) <= 0.65
 
     def test_confidence_label_thresholds(self) -> None:
         assert Finding.classify_confidence(0.75)[:2] == ("CONFIDENCE_HIGH", "success")

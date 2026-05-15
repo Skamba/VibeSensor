@@ -22,65 +22,81 @@ from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 # ── estimate_text_width ──────────────────────────────────────────────────────
 
 
-def test_estimate_text_width_returns_minimum_for_short_text() -> None:
+def test_estimate_text_width_enforces_minimum_and_scales_with_text_length() -> None:
     assert estimate_text_width("", font_size=8.0) == 10.0
-
-
-def test_estimate_text_width_scales_with_text_length() -> None:
-    w1 = estimate_text_width("ab", font_size=8.0)
-    w2 = estimate_text_width("abcd", font_size=8.0)
-    assert w2 > w1
+    assert estimate_text_width("abcd", font_size=8.0) > estimate_text_width(
+        "ab",
+        font_size=8.0,
+    )
 
 
 # ── label_bbox ───────────────────────────────────────────────────────────────
 
 
-def test_label_bbox_start_anchor() -> None:
-    bbox = label_bbox(x=10, y=20, text="test", anchor="start", font_size=8.0)
-    assert bbox[0] == 10.0
-    assert bbox[1] == 19.0  # y - 1.0
-
-
-def test_label_bbox_end_anchor() -> None:
-    bbox = label_bbox(x=100, y=20, text="test", anchor="end", font_size=8.0)
-    width = estimate_text_width("test", font_size=8.0)
-    assert bbox[0] == pytest.approx(100.0 - width)
-
-
-def test_label_bbox_middle_anchor() -> None:
-    bbox = label_bbox(x=100, y=20, text="test", anchor="middle", font_size=8.0)
-    width = estimate_text_width("test", font_size=8.0)
-    assert bbox[0] == pytest.approx(100.0 - width / 2.0)
+@pytest.mark.parametrize(
+    ("anchor", "x", "expected_left"),
+    [
+        pytest.param("start", 10.0, 10.0, id="start"),
+        pytest.param(
+            "end",
+            100.0,
+            100.0 - estimate_text_width("test", font_size=8.0),
+            id="end",
+        ),
+        pytest.param(
+            "middle",
+            100.0,
+            100.0 - estimate_text_width("test", font_size=8.0) / 2.0,
+            id="middle",
+        ),
+    ],
+)
+def test_label_bbox_positions_left_edge_by_anchor(
+    anchor: str,
+    x: float,
+    expected_left: float,
+) -> None:
+    bbox = label_bbox(x=x, y=20, text="test", anchor=anchor, font_size=8.0)
+    assert bbox[0] == pytest.approx(expected_left)
+    assert bbox[1] == 19.0
 
 
 # ── boxes_overlap ────────────────────────────────────────────────────────────
 
 
-def test_boxes_overlap_detects_intersection() -> None:
-    assert boxes_overlap((0, 0, 10, 10), (5, 5, 15, 15)) is True
-
-
-def test_boxes_overlap_no_intersection() -> None:
-    assert boxes_overlap((0, 0, 10, 10), (20, 20, 30, 30)) is False
-
-
-def test_boxes_overlap_touching_edges_is_not_overlap() -> None:
-    assert boxes_overlap((0, 0, 10, 10), (10, 0, 20, 10)) is False
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        pytest.param((0, 0, 10, 10), (5, 5, 15, 15), True, id="intersection"),
+        pytest.param((0, 0, 10, 10), (20, 20, 30, 30), False, id="separate"),
+        pytest.param((0, 0, 10, 10), (10, 0, 20, 10), False, id="touching_edges"),
+    ],
+)
+def test_boxes_overlap_detects_only_positive_intersections(
+    left: tuple[float, float, float, float],
+    right: tuple[float, float, float, float],
+    expected: bool,
+) -> None:
+    assert boxes_overlap(left, right) is expected
 
 
 # ── bounds_overflow ──────────────────────────────────────────────────────────
 
 
-def test_bounds_overflow_no_overflow() -> None:
-    assert bounds_overflow((10, 10, 90, 90), width=100, height=100) == 0.0
-
-
-def test_bounds_overflow_left() -> None:
-    assert bounds_overflow((-5, 10, 90, 90), width=100, height=100) > 0.0
-
-
-def test_bounds_overflow_right() -> None:
-    assert bounds_overflow((10, 10, 105, 90), width=100, height=100) > 0.0
+@pytest.mark.parametrize(
+    ("bbox", "has_overflow"),
+    [
+        pytest.param((10, 10, 90, 90), False, id="inside"),
+        pytest.param((-5, 10, 90, 90), True, id="left"),
+        pytest.param((10, 10, 105, 90), True, id="right"),
+    ],
+)
+def test_bounds_overflow_reports_distance_outside_page(
+    bbox: tuple[float, float, float, float],
+    has_overflow: bool,
+) -> None:
+    overflow = bounds_overflow(bbox, width=100, height=100)
+    assert (overflow > 0.0) is has_overflow
 
 
 # ── resolve_marker_states ────────────────────────────────────────────────────
