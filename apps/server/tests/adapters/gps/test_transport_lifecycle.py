@@ -10,104 +10,109 @@ from vibesensor.adapters.gps.transport_lifecycle import (
 )
 
 
-class TestOnConnected:
-    def test_returns_connected_state(self) -> None:
-        lifecycle = TransportLifecycle()
-        transition = lifecycle.on_connected()
-        assert transition.changes["connection_state"] == "connected"
-        assert transition.changes["last_error"] is None
-        assert transition.changes["current_reconnect_delay"] == GPS_RECONNECT_DELAY_S
-        assert transition.sleep_before_retry is None
+def test_on_connected_returns_connected_state_and_resets_backoff() -> None:
+    lifecycle = TransportLifecycle(initial_delay=1.0)
+    lifecycle.on_connection_error(RuntimeError("boom"))
+    assert lifecycle.reconnect_delay > 1.0
 
-    def test_resets_backoff_delay(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=1.0)
-        # Advance backoff first.
-        lifecycle.on_connection_error(RuntimeError("boom"))
-        assert lifecycle.reconnect_delay > 1.0
-        # on_connected resets it.
-        lifecycle.on_connected()
-        assert lifecycle.reconnect_delay == 1.0
+    transition = lifecycle.on_connected()
+
+    assert transition.changes == {
+        "connection_state": "connected",
+        "last_error": None,
+        "current_reconnect_delay": 1.0,
+    }
+    assert transition.sleep_before_retry is None
+    assert lifecycle.reconnect_delay == 1.0
 
 
-class TestOnStreamDisconnected:
-    def test_returns_disconnected_fields(self) -> None:
-        lifecycle = TransportLifecycle()
-        transition = lifecycle.on_stream_disconnected()
-        assert transition.changes["connection_state"] == "disconnected"
-        assert transition.changes["speed_snapshot"] == (None, None)
-        assert transition.changes["last_fix_mode"] is None
-        assert transition.changes["device_info"] is None
-        assert transition.changes["zero_speed_streak"] == 0
-        assert transition.sleep_before_retry is None
+def test_on_stream_disconnected_returns_disconnected_fields_and_resets_backoff() -> None:
+    lifecycle = TransportLifecycle(initial_delay=0.5)
+    lifecycle.on_connection_error(RuntimeError("x"))
 
-    def test_resets_backoff_delay(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=0.5)
-        lifecycle.on_connection_error(RuntimeError("x"))
-        lifecycle.on_stream_disconnected()
-        assert lifecycle.reconnect_delay == 0.5
+    transition = lifecycle.on_stream_disconnected()
+
+    assert transition.changes == _expected_disconnected_fields()
+    assert transition.sleep_before_retry is None
+    assert lifecycle.reconnect_delay == 0.5
 
 
-class TestOnConnectionError:
-    def test_returns_disconnected_plus_error(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=2.0)
-        exc = OSError("network down")
-        transition = lifecycle.on_connection_error(exc)
-        assert transition.changes["connection_state"] == "disconnected"
-        assert transition.changes["last_error"] == "network down"
-        assert transition.changes["current_reconnect_delay"] == 2.0
-        assert transition.sleep_before_retry == 2.0
+@pytest.mark.parametrize(
+    ("exc", "expected_error"),
+    [
+        pytest.param(OSError("network down"), "network down", id="message"),
+        pytest.param(ConnectionError(), "ConnectionError", id="type_name_fallback"),
+    ],
+)
+def test_on_connection_error_returns_disconnected_error_transition(
+    exc: BaseException,
+    expected_error: str,
+) -> None:
+    lifecycle = TransportLifecycle(initial_delay=2.0)
 
-    def test_error_str_fallback_to_type_name(self) -> None:
-        lifecycle = TransportLifecycle()
-        transition = lifecycle.on_connection_error(ConnectionError())
-        assert transition.changes["last_error"] == "ConnectionError"
+    transition = lifecycle.on_connection_error(exc)
 
-    def test_exponential_backoff(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=1.0, max_delay=10.0, backoff_factor=2.0)
-        first_transition = lifecycle.on_connection_error(RuntimeError("a"))
-        assert first_transition.sleep_before_retry == 1.0
-        second_transition = lifecycle.on_connection_error(RuntimeError("b"))
-        assert second_transition.sleep_before_retry == 2.0
-        third_transition = lifecycle.on_connection_error(RuntimeError("c"))
-        assert third_transition.sleep_before_retry == 4.0
-        fourth_transition = lifecycle.on_connection_error(RuntimeError("d"))
-        assert fourth_transition.sleep_before_retry == 8.0
-        # Capped at max.
-        fifth_transition = lifecycle.on_connection_error(RuntimeError("e"))
-        assert fifth_transition.sleep_before_retry == 10.0
-
-    def test_clears_gps_metadata(self) -> None:
-        lifecycle = TransportLifecycle()
-        transition = lifecycle.on_connection_error(TimeoutError())
-        assert transition.changes["last_epx_m"] is None
-        assert transition.changes["last_epy_m"] is None
-        assert transition.changes["last_epv_m"] is None
-        assert transition.changes["last_fix_mode"] is None
+    assert transition.changes == {
+        **_expected_disconnected_fields(),
+        "last_error": expected_error,
+        "current_reconnect_delay": 2.0,
+    }
+    assert transition.sleep_before_retry == 2.0
 
 
-class TestResetDelay:
-    def test_resets_after_backoff(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=0.1)
-        lifecycle.on_connection_error(RuntimeError("x"))
-        lifecycle.on_connection_error(RuntimeError("y"))
-        assert lifecycle.reconnect_delay > 0.1
-        lifecycle.reset_delay()
-        assert lifecycle.reconnect_delay == pytest.approx(0.1)
+@pytest.mark.parametrize(
+    ("initial_delay", "max_delay", "backoff_factor", "expected_delays"),
+    [
+        pytest.param(1.0, 10.0, 2.0, [1.0, 2.0, 4.0, 8.0, 10.0], id="default_factor"),
+        pytest.param(0.5, 2.0, 3.0, [0.5, 1.5, 2.0], id="custom_policy"),
+    ],
+)
+def test_connection_error_advances_backoff_with_max_cap(
+    initial_delay: float,
+    max_delay: float,
+    backoff_factor: float,
+    expected_delays: list[float],
+) -> None:
+    lifecycle = TransportLifecycle(
+        initial_delay=initial_delay,
+        max_delay=max_delay,
+        backoff_factor=backoff_factor,
+    )
+
+    transitions = [
+        lifecycle.on_connection_error(RuntimeError(str(index)))
+        for index in range(len(expected_delays))
+    ]
+
+    assert [transition.sleep_before_retry for transition in transitions] == expected_delays
 
 
-class TestCustomPolicy:
-    def test_custom_initial_and_max(self) -> None:
-        lifecycle = TransportLifecycle(initial_delay=0.5, max_delay=2.0, backoff_factor=3.0)
-        first_transition = lifecycle.on_connection_error(RuntimeError("a"))
-        assert first_transition.sleep_before_retry == 0.5
-        second_transition = lifecycle.on_connection_error(RuntimeError("b"))
-        assert second_transition.sleep_before_retry == 1.5
-        # Next would be 4.5 but capped at 2.0.
-        third_transition = lifecycle.on_connection_error(RuntimeError("c"))
-        assert third_transition.sleep_before_retry == 2.0
+def test_reset_delay_restores_initial_delay_after_backoff() -> None:
+    lifecycle = TransportLifecycle(initial_delay=0.1)
+    lifecycle.on_connection_error(RuntimeError("x"))
+    lifecycle.on_connection_error(RuntimeError("y"))
+    assert lifecycle.reconnect_delay > 0.1
 
-    def test_defaults_match_module_constants(self) -> None:
-        lifecycle = TransportLifecycle()
-        assert lifecycle.reconnect_delay == GPS_RECONNECT_DELAY_S
-        transition = lifecycle.on_connected()
-        assert transition.changes["current_reconnect_delay"] == GPS_RECONNECT_DELAY_S
+    lifecycle.reset_delay()
+
+    assert lifecycle.reconnect_delay == pytest.approx(0.1)
+
+
+def test_default_policy_uses_module_reconnect_delay() -> None:
+    lifecycle = TransportLifecycle()
+    assert lifecycle.reconnect_delay == GPS_RECONNECT_DELAY_S
+    transition = lifecycle.on_connected()
+    assert transition.changes["current_reconnect_delay"] == GPS_RECONNECT_DELAY_S
+
+
+def _expected_disconnected_fields() -> dict[str, object]:
+    return {
+        "connection_state": "disconnected",
+        "speed_snapshot": (None, None),
+        "last_fix_mode": None,
+        "last_epx_m": None,
+        "last_epy_m": None,
+        "last_epv_m": None,
+        "zero_speed_streak": 0,
+        "device_info": None,
+    }
