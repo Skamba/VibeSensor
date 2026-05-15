@@ -20,8 +20,12 @@ class TestSummarizeRunDataEdgeCases:
 
     def test_empty_samples_no_crash(self) -> None:
         summary = summarize_run_data(self._MINIMAL_META, [], lang="en")
+        assert summary["run_id"] == "test-edge"
+        assert summary["lang"] == "en"
         assert summary["rows"] == 0
-        assert summary.get("run_suitability") is not None
+        assert summary["duration_s"] == 60.0
+        assert summary["samples"] == []
+        assert summary["run_suitability"]
 
     def test_samples_with_all_none_axes(self) -> None:
         samples: list[dict[str, Any]] = [
@@ -37,6 +41,9 @@ class TestSummarizeRunDataEdgeCases:
         summary = summarize_run_data(self._MINIMAL_META, samples, lang="en")
         assert summary["rows"] == 10
         accel_sanity = summary.get("data_quality", {}).get("accel_sanity", {})
+        assert accel_sanity.get("x_mean") is None
+        assert accel_sanity.get("y_mean") is None
+        assert accel_sanity.get("z_mean") is None
         assert accel_sanity.get("saturation_count") == 0
 
     def test_single_sample_no_crash(self) -> None:
@@ -54,7 +61,10 @@ class TestSummarizeRunDataEdgeCases:
         ]
         summary = summarize_run_data(self._MINIMAL_META, samples, lang="en")
         assert summary["rows"] == 1
-        assert summary.get("findings") is not None
+        assert summary["samples"][0]["client_id"] == "c1"
+        assert summary["samples"][0]["location"] == "front"
+        assert summary["samples"][0]["vibration_strength_db"] == 5.0
+        assert summary["findings"]
 
     def test_nl_lang_no_crash(self) -> None:
         summary = summarize_run_data(self._MINIMAL_META, [], lang="nl")
@@ -63,3 +73,5 @@ class TestSummarizeRunDataEdgeCases:
     def test_missing_metadata_fields(self) -> None:
         summary = summarize_run_data({"run_id": "minimal"}, [], lang="en")
         assert summary["run_id"] == "minimal"
+        assert summary["duration_s"] == 0.0
+        assert summary["sensor_model"] == "unknown"
