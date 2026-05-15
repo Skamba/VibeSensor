@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from _paths import SERVER_ROOT
+from _report_pdf_test_helpers import extract_pdf_pages_text
 from pypdf import PdfReader
 from test_support.findings import make_finding_payload
 from test_support.pdf import extract_pdf_text
@@ -61,6 +62,14 @@ def _sample(
     )
 
 
+def _pdf_page_text(pdf: bytes, page_index: int = 0) -> str:
+    return extract_pdf_pages_text(pdf)[page_index]
+
+
+def _pdf_page_text_lower(pdf: bytes, page_index: int = 0) -> str:
+    return _pdf_page_text(pdf, page_index).lower()
+
+
 def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     run_path = tmp_path / "no_car.jsonl"
     records: list[dict[str, object]] = [_run_metadata()]
@@ -75,6 +84,9 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
 
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
+    page_one_text = _pdf_page_text(pdf)
+    assert "Car Unknown" in page_one_text
+    assert "VibeSensor Diagnostic Report" in page_one_text
 
 
 def test_report_pdf_includes_appendix_b_for_generated_summary(tmp_path: Path) -> None:
@@ -93,6 +105,9 @@ def test_report_pdf_includes_appendix_b_for_generated_summary(tmp_path: Path) ->
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
+    page_two_text = _pdf_page_text(pdf, 1)
+    assert "Traceability" in page_two_text
+    assert "Evidence and Run Context" not in page_two_text
 
 
 def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> None:
@@ -143,7 +158,9 @@ def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> N
     assert "Sensor Topology" in page_two_text
     assert "Marker color shows relative vibration strength." in page_two_text
     assert "Appendix B" not in page_two_text
-    assert "Evidence and Run Context" in (reader.pages[2].extract_text() or "")
+    page_three_text = reader.pages[2].extract_text() or ""
+    assert "Evidence and Run Context" in page_three_text
+    assert "Evidence chain" in page_three_text
 
 
 @pytest.mark.parametrize(
@@ -170,6 +187,7 @@ def test_report_pdf_recapture_sections_render_localized_headings(
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = [f"{key} ({i18n[key][lang]!r})" for key in i18n_keys if i18n[key][lang] not in text]
     assert missing == [], f"Missing {lang} labels in PDF: {missing}"
+    assert i18n["REPORT_RECAPTURE_GUIDANCE_TITLE"][lang] in text
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
@@ -205,9 +223,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     )
 
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    page_one_text = " ".join(
-        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
-    )
+    page_one_text = _pdf_page_text_lower(pdf)
     text = extract_pdf_text(pdf).lower()
 
     assert "inspect first — moderate confidence" in page_one_text
@@ -215,6 +231,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     assert "potential saturation samples" in page_one_text
     assert "run quality and limits" in text
     assert "frame integrity" in text
+    assert "traceability" in text
 
 
 def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() -> None:
@@ -268,22 +285,22 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
     )
 
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    page_one_text = " ".join(
-        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
-    )
+    page_one_text = _pdf_page_text_lower(pdf)
 
     assert "limited by run context" not in page_one_text
     assert "potential saturation samples" in page_one_text
+    assert "action status" in page_one_text
 
 
 def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> None:
     document = build_report_document(prepare_report_input(ambiguous_primary_location_summary()))
     pdf = build_report_pdf(document)
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+    text = _pdf_page_text(pdf)
 
     assert document.observed.strongest_location is not None
     assert document.observed.strongest_location in text
     assert "Front-Left / Rear-Left" not in text
+    assert "Location confidence" in text
 
 
 def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
@@ -318,11 +335,12 @@ def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
             ],
         )
     )
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+    text = _pdf_page_text_lower(pdf)
 
     assert "action-ready" in text
     assert "strong" in text
     assert "what to do next" in text
+    assert "check wheel balance and runout" in text
 
 
 def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
@@ -362,8 +380,7 @@ def test_page_one_is_decision_first_without_timeline_or_long_caution() -> None:
             ],
         )
     )
-    page_one_text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
-    page_one_lower = page_one_text.lower()
+    page_one_lower = _pdf_page_text_lower(pdf)
 
     assert "wheel / tire" in page_one_lower
     assert "inspect first" in page_one_lower
@@ -410,10 +427,11 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
     )
 
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+    text = _pdf_page_text_lower(pdf)
 
     assert "inspect first — moderate confidence" in text
     assert "recapture before acting" not in text
+    assert "confidence" in text
 
 
 @pytest.mark.parametrize(
@@ -472,12 +490,13 @@ def test_build_report_pdf_keeps_weak_spatial_engine_and_driveline_findings_on_in
     )
 
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+    text = _pdf_page_text_lower(pdf)
 
     assert "inspect first — moderate confidence" in text
     assert "recapture before acting" not in text
     assert "insufficient evidence" not in text
     assert source_label in text
+    assert "front-right" in text
 
 
 def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> None:
@@ -521,22 +540,24 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
     )
 
     pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
-    page_one_text = " ".join(
-        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
-    )
+    page_one_text = _pdf_page_text_lower(pdf)
+    page_two_text = _pdf_page_text_lower(pdf, 1)
 
     assert "recapture before acting" in page_one_text
+    assert "recapture guidance" in page_two_text
+    assert "what was insufficient in this run" in page_two_text
 
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_on_page_one() -> None:
     document = build_report_document(prepare_report_input(sequential_same_source_summary()))
     pdf = build_report_pdf(document)
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+    text = _pdf_page_text(pdf)
 
     assert "Front-Left" in text
     assert "Rear-Right" in text
     assert document.verdict_page.proof_summary
     assert document.verdict_page.proof_summary in text
+    assert "Why this is credible" in text
 
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_flow() -> None:
@@ -544,13 +565,14 @@ def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_
         prepare_report_input(sequential_same_source_summary(weak_spatial=True))
     )
     pdf = build_report_pdf(document)
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+    text = _pdf_page_text(pdf)
 
     assert document.verdict_page.action_status in text
     assert "Front-Left" in text
     assert "Rear-Right" in text
     assert document.verdict_page.proof_summary
     assert document.verdict_page.proof_summary in text
+    assert "Best available location signal" in text
 
 
 @pytest.mark.parametrize(
@@ -571,3 +593,5 @@ def test_build_report_pdf_recapture_page_uses_scenario_specific_guidance(
 
     assert document.appendix_a.capture_issues
     assert document.appendix_a.capture_issues[0] in page_two_text
+    assert document.appendix_a.capture_changes
+    assert document.appendix_a.capture_changes[0] in page_two_text
