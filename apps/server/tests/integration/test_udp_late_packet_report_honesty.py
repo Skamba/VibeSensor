@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
@@ -79,7 +81,10 @@ def _samples(freq_hz: float) -> np.ndarray:
     return np.column_stack([wave, zeros, zeros])
 
 
-def test_late_udp_packet_reaches_persisted_report_honesty(tmp_path, monkeypatch) -> None:
+def test_late_udp_packet_reaches_persisted_report_honesty(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     history_db = build_history_db(tmp_path)
     try:
         registry = ClientRegistry(db=history_db.client_name_repository)
@@ -218,9 +223,12 @@ def test_late_udp_packet_reaches_persisted_report_honesty(tmp_path, monkeypatch)
         prepared = prepare_persisted_report_input(summary)
         document = build_report_document(prepared)
 
-        assert any(
-            "late or out-of-order packets quarantined from live processing" in (row.detail or "")
+        late_packet_rows = [
+            row
             for row in document.data_trust
-        )
+            if "late or out-of-order packets quarantined from live processing" in (row.detail or "")
+        ]
+        assert late_packet_rows
+        assert late_packet_rows[0].state == "warn"
     finally:
         history_db.lifecycle.close()

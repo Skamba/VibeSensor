@@ -40,6 +40,8 @@ class TestAsFloatOrNone:
             (float("inf"), None),
             (float("-inf"), None),
             ("abc", None),
+            (True, None),
+            (False, None),
         ],
     )
     def test_as_float_or_none(self, value: Any, expected: float | None) -> None:
@@ -54,6 +56,8 @@ class TestAsIntOrNone:
             (3.7, 4),
             (float("nan"), None),
             (None, None),
+            (True, None),
+            (False, None),
         ],
     )
     def test_as_int_or_none(self, value: Any, expected: int | None) -> None:

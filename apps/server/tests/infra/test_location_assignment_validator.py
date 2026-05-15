@@ -23,6 +23,7 @@ def test_normalize_caps_utf8_bytes_without_splitting_codepoints() -> None:
 
     assert len(normalized.encode("utf-8")) <= 64
     assert normalized.encode("utf-8").decode("utf-8") == normalized
+    assert normalized == "€" * 21
 
 
 def test_validate_assignment_rejects_duplicate_location() -> None:

@@ -139,10 +139,12 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
     ]
 
     summary = run_analysis(jittered, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for fault+jitter {corner}"
-    assert_wheel_source(summary, msg=f"fault+jitter {corner}")
-    assert_confidence_between(summary, 0.10, 1.0, msg=f"fault+jitter {corner}")
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        min_confidence=0.10,
+        msg=f"fault+jitter {corner}",
+    )
 
 
 # F.3 – No-fault diffuse + pothole transients (2 cases)
@@ -422,6 +424,7 @@ def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
     top = extract_top(summary)
     assert top is not None, f"No finding for self-dropout {corner}"
     # Confidence may be lower due to missing data, but fault should be detected
+    assert_wheel_source(summary, msg=f"self-dropout {corner}")
     assert_confidence_between(summary, 0.10, 1.0, msg=f"self-dropout {corner}")
 
 

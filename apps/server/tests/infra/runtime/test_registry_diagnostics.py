@@ -33,12 +33,13 @@ def test_note_parse_error_normalizes_client_and_invalid_queue_drops_are_ignored(
     diagnostics, clients = _make_diagnostics()
 
     diagnostics.note_parse_error("AABBCCDDEEFF")
+    diagnostics.note_server_queue_drop("AA:BB:CC:DD:EE:FF")
     diagnostics.note_server_queue_drop(None)
     diagnostics.note_server_queue_drop("not-a-client-id")
 
     record = clients["aabbccddeeff"]
     assert record.parse_errors == 1
-    assert record.server_queue_drops == 0
+    assert record.server_queue_drops == 1
     assert list(clients) == ["aabbccddeeff"]
 
 

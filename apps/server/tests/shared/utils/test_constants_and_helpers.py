@@ -103,3 +103,4 @@ def test_engine_rpm_basic() -> None:
     assert wh is not None
     rpm = spec.engine_rpm_from_wheel_hz(wh)
     assert rpm is not None
+    assert rpm == pytest.approx(wh * spec.final_drive_ratio * spec.current_gear_ratio * 60.0)

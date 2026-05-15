@@ -18,11 +18,8 @@ from test_support import (
     SPEED_HIGH,
     SPEED_MID,
     SPEED_VERY_HIGH,
-    assert_confidence_label_valid,
-    assert_strongest_location,
+    assert_diagnosis_contract,
     assert_tolerant_no_fault,
-    assert_wheel_source,
-    extract_top,
     make_diffuse_samples,
     make_profile_fault_samples,
     make_profile_speed_sweep_fault_samples,
@@ -68,11 +65,13 @@ pytestmark = pytest.mark.diagnostic_matrix
 
 def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     """Common assertion: top finding exists at *sensor* with wheel source."""
-    top = extract_top(summary)
-    assert top is not None, f"{msg}: no finding"
-    assert_wheel_source(summary, msg=msg)
-    assert_strongest_location(summary, sensor, msg=msg)
-    assert_confidence_label_valid(summary, msg=msg)
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.01,
+        msg=msg,
+    )
 
 
 # E.2 – 4-sensor transient on non-fault sensor (4 cases)
@@ -148,7 +147,6 @@ def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> N
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"8s+t {corner}")
-    assert_confidence_label_valid(summary, msg=f"8s+t {corner}")
 
 
 # E.5 – 12-sensor fault + transient (4 corners = 4 cases)

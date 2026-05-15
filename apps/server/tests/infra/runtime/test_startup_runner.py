@@ -65,14 +65,14 @@ class TestStartupRunnerPhases:
         await runner.run()
 
         assert health_state.startup_state == "ready"
-        assert set(started_names) == {
+        assert started_names == [
             "processing-loop",
             "ws-broadcast",
             "metrics-log",
             "gps-speed",
             "obd-speed",
             "update-startup-recover",
-        }
+        ]
 
     @pytest.mark.asyncio
     async def test_marks_failed_on_exception(self) -> None:
