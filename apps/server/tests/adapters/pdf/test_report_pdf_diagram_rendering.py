@@ -290,3 +290,6 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     assert "why this corner wins" in text
     assert "dominant corner" in text
     assert "coverage" in text
+    assert "front-left" in text
+    assert "front-right" in text
+    assert "strong" in text

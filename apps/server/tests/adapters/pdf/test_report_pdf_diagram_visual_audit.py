@@ -53,4 +53,6 @@ def test_report_pdf_renders_sensor_topology_context_without_primitive_pinning() 
     assert "Front-Left" in text
     assert "Rear-Left" in text
     assert "2.0x stronger" in text
+    assert "4 of 4 expected positions stayed connected." in text
+    assert "Strong" in text
     assert "Topology confirms the strongest sensor is on the front axle." in text
