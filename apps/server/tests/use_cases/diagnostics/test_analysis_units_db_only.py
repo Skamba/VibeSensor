@@ -100,13 +100,21 @@ def test_analysis_modules_use_canonical_db_helper() -> None:
     """Analysis modules must use the canonical vibration_strength_db_scalar helper."""
     analysis_root = SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics"
 
-    alias_users = [
-        str(py_file.relative_to(analysis_root))
-        for py_file in sorted(analysis_root.rglob("*.py"))
-        if "as canonical_vibration_db" in py_file.read_text(encoding="utf-8")
-    ]
+    alias_users: list[str] = []
+    legacy_scalar_users: list[str] = []
+    for py_file in sorted(analysis_root.rglob("*.py")):
+        relative = str(py_file.relative_to(analysis_root))
+        source = py_file.read_text(encoding="utf-8")
+        if "as canonical_vibration_db" in source:
+            alias_users.append(relative)
+        if "vibration_strength_scalar" in source:
+            legacy_scalar_users.append(relative)
 
     assert not alias_users, (
         "Analysis modules must import vibration_strength_db_scalar directly; "
         "aliased imports found in: " + ", ".join(alias_users)
+    )
+    assert not legacy_scalar_users, (
+        "Analysis modules must not use raw scalar strength helpers; "
+        "legacy helpers found in: " + ", ".join(legacy_scalar_users)
     )

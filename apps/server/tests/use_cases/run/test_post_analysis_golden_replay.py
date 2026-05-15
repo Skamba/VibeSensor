@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,10 @@ def test_post_analysis_golden_replay_fast_subset(
     )
 
     assert snapshot_path.exists()
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    assert snapshot["case_id"] == fixture.case_id
+    assert snapshot["expected"]["suspected_source"] == fixture.expected.suspected_source
+    assert snapshot["artifact_paths"] == result.manifest.generated_artifact_paths
     metadata = result.analysis.get("analysis_metadata")
     assert isinstance(metadata, dict)
     assert metadata["whole_run_artifacts_available"] is True

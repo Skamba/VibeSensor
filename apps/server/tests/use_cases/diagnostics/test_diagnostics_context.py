@@ -53,7 +53,17 @@ def _metadata() -> RunMetadata:
 
 
 def test_run_metadata_is_the_diagnostics_context() -> None:
-    metadata = _metadata()
+    metadata_payload = _context_metadata()
+    metadata_payload.update(
+        {
+            "final_drive_ratio": 9.99,
+            "current_gear_ratio": 1.99,
+            "car_name": "Flat Name",
+            "car_type": "truck",
+            "car_variant": "flat",
+        },
+    )
+    metadata = normalize_run_metadata(run_metadata_from_mapping(metadata_payload), file_name="ctx")
 
     assert metadata.run_id == "ctx-run"
     assert metadata.raw_sample_rate_hz == 200.0
@@ -68,21 +78,6 @@ def test_run_metadata_is_the_diagnostics_context() -> None:
     assert metadata.symptom.description == "driveline hum"
     assert metadata.symptom.onset == "after 60 km/h"
     assert metadata.symptom.context == "during acceleration"
-
-
-def test_run_metadata_prefers_nested_snapshot_over_conflicting_flat_aliases() -> None:
-    metadata_payload = _context_metadata()
-    metadata_payload.update(
-        {
-            "final_drive_ratio": 9.99,
-            "current_gear_ratio": 1.99,
-            "car_name": "Flat Name",
-            "car_type": "truck",
-            "car_variant": "flat",
-        },
-    )
-
-    metadata = normalize_run_metadata(run_metadata_from_mapping(metadata_payload), file_name="ctx")
     spec = metadata.order_reference_spec
 
     assert spec is not None
