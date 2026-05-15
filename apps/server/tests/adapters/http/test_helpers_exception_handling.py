@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import pytest
 from fastapi import HTTPException
 
@@ -20,61 +22,44 @@ from vibesensor.shared.exceptions import (
 from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
 
 
-def test_configuration_error_caught_as_vibesensor_error() -> None:
-    """ConfigurationError maps to HTTP 400."""
+@pytest.mark.parametrize(
+    ("error_factory", "expected_status_code"),
+    [
+        (lambda: ConfigurationError("bad config"), 400),
+        (lambda: ProtocolError("bad packet"), 400),
+        (lambda: UpdateError("busy", status="conflict"), 409),
+        (lambda: ServiceUnavailableError("service down"), 503),
+        (lambda: VibeSensorError("generic domain error"), 500),
+        (lambda: OperationalError("operational failure"), 500),
+    ],
+    ids=[
+        "configuration-error",
+        "protocol-error",
+        "update-conflict",
+        "service-unavailable",
+        "vibesensor-base",
+        "operational-base",
+    ],
+)
+def test_route_error_boundary_maps_known_errors(
+    error_factory: Callable[[], Exception],
+    expected_status_code: int,
+) -> None:
     with pytest.raises(HTTPException) as exc_info:
         with route_errors_to_http():
-            raise ConfigurationError("bad config")
-    assert exc_info.value.status_code == 400
+            raise error_factory()
+
+    assert exc_info.value.status_code == expected_status_code
 
 
-def test_protocol_error_maps_to_400() -> None:
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http():
-            raise ProtocolError("bad packet")
-    assert exc_info.value.status_code == 400
-
-
-def test_update_error_conflict_maps_to_409() -> None:
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http():
-            raise UpdateError("busy", status="conflict")
-    assert exc_info.value.status_code == 409
-
-
-def test_plain_value_error_propagates_past_route_boundary() -> None:
-    """A plain ValueError must be handled explicitly by the route that owns it."""
+def test_value_error_handling_stays_explicit_at_route_boundary() -> None:
     with pytest.raises(ValueError, match="not a number"):
         with route_errors_to_http():
             raise ValueError("not a number")
 
-
-def test_http_exception_for_value_error_maps_explicit_request_failures() -> None:
     exc = http_exception_for_value_error(ValueError("not a number"), status_code=400)
     assert exc.status_code == 400
     assert exc.detail == "not a number"
-
-
-def test_service_unavailable_error_maps_to_503() -> None:
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http():
-            raise ServiceUnavailableError("service down")
-    assert exc_info.value.status_code == 503
-
-
-def test_vibesensor_error_base_caught() -> None:
-    """VibeSensorError (base) is caught and mapped to HTTP 500."""
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http():
-            raise VibeSensorError("generic domain error")
-    assert exc_info.value.status_code == 500
-
-
-def test_operational_error_base_maps_to_500() -> None:
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http():
-            raise OperationalError("operational failure")
-    assert exc_info.value.status_code == 500
 
 
 @pytest.mark.parametrize(

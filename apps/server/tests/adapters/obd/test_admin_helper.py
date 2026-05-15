@@ -104,49 +104,7 @@ def test_parse_bluetooth_scan_events_parses_new_device_lines_with_ansi() -> None
     assert devices[0].name == "Audioengine HD6"
 
 
-def test_scan_devices_uses_timed_scan_output_when_devices_list_is_empty() -> None:
-    responses = {
-        ("rfkill", "unblock", "bluetooth"): (0, "", ""),
-        ("systemctl", "start", "bluetooth"): (0, "", ""),
-        ("bluetoothctl", "power", "on"): (0, "", ""),
-        (
-            "bluetoothctl",
-            "--timeout",
-            "8",
-            "scan",
-            "on",
-        ): (
-            0,
-            "[NEW] Device 00:22:D9:00:1B:B1 Audioengine HD6",
-            "",
-        ),
-        ("bluetoothctl", "devices"): (0, "", ""),
-        ("bluetoothctl", "devices", "Paired"): (0, "", ""),
-        ("bluetoothctl", "paired-devices"): (0, "", ""),
-        ("bluetoothctl", "scan", "off"): (0, "", ""),
-    }
-    calls: list[tuple[str, ...]] = []
-
-    def runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tuple[int, str, str]:
-        del timeout_s, allow_timeout
-        key = tuple(argv)
-        calls.append(key)
-        return responses[key]
-
-    devices = BluetoothObdAdminHelper(runner=runner).scan_devices(timeout_s=8)
-
-    assert len(devices) == 1
-    assert devices[0].name == "Audioengine HD6"
-    assert (
-        "bluetoothctl",
-        "--timeout",
-        "8",
-        "scan",
-        "on",
-    ) in calls
-
-
-def test_scan_devices_sorts_human_readable_names_ahead_of_mac_aliases() -> None:
+def test_scan_devices_uses_timed_scan_output_and_sorts_human_names() -> None:
     responses = {
         ("rfkill", "unblock", "bluetooth"): (0, "", ""),
         ("systemctl", "start", "bluetooth"): (0, "", ""),
@@ -168,20 +126,7 @@ def test_scan_devices_sorts_human_readable_names_ahead_of_mac_aliases() -> None:
             ),
             "",
         ),
-        (
-            "bluetoothctl",
-            "devices",
-        ): (
-            0,
-            "\n".join(
-                [
-                    "Device 53:40:AC:57:11:77 53-40-AC-57-11-77",
-                    "Device 00:22:D9:00:1B:B1 Audioengine HD6",
-                    "Device 11:22:33:44:55:66",
-                ]
-            ),
-            "",
-        ),
+        ("bluetoothctl", "devices"): (0, "", ""),
         ("bluetoothctl", "devices", "Paired"): (0, "", ""),
         ("bluetoothctl", "paired-devices"): (0, "", ""),
         ("bluetoothctl", "scan", "off"): (0, "", ""),
@@ -215,10 +160,13 @@ def test_scan_devices_sorts_human_readable_names_ahead_of_mac_aliases() -> None:
             "",
         ),
     }
+    calls: list[tuple[str, ...]] = []
 
     def runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tuple[int, str, str]:
         del timeout_s, allow_timeout
-        return responses[tuple(argv)]
+        key = tuple(argv)
+        calls.append(key)
+        return responses[key]
 
     devices = BluetoothObdAdminHelper(runner=runner).scan_devices(timeout_s=8)
 
@@ -227,3 +175,11 @@ def test_scan_devices_sorts_human_readable_names_ahead_of_mac_aliases() -> None:
         "112233445566",
         "5340ac571177",
     ]
+    assert devices[0].name == "Audioengine HD6"
+    assert (
+        "bluetoothctl",
+        "--timeout",
+        "8",
+        "scan",
+        "on",
+    ) in calls
