@@ -9,6 +9,7 @@ from vibesensor.use_cases.diagnostics._ranking_utils import (
 
 
 def test_dominant_weighted_value_keeps_count_weight_and_value_tiebreaks() -> None:
+    assert dominant_weighted_value(values=()) is None
     assert (
         dominant_weighted_value(
             values=(
@@ -18,6 +19,15 @@ def test_dominant_weighted_value_keeps_count_weight_and_value_tiebreaks() -> Non
             )
         )
         == "front-left"
+    )
+    assert (
+        dominant_weighted_value(
+            values=(
+                ("alpha", 1.0),
+                ("bravo", 2.0),
+            )
+        )
+        == "bravo"
     )
     assert (
         dominant_weighted_value(

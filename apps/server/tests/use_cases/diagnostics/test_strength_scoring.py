@@ -73,8 +73,8 @@ def test_floor_rms_peak_index_out_of_range_ignored() -> None:
         min_hz=0,
         max_hz=100,
     )
-    # Bad index ignored → median of [0.5, 0.6]
-    assert result > 0
+    # Bad index ignored -> median of [0.5, 0.6].
+    assert result == pytest.approx(0.55)
 
 
 def test_floor_rms_skips_broadcast_peak_exclusion_on_sorted_freq(

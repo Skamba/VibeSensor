@@ -76,4 +76,4 @@ def test_build_post_analysis_summary_persists_raw_capture_finalize_state_and_war
         == "raw capture finalize timed out"
     )
     warnings = summary["warnings"]
-    assert warnings[0]["code"] == WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED
+    assert [warning["code"] for warning in warnings] == [WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED]

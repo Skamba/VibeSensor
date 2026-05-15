@@ -48,7 +48,7 @@ def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     assert rows[0].strength_floor_amp_g == 0.003
 
 
-def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fake_registry) -> None:
+def test_build_sample_records_caps_combined_top_peak_list(make_logger, fake_registry) -> None:
     active = fake_registry.get("active")
     assert active is not None
     active.latest_metrics["combined"]["strength_metrics"]["top_peaks"] = [
