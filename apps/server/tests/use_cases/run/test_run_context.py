@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.run_context_warning import (
@@ -30,41 +32,52 @@ class TestBuildRunContextSnapshot:
 
 
 class TestOrderReferenceContextComplete:
-    def test_uses_canonical_nested_metadata(self) -> None:
-        metadata = run_metadata_from_mapping(
-            {
-                "run_id": "run-1",
-                "start_time_utc": "2025-01-01T00:00:00Z",
-                "sensor_model": "fixture-sensor",
-                "raw_sample_rate_hz": 800,
-                "analysis_settings_snapshot": {
+    @pytest.mark.parametrize(
+        ("metadata_payload", "expected"),
+        [
+            (
+                {
+                    "run_id": "run-1",
+                    "start_time_utc": "2025-01-01T00:00:00Z",
+                    "sensor_model": "fixture-sensor",
+                    "raw_sample_rate_hz": 800,
+                    "analysis_settings_snapshot": {
+                        "tire_width_mm": 255.0,
+                        "tire_aspect_pct": 40.0,
+                        "rim_in": 19.0,
+                        "final_drive_ratio": 3.15,
+                        "current_gear_ratio": 0.81,
+                    },
+                },
+                True,
+            ),
+            (
+                {
+                    "run_id": "run-legacy",
+                    "start_time_utc": "2025-01-01T00:00:00Z",
+                    "sensor_model": "fixture-sensor",
+                    "raw_sample_rate_hz": 800,
                     "tire_width_mm": 255.0,
                     "tire_aspect_pct": 40.0,
                     "rim_in": 19.0,
                     "final_drive_ratio": 3.15,
                     "current_gear_ratio": 0.81,
                 },
-            },
-        )
-
-        assert order_reference_context_complete(metadata) is True
-
-    def test_ignores_flat_legacy_metadata_aliases(self) -> None:
+                False,
+            ),
+        ],
+        ids=["nested-snapshot", "flat-legacy-aliases"],
+    )
+    def test_order_reference_context_uses_only_canonical_nested_metadata(
+        self,
+        metadata_payload: dict[str, object],
+        expected: bool,
+    ) -> None:
         metadata = run_metadata_from_mapping(
-            {
-                "run_id": "run-legacy",
-                "start_time_utc": "2025-01-01T00:00:00Z",
-                "sensor_model": "fixture-sensor",
-                "raw_sample_rate_hz": 800,
-                "tire_width_mm": 255.0,
-                "tire_aspect_pct": 40.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.81,
-            },
+            metadata_payload,
         )
 
-        assert order_reference_context_complete(metadata) is False
+        assert order_reference_context_complete(metadata) is expected
 
 
 class TestCurrentContextWarnings:

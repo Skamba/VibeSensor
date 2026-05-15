@@ -150,11 +150,16 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
     stored_metadata = history_db.run_repository.get_run_metadata(snapshot.run_id)
     assert stored_metadata is not None
     stage_by_name = {stage.stage_name: stage for stage in stored_metadata.finalization_stages}
+    assert [stage.stage_name for stage in stored_metadata.finalization_stages] == list(
+        expected_statuses,
+    )
     assert {name: stage.status for name, stage in stage_by_name.items()} == expected_statuses
     assert (
         stage_by_name["ResolvePostAnalysisCandidateStage"].diagnostic_context["reason"]
         == expected_resolve_reason
     )
+    assert stored_metadata.raw_capture_finalize is not None
+    assert stored_metadata.raw_capture_finalize.status == raw_capture_status
 
 
 def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update(

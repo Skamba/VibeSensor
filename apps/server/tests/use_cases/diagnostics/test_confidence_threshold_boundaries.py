@@ -24,9 +24,11 @@ from test_support import (
     SPEED_LOW,
     SPEED_MID,
     assert_confidence_label_valid,
+    assert_has_warnings,
     assert_no_wheel_fault,
     extract_top,
     make_profile_fault_samples,
+    parse_speed_band,
     profile_metadata,
     run_analysis,
     top_confidence,
@@ -60,6 +62,8 @@ def test_strong_single_sensor_reaches_high_confidence(profile: dict[str, Any], c
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
     conf = top_confidence(summary)
+    assert_confidence_label_valid(summary)
+    assert_has_warnings(summary)
     assert conf >= 0.60, (
         f"Strong single-sensor fault at {corner} ({profile['name']}) "
         f"gave conf={conf:.3f}, expected ≥0.60"
@@ -91,11 +95,15 @@ def test_strong_4sensor_fault_reaches_medium_confidence(
     )
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
+    top = extract_top(summary)
+    assert top is not None
     conf = top_confidence(summary)
     assert conf >= 0.40, (
         f"Strong fault at {corner}/{speed} ({profile['name']}) gave conf={conf:.3f}, expected ≥0.40"
     )
     assert_confidence_label_valid(summary)
+    band = parse_speed_band(top)
+    assert band[0] <= speed <= band[1]
 
 
 # ===================================================================
@@ -204,8 +212,8 @@ def test_spatial_separation_effect(profile: dict[str, Any], corner: str, speed: 
     assert conf_4 > 0.25, (
         f"4-sensor should produce a finding at {corner}/{speed} ({profile['name']})"
     )
-    assert abs(conf_1 - conf_4) > 0.01, (
-        f"Confidence should differ between 1-sensor and 4-sensor "
+    assert conf_1 > conf_4, (
+        f"Spatial separation should reduce 4-sensor confidence vs 1-sensor "
         f"at {corner}/{speed} ({profile['name']})"
     )
 
