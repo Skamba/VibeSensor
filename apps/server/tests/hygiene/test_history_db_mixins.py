@@ -38,11 +38,20 @@ def test_run_history_repository_mixins_expose_disjoint_public_methods() -> None:
 
     overlaps = {name: owners for name, owners in owners_by_name.items() if len(owners) > 1}
     assert overlaps == {}, f"run-history mixins must keep disjoint public APIs: {overlaps}"
+    assert {
+        "create_run",
+        "append_samples",
+        "get_run",
+        "get_run_samples",
+    } <= set().union(*(_public_method_names(mixin) for mixin in mixins))
 
 
 def test_history_persistence_factory_returns_split_adapters(tmp_path: Path) -> None:
     adapters = create_history_persistence_adapters(tmp_path / "history.db")
     try:
+        assert adapters.lifecycle is adapters.run_repository._engine
+        assert adapters.lifecycle is adapters.settings_snapshot_repository._engine
+        assert adapters.lifecycle is adapters.client_name_repository._engine
         assert isinstance(adapters.lifecycle, SQLiteHistoryEngine)
         assert isinstance(adapters.run_repository, RunHistoryRepository)
         assert isinstance(adapters.settings_snapshot_repository, SettingsSnapshotRepository)

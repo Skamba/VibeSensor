@@ -1,17 +1,39 @@
 """Guardrails for TestRun as the canonical post-analysis domain aggregate."""
 
+from __future__ import annotations
+
+import pytest
+
+from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )
 
 
+def _finding(
+    finding_id: str,
+    *,
+    confidence: float = 0.75,
+    source: str = "wheel/tire",
+    strength_db: float | None = None,
+    severity: str = "diagnostic",
+    location: str = "",
+) -> Finding:
+    return Finding(
+        finding_id=finding_id,
+        confidence=confidence,
+        severity=severity,
+        suspected_source=source,
+        vibration_strength_db=strength_db,
+        strongest_location=location,
+    )
+
+
 def test_test_run_provides_finding_queries() -> None:
     """``TestRun`` must own finding classification queries."""
-    from vibesensor.domain import Finding, RunCapture, TestRun
-
-    diag = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
-    ref = Finding(finding_id="REF_SPEED", confidence=1.0, suspected_source="unknown")
-    info = Finding(finding_id="F002", confidence=0.10, severity="info", suspected_source="unknown")
+    diag = _finding("F001")
+    ref = _finding("REF_SPEED", confidence=1.0, source="unknown")
+    info = _finding("F002", confidence=0.10, severity="info", source="unknown")
 
     result = TestRun(
         capture=RunCapture(run_id="test-123"),
@@ -22,20 +44,28 @@ def test_test_run_provides_finding_queries() -> None:
     assert result.primary_finding == diag
     assert result.diagnostic_findings == (diag,)
     assert result.non_reference_findings == (diag, info)
+    assert result.sensor_count == 0
+    assert result.total_usable_samples == 0
 
 
 def test_test_run_effective_top_causes() -> None:
     """``effective_top_causes()`` mirrors diagnosis_candidates logic."""
-    from vibesensor.domain import Finding, RunCapture, TestRun
-
-    actionable = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
+    actionable = _finding("F001")
     result = TestRun(
         capture=RunCapture(run_id="test"),
         findings=(actionable,),
         top_causes=(actionable,),
     )
     effective = result.effective_top_causes()
-    assert actionable in effective
+    assert effective == (actionable,)
+
+    reference_only = _finding("REF_SPEED", source="unknown")
+    fallback = TestRun(
+        capture=RunCapture(run_id="test"),
+        findings=(reference_only,),
+        top_causes=(reference_only,),
+    )
+    assert fallback.effective_top_causes() == (reference_only,)
 
 
 def test_run_analysis_produces_test_run() -> None:
@@ -75,12 +105,10 @@ def test_run_analysis_produces_test_run() -> None:
 
 def test_test_run_reference_gap_detection() -> None:
     """``has_relevant_reference_gap()`` detects source-relevant gaps."""
-    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
-
-    ref_speed = Finding(finding_id="REF_SPEED", suspected_source="unknown")
-    ref_wheel = Finding(finding_id="REF_WHEEL", suspected_source="unknown")
-    ref_engine = Finding(finding_id="REF_ENGINE", suspected_source="unknown")
-    diag = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
+    ref_speed = _finding("REF_SPEED", source="unknown")
+    ref_wheel = _finding("REF_WHEEL", source="unknown")
+    ref_engine = _finding("REF_ENGINE", source="unknown")
+    diag = _finding("F001", confidence=0.80)
 
     assert ref_speed.is_reference
     assert ref_wheel.is_reference
@@ -110,20 +138,8 @@ def test_test_run_reference_gap_detection() -> None:
 
 def test_test_run_top_strength_db() -> None:
     """``top_strength_db()`` finds the best strength from findings."""
-    from vibesensor.domain import Finding, RunCapture, TestRun
-
-    f1 = Finding(
-        finding_id="F001",
-        confidence=0.80,
-        suspected_source="wheel/tire",
-        vibration_strength_db=12.5,
-    )
-    f2 = Finding(
-        finding_id="F002",
-        confidence=0.60,
-        suspected_source="engine",
-        vibration_strength_db=8.0,
-    )
+    f1 = _finding("F001", confidence=0.80, strength_db=12.5)
+    f2 = _finding("F002", confidence=0.60, source="engine", strength_db=8.0)
     result = TestRun(
         capture=RunCapture(run_id="test"),
         findings=(f1, f2),
@@ -132,7 +148,7 @@ def test_test_run_top_strength_db() -> None:
     assert result.top_strength_db() == 12.5
 
     # No strength → None
-    f3 = Finding(finding_id="F003", confidence=0.50, suspected_source="engine")
+    f3 = _finding("F003", confidence=0.50, source="engine")
     result2 = TestRun(
         capture=RunCapture(run_id="test"),
         findings=(f3,),
@@ -143,14 +159,7 @@ def test_test_run_top_strength_db() -> None:
 
 def test_test_run_primary_source_and_location() -> None:
     """``primary_source`` and ``primary_location`` are domain queries."""
-    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
-
-    f = Finding(
-        finding_id="F001",
-        confidence=0.80,
-        suspected_source="wheel/tire",
-        strongest_location="Left Front",
-    )
+    f = _finding("F001", confidence=0.80, location="Left Front")
     result = TestRun(
         capture=RunCapture(run_id="test"),
         findings=(f,),
@@ -184,6 +193,8 @@ def test_test_run_from_summary_populates_speed_profile() -> None:
     result = reconstruct_test_run_from_summary(summary)
     assert result.speed_profile is not None, "test_run_from_summary must populate speed_profile"
     assert result.speed_profile.steady_speed
+    assert result.speed_profile.min_kmh == 30.0
+    assert result.speed_profile.max_kmh == 90.0
 
 
 def test_test_run_from_summary_populates_suitability() -> None:
@@ -199,6 +210,7 @@ def test_test_run_from_summary_populates_suitability() -> None:
     result = reconstruct_test_run_from_summary(summary)
     assert result.suitability is not None, "test_run_from_summary must populate suitability"
     assert result.suitability.is_usable
+    assert result.suitability.checks[0].check_key == "speed"
 
 
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
@@ -241,3 +253,25 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     assert isinstance(result.diagnostic_case, DiagnosticCase)
     assert result.diagnostic_case.primary_run is not None
     assert result.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
+    assert result.diagnostic_case.car is not None
+    assert result.diagnostic_case.car.name == "Guard Car"
+
+
+@pytest.mark.parametrize(
+    ("top_causes", "message"),
+    [
+        pytest.param((), None, id="empty-top-causes"),
+        pytest.param((_finding("F999"),), "unmatched top causes", id="unmatched-top-cause"),
+    ],
+)
+def test_test_run_rejects_unmatched_top_causes(
+    top_causes: tuple[Finding, ...],
+    message: str | None,
+) -> None:
+    findings = (_finding("F001"),)
+    if message is None:
+        TestRun(capture=RunCapture(run_id="test"), findings=findings, top_causes=top_causes)
+        return
+
+    with pytest.raises(ValueError, match=message):
+        TestRun(capture=RunCapture(run_id="test"), findings=findings, top_causes=top_causes)
