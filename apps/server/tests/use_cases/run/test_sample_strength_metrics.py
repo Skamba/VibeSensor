@@ -41,9 +41,14 @@ class TestExtractStrengthData:
         result = extract_strength_data(metrics)
         assert result.vibration_strength_db == pytest.approx(18.5)
         assert result.strength_bucket == "l3"
-        payloads = strength_peak_payloads(result.top_peaks, max_items=8)
-        assert len(payloads) == 1
-        assert payloads[0]["hz"] == pytest.approx(45.0)
+        assert strength_peak_payloads(result.top_peaks, max_items=8) == [
+            {
+                "hz": 45.0,
+                "amp": 0.015,
+                "vibration_strength_db": 18.5,
+                "strength_bucket": "l3",
+            }
+        ]
 
 
 class TestDominantHzFromStrength:

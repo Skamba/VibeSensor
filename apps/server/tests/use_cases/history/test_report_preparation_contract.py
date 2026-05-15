@@ -145,9 +145,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
     assert primary.tier in {"B", "C"}
 
 
-def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_prepare_persisted_report_input_does_not_roundtrip_through_summary() -> None:
     analysis = PersistedAnalysis.from_json_object(
         {
             "run_id": "persisted-run",
