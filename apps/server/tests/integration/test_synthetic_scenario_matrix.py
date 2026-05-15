@@ -23,6 +23,7 @@ from test_support import (
     assert_has_warnings,
     assert_no_wheel_fault,
     assert_strongest_location,
+    assert_summary_sections,
     assert_tolerant_no_fault,
     assert_wheel_source,
     extract_top,
@@ -317,6 +318,7 @@ def test_representative_fault_scenario_matrix(
             ),
         )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
+    assert_summary_sections(summary, min_findings=1, min_top_causes=1)
     top = extract_top(summary)
     tag = f"{case.case_id}/{case.corner}/{case.speed_case_id}"
     assert top is not None, f"No finding for {tag}"
@@ -354,6 +356,7 @@ def test_representative_no_fault_scenario_matrix(
             ),
         )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
+    assert_summary_sections(summary)
     tag = f"{case.case_id}/{case.speed_case_id}"
     if case.transient:
         assert_tolerant_no_fault(summary, msg=tag)
@@ -415,6 +418,7 @@ def test_representative_phased_scenario_matrix(
             ),
         )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
+    assert_summary_sections(summary, min_findings=1, min_top_causes=1)
     tag = f"{case.case_id}/{case.corner}"
     top = extract_top(summary)
     assert top is not None, f"No finding for {tag}"
