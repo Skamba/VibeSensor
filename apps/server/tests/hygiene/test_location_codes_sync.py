@@ -7,6 +7,8 @@ import re
 import subprocess
 import sys
 
+import pytest
+
 from tests._paths import REPO_ROOT
 from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
@@ -44,39 +46,36 @@ def _extract_export_json(module_text: str, export_name: str) -> object:
     return json.loads(match.group("value"))
 
 
-def test_generated_ui_constants_encode_backend_locations() -> None:
-    """The shared constants generator must reflect backend location literals only."""
-    generated = _generated_constants_ts()
-    assert _extract_export_json(generated, "defaultLocationCodes") == list(LOCATION_CODES.keys())
+@pytest.fixture(scope="module")
+def generated_constants() -> str:
+    return _generated_constants_ts()
 
 
-def test_generated_ui_constants_encode_backend_analysis_defaults() -> None:
-    """Generated UI defaults must come from backend analysis-settings defaults."""
-    generated = _generated_constants_ts()
-    assert _extract_export_json(generated, "defaultAnalysisSettings") == (
-        AnalysisSettingsSnapshot.DEFAULTS
-    )
-
-
-def test_generated_ui_constants_encode_backend_live_analysis_config() -> None:
-    """Generated live-analysis constants must stay aligned with backend owners."""
-    generated = _generated_constants_ts()
+def test_generated_ui_constants_encode_backend_sources(generated_constants: str) -> None:
+    """Generated UI constants must be direct projections of backend owners."""
     config = documented_default_config()
     processing = config.get("processing")
     assert isinstance(processing, dict)
     sample_rate_hz = processing.get("sample_rate_hz")
     assert isinstance(sample_rate_hz, (int, float))
-    assert _extract_export_json(generated, "defaultLiveAnalysisConfig") == {
-        "sampleRateHz": sample_rate_hz,
-        "fftWindowSizeSamples": FFT_N,
-        "spectrumMinHz": SPECTRUM_MIN_HZ,
-        "spectrumMaxHz": SPECTRUM_MAX_HZ,
-        "peakBandwidthHz": PEAK_BANDWIDTH_HZ,
-        "peakSeparationHz": PEAK_SEPARATION_HZ,
-        "strengthAlgorithmVersion": STRENGTH_ALGORITHM_VERSION,
-        "peakDetectorVersion": PEAK_DETECTOR_VERSION,
-        "calibrationProfileId": CALIBRATION_PROFILE_ID,
+
+    expected_exports = {
+        "defaultLocationCodes": list(LOCATION_CODES.keys()),
+        "defaultAnalysisSettings": AnalysisSettingsSnapshot.DEFAULTS,
+        "defaultLiveAnalysisConfig": {
+            "sampleRateHz": sample_rate_hz,
+            "fftWindowSizeSamples": FFT_N,
+            "spectrumMinHz": SPECTRUM_MIN_HZ,
+            "spectrumMaxHz": SPECTRUM_MAX_HZ,
+            "peakBandwidthHz": PEAK_BANDWIDTH_HZ,
+            "peakSeparationHz": PEAK_SEPARATION_HZ,
+            "strengthAlgorithmVersion": STRENGTH_ALGORITHM_VERSION,
+            "peakDetectorVersion": PEAK_DETECTOR_VERSION,
+            "calibrationProfileId": CALIBRATION_PROFILE_ID,
+        },
     }
+    for export_name, expected in expected_exports.items():
+        assert _extract_export_json(generated_constants, export_name) == expected
 
 
 def test_domain_location_codes_match_shared() -> None:
@@ -84,3 +83,5 @@ def test_domain_location_codes_match_shared() -> None:
     assert DOMAIN_LOCATION_CODES == LOCATION_CODES, (
         "domain/sensor.py _LOCATION_CODES drifted from shared/locations.py LOCATION_CODES"
     )
+    assert list(DOMAIN_LOCATION_CODES) == list(LOCATION_CODES)
+    assert len(set(LOCATION_CODES)) == len(LOCATION_CODES)

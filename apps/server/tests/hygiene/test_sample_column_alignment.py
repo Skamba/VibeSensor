@@ -70,11 +70,20 @@ def _core_export_columns() -> set[str]:
     return set(_export_columns()) - _EXPORT_ONLY
 
 
+def _assert_same_columns(left_name: str, left: set[str], right_name: str, right: set[str]) -> None:
+    assert left == right, (
+        f"{left_name} and {right_name} sample columns drifted:\n"
+        f"  {left_name}-only: {sorted(left - right)}\n"
+        f"  {right_name}-only: {sorted(right - left)}"
+    )
+
+
 class TestSampleColumnAlignment:
     def test_insert_columns_match_ddl(self) -> None:
         ddl = _core_ddl_columns()
         insert = set(_insert_columns())
-        assert ddl == insert, f"DDL↔insert mismatch: {ddl.symmetric_difference(insert)}"
+        _assert_same_columns("DDL", ddl, "insert", insert)
+        assert _insert_columns() == [column for column in _ddl_columns() if column not in _DDL_ONLY]
 
     def test_domain_fields_cover_ddl(self) -> None:
         ddl = _core_ddl_columns()
@@ -91,6 +100,7 @@ class TestSampleColumnAlignment:
         assert not missing_from_export, (
             f"DDL columns missing from EXPORT_CSV_COLUMNS: {missing_from_export}"
         )
+        assert len(_export_columns()) == len(set(_export_columns()))
 
     def test_no_unexpected_extras_in_domain(self) -> None:
         ddl = _core_ddl_columns()
@@ -99,6 +109,7 @@ class TestSampleColumnAlignment:
         assert not unexpected, (
             f"SensorFrame has fields not in DDL (add to _DDL_ONLY or fix): {unexpected}"
         )
+        assert len(_domain_fields()) == len(set(_domain_fields()))
 
     def test_no_unexpected_extras_in_export(self) -> None:
         ddl = _core_ddl_columns()
