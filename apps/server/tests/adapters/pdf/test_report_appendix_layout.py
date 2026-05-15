@@ -6,6 +6,7 @@ import json
 
 import pytest
 from _paths import SERVER_ROOT
+from _report_pdf_test_helpers import extract_pdf_pages_text
 from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
@@ -58,6 +59,8 @@ def test_report_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
 
     assert i18n["REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"][lang] in text
     assert i18n["REPORT_ACTION_MATRIX_TITLE"][lang] in text
+    assert "Wheel / Tire" in text
+    assert "Check wheel balance" in text
 
 
 def test_report_pdf_marks_appendix_table_overflow_instead_of_silent_omission() -> None:
@@ -95,6 +98,9 @@ def test_report_pdf_marks_appendix_table_overflow_instead_of_silent_omission() -
     text = extract_pdf_text(build_report_pdf(data))
 
     assert text.count("+ 3 more rows not shown") >= 2
+    assert "Dense evidence chain." in text
+    assert "Source 1" in text
+    assert "P1" in text
 
 
 def test_report_pdf_ranked_source_stack_has_room_for_four_candidates() -> None:
@@ -120,8 +126,11 @@ def test_report_pdf_ranked_source_stack_has_room_for_four_candidates() -> None:
 
     text = extract_pdf_text(build_report_pdf(data))
 
+    assert "Engine" in text
+    assert "Wheel / Tire" in text
     assert "Driveline" in text
     assert "Body resonance" in text
+    assert "Front cabin" in text
 
 
 def test_report_pdf_worksheet_pagination_does_not_skip_action_after_ranked_stack() -> None:
@@ -149,7 +158,11 @@ def test_report_pdf_worksheet_pagination_does_not_skip_action_after_ranked_stack
         ],
     )
 
-    text = extract_pdf_text(build_report_pdf(data))
+    pages_text = extract_pdf_pages_text(build_report_pdf(data))
+    text = "\n".join(pages_text)
 
+    assert "Inspection Path" in text
+    assert "Body resonance" in text
     for index in range(1, 9):
         assert f"Action {index}: inspect a unique worksheet item." in text
+        assert f"Confirm action {index}." in text

@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import importlib
 import sys
-from io import BytesIO
 
 from _paths import SERVER_ROOT
-from pypdf import PdfReader
+from _report_pdf_test_helpers import extract_pdf_pages_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting.document import (
@@ -116,6 +115,10 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
     )
     pdf = build_report_pdf(data)
     assert pdf[:5] == b"%PDF-"
+    text = " ".join(extract_pdf_pages_text(pdf))
+    assert "Test Report" in text
+    assert "Run date Unknown" in text
+    assert "Most likely source Unknown" in text
 
 
 # ---------------------------------------------------------------------------
@@ -175,14 +178,17 @@ def test_report_output_matches_template_data() -> None:
         lang="en",
     )
     pdf_bytes = build_report_pdf(data)
-    reader = PdfReader(BytesIO(pdf_bytes))
-    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    pages_text = extract_pdf_pages_text(pdf_bytes)
+    text = "\n".join(pages_text)
 
     assert "Wheel / Tire" in text
     assert "Front-Left" in text
     assert "Action-ready" in text
     assert "Inspection Path" in text
     assert "VibeSensor Diagnostic Report" in text
+    assert "2026-01-15 10:30:00" in pages_text[0]
+    assert "Check wheel balance" in text
+    assert "Front-Left outranked the next location by 2.1x" in text
 
 
 def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> None:
@@ -214,13 +220,12 @@ def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> Non
         lang="en",
     )
     pdf_bytes = build_report_pdf(data)
-    reader = PdfReader(BytesIO(pdf_bytes))
-    page_one = reader.pages[0].extract_text() or ""
-    page_one_single_line = " ".join(page_one.split())
+    page_one_single_line = extract_pdf_pages_text(pdf_bytes)[0]
 
     assert "Rear-Right" in page_one_single_line
     assert "Recapture before acting" in page_one_single_line
-    assert "Why this corner wins" in page_one
+    assert "Why this corner wins" in page_one_single_line
+    assert "1 of 1 expected positions stayed connected." in page_one_single_line
 
 
 def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
@@ -274,10 +279,10 @@ def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
         lang="en",
     )
     pdf_bytes = build_report_pdf(data)
-    reader = PdfReader(BytesIO(pdf_bytes))
-    page_two = reader.pages[1].extract_text() or ""
-    page_three = reader.pages[2].extract_text() or ""
-    page_three_single_line = " ".join(page_three.split())
+    pages_text = extract_pdf_pages_text(pdf_bytes)
+    page_two = pages_text[1]
+    page_three = pages_text[2]
+    page_three_single_line = page_three
 
     assert "Evidence and Run Context" in page_two
     assert "Inspection Path" in page_three
@@ -285,3 +290,5 @@ def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
     assert "Front-Left" in page_three
     assert "Check wheel bearing assembly" in page_three_single_line
     assert "Inspect tire belt package" in page_three_single_line
+    assert "Move to the driveline path next" in page_three_single_line
+    assert "If the bearing is clean" in page_three_single_line
