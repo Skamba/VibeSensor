@@ -56,6 +56,7 @@ def test_build_pi_image_action_reuses_shared_runtime_and_publishes_image_contrac
     assert "sha256sum" in collect_run
     assert "version_info_source" in collect_run
     assert "published_artifact=${artifact_name}" in collect_run
+    assert "release-artifact-name=${artifact_name}" in collect_run
 
     upload_step = _step_by_name(steps, "Upload Pi image workflow artifact")
     assert upload_step["uses"] == "actions/upload-artifact@v7"

@@ -53,6 +53,8 @@ def test_update_sudo_wrapper_allows_expected_update_commands(tmp_path: Path) -> 
     for command in allowed_commands:
         result = _run_wrapper(tmp_path, command)
         assert result.returncode == 0, result.stderr
+        assert result.stderr == ""
+        assert result.stdout.strip().endswith(" ".join(command[1:]))
 
 
 def test_update_sudo_wrapper_rejects_basename_spoofing(tmp_path: Path) -> None:
@@ -64,6 +66,7 @@ def test_update_sudo_wrapper_rejects_basename_spoofing(tmp_path: Path) -> None:
 
     assert result.returncode == 126
     assert "is not allowed" in result.stderr
+    assert result.stdout == ""
 
 
 def test_update_sudo_wrapper_rejects_unexpected_subcommands(tmp_path: Path) -> None:
@@ -71,6 +74,7 @@ def test_update_sudo_wrapper_rejects_unexpected_subcommands(tmp_path: Path) -> N
 
     assert result.returncode == 126
     assert "is not allowed" in result.stderr
+    assert result.stdout == ""
 
 
 def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> None:
@@ -78,6 +82,7 @@ def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> 
 
     assert result.returncode == 126
     assert "is not allowed" in result.stderr
+    assert result.stdout == ""
 
 
 def test_manual_pi_install_installs_update_sudoers_entry() -> None:

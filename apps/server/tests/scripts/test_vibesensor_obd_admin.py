@@ -41,6 +41,7 @@ def test_ensure_repo_venv_python_reexecs_when_sys_prefix_is_not_the_repo_venv(
     with pytest.raises(SystemExit, match="0"):
         module._ensure_repo_venv_python()
 
+    assert module.sys.argv == ["vibesensor_obd_admin.py", "scan"]
     assert execv_calls == [
         (
             str(target_python),
@@ -68,6 +69,7 @@ def test_ensure_repo_venv_python_accepts_symlinked_venv_when_sys_prefix_matches(
     monkeypatch.setattr(module.os, "execv", _unexpected_execv)
 
     module._ensure_repo_venv_python()
+    assert module.sys.prefix == str(venv_root)
 
 
 def test_find_repo_venv_python_falls_back_to_python3(
@@ -83,3 +85,4 @@ def test_find_repo_venv_python_falls_back_to_python3(
     monkeypatch.setattr(module, "VENV_PYTHON_BASENAMES", ("python", "python3"))
 
     assert module._find_repo_venv_python() == target_python
+    assert target_python.name == "python3"

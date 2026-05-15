@@ -65,6 +65,7 @@ def test_refresh_download_failure_preserves_current_bundle(tmp_path: Path) -> No
     assert (cache.current_dir / "marker.txt").read_text(encoding="utf-8") == "old-tag"
     assert read_meta(cache.current_dir).tag == "old-tag"
     assert not (cache.current_dir.parent / "current.old").exists()
+    assert fetcher.download_asset.call_count == 1
 
 
 def test_refresh_restores_previous_bundle_after_activation_failure(
@@ -110,3 +111,4 @@ def test_refresh_restores_previous_bundle_after_activation_failure(
     assert (cache.current_dir / "marker.txt").read_text(encoding="utf-8") == "old-tag"
     assert read_meta(cache.current_dir).tag == "old-tag"
     assert not (cache.current_dir.parent / "current.old").exists()
+    assert extracted_dirs and not extracted_dirs[0].exists()
