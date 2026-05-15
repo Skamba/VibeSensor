@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pytest
 from _report_pdf_test_helpers import (
+    assert_pdf_contains,
     extract_media_box,
+    extract_pdf_pages_text,
     sample,
 )
 from test_support.pdf import extract_pdf_text
@@ -49,6 +51,8 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
     )
     width = x1 - x0
     height = y1 - y0
+    assert width == pytest.approx(595.276, abs=0.01)
+    assert height == pytest.approx(841.89, abs=0.01)
     assert height > width
 
 
@@ -71,6 +75,8 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     assert summary["sensor_intensity_by_location"][0]["strength_bucket_distribution"]["total"] == 8
     rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert rendered_pdf.startswith(b"%PDF")
+    assert_pdf_contains(rendered_pdf, "VibeSensor Diagnostic Report")
+    assert "None" not in extract_pdf_text(rendered_pdf)
 
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
@@ -89,12 +95,12 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    text_blob = extract_pdf_text(
-        build_report_pdf(
-            build_report_document(prepare_report_input(summarize_log(run_path))),
-        ),
+    pages_text = extract_pdf_pages_text(
+        build_report_pdf(build_report_document(prepare_report_input(summarize_log(run_path)))),
     )
+    text_blob = "\n".join(pages_text)
     assert text_blob.count("What to do next") == 1
+    assert "What to do next" in pages_text[0]
 
 
 def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
@@ -148,6 +154,7 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     )
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob
+    assert "Raw Sample Rate (Hz)" in text_blob
 
 
 def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
@@ -310,3 +317,8 @@ def test_car_diagram_omits_sensor_labels() -> None:
         }
     ]
     assert labels == []
+    diagram_text = " ".join(
+        str(getattr(item, "text", "")) for item in diagram.contents if hasattr(item, "text")
+    )
+    assert "FRONT" in diagram_text
+    assert "REAR" in diagram_text
