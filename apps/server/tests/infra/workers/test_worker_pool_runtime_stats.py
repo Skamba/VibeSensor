@@ -24,7 +24,11 @@ class TestWorkerPoolRuntimeStats:
             pool.map_unordered(lambda x: time.sleep(0.01) or x, [1, 2])
             stats = pool.stats()
             assert stats["total_run_s"] > 0
+            assert stats["avg_run_s"] > 0
             assert stats["total_tasks"] == 2
+            assert stats["pending_tasks"] == 0
+            assert stats["queued_tasks"] == 0
+            assert stats["running_tasks"] == 0
         finally:
             pool.shutdown()
 

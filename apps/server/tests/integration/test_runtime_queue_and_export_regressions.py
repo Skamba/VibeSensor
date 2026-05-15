@@ -44,6 +44,13 @@ class TestFlushBumpsGeneration:
         with proc._store.lock:
             buf = proc._store._registry._get_or_create_unlocked("sensor-1")
         buf.ingest_generation = 5
+        buf.reset_generation = 2
+        buf.write_idx = 7
         buf.count = 10  # pretend some data
+        buf.latest_metrics = {"stale": True}
         proc.flush_client_buffer("sensor-1")
         assert buf.ingest_generation == 6
+        assert buf.reset_generation == 3
+        assert buf.count == 0
+        assert buf.write_idx == 0
+        assert buf.latest_metrics == {}

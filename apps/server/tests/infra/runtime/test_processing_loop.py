@@ -245,7 +245,11 @@ class TestProcessingLoopFailureTracking:
             with pytest.raises(ProcessingLoopFailure, match="Processing loop remained unhealthy"):
                 await loop.run()
 
+        expected_failures = MAX_CONSECUTIVE_FAILURES * MAX_FATAL_BACKOFF_CYCLES
         assert state.processing_state == ProcessingHealth.FATAL
+        assert state.processing_failure_count == expected_failures
+        assert state.last_failure_category == "compute_all"
+        assert state.processing_failure_categories == {"compute_all": expected_failures}
 
     @pytest.mark.asyncio
     async def test_programmer_bug_propagates_from_ingress_state(self) -> None:

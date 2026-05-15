@@ -196,6 +196,7 @@ def test_one_wheel_plus_cabin_correct_localization(
     assert_confidence_between(summary, 0.15, 1.0, msg=tag)
     top = extract_top(summary)
     assert top is not None, f"Expected a top cause for {tag}"
+    assert str(top.get("strongest_location") or "").lower() == wheel_sensor.lower()
 
 
 # ===================================================================

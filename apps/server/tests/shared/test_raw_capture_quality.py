@@ -42,6 +42,15 @@ def test_raw_capture_loss_policy_warns_for_first_queue_overflow() -> None:
     assert assessment.gate_whole_run is False
 
 
+def test_raw_capture_loss_policy_reports_ok_when_no_manifest_is_available() -> None:
+    assessment = assess_raw_capture_loss_policy(None)
+
+    assert assessment.severity == "ok"
+    assert assessment.reason == "raw_capture_not_available"
+    assert assessment.gate_whole_run is False
+    assert assessment.total_loss_event_count == 0
+
+
 def test_raw_capture_loss_policy_gates_whole_run_for_fatal_queue_overflow() -> None:
     assessment = assess_raw_capture_loss_policy(_manifest(queue_overflow=120))
 

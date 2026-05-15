@@ -172,6 +172,8 @@ def test_as_float_or_none(value: object, expected: float | None) -> None:
         (None, None),
         ("abc", None),
         (float("nan"), None),
+        (True, None),
+        (False, None),
     ],
 )
 def test_as_int_or_none(value: object, expected: int | None) -> None:
@@ -335,6 +337,28 @@ def test_read_jsonl_run_logs_warning_for_corrupt_lines(
         run_data = read_jsonl_run(path)
     assert len(run_data.samples) == 1
     assert "Skipping corrupt JSONL line 2" in caplog.text
+
+
+def test_read_jsonl_run_skips_malformed_sample_line(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    path = tmp_path / "malformed_sample.jsonl"
+    metadata = _make_run_metadata(run_id="r5")
+    lines = [
+        json.dumps(metadata),
+        json.dumps({"record_type": "sample", "t_s": 1.0, "sample_rate_hz": "fast"}),
+        json.dumps({"record_type": "sample", "t_s": 2.0}),
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.shared.boundaries.runs.log"):
+        run_data = read_jsonl_run(path)
+
+    assert [sample.t_s for sample in run_data.samples] == [2.0]
+    assert "Skipping malformed sample at line 2" in caplog.text
+    assert "sample_rate_hz" in caplog.text
 
 
 # -- create_run_metadata -------------------------------------------------------

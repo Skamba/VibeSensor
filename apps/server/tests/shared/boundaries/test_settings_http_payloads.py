@@ -105,7 +105,12 @@ def test_preference_response_payloads_project_scalars() -> None:
 
 def test_analysis_settings_update_payload_from_mapping_omits_none_fields() -> None:
     payload = analysis_settings_update_payload_from_mapping(
-        {"tire_width_mm": 255.0, "gear_uncertainty_pct": 1.5}
+        {
+            "tire_width_mm": 255.0,
+            "gear_uncertainty_pct": 1.5,
+            "final_drive_ratio": None,
+            "tire_aspect_pct": True,
+        }
     )
 
     assert payload == {
