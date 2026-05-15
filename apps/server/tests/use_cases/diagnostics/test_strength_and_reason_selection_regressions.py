@@ -34,8 +34,7 @@ class TestStrengthLabelNanGuard:
     def test_invalid_returns_unknown(self, db_value: object) -> None:
         key, label = strength_label(db_value)
         assert key == "unknown"
-        if db_value is not None or isinstance(db_value, float):
-            assert "nknown" in label  # "Unknown" or "Onbekend"
+        assert label == "Unknown"
 
     def test_valid_db_returns_band(self) -> None:
         key, _label = strength_label(15.0)
