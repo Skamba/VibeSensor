@@ -1,16 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Route } from "@playwright/test";
 
 import {
   bootLiveDashboard,
   cancelPrompt,
   confirmPrompt,
-  fulfillJson,
-  installCommonRoutes,
+  installSettingsRoutes,
   openAnalysisTab,
-  requestPath,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
+
+const activeCarSettings = {
+  cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+  active_car_id: "car-1",
+};
 
 test("analysis tab adds guided helper copy and can reset tuning to defaults", async ({
   page,
@@ -33,26 +36,16 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
     tire_deflection_factor: 0.97,
   };
   let analysisPutCalls = 0;
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    if (route.request().method() === "PUT") {
+  await installSettingsRoutes(page, {
+    "/api/settings/cars": activeCarSettings,
+    "GET /api/settings/analysis": () => lastAnalysisPayload,
+    "PUT /api/settings/analysis": async (route: Route) => {
       analysisPutCalls += 1;
       lastAnalysisPayload = route.request().postDataJSON() as Record<
         string,
         number
       >;
-      await fulfillJson(route, {
+      return {
         ...lastAnalysisPayload,
         tire_width_mm: 285,
         tire_aspect_pct: 30,
@@ -60,10 +53,8 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
         final_drive_ratio: 3.08,
         current_gear_ratio: 0.64,
         tire_deflection_factor: 0.97,
-      });
-      return;
-    }
-    await fulfillJson(route, lastAnalysisPayload);
+      };
+    },
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openAnalysisTab(page);
@@ -120,69 +111,68 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
   await expect.poll(() => analysisPutCalls).toBe(1);
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("5");
   await expect(page.locator("#maxBandHalfWidthInput")).toHaveValue("6");
-  expect(lastAnalysisPayload.wheel_bandwidth_pct).toBe(5);
-  expect(lastAnalysisPayload.max_band_half_width_pct).toBe(6);
+  expect(lastAnalysisPayload).toMatchObject({
+    driveshaft_bandwidth_pct: 5,
+    engine_bandwidth_pct: 5,
+    final_drive_uncertainty_pct: 1,
+    gear_uncertainty_pct: 2,
+    max_band_half_width_pct: 6,
+    min_abs_band_hz: 0.5,
+    speed_uncertainty_pct: 3,
+    tire_diameter_uncertainty_pct: 4,
+    wheel_bandwidth_pct: 5,
+  });
 });
 
 test("analysis settings ask for confirmation before saving risky values", async ({
   page,
 }) => {
   let analysisPutCalls = 0;
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    if (route.request().method() === "PUT") {
+  let lastSavedPayload: Record<string, number> | null = null;
+  await installSettingsRoutes(page, {
+    "/api/settings/cars": activeCarSettings,
+    "PUT /api/settings/analysis": async (route: Route) => {
       analysisPutCalls += 1;
-      await fulfillJson(route, route.request().postDataJSON());
-      return;
-    }
-    await fulfillJson(route, {});
+      lastSavedPayload = route.request().postDataJSON() as Record<
+        string,
+        number
+      >;
+      return lastSavedPayload;
+    },
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openAnalysisTab(page);
   await page.locator("#wheelBandwidthInput").fill("40");
   await page.locator("#saveAnalysisBtn").click();
+  await expect(page.locator(".confirmation-dialog")).toContainText(
+    "Wheel Bandwidth (%)",
+  );
+  await expect(page.locator(".confirmation-dialog")).toContainText(
+    "guided 2% to 12%",
+  );
   await cancelPrompt(page);
   await expect.poll(() => analysisPutCalls).toBe(0);
+  expect(lastSavedPayload).toBeNull();
+  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("40");
 
   await page.locator("#saveAnalysisBtn").click();
   await confirmPrompt(page);
   await expect.poll(() => analysisPutCalls).toBe(1);
+  expect(lastSavedPayload).toMatchObject({
+    wheel_bandwidth_pct: 40,
+  });
 });
 
 test("analysis settings show a field-specific error when a hard limit is exceeded", async ({
   page,
 }) => {
   let analysisPutCalls = 0;
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    if (route.request().method() === "PUT") {
+  await installSettingsRoutes(page, {
+    "/api/settings/cars": activeCarSettings,
+    "PUT /api/settings/analysis": async (route: Route) => {
       analysisPutCalls += 1;
-      await fulfillJson(route, route.request().postDataJSON());
-      return;
-    }
-    await fulfillJson(route, {});
+      return route.request().postDataJSON();
+    },
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openAnalysisTab(page);
@@ -201,35 +191,25 @@ test("analysis settings show a field-specific error when a hard limit is exceede
     "aria-invalid",
     "true",
   );
+  await expect(page.locator("#wheelBandwidthInput")).toBeFocused();
+  await expect(page.locator("#analysisSaveFeedback")).toBeHidden();
 });
 
 test("failed analysis save preserves the draft and explains that saved settings remain active", async ({
   page,
 }) => {
   let analysisPutCalls = 0;
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
-    },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    if (route.request().method() === "PUT") {
+  await installSettingsRoutes(page, {
+    "/api/settings/cars": activeCarSettings,
+    "PUT /api/settings/analysis": async (route: Route) => {
       analysisPutCalls += 1;
       await route.fulfill({
         status: 500,
         contentType: "application/json",
         body: JSON.stringify({ detail: "Analysis save failed" }),
       });
-      return;
-    }
-    await fulfillJson(route, {
+    },
+    "GET /api/settings/analysis": {
       tire_width_mm: 285,
       tire_aspect_pct: 30,
       rim_in: 21,
@@ -245,7 +225,7 @@ test("failed analysis save preserves the draft and explains that saved settings 
       min_abs_band_hz: 0.5,
       max_band_half_width_pct: 6,
       tire_deflection_factor: 0.97,
-    });
+    },
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openAnalysisTab(page);
@@ -267,4 +247,7 @@ test("failed analysis save preserves the draft and explains that saved settings 
     "open",
     "",
   );
+  await expect(
+    page.locator("#analysisSaveFeedback .settings-feedback"),
+  ).toHaveAttribute("data-tone", "error");
 });
