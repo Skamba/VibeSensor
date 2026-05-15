@@ -122,10 +122,17 @@ def test_finding_payload_round_trips_domain_summary_boundary() -> None:
     decoded = finding_from_payload(payload)
 
     assert payload["finding_id"] == finding.finding_id
+    assert payload["suspected_source"] == "wheel/tire"
+    assert "source" not in payload
     assert payload["evidence_metrics"]["vibration_strength_db"] == 16.4
+    assert payload["evidence_metrics"]["matched_samples"] == 22
     assert payload["location_hotspot"]["ambiguous_locations"] == ["front_right_wheel"]
+    assert payload["location_hotspot"]["location_count"] == 4
     assert payload["matched_points"][0]["matched_hz"] == 43.5
+    assert payload["matched_points"][0]["phase"] == "cruise"
     assert payload["phase_evidence"]["phases_detected"] == ["acceleration", "cruise"]
+    assert payload["confidence_label_key"] == "CONFIDENCE_HIGH"
+    assert payload["signatures_observed"] == ["wheel order"]
     assert decoded == finding
 
 
@@ -158,3 +165,4 @@ def test_run_suitability_payload_round_trips_domain_boundary() -> None:
         }
     ]
     assert decoded == suitability
+    assert decoded.checks[0].details == (("sat_count", 3),)

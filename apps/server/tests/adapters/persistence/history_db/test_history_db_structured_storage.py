@@ -103,14 +103,41 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
 def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-nan", "2026-01-01T00:00:00Z", _metadata("run-nan"))
-    sample = {"speed_kmh": float("nan"), "accel_x_g": float("inf"), "t_s": 1.0}
+    sample = {
+        "speed_kmh": float("nan"),
+        "gps_speed_kmh": float("-inf"),
+        "engine_rpm": float("inf"),
+        "accel_x_g": float("inf"),
+        "vibration_strength_db": float("nan"),
+        "strength_peak_amp_g": float("inf"),
+        "t_s": 1.0,
+        "client_id": "nan-client",
+        "strength_bucket": "l2",
+    }
     db.run_repository.append_samples("run-nan", [sensor_frame_from_mapping(sample)])
+
+    stored = fetch_one(
+        db.lifecycle,
+        """
+        SELECT speed_kmh, gps_speed_kmh, engine_rpm, accel_x_g,
+               vibration_strength_db, strength_peak_amp_g, t_s, client_id, strength_bucket
+        FROM samples_v2 WHERE run_id = ?
+        """,
+        ("run-nan",),
+    )
+    assert stored == (None, None, None, None, None, None, 1.0, "nan-client", "l2")
 
     rows = db.run_repository.get_run_samples("run-nan")
     assert len(rows) == 1
     assert rows[0].speed_kmh is None
+    assert rows[0].gps_speed_kmh is None
+    assert rows[0].engine_rpm is None
     assert rows[0].accel_x_g is None
+    assert rows[0].vibration_strength_db is None
+    assert rows[0].strength_peak_amp_g is None
     assert rows[0].t_s == 1.0
+    assert rows[0].client_id == "nan-client"
+    assert rows[0].strength_bucket == "l2"
 
 
 def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
