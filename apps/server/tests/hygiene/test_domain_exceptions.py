@@ -16,7 +16,7 @@ from vibesensor.shared.exceptions import (
     VibeSensorError,
 )
 
-_ALL_DOMAIN_EXCEPTIONS = (
+_DIRECT_DOMAIN_EXCEPTIONS = (
     ConfigurationError,
     DataCorruptError,
     PersistenceError,
@@ -28,45 +28,63 @@ _ALL_DOMAIN_EXCEPTIONS = (
 )
 
 
+def _all_domain_exception_classes() -> tuple[type[VibeSensorError], ...]:
+    classes: list[type[VibeSensorError]] = []
+
+    def collect(cls: type[VibeSensorError]) -> None:
+        for subclass in sorted(cls.__subclasses__(), key=lambda item: item.__name__):
+            classes.append(subclass)
+            collect(subclass)
+
+    collect(VibeSensorError)
+    return tuple(classes)
+
+
+_ALL_DOMAIN_EXCEPTIONS = _all_domain_exception_classes()
+
+
 def test_base_exception_is_exception() -> None:
     assert issubclass(VibeSensorError, Exception)
-
-
-@pytest.mark.parametrize("exc_cls", _ALL_DOMAIN_EXCEPTIONS, ids=lambda cls: cls.__name__)
-def test_domain_errors_catchable_by_base(exc_cls: type[VibeSensorError]) -> None:
-    """All domain exceptions should be catchable with VibeSensorError."""
-    try:
-        raise exc_cls("test")
-    except VibeSensorError:
-        pass  # expected
-    else:
-        raise AssertionError(f"{exc_cls.__name__} not catchable as VibeSensorError")
-
-
-@pytest.mark.parametrize("exc_cls", _ALL_DOMAIN_EXCEPTIONS, ids=lambda cls: cls.__name__)
-def test_all_domain_exceptions_single_base(exc_cls: type[VibeSensorError]) -> None:
-    """Every domain exception inherits exclusively from VibeSensorError."""
     assert VibeSensorError.__bases__ == (Exception,)
+
+
+@pytest.mark.parametrize("exc_cls", _DIRECT_DOMAIN_EXCEPTIONS, ids=lambda cls: cls.__name__)
+def test_domain_errors_catchable_by_base_preserve_message(
+    exc_cls: type[VibeSensorError],
+) -> None:
+    """Every top-level domain exception is catchable through VibeSensorError."""
+    with pytest.raises(VibeSensorError, match=f"{exc_cls.__name__} message"):
+        raise exc_cls(f"{exc_cls.__name__} message")
+
+
+@pytest.mark.parametrize("exc_cls", _DIRECT_DOMAIN_EXCEPTIONS, ids=lambda cls: cls.__name__)
+def test_all_domain_exceptions_single_base(exc_cls: type[VibeSensorError]) -> None:
+    """Top-level domain exceptions inherit directly from VibeSensorError."""
     assert exc_cls.__bases__ == (VibeSensorError,), (
         f"{exc_cls.__name__}.__bases__ = {exc_cls.__bases__}, expected (VibeSensorError,)"
     )
 
 
 @pytest.mark.parametrize("exc_cls", _ALL_DOMAIN_EXCEPTIONS, ids=lambda cls: cls.__name__)
-def test_no_stdlib_exception_inheritance(exc_cls: type[VibeSensorError]) -> None:
-    """No domain exception is a subclass of ValueError, RuntimeError, or LookupError."""
-    stdlib_bases = (ValueError, RuntimeError, LookupError)
-    for stdlib in stdlib_bases:
-        assert not issubclass(exc_cls, stdlib), (
-            f"{exc_cls.__name__} should not be a subclass of {stdlib.__name__}"
-        )
+def test_domain_exception_hierarchy_has_no_stdlib_compat_bases(
+    exc_cls: type[VibeSensorError],
+) -> None:
+    """Concrete exceptions may specialize another domain error, but no stdlib class."""
+    assert len(exc_cls.__bases__) == 1
+    assert issubclass(exc_cls.__bases__[0], VibeSensorError)
+
+    stdlib_mro_entries = [
+        cls.__name__
+        for cls in exc_cls.__mro__[1:]
+        if cls not in (VibeSensorError, Exception, BaseException, object)
+        and cls.__module__ == "builtins"
+    ]
+    assert not stdlib_mro_entries, (
+        f"{exc_cls.__name__} should not inherit from stdlib exception bases: {stdlib_mro_entries}"
+    )
 
 
-def test_configuration_error_caught_by_vibesensor_error() -> None:
-    """ConfigurationError is catchable via except VibeSensorError."""
-    with_catch = False
-    try:
-        raise ConfigurationError("bad")
-    except VibeSensorError:
-        with_catch = True
-    assert with_catch
+def test_configuration_error_is_in_recursive_exception_inventory() -> None:
+    assert ConfigurationError in _ALL_DOMAIN_EXCEPTIONS
+    with pytest.raises(VibeSensorError, match="bad config"):
+        raise ConfigurationError("bad config")

@@ -26,16 +26,23 @@ def test_http_history_reexports_shared_typed_dict_contracts() -> None:
     """HTTP history aliases must point at shared owners, not duplicate them."""
 
     assert history_models.__all__
+    assert len(history_models.__all__) == len(set(history_models.__all__))
     for name in history_models.__all__:
         api_contract = getattr(history_models, name)
-        shared_contracts = {
-            contract
+        shared_contracts = [
+            (module.__name__, contract)
             for module in _SHARED_CONTRACT_MODULES
             if (contract := _exported_contract(module, name)) is not None
-        }
+        ]
 
         assert is_typeddict(api_contract), f"{name} should be a TypedDict contract"
-        assert shared_contracts == {api_contract}, (
-            f"{name} should be re-exported from a shared contract owner instead of "
-            "duplicated in adapters.http.models.history"
+        shared_contract_objects = {contract for _, contract in shared_contracts}
+        assert shared_contract_objects == {api_contract}, (
+            f"{name} should resolve to the same shared contract object, found owners "
+            f"{[module_name for module_name, _ in shared_contracts]}"
+        )
+        assert shared_contracts, f"{name} should have at least one shared owner"
+        assert all(shared_contract is api_contract for _, shared_contract in shared_contracts), (
+            f"{name} should be re-exported from shared owners instead of duplicated in "
+            "adapters.http.models.history"
         )

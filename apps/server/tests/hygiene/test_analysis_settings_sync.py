@@ -65,15 +65,18 @@ def _parse_ui_setting_keys() -> list[str]:
 
 
 def test_ui_defaults_match_backend() -> None:
-    """Every backend DEFAULTS key must appear in UI vehicle defaults with the same value."""
+    """Generated UI vehicle defaults must be a value-for-value backend projection."""
     backend = AnalysisSettingsSnapshot.DEFAULTS
     frontend = _parse_ui_vehicle_defaults()
 
-    missing = set(backend) - set(frontend)
-    assert not missing, f"UI vehicle defaults are missing keys: {sorted(missing)}"
+    assert set(frontend) == set(backend), (
+        "UI vehicle defaults key set drifted from backend DEFAULTS: "
+        f"missing={sorted(set(backend) - set(frontend))}, "
+        f"extra={sorted(set(frontend) - set(backend))}"
+    )
 
     mismatched: list[str] = []
-    for key, be_val in backend.items():
+    for key, be_val in sorted(backend.items()):
         fe_val = frontend[key]
         if abs(fe_val - be_val) > 1e-9:
             mismatched.append(f"  {key}: UI={fe_val}, backend={be_val}")
@@ -83,12 +86,14 @@ def test_ui_defaults_match_backend() -> None:
 
 
 def test_ui_setting_keys_match_backend() -> None:
-    """UI vehicle-setting key unions must list every backend DEFAULTS key."""
-    backend_keys = set(AnalysisSettingsSnapshot.DEFAULTS)
-    frontend_keys = set(_parse_ui_setting_keys())
+    """UI vehicle-setting key unions must list each backend DEFAULTS key exactly once."""
+    backend_keys = tuple(AnalysisSettingsSnapshot.DEFAULTS)
+    frontend_keys = _parse_ui_setting_keys()
 
-    missing = backend_keys - frontend_keys
-    assert not missing, f"UI vehicle-setting keys missing: {sorted(missing)}"
-
-    extra = frontend_keys - backend_keys
-    assert not extra, f"UI vehicle-setting keys have extra entries: {sorted(extra)}"
+    duplicates = sorted({key for key in frontend_keys if frontend_keys.count(key) > 1})
+    assert not duplicates, f"UI vehicle-setting keys are duplicated: {duplicates}"
+    assert set(frontend_keys) == set(backend_keys), (
+        "UI vehicle-setting keys drifted from backend DEFAULTS: "
+        f"missing={sorted(set(backend_keys) - set(frontend_keys))}, "
+        f"extra={sorted(set(frontend_keys) - set(backend_keys))}"
+    )
