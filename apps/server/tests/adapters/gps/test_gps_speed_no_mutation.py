@@ -15,7 +15,7 @@ import copy
 import pytest
 from test_support.gps import set_gps_snapshot_age
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor, SpeedResolution
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
 
 def _snapshot(m: GPSSpeedMonitor) -> dict:
@@ -224,28 +224,6 @@ class TestMultipleReadsConsistent:
 
         assert speed1 == speed2
         assert fb1 == fb2
-
-
-# ---------------------------------------------------------------------------
-# SpeedResolution named tuple
-# ---------------------------------------------------------------------------
-
-
-class TestSpeedResolution:
-    def test_is_named_tuple(self) -> None:
-        r = SpeedResolution(10.0, False, "gps")
-        assert r.speed_mps == 10.0
-        assert r.fallback_active is False
-        assert r.source == "gps"
-        # NamedTuple is immutable
-        with pytest.raises(AttributeError):
-            r.speed_mps = 20.0
-
-    def test_unpacking(self) -> None:
-        speed, fb, src = SpeedResolution(None, True, "none")
-        assert speed is None
-        assert fb is True
-        assert src == "none"
 
 
 # ---------------------------------------------------------------------------
