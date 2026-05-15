@@ -72,6 +72,7 @@ def test_history_export_uses_streaming_response() -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/zip"
+    assert response.headers["content-disposition"] == 'attachment; filename="run-1.zip"'
     content_length = response.headers.get("content-length")
     assert content_length is not None
     assert int(content_length) > 0

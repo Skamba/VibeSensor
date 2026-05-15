@@ -19,6 +19,7 @@ from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
         pytest.param(math.inf, None, id="inf-rejected"),
         pytest.param(-math.inf, None, id="neg-inf-rejected"),
         pytest.param(math.nan, None, id="nan-rejected"),
+        pytest.param(True, None, id="bool-rejected"),
         pytest.param(-1, None, id="negative-rejected"),
         pytest.param(0, None, id="zero-rejected"),
         pytest.param(500.1, None, id="above-upper-bound-rejected"),

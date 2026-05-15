@@ -16,6 +16,16 @@ from fastapi.testclient import TestClient
 from vibesensor.adapters.analysis_summary import summarize_run_data
 
 
+def test_delete_run_returns_deleted_status_for_safe_run() -> None:
+    app, _ = make_app_and_state(language="en")
+
+    with TestClient(app) as client:
+        response = client.delete("/api/history/run-1")
+
+    assert response.status_code == 200
+    assert response.json() == {"run_id": "run-1", "status": "deleted"}
+
+
 def test_delete_active_run_returns_409() -> None:
     @dataclass
     class ActiveDB(FakeHistoryDB):
