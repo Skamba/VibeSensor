@@ -238,4 +238,6 @@ def test_main_reports_default_min_shards_and_base_config(monkeypatch, tmp_path: 
     assert module.main([]) == 0
 
     assert recorded["config_call"]["source_config"] == module._DEFAULT_BASE_CONFIG.resolve()
+    assert recorded["config_call"]["config_name"] == "shard-1.yaml"
+    assert recorded["config_call"]["data_seed_dir"] == module._DEFAULT_DATA_SEED_DIR
     assert any("min requested: 6" in line for line in emitted)

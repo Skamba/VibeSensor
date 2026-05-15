@@ -86,8 +86,33 @@ def test_main_dry_run_smoke_maps_representative_changed_paths(
     assert "[test-changed] ui-test:" in output
     assert "[test-changed] ui-typecheck:" in output
     assert "[test-changed] pytest:" in output
+    assert "Changed files vs origin/main:" in output
+    assert "apps/ui/src/ws_payload_validator.ts" in output
     assert "apps/server/tests/hygiene" in output
     assert "apps/server/tests/shared" in output
+
+
+def test_changed_files_combines_committed_staged_unstaged_and_untracked(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_run_changed_module()
+    _install_git_state(
+        monkeypatch,
+        module,
+        outputs=_git_outputs(
+            committed=("README.md",),
+            staged=("apps/ui/src/main.ts",),
+            unstaged=("apps/server/tests/hygiene/test_run_changed.py",),
+            untracked=("tools/dev/new_helper.py",),
+        ),
+    )
+
+    assert module._changed_files("origin/main") == (
+        "README.md",
+        "apps/server/tests/hygiene/test_run_changed.py",
+        "apps/ui/src/main.ts",
+        "tools/dev/new_helper.py",
+    )
 
 
 def test_main_exits_cleanly_when_merge_base_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:

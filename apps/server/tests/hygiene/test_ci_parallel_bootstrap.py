@@ -115,6 +115,7 @@ def test_main_uses_shared_ui_bootstrap_helper_when_npm_ci_is_needed(
         ["node", "../../tools/ui/ensure_ui_bootstrap.mjs"],
         cwd=ui_dir,
     )
+    assert captured["bootstrap_steps"][-1].cmd[0] == "node"
 
 
 def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
@@ -346,6 +347,7 @@ def test_main_skips_selected_downstream_job_when_github_need_fails(
     assert run_order == ["frontend-typecheck"]
     assert "[ui-unit] skip (needed job failed: frontend-typecheck)" in output
     assert "- ui-unit: SKIP (needed job failed: frontend-typecheck)" in output
+    assert "frontend-typecheck.log" in output
 
 
 def test_main_reports_missing_shellcheck_before_running_shell_lint(
@@ -461,4 +463,6 @@ def test_main_serializes_jobs_with_overlapping_workspace_write_sets(
     output = "\n".join(outputs)
     assert "shared workspace write-set serialization" in output
     assert "ui-generated-contracts: frontend-typecheck, backend-contract-drift" in output
+    assert "- frontend-typecheck: PASS" in output
+    assert "- backend-contract-drift: PASS" in output
     assert max_active_jobs == 1
