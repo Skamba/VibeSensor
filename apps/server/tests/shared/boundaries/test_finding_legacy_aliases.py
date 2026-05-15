@@ -83,14 +83,17 @@ class TestRemovedSignalFallbacks:
 class TestRemovedHotspotAliases:
     """Canonical hotspot decoding ignores removed alias keys."""
 
-    def test_location_hotspot_ignores_second_location_and_old_location_aliases(self) -> None:
+    def test_location_hotspot_uses_only_canonical_location_keys(self) -> None:
         payload: dict[str, object] = {
             "finding_id": "F-hotspot",
             "severity": "diagnostic",
             "suspected_source": "wheel/tire",
             "location_hotspot": {
-                "location": "front-left",
+                "top_location": "front-left",
+                "ambiguous_locations": ["rear-left"],
+                "location_count": 4,
                 "second_location": "front-right",
+                "location": "wrong-location",
                 "ambiguous_location": True,
             },
         }
@@ -98,5 +101,7 @@ class TestRemovedHotspotAliases:
         finding = finding_from_payload(payload)
 
         assert finding.location is not None
-        assert finding.location.strongest_location == ""
-        assert finding.location.alternative_locations == ()
+        assert finding.location.strongest_location == "front-left"
+        assert finding.location.alternative_locations == ("rear-left",)
+        assert finding.location.location_count == 4
+        assert finding.location.ambiguous is True

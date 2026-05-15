@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import pytest
 
-def test_f_order_finding_id_normalization() -> None:
+from vibesensor.domain import Finding
+from vibesensor.use_cases.diagnostics.findings import finalize_findings
+
+
+def test_f_order_finding_id_normalization_preserves_order_and_reference_ids() -> None:
     """``finalize_findings`` normalises arbitrary IDs to sequential ``F###``.
 
     ``F_ORDER`` is an internal working ID from order analysis.
@@ -12,29 +17,34 @@ def test_f_order_finding_id_normalization() -> None:
     consumers see deterministic identifiers.  The normalization to
     ``F001`` is correct behavior, not a test bug.
     """
-    from vibesensor.domain import Finding
-    from vibesensor.use_cases.diagnostics.findings import finalize_findings
 
     domain_findings = finalize_findings(
         [
-            Finding(finding_id="F_ORDER", confidence=0.7, suspected_source="wheel/tire"),
-            Finding(finding_id="F_PERSISTENT", confidence=0.4, suspected_source="engine"),
+            Finding(
+                finding_id="F_ORDER",
+                confidence=0.7,
+                ranking_score=0.3,
+                suspected_source="wheel/tire",
+            ),
+            Finding(
+                finding_id="F_PERSISTENT",
+                confidence=0.4,
+                ranking_score=0.9,
+                suspected_source="engine",
+            ),
         ]
     )
-    # Both get sequential F### IDs regardless of their input names
-    assert domain_findings[0].finding_id == "F001"
-    assert domain_findings[1].finding_id == "F002"
-    assert all(isinstance(f, Finding) for f in domain_findings)
+    assert [finding.finding_id for finding in domain_findings] == ["F001", "F002"]
+    assert [finding.suspected_source for finding in domain_findings] == ["wheel/tire", "engine"]
 
     # Reference findings keep their original IDs
     domain_ref = finalize_findings(
         [
-            Finding(finding_id="REF_SPEED", confidence=None, suspected_source="unknown"),
-            Finding(finding_id="F_ORDER", confidence=0.7, suspected_source="wheel/tire"),
+            Finding(finding_id="REF_SPEED", confidence=None, ranking_score=0.1),
+            Finding(finding_id="F_ORDER", confidence=0.7, ranking_score=0.2),
         ]
     )
-    assert domain_ref[0].finding_id == "REF_SPEED"
-    assert domain_ref[1].finding_id == "F001"
+    assert [finding.finding_id for finding in domain_ref] == ["REF_SPEED", "F001"]
 
 
 def test_no_compat_dual_base_exceptions() -> None:
@@ -88,3 +98,17 @@ def test_no_compat_dual_base_exceptions() -> None:
         "Custom exceptions must inherit exclusively from VibeSensorError, "
         f"not from stdlib exception types: {violations}"
     )
+
+
+@pytest.mark.parametrize(
+    "legacy_id",
+    [
+        pytest.param("F_ORDER", id="order"),
+        pytest.param("F_PERSISTENT", id="persistent"),
+        pytest.param("CUSTOM_FINDING", id="custom"),
+    ],
+)
+def test_non_reference_finding_ids_get_stable_sequential_ids(legacy_id: str) -> None:
+    domain_findings = finalize_findings([Finding(finding_id=legacy_id, confidence=0.7)])
+
+    assert [finding.finding_id for finding in domain_findings] == ["F001"]
