@@ -516,3 +516,61 @@ export function gpsStatus(overrides: Partial<Record<string, unknown>>) {
     ...overrides,
   };
 }
+
+function baseSettingsRouteMap(
+  overrides: Record<string, SettingsRouteValue> = {},
+): Record<string, SettingsRouteValue> {
+  return {
+    "/api/settings/language": { language: "en" },
+    "/api/settings/speed-unit": { speed_unit: "kmh" },
+    "/api/settings/speed-source/status": gpsStatus({}),
+    ...overrides,
+  };
+}
+
+export async function installSettingsRoutes(
+  page: Page,
+  settingsMap: Record<string, SettingsRouteValue> = {},
+  options: Omit<CommonRouteOptions, "settingsHandler"> = {},
+): Promise<void> {
+  await installCommonRoutes(page, {
+    ...options,
+    settingsHandler: createSettingsHandlerFromMap(
+      baseSettingsRouteMap(settingsMap),
+    ),
+  });
+}
+
+export function obdStatus(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    configured_device_mac: null,
+    configured_device_name: null,
+    paired: false,
+    trusted: false,
+    connected: false,
+    rfcomm_channel: null,
+    last_rpm: null,
+    rpm_sample_age_s: null,
+    rpm_target_interval_ms: 50,
+    rpm_effective_hz: null,
+    request_rtt_ms: null,
+    timeout_count: 0,
+    error_count: 0,
+    poll_mode: null,
+    backoff_active: false,
+    last_raw_response: null,
+    debug_hint: null,
+    ...overrides,
+  };
+}
+
+export function speedSourceSettings(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    speed_source: "gps",
+    manual_speed_kph: null,
+    stale_timeout_s: 5,
+    ...overrides,
+  };
+}

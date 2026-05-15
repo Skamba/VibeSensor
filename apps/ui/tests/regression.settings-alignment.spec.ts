@@ -3,9 +3,8 @@ import { expect, test } from "@playwright/test";
 import {
   buildCaptureReadiness,
   fulfillJson,
-  installCommonRoutes,
+  installSettingsRoutes,
   installFakeWebSocket,
-  requestPath,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 12_000 });
@@ -41,33 +40,25 @@ test("settings desktop journey keeps analysis controls and car actions reachable
     final_drive_ratio: 3.3,
     current_gear_ratio: 0.84,
   };
-  await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Active Car",
-              type: "sedan",
-              aspects: readyAspects,
-            },
-            {
-              id: "car-2",
-              name: "Inactive Car",
-              type: "suv",
-              aspects: readyAspects,
-            },
-          ],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
+  await installSettingsRoutes(page, {
+    "/api/settings/cars": {
+      cars: [
+        {
+          id: "car-1",
+          name: "Active Car",
+          type: "sedan",
+          aspects: readyAspects,
+        },
+        {
+          id: "car-2",
+          name: "Inactive Car",
+          type: "suv",
+          aspects: readyAspects,
+        },
+      ],
+      active_car_id: "car-1",
     },
-  });
-  await page.route("**/api/settings/analysis", async (route) => {
-    await fulfillJson(route, analysisSettingsPayload);
+    "GET /api/settings/analysis": analysisSettingsPayload,
   });
   await installFakeWebSocket(page);
   await page.goto("/");
@@ -94,10 +85,25 @@ test("settings desktop journey keeps analysis controls and car actions reachable
 
   await expect(activeDeleteButton).toBeVisible();
   await expect(inactiveDeleteButton).toBeVisible();
+  await expect(activeDeleteButton).toHaveAttribute("data-car-action", "delete");
+  await expect(inactiveDeleteButton).toHaveAttribute(
+    "data-car-action",
+    "delete",
+  );
   await expect(activeRow.locator(".car-activate-btn")).toHaveCount(0);
   await expect(inactiveRow.locator(".car-activate-btn")).toHaveCount(1);
 
   await expect(activeRow).toContainText("Active");
+  await expect(activeRow).toHaveAttribute("data-car-complete", "true");
+  await expect(activeRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "active",
+  );
+  await expect(inactiveRow).toHaveAttribute("data-car-complete", "true");
+  await expect(inactiveRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "inactive",
+  );
   await expect(inactiveRow.locator(".car-activate-btn")).toBeEnabled();
 });
 
@@ -105,29 +111,28 @@ test("dashboard desktop journey keeps summary stats and sensor cards readable", 
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await installCommonRoutes(page, {
-    locations: [
-      { code: "front_left_wheel", label: "Front Left Wheel" },
-      { code: "engine_bay", label: "Engine Bay" },
-    ],
-    settingsHandler: async (route) => {
-      if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, {
-          cars: [
-            {
-              id: "car-1",
-              name: "Test Hatch",
-              type: "Simulated setup",
-              aspects: {},
-            },
-          ],
-          active_car_id: "car-1",
-        });
-        return;
-      }
-      await fulfillJson(route, {});
+  await installSettingsRoutes(
+    page,
+    {
+      "/api/settings/cars": {
+        cars: [
+          {
+            id: "car-1",
+            name: "Test Hatch",
+            type: "Simulated setup",
+            aspects: {},
+          },
+        ],
+        active_car_id: "car-1",
+      },
     },
-  });
+    {
+      locations: [
+        { code: "front_left_wheel", label: "Front Left Wheel" },
+        { code: "engine_bay", label: "Engine Bay" },
+      ],
+    },
+  );
   await page.route("**/api/recording/status", async (route) => {
     await fulfillJson(route, {
       enabled: false,
@@ -220,6 +225,7 @@ test("dashboard desktop journey keeps summary stats and sensor cards readable", 
   );
   await expect(dataFreshnessValue).toBeVisible();
   await expect(strongestSignalValue).toBeVisible();
+  await expect(strongestSignalValue).toContainText("12");
   await expect(speedValue).toBeVisible();
 
   await expect(page.locator(".site-header__status")).toBeHidden();
@@ -237,6 +243,9 @@ test("dashboard desktop journey keeps summary stats and sensor cards readable", 
   await expect(frontCard).toHaveText("Front Left Wheel");
   await expect(engineCard).toHaveText("Engine Bay");
   await expect(unassignedCard).toHaveText("Gamma Probe");
+  await expect(frontCard).toHaveAttribute("data-strongest", "true");
+  await expect(engineCard).not.toHaveAttribute("data-strongest", "true");
+  await expect(unassignedCard).not.toHaveAttribute("data-strongest", "true");
 
   await page.locator("#tab-history").click();
   await expect(page.locator(".site-header__status")).toBeVisible();
