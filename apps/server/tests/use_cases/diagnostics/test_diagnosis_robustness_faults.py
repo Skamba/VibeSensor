@@ -231,11 +231,11 @@ class TestDuplicateReplayedSamples:
             lang="en",
             file_name="dup_test",
         )
-        assert_summary_sections(duped, min_findings=0)
+        assert_summary_sections(baseline, min_findings=1, min_top_causes=1)
+        assert_summary_sections(duped, min_findings=1, min_top_causes=1)
         baseline_top = baseline.get("top_causes", [])
         duped_top = duped.get("top_causes", [])
-        if baseline_top and duped_top:
-            assert (
-                float(duped_top[0].get("confidence", 0))
-                <= float(baseline_top[0].get("confidence", 0)) + 0.15
-            )
+        assert (
+            float(duped_top[0].get("confidence", 0))
+            <= float(baseline_top[0].get("confidence", 0)) + 0.15
+        )

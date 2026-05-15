@@ -242,5 +242,5 @@ class TestSuppressEngineAliases:
         ]
         result = _suppress_engine_aliases(input_findings)
         engine_results = [f for f in result if str(f.suspected_source).strip().lower() == "engine"]
-        if engine_results:
-            assert engine_results[0].effective_confidence < 0.50
+        assert len(engine_results) == 1
+        assert engine_results[0].effective_confidence == pytest.approx(0.30)
