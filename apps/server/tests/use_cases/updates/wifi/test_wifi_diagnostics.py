@@ -19,7 +19,9 @@ class TestParseWifiDiagnostics:
         log_dir = _wifi_log_dir(tmp_path)
         (log_dir / "summary.txt").write_text("status=FAILED\nrc=22\n")
         issues = parse_wifi_diagnostics(str(log_dir))
-        assert any("failure" in issue.message.lower() for issue in issues)
+        assert [(issue.phase, issue.message, issue.detail) for issue in issues] == [
+            ("diagnostics", "Hotspot summary reports failure", "status=FAILED"),
+        ]
 
     def test_summary_timeout_case_insensitive(self, tmp_path) -> None:
         log_dir = _wifi_log_dir(tmp_path)
@@ -40,9 +42,9 @@ class TestParseWifiDiagnostics:
             "2024-01-01 INFO normaline\n2024-01-01 ERROR something failed\n2024-01-01 INFO ok\n",
         )
         issues = parse_wifi_diagnostics(str(log_dir))
-        assert any(
-            "error" in issue.detail.lower() or "failed" in issue.detail.lower() for issue in issues
-        )
+        assert [(issue.phase, issue.message, issue.detail) for issue in issues] == [
+            ("diagnostics", "Hotspot log issue", "2024-01-01 ERROR something failed"),
+        ]
 
     def test_password_not_leaked_in_diagnostics(self, tmp_path) -> None:
         log_dir = tmp_path / "wifi"

@@ -106,6 +106,32 @@ class TestResolveSpeedContext:
         assert rpm is not None and rpm > 0
         assert rpm_source == "estimated_from_speed_and_ratios"
 
+    def test_measured_engine_rpm_takes_precedence_over_estimate(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class _FakeSpec:
+            def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
+                return 999.0 if speed_kmh > 0 else None
+
+        monkeypatch.setattr(
+            "vibesensor.use_cases.run.sample_speed_context.order_reference_spec_from_snapshot",
+            lambda snapshot: _FakeSpec(),
+        )
+
+        context = resolve_speed_context(
+            gps_speed_mps=12.0,
+            resolved_speed_mps=12.0,
+            resolved_speed_source="obd2",
+            analysis_settings_snapshot=_analysis_settings_snapshot(),
+            measured_engine_rpm=3210.0,
+            measured_engine_rpm_source="obd2_pid",
+        )
+
+        assert context.speed_kmh == pytest.approx(43.2)
+        assert context.engine_rpm == 3210.0
+        assert context.engine_rpm_source == "obd2_pid"
+
     def test_manual_override(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.override_speed_mps = 20.0
