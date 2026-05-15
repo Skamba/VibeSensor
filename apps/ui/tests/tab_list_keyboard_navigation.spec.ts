@@ -23,16 +23,14 @@ function makeKeyboardEvent(key: string): {
 }
 
 describe("tab_list_keyboard_navigation", () => {
-  test("normalizes wrapped tab indexes", () => {
-    expect(normalizeTabListIndex(3, 3)).toBe(0);
-    expect(normalizeTabListIndex(-1, 3)).toBe(2);
-    expect(normalizeTabListIndex(0, 0)).toBe(0);
-  });
-
-  test("activates and focuses wrapped arrow navigation targets", () => {
+  test("normalizes and focuses wrapped arrow navigation targets", () => {
     const activated: string[] = [];
     const focused: number[] = [];
     const { event, wasPrevented } = makeKeyboardEvent("ArrowLeft");
+
+    expect(normalizeTabListIndex(3, 3)).toBe(0);
+    expect(normalizeTabListIndex(-1, 3)).toBe(2);
+    expect(normalizeTabListIndex(0, 0)).toBe(0);
 
     handleTabListKeyboardNavigation({
       count: 3,

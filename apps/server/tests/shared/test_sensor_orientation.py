@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from vibesensor.shared.sensor_orientation import (
     estimate_gravity_axis,
@@ -9,18 +10,21 @@ from vibesensor.shared.sensor_orientation import (
 )
 
 
-def test_parse_mount_orientation_accepts_identity_aliases() -> None:
-    orientation = parse_mount_orientation("vehicle-aligned")
+@pytest.mark.parametrize(
+    ("raw", "vehicle_axes_from_sensor"),
+    [
+        ("vehicle-aligned", ("+x", "+y", "+z")),
+        ("+y,-x,+z", ("+y", "-x", "+z")),
+    ],
+)
+def test_parse_mount_orientation_accepts_aliases_and_axis_mappings(
+    raw: str,
+    vehicle_axes_from_sensor: tuple[str, str, str],
+) -> None:
+    orientation = parse_mount_orientation(raw)
 
     assert orientation is not None
-    assert orientation.vehicle_axes_from_sensor == ("+x", "+y", "+z")
-
-
-def test_parse_mount_orientation_accepts_signed_axis_mapping() -> None:
-    orientation = parse_mount_orientation("+y,-x,+z")
-
-    assert orientation is not None
-    assert orientation.vehicle_axes_from_sensor == ("+y", "-x", "+z")
+    assert orientation.vehicle_axes_from_sensor == vehicle_axes_from_sensor
 
 
 def test_parse_mount_orientation_rejects_unknown_or_duplicate_mapping() -> None:
