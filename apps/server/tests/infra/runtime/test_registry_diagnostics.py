@@ -29,23 +29,17 @@ def _make_diagnostics() -> tuple[RegistryDiagnostics, dict[str, ClientRecord]]:
     )
 
 
-def test_note_parse_error_creates_and_normalizes_client_record() -> None:
+def test_note_parse_error_normalizes_client_and_invalid_queue_drops_are_ignored() -> None:
     diagnostics, clients = _make_diagnostics()
 
     diagnostics.note_parse_error("AABBCCDDEEFF")
+    diagnostics.note_server_queue_drop(None)
+    diagnostics.note_server_queue_drop("not-a-client-id")
 
     record = clients["aabbccddeeff"]
     assert record.parse_errors == 1
     assert record.server_queue_drops == 0
-
-
-def test_note_server_queue_drop_ignores_missing_and_invalid_client_ids() -> None:
-    diagnostics, clients = _make_diagnostics()
-
-    diagnostics.note_server_queue_drop(None)
-    diagnostics.note_server_queue_drop("not-a-client-id")
-
-    assert clients == {}
+    assert list(clients) == ["aabbccddeeff"]
 
 
 def test_data_loss_snapshot_aggregates_counters_and_affected_clients() -> None:
