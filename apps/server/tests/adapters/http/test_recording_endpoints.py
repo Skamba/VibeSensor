@@ -151,13 +151,24 @@ class TestRecordingStatusEndpoint:
 
 class TestRecordingStartEndpoint:
     def test_start_returns_running_status(self, _recording_client) -> None:
-        client, _state = _recording_client
+        client, state = _recording_client
 
         response = client.post("/api/recording/start")
 
         assert response.status_code == 200
-        assert response.json()["enabled"] is True
-        assert response.json()["run_id"] == "run-abc"
+        assert response.json() == {
+            "enabled": True,
+            "run_id": "run-abc",
+            "write_error": None,
+            "analysis_in_progress": False,
+            "start_time_utc": None,
+            "samples_written": 42,
+            "samples_dropped": 0,
+            "last_completed_run_id": None,
+            "last_completed_run_error": None,
+            "capture_readiness": None,
+        }
+        state.run_recorder.start_recording.assert_called_once_with()
 
     def test_start_when_already_recording_returns_status(self, _recording_client) -> None:
         """start_recording is idempotent — called again it still returns a valid status."""
@@ -180,12 +191,24 @@ class TestRecordingStartEndpoint:
 
 class TestRecordingStopEndpoint:
     def test_stop_returns_idle_status(self, _recording_client) -> None:
-        client, _state = _recording_client
+        client, state = _recording_client
 
         response = client.post("/api/recording/stop")
 
         assert response.status_code == 200
-        assert response.json()["enabled"] is False
+        assert response.json() == {
+            "enabled": False,
+            "run_id": None,
+            "write_error": None,
+            "analysis_in_progress": False,
+            "start_time_utc": None,
+            "samples_written": 0,
+            "samples_dropped": 0,
+            "last_completed_run_id": None,
+            "last_completed_run_error": None,
+            "capture_readiness": None,
+        }
+        state.run_recorder.stop_recording.assert_called_once_with()
 
     def test_stop_when_not_recording_returns_idle_status(self, _recording_client) -> None:
         """stop_recording when not recording is safe — returns idle status."""

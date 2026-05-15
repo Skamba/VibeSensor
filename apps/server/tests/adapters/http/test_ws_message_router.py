@@ -45,3 +45,13 @@ async def test_route_ws_message_applies_valid_selection() -> None:
     await route_ws_message(hub, ws, json.dumps({"client_id": "AA:BB:CC:DD:EE:FF"}))
 
     hub.update_selected_client.assert_awaited_once_with(ws, "aabbccddeeff")
+
+
+@pytest.mark.asyncio
+async def test_route_ws_message_clears_selection_when_client_id_is_null() -> None:
+    hub = AsyncMock()
+    ws = AsyncMock()
+
+    await route_ws_message(hub, ws, json.dumps({"client_id": None}))
+
+    hub.update_selected_client.assert_awaited_once_with(ws, None)

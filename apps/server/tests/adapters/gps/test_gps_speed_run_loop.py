@@ -188,31 +188,36 @@ async def test_run_reconnects_on_connection_failure(
     caplog.set_level("WARNING")
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
-    await asyncio.wait_for(enough_attempts.wait(), timeout=5.0)
-    await _await_condition(
-        "GPS reconnect error state after refused connections",
-        lambda: (
-            attempt_count >= 2
-            and monitor.last_error == "mock refused"
-            and 0.02 <= monitor.current_reconnect_delay <= 0.04
-        ),
-        timeout_s=5.0,
-    )
+    try:
+        await asyncio.wait_for(enough_attempts.wait(), timeout=5.0)
+        await _await_condition(
+            "GPS reconnect error state after refused connections",
+            lambda: (
+                attempt_count >= 2
+                and monitor.last_error == "mock refused"
+                and 0.02 <= monitor.current_reconnect_delay <= 0.04
+            ),
+            timeout_s=5.0,
+        )
 
-    assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
-    assert monitor.speed_mps is None
-    assert monitor.last_error == "mock refused"
-    assert 0.02 <= monitor.current_reconnect_delay <= 0.04
+        assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
+        assert monitor.speed_mps is None
+        assert monitor.last_error == "mock refused"
+        assert 0.02 <= monitor.current_reconnect_delay <= 0.04
 
-    task.cancel()
-    await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=5.0)
+        task.cancel()
+        await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=5.0)
 
-    assert "GPS connection lost, retrying" in caplog.text
-    reconnect_records = [
-        record for record in caplog.records if "GPS connection lost, retrying" in record.message
-    ]
-    assert reconnect_records
-    assert all(record.exc_info is None for record in reconnect_records)
+        assert "GPS connection lost, retrying" in caplog.text
+        reconnect_records = [
+            record for record in caplog.records if "GPS connection lost, retrying" in record.message
+        ]
+        assert reconnect_records
+        assert all(record.exc_info is None for record in reconnect_records)
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
 
 @pytest.mark.asyncio
@@ -235,11 +240,15 @@ async def test_run_does_not_swallow_processing_programming_errors() -> None:
     host, port = server.sockets[0].getsockname()[:2]
     task = asyncio.create_task(monitor.run(host=host, port=port))
 
-    with pytest.raises(RuntimeError, match="bug"):
-        await asyncio.wait_for(task, timeout=1.0)
-
-    server.close()
-    await server.wait_closed()
+    try:
+        with pytest.raises(RuntimeError, match="bug"):
+            await asyncio.wait_for(task, timeout=1.0)
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        server.close()
+        await server.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -270,29 +279,35 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
     )
 
     task = asyncio.create_task(monitor.run(host=host, port=port))
+    server_closed = False
+    try:
+        await _await_condition(
+            "GPS speed to update before server disconnect",
+            lambda: monitor.speed_mps == 42.0,
+            timeout_s=2.0,
+        )
+        assert monitor.speed_mps == 42.0
 
-    await _await_condition(
-        "GPS speed to update before server disconnect",
-        lambda: monitor.speed_mps == 42.0,
-        timeout_s=2.0,
-    )
-    assert monitor.speed_mps == 42.0
+        # After the server closes, the client detects EOF and the except block
+        # resets speed_mps to None on the next failed reconnect attempt.
+        # The server is already closed; the next connect attempt will fail.
+        server.close()
+        await server.wait_closed()
+        server_closed = True
 
-    # After the server closes, the client detects EOF and the except block
-    # resets speed_mps to None on the next failed reconnect attempt.
-    # The server is already closed; the next connect attempt will fail.
-    server.close()
-    await server.wait_closed()
-
-    await _await_condition(
-        "GPS speed to clear after disconnect and failed reconnect",
-        lambda: monitor.speed_mps is None,
-        timeout_s=5.0,
-    )
-    assert monitor.speed_mps is None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
+        await _await_condition(
+            "GPS speed to clear after disconnect and failed reconnect",
+            lambda: monitor.speed_mps is None,
+            timeout_s=5.0,
+        )
+        assert monitor.speed_mps is None
+    finally:
+        if not server_closed:
+            server.close()
+            await server.wait_closed()
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
 
 @pytest.mark.asyncio
@@ -322,13 +337,15 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(asyncio, "sleep", _spy_sleep)
 
     task = asyncio.create_task(monitor.run())
-    await asyncio.wait_for(disabled_poll_seen.wait(), timeout=1.0)
+    try:
+        await asyncio.wait_for(disabled_poll_seen.wait(), timeout=1.0)
 
-    assert monitor.speed_mps is None
-    assert not connection_attempted
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
+        assert monitor.speed_mps is None
+        assert not connection_attempted
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
 
 @pytest.mark.asyncio

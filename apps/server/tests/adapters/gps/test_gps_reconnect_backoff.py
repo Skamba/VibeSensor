@@ -20,14 +20,13 @@ class TestGPSReconnectBackoff:
     @pytest.mark.asyncio
     async def test_reconnect_delay_doubles_and_caps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monitor = GPSSpeedMonitor(gps_enabled=True)
-        delays_seen: list[float] = []
+        retry_delays: list[float] = []
 
         connect_count = 0
 
         async def _mock_open_connection(host, port):
             nonlocal connect_count
             connect_count += 1
-            delays_seen.append(monitor.current_reconnect_delay)
             if connect_count >= 5:
                 raise asyncio.CancelledError()
             raise ConnectionRefusedError("test")
@@ -35,6 +34,7 @@ class TestGPSReconnectBackoff:
         original_sleep = asyncio.sleep
 
         async def _fast_sleep(delay):
+            retry_delays.append(delay)
             await original_sleep(0)
 
         monkeypatch.setattr(asyncio, "open_connection", _mock_open_connection)
@@ -43,11 +43,13 @@ class TestGPSReconnectBackoff:
         with pytest.raises(asyncio.CancelledError):
             await monitor.run(host="127.0.0.1", port=29470)
 
-        assert delays_seen[0] == GPS_RECONNECT_DELAY_S
-        for i in range(1, min(3, len(delays_seen))):
-            assert delays_seen[i] >= delays_seen[i - 1]
-        for delay in delays_seen:
-            assert delay <= GPS_RECONNECT_MAX_DELAY_S
+        assert connect_count == 5
+        assert retry_delays == [
+            GPS_RECONNECT_DELAY_S,
+            GPS_RECONNECT_DELAY_S * 2,
+            GPS_RECONNECT_DELAY_S * 4,
+            GPS_RECONNECT_MAX_DELAY_S,
+        ]
 
     @pytest.mark.asyncio
     async def test_version_message_sets_device_info(self) -> None:

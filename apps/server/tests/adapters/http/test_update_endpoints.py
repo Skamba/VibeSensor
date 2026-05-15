@@ -197,6 +197,7 @@ def test_cancel_update_returns_cancelled_flag(update_client) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"cancelled": True}
+    state.update_manager.cancel.assert_called_once_with()
 
 
 def test_list_esp_flash_ports_returns_detected_ports(update_client) -> None:
@@ -334,6 +335,7 @@ def test_cancel_esp_flash_returns_cancelled_flag(update_client) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"cancelled": True}
+    state.esp_flash_manager.cancel.assert_called_once_with()
 
 
 def test_get_esp_flash_history_returns_attempts(update_client) -> None:
