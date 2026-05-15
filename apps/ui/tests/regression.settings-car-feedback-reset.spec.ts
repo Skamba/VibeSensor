@@ -12,6 +12,8 @@ test("clears transient car creation feedback after leaving and re-entering the c
 }) => {
   let cars = [] as Array<Record<string, unknown>>;
   let activeCarId: string | null = null;
+  let createCarCalls = 0;
+  let activateCarCalls = 0;
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -22,6 +24,7 @@ test("clears transient car creation feedback after leaving and re-entering the c
         return;
       }
       if (path === "/api/settings/cars" && method === "POST") {
+        createCarCalls += 1;
         cars = [
           {
             id: "car-1",
@@ -40,6 +43,7 @@ test("clears transient car creation feedback after leaving and re-entering the c
         return;
       }
       if (path === "/api/settings/cars/active" && method === "PUT") {
+        activateCarCalls += 1;
         activeCarId = "car-1";
         await fulfillJson(route, { cars, active_car_id: activeCarId });
         return;
@@ -69,13 +73,21 @@ test("clears transient car creation feedback after leaving and re-entering the c
   const createdRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(guidance).toContainText("Car added");
   await expect(createdRow).toHaveClass(/car-list-row--highlighted/);
+  await expect(createdRow).toHaveAttribute("data-highlighted", "true");
   await expect(createdRow).toContainText("New");
+  await expect(createdRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "inactive",
+  );
+  await expect.poll(() => createCarCalls).toBe(1);
+  await expect.poll(() => activateCarCalls).toBe(0);
 
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await page.locator('[data-settings-tab="carTab"]').click();
 
   await expect(guidance).toBeHidden();
   await expect(createdRow).not.toHaveClass(/car-list-row--highlighted/);
+  await expect(createdRow).toHaveAttribute("data-highlighted", "false");
   await expect(createdRow).not.toContainText("New");
 
   await page.locator("#tab-dashboard").click();
@@ -84,5 +96,9 @@ test("clears transient car creation feedback after leaving and re-entering the c
 
   await expect(guidance).toBeHidden();
   await expect(createdRow).not.toHaveClass(/car-list-row--highlighted/);
+  await expect(createdRow).toHaveAttribute("data-highlighted", "false");
   await expect(createdRow).not.toContainText("New");
+  await expect(createdRow.locator("strong")).toHaveText("Track Demo");
+  await expect.poll(() => createCarCalls).toBe(1);
+  await expect.poll(() => activateCarCalls).toBe(0);
 });
