@@ -43,13 +43,25 @@ def _cause_confidence(cause: dict[str, Any]) -> float:
     return float(cause.get("confidence", 0))
 
 
+def _assert_summary_contract(summary: dict[str, Any], msg: str = "") -> None:
+    assert isinstance(summary.get("findings"), list), f"Missing or invalid findings list. {msg}"
+    assert isinstance(summary.get("top_causes"), list), f"Missing or invalid top_causes list. {msg}"
+    assert isinstance(summary.get("run_suitability"), list), (
+        f"Missing or invalid run_suitability list. {msg}"
+    )
+    assert "most_likely_origin" in summary, f"Missing most_likely_origin section. {msg}"
+
+
 def _top_causes(summary: dict[str, Any]) -> list[dict[str, Any]]:
     return summary.get("top_causes") or []
 
 
 def _top_cause_or_fail(summary: dict[str, Any], msg: str = "") -> dict[str, Any]:
+    _assert_summary_contract(summary, msg)
     top = extract_top(summary)
     assert top is not None, f"No top cause found. {msg}"
+    assert "suspected_source" in top, f"Top cause missing suspected_source. {msg}"
+    assert "confidence" in top, f"Top cause missing confidence. {msg}"
     return top
 
 
@@ -69,6 +81,7 @@ def assert_no_wheel_fault(summary: dict[str, Any], msg: str = "") -> None:
     Low-confidence matches (< 0.40) are tolerated because broadband noise
     can accidentally align with wheel-order frequencies at certain speeds.
     """
+    _assert_summary_contract(summary, msg)
     for c, conf in _iter_causes_at_or_above(summary, 0.40):
         src = _cause_source(c)
         if "wheel" in src:
@@ -118,6 +131,7 @@ def assert_strict_no_fault(summary: dict[str, Any], msg: str = "") -> None:
 
     Use for known-clean scenarios (pure noise, idle-only, etc.).
     """
+    _assert_summary_contract(summary, msg)
     for c in _top_causes(summary):
         conf = _cause_confidence(c)
         src = _cause_source(c)
@@ -130,6 +144,7 @@ def assert_tolerant_no_fault(summary: dict[str, Any], msg: str = "") -> None:
     Allows low-confidence findings (< 0.50) since diffuse noise or transients
     can produce incidental matches.
     """
+    _assert_summary_contract(summary, msg)
     for c, conf in _iter_causes_at_or_above(summary, 0.50):
         src = _cause_source(c)
         if "wheel" in src:
@@ -153,6 +168,7 @@ def assert_speed_band_present(summary: dict[str, Any], msg: str = "") -> None:
 
 def assert_has_warnings(summary: dict[str, Any], msg: str = "") -> None:
     """Assert the summary has a 'warnings' field (may be empty list)."""
+    _assert_summary_contract(summary, msg)
     assert "warnings" in summary, f"Missing 'warnings' field. {msg}"
     assert isinstance(summary["warnings"], list), f"'warnings' is not a list. {msg}"
 

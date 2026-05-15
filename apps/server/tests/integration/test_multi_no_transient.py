@@ -17,6 +17,7 @@ from test_support import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
+    assert_confidence_label_valid,
     assert_no_wheel_fault,
     assert_pairwise_monotonic,
     assert_strongest_location,
@@ -62,6 +63,8 @@ def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     assert top is not None, f"{msg}: no finding"
     assert_wheel_source(summary, msg=msg)
     assert_strongest_location(summary, sensor, msg=msg)
+    assert_confidence_between(summary, 0.10, 1.0, msg=msg)
+    assert_confidence_label_valid(summary, msg=msg)
 
 
 # D.3 – 2-sensor pairs with fault localization (4 cases)

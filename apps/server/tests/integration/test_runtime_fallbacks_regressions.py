@@ -13,6 +13,7 @@ import pytest
 from _paths import SERVER_ROOT
 from test_support.persisted_analysis import make_persisted_analysis
 
+from vibesensor import report_i18n
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -125,3 +126,17 @@ class TestEvidencePeakPresentFormat:
         assert ".1f}" in nl_template, f"Expected .1f in NL template, got: {nl_template}"
         assert ".4f" not in en_template, "Stale .4f found in EN template"
         assert ".4f" not in nl_template, "Stale .4f found in NL template"
+
+        rendered = report_i18n.tr(
+            "en",
+            "EVIDENCE_PEAK_PRESENT",
+            freq=12.345,
+            pct=0.25,
+            p95=9.876,
+            units="dB",
+            burst=1.234,
+            cls="persistent",
+        )
+        assert "12.3 Hz" in rendered
+        assert "9.9 dB" in rendered
+        assert "1.2×" in rendered
