@@ -49,18 +49,18 @@
     "valibot": "^1.4.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
-    "@playwright/test": "^1.59.1",
+    "@biomejs/biome": "^2.4.15",
+    "@playwright/test": "^1.60.0",
     "@preact/preset-vite": "^2.10.5",
     "dependency-cruiser": "^17.4.0",
     "happy-dom": "^20.9.0",
-    "knip": "^6.12.2",
+    "knip": "^6.14.1",
     "linkedom": "^0.18.12",
-    "msw": "^2.14.5",
+    "msw": "^2.14.6",
     "openapi-typescript": "^7.13.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "^5.9.3",
-    "vite": "^8.0.11",
-    "vitest": "^4.1.5"
+    "vite": "^8.0.13",
+    "vitest": "^4.1.6"
   }
 }
