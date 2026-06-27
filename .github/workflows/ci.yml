@@ -374,7 +374,7 @@ jobs:
         uses: ./.github/actions/setup-python
 
       - id: playwright-browser-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('apps/ui/package-lock.json') }}
@@ -595,7 +595,7 @@ jobs:
         id: setup-backend
         uses: ./.github/actions/setup-backend
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/vibesensor/backend-duration-cache.json
           # Keep each run's write key distinct while still restoring from the stable test-history prefix.
@@ -672,7 +672,7 @@ jobs:
         id: setup-backend
         uses: ./.github/actions/setup-backend
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/vibesensor/e2e-duration-cache.json
           key: ${{ runner.os }}-e2e-durations-${{ hashFiles('tools/tests/run_e2e_parallel.py', 'apps/server/tests_e2e/**/*.py') }}-${{ github.run_id }}
