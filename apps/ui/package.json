@@ -46,7 +46,7 @@
     "@tanstack/query-core": "^5.100.13",
     "comlink": "^4.4.2",
     "preact": "^10.29.2",
-    "valibot": "^1.4.0"
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
