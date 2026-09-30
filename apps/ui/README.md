@@ -110,7 +110,7 @@ Frontend server-state ownership is centralized on the runtime-owned
 - Keep feature-specific query keys in
   `src/app/features/server_state_query_keys.ts`.
 - Keep feature-owned observed-query bridges in
-  `src/app/features/server_state_query.ts` and the owning workflow/module.
+  `src/app/features/server_state_query.ts` and the owning feature controller.
 - Use TanStack Query for fetches, cache updates, background refetch intervals,
   and invalidation instead of reintroducing ad hoc loaders or poll loops.
 - Mutations should either write authoritative results into the cache with
@@ -186,8 +186,9 @@ Use MSW when the behavior under test depends on the real HTTP boundary:
 Do **not** use MSW when the test is already below the network seam:
 
 - pure presenters, state derivations, and DOM-only views should stay network-free
-- workflow/controller tests with injected transport ports should keep those
-  focused fakes instead of layering on MSW unnecessarily
+- feature controller tests that only need canned or deferred responses should
+  fake the `api/*` wrapper module the controller imports (`vi.mock("../src/api/settings", ...)`)
+  instead of layering on MSW; controllers do not take injectable transport ports
 - WebSocket behavior is separate; keep using the existing fake WebSocket helpers
   for live-session flows instead of trying to route WS traffic through MSW
 
@@ -443,10 +444,22 @@ instead of controller-side variant class interpolation.
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas chart lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
-- Expected feature shape is thin facade + focused workflow/transport/presenter
-  or derived view-state modules. Workflow modules stay DOM-free, render-state
-  derivation lives in one focused owner, and view surfaces decode local DOM
-  events into typed actions for the owning feature.
+- Expected feature shape is one DOM-free controller module per feature in
+  `app/features/` (for example `cars_feature.ts`, `speed_source_feature.ts`,
+  `update_feature.ts`) that owns the feature's signals, query/polling
+  lifecycles, and commands, calls the `api/*` wrappers directly, and binds the
+  typed actions of its panel bridge. Pure view-model builders for that panel
+  live in one `app/views/*` module next to the Preact surface; a separate
+  derived view-state module is only warranted when the derivation is large and
+  shared across panels (as with `realtime_feature_view_state.ts`), and pure
+  state helpers may sit in one `*_state.ts` module (as with
+  `cars_wizard_state.ts`). View surfaces decode local DOM events into typed
+  actions for the owning controller.
+- Do not add pass-through `*_transport.ts` wrappers, per-feature
+  `*Ports`/`*Deps` interfaces, or facade/workflow splits for a single
+  implementation. Pass controllers a plain context object; test HTTP by faking
+  the `api/*` module (or MSW when the real request matters) and view effects
+  through a fake panel bridge.
 - Mount Preact owner surfaces directly inside their owning runtime/view module.
   Do not scatter `preact.render(...)` calls across feature or presenter code.
 
@@ -469,7 +482,7 @@ Valibot-backed runtime validation now sits at the WebSocket boundary. Live paylo
   helper for frontend runtime boundaries.
 - `src/api/update_validators.ts` is the canonical HTTP pattern: parse once,
   validate once, then return typed data from the API module.
-- Feature/workflow code may surface validated boundary failures to the UI, but it
+- Feature controller code may surface validated boundary failures to the UI, but it
   must not rebuild ad hoc `typeof` normalizers for the same payload shape.
 - Keep custom fast-path validators only where large numeric arrays or similar hot
   paths would make generic schema validation measurably more expensive.
