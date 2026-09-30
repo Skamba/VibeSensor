@@ -10,137 +10,105 @@ from threading import Event, Thread
 
 import pytest
 from test_support.history_db_async import fetch_all, fetch_one
+from test_support.history_db_lifecycle import make_run_metadata as _metadata
 
 import vibesensor.adapters.persistence.history_db._engine as engine_module
 from vibesensor.adapters.persistence.history_db import (
     HistoryDbEngineTimeoutError,
+    HistoryPersistenceAdapters,
     SQLiteHistoryEngine,
-    create_history_persistence_adapters,
 )
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.run_schema import RunMetadata
 
 
 class _AbortTxn(BaseException):
     pass
 
 
-def _metadata(run_id: str) -> RunMetadata:
-    return run_metadata_from_mapping(
-        {
-            "run_id": run_id,
-            "start_time_utc": "2026-01-01T00:00:00Z",
-            "sensor_model": "ADXL345",
-            "raw_sample_rate_hz": 800,
-            "sample_rate_hz": 800,
-            "feature_interval_s": 1.0,
-            "source": "test",
-        }
+def test_history_db_read_connection_is_query_only(db: HistoryPersistenceAdapters) -> None:
+    assert db.lifecycle._read_conn is not None
+    row = fetch_one(db.lifecycle, "PRAGMA query_only")
+    assert row is not None
+    assert int(row[0]) == 1
+
+
+def test_history_db_read_errors_clear_read_transaction(db: HistoryPersistenceAdapters) -> None:
+    assert db.lifecycle._read_conn is not None
+    with pytest.raises(sqlite3.OperationalError):
+        fetch_all(db.lifecycle, "SELECT * FROM missing_table")
+    assert not db.lifecycle._read_conn.in_transaction
+
+
+def test_history_db_read_base_exception_clears_read_transaction(
+    db: HistoryPersistenceAdapters,
+) -> None:
+    asyncio.run(
+        db.run_repository.acreate_run(
+            "run-read-abort", "2026-01-01T00:00:00Z", _metadata("run-read-abort")
+        )
     )
-
-
-def test_history_db_read_connection_is_query_only(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    try:
-        assert db.lifecycle._read_conn is not None
-        row = fetch_one(db.lifecycle, "PRAGMA query_only")
-        assert row is not None
-        assert int(row[0]) == 1
-    finally:
-        asyncio.run(db.aclose())
-
-
-def test_history_db_read_errors_clear_read_transaction(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    try:
-        assert db.lifecycle._read_conn is not None
-        with pytest.raises(sqlite3.OperationalError):
-            fetch_all(db.lifecycle, "SELECT * FROM missing_table")
-        assert not db.lifecycle._read_conn.in_transaction
-    finally:
-        asyncio.run(db.aclose())
-
-
-def test_history_db_read_base_exception_clears_read_transaction(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    try:
-        asyncio.run(
-            db.run_repository.acreate_run(
-                "run-read-abort", "2026-01-01T00:00:00Z", _metadata("run-read-abort")
-            )
+    assert db.lifecycle._read_conn is not None
+    with pytest.raises(_AbortTxn):
+        rows = fetch_all(
+            db.lifecycle,
+            "SELECT * FROM runs WHERE run_id = ?",
+            ("run-read-abort",),
         )
-        assert db.lifecycle._read_conn is not None
-        with pytest.raises(_AbortTxn):
-            rows = fetch_all(
-                db.lifecycle,
-                "SELECT * FROM runs WHERE run_id = ?",
-                ("run-read-abort",),
-            )
-            assert rows
-            raise _AbortTxn
-        assert not db.lifecycle._read_conn.in_transaction
-        runs = asyncio.run(db.run_repository.alist_runs())
-        assert [run.run_id for run in runs] == ["run-read-abort"]
-    finally:
-        asyncio.run(db.aclose())
+        assert rows
+        raise _AbortTxn
+    assert not db.lifecycle._read_conn.in_transaction
+    runs = asyncio.run(db.run_repository.alist_runs())
+    assert [run.run_id for run in runs] == ["run-read-abort"]
 
 
-def test_history_db_write_cursor_base_exception_rolls_back(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    try:
-        asyncio.run(
-            db.run_repository.acreate_run(
-                "run-write-cursor", "2026-01-01T00:00:00Z", _metadata("run-write-cursor")
-            )
+def test_history_db_write_cursor_base_exception_rolls_back(db: HistoryPersistenceAdapters) -> None:
+    asyncio.run(
+        db.run_repository.acreate_run(
+            "run-write-cursor", "2026-01-01T00:00:00Z", _metadata("run-write-cursor")
         )
-        with pytest.raises(_AbortTxn):
+    )
+    with pytest.raises(_AbortTxn):
 
-            async def _run() -> None:
-                async with db.lifecycle._cursor() as cur:
-                    await cur.execute(
-                        "UPDATE runs SET sample_count = 7 WHERE run_id = ?",
-                        ("run-write-cursor",),
-                    )
-                    raise _AbortTxn
+        async def _run() -> None:
+            async with db.lifecycle._cursor() as cur:
+                await cur.execute(
+                    "UPDATE runs SET sample_count = 7 WHERE run_id = ?",
+                    ("run-write-cursor",),
+                )
+                raise _AbortTxn
 
-            asyncio.run(_run())
-        assert not db.lifecycle._conn.in_transaction
-        run = asyncio.run(db.run_repository.aget_run("run-write-cursor"))
-        assert run is not None
-        assert run.sample_count == 0
-    finally:
-        asyncio.run(db.aclose())
+        asyncio.run(_run())
+    assert not db.lifecycle._conn.in_transaction
+    run = asyncio.run(db.run_repository.aget_run("run-write-cursor"))
+    assert run is not None
+    assert run.sample_count == 0
 
 
-def test_history_db_write_transaction_base_exception_rolls_back(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    try:
-        asyncio.run(
-            db.run_repository.acreate_run(
-                "run-write-tx", "2026-01-01T00:00:00Z", _metadata("run-write-tx")
-            )
+def test_history_db_write_transaction_base_exception_rolls_back(
+    db: HistoryPersistenceAdapters,
+) -> None:
+    asyncio.run(
+        db.run_repository.acreate_run(
+            "run-write-tx", "2026-01-01T00:00:00Z", _metadata("run-write-tx")
         )
-        with pytest.raises(_AbortTxn):
+    )
+    with pytest.raises(_AbortTxn):
 
-            async def _run() -> None:
-                async with db.lifecycle.write_transaction_cursor() as cur:
-                    await cur.execute(
-                        "UPDATE runs SET sample_count = 9 WHERE run_id = ?",
-                        ("run-write-tx",),
-                    )
-                    raise _AbortTxn
+        async def _run() -> None:
+            async with db.lifecycle.write_transaction_cursor() as cur:
+                await cur.execute(
+                    "UPDATE runs SET sample_count = 9 WHERE run_id = ?",
+                    ("run-write-tx",),
+                )
+                raise _AbortTxn
 
-            asyncio.run(_run())
-        assert not db.lifecycle._conn.in_transaction
-        run = asyncio.run(db.run_repository.aget_run("run-write-tx"))
-        assert run is not None
-        assert run.sample_count == 0
-    finally:
-        asyncio.run(db.aclose())
+        asyncio.run(_run())
+    assert not db.lifecycle._conn.in_transaction
+    run = asyncio.run(db.run_repository.aget_run("run-write-tx"))
+    assert run is not None
+    assert run.sample_count == 0
 
 
-def test_history_db_allows_reads_during_write_transaction(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+def test_history_db_allows_reads_during_write_transaction(db: HistoryPersistenceAdapters) -> None:
     asyncio.run(
         db.run_repository.acreate_run("run-read", "2026-01-01T00:00:00Z", _metadata("run-read"))
     )

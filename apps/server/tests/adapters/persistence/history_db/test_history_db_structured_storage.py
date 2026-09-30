@@ -4,45 +4,21 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import cast
 
 import pytest
 from test_support.history_db_async import execute_statements, fetch_all, fetch_one
+from test_support.history_db_lifecycle import create_recording_run
+from test_support.history_db_lifecycle import make_analysis_summary as _analysis
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.adapters.persistence.history_db import (
+    HistoryPersistenceAdapters,
+    create_history_persistence_adapters,
+)
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.run_schema import RunMetadata
-
-
-def _metadata(run_id: str, **overrides: object) -> RunMetadata:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "sensor_model": "fixture-sensor",
-        "raw_sample_rate_hz": 800,
-        "sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "source": "test",
-    }
-    payload.update(overrides)
-    return run_metadata_from_mapping(payload)
-
-
-def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "findings": [],
-        "top_causes": [],
-        "warnings": [],
-    }
-    payload.update(overrides)
-    return cast(AnalysisSummary, payload)
 
 
 def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict[str, object]:
@@ -80,9 +56,8 @@ def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict[str, object]:
     }
 
 
-def test_v2_structured_roundtrip(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-v2", "2026-01-01T00:00:00Z", _metadata("run-v2"))
+def test_v2_structured_roundtrip(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-v2")
     originals = [_sensor_frame_dict(i) for i in range(5)]
     db.run_repository.append_samples(
         "run-v2", [sensor_frame_from_mapping(sample) for sample in originals]
@@ -100,9 +75,8 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
         assert sensor_frame_to_json_object(row)["top_peaks"] == orig["top_peaks"]
 
 
-def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-nan", "2026-01-01T00:00:00Z", _metadata("run-nan"))
+def test_v2_nan_inf_sanitized(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-nan")
     sample = {
         "speed_kmh": float("nan"),
         "gps_speed_kmh": float("-inf"),
@@ -140,9 +114,8 @@ def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
     assert rows[0].strength_bucket == "l2"
 
 
-def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-check", "2026-01-01T00:00:00Z", _metadata("run-check"))
+def test_v2_no_json_blobs_in_storage(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-check")
     db.run_repository.append_samples(
         "run-check", [sensor_frame_from_mapping(_sensor_frame_dict(0))]
     )
@@ -200,9 +173,8 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
         create_history_persistence_adapters(db_path)
 
 
-def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-sf", "2026-01-01T00:00:00Z", _metadata("run-sf"))
+def test_v2_sensor_frame_objects(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-sf")
 
     frame = sensor_frame_from_mapping(_sensor_frame_dict(0, run_id="run-sf"))
     db.run_repository.append_samples("run-sf", [frame])
@@ -214,9 +186,8 @@ def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
     assert rows[0].top_peaks == frame.top_peaks
 
 
-def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-del2", "2026-01-01T00:00:00Z", _metadata("run-del2"))
+def test_v2_delete_cascades_legacy_and_v2(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-del2")
     db.run_repository.append_samples(
         "run-del2",
         [sensor_frame_from_mapping(_sensor_frame_dict(i, run_id="run-del2")) for i in range(3)],
@@ -229,11 +200,8 @@ def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
     assert row is not None and row[0] == 0
 
 
-def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run(
-        "run-full", "2026-01-01T00:00:00Z", _metadata("run-full", source="roundtrip")
-    )
+def test_v2_record_then_export_roundtrip(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-full", source="roundtrip")
 
     for batch_start in range(0, 20, 5):
         batch = [
@@ -265,9 +233,8 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     assert db.run_repository.get_run("run-full").analysis == analysis
 
 
-def test_v2_iter_with_offset(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-off", "2026-01-01T00:00:00Z", _metadata("run-off"))
+def test_v2_iter_with_offset(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-off")
     db.run_repository.append_samples(
         "run-off", [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(10)]
     )
@@ -287,9 +254,8 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
     assert rows_past == []
 
 
-def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
+def test_iter_run_samples_skips_corrupt_rows_and_continues(db: HistoryPersistenceAdapters) -> None:
+    create_recording_run(db, "run-corrupt")
     db.run_repository.append_samples(
         "run-corrupt",
         [sensor_frame_from_mapping({"t_s": 1.0}), sensor_frame_from_mapping({"t_s": 2.0})],
@@ -312,13 +278,10 @@ def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> No
 
 
 def test_v2_row_to_dict_non_list_peak_column_warns_and_skips_row(
-    tmp_path: Path,
+    db: HistoryPersistenceAdapters,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run(
-        "run-peak-warn", "2026-01-01T00:00:00Z", _metadata("run-peak-warn")
-    )
+    create_recording_run(db, "run-peak-warn")
 
     execute_statements(
         db.lifecycle,
