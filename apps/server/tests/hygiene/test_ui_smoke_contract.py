@@ -195,7 +195,7 @@ def test_ui_smoke_playwright_cache_hit_install_contract() -> None:
         step
         for step in steps
         if isinstance(step, dict)
-        and step.get("uses") == "actions/cache@v5"
+        and step.get("uses") == "actions/cache@v6"
         and step.get("with", {}).get("path") == "~/.cache/ms-playwright"
     )
     assert cache_step["id"] == "playwright-browser-cache"

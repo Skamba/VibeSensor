@@ -107,7 +107,7 @@ def check_contract_sync_entrypoint() -> list[str]:
             backend_contract_drift_steps,
             (
                 WorkflowStepRequirement(
-                    uses="actions/setup-node@v6",
+                    uses="actions/setup-node@v7",
                     error_message=(
                         "backend-contract-drift must install Node because the authoritative contract sync "
                         "runs the UI derivative generator."

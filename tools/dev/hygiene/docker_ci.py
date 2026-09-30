@@ -140,13 +140,13 @@ def _check_setup_backend_cache_contract(
             for step in backend_action_steps
             if isinstance(step, Mapping)
             and step.get("id") == "backend-venv-cache"
-            and step.get("uses") == "actions/cache@v5"
+            and step.get("uses") == "actions/cache@v6"
         ),
         None,
     )
     if cache_step is None:
         errors.append(
-            ".github/actions/setup-backend/action.yml must restore a repo-local backend virtualenv via actions/cache@v5."
+            ".github/actions/setup-backend/action.yml must restore a repo-local backend virtualenv via actions/cache@v6."
         )
     else:
         raw_with = cache_step.get("with")
