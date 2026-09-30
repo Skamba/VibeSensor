@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
 

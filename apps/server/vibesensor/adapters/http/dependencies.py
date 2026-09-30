@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import ClientSnapshotSource
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector

@@ -1,31 +1,27 @@
 """Client registry — tracks active ESP32 sensor clients.
 
 Maintains per-client state (sequence numbers, dedup windows, last-seen
-timestamps) and exposes raw client snapshots for transport presenters.
+timestamps, transport-error counters), applies HELLO/DATA/ACK bookkeeping,
+owns the live/retained/stale liveness policy, and projects raw client
+snapshots for transport presenters. User-assigned client names live in
+``client_metadata``.
 """
 
 from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from threading import RLock
+from typing import Literal
 
 from vibesensor.domain import normalize_sensor_id
 from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
-from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
-from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
-from vibesensor.infra.runtime.client_snapshot_assembler import ClientSnapshotAssembler
-from vibesensor.infra.runtime.dedup_window import DedupWindow
-from vibesensor.infra.runtime.registry_diagnostics import RegistryDiagnostics
-from vibesensor.infra.runtime.registry_updates import (
-    DataUpdateResult,
-    apply_data_message_update,
-)
 from vibesensor.shared.ports import (
     ClientNamePersistence,
     RegistryAckMessage,
@@ -38,12 +34,22 @@ LOGGER = logging.getLogger(__name__)
 _LOCATION_VALIDATOR = LocationAssignmentValidator()
 
 __all__ = [
+    "ClientLivenessPolicy",
     "ClientRecord",
     "ClientRecordSnapshot",
     "ClientRegistry",
     "ClientSnapshot",
     "DataUpdateResult",
+    "DedupWindow",
+    "apply_data_message_update",
+    "project_client_snapshots",
 ]
+
+_DEFAULT_DEDUP_WINDOW_SIZE = 128
+_RESTART_SEQ_GAP = 1000
+_JITTER_EMA_ALPHA = 0.2
+_SEQ_MASK = 0xFFFFFFFF
+_SEQ_HALF = 0x80000000
 
 
 def _resolve_now_wall(now: float | None) -> float:
@@ -56,6 +62,56 @@ def _resolve_now_mono(now_mono: float | None) -> float:
     """Return monotonic ``now_mono`` if provided, else ``time.monotonic()``."""
 
     return time.monotonic() if now_mono is None else now_mono
+
+
+@dataclass(slots=True)
+class DedupWindow:
+    """Track a bounded window of recently seen sequence numbers."""
+
+    _seen_seqs: set[int] = field(default_factory=set)
+    _seen_seqs_max: int = -1
+
+    def clear(self) -> None:
+        """Reset the dedup window to its initial empty state."""
+
+        self._seen_seqs.clear()
+        self._seen_seqs_max = -1
+
+    def contains(self, seq: int) -> bool:
+        """Return ``True`` when *seq* is still within the dedup window."""
+
+        return seq in self._seen_seqs
+
+    def record(self, seq: int) -> None:
+        """Record *seq* and advance the tracked maximum sequence value."""
+
+        self._seen_seqs.add(seq)
+        self._seen_seqs_max = max(self._seen_seqs_max, seq)
+
+    def prune(self, window_size: int) -> None:
+        """Discard old entries so the dedup window stays bounded."""
+
+        if len(self._seen_seqs) > window_size:
+            cutoff = self._seen_seqs_max - window_size + 1
+            self._seen_seqs = {seen for seen in self._seen_seqs if seen >= cutoff}
+
+    def track(self, seq: int, *, window_size: int = _DEFAULT_DEDUP_WINDOW_SIZE) -> bool:
+        """Return ``True`` for duplicates; otherwise record *seq* and prune."""
+
+        if self.contains(seq):
+            return True
+        self.record(seq)
+        self.prune(window_size)
+        return False
+
+
+@dataclass(slots=True)
+class DataUpdateResult:
+    """Return value of :func:`apply_data_message_update`."""
+
+    reset_detected: bool = False
+    is_duplicate: bool = False
+    is_late: bool = False
 
 
 @dataclass(slots=True)
@@ -159,6 +215,223 @@ def _snapshot_record(record: ClientRecord) -> ClientRecordSnapshot:
     )
 
 
+@dataclass(slots=True)
+class ClientSnapshot:
+    """Raw client snapshot assembled from registry runtime state."""
+
+    client_id: str
+    name: str
+    connected: bool
+    location_code: str = ""
+    firmware_version: str = ""
+    sample_rate_hz: int = 0
+    frame_samples: int = 0
+    last_seen_age_ms: int | None = None
+    frames_total: int = 0
+    dropped_frames: int = 0
+    latest_metrics: ClientMetrics | None = None
+    reset_count: int = 0
+    last_reset_time: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ClientLivenessPolicy:
+    """Own the live/retained/stale time windows for tracked clients."""
+
+    live_ttl_seconds: float = 10.0
+    retention_ttl_seconds: float = 120.0
+
+    def __post_init__(self) -> None:
+        live_ttl_seconds = max(1.0, float(self.live_ttl_seconds))
+        retention_ttl_seconds = max(live_ttl_seconds, float(self.retention_ttl_seconds))
+        object.__setattr__(self, "live_ttl_seconds", live_ttl_seconds)
+        object.__setattr__(self, "retention_ttl_seconds", retention_ttl_seconds)
+
+    def is_live(self, record: ClientRecord, mono_now: float) -> bool:
+        return bool(
+            record.last_seen_mono and (mono_now - record.last_seen_mono) <= self.live_ttl_seconds,
+        )
+
+    def is_retained(self, record: ClientRecord, mono_now: float) -> bool:
+        return bool(
+            record.last_seen_mono
+            and (mono_now - record.last_seen_mono) <= self.retention_ttl_seconds,
+        )
+
+    def active_client_ids(
+        self,
+        clients: Mapping[str, ClientRecord],
+        mono_now: float,
+    ) -> list[str]:
+        return [record.client_id for record in clients.values() if self.is_live(record, mono_now)]
+
+    def stale_client_ids(
+        self,
+        clients: Mapping[str, ClientRecord],
+        mono_now: float,
+    ) -> list[str]:
+        return [
+            client_id
+            for client_id, record in clients.items()
+            if record.last_seen_mono and not self.is_retained(record, mono_now)
+        ]
+
+
+def _is_short_session_restart(
+    record: ClientRecord,
+    *,
+    seq: int,
+    t0_us: int,
+) -> bool:
+    last_seq = record.last_seq
+    last_t0_us = record.last_t0_us
+    return (
+        last_seq is not None
+        and last_t0_us is not None
+        and seq <= last_seq
+        and t0_us > last_t0_us
+        and (last_seq - seq) < _RESTART_SEQ_GAP
+    )
+
+
+def _is_seq_behind(*, seq: int, last_seq: int) -> bool:
+    return seq != last_seq and ((last_seq - seq) & _SEQ_MASK) < _SEQ_HALF
+
+
+def _is_late_packet(
+    record: ClientRecord,
+    *,
+    seq: int,
+    t0_us: int,
+) -> bool:
+    last_seq = record.last_seq
+    last_t0_us = record.last_t0_us
+    return (
+        last_seq is not None
+        and last_t0_us is not None
+        and _is_seq_behind(seq=seq, last_seq=last_seq)
+        and t0_us <= last_t0_us
+    )
+
+
+def apply_data_message_update(
+    record: ClientRecord,
+    *,
+    seq: int,
+    sample_count: int,
+    t0_us: int,
+    addr: tuple[str, int],
+    now_ts: float,
+    mono: float,
+) -> DataUpdateResult:
+    """Apply one DATA message to an existing client record."""
+
+    record.last_seen = now_ts
+    record.last_seen_mono = mono
+    record.data_addr = (addr[0], addr[1])
+
+    if _is_short_session_restart(record, seq=seq, t0_us=t0_us):
+        # A restarted short-lived sender can reuse low sequence numbers with a
+        # strictly newer t0_us before the large-gap reset heuristic fires.
+        record.dedup_window.clear()
+        record.last_seq = None
+        record.last_t0_us = None
+        record.timing_jitter_us_ema = 0.0
+        record.timing_drift_us_total = 0.0
+
+    if record.dedup_window.track(seq):
+        record.duplicates_received += 1
+        return DataUpdateResult(is_duplicate=True)
+    if _is_late_packet(record, seq=seq, t0_us=t0_us):
+        return DataUpdateResult(is_late=True)
+
+    record.frames_total += 1
+    reset_detected = False
+    if (
+        record.sample_rate_hz > 0
+        and sample_count > 0
+        and record.last_t0_us is not None
+        and t0_us >= record.last_t0_us
+    ):
+        expected_delta_us = (float(sample_count) / float(record.sample_rate_hz)) * 1_000_000.0
+        actual_delta_us = float(t0_us - record.last_t0_us)
+        jitter_us = actual_delta_us - expected_delta_us
+        record.timing_jitter_us_ema = (
+            1.0 - _JITTER_EMA_ALPHA
+        ) * record.timing_jitter_us_ema + _JITTER_EMA_ALPHA * jitter_us
+        record.timing_drift_us_total += jitter_us
+
+    if record.last_seq is not None:
+        if seq < record.last_seq and (record.last_seq - seq) > _RESTART_SEQ_GAP:
+            record.reset_count += 1
+            record.last_reset_time = now_ts
+            record.last_t0_us = None
+            record.timing_jitter_us_ema = 0.0
+            record.timing_drift_us_total = 0.0
+            record.dedup_window.clear()
+            record.dedup_window.track(seq)
+            reset_detected = True
+        else:
+            expected = (record.last_seq + 1) & _SEQ_MASK
+            if seq != expected:
+                gap = (seq - expected) & _SEQ_MASK
+                if gap < _SEQ_HALF:
+                    record.frames_dropped += gap
+
+    if record.last_seq is None or ((seq - record.last_seq) & _SEQ_MASK) < _SEQ_HALF:
+        record.last_seq = seq
+    record.last_t0_us = t0_us
+    return DataUpdateResult(reset_detected=reset_detected)
+
+
+def project_client_snapshots(
+    clients: dict[str, ClientRecord],
+    metadata: ClientMetadataManager,
+    *,
+    now_wall: float,
+    now_mono: float,
+    policy: ClientLivenessPolicy,
+    metrics_by_client: dict[str, ClientMetrics] | None = None,
+) -> list[ClientSnapshot]:
+    """Build transport-facing ``ClientSnapshot`` rows from registry state."""
+    snapshots: list[ClientSnapshot] = []
+    for client_id in metadata.known_client_ids(clients):
+        record = clients.get(client_id)
+        if record is None:
+            snapshots.append(
+                ClientSnapshot(
+                    client_id=client_id,
+                    name=metadata.default_name_for(client_id),
+                    connected=False,
+                ),
+            )
+            continue
+        age_ms = int(max(0.0, now_wall - record.last_seen) * 1000) if record.last_seen else None
+        connected = policy.is_live(record, now_mono)
+        snapshots.append(
+            ClientSnapshot(
+                client_id=record.client_id,
+                name=record.name,
+                connected=connected,
+                location_code=record.location_code,
+                firmware_version=record.firmware_version,
+                sample_rate_hz=record.sample_rate_hz,
+                frame_samples=record.frame_samples,
+                last_seen_age_ms=age_ms,
+                frames_total=record.frames_total,
+                dropped_frames=record.frames_dropped,
+                latest_metrics=(
+                    metrics_by_client.get(record.client_id)
+                    if metrics_by_client is not None
+                    else None
+                ),
+                reset_count=record.reset_count,
+                last_reset_time=record.last_reset_time,
+            ),
+        )
+    return snapshots
+
+
 class ClientRegistry:
     """Thread-safe registry of live and recently-retained ESP32 clients."""
 
@@ -174,11 +447,6 @@ class ClientRegistry:
             retention_ttl_seconds=retention_ttl_seconds,
         )
         self._clients: dict[str, ClientRecord] = {}
-        self._diagnostics = RegistryDiagnostics(
-            lock=self._lock,
-            clients=self._clients,
-            get_or_create=self._get_or_create,
-        )
         self._metadata = ClientMetadataManager(
             lock=self._lock,
             get_or_create=self._get_or_create,
@@ -195,14 +463,6 @@ class ClientRegistry:
                 if db is not None
                 else None
             ),
-        )
-        self._snapshot_assembler = ClientSnapshotAssembler(
-            lock=self._lock,
-            clients=self._clients,
-            metadata=self._metadata,
-            policy=self._liveness_policy,
-            resolve_now_wall=_resolve_now_wall,
-            resolve_now_mono=_resolve_now_mono,
         )
 
     @staticmethod
@@ -311,11 +571,26 @@ class ClientRegistry:
                 record.pending_sync_cmd_seq = None
                 record.pending_sync_send_us = None
 
+    def _note_client_counter(
+        self,
+        client_id: str | None,
+        attr: Literal["parse_errors", "server_queue_drops"],
+    ) -> None:
+        if not client_id:
+            return
+        try:
+            normalized = normalize_sensor_id(client_id)
+        except ValueError:
+            return
+        with self._lock:
+            record = self._get_or_create(normalized)
+            setattr(record, attr, getattr(record, attr) + 1)
+
     def note_parse_error(self, client_id: str | None) -> None:
-        self._diagnostics.note_parse_error(client_id)
+        self._note_client_counter(client_id, "parse_errors")
 
     def note_server_queue_drop(self, client_id: str | None) -> None:
-        self._diagnostics.note_server_queue_drop(client_id)
+        self._note_client_counter(client_id, "server_queue_drops")
 
     def set_name(self, client_id: str, name: str) -> ClientRecord:
         return self._metadata.set_name(client_id, name)
@@ -389,7 +664,28 @@ class ClientRegistry:
             return self._liveness_policy.active_client_ids(self._clients, mono_now)
 
     def data_loss_snapshot(self) -> dict[str, int]:
-        return self._diagnostics.data_loss_snapshot()
+        with self._lock:
+            snapshot: dict[str, int] = {
+                "tracked_clients": len(self._clients),
+                "affected_clients": 0,
+                "frames_dropped": 0,
+                "queue_overflow_drops": 0,
+                "server_queue_drops": 0,
+                "parse_errors": 0,
+            }
+            for record in self._clients.values():
+                snapshot["frames_dropped"] += int(record.frames_dropped)
+                snapshot["queue_overflow_drops"] += int(record.queue_overflow_drops)
+                snapshot["server_queue_drops"] += int(record.server_queue_drops)
+                snapshot["parse_errors"] += int(record.parse_errors)
+                if (
+                    record.frames_dropped > 0
+                    or record.queue_overflow_drops > 0
+                    or record.server_queue_drops > 0
+                    or record.parse_errors > 0
+                ):
+                    snapshot["affected_clients"] += 1
+            return snapshot
 
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
@@ -422,8 +718,12 @@ class ClientRegistry:
         metrics_by_client: dict[str, ClientMetrics] | None = None,
     ) -> list[ClientSnapshot]:
         """Return raw per-client snapshots for transport presenters."""
-        return self._snapshot_assembler.client_snapshots(
-            now=now,
-            now_mono=now_mono,
-            metrics_by_client=metrics_by_client,
-        )
+        with self._lock:
+            return project_client_snapshots(
+                self._clients,
+                self._metadata,
+                now_wall=_resolve_now_wall(now),
+                now_mono=_resolve_now_mono(now_mono),
+                policy=self._liveness_policy,
+                metrics_by_client=metrics_by_client,
+            )

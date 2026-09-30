@@ -27,8 +27,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
-from vibesensor.infra.runtime.processing_tick import ProcessingTickRunner
+from vibesensor.infra.runtime.processing_loop import ProcessingLoopState, ProcessingTickRunner
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS

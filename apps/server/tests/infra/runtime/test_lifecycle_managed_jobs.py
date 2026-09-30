@@ -1,4 +1,4 @@
-"""Tests for ManagedJobShutdown (#1449)."""
+"""Tests for managed-job (update/flash) cancellation during lifecycle shutdown (#1449)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import logging
 
 import pytest
 
-from vibesensor.infra.runtime.managed_job_shutdown import ManagedJobShutdown
+from vibesensor.infra.runtime.lifecycle import cancel_managed_jobs
 
 
 class _FakeJobSource:
@@ -37,27 +37,26 @@ async def _instant_job() -> None:
     return None
 
 
-class TestManagedJobShutdown:
+class TestCancelManagedJobs:
     """Verify managed-job shutdown ignores inactive sources and cancels active tasks."""
 
     @pytest.mark.asyncio
     async def test_no_active_tasks_returns_empty(self) -> None:
         """Sources with no active tasks produce an empty lingering list."""
-        shutdown = ManagedJobShutdown(
+        lingering = await cancel_managed_jobs(
             [
                 _FakeJobSource(None),
                 _FakeJobSource(None),
-            ]
+            ],
+            timeout_s=5.0,
         )
-        lingering = await shutdown.cancel(timeout_s=5.0)
         assert lingering == []
 
     @pytest.mark.asyncio
     async def test_cancels_active_tasks(self) -> None:
         """Active tasks get cancelled and finish within timeout."""
         task = asyncio.create_task(_slow_job(), name="test-update-job")
-        shutdown = ManagedJobShutdown([_FakeJobSource(task)])
-        lingering = await shutdown.cancel(timeout_s=5.0)
+        lingering = await cancel_managed_jobs([_FakeJobSource(task)], timeout_s=5.0)
         assert lingering == []
         assert task.cancelled()
 
@@ -66,8 +65,7 @@ class TestManagedJobShutdown:
         """Already-done tasks are not included in cancellation."""
         task = asyncio.create_task(_instant_job(), name="test-done-job")
         await task  # let it finish
-        shutdown = ManagedJobShutdown([_FakeJobSource(task)])
-        lingering = await shutdown.cancel(timeout_s=5.0)
+        lingering = await cancel_managed_jobs([_FakeJobSource(task)], timeout_s=5.0)
         assert lingering == []
 
     @pytest.mark.asyncio
@@ -77,14 +75,14 @@ class TestManagedJobShutdown:
         await done_task
         active_task = asyncio.create_task(_slow_job(), name="active")
 
-        shutdown = ManagedJobShutdown(
+        lingering = await cancel_managed_jobs(
             [
                 _FakeJobSource(None),
                 _FakeJobSource(done_task),
                 _FakeJobSource(active_task),
-            ]
+            ],
+            timeout_s=5.0,
         )
-        lingering = await shutdown.cancel(timeout_s=5.0)
         assert lingering == []
         assert active_task.cancelled()
 
@@ -95,7 +93,7 @@ class TestManagedJobShutdown:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Tasks that outlive cancellation are returned and logged by name."""
-        import vibesensor.infra.runtime.managed_job_shutdown as shutdown_module
+        import vibesensor.infra.runtime.lifecycle as shutdown_module
 
         task = asyncio.create_task(_stubborn_job(), name="stubborn-job")
         await asyncio.sleep(0)
@@ -109,11 +107,9 @@ class TestManagedJobShutdown:
             return set(), set(tasks)
 
         monkeypatch.setattr(shutdown_module.asyncio, "wait", _wait_pending)
-        shutdown = ManagedJobShutdown([_FakeJobSource(task)])
-
         try:
             with caplog.at_level(logging.WARNING, logger=shutdown_module.LOGGER.name):
-                lingering = await shutdown.cancel(timeout_s=0.01)
+                lingering = await cancel_managed_jobs([_FakeJobSource(task)], timeout_s=0.01)
 
             assert lingering == [task]
             assert "managed shutdown task(s)" in caplog.text

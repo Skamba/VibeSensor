@@ -1,9 +1,8 @@
-"""Tests for the extracted ClientLivenessPolicy helper."""
+"""Tests for the ClientLivenessPolicy live/retained/stale windows."""
 
 from __future__ import annotations
 
-from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
-from vibesensor.infra.runtime.registry import ClientRecord
+from vibesensor.infra.runtime.registry import ClientLivenessPolicy, ClientRecord
 
 
 def _make_record(

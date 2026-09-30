@@ -16,8 +16,7 @@ from vibesensor.adapters.persistence.history_db import (
 )
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector

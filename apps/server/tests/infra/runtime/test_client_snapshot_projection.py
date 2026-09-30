@@ -1,12 +1,14 @@
-"""Tests for client_snapshot_projection — pure projection function."""
+"""Tests for the pure registry-to-ClientSnapshot projection."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
-from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
-from vibesensor.infra.runtime.registry import ClientRecord
+from vibesensor.infra.runtime.registry import (
+    ClientLivenessPolicy,
+    ClientRecord,
+    project_client_snapshots,
+)
 
 
 def _make_record(

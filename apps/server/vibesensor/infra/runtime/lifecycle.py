@@ -1,10 +1,15 @@
 """LifecycleManager – async service startup and graceful shutdown.
 
 Owns:
-- Background task creation and cancellation
-- UDP transport management
+- Named startup phases with health-state reporting and tracing spans
+- Background task creation (via ``BackgroundTaskCoordinator`` +
+  ``TaskSupervisor``) and cancellation
+- UDP data-transport startup and cleanup
 - Graceful shutdown sequencing (ingress stop → task cancellation →
-  metrics/analysis drain → resource cleanup)
+  managed-job cancellation → metrics/analysis drain → resource cleanup)
+
+The protocols below describe collaborators implemented in outer layers
+(adapters / use cases) that infra may not import directly.
 """
 
 from __future__ import annotations
@@ -12,20 +17,26 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
-from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.shutdown_sequence import (
-    LifecycleShutdownIssue,
-    LifecycleShutdownSequence,
+import aiosqlite
+import anyio
+from opentelemetry.trace import SpanKind
+
+from vibesensor.infra.runtime.background_tasks import (
+    BackgroundTaskCoordinator,
+    RestartableExceptions,
+    TaskSupervisor,
+    task_failure_message,
 )
-from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
-from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 if TYPE_CHECKING:
@@ -34,6 +45,13 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
     from vibesensor.infra.workers.worker_pool import WorkerPool
+
+__all__ = [
+    "LifecycleManager",
+    "LifecycleRuntime",
+    "StartUdpReceiver",
+    "cancel_managed_jobs",
+]
 
 
 class LifecycleControlPlane(Protocol):
@@ -99,6 +117,16 @@ class LifecycleHistoryDb(Protocol):
     async def aclose(self) -> None: ...
 
 
+class UdpQueueConsumer(Protocol):
+    async def process_queue(self) -> None: ...
+
+
+StartUdpReceiver = Callable[
+    ...,
+    Awaitable[tuple[asyncio.DatagramTransport | None, UdpQueueConsumer | None]],
+]
+
+
 @dataclass(slots=True)
 class LifecycleRuntime:
     """Lifecycle-owned dependency bundle consumed by LifecycleManager."""
@@ -129,17 +157,45 @@ class LifecycleRuntime:
 
 LOGGER = logging.getLogger(__name__)
 
+_BACKGROUND_CANCEL_TIMEOUT_S = 15.0
+_MANAGED_JOB_CANCEL_TIMEOUT_S = 10.0
+
+
+async def cancel_managed_jobs(
+    sources: Sequence[LifecycleManagedJobs],
+    *,
+    timeout_s: float,
+) -> list[asyncio.Task[None]]:
+    """Cancel the active managed job tasks (update, flash); return any that outlive *timeout_s*."""
+    tasks = [s.job_task for s in sources if s.job_task is not None and not s.job_task.done()]
+    for task in tasks:
+        task.cancel()
+    if not tasks:
+        return []
+    _done, pending = await asyncio.wait(tasks, timeout=timeout_s)
+    if pending:
+        LOGGER.warning(
+            "%d managed shutdown task(s) did not finish within the cancellation "
+            "deadline and remain pending: %s",
+            len(pending),
+            [task.get_name() for task in pending],
+        )
+    return [task for task in tasks if not task.done()]
+
+
+StartupPhase = tuple[str, Callable[[], Awaitable[None]]]
+
 
 class LifecycleManager:
     """Manages server startup (UDP receiver, background tasks) and graceful shutdown."""
 
     __slots__ = (
         "_background_tasks",
+        "_data_transport",
         "_health_state",
         "_runtime",
-        "_shutdown_sequence",
+        "_start_udp_receiver",
         "_task_supervisor",
-        "_udp_transport_lifecycle",
     )
 
     def __init__(
@@ -150,28 +206,13 @@ class LifecycleManager:
     ) -> None:
         self._runtime = runtime
         self._health_state = runtime.health_state
+        self._start_udp_receiver = start_udp_receiver
+        self._data_transport: asyncio.DatagramTransport | None = None
         self._task_supervisor = TaskSupervisor(
             health_state=self._health_state,
             logger=LOGGER,
         )
         self._background_tasks = BackgroundTaskCoordinator(
-            logger=LOGGER,
-        )
-        self._udp_transport_lifecycle = UdpTransportLifecycle(
-            start_udp_receiver=start_udp_receiver,
-            start_background_task=lambda task_factory: self._background_tasks.start(
-                lambda: self._task_supervisor.run(
-                    task_factory,
-                    name="udp-data-consumer",
-                ),
-                name="udp-data-consumer",
-            ),
-            logger=LOGGER,
-        )
-        self._shutdown_sequence = LifecycleShutdownSequence(
-            runtime=runtime,
-            background_tasks=self._background_tasks,
-            udp_transport_lifecycle=self._udp_transport_lifecycle,
             logger=LOGGER,
         )
 
@@ -199,39 +240,184 @@ class LifecycleManager:
                 data_dir,
             )
 
+    # -- startup ---------------------------------------------------------------
+
     async def start(self) -> None:
         """Launch UDP receiver, control plane, and background async tasks."""
-        from vibesensor.infra.runtime.startup_runner import StartupRunner
-
         self._validate_startup()
         await self._background_tasks.open()
-        runner = StartupRunner(
-            runtime=self._runtime,
-            health_state=self._health_state,
-            task_supervisor=self._task_supervisor,
-            background_tasks=self._background_tasks,
-            udp_transport_lifecycle=self._udp_transport_lifecycle,
+        await self._run_startup_phases()
+
+    async def _run_startup_phases(self) -> None:
+        """Execute the named startup phases in order with health-state tracking."""
+        phase_name = "starting"
+        self._health_state.set_phase(phase_name)
+        cancelled_exc_class = anyio.get_cancelled_exc_class()
+        try:
+            for phase_name, run_phase in self._startup_phases():
+                self._health_state.set_phase(phase_name)
+                with start_span(
+                    __name__,
+                    "runtime.startup.phase",
+                    kind=SpanKind.INTERNAL,
+                    attributes={"vibesensor.phase": phase_name},
+                ) as span:
+                    try:
+                        await run_phase()
+                    except cancelled_exc_class:
+                        span.set_attribute("vibesensor.cancelled", True)
+                        raise
+                    except (OSError, RuntimeError) as exc:
+                        mark_span_error(span, exc)
+                        raise
+            self._health_state.mark_ready()
+        except (OSError, RuntimeError) as exc:
+            self._health_state.mark_failed(phase_name, task_failure_message(exc))
+            raise
+
+    def _startup_phases(self) -> list[StartupPhase]:
+        r = self._runtime
+        return [
+            ("udp_receiver", self._start_udp_transport),
+            ("control_plane", r.control_plane.start),
+            (
+                "processing-loop",
+                lambda: self._start_supervised(lambda: r.processing_loop.run(), "processing-loop"),
+            ),
+            (
+                "ws-broadcast",
+                lambda: self._start_supervised(
+                    lambda: r.ws_hub.run(
+                        UI_PUSH_HZ,
+                        r.ws_broadcast.build_payload,
+                        on_tick=r.ws_broadcast.on_tick,
+                        metrics_recorder=lambda connection_count, duration_s: (
+                            r.ingest_diagnostics.note_ws_publish(
+                                connection_count=connection_count,
+                                duration_s=duration_s,
+                            )
+                        ),
+                    ),
+                    "ws-broadcast",
+                    restartable_exceptions=(BroadcastTickLoopFailure,),
+                ),
+            ),
+            (
+                "metrics-log",
+                lambda: self._start_supervised(lambda: r.run_recorder.run(), "metrics-log"),
+            ),
+            (
+                "gps-speed",
+                lambda: self._start_supervised(
+                    lambda: r.gps_monitor.run(host=r.gpsd_host, port=r.gpsd_port),
+                    "gps-speed",
+                ),
+            ),
+            (
+                "obd-speed",
+                lambda: self._start_supervised(lambda: r.obd_runner.run(), "obd-speed"),
+            ),
+            ("update-startup-recover", self._start_update_recovery),
+        ]
+
+    async def _start_udp_transport(self) -> None:
+        r = self._runtime
+        self._data_transport, consumer = await self._start_udp_receiver(
+            host=r.udp_data_host,
+            port=r.udp_data_port,
+            registry=r.registry,
+            processor=r.processor,
+            raw_capture_sink=r.run_recorder,
+            queue_maxsize=r.udp_data_queue_maxsize,
+            ingest_diagnostics=r.ingest_diagnostics,
         )
-        await runner.run()
+        if consumer is not None:
+            await self._start_supervised(consumer.process_queue, "udp-data-consumer")
+
+    async def _start_supervised(
+        self,
+        coro_factory: Callable[[], Awaitable[object]],
+        name: str,
+        *,
+        restartable_exceptions: RestartableExceptions = (),
+    ) -> None:
+        self._background_tasks.start(
+            lambda: self._task_supervisor.run(
+                coro_factory,
+                name=name,
+                restartable_exceptions=restartable_exceptions,
+            ),
+            name=name,
+        )
+
+    async def _start_update_recovery(self) -> None:
+        self._background_tasks.start(
+            self._runtime.update_manager.startup_recover,
+            name="update-startup-recover",
+        )
+
+    # -- shutdown --------------------------------------------------------------
 
     async def stop(self) -> None:
-        """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
-        shutdown = await self._shutdown_sequence.run()
-        self._report_shutdown_issues(shutdown.issues)
-        self._report_lingering_tasks(
-            list(shutdown.lingering_background),
-            list(shutdown.lingering_managed),
-        )
+        """Graceful shutdown with explicit ingress-stop and metrics-drain phases.
 
-    def _report_shutdown_issues(self, issues: tuple[LifecycleShutdownIssue, ...]) -> None:
-        for issue in issues:
+        Resource-close failures are collected and logged after the whole
+        sequence has run so one failing step never skips the later ones.
+        """
+        r = self._runtime
+        issues: list[tuple[str, Exception]] = []
+        try:
+            r.control_plane.close()
+        except OSError as exc:
+            issues.append(("Error closing control plane", exc))
+        self._close_udp_transport()
+        lingering_background = await self._background_tasks.cancel_all(
+            timeout_s=_BACKGROUND_CANCEL_TIMEOUT_S,
+        )
+        lingering_managed = await cancel_managed_jobs(
+            [r.update_manager, r.esp_flash_manager],
+            timeout_s=_MANAGED_JOB_CANCEL_TIMEOUT_S,
+        )
+        await self._drain_analysis()
+        try:
+            await anyio.to_thread.run_sync(r.worker_pool.shutdown, True)
+        except (OSError, RuntimeError) as exc:
+            issues.append(("Error shutting down worker pool", exc))
+        try:
+            await r.history_db.aclose()
+        except (aiosqlite.Error, OSError) as exc:
+            issues.append(("Error closing history DB", exc))
+        if not lingering_background:
+            await self._background_tasks.close()
+        for message, issue in issues:
+            LOGGER.warning(message, exc_info=(type(issue), issue, issue.__traceback__))
+        self._report_lingering_tasks(lingering_background, lingering_managed)
+
+    def _close_udp_transport(self) -> None:
+        try:
+            if self._data_transport is not None:
+                self._data_transport.close()
+                self._data_transport = None
+        except OSError:
+            LOGGER.warning("Error closing data transport", exc_info=True)
+
+    async def _drain_analysis(self) -> None:
+        analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
+        shutdown_report = await anyio.to_thread.run_sync(
+            self._runtime.run_recorder.shutdown_report,
+            analysis_timeout_s,
+        )
+        if not shutdown_report.completed:
             LOGGER.warning(
-                issue.message,
-                exc_info=(
-                    type(issue.exception),
-                    issue.exception,
-                    issue.exception.__traceback__,
-                ),
+                "Post-analysis did not finish within %.1fs on shutdown; "
+                "results for the last run may be lost. active_run_before_stop=%s "
+                "queue_depth=%d active_run=%s oldest_queue_age_s=%s write_error=%s",
+                analysis_timeout_s,
+                shutdown_report.active_run_id_before_stop,
+                shutdown_report.analysis_queue_depth,
+                shutdown_report.analysis_active_run_id,
+                shutdown_report.analysis_queue_oldest_age_s,
+                shutdown_report.write_error,
             )
 
     def _report_lingering_tasks(
