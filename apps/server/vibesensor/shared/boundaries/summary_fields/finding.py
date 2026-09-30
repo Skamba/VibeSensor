@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import cast
 
 from vibesensor.domain import (
     ConfidenceAssessment,
     Finding,
     FindingEvidence,
+    OrderMatchObservation,
     Signature,
     VibrationSource,
+    coerce_float,
 )
-from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.codecs.finding_evidence import finding_evidence_from_mapping
-from vibesensor.shared.boundaries.summary_fields.evidence_metrics import build_evidence_metrics
-from vibesensor.shared.boundaries.summary_fields.order_match import (
-    order_match_observations_from_sequence,
-)
+from vibesensor.shared.boundaries.codecs.scalars import float_or, optional_float, text_or_none
 from vibesensor.shared.boundaries.summary_fields.origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
@@ -30,6 +27,7 @@ from vibesensor.shared.json_utils import (
     payload_value_from_json,
 )
 from vibesensor.shared.types.analysis_views import (
+    FindingEvidenceMetrics,
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
@@ -306,4 +304,143 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
             support_score=confidence or 0.0,
             source=source,
         ),
+    )
+
+
+def finding_evidence_from_mapping(payload: Mapping[str, object]) -> FindingEvidence:
+    """Decode a canonical evidence payload into a domain ``FindingEvidence``."""
+
+    phase_conf = payload.get("per_phase_confidence")
+    phase_items: tuple[tuple[str, float], ...] = ()
+    if isinstance(phase_conf, dict):
+        phase_items = tuple(
+            (str(key), confidence)
+            for key, value in sorted(phase_conf.items())
+            if (confidence := optional_float(value)) is not None
+        )
+
+    focused_speed_band = payload.get("focused_speed_band")
+    possible_samples = payload.get("possible_samples")
+    matched_samples = payload.get("matched_samples")
+    phases_with_evidence = payload.get("phases_with_evidence")
+    return FindingEvidence(
+        match_rate=float_or(payload.get("match_rate")),
+        global_match_rate=optional_float(payload.get("global_match_rate")),
+        focused_speed_band=text_or_none(focused_speed_band),
+        mean_relative_error=optional_float(payload.get("mean_relative_error")),
+        mean_noise_floor_db=optional_float(payload.get("mean_noise_floor_db")),
+        possible_samples=(
+            int(possible_samples) if isinstance(possible_samples, (int, float)) else None
+        ),
+        matched_samples=(
+            int(matched_samples) if isinstance(matched_samples, (int, float)) else None
+        ),
+        snr_db=optional_float(payload.get("snr_db")),
+        presence_ratio=float_or(payload.get("presence_ratio")),
+        burstiness=float_or(payload.get("burstiness")),
+        spatial_concentration=float_or(payload.get("spatial_concentration")),
+        frequency_correlation=float_or(payload.get("frequency_correlation")),
+        speed_uniformity=float_or(payload.get("speed_uniformity")),
+        spatial_uniformity=float_or(payload.get("spatial_uniformity")),
+        phases_with_evidence=(
+            int(phases_with_evidence) if isinstance(phases_with_evidence, (int, float)) else None
+        ),
+        phase_confidences=phase_items,
+        vibration_strength_db=optional_float(payload.get("vibration_strength_db")),
+    )
+
+
+def build_evidence_metrics(
+    finding: Finding,
+) -> FindingEvidenceMetrics | None:
+    """Build evidence metrics payload from a domain Finding.
+
+    Returns the fully populated ``FindingEvidenceMetrics`` dict when evidence
+    exists, a minimal dict with only ``vibration_strength_db`` when the finding
+    carries strength but no evidence, or ``None`` when neither is present.
+    """
+    if finding.evidence is not None:
+        return _metrics_from_evidence(finding.evidence, finding)
+    if finding.vibration_strength_db is not None:
+        return {"vibration_strength_db": finding.vibration_strength_db}
+    return None
+
+
+def _metrics_from_evidence(
+    ev: FindingEvidence,
+    finding: Finding,
+) -> FindingEvidenceMetrics:
+    metrics: FindingEvidenceMetrics = {
+        "match_rate": ev.match_rate,
+        "presence_ratio": ev.presence_ratio,
+        "burstiness": ev.burstiness,
+        "spatial_concentration": ev.spatial_concentration,
+        "frequency_correlation": ev.frequency_correlation,
+        "speed_uniformity": ev.speed_uniformity,
+        "spatial_uniformity": ev.spatial_uniformity,
+    }
+    if ev.global_match_rate is not None:
+        metrics["global_match_rate"] = ev.global_match_rate
+    if ev.focused_speed_band is not None:
+        metrics["focused_speed_band"] = ev.focused_speed_band
+    if ev.mean_relative_error is not None:
+        metrics["mean_relative_error"] = ev.mean_relative_error
+    if ev.mean_noise_floor_db is not None:
+        metrics["mean_noise_floor_db"] = ev.mean_noise_floor_db
+    if ev.possible_samples is not None:
+        metrics["possible_samples"] = ev.possible_samples
+    if ev.matched_samples is not None:
+        metrics["matched_samples"] = ev.matched_samples
+    if ev.snr_db is not None:
+        metrics["snr_db"] = ev.snr_db
+    if ev.vibration_strength_db is not None:
+        metrics["vibration_strength_db"] = ev.vibration_strength_db
+    elif finding.vibration_strength_db is not None:
+        metrics["vibration_strength_db"] = finding.vibration_strength_db
+    if ev.phases_with_evidence is not None:
+        metrics["phases_with_evidence"] = ev.phases_with_evidence
+    if ev.phase_confidences:
+        metrics["per_phase_confidence"] = dict(ev.phase_confidences)
+    return metrics
+
+
+def order_match_observation_from_mapping(raw: Mapping[str, object]) -> OrderMatchObservation:
+    """Decode one raw mapping into a typed order-match observation."""
+
+    def _opt_float(key: str) -> float | None:
+        value = raw.get(key)
+        if value is None:
+            return None
+        try:
+            return coerce_float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _float(key: str, default: float = 0.0) -> float:
+        value = raw.get(key)
+        if value is None:
+            return default
+        try:
+            return coerce_float(value)
+        except (TypeError, ValueError):
+            return default
+
+    return OrderMatchObservation(
+        predicted_hz=_float("predicted_hz"),
+        matched_hz=_float("matched_hz"),
+        rel_error=_float("rel_error"),
+        amp=_float("amp"),
+        location=str(raw.get("location", "")),
+        t_s=_opt_float("t_s"),
+        speed_kmh=_opt_float("speed_kmh"),
+        phase=str(raw["phase"]) if raw.get("phase") is not None else None,
+    )
+
+
+def order_match_observations_from_sequence(
+    payload: Sequence[object],
+) -> tuple[OrderMatchObservation, ...]:
+    """Decode a sequence of raw payload rows into typed observations."""
+    return tuple(
+        order_match_observation_from_mapping(item) for item in payload if isinstance(item, Mapping)
     )

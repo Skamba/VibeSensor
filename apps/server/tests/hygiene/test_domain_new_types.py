@@ -12,11 +12,11 @@ from vibesensor.domain import (
     PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
+from vibesensor.shared.boundaries.summary_fields.finding import (
+    order_match_observation_from_mapping,
+)
 from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summary_from_mapping,
-)
-from vibesensor.shared.boundaries.summary_fields.order_match import (
-    order_match_observation_from_mapping,
 )
 
 # ---------------------------------------------------------------------------
