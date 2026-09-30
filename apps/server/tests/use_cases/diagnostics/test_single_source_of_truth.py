@@ -246,7 +246,14 @@ def test_protocol_docs_byte_sizes_match() -> None:
 
 def test_protocol_docs_match_generated_contract_reference() -> None:
     """docs/protocol.md must match the generated authoritative contract doc."""
-    from vibesensor.cli.contract_reference_doc import render_contract_reference_markdown
+    import importlib.util
+
+    generator = REPO_ROOT / "tools" / "config" / "generate_contract_reference_doc.py"
+    spec = importlib.util.spec_from_file_location("generate_contract_reference_doc", generator)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    render_contract_reference_markdown = module.render_contract_reference_markdown
 
     root = REPO_ROOT
     doc_path = root / "docs" / "protocol.md"

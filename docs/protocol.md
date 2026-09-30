@@ -6,7 +6,7 @@ This document is generated from code and shared contract files.
 - Source of truth:
   - `apps/server/vibesensor/adapters/udp/protocol.py`
   - `apps/server/vibesensor/app/config_defaults.py`
-  - `apps/server/vibesensor/cli/contract_reference_doc.py`
+  - `tools/config/generate_contract_reference_doc.py`
 
 ## Network contract
 
