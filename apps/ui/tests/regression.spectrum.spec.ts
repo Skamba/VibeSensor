@@ -62,8 +62,14 @@ test("spectrum controls simplify the chart and update the inspector", async ({
     "Wheel 1x",
   );
   await expect(bandLegend).toBeVisible();
-  await expect(bandLegend).toContainText("Wheel 1x");
-  await expect(bandLegend.locator(".legend-item")).toHaveCount(4);
+  // The band legend is a contextual key: it lists only the reference bands
+  // that contain the inspected frequency (here the focused trace's peak,
+  // which sits in the wheel 1x band), not every band drawn on the chart.
+  await expect(inspector).toContainText("Wheel 1x");
+  await expect(bandLegend.locator(".legend-item")).toHaveCount(1);
+  await expect(
+    bandLegend.locator('.legend-item[data-band-state="active"]'),
+  ).toHaveText("Wheel 1x");
   const headerBottom = await page
     .locator(".site-header")
     .evaluate((el) => el.getBoundingClientRect().bottom);
@@ -311,7 +317,7 @@ test("spectrum band toggle stays hidden when no spectrum data is available", asy
 
   await expect(page.locator("#spectrumOverlay")).toBeVisible();
   await expect(page.locator("#spectrumOverlay")).toContainText(
-    "Waiting for spectrum data",
+    "Connected, but no spectrum frames yet.",
   );
   await expect(page.locator("#spectrumBandToggle")).toBeHidden();
   await expect(page.locator("#bandLegend")).toBeHidden();

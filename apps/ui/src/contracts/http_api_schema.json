@@ -1092,7 +1092,7 @@
       },
       "CarLibraryModelEntry": {
         "additionalProperties": false,
-        "description": "A full car library entry with brand, model, tire options, and variants.",
+        "description": "A full car library entry with brand, model, tire options, and variants.\n\n``gearboxes`` may be empty: a gearbox option needs a driven final-drive\nratio, and some exact library rows deliberately leave it unresolved\n(for example when the manufacturer publishes none, or only split\nfinal-drive values the canonical row cannot encode). Clients then fall\nback to manual gearbox entry.",
         "properties": {
           "brand": {
             "title": "Brand",
@@ -1102,7 +1102,6 @@
             "items": {
               "$ref": "#/components/schemas/CarLibraryGearboxEntry"
             },
-            "minItems": 1,
             "title": "Gearboxes",
             "type": "array"
           },

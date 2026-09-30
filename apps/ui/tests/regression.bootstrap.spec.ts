@@ -98,9 +98,12 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
       .locator('.capture-readiness__item[data-readiness-state="pass"]')
       .first(),
   ).toContainText(/live sensor.*streaming cleanly/i);
+  // The checklist lists the three individual checks; the overall
+  // capture_ready verdict is summarised elsewhere, not rendered as an item.
+  await expect(page.locator(".capture-readiness__item")).toHaveCount(3);
   await expect(
     page.locator('.capture-readiness__item[data-readiness-state="pass"]'),
-  ).toHaveCount(4);
+  ).toHaveCount(3);
 
   captureReadiness = buildCaptureReadiness({
     isReady: false,
@@ -135,7 +138,11 @@ test("dark mode theme regression keeps shared readiness and warning surfaces wir
   ).toHaveCount(1);
   await expect(
     page.locator('.capture-readiness__item[data-readiness-state="fail"]'),
-  ).toHaveCount(2);
+  ).toHaveCount(1);
+  // While capture is blocked the checklist hides already-passing checks.
+  await expect(
+    page.locator('.capture-readiness__item[data-readiness-state="pass"]'),
+  ).toHaveCount(0);
   const banner = page.locator(".app-error-banner");
   await banner.evaluate((element) => {
     if (!(element instanceof HTMLElement)) {

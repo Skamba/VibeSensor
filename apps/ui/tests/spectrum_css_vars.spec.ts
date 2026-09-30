@@ -5,9 +5,13 @@ describe("spectrum_css_vars", () => {
   test("refreshes spectrum colors when the theme changes", async () => {
     const restoreDocument = installDocumentStub();
     const styleValues: Record<string, string> = {
-      "--surface": "#101820",
-      "--muted": "#556677",
-      "--border": "#c0ffee",
+      "--md-sys-color-surface-container": "#101820",
+      "--md-sys-color-on-surface-variant": "#556677",
+      "--chart-grid": "#c0ffee",
+      // Retired alias tokens must not be read any more.
+      "--surface": "#badbad",
+      "--muted": "#badbad",
+      "--border": "#badbad",
       "--tooltip-bg": "rgba(1, 2, 3, 0.9)",
       "--tooltip-fg": "#fefefe",
     };
@@ -62,14 +66,14 @@ describe("spectrum_css_vars", () => {
         tooltipFg: "#fefefe",
       });
 
-      styleValues["--surface"] = "#222222";
+      styleValues["--md-sys-color-surface-container"] = "#222222";
       expect(getSpectrumCssVars().surface).toBe("#101820");
 
       dispatchThemeChange();
       const refreshed = getSpectrumCssVars();
       expect(refreshed.surface).toBe("#222222");
 
-      styleValues["--surface"] = "#444444";
+      styleValues["--md-sys-color-surface-container"] = "#444444";
       dispatchThemeChange();
       expect(getSpectrumCssVars().surface).toBe("#444444");
     } finally {

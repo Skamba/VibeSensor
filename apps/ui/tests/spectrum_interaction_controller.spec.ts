@@ -287,4 +287,97 @@ describe("SpectrumInteractionController", () => {
       announce: true,
     });
   });
+
+  test("band legend lists only the reference bands at the inspected frequency", () => {
+    const panel = createPanelStub();
+    const controller = new SpectrumInteractionController({
+      panel: panel.panel,
+      t: (key) =>
+        key === "spectrum.bands.none" ? "No matching reference band" : key,
+      getStrengthDb: (entryId) => (entryId === "sensor-a" ? 12 : 8),
+      getTopPeakHz: (entryId) => (entryId === "sensor-a" ? 12 : 36),
+      setSeriesIsolation: () => undefined,
+      requestPlotRefresh: () => undefined,
+    });
+    const wheel1x = {
+      label: "Wheel 1x",
+      min_hz: 11,
+      max_hz: 13,
+      color: "rgba(1, 1, 1, 0.2)",
+    };
+    const wheel2x = {
+      label: "Wheel 2x",
+      min_hz: 22,
+      max_hz: 26,
+      color: "rgba(2, 2, 2, 0.2)",
+    };
+    const driveshaft = {
+      label: "Driveshaft 1x",
+      min_hz: 23,
+      max_hz: 26,
+      color: "rgba(3, 3, 3, 0.2)",
+    };
+    const engine = {
+      label: "Engine 1x",
+      min_hz: 34,
+      max_hz: 38,
+      color: "rgba(4, 4, 4, 0.2)",
+    };
+
+    controller.sync({
+      entries: [
+        {
+          id: "sensor-a",
+          label: "Front Right Wheel",
+          color: "#ff5500",
+          values: [12, 11, 10, 9],
+        },
+        {
+          id: "sensor-b",
+          label: "Engine Bay",
+          color: "#3366ff",
+          values: [8, 7, 6, 5],
+        },
+      ],
+      freqAxis: [12, 24, 36, 60],
+      chartBands: [wheel1x, wheel2x, driveshaft, engine],
+    });
+
+    // Hidden until the reference bands are switched on.
+    expect(controller.bandLegendModel.value.visible).toBe(false);
+    panel.onBandToggle?.();
+    expect(controller.getBandsVisible()).toBe(true);
+    expect(controller.getChartBands()).toHaveLength(4);
+
+    // All four bands are drawn, but the legend is a contextual key for the
+    // inspected frequency: the strongest trace peaks at 12 Hz -> Wheel 1x.
+    expect(controller.bandLegendModel.value).toEqual({
+      visible: true,
+      items: [{ labelText: "Wheel 1x", color: wheel1x.color }],
+      emptyText: "No matching reference band",
+    });
+
+    // Hovering follows the cursor and lists every overlapping band there.
+    controller.setCursorDataIndex(1);
+    expect(controller.bandLegendModel.value.items).toEqual([
+      { labelText: "Wheel 2x", color: wheel2x.color },
+      { labelText: "Driveshaft 1x", color: driveshaft.color },
+    ]);
+
+    // A frequency outside every band yields the explicit empty state.
+    controller.setCursorDataIndex(3);
+    expect(controller.bandLegendModel.value.visible).toBe(true);
+    expect(controller.bandLegendModel.value.items).toEqual([]);
+
+    // Focusing another trace moves the legend to that trace's peak.
+    controller.setCursorDataIndex(null);
+    controller.sensorLegendHandlersModel.value?.onSelect("sensor-b");
+    expect(controller.bandLegendModel.value.items).toEqual([
+      { labelText: "Engine 1x", color: engine.color },
+    ]);
+
+    panel.onBandToggle?.();
+    expect(controller.bandLegendModel.value.visible).toBe(false);
+    controller.dispose();
+  });
 });

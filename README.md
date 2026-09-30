@@ -210,6 +210,13 @@ vibesensor-sim --count 5 --server-host 127.0.0.1 --scenario accel-front-left-sur
 
 Run `vibesensor-sim --help` to see the full scripted scenario list.
 
+Simulated sensors follow the firmware protocol (HELLO_ACK handshake, clock
+sync, sample-clock `t0_us`), so recordings are raw-backed like real hardware;
+start recording about 10 s after the sensors connect so clock sync has been
+applied. Wheel, driveshaft, and engine order tones follow the server's active
+car (tire size, final drive, gear); pass `--no-car-sync` to keep the default
+car profile.
+
 ## Deploying to Raspberry Pi
 
 Both deployment modes target Raspberry Pi 3 A+ with Trixie Lite.

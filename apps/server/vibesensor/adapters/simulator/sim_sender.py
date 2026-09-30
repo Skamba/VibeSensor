@@ -29,6 +29,7 @@ from vibesensor.adapters.simulator.server_http import (
 )
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
 from vibesensor.adapters.simulator.sim_runtime import (
+    active_car_order_loop,
     auto_stop,
     command_loop,
     road_scene_loop,
@@ -129,6 +130,18 @@ async def async_main(args: argparse.Namespace) -> None:
                     )
                 )
             )
+        if not args.no_car_sync:
+            tasks.append(
+                asyncio.create_task(
+                    active_car_order_loop(
+                        clients,
+                        stop_event,
+                        server_host=args.server_host,
+                        server_http_port=args.server_http_port,
+                        server_check_timeout=args.server_check_timeout,
+                    )
+                )
+            )
         for client in clients:
             tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
         if args.scenario == "road" and not args.no_road_scene:
@@ -214,6 +227,14 @@ def parse_args() -> argparse.Namespace:
         "--no-road-scene",
         action="store_true",
         help="Disable the road-scene randomization loop (for scripted/deterministic runs)",
+    )
+    parser.add_argument(
+        "--no-car-sync",
+        action="store_true",
+        help=(
+            "Keep order tones on the default car profile instead of following the "
+            "server's active car (tire size, final drive, gear)"
+        ),
     )
     parser.add_argument(
         "--no-auto-server",

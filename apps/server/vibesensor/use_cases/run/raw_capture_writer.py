@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -342,9 +343,17 @@ class RunRawCaptureWriter:
         run_stats.record_late_packet(client_id)
 
     def shutdown(self, timeout_s: float = 5.0) -> bool:
+        """Drain queued chunks, then stop the worker within one ``timeout_s`` budget.
+
+        Returns ``True`` only when the worker consumed the shutdown request and
+        exited. The enqueue wait and the drain/exit wait share one deadline, and
+        the result is read after the join so a worker that finishes during the
+        join is reported as a clean shutdown.
+        """
         thread = self._thread
         if thread is None:
             return True
+        deadline = time.monotonic() + _bounded_wait_timeout(timeout_s)
         request = _ShutdownRequest()
         try:
             self._queue.put(
@@ -359,11 +368,10 @@ class RunRawCaptureWriter:
             return False
         if self._ingest_diagnostics is not None:
             self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
-        finished = request.done.wait(timeout=_bounded_wait_timeout(timeout_s))
-        thread.join(timeout=_bounded_wait_timeout(timeout_s))
+        thread.join(timeout=max(0.0, deadline - time.monotonic()))
         if not thread.is_alive():
             self._thread = None
-            return finished
+            return request.done.is_set()
         self._logger.error(
             "Raw capture worker did not exit within %.2fs during shutdown",
             max(0.0, float(timeout_s)),

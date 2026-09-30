@@ -113,7 +113,14 @@ def _build_console_handler() -> logging.Handler:
         structlog.stdlib.ProcessorFormatter(
             foreign_pre_chain=_foreign_pre_chain(),
             processors=_shared_formatter_processors(
-                structlog.dev.ConsoleRenderer(colors=False),
+                # Plain tracebacks: structlog otherwise switches to rich with
+                # show_locals whenever rich is importable (dev envs), and
+                # rendering every frame's locals runs synchronously on the
+                # event loop, stalling the failing response for seconds.
+                structlog.dev.ConsoleRenderer(
+                    colors=False,
+                    exception_formatter=structlog.dev.plain_traceback,
+                ),
                 format_exceptions=False,
             ),
         )

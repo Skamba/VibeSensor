@@ -25,24 +25,32 @@ const spectrumCssVars = computed<Readonly<SpectrumCssVars>>(() => {
 let cachedSpectrumCssVars: Readonly<SpectrumCssVars> | null = null;
 let stopSpectrumCssVarsThemeTracking: (() => void) | null = null;
 
+/**
+ * Theme tokens the canvas chart reads. `--surface`, `--muted` and `--border`
+ * were alias tokens dropped in the token cleanup; reading them silently fell
+ * back to the light defaults, so the dark theme drew light grid lines and
+ * axis text.
+ */
+const SPECTRUM_CSS_VAR_TOKENS: Readonly<Record<keyof SpectrumCssVars, string>> =
+  Object.freeze({
+    surface: "--md-sys-color-surface-container",
+    muted: "--md-sys-color-on-surface-variant",
+    border: "--chart-grid",
+    tooltipBg: "--tooltip-bg",
+    tooltipFg: "--tooltip-fg",
+  });
+
 function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
   const rootStyle = getComputedStyle(document.documentElement);
+  const read = (key: keyof SpectrumCssVars): string =>
+    rootStyle.getPropertyValue(SPECTRUM_CSS_VAR_TOKENS[key]).trim() ||
+    DEFAULT_SPECTRUM_CSS_VARS[key];
   const next: SpectrumCssVars = {
-    surface:
-      rootStyle.getPropertyValue("--surface").trim() ||
-      DEFAULT_SPECTRUM_CSS_VARS.surface,
-    muted:
-      rootStyle.getPropertyValue("--muted").trim() ||
-      DEFAULT_SPECTRUM_CSS_VARS.muted,
-    border:
-      rootStyle.getPropertyValue("--border").trim() ||
-      DEFAULT_SPECTRUM_CSS_VARS.border,
-    tooltipBg:
-      rootStyle.getPropertyValue("--tooltip-bg").trim() ||
-      DEFAULT_SPECTRUM_CSS_VARS.tooltipBg,
-    tooltipFg:
-      rootStyle.getPropertyValue("--tooltip-fg").trim() ||
-      DEFAULT_SPECTRUM_CSS_VARS.tooltipFg,
+    surface: read("surface"),
+    muted: read("muted"),
+    border: read("border"),
+    tooltipBg: read("tooltipBg"),
+    tooltipFg: read("tooltipFg"),
   };
   if (
     cachedSpectrumCssVars &&

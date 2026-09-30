@@ -118,11 +118,23 @@ persisted summary sample instead of guessing raw alignment. Gaps,
 overlaps, dropped chunks, and other incomplete raw coverage still fall
 back per window and emit deterministic warnings.
 
+### 8. Simulator Parity
+
+`vibesensor-sim` follows the same contract as the firmware: it streams
+only after `HELLO_ACK`, answers `CMD_SYNC_CLOCK` with the sync-clock ACK
+(device receive/send timestamps), applies the server offset once a sync
+carries a measured RTT, and stamps `t0_us` from a per-sensor sample clock
+(device timer with a few tens of ppm drift) rather than from send time.
+Simulator recordings are therefore raw-backed like real sensors. As with
+real hardware, the offset is applied from the second sync exchange (about
+10 s after a sensor connects); a recording started earlier contains one
+clock step per sensor.
+
 ## Fallback Behaviour
 
 | Scenario | Behaviour |
 |----------|-----------|
-| Sensor has no `t0_us` (pre-sync or simulator) | Falls back to server arrival time for alignment. |
+| Sensor has no `t0_us` yet (pre-sync) | Falls back to server arrival time for alignment. |
 | One sensor missing data | Excluded from alignment; remaining sensors compared normally. |
 | Overlap ratio < 50 % | `aligned = False`; consumers can choose to skip the comparison. |
 | Single sensor | Trivially aligned (`overlap_ratio = 1.0`). |

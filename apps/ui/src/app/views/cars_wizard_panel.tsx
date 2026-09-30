@@ -4,12 +4,13 @@ import {
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
-import { useLayoutEffect, useRef } from "preact/hooks";
+import { useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import type { CarsWizardRenderModel } from "./car_wizard_view";
 import {
   CarsWizardStepNav,
   CarsWizardSteps,
   CarsWizardSummaryPanel,
+  type WizardLoadRecoveryHandlers,
   } from "./cars_wizard_sections";
 import {
   resolveWizardFocusTarget,
@@ -20,9 +21,11 @@ import {
 export type CarsFeatureInteraction =
   | { type: "back" }
   | { type: "close" }
+  | { type: "continue-manual" }
   | { type: "finish" }
   | { type: "manual-input-changed"; field: keyof CarsFeatureManualInputState; value: string }
   | { type: "open" }
+  | { type: "retry-load" }
   | { type: "select-brand"; value: string }
   | { type: "select-gearbox"; index: number }
   | { type: "select-model"; index: number }
@@ -104,6 +107,15 @@ export function CarsWizardPanel(props: {
   function dispatchAction(action: CarsFeatureInteraction): void {
     props.actions.peek()?.onAction(action);
   }
+
+  const recovery = useMemo<WizardLoadRecoveryHandlers>(
+    () => ({
+      onContinueManual: () =>
+        props.actions.peek()?.onAction({ type: "continue-manual" }),
+      onRetryLoad: () => props.actions.peek()?.onAction({ type: "retry-load" }),
+    }),
+    [props.actions],
+  );
 
   function closeWizard(): void {
     dispatchAction({ type: "close" });
@@ -193,6 +205,7 @@ export function CarsWizardPanel(props: {
                     dispatchAction({ type: "submit-custom-model", value })}
                   onSubmitCustomType={(value) =>
                     dispatchAction({ type: "submit-custom-type", value })}
+                  recovery={recovery}
                 />
               </div>
 

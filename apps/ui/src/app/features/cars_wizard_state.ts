@@ -40,7 +40,19 @@ export interface ManualGearboxValues {
   topGear: number;
 }
 
+// Manual specs start empty: anything saved from this form is sent as
+// user-confirmed vehicle data, so it must be a value the user actually entered
+// (or a library value they kept), never a silent generic default.
 export const DEFAULT_CARS_WIZARD_MANUAL_INPUTS = {
+  finalDrive: "",
+  rim: "",
+  tireAspect: "",
+  tireWidth: "",
+  topGear: "",
+} as const;
+
+/** Example values shown as input placeholders only. */
+export const CARS_WIZARD_MANUAL_INPUT_EXAMPLES = {
   finalDrive: "3.08",
   rim: "18",
   tireAspect: "45",
@@ -372,6 +384,20 @@ export function firstMissingManualInputField(
     return "topGear";
   }
   return null;
+}
+
+/** True when the manual tire fields still hold the selected library tire. */
+export function manualTireMatchesOption(
+  option: CarLibraryTireOption,
+  inputs: CarsFeatureManualInputState,
+): boolean {
+  const front = tireOptionFront(option);
+  return (
+    front != null &&
+    readPositiveWizardNumber(inputs.tireWidth) === front.width_mm &&
+    readPositiveWizardNumber(inputs.tireAspect) === front.aspect_pct &&
+    readPositiveWizardNumber(inputs.rim) === front.rim_in
+  );
 }
 
 export function tireInputsFromOption(

@@ -197,7 +197,9 @@ task/timeout helpers:
 - `LifecycleManager` opens one runtime-scoped AnyIO task group before startup
   phases begin
 - `BackgroundTaskCoordinator` starts named runtime services inside that task
-  group and owns per-service cancel scopes for shutdown
+  group and owns per-service cancel scopes for shutdown; a service is tracked
+  and cancellable as soon as `start()` returns, so shutdown right after startup
+  never waits on a service body that has not been scheduled yet
 - `TaskSupervisor` owns restart/backoff for long-lived runtime services such as
   `processing-loop`, `ws-broadcast`, `gps-speed`, `obd-speed`, and the UDP data
   consumer while still recording terminal failures into health state

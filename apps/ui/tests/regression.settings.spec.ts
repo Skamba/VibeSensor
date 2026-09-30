@@ -285,7 +285,9 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
   );
   await expect(page.locator("#obdStatusBackoff")).toHaveText("Yes");
   await expect(page.locator("#obdSpeedConfig")).toBeVisible();
-  await expect(page.locator("#gpsFallbackPanel")).toBeHidden();
+  // The stale-timeout fallback applies to every live source (GPS and OBD2).
+  await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  await expect(page.locator("#staleTimeoutInput")).toBeVisible();
 });
 
 test("assigning a sensor location preserves the original sensor name", async ({
