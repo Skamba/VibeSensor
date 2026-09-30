@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -15,11 +16,14 @@ from vibesensor.use_cases.updates.artifact_validation import (
     wheel_dependency_issues,
 )
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher, FirmwareRefreshResult
-from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
-from vibesensor.use_cases.updates.rollback import RollbackDeploymentVerifier, RollbackSnapshotStore
+from vibesensor.use_cases.updates.rollback import (
+    RollbackDeploymentVerifier,
+    RollbackSnapshotStore,
+    UpdateRollback,
+)
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
+from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor, WheelInstallResult
 
 
 class RecordingCommands:
@@ -98,9 +102,19 @@ def _build_fake_wheel(
         wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
 
 
+@dataclass(frozen=True, slots=True)
+class _Installer:
+    """The install-time collaborators the update job uses, wired like production."""
+
+    repo: Path
+    config_path: Path
+    wheel_installer: WheelInstallExecutor
+    rollback: UpdateRollback
+
+
 def _make_installer(
     tmp_path: Path,
-) -> tuple[UpdateInstaller, RecordingCommands, UpdateStatusTracker]:
+) -> tuple[_Installer, RecordingCommands, UpdateStatusTracker]:
     repo = tmp_path / "repo"
     server_dir = repo / "apps" / "server"
     (server_dir / ".venv" / "bin").mkdir(parents=True)
@@ -123,14 +137,26 @@ def _make_installer(
     (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /tmp\n")
     tracker = build_update_status_harness(tmp_path / "update_status.json")
     commands = RecordingCommands()
-    installer = UpdateInstaller(
+    wheel_validator = WheelArtifactValidator(status=tracker)
+    wheel_installer = WheelInstallExecutor(
         commands=commands,
         status=tracker,
-        config=UpdateInstallerConfig(
+        repo=repo,
+        reinstall_timeout_s=30,
+        wheel_validator=wheel_validator,
+    )
+    installer = _Installer(
+        repo=repo,
+        config_path=config_path,
+        wheel_installer=wheel_installer,
+        rollback=UpdateRollback(
+            commands=commands,
+            status=tracker,
             repo=repo,
             rollback_dir=tmp_path / "rollback",
-            reinstall_timeout_s=30,
-            smoke_config_path=config_path,
+            config_path=config_path,
+            wheel_validator=wheel_validator,
+            wheel_install_executor=wheel_installer,
         ),
     )
     return installer, commands, tracker
@@ -143,13 +169,13 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     rollback_dir = tmp_path / "rollback"
 
     with patch("vibesensor.__version__", "2025.6.14"):
-        assert await installer.snapshot_for_rollback() is True
+        assert await installer.rollback.snapshot_for_rollback() is True
 
     metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
     assert metadata["version"] == "2025.6.14"
     assert len(metadata["sha256"]) == 64
     assert metadata["config_path"].endswith("config.pi.yaml")
-    assert metadata["repo_path"] == str(installer._config.repo)
+    assert metadata["repo_path"] == str(installer.repo)
     assert "assets_verified" in metadata
     assert "has_packaged_static" in metadata
     assert metadata["sha256"] == sha256_file(rollback_dir / "rollback_snapshot.whl")
@@ -164,7 +190,7 @@ async def test_snapshot_for_rollback_falls_back_to_package_index_download(
     commands.set_response("pip wheel", 1, "", "local build failed")
 
     with patch("vibesensor.__version__", "2025.6.14"):
-        assert await installer.snapshot_for_rollback() is True
+        assert await installer.rollback.snapshot_for_rollback() is True
 
     calls = [" ".join(call[0]) for call in commands.calls]
     assert any("pip wheel" in call for call in calls)
@@ -183,7 +209,7 @@ async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: P
         patch("vibesensor.__version__", "2025.6.14"),
         patch.object(RollbackSnapshotStore, "write_metadata", side_effect=OSError("disk full")),
     ):
-        assert await installer.snapshot_for_rollback() is False
+        assert await installer.rollback.snapshot_for_rollback() is False
 
     assert not (rollback_dir / "rollback_snapshot.json").exists()
     assert not (rollback_dir / "rollback_snapshot.whl").exists()
@@ -217,7 +243,7 @@ async def test_snapshot_for_rollback_preserves_previous_snapshot_when_metadata_w
         patch("vibesensor.__version__", "2025.6.14"),
         patch.object(RollbackSnapshotStore, "write_metadata", side_effect=OSError("disk full")),
     ):
-        assert await installer.snapshot_for_rollback() is False
+        assert await installer.rollback.snapshot_for_rollback() is False
 
     assert read_wheel_metadata(previous_wheel).version == "2025.6.13"
     metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
@@ -234,7 +260,7 @@ async def test_install_release_rejects_corrupt_downloaded_wheel(tmp_path: Path) 
     broken_wheel = tmp_path / "broken.whl"
     broken_wheel.write_text("not a wheel", encoding="utf-8")
 
-    result = await installer.install_release(broken_wheel, "2025.6.15")
+    result = await installer.wheel_installer.install_release(broken_wheel, "2025.6.15")
 
     assert result == WheelInstallResult(succeeded=False, rollback_required=False)
     assert tracker.status.state.value == "failed"
@@ -260,7 +286,7 @@ async def test_rollback_rejects_checksum_mismatch(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert await installer.rollback() is False
+    assert await installer.rollback.rollback() is False
     assert not commands.calls
     assert any(
         issue.message == "Rollback snapshot wheel checksum mismatch"
@@ -276,7 +302,7 @@ async def test_rollback_without_metadata_fails_explicitly(tmp_path: Path) -> Non
     wheel_path = rollback_dir / "rollback_snapshot.whl"
     _build_fake_wheel(wheel_path, version="2025.6.14")
 
-    assert await installer.rollback() is False
+    assert await installer.rollback.rollback() is False
     assert not commands.calls
     assert any(
         issue.message == "Rollback snapshot metadata is missing" for issue in tracker.status.issues
@@ -299,7 +325,7 @@ async def test_rollback_missing_snapshot_wheel_fails(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert await installer.rollback() is False
+    assert await installer.rollback.rollback() is False
     assert not commands.calls
     assert any(
         issue.message == "Rollback snapshot wheel is missing" for issue in tracker.status.issues
@@ -324,7 +350,7 @@ async def test_rollback_invalid_snapshot_wheel_fails(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert await installer.rollback() is False
+    assert await installer.rollback.rollback() is False
     assert not commands.calls
     assert any(
         issue.message == "Rollback snapshot wheel is corrupt" for issue in tracker.status.issues
@@ -343,7 +369,7 @@ async def test_rollback_verifies_deployment_after_reinstall(tmp_path: Path) -> N
             {
                 "version": "2025.6.14",
                 "sha256": sha256_file(wheel_path),
-                "config_path": str(installer._config.smoke_config_path),
+                "config_path": str(installer.config_path),
             },
         )
         + "\n",
@@ -353,7 +379,7 @@ async def test_rollback_verifies_deployment_after_reinstall(tmp_path: Path) -> N
     verify = AsyncMock(return_value=True)
 
     with patch.object(RollbackDeploymentVerifier, "verify", verify):
-        assert await installer.rollback() is True
+        assert await installer.rollback.rollback() is True
 
     verify.assert_awaited_once()
     assert any("Rolled back to rollback_snapshot.whl" in line for line in tracker.status.log_tail)
@@ -371,7 +397,7 @@ async def test_rollback_fails_when_deployment_verification_fails(tmp_path: Path)
             {
                 "version": "2025.6.14",
                 "sha256": sha256_file(wheel_path),
-                "config_path": str(installer._config.smoke_config_path),
+                "config_path": str(installer.config_path),
             },
         )
         + "\n",
@@ -384,7 +410,7 @@ async def test_rollback_fails_when_deployment_verification_fails(tmp_path: Path)
         "verify",
         AsyncMock(return_value=False),
     ):
-        assert await installer.rollback() is False
+        assert await installer.rollback.rollback() is False
 
 
 def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path) -> None:
@@ -482,7 +508,7 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
         "",
     )
 
-    result = await installer.install_release(wheel_path, "2025.6.15")
+    result = await installer.wheel_installer.install_release(wheel_path, "2025.6.15")
 
     assert result == WheelInstallResult(succeeded=False, rollback_required=False)
     assert tracker.status.state.value == "failed"
@@ -508,7 +534,7 @@ async def test_install_release_reports_malformed_dependency_snapshot_stdout(
     )
     commands.set_response("missingdep", 0, "{not-json", "")
 
-    result = await installer.install_release(wheel_path, "2025.6.15")
+    result = await installer.wheel_installer.install_release(wheel_path, "2025.6.15")
 
     assert result == WheelInstallResult(succeeded=False, rollback_required=False)
     assert tracker.status.state.value == "failed"
@@ -543,7 +569,7 @@ async def test_wheel_install_executor_only_requests_rollback_after_mutating_fail
         "",
     )
 
-    compatibility_result = await installer._wheel_install_executor.install_release(
+    compatibility_result = await installer.wheel_installer.install_release(
         wheel_path,
         "2025.6.15",
     )
@@ -555,7 +581,7 @@ async def test_wheel_install_executor_only_requests_rollback_after_mutating_fail
     _build_fake_wheel(second_wheel, version="2025.6.15")
     second_commands.set_response("pip install --force-reinstall --no-deps", 1, "", "install failed")
 
-    install_result = await second_installer._wheel_install_executor.install_release(
+    install_result = await second_installer.wheel_installer.install_release(
         second_wheel,
         "2025.6.15",
     )
@@ -569,7 +595,7 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
     refresher = FirmwareRefresher(
         commands=commands,
         status=tracker,
-        repo=installer._config.repo,
+        repo=installer.repo,
         timeout_s=30,
     )
 
@@ -578,7 +604,7 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
     assert any(
         call[0][:3]
         == [
-            str(installer._config.repo / "apps" / "server" / ".venv" / "bin" / "python3"),
+            str(installer.repo / "apps" / "server" / ".venv" / "bin" / "python3"),
             "-m",
             "vibesensor.use_cases.updates.firmware.firmware_cache",
         ]

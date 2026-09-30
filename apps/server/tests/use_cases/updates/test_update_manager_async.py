@@ -17,16 +17,16 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
+from vibesensor.use_cases.updates.job import UpdateJob
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
+    UpdatePhase,
     UpdateState,
     UpdateTerminalState,
     UpdateTransport,
+    UpdateValidationConfig,
     UsbInternetStatus,
 )
-from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
-from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusTracker,
@@ -34,7 +34,6 @@ from vibesensor.use_cases.updates.status import (
     update_status_to_builtins,
 )
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 
 
 class _StaticUsbInternetService:
@@ -71,31 +70,37 @@ def _build_manager_with_cancellation_cleanup(
     tracker = UpdateStatusTracker(state_store=state_store)
     prepared_transport = SimpleNamespace(cleanup_after_update=AsyncMock())
 
-    async def plan_with_cancellation(_request, *, on_prepared=None):
-        prepared = PreparedUpdateRun(prepared_transport=prepared_transport)
-        if on_prepared is not None:
-            on_prepared(prepared)
+    async def prepare(_request):
+        tracker.transition(UpdatePhase.stopping_hotspot)
+        tracker.transition(UpdatePhase.connecting_wifi)
+        return prepared_transport
+
+    def cancel_release_check():
         raise asyncio.CancelledError
 
-    workflow = UpdateWorkflow(
-        planner=SimpleNamespace(plan=AsyncMock(side_effect=plan_with_cancellation)),
-        workflow_executor=SimpleNamespace(execute=AsyncMock()),
-        finalizer=UpdateWorkflowFinalizer(
-            transport_coordinator=UpdateTransportCoordinator(
-                lifecycles=MagicMock(),
-                logger=logging.getLogger("vibesensor.tests.update_cleanup"),
-            ),
-            runtime_details_refresher=UpdateRuntimeDetailsRefresher(
-                status=tracker,
-                repo=repo,
-                logger=logging.getLogger("vibesensor.tests.update_cleanup"),
-            ),
+    lifecycle = SimpleNamespace(prepare=prepare)
+    job = UpdateJob(
+        status=tracker,
+        commands=MagicMock(),
+        transport=UpdateTransportCoordinator(
+            wifi=lifecycle,
+            usb_internet=lifecycle,
+            logger=logging.getLogger("vibesensor.tests.update_cleanup"),
         ),
+        release_fetcher=SimpleNamespace(find_latest_release=cancel_release_check),
+        stager=MagicMock(),
+        firmware_refresher=MagicMock(),
+        wheel_installer=MagicMock(),
+        rollback=MagicMock(),
+        validation_config=UpdateValidationConfig(
+            rollback_dir=tmp_path / "rollback",
+            min_free_disk_bytes=1,
+        ),
+        repo=repo,
     )
     manager = UpdateManager(
         status=tracker,
-        workflow=workflow,
-        startup_recovery=SimpleNamespace(recover=AsyncMock()),
+        job=job,
         usb_status_service=MagicMock(),
         timeout_s=10.0,
     )
@@ -160,7 +165,7 @@ class TestUpdateManagerAsync:
         manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
         runner.set_response("python3 -c pass", 1, "", "sudo: a password is required")
         with patch(
-            "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
+            "vibesensor.use_cases.updates.job.UpdateJob._find_latest_release",
             side_effect=AssertionError("release resolution should not run without privileges"),
         ):
             await run_update(manager, "TestNet", "pass", effective_uid=1000)
@@ -298,7 +303,7 @@ class TestUpdateManagerAsync:
         with (
             patch_release_fetcher(current_version="2025.6.14") as fetcher,
             patch(
-                "vibesensor.use_cases.updates.installer.UpdateInstaller.snapshot_for_rollback",
+                "vibesensor.use_cases.updates.rollback.UpdateRollback.snapshot_for_rollback",
                 new=AsyncMock(return_value=False),
             ),
         ):
@@ -514,7 +519,11 @@ class TestUpdateManagerAsync:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
+                "vibesensor.use_cases.updates.job.validate_prerequisites",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "vibesensor.use_cases.updates.job.collect_runtime_details",
                 side_effect=OSError("runtime unavailable"),
             ),
             caplog.at_level("ERROR"),
@@ -550,7 +559,11 @@ class TestUpdateManagerAsync:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
+                "vibesensor.use_cases.updates.job.validate_prerequisites",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "vibesensor.use_cases.updates.job.collect_runtime_details",
                 side_effect=TypeError("runtime bug"),
             ),
         ):

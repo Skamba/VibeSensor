@@ -398,7 +398,9 @@ The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`
 
 Production devices use the wheel-based updater in
 `apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public
-facade over the focused updater modules.
+API and `job.py` holding the linear update flow (validate, prepare transport,
+check release, stage/snapshot/install with rollback via `rollback.py`,
+complete, clean up).
 
 Firmware update code lives under
 `apps/server/vibesensor/use_cases/updates/firmware/`:
@@ -415,8 +417,8 @@ code lives under `apps/server/vibesensor/use_cases/updates/wifi/` and
   `wifi/wifi_hotspot_recovery.py` handles hotspot restore retries,
   `transport/uplink_readiness.py` handles DNS readiness polling, and
   `releases/release_validation.py` handles packaged smoke-server startup
-  polling. `restart_scheduler.py` stays custom because it is a two-command
-  fallback path, not a timed retry policy.
+  polling. Backend restart scheduling in `job.py` stays custom because it is
+  a two-command fallback path, not a timed retry policy.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.

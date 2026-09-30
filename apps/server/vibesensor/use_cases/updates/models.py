@@ -64,14 +64,6 @@ class UpdateTransport(enum.StrEnum):
     usb_internet = "usb_internet"
 
 
-class UpdateExecutionOutcome(enum.StrEnum):
-    """Canonical coordinator/workflow result for one update run."""
-
-    aborted = "aborted"
-    refresh_only = "refresh_only"
-    installed = "installed"
-
-
 @dataclass(frozen=True, slots=True)
 class UpdateIssue:
     """An issue (warning or error) raised during a specific update phase."""

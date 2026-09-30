@@ -545,7 +545,7 @@ class TestPersistenceDuringLifecycle:
         with (
             patch_validation_environment(),
             patch(
-                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
+                "vibesensor.use_cases.updates.job.UpdateJob._find_latest_release",
                 side_effect=AssertionError("release resolution should not run without privileges"),
             ),
         ):

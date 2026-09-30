@@ -42,8 +42,7 @@ def _build_manager(
     workflow_run = AsyncMock()
     manager = UpdateManager(
         status=tracker,
-        workflow=SimpleNamespace(run=workflow_run),
-        startup_recovery=SimpleNamespace(recover=AsyncMock()),
+        job=SimpleNamespace(run=workflow_run, recover_interrupted=AsyncMock()),
         usb_status_service=MagicMock(),
         timeout_s=timeout_s,
     )

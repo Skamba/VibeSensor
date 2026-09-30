@@ -9,7 +9,6 @@ from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest, 
 __all__ = [
     "PreparedUpdateTransport",
     "UpdateTransportLifecycle",
-    "UpdateTransportLifecycles",
 ]
 
 
@@ -41,29 +40,3 @@ class UpdateTransportLifecycle(PreparedUpdateTransport, Protocol):
     async def recover_interrupted_update(self, status: UpdateJobStatus) -> None:
         """Recover transport-owned state after an interrupted update job."""
         ...
-
-
-class UpdateTransportLifecycles:
-    """Resolve canonical updater transport lifecycles from requests or persisted state."""
-
-    __slots__ = ("_lifecycles",)
-
-    def __init__(
-        self,
-        *,
-        wifi: UpdateTransportLifecycle,
-        usb_internet: UpdateTransportLifecycle,
-    ) -> None:
-        self._lifecycles: dict[UpdateTransport, UpdateTransportLifecycle] = {
-            UpdateTransport.wifi: wifi,
-            UpdateTransport.usb_internet: usb_internet,
-        }
-
-    def for_request(self, request: UpdateRequest) -> UpdateTransportLifecycle:
-        return self._lifecycles[request.transport]
-
-    def for_transport(self, transport: UpdateTransport) -> UpdateTransportLifecycle:
-        return self._lifecycles[transport]
-
-    def for_status(self, status: UpdateJobStatus) -> UpdateTransportLifecycle:
-        return self.for_transport(status.transport)

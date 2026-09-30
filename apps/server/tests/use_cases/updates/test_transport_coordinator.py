@@ -10,7 +10,6 @@ from test_support.update_status import build_update_status_harness
 from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateState, UpdateTransport
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport.lifecycles import UpdateTransportLifecycles
 
 
 def _request(transport: UpdateTransport) -> UpdateRequest:
@@ -63,11 +62,9 @@ def _coordinator(
 ) -> tuple[UpdateTransportCoordinator, object]:
     status = build_update_status_harness(tmp_path / "state.json")
     return UpdateTransportCoordinator(
-        lifecycles=UpdateTransportLifecycles(
-            wifi=wifi or _RecordingTransportLifecycle(transport=UpdateTransport.wifi),
-            usb_internet=usb_internet
-            or _RecordingTransportLifecycle(transport=UpdateTransport.usb_internet),
-        ),
+        wifi=wifi or _RecordingTransportLifecycle(transport=UpdateTransport.wifi),
+        usb_internet=usb_internet
+        or _RecordingTransportLifecycle(transport=UpdateTransport.usb_internet),
         logger=MagicMock(),
     ), status
 

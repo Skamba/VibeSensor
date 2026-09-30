@@ -5,11 +5,10 @@ from __future__ import annotations
 import logging
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
-from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest
+from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.transport.lifecycles import (
     PreparedUpdateTransport,
     UpdateTransportLifecycle,
-    UpdateTransportLifecycles,
 )
 
 __all__ = ["UpdateTransportCoordinator"]
@@ -23,14 +22,18 @@ class UpdateTransportCoordinator:
     def __init__(
         self,
         *,
-        lifecycles: UpdateTransportLifecycles,
+        wifi: UpdateTransportLifecycle,
+        usb_internet: UpdateTransportLifecycle,
         logger: logging.Logger,
     ) -> None:
-        self._lifecycles = lifecycles
+        self._lifecycles: dict[UpdateTransport, UpdateTransportLifecycle] = {
+            UpdateTransport.wifi: wifi,
+            UpdateTransport.usb_internet: usb_internet,
+        }
         self._logger = logger
 
     async def prepare(self, request: UpdateRequest) -> PreparedUpdateTransport:
-        lifecycle = self._lifecycles.for_request(request)
+        lifecycle = self._lifecycles[request.transport]
         try:
             return await lifecycle.prepare(request)
         except UpdateTransportError as exc:
@@ -57,7 +60,7 @@ class UpdateTransportCoordinator:
             ) from exc
 
     async def recover_interrupted(self, status: UpdateJobStatus) -> None:
-        await self._lifecycles.for_status(status).recover_interrupted_update(status)
+        await self._lifecycles[status.transport].recover_interrupted_update(status)
 
     async def _abort_preparation(
         self,

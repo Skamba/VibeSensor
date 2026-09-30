@@ -1,4 +1,4 @@
-"""Canonical update-job runtime and public API."""
+"""Public updater API: start/cancel an update job and supervise its task."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.shared.tracing import mark_span_error, start_span
+from vibesensor.use_cases.updates.job import UpdateJob
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateRequest,
@@ -15,28 +16,24 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
     validate_update_request,
 )
-from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
-from vibesensor.use_cases.updates.workflow import UpdateWorkflow
+from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
 
 
 class UpdateManager:
-    """Own update start/cancel/recovery and the managed workflow task lifecycle."""
+    """Own update start/cancel/recovery and the supervised update-job task lifecycle."""
 
     def __init__(
         self,
         *,
         status: UpdateStatusTracker,
-        workflow: UpdateWorkflow,
-        startup_recovery: UpdateStartupRecoveryCoordinator,
-        usb_status_service: UsbInternetStatusReader,
+        job: UpdateJob,
+        usb_status_service: UsbInternetStatusService,
         timeout_s: float,
         task_name: str = "system-update",
     ) -> None:
         self._status = status
-        self._workflow = workflow
-        self._startup_recovery = startup_recovery
+        self._job = job
         self._usb_status_service = usb_status_service
         self._timeout_s = timeout_s
         self._task_name = task_name
@@ -79,7 +76,7 @@ class UpdateManager:
     async def startup_recover(self) -> None:
         with start_span(__name__, "update.startup_recover", kind=SpanKind.INTERNAL) as span:
             try:
-                await self._startup_recovery.recover()
+                await self._job.recover_interrupted()
             except asyncio.CancelledError:
                 span.set_attribute("vibesensor.cancelled", True)
                 raise
@@ -95,7 +92,7 @@ class UpdateManager:
             attributes={"vibesensor.transport": request.transport.value},
         ) as span:
             workflow_task = asyncio.create_task(
-                self._workflow.run(request=request),
+                self._job.run(request=request),
                 name=f"{self._task_name}-workflow",
             )
             try:
