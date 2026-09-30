@@ -86,11 +86,6 @@ Deep dives: `docs/analysis_pipeline.md`, `docs/report_pipeline.md`, `docs/run_li
 
 ## Guard mapping
 
-Each flow has at least one automated architecture/static guard:
-
-| Flow | Guard owner |
-|------|-------------|
-| Live | `tools/dev/verify_backend_static_guards.py`: live processing stays analysis-free; `WsBroadcast` stays behind `ws_payload_projection` |
-| Recording | `tools/dev/verify_backend_static_guards.py`: recording flow uses `sample_flush` and `persistence_writer` |
-| Raw capture | `tools/dev/verify_backend_static_guards.py`: raw capture replay stays in post-analysis boundaries |
-| Report | `tools/dev/verify_backend_static_guards.py`: report loader avoids boundary re-wraps; PDF entrypoint renders `ReportDocument` |
+Import direction between these flows is enforced by the import-linter contracts
+in `apps/server/pyproject.toml`: live processing and WebSocket projection stay
+off post-run diagnosis/report modules, and the PDF adapter stays off diagnostics.

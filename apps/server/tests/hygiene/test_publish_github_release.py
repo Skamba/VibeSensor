@@ -11,7 +11,6 @@ import pytest
 from tests._paths import REPO_ROOT
 
 _PUBLISH_RELEASE = REPO_ROOT / "tools" / "publish_github_release.py"
-pytestmark = pytest.mark.dev_tooling
 
 
 def _load_publish_github_release_module():

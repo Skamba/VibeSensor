@@ -1,7 +1,7 @@
 """
 Covers E2E-1..E2E-8 user journeys in Docker full-suite CI.
 
-Run locally via `make test-all` (uses tools/tests/run_full_suite.py harness).
+Run locally via `make test-full-suite`.
 """
 
 from __future__ import annotations

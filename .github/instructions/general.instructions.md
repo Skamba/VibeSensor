@@ -29,15 +29,15 @@ Scope: global workflow, validation, docs, PR/CI, safety, and simplification rule
 - Historical or superseded docs are reference only unless they explicitly say they are Active.
 
 ## Validation
-- Use proportionate validation. Start with `make plan-validation`; run `./.venv/bin/python tools/tests/plan_validation.py --run` for planned non-Docker jobs, or ACT only for workflow/Docker parity.
+- Use proportionate validation. Run targeted tests while iterating and `make ci` before pushing; use ACT only for workflow/Docker parity.
 - Run targeted tests for the changed seam, then broader relevant gates. Do not run heavy unrelated builds unless the touched area requires them.
-- Docs/instruction-only changes should run `make docs-lint` and the validation planner, not the local Docker stack.
+- Docs/instruction-only changes need no local gate and should not start the local Docker stack.
 - Runtime-affecting backend/frontend changes that alter HTTP/WS flows, runtime wiring, static asset serving, container/dev-stack behavior, or live UI flows require the local Docker stack and simulator flow from the canonical command docs.
 - If a refactor changes seams, update tests to validate current behavior instead of obsolete internals.
 - Completion reports must state files changed, validation run, skipped validation with reasons, and whether docs/AI guidance were updated or unnecessary.
 
 ## PR and CI
-- After opening/updating a PR intended to land, run `./.venv/bin/python tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green`.
+- After opening/updating a PR intended to land, run `gh pr checks <PR_NUMBER> --watch` and merge with `gh pr merge --squash` once green.
 - Treat watcher `RESULT=NON_GREEN`, `RESULT=MERGE_ISSUES`, or `RESULT=MERGE_FAILED` as actionable: inspect annotations and concise log tails, fix branch-caused failures, push, and restart the watcher.
 - `RESULT=MERGED` is success for merge-on-green; `RESULT=ALL_GREEN` is success only for watch-only.
 - Do not merge on red required checks. Document unrelated or flaky blockers.

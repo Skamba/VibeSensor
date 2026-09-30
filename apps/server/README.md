@@ -22,15 +22,12 @@ Backend ownership boundaries:
 See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backend-package-layout)
 for the detailed backend ownership map. This README stays focused on
 backend-specific setup, configuration, routes, updates, and testing.
-Package-level backend dependency direction is declared in
-`apps/server/pyproject.toml` under `[tool.importlinter]`; keep repo-specific
-root-module and structural guardrails in `tools/dev/verify_backend_static_guards.py`.
-That static-guard layer now also carries the higher-signal seam messages that
-import-linter cannot: `use_cases/**` must stay off adapter imports directly,
-analysis/history core must stay off `adapters/pdf`, and live telemetry/runtime
-surfaces must stay off post-run diagnosis/report conclusion modules. When one of
-those fails, move the dependency behind the documented shared port or report
-boundary seam instead of widening the outer import.
+Backend dependency direction is declared in `apps/server/pyproject.toml` under
+`[tool.importlinter]`: the package layer order, plus narrower seams such as live
+telemetry staying off post-run diagnosis/report modules and the PDF adapter
+staying off diagnostics. When a contract fails, move the dependency behind the
+documented shared port or report boundary seam instead of widening the outer
+import.
 
 ## Shared layer ownership
 

@@ -78,10 +78,9 @@ git config core.hooksPath .githooks
 Current hook behavior:
 
 - Hooks are safe to enable.
-- The privacy guard scans staged and pushed additions for high-confidence secret
-  material and sensitive local-only files.
-- Hooks prefer `.venv/bin/python` after `make setup`, then fall back to `python3`
-  or `python` for bootstrap-only checkouts.
+- The pre-commit and pre-push hooks run [gitleaks](https://github.com/gitleaks/gitleaks)
+  over staged changes and pushed commits. Install gitleaks locally; without it the
+  hooks print a warning and skip the scan. CI runs the same scan on every PR.
 - If a hook blocks you unexpectedly, use the commands below directly and then investigate instead of guessing.
 
 ## Validation workflow
@@ -89,16 +88,11 @@ Current hook behavior:
 Use `make format` as the only supported Python formatter for backend and tooling
 files. Do not run competing Python formatters in this repo.
 
-Use `make test-changed` as a heuristic shortcut for the files changed on your
-current branch when you want a fast first pass. It is not a replacement for the
-broader tiers below before merge.
+Use `make test` (or a targeted `pytest` path) during iteration and `make ci`
+before pushing; it runs lint, type checks, backend tests, and UI unit tests.
 
-Three tiers: use `make test` during iteration, `make test-ci-lite` for the
-non-Docker blocking-CI subset, and `make test-all` when you want the broader
-local runner (including Docker-backed jobs when Docker is available).
-
-For the recurring repo-wide commands (lint, type checks, docs lint, focused
-pytest, CI-parity runs, PR watching, and Docker bring-up), use the command
+For the recurring repo-wide commands (lint, type checks, focused pytest, and
+Docker bring-up), use the command
 list in [.github/copilot-instructions.md](.github/copilot-instructions.md)
 § "Commands". Use [docs/testing.md](docs/testing.md) for the test-layout map
 and CI-parity guidance.
@@ -111,9 +105,7 @@ Additional local-only convenience commands:
 | Python formatting | `make format` |
 | Fast backend tests | `make test` |
 | UI lint | `make ui-lint` |
-| Changed-file heuristic | `make test-changed` |
-| Non-Docker CI subset | `make test-ci-lite` |
-| Full local CI runner | `make test-all` |
+| Main local CI gates | `make ci` |
 | Coverage view | `make coverage` |
 
 ## CI jobs and local reproduction
@@ -124,11 +116,9 @@ The blocking jobs live in
 "Commands" plus [docs/testing.md](docs/testing.md) when you need the matching
 local reproduction flow.
 
-Backend checks are split by concern. `backend-lint` covers formatting and
-linting, `repo-hygiene` covers repository policy checks,
-`backend-static-guards` covers architecture/static guardrails,
-`backend-preflight` covers config preflight, `docs-lint` covers documentation
-drift and local markdown links, and `backend-contract-drift` covers generated
+Backend checks are split by concern. `backend-lint` covers Ruff formatting and
+linting plus the import-linter layer contracts, `backend-preflight` covers
+dependency and config preflight, and `backend-contract-drift` covers generated
 contract sync. Use those workflow job names when matching a CI failure to a
 local reproduction command.
 
@@ -136,7 +126,7 @@ Use `release-smoke` when you need confidence in the packaged wheel and bundled
 static assets. Use `e2e` when you need confidence in the Docker/runtime path.
 They cover different delivery contracts and neither replaces the other.
 
-When a single shard fails in CI, run the corresponding focused suite locally first instead of rerunning everything.
+When a CI job fails, run the corresponding focused suite locally first instead of rerunning everything.
 
 ## Pull requests and merge expectations
 

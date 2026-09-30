@@ -54,7 +54,6 @@ examples/
 tools/dev/
 tools/tests/
 tools/simulator
-tools/watch_pr_checks.py
 
 # Misc
 .ruff_cache
