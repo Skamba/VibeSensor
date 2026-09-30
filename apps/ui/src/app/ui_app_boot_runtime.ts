@@ -55,7 +55,6 @@ function createUiAppFeatureRuntimePorts(deps: {
       setShellLiveStatus: (variant, text) => shell.setLiveStatus(variant, text),
     },
     view: {
-      renderSpectrum: () => spectrum.renderSpectrum(),
       refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
     },
     transport: {

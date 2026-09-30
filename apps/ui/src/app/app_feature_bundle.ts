@@ -11,7 +11,6 @@ import {
 } from "./features/realtime_feature";
 import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
-import type { SettingsFeatureViewPorts } from "./features/settings_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
@@ -38,7 +37,9 @@ export interface AppFeatureBundleRuntimePorts {
   };
   realtimeChrome: Pick<RealtimeFeatureChromePorts, "setShellLiveStatus">;
   transport: RealtimeFeatureSelectionPorts;
-  view: SettingsFeatureViewPorts;
+  view: {
+    refreshSpectrumDecorations(): void;
+  };
 }
 
 export interface AppFeatureBundleDeps {

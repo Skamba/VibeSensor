@@ -4,10 +4,8 @@ import {
   createHistoryFeature,
   type HistoryFeature,
 } from "./features/history_feature";
-import {
-  createSettingsFeature,
-  type SettingsFeature,
-} from "./features/settings_feature";
+import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
+import { createSpeedSourceFeature } from "./features/speed_source_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppFeatureBundleDeps } from "./app_feature_bundle";
 
@@ -15,10 +13,10 @@ export interface AppFeatureSecondaryBundle {
   dispose(): void;
   history: Pick<HistoryFeature, "refreshHistory">;
   openCarWizard(): void;
-  settings: Pick<
-    SettingsFeature,
-    "loadAnalysisSettingsFromServer" | "loadSpeedSourceFromServer"
-  >;
+  settings: {
+    loadAnalysisSettingsFromServer(): Promise<void>;
+    loadSpeedSourceFromServer(): Promise<void>;
+  };
 }
 
 export function createAppFeatureSecondaryBundle(
@@ -41,25 +39,26 @@ export function createAppFeatureSecondaryBundle(
     queryClient: serverState.queryClient,
   });
 
-  const settings = createSettingsFeature({
-    state: {
-      settings: state.settings,
-      shell: state.shell,
-    },
-    panels: {
-      settingsShell: panels.settingsShell,
-      analysisPanel: panels.settings.analysis,
-      speedSourcePanel: panels.settings.speedSource,
-    },
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      view: runtime.view,
-    },
+  const analysis = createSettingsAnalysisModule({
+    panel: panels.settings.analysis,
+    settings: state.settings,
+    lang: state.shell.lang,
+    queryClient: serverState.queryClient,
+    services,
+    refreshSpectrumDecorations: runtime.view.refreshSpectrumDecorations,
+  });
+
+  const speedSource = createSpeedSourceFeature({
+    panel: panels.settings.speedSource,
+    settings: state.settings,
+    queryClient: serverState.queryClient,
     services,
     formatting: {
       fmt: formatting.fmt,
     },
-    queryClient: serverState.queryClient,
+    getSpeedUnit: () => state.shell.speedUnit.value,
+    activeViewId: runtime.navigation.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
   });
 
   const cars = createCarsFeature({
@@ -71,7 +70,7 @@ export function createAppFeatureSecondaryBundle(
     activeSettingsTabId: panels.settingsShell.activeTabId,
     openAnalysisTab: () => panels.settingsShell.activateTab("analysisTab"),
     refreshSpectrumDecorations: runtime.view.refreshSpectrumDecorations,
-    syncAnalysisInputs: settings.syncSettingsInputs,
+    syncAnalysisInputs: analysis.syncSettingsInputs,
     services,
     formatting: {
       fmt: formatting.fmt,
@@ -102,7 +101,8 @@ export function createAppFeatureSecondaryBundle(
   });
 
   cars.bindHandlers();
-  settings.bindHandlers();
+  analysis.bindHandlers();
+  speedSource.bindHandlers();
   history.bindHandlers();
   update.bindUpdateHandlers();
   espFlash.bindHandlers();
@@ -112,7 +112,8 @@ export function createAppFeatureSecondaryBundle(
       espFlash.dispose();
       update.dispose();
       history.dispose();
-      settings.dispose();
+      speedSource.dispose();
+      analysis.dispose();
       cars.dispose();
     },
     history: {
@@ -122,9 +123,9 @@ export function createAppFeatureSecondaryBundle(
       void cars.openWizard();
     },
     settings: {
-      loadSpeedSourceFromServer: () => settings.loadSpeedSourceFromServer(),
+      loadSpeedSourceFromServer: () => speedSource.loadSpeedSourceFromServer(),
       loadAnalysisSettingsFromServer: () =>
-        settings.loadAnalysisSettingsFromServer(),
+        analysis.loadAnalysisSettingsFromServer(),
     },
   };
 }

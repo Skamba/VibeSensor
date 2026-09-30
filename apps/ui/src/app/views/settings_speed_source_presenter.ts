@@ -50,6 +50,39 @@ export interface SettingsSpeedSourcePresenterDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
 }
 
+export const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel =
+  {
+    gps: {
+      deviceText: "--",
+      effectiveSpeedText: "--",
+      fallbackText: "--",
+      lastErrorText: "--",
+      lastUpdateText: "--",
+      rawSpeedText: "--",
+      reconnectText: "--",
+      stateText: "--",
+    },
+    obd: {
+      backoffText: "--",
+      configuredDeviceText: "--",
+      connectedText: "--",
+      debugHintText: "--",
+      effectiveCadenceText: "--",
+      errorsText: "--",
+      lastRpmText: "--",
+      modeText: "--",
+      pairingText: "--",
+      rawResponseText: "--",
+      requestRttText: "--",
+      rfcommChannelText: "--",
+      rpmAgeText: "--",
+      targetCadenceText: "--",
+      timeoutsText: "--",
+      trustedText: "--",
+      visible: false,
+    },
+  };
+
 const CONNECTION_STATE_I18N: Record<string, string> = {
   connected: "settings.speed.state_connected",
   disabled: "settings.speed.state_disabled",
@@ -109,7 +142,7 @@ function formatConfiguredObdDevice(
   );
 }
 
-function activeSourceLabel(
+export function activeSpeedSourceLabel(
   settings: SettingsSpeedSourceRenderState["settings"],
   t: SettingsSpeedSourcePresenterDeps["t"],
 ): string {
@@ -161,7 +194,9 @@ function looksLikeMacAlias(rawValue: string | null | undefined): boolean {
   return value != null && /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i.test(value);
 }
 
-function hasHumanReadableDeviceName(device: ObdDevicePayload): boolean {
+export function hasHumanReadableObdDeviceName(
+  device: ObdDevicePayload,
+): boolean {
   const value = device.name?.trim();
   return Boolean(value) && !looksLikeMacAlias(value);
 }
@@ -171,7 +206,7 @@ function obdDevicePrimaryLabel(device: ObdDevicePayload): string {
 }
 
 function obdDeviceSecondaryLabel(device: ObdDevicePayload): string | null {
-  return hasHumanReadableDeviceName(device) ? device.mac_address : null;
+  return hasHumanReadableObdDeviceName(device) ? device.mac_address : null;
 }
 
 function createBadge(
@@ -336,7 +371,7 @@ export function buildSettingsSpeedSourcePanelModel(
     staleTimeoutFeedback: state.staleTimeoutFeedback,
     staleTimeoutInputValue: state.staleTimeoutInputValue,
     summary: {
-      currentSourceText: activeSourceLabel(state.settings, deps.t),
+      currentSourceText: activeSpeedSourceLabel(state.settings, deps.t),
       effectiveSpeedText: formatSpeedValue(
         activeEffectiveSpeedKph(state.settings),
         deps,

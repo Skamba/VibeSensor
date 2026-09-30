@@ -1,4 +1,5 @@
 import { beforeEach, expect, test } from "vitest";
+import { applyCarsPayloadToSettings } from "../src/app/features/dashboard_startup_state";
 import { createSettingsAnalysisModule } from "../src/app/features/settings_analysis_module";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect, signal } from "../src/app/ui_signals";
@@ -97,11 +98,10 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   const module = createSettingsAnalysisModule({
     panel,
-    hasValidActiveCar: () => true,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations: () => undefined,
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: async () => true,
@@ -198,13 +198,12 @@ test("settings analysis module keeps active-car geometry when loading server ana
       focusField: () => undefined,
       openGuidance: () => undefined,
     },
-    hasValidActiveCar: () => true,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations: () => {
       refreshSpectrumDecorationCalls += 1;
     },
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: async () => true,
@@ -330,12 +329,11 @@ function createAnalysisModuleHarness(
   };
   const module = createSettingsAnalysisModule({
     panel,
-    hasValidActiveCar: () => true,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations:
       options.refreshSpectrumDecorations ?? (() => undefined),
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: options.requestConfirmation ?? (async () => true),
@@ -353,4 +351,29 @@ function modulePanelActions(
     throw new Error("Expected analysis panel actions to be bound");
   }
   return actions;
+}
+
+/** Analysis saves require a resolved active car, as in the running app. */
+function withActiveCar(
+  state: ReturnType<typeof createAppState>["settings"],
+): ReturnType<typeof createAppState>["settings"] {
+  applyCarsPayloadToSettings(state.car, {
+    active_car_id: "car-1",
+    cars: [
+      {
+        id: "car-1",
+        name: "Track",
+        type: "Coupe",
+        variant: null,
+        aspects: {
+          current_gear_ratio: 0.72,
+          final_drive_ratio: 3.23,
+          rim_in: 19,
+          tire_aspect_pct: 40,
+          tire_width_mm: 245,
+        },
+      },
+    ],
+  });
+  return state;
 }

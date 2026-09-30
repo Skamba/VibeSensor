@@ -5,13 +5,21 @@ import type {
   AnalysisSettingsRequest,
 } from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
+import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { FeatureServices } from "../feature_deps_base";
 import {
   defaultVehicleSettings,
   mergeAnalysisTuningSettings,
   type SettingsState,
 } from "../settings_state";
-import { batch, computed, signal } from "../ui_signals";
+import {
+  batch,
+  computed,
+  effectOnChange,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
@@ -20,16 +28,6 @@ import type {
 } from "../views/analysis_panel";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import { serverStateQueryKeys } from "./server_state_query_keys";
-
-export interface SettingsAnalysisModuleDeps {
-  panel: AnalysisPanelView;
-  settings: SettingsState;
-  queryClient: QueryClient;
-  services: FeatureServices;
-  refreshSpectrumDecorations: () => void;
-  hasValidActiveCar: () => boolean;
-  onSaveError: (error: unknown) => void;
-}
 
 export interface SettingsAnalysisModule {
   bindHandlers(): void;
@@ -208,11 +206,22 @@ function formatSettingValue(value: number): string {
     : String(Number(value.toFixed(1)));
 }
 
-export function createSettingsAnalysisModule(
-  ctx: SettingsAnalysisModuleDeps,
-): SettingsAnalysisModule {
+/**
+ * Analysis-settings controller: validation, save/reset orchestration, field
+ * guidance, and spectrum refreshes behind the typed analysis-panel bridge.
+ * Saves require a resolved active car; language changes resync the drafts.
+ */
+export function createSettingsAnalysisModule(ctx: {
+  panel: AnalysisPanelView;
+  settings: SettingsState;
+  lang: ReadonlySignal<string>;
+  queryClient: QueryClient;
+  services: FeatureServices;
+  refreshSpectrumDecorations: () => void;
+}): SettingsAnalysisModule {
   const { panel, settings, services } = ctx;
   const { t } = services;
+  const carSelection = createCarSelectionDerivedState(settings.car);
   const draftValues = signal(buildDraftValues(settings));
   const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
   const fieldErrorMessages = signal<
@@ -341,7 +350,7 @@ export function createSettingsAnalysisModule(
     if (disposed || mutationInFlight) {
       return;
     }
-    if (!ctx.hasValidActiveCar()) {
+    if (!carSelection.hasResolvedActiveCar.value) {
       return;
     }
     mutationInFlight = true;
@@ -429,7 +438,9 @@ export function createSettingsAnalysisModule(
           error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
       };
-      ctx.onSaveError(error);
+      services.showError(
+        error instanceof Error ? error.message : t("settings.save_failed"),
+      );
     }
   }
 
@@ -463,7 +474,7 @@ export function createSettingsAnalysisModule(
     if (disposed || mutationInFlight) {
       return;
     }
-    if (!ctx.hasValidActiveCar()) {
+    if (!carSelection.hasResolvedActiveCar.value) {
       return;
     }
     clearFieldValidationState();
@@ -587,9 +598,14 @@ export function createSettingsAnalysisModule(
     };
   }
 
+  const disposeLanguageSync = effectOnChange(ctx.lang, () => {
+    untracked(syncSettingsInputs);
+  });
+
   return {
     bindHandlers,
     dispose(): void {
+      disposeLanguageSync();
       disposed = true;
       requestGeneration += 1;
       mutationInFlight = false;
