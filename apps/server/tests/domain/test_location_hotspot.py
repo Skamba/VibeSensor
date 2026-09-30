@@ -140,6 +140,7 @@ class TestLocationHotspotValueObject:
                 False,
                 id="unknown-location",
             ),
+            pytest.param(LocationHotspot(strongest_location=""), False, id="blank-location"),
             pytest.param(
                 LocationHotspot(
                     strongest_location="front_left",
@@ -192,29 +193,99 @@ class TestLocationHotspotValueObject:
     def test_display_location_cases(self, hotspot: LocationHotspot, expected: str) -> None:
         assert hotspot.display_location == expected
 
-    def test_has_clear_separation_false_for_ambiguous_hotspot(self) -> None:
-        hotspot = LocationHotspot(strongest_location="front_left", ambiguous=True)
-        assert hotspot.has_clear_separation is False
+    @pytest.mark.parametrize(
+        ("hotspot", "expected"),
+        [
+            pytest.param(
+                LocationHotspot(strongest_location="front_left", dominance_ratio=3.0),
+                True,
+                id="strong-separation",
+            ),
+            pytest.param(
+                LocationHotspot(strongest_location="front_left", weak_spatial_separation=True),
+                False,
+                id="weak-spatial-separation",
+            ),
+            pytest.param(
+                LocationHotspot(strongest_location="front_left", ambiguous=True),
+                False,
+                id="ambiguous-location",
+            ),
+        ],
+    )
+    def test_has_clear_separation_cases(self, hotspot: LocationHotspot, expected: bool) -> None:
+        assert hotspot.has_clear_separation is expected
 
-    def test_confidence_band_uses_domain_thresholds(self) -> None:
-        assert LocationHotspot(localization_confidence=0.8).confidence_band == "high"
-        assert LocationHotspot(localization_confidence=0.55).confidence_band == "medium"
-        assert LocationHotspot(localization_confidence=0.2).confidence_band == "low"
+    @pytest.mark.parametrize(
+        ("confidence", "expected"),
+        [
+            pytest.param(0.85, "high", id="high"),
+            pytest.param(0.8, "high", id="high-threshold"),
+            pytest.param(0.55, "medium", id="medium"),
+            pytest.param(0.2, "low", id="low"),
+            pytest.param(None, "low", id="missing-defaults-low"),
+        ],
+    )
+    def test_confidence_band_uses_domain_thresholds(
+        self,
+        confidence: float | None,
+        expected: str,
+    ) -> None:
+        assert LocationHotspot(localization_confidence=confidence).confidence_band == expected
 
-    def test_supporting_locations_excludes_primary_and_dedupes(self) -> None:
+    @pytest.mark.parametrize(
+        ("alternatives", "expected"),
+        [
+            pytest.param(
+                ("front_left", "front_right", "front_right", "rear_left"),
+                ("front_right", "rear_left"),
+                id="excludes-primary-and-dedupes",
+            ),
+            pytest.param((), (), id="no-alternatives"),
+        ],
+    )
+    def test_supporting_locations_cases(
+        self,
+        alternatives: tuple[str, ...],
+        expected: tuple[str, ...],
+    ) -> None:
         hotspot = LocationHotspot(
             strongest_location="front_left",
-            alternative_locations=("front_left", "front_right", "front_right", "rear_left"),
+            alternative_locations=alternatives,
         )
-        assert hotspot.supporting_locations == ("front_right", "rear_left")
+        assert hotspot.supporting_locations == expected
 
-    def test_summary_location_joins_supporting_locations_when_ambiguous(self) -> None:
-        hotspot = LocationHotspot(
-            strongest_location="front_left",
-            ambiguous=True,
-            alternative_locations=("front_right",),
-        )
-        assert hotspot.summary_location == "front_left / front_right"
+    @pytest.mark.parametrize(
+        ("hotspot", "expected"),
+        [
+            pytest.param(
+                LocationHotspot(strongest_location="front_left", dominance_ratio=3.0),
+                "front_left",
+                id="clear-location",
+            ),
+            pytest.param(
+                LocationHotspot(
+                    strongest_location="front_left",
+                    ambiguous=True,
+                    alternative_locations=("front_right",),
+                ),
+                "front_left / front_right",
+                id="ambiguous-joins-supporting",
+            ),
+            pytest.param(
+                LocationHotspot(
+                    strongest_location="front_left",
+                    weak_spatial_separation=True,
+                    alternative_locations=("front_right",),
+                ),
+                "front_left / front_right",
+                id="weak-separation-joins-supporting",
+            ),
+            pytest.param(LocationHotspot(strongest_location=""), "unknown", id="blank-location"),
+        ],
+    )
+    def test_summary_location_cases(self, hotspot: LocationHotspot, expected: str) -> None:
+        assert hotspot.summary_location == expected
 
     def test_location_hotspot_from_payload_full(self) -> None:
         hotspot = location_hotspot_from_payload(
@@ -376,30 +447,59 @@ class TestLocationHotspotValueObject:
         assert promoted.weak_spatial_separation is True
         assert promoted.supporting_locations == ("rear_right",)
 
-    def test_promote_near_tie_ignores_distant_second_finding(self) -> None:
+    @pytest.mark.parametrize(
+        ("alternative_location", "top_confidence", "alternative_confidence"),
+        [
+            pytest.param("rear_right", 0.9, 0.3, id="distant-second-finding"),
+            pytest.param("front_left", 0.8, 0.75, id="same-location"),
+            pytest.param("", 0.8, 0.75, id="blank-alternative"),
+            pytest.param("rear_right", 0.0, 0.75, id="zero-top-confidence"),
+        ],
+    )
+    def test_promote_near_tie_returns_same_hotspot_when_not_a_tie(
+        self,
+        alternative_location: str,
+        top_confidence: float,
+        alternative_confidence: float,
+    ) -> None:
         hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
         promoted = hotspot.promote_near_tie(
-            alternative_location="rear_right",
-            top_confidence=0.9,
-            alternative_confidence=0.3,
+            alternative_location=alternative_location,
+            top_confidence=top_confidence,
+            alternative_confidence=alternative_confidence,
         )
-        assert promoted == hotspot
+        assert promoted is hotspot
 
-    def test_with_adaptive_weak_spatial_promotes_below_threshold(self) -> None:
+    @pytest.mark.parametrize(
+        ("dominance_ratio", "weak", "location_count", "expected_weak"),
+        [
+            pytest.param(1.3, False, 3, True, id="below-three-location-threshold"),
+            pytest.param(1.05, False, 2, True, id="below-baseline-threshold"),
+            pytest.param(1.5, False, 3, False, id="above-three-location-threshold"),
+            pytest.param(3.0, False, 2, False, id="strong-separation"),
+            pytest.param(3.0, True, 2, True, id="already-weak-stays-weak"),
+        ],
+    )
+    def test_with_adaptive_weak_spatial_cases(
+        self,
+        dominance_ratio: float,
+        weak: bool,
+        location_count: int,
+        expected_weak: bool,
+    ) -> None:
         hotspot = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            dominance_ratio=1.3,
+            dominance_ratio=dominance_ratio,
+            weak_spatial_separation=weak,
         )
-        promoted = hotspot.with_adaptive_weak_spatial(3)
-        assert promoted.weak_spatial_separation is True
+        result = hotspot.with_adaptive_weak_spatial(location_count)
+        assert result.weak_spatial_separation is expected_weak
+        if expected_weak == weak:
+            assert result == hotspot
 
-    def test_with_adaptive_weak_spatial_leaves_strong_separation_unchanged(self) -> None:
-        hotspot = LocationHotspot.from_analysis_inputs(
-            strongest_location="front_left",
-            dominance_ratio=1.5,
-        )
-        promoted = hotspot.with_adaptive_weak_spatial(3)
-        assert promoted == hotspot
+    def test_with_adaptive_weak_spatial_without_dominance_is_noop(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        assert hotspot.with_adaptive_weak_spatial(location_count=2) is hotspot
 
 
 class TestLocationIntensitySummaryRows:
