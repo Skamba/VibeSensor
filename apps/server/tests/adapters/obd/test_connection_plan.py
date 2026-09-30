@@ -5,8 +5,6 @@ from vibesensor.adapters.obd.connection_plan import (
     ObdConnectionStepKind,
     plan_connection_step,
 )
-from vibesensor.adapters.obd.runtime_control import resolve_runtime_control_decision
-from vibesensor.adapters.obd.runtime_policy import ObdPolicyUpdate
 from vibesensor.domain import SpeedSourceKind
 
 
@@ -90,31 +88,3 @@ def test_connection_plan_polls_when_due_with_matching_session() -> None:
     )
 
     assert step.kind is ObdConnectionStepKind.POLL
-
-
-def test_runtime_control_disconnects_when_obd_device_changes() -> None:
-    decision = resolve_runtime_control_decision(
-        ObdPolicyUpdate(
-            applied_speed_kmh=None,
-            selected_source=SpeedSourceKind.OBD2,
-            configured_device_changed=True,
-            configured_device_missing=False,
-        ),
-    )
-
-    assert decision is not None
-    assert decision.connection_state == "disconnected"
-
-
-def test_runtime_control_idles_when_source_is_not_obd() -> None:
-    decision = resolve_runtime_control_decision(
-        ObdPolicyUpdate(
-            applied_speed_kmh=42.0,
-            selected_source=SpeedSourceKind.GPS,
-            configured_device_changed=False,
-            configured_device_missing=False,
-        ),
-    )
-
-    assert decision is not None
-    assert decision.connection_state == "idle"

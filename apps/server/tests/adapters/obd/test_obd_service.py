@@ -58,9 +58,9 @@ async def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_po
     )
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.2)]
-    assert parts.projection.resolve_speed().source == "obd2"
-    assert parts.projection.resolve_speed().speed_mps == pytest.approx(40.0 / 3.6)
-    status = parts.projection.status_snapshot()
+    assert parts.obd.resolve_speed().source == "obd2"
+    assert parts.obd.resolve_speed().speed_mps == pytest.approx(40.0 / 3.6)
+    status = parts.obd.status_snapshot()
     assert status.last_speed_kmh == pytest.approx(40.0)
     assert status.last_rpm == pytest.approx(0x1AF8 / 4.0)
     assert status.rpm_target_interval_ms == 50
@@ -104,13 +104,13 @@ async def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stal
         step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
     )
 
-    assert parts.facts.engine_rpm == pytest.approx(0x1AF8 / 4.0)
+    assert parts.obd.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 1.99
-    assert parts.facts.engine_rpm == pytest.approx(0x1AF8 / 4.0)
+    assert parts.obd.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 2.11
-    assert parts.facts.engine_rpm is None
+    assert parts.obd.engine_rpm is None
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     assert status.timeout_count == 1
     assert status.backoff_active is True
 
@@ -148,7 +148,7 @@ async def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_sp
     )
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.3)]
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     assert status.poll_mode == "rpm_only_backoff"
     assert status.backoff_active is True
     assert status.timeout_count == 1
@@ -159,7 +159,7 @@ async def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_sp
 
 def test_obd_runtime_projection_resolves_stale_speed_to_manual_fallback() -> None:
     parts = _build_runtime_parts(clock=lambda: 100.0)
-    parts.settings.apply_speed_source_settings(
+    parts.obd.apply_speed_source_settings(
         effective_speed_kmh=54.0,
         manual_source_selected=False,
         stale_timeout_s=5.0,
@@ -167,10 +167,10 @@ def test_obd_runtime_projection_resolves_stale_speed_to_manual_fallback() -> Non
         obd_device_mac="00043e5a4a4d",
         obd_device_name="OBDLink MX+",
     )
-    parts.store.state.speed_snapshot = (10.0, 90.0)
-    parts.connection_control.mark_connected()
+    parts.obd._state.speed_snapshot = (10.0, 90.0)
+    parts.obd.mark_connected()
 
-    resolution = parts.projection.resolve_speed()
+    resolution = parts.obd.resolve_speed()
 
     assert resolution.source == "fallback_manual"
     assert resolution.speed_mps == pytest.approx(54.0 / 3.6)
@@ -188,7 +188,7 @@ def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
         rfcomm_channel=1,
     )
     parts = _build_runtime_parts(clock=lambda: 100.0, admin_client=admin_client)
-    parts.settings.apply_speed_source_settings(
+    parts.obd.apply_speed_source_settings(
         effective_speed_kmh=None,
         manual_source_selected=False,
         selected_source="obd2",
@@ -196,7 +196,7 @@ def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
         obd_device_name="OBDLink MX+",
     )
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
 
     assert status.device_mac == "00043e5a4a4d"
     assert status.paired is False
@@ -207,7 +207,7 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     admin_client = MagicMock()
     admin_client.device_info.side_effect = ExternalCommandError("sudo: a password is required")
     parts = _build_runtime_parts(clock=lambda: 100.0, admin_client=admin_client)
-    parts.settings.apply_speed_source_settings(
+    parts.obd.apply_speed_source_settings(
         effective_speed_kmh=None,
         manual_source_selected=False,
         selected_source="obd2",
@@ -215,8 +215,8 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
         obd_device_name="OBDLink MX+",
     )
 
-    parts.admin.refresh_configured_device()
-    status = parts.projection.status_snapshot()
+    parts.obd.refresh_obd_status()
+    status = parts.obd.status_snapshot()
 
     assert "sudo" in str(status.last_error).lower()
     assert "sudo helper" in str(obd_debug_hint(status)).lower()
@@ -226,7 +226,7 @@ def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> Non
     clock = _FakeClock()
     parts = _connected_runtime_parts(clock=clock)
 
-    connection_lost = parts.connection_control.apply_poll_cycle(
+    connection_lost = parts.obd.apply_poll_cycle(
         ObdPollResult(
             rpm=ObdPidPollResult(
                 value=None,
@@ -242,7 +242,60 @@ def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> Non
     )
 
     assert connection_lost is True
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     assert status.connection_state == "disconnected"
     assert status.last_error == "PID 010C request failed: Session is not connected"
     assert status.reconnect_delay_s == 4.0
+
+
+def _apply_obd_settings(parts, *, selected_source: str, obd_device_mac: str | None) -> None:
+    parts.obd.apply_speed_source_settings(
+        effective_speed_kmh=None,
+        manual_source_selected=False,
+        stale_timeout_s=5.0,
+        selected_source=selected_source,
+        obd_device_mac=obd_device_mac,
+        obd_device_name="OBDLink MX+",
+    )
+
+
+def test_obd_settings_change_to_new_device_disconnects_and_forgets_observed_device() -> None:
+    parts = _connected_runtime_parts(clock=_FakeClock(now=100.0))
+    parts.obd.mark_disconnected(error="link down")
+    assert parts.obd.status_snapshot().paired is True
+
+    _apply_obd_settings(parts, selected_source="obd2", obd_device_mac="00043e5a4a4e")
+
+    assert parts.obd._state.connection_state == "disconnected"
+    status = parts.obd.status_snapshot()
+    assert status.device_mac == "00043e5a4a4e"
+    assert status.paired is False
+    assert status.rfcomm_channel is None
+    assert status.last_error is None
+
+
+def test_obd_settings_keep_connection_when_device_is_unchanged() -> None:
+    parts = _connected_runtime_parts(clock=_FakeClock(now=100.0))
+
+    _apply_obd_settings(parts, selected_source="obd2", obd_device_mac="00043e5a4a4d")
+
+    assert parts.obd._state.connection_state == "connected"
+    assert parts.obd.status_snapshot().paired is True
+
+
+def test_obd_settings_missing_device_disconnects() -> None:
+    parts = _connected_runtime_parts(clock=_FakeClock(now=100.0))
+
+    _apply_obd_settings(parts, selected_source="obd2", obd_device_mac=None)
+
+    assert parts.obd._state.connection_state == "disconnected"
+    assert parts.obd.status_snapshot().paired is False
+
+
+def test_obd_settings_idle_runtime_when_source_is_not_obd() -> None:
+    parts = _connected_runtime_parts(clock=_FakeClock(now=100.0))
+
+    _apply_obd_settings(parts, selected_source="gps", obd_device_mac="00043e5a4a4d")
+
+    assert parts.obd._state.connection_state == "idle"
+    assert parts.obd.status_snapshot().paired is False

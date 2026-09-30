@@ -31,7 +31,7 @@ def build_lifecycle_state(
         worker_pool=live_runtime.worker_pool,
         settings_reader=runtime_settings.settings_reader,
         gps_monitor=speed_runtime.gps_monitor,
-        obd_runner=speed_runtime.obd_runtime.connection.runner,
+        obd_runner=speed_runtime.obd,
         history_db=history.lifecycle,
         processing_loop_state=live_runtime.processing_loop_state,
         health_state=health_state,
@@ -58,7 +58,7 @@ def build_router_deps(
 
     settings = settings_services.http_settings_deps(
         speed_status_service=speed_runtime.speed_services.observation,
-        obd_admin_service=speed_runtime.speed_services.admin,
+        obd_admin_service=speed_runtime.obd,
     )
     return RouterDeps(
         health=live_runtime.http_health_deps(health_state=health_state),
