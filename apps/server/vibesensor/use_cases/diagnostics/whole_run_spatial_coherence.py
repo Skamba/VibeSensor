@@ -8,6 +8,12 @@ from dataclasses import dataclass
 
 from vibesensor.domain import LocationHotspot
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
+from vibesensor.shared.types.spatial_evidence_contracts import (
+    SpatialEvidenceSummary,
+    SpatialEvidenceWindow,
+    SpatialLocationSummary,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
@@ -38,14 +44,8 @@ from vibesensor.use_cases.diagnostics.orders.matching import (
     filtered_peak_pairs,
     order_peak_tolerance_hz,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
-    SpatialEvidenceSummary,
-    SpatialEvidenceWindow,
-    SpatialLocationSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_alignment import (
     AlignedSpatialWindow,

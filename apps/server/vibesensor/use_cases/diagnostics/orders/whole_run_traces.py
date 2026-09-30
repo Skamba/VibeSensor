@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.order_trace_contracts import (
+    OrderTraceFamily,
+    OrderTracePoint,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
@@ -28,10 +32,6 @@ from vibesensor.use_cases.diagnostics.orders.physics import (
     OrderHypothesis,
     _order_hypotheses,
     _order_label,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderTraceFamily,
-    OrderTracePoint,
 )
 from vibesensor.use_cases.diagnostics.whole_run_context import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (

@@ -32,13 +32,17 @@ from test_support.post_analysis_artifacts import (
 )
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.types.whole_run_analysis import (
-    WholeRunContextInterval,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
+from vibesensor.shared.types.order_trace_contracts import (
     OrderTracePoint,
     OrderTraceSummary,
     OrderTraceSupportInterval,
+)
+from vibesensor.shared.types.spatial_evidence_contracts import (
+    SpatialEvidenceSummary,
+    SpatialLocationSummary,
+)
+from vibesensor.shared.types.whole_run_analysis import (
+    WholeRunContextInterval,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
@@ -50,10 +54,6 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
-)
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
-    SpatialEvidenceSummary,
-    SpatialLocationSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,

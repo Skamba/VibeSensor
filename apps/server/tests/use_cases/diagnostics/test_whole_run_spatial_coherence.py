@@ -3,19 +3,19 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
+from vibesensor.shared.types.spatial_evidence_contracts import (
+    SpatialEvidenceWindow,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
-    SpatialEvidenceWindow,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,

@@ -7,6 +7,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.order_trace_contracts import (
+    OrderHarmonicEvidenceSummary,
+    OrderTracePoint,
+    OrderTraceSummary,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
@@ -37,11 +42,6 @@ from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
     ordered_order_hypothesis_keys,
 )
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderHarmonicEvidenceSummary,
-    OrderTracePoint,
-    OrderTraceSummary,
-)
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
 )

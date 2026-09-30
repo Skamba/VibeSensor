@@ -316,7 +316,7 @@ The report path can still project compact location proof from these summaries,
 but the source artifact should be candidate-aware and whole-run aware.
 
 The current contract owner is
-`apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py`.
+`apps/server/vibesensor/shared/types/spatial_evidence_contracts.py`.
 It now settles:
 
 - dense `SpatialEvidenceWindow` rows keyed by
@@ -357,7 +357,7 @@ derived from supporting-window evidence.
 Support and counterevidence now use one shared persisted vocabulary instead of
 renderer-only prose. The canonical owner is the combination of:
 
-- `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`
+- `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`
   for compact persisted diagnosis rows
 - `apps/server/vibesensor/shared/types/history_analysis_contracts.py` for the
   outward history/report/schema contract
@@ -396,7 +396,7 @@ typed details payload so later fusion/report work can explain why a diagnosis
 ranked where it did without reparsing report prose.
 
 The contract owner for the fused output should now live in
-`apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`.
+`apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`.
 That layer should settle:
 
 - compact `WholeRunDiagnosisSummary` rows persisted as
@@ -430,10 +430,10 @@ scoring path instead of creating a second threshold table.
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
 | `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
 | `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` with compact report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
-| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
-| `SpatialEvidenceSummary` | `apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
+| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/shared/types/order_trace_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
+| `SpatialEvidenceSummary` | `apps/server/vibesensor/shared/types/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
 | `WholeRunSpatialAlignmentMatrix` / `AlignedSpatialWindow` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py` | Deterministic per-window sensor joins with explicit coverage-state semantics for later spatial scoring |
-| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py` with persisted projection in `shared/types/history_analysis_contracts.py` | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
+| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py` with persisted projection in `shared/types/history_analysis_contracts.py` | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
 
 For the context track:
 

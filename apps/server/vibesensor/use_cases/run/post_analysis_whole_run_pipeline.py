@@ -12,10 +12,16 @@ import aiosqlite
 from vibesensor.domain import CarOrderReferenceStatus
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.spatial_evidence_contracts import (
+    SpatialEvidenceSummary,
+)
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    WholeRunDiagnosisSummary,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WholeRunOrderFamilySummaryArtifactBundle,
 )
@@ -25,14 +31,8 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
-    SpatialEvidenceSummary,
-)
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WholeRunContextArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
-    WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WholeRunSpatialCoherenceArtifactBundle,

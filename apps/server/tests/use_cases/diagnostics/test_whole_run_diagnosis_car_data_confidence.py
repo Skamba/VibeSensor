@@ -5,16 +5,16 @@ from typing import cast
 import pytest
 
 from vibesensor.domain import CarOrderReferenceStatus, DrivingPhase, VehicleFieldConfidence
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
+from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialLocationSummary,
 )
-from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
     WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (

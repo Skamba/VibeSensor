@@ -7,6 +7,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
@@ -16,7 +17,6 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
