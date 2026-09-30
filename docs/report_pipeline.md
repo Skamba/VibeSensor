@@ -27,13 +27,13 @@ Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
     → execute_post_analysis() [vibesensor.use_cases.run.post_analysis_executor]
       → load_post_analysis_run() [vibesensor.use_cases.run.post_analysis_loader]
-      → build_whole_run_artifacts() [vibesensor.use_cases.run.post_analysis_whole_run_builders]
+      → run_whole_run_pipeline_stages() [vibesensor.use_cases.run.post_analysis_executor]
         → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
         → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
       → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]
       → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis_summary]
         → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
-        → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py
+        → run_analysis.py + run_data_preparation.py + _summary_steps.py + _summary_result.py
         → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
       → append compact whole-run report-facing summaries
       → astore_analysis() [vibesensor.adapters.persistence.history_db]
@@ -42,9 +42,10 @@ GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
     → HistoryReportRequestLoader.load_report_request() [vibesensor.use_cases.history.report_loader]
     → prepare_report_input() [vibesensor.shared.boundaries.reporting.preparation]
-    → _build_pdf_bytes() [vibesensor.app.container]
-      → build_report_document(prepared_input) [vibesensor.use_cases.history.report_document]
-      → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
+    → _build_prepared_pdf_bytes() [vibesensor.app.composition.history]
+      → build_prepared_report_pdf(prepared_input) [vibesensor.adapters.pdf.pdf_engine]
+        → build_report_document(prepared_input) [vibesensor.use_cases.history.report_document]
+        → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
 ```
 
 ## Key Architectural Rules
@@ -116,8 +117,8 @@ needs:
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
 - **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
 - **Peak rows**: top diagnostic peaks with classification
-- **Rendering context**: pre-computed findings (as ``FindingPresentation``
-  snapshots), top causes, sensor intensity, location hotspot rows
+- **Rendering context**: domain ``Finding`` objects for findings and effective
+  top causes, sensor intensity, location hotspot rows
 
 ### Mapping examples
 

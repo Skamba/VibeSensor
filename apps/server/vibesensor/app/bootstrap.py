@@ -1,8 +1,7 @@
 """FastAPI application factory and CLI entry point.
 
-Service construction lives in ``container.py`` and runtime state lives in
-``runtime_state.py``. This module creates the FastAPI app, wires the lifespan,
-and serves static assets.
+Service construction lives in ``container.py``. This module creates the
+FastAPI app, wires the lifespan, and serves static assets.
 """
 
 from __future__ import annotations
@@ -67,7 +66,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     configure_tracing(config.tracing)
     runtime = build_runtime(config)
     lifecycle = LifecycleManager(
-        runtime=runtime.lifecycle.lifecycle_runtime(),
+        runtime=runtime.lifecycle,
         start_udp_receiver=start_udp_data_receiver,
     )
 

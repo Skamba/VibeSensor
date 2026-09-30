@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.recording import (
     RecordingCaptureReadinessCheckResponse,
     RecordingCaptureReadinessResponse,
     RecordingStatusResponse,

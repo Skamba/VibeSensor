@@ -13,8 +13,10 @@ from vibesensor.domain import (
     CarSnapshot,
     RunContextSnapshot,
 )
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
+)
+from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
@@ -126,15 +128,10 @@ class TestAnalysisSettingsSnapshotFromDict:
                 "rim_in": 21.0,
                 "final_drive_ratio": 3.08,
                 "current_gear_ratio": 0.64,
-                "wheel_bandwidth_pct": 0.0025,
-                "driveshaft_bandwidth_pct": 0.0025,
-                "engine_bandwidth_pct": 0.0025,
                 "speed_uncertainty_pct": 0.05,
                 "tire_diameter_uncertainty_pct": 0.02,
                 "final_drive_uncertainty_pct": 0.01,
                 "gear_uncertainty_pct": 0.01,
-                "min_abs_band_hz": 1.0,
-                "max_band_half_width_pct": 0.05,
                 "tire_deflection_factor": 0.96,
             }
         )

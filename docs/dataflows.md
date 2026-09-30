@@ -43,7 +43,7 @@ Deep dive: `docs/run_lifecycle.md`
 | Field | Value |
 |------|-------------|
 | Source | Optional per-run raw capture written alongside an active recording |
-| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_whole_run_builders.py` |
+| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_executor.py` (whole-run stages) |
 | Boundary | Raw capture is read through `RunPersistence`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
 | Final consumer | Offline post-stop analysis: raw replay compatibility plus whole-run sidecar builders |
 | Data shape | Persisted and replayable raw artifacts, dense sidecar artifacts, and compact persisted summaries |
@@ -53,13 +53,12 @@ use raw replay when the manifest/store exists, or fall back to persisted summary
 rows when it does not. When raw capture is available, whole-run spectra use
 bounded raw range reads, then the sidecar path builds context labels, order
 traces/summaries, family
-summaries, and spatial coherence through `post_analysis_whole_run_builders.py`
-and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
+summaries, and spatial coherence through the whole-run stage functions in
+`post_analysis_executor.py` and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
 `whole-run-artifacts/<run_id>/`; compact report-facing summaries and manifest
 metadata are appended to `analysis_json`.
 
-`use_cases/diagnostics/post_run_raw_windows.py` remains a compatibility/support
-bounded raw range-window iterator. The connected whole-run spectral executor is
+The whole-run spectral executor is
 `use_cases/diagnostics/whole_run_spectra.py`. Degraded or missing raw/whole-run
 state must propagate forward as
 lifecycle/artifact status and report context instead of triggering a second ad
@@ -72,7 +71,7 @@ Deep dives: `docs/run_lifecycle.md`, `docs/analysis_pipeline.md`
 | Field | Value |
 |------|-------------|
 | Source | Persisted run metadata, persisted analysis outputs, and already-derived report facts |
-| Main path | history DB -> `use_cases/history/report_loader.py` -> shared report boundaries/fact builders -> `app/container.py::_build_pdf_bytes` -> PDF/UI consumers |
+| Main path | history DB -> `use_cases/history/report_loader.py` -> shared report boundaries/fact builders -> `app/composition/history.py::_build_prepared_pdf_bytes` -> PDF/UI consumers |
 | Boundary | History/report loading reads persisted truth only; it does not rerun live processing or raw replay directly |
 | Final consumer | History detail UI, quick report readiness, and generated PDFs |
 | Data shape | Persisted, replay-free report state |
@@ -86,11 +85,6 @@ Deep dives: `docs/analysis_pipeline.md`, `docs/report_pipeline.md`, `docs/run_li
 
 ## Guard mapping
 
-Each flow has at least one automated architecture/static guard:
-
-| Flow | Guard owner |
-|------|-------------|
-| Live | `tools/dev/verify_backend_static_guards.py`: live processing stays analysis-free; `WsBroadcast` stays behind `ws_payload_projection` |
-| Recording | `tools/dev/verify_backend_static_guards.py`: recording flow uses `sample_flush` and `persistence_writer` |
-| Raw capture | `tools/dev/verify_backend_static_guards.py`: raw capture replay stays in post-analysis boundaries |
-| Report | `tools/dev/verify_backend_static_guards.py`: report loader avoids boundary re-wraps; PDF entrypoint renders `ReportDocument` |
+Import direction between these flows is enforced by the import-linter contracts
+in `apps/server/pyproject.toml`: live processing and WebSocket projection stay
+off post-run diagnosis/report modules, and the PDF adapter stays off diagnostics.

@@ -10,8 +10,9 @@ from test_support.scenario_ground_truth import (
     road_noise_phase,
 )
 
-from vibesensor.shared.boundaries.reporting import PreparedReportInput, prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history import report_document
 from vibesensor.use_cases.history.report_document.composition import compose_report_document
 

@@ -7,7 +7,10 @@ from reportlab.graphics.shapes import Circle, PolyLine, Rect, String
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import REPORT_COLORS
 from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
-from vibesensor.shared.boundaries.reporting.document import TimelineGraphData, TimelineGraphInterval
+from vibesensor.shared.boundaries.reporting.document.sections import (
+    TimelineGraphData,
+    TimelineGraphInterval,
+)
 
 
 def _color_hex(color: object) -> str | None:

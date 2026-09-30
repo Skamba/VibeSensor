@@ -6,7 +6,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
     SpatialEvidenceSummaryResponse,
     SpatialLocationSummaryResponse,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialEvidenceWindow,
     SpatialLocationSummary,

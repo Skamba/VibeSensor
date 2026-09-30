@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { HttpResponse, http, uiTestUrl } from "./msw/http";
 import { createUiMswTestServer } from "./msw/node";
 import { createAppState } from "../src/app/ui_app_state";
-import { UiShellController } from "../src/app/runtime/ui_shell_controller";
+import {
+  DEFAULT_SHELL_VIEW_ID,
+  UiShellController,
+} from "../src/app/runtime/ui_shell_controller";
 import {
   DEFAULT_UI_SHELL_CHROME_ACTIONS,
   type UiShellChromeActions,
@@ -11,11 +14,6 @@ import {
   type UiShellChromePreferencesModel,
   type UiShellChromeStatusModel,
 } from "../src/app/runtime/ui_shell_chrome";
-import {
-  DEFAULT_SHELL_VIEW_ID,
-  createUiShellNavigationModule,
-} from "../src/app/runtime/ui_shell_navigation_module";
-import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
@@ -70,32 +68,60 @@ function createChromeViewHarness() {
   };
 }
 
-describe("createUiShellNavigationModule", () => {
-  test("setActiveView updates signal-backed state and falls back to dashboard", () => {
+function createShellController(
+  state: ReturnType<typeof createAppState>,
+  options: {
+    chrome?: ReturnType<typeof createChromeViewHarness>;
+    onViewActivated?: (viewId: string) => Promise<void>;
+  } = {},
+): UiShellController {
+  return new UiShellController({
+    bindFeatureHandlers: () => undefined,
+    chrome: (options.chrome ?? createChromeViewHarness()).view,
+    chromeActions: signal<UiShellChromeActions>({
+      ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+    }),
+    liveOverview: {
+      model: signal(null),
+      speedText: signal<ReadonlySignal<string> | null>(null),
+    },
+    onViewActivated: options.onViewActivated,
+    queryClient: createTestQueryClient(),
+    state,
+  });
+}
+
+describe("UiShellController view navigation", () => {
+  beforeEach(() => {
+    installWindowStub();
+  });
+
+  test("setActiveView updates signal-backed state and falls back to dashboard", async () => {
     const state = createAppState();
     const activatedViews: string[] = [];
     let resizeCalls = 0;
-
-    const module = createUiShellNavigationModule({
-      shell: state.shell,
-      viewIds: [DEFAULT_SHELL_VIEW_ID, "historyView"],
-      onViewActivated: (viewId) => {
-        activatedViews.push(viewId);
-      },
-      onDashboardViewActivated: () => {
+    state.spectrum.spectrumPlot.value = {
+      resize: () => {
         resizeCalls += 1;
+      },
+    } as unknown as NonNullable<typeof state.spectrum.spectrumPlot.value>;
+
+    const controller = createShellController(state, {
+      onViewActivated: async (viewId) => {
+        activatedViews.push(viewId);
       },
     });
 
-    module.setActiveView("historyView");
+    controller.setActiveView("historyView");
+    await Promise.resolve();
     expect(state.shell.activeViewId.value).toBe("historyView");
-    expect(module.activeViewId.value).toBe("historyView");
+    expect(controller.activeViewId.value).toBe("historyView");
     expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(0);
 
-    module.setActiveView("missingView");
+    controller.setActiveView("missingView");
     expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
-    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(controller.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(1);
   });
@@ -106,52 +132,46 @@ describe("createUiShellNavigationModule", () => {
       throw new Error("activation promise was not created");
     };
 
-    const module = createUiShellNavigationModule({
-      shell: state.shell,
-      viewIds: [DEFAULT_SHELL_VIEW_ID, "settingsView"],
-      onViewActivated: (viewId) =>
-        viewId === "settingsView"
-          ? new Promise<void>((resolve) => {
-              resolveActivation = resolve;
-            })
-          : undefined,
+    const controller = createShellController(state, {
+      onViewActivated: () =>
+        new Promise<void>((resolve) => {
+          resolveActivation = resolve;
+        }),
     });
 
-    module.setActiveView("settingsView");
+    controller.setActiveView("settingsView");
     expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
-    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(controller.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
 
     resolveActivation();
     await Promise.resolve();
 
     expect(state.shell.activeViewId.value).toBe("settingsView");
-    expect(module.activeViewId.value).toBe("settingsView");
+    expect(controller.activeViewId.value).toBe("settingsView");
   });
 
-  test("keeps the current view when lazy activation fails", async () => {
+  test("keeps the current view and reports the error when lazy activation fails", async () => {
     const state = createAppState();
-    const activationErrors: string[] = [];
+    const chrome = createChromeViewHarness();
 
-    const module = createUiShellNavigationModule({
-      shell: state.shell,
-      viewIds: [DEFAULT_SHELL_VIEW_ID, "settingsView"],
+    const controller = createShellController(state, {
+      chrome,
       onViewActivated: async () => {
         throw new Error("chunk failed");
       },
-      onViewActivationFailed: (viewId, error) => {
-        activationErrors.push(
-          `${viewId}:${error instanceof Error ? error.message : String(error)}`,
-        );
-      },
     });
 
-    module.setActiveView("settingsView");
+    controller.setActiveView("settingsView");
     await Promise.resolve();
     await Promise.resolve();
 
     expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
-    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
-    expect(activationErrors).toEqual(["settingsView:chunk failed"]);
+    expect(controller.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
+      hidden: false,
+      text: "chunk failed",
+      variant: "bad",
+    });
   });
 });
 
@@ -432,31 +452,30 @@ describe("createUiShellPreferencesModule", () => {
   });
 });
 
-describe("createUiShellNotificationModule", () => {
-  test("shows and clears the shared error banner model signal", () => {
+describe("UiShellController error banner", () => {
+  test("shows the shared error banner and hides it when the timer fires", () => {
     let pendingHide: () => void = () => {
       throw new Error("hide timer was not scheduled");
     };
+    (globalThis as { window?: Window & typeof globalThis }).window = {
+      clearTimeout: () => undefined,
+      setTimeout: ((callback: TimerHandler) => {
+        pendingHide = callback as () => void;
+        return 1 as unknown as ReturnType<typeof setTimeout>;
+      }) as Window["setTimeout"],
+    } as unknown as Window & typeof globalThis;
+    const chrome = createChromeViewHarness();
+    const controller = createShellController(createAppState(), { chrome });
 
-    const module = createUiShellNotificationModule({
-      window: {
-        clearTimeout: () => undefined,
-        setTimeout: ((callback: TimerHandler) => {
-          pendingHide = callback as () => void;
-          return 1 as unknown as ReturnType<typeof setTimeout>;
-        }) as Window["setTimeout"],
-      },
-    });
-
-    module.showError("save failed");
-    expect(module.bannerModel.value).toEqual({
+    controller.showError("save failed");
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
       hidden: false,
       text: "save failed",
       variant: "bad",
     });
 
     pendingHide();
-    expect(module.bannerModel.value).toEqual({
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
       hidden: true,
       text: "",
       variant: null,

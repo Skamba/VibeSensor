@@ -37,15 +37,10 @@ class TestOrderReferenceSpecFromSettings:
         settings = _order_settings(
             final_drive_ratio=3.08,
             current_gear_ratio=0.64,
-            wheel_bandwidth_pct=5.0,
-            driveshaft_bandwidth_pct=4.5,
-            engine_bandwidth_pct=5.2,
             speed_uncertainty_pct=1.0,
             tire_diameter_uncertainty_pct=1.0,
             final_drive_uncertainty_pct=0.1,
             gear_uncertainty_pct=0.2,
-            min_abs_band_hz=0.2,
-            max_band_half_width_pct=6.0,
         )
         spec = order_reference_spec_from_mapping(settings, deflection_factor=0.97)
         assert spec is not None
@@ -59,7 +54,7 @@ class TestOrderReferenceSpecFromSettings:
         spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.final_drive_ratio == 0.0
-        assert spec.wheel_bandwidth_pct == 0.0
+        assert spec.speed_uncertainty_pct == 0.0
 
     def test_tire_circumference(self) -> None:
         settings = _order_settings()
@@ -275,15 +270,10 @@ class TestCarOrderReferenceSpec:
             "rim_in": 21.0,
             "final_drive_ratio": 0.0,
             "current_gear_ratio": 0.0,
-            "wheel_bandwidth_pct": 0.0,
-            "driveshaft_bandwidth_pct": 0.0,
-            "engine_bandwidth_pct": 0.0,
             "speed_uncertainty_pct": 0.0,
             "tire_diameter_uncertainty_pct": 0.0,
             "final_drive_uncertainty_pct": 0.0,
             "gear_uncertainty_pct": 0.0,
-            "min_abs_band_hz": 0.0,
-            "max_band_half_width_pct": 0.0,
             "tire_deflection_factor": 1.0,
             "front_tire_width_mm": 245.0,
             "front_tire_aspect_pct": 40.0,

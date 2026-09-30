@@ -5,15 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from vibesensor.adapters.http.models import (
-    DeleteHistoryRunResponse,
-    HistoryInsightsResponse,
-    HistoryListEntryResponse,
-    HistoryRunResponse,
-)
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import ClientSnapshotSource
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
@@ -25,15 +19,19 @@ from vibesensor.shared.ports import (
     UiPreferencesStore,
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
-from vibesensor.use_cases.history.exports import HistoryExportDownload
-from vibesensor.use_cases.history.reports import HistoryReportPdf
+from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+    from vibesensor.adapters.history import (
+        ProjectedHistoryExportService,
+        ProjectedHistoryRunService,
+    )
+    from vibesensor.adapters.obd import ObdService
+    from vibesensor.adapters.obd.models import ObdStatusSnapshot
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
@@ -41,40 +39,10 @@ if TYPE_CHECKING:
     )
 
 
-class HistoryRunServiceProtocol(Protocol):
-    async def list_runs(self) -> list[HistoryListEntryResponse]: ...
-
-    async def get_run(self, run_id: str) -> HistoryRunResponse: ...
-
-    async def get_insights(
-        self,
-        run_id: str,
-        requested_lang: str | None = None,
-    ) -> HistoryInsightsResponse | None: ...
-
-    async def delete_run(self, run_id: str) -> DeleteHistoryRunResponse: ...
-
-
-class HistoryReportServiceProtocol(Protocol):
-    async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf: ...
-
-
-class HistoryExportServiceProtocol(Protocol):
-    async def build_export(self, run_id: str) -> HistoryExportDownload: ...
-
-
 class SettingsSpeedServiceProtocol(Protocol):
     def status_snapshot(self) -> SpeedSourceStatusSnapshot: ...
 
     def obd_status(self) -> ObdStatusSnapshot: ...
-
-
-class ObdAdminServiceProtocol(Protocol):
-    def scan_obd_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
-
-    def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
-
-    def refresh_obd_status(self) -> None: ...
 
 
 class SpeedSourceSettingsServiceProtocol(Protocol):
@@ -137,14 +105,14 @@ class SettingsDeps:
     ui_preferences: UiPreferencesStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
-    obd_admin_service: ObdAdminServiceProtocol
+    obd_admin_service: ObdService
 
 
 @dataclass(slots=True)
 class HistoryDeps:
-    run_service: HistoryRunServiceProtocol
-    report_service: HistoryReportServiceProtocol
-    export_service: HistoryExportServiceProtocol
+    run_service: ProjectedHistoryRunService
+    report_service: HistoryReportService
+    export_service: ProjectedHistoryExportService
 
 
 @dataclass(slots=True)

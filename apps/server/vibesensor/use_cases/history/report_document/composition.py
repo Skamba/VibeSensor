@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting import PreparedReportInput
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 
 from .document_context import build_report_document_context
 from .document_output import assemble_report_document

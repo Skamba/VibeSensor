@@ -9,7 +9,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisFactorResponse,
     WholeRunDiagnosisSummaryResponse,
 )
-from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
     DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,
     DiagnosisFactor,

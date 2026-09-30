@@ -6,12 +6,10 @@ export {
   setSettingsLanguage,
   getSettingsSpeedUnit,
   setSettingsSpeedUnit,
-  getSettingsCars,
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,
   getSpeedSourceStatus,
-  getSettingsObdStatus,
 } from "./api/settings";
 export {
   getCarLibraryBrands,

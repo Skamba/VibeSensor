@@ -18,8 +18,7 @@ one big state-machine class:
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
 - `whole_run_spectra.py` owns the connected bounded raw range-read sidecar
-  executor. `post_run_raw_windows.py` remains a compatibility/support window
-  iterator over finalized raw sidecars.
+  executor.
 - `CaptureReadinessTracker` owns the backend pre-record readiness checklist for
   idle/live states.
 - `RunRecorder` coordinates those helpers without re-owning their internals.
@@ -232,10 +231,8 @@ task/timeout helpers:
 | `apps/server/vibesensor/use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `apps/server/vibesensor/use_cases/run/logger.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
-| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path. |
+| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as one sequence of stage functions that call the whole-run diagnostics builders directly. |
 | `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |
-| `apps/server/vibesensor/use_cases/run/post_analysis_whole_run_builders.py` | Adapter between the executor and whole-run spectra/context/order/spatial sidecar builders. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_raw_windows.py` | Compatibility/support raw range-read window boundary. |
 | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spectra.py` | Current whole-run spectral sidecar builder over bounded raw range reads. |
 | `apps/server/vibesensor/use_cases/diagnostics/whole_run_context.py` | Current whole-run context labels and compact intervals. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_*.py` | Current whole-run order trace, scoring, and family-summary sidecar/summarization stages. |

@@ -28,7 +28,7 @@ def _write_config(tmp_path: Path) -> Path:
 
 def _fake_app_runtime(router_deps: object) -> SimpleNamespace:
     return SimpleNamespace(
-        lifecycle=SimpleNamespace(lifecycle_runtime=lambda: SimpleNamespace()),
+        lifecycle=SimpleNamespace(),
         router=router_deps,
     )
 

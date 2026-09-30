@@ -18,7 +18,7 @@ from vibesensor.shared.report_presentation import (
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "PrimaryCandidateContext",
@@ -55,7 +55,7 @@ def resolve_primary_report_candidate(
     aggregate: TestRun,
     facts: PrimaryReportFacts,
     confidence_facts: ReportConfidenceFacts | None = None,
-    diagnosis_summary: ReportWholeRunDiagnosisSummary | None = None,
+    diagnosis_summary: WholeRunDiagnosisSummary | None = None,
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:

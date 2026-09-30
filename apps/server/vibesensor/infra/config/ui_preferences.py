@@ -9,10 +9,10 @@ from typing import get_args
 
 from vibesensor.infra.config.car_settings import _UpdateWithRollback
 from vibesensor.infra.config.settings_transaction import log_settings_change
-from vibesensor.shared.boundaries.settings.snapshot import (
+from vibesensor.shared.boundaries.settings import (
     validated_language_code as _validated_language,
 )
-from vibesensor.shared.boundaries.settings.snapshot import (
+from vibesensor.shared.boundaries.settings import (
     validated_speed_unit_code as _validated_speed_unit,
 )
 from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode

@@ -294,11 +294,6 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["settings.update.health.analysis_run"] == "Actieve analyse"
     assert ui["settings.update.health.analysis_queue_depth"] == "Wachtrij analyses"
     assert ui["settings.tire_aspect"] == "Zijwanghoogte (%)"
-    assert ui["settings.wheel_bandwidth"] == "Wielorde-bandbreedte (%)"
-    assert ui["settings.driveshaft_bandwidth"] == "Aandrijfasorde-bandbreedte (%)"
-    assert ui["settings.engine_bandwidth"] == "Motororde-bandbreedte (%)"
-    assert ui["settings.min_half_width"] == "Minimale halve breedte (Hz)"
-    assert ui["settings.max_half_width"] == "Maximale halve breedte (%)"
     assert ui["status.running"] == "Lopend"
     assert "Handmatig" in ui["speed.override"]
     assert ui["speed.unit"] == "Eenheid"

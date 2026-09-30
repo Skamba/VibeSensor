@@ -12,12 +12,13 @@ import pytest
 from test_support import response_payload
 from test_support.history_db_async import execute_statements, fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.routes import iter_api_routes
 
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -252,7 +253,7 @@ def _make_fake_state(history_db: Any) -> Any:
 
 def _find_endpoint(router, path: str):
     """Return the endpoint callable for *path*, or ``pytest.fail``."""
-    for route in router.routes:
+    for route in iter_api_routes(router.routes):
         if getattr(route, "path", "") == path:
             return route.endpoint
     pytest.fail(f"Route {path!r} not found")

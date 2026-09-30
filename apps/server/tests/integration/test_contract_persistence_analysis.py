@@ -24,7 +24,7 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import (
+from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )

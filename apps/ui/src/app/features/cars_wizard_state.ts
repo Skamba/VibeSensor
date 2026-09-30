@@ -6,7 +6,14 @@ import type {
 } from "../../api";
 import type { WizardSummaryData } from "../views/car_wizard_view";
 import { buildGearboxConfidenceHint } from "./car_confidence_summary";
-import { formatCarLibraryTireOption } from "./cars_tire_setup";
+import { formatCarLibraryTireOption, tireOptionFront } from "./cars_tire_setup";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "../ui_signals";
 
 export type WizardSpecBranch = "library" | "manual" | null;
 
@@ -98,7 +105,7 @@ function readPositiveWizardNumber(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-export function readWizardManualTireValues(
+function readWizardManualTireValues(
   step: number,
   values: { width: unknown; aspect: unknown; rim: unknown },
 ): ManualTireValues | null {
@@ -114,7 +121,7 @@ export function readWizardManualTireValues(
   return { width, aspect, rim };
 }
 
-export function readWizardManualGearboxValues(
+function readWizardManualGearboxValues(
   step: number,
   values: { finalDrive: unknown; topGear: unknown },
 ): ManualGearboxValues | null {
@@ -275,5 +282,164 @@ export function buildWizardSummaryData(
           ? formatManualGearboxSummary(manualGearbox, deps)
           : null
         : (state.selectedGearbox?.name ?? null),
+  };
+}
+
+export type CarsFeatureOptionsStatus = "idle" | "loading" | "error" | "ready";
+
+export interface CarsFeatureOptionsState<TOption> {
+  message: string | null;
+  options: readonly TOption[];
+  status: CarsFeatureOptionsStatus;
+}
+
+export function createIdleOptionsState<
+  TOption,
+>(): CarsFeatureOptionsState<TOption> {
+  return {
+    message: null,
+    options: [],
+    status: "idle",
+  };
+}
+
+export function createErrorOptionsState<TOption>(
+  message: string,
+): CarsFeatureOptionsState<TOption> {
+  return {
+    message,
+    options: [],
+    status: "error",
+  };
+}
+
+export function createLoadingOptionsState<TOption>(
+  message: string,
+): CarsFeatureOptionsState<TOption> {
+  return {
+    message,
+    options: [],
+    status: "loading",
+  };
+}
+
+export function createReadyOptionsState<TOption>(
+  options: readonly TOption[],
+): CarsFeatureOptionsState<TOption> {
+  return {
+    message: null,
+    options: [...options],
+    status: "ready",
+  };
+}
+
+export interface CarsFeatureManualInputState {
+  finalDrive: string;
+  rim: string;
+  tireAspect: string;
+  tireWidth: string;
+  topGear: string;
+}
+
+export interface CarsFeatureManualInputStore {
+  readonly finalDrive: Signal<string>;
+  readonly rim: Signal<string>;
+  readonly state: ReadonlySignal<CarsFeatureManualInputState>;
+  readonly tireAspect: Signal<string>;
+  readonly tireWidth: Signal<string>;
+  readonly topGear: Signal<string>;
+  readonly manualGearbox: ReadonlySignal<ManualGearboxValues | null>;
+  readonly manualTire: ReadonlySignal<ManualTireValues | null>;
+  write(inputs: CarsFeatureManualInputState): void;
+}
+
+export function firstMissingManualInputField(
+  inputs: CarsFeatureManualInputState,
+): keyof CarsFeatureManualInputState | null {
+  if (readPositiveWizardNumber(inputs.tireWidth) == null) {
+    return "tireWidth";
+  }
+  if (readPositiveWizardNumber(inputs.tireAspect) == null) {
+    return "tireAspect";
+  }
+  if (readPositiveWizardNumber(inputs.rim) == null) {
+    return "rim";
+  }
+  if (readPositiveWizardNumber(inputs.finalDrive) == null) {
+    return "finalDrive";
+  }
+  if (readPositiveWizardNumber(inputs.topGear) == null) {
+    return "topGear";
+  }
+  return null;
+}
+
+export function tireInputsFromOption(
+  option: CarLibraryTireOption,
+  current: CarsFeatureManualInputState,
+): CarsFeatureManualInputState {
+  const front = tireOptionFront(option);
+  if (!front) {
+    return current;
+  }
+  return {
+    ...current,
+    rim: String(front.rim_in),
+    tireAspect: String(front.aspect_pct),
+    tireWidth: String(front.width_mm),
+  };
+}
+
+export function createCarsManualInputStore(
+  step: ReadonlySignal<number>,
+): CarsFeatureManualInputStore {
+  const finalDrive = signal<string>(
+    DEFAULT_CARS_WIZARD_MANUAL_INPUTS.finalDrive,
+  );
+  const rim = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.rim);
+  const tireAspect = signal<string>(
+    DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect,
+  );
+  const tireWidth = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireWidth);
+  const topGear = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.topGear);
+  const state = computed<CarsFeatureManualInputState>(() => ({
+    finalDrive: finalDrive.value,
+    rim: rim.value,
+    tireAspect: tireAspect.value,
+    tireWidth: tireWidth.value,
+    topGear: topGear.value,
+  }));
+
+  function write(inputs: CarsFeatureManualInputState): void {
+    batch(() => {
+      finalDrive.value = inputs.finalDrive;
+      rim.value = inputs.rim;
+      tireAspect.value = inputs.tireAspect;
+      tireWidth.value = inputs.tireWidth;
+      topGear.value = inputs.topGear;
+    });
+  }
+
+  return {
+    finalDrive,
+    rim,
+    state,
+    tireAspect,
+    tireWidth,
+    topGear,
+    manualGearbox: computed(() =>
+      readWizardManualGearboxValues(step.value, {
+        finalDrive: finalDrive.value,
+        topGear: topGear.value,
+      }),
+    ),
+    manualTire: computed(() =>
+      readWizardManualTireValues(step.value, {
+        aspect: tireAspect.value,
+        rim: rim.value,
+        width: tireWidth.value,
+      }),
+    ),
+    write,
   };
 }

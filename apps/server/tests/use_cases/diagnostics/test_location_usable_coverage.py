@@ -11,7 +11,7 @@ from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensit
 
 
 def _typed_samples(mappings: list[dict[str, object]]):
-    from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+    from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 
     return sensor_frames_from_mappings(mappings)
 

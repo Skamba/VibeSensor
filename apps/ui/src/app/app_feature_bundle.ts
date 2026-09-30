@@ -1,50 +1,36 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import {
-  createAppFeatureBundlePorts,
-  createRealtimeFeatureRecordingPorts,
-} from "./app_feature_bundle_ports";
-import {
-  createRealtimeFeature,
-  type RealtimeFeatureChromePorts,
-  type RealtimeFeatureSelectionPorts,
-} from "./features/realtime_feature";
 import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
-import type { SettingsFeatureViewPorts } from "./features/settings_feature";
+import { createRealtimeFeature } from "./features/realtime_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
+import type { AppFeatureSecondaryBundle } from "./app_feature_secondary_bundle";
+import type { UiStartupFeatures } from "./runtime/ui_startup_coordinator";
 import type { AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
 import type { ReadonlySignal } from "./ui_signals";
-import type { AppFeatureBundle } from "./app_feature_bundle_ports";
-import type { AppFeatureSecondaryBundle } from "./app_feature_secondary_bundle";
 import { preloadHistoryLazyView } from "./views/history_lazy_view";
 import { preloadSettingsLazyView } from "./views/settings_lazy_view";
-export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 
-export interface AppFeatureBundleSharedDeps {
+/** Everything the feature controllers need from state and the runtime. */
+export interface AppFeatureContext {
+  state: AppState;
   services: FeatureServices;
   formatting: FeatureFormatting;
-  serverState: {
-    queryClient: QueryClient;
-  };
-}
-
-export interface AppFeatureBundleRuntimePorts {
+  queryClient: QueryClient;
   panels: UiMountedPanels;
-  navigation: {
-    activatePrimaryView(viewId: string): void;
-    activeViewId: ReadonlySignal<string>;
-  };
-  realtimeChrome: Pick<RealtimeFeatureChromePorts, "setShellLiveStatus">;
-  transport: RealtimeFeatureSelectionPorts;
-  view: SettingsFeatureViewPorts;
+  activeViewId: ReadonlySignal<string>;
+  activatePrimaryView(viewId: string): void;
+  setShellLiveStatus(variant: string, text: string): void;
+  sendSelection(): void;
+  refreshSpectrumDecorations(): void;
 }
 
-export interface AppFeatureBundleDeps {
-  state: AppState;
-  shared: AppFeatureBundleSharedDeps;
-  runtime: AppFeatureBundleRuntimePorts;
+export interface AppFeatureBundle {
+  bindHandlers(): void;
+  dispose(): void;
+  ensureViewReady(viewId: string): Promise<void>;
+  startup: UiStartupFeatures;
 }
 
 interface LazySecondaryFeatureBundle {
@@ -56,7 +42,7 @@ interface LazySecondaryFeatureBundle {
 }
 
 function createLazySecondaryFeatureBundle(
-  deps: AppFeatureBundleDeps,
+  ctx: AppFeatureContext,
 ): LazySecondaryFeatureBundle {
   let bundle: AppFeatureSecondaryBundle | null = null;
   let bundlePromise: Promise<AppFeatureSecondaryBundle> | null = null;
@@ -75,7 +61,7 @@ function createLazySecondaryFeatureBundle(
     }
     bundlePromise = import("./app_feature_secondary_bundle")
       .then(({ createAppFeatureSecondaryBundle }) => {
-        const nextBundle = createAppFeatureSecondaryBundle(deps);
+        const nextBundle = createAppFeatureSecondaryBundle(ctx);
         if (disposed) {
           nextBundle.dispose();
           return nextBundle;
@@ -159,18 +145,13 @@ function createLazySecondaryFeatureBundle(
 }
 
 export function createAppFeatureBundle(
-  deps: AppFeatureBundleDeps,
+  ctx: AppFeatureContext,
 ): AppFeatureBundle {
-  const {
-    state,
-    shared: { services, formatting, serverState },
-    runtime,
-  } = deps;
-  const { panels } = runtime;
-  const secondary = createLazySecondaryFeatureBundle(deps);
+  const { state, services, panels } = ctx;
+  const secondary = createLazySecondaryFeatureBundle(ctx);
   const dashboardSpeedSourceStatus = createDashboardSpeedSourceStatusModule({
-    activeViewId: runtime.navigation.activeViewId,
-    queryClient: serverState.queryClient,
+    activeViewId: ctx.activeViewId,
+    queryClient: ctx.queryClient,
     settings: state.settings,
   });
   const reportFeatureLoadError = (error: unknown): void => {
@@ -197,79 +178,61 @@ export function createAppFeatureBundle(
   };
 
   const realtime = createRealtimeFeature({
-    state: {
-      realtime: state.realtime,
-      settings: state.settings,
-      spectrum: state.spectrum,
-      shell: state.shell,
-    },
-    panels: {
-      sensorsPanel: panels.settings.sensors,
-    },
-    ports: {
-      chrome: {
-        ...runtime.realtimeChrome,
-        liveOverview: panels.dashboard.liveOverview,
-        loggingPanel: panels.dashboard.logging,
+    realtime: state.realtime,
+    settings: state.settings,
+    spectrum: state.spectrum,
+    shell: state.shell,
+    sensorsPanel: panels.settings.sensors,
+    liveOverview: panels.dashboard.liveOverview,
+    loggingPanel: panels.dashboard.logging,
+    setShellLiveStatus: ctx.setShellLiveStatus,
+    navigation: {
+      activatePrimaryView: ctx.activatePrimaryView,
+      activateSettingsTab: (tabId) => panels.settingsShell.activateTab(tabId),
+      openCarWizard: () => {
+        void secondary.openCarWizard().catch(reportFeatureLoadError);
       },
-      navigation: {
-        activatePrimaryView: runtime.navigation.activatePrimaryView,
-        activateSettingsTab: (tabId) => panels.settingsShell.activateTab(tabId),
-        openCarWizard: () => {
-          void secondary.openCarWizard().catch(reportFeatureLoadError);
-        },
-      },
-      selection: runtime.transport,
-      recording: createRealtimeFeatureRecordingPorts(() =>
-        secondary.refreshHistory(),
-      ),
     },
+    sendSelection: ctx.sendSelection,
+    onRecordingStatusChanged: () => secondary.refreshHistory(),
     services,
     formatting: {
-      formatInt: formatting.formatInt,
+      formatInt: ctx.formatting.formatInt,
     },
-    queryClient: serverState.queryClient,
+    queryClient: ctx.queryClient,
   });
 
-  const bundle = createAppFeatureBundlePorts({
-    dashboard: {
-      hydrateStartupState: () =>
-        Promise.all([
-          loadDashboardStartupState(serverState.queryClient, state.settings),
-          dashboardSpeedSourceStatus.markStartupReady(),
-        ]).then(() => undefined),
+  return {
+    bindHandlers(): void {
+      dashboardSpeedSourceStatus.bindHandlers();
+      realtime.bindHandlers();
     },
-    realtime,
+    dispose(): void {
+      dashboardSpeedSourceStatus.dispose();
+      secondary.dispose();
+      realtime.dispose();
+    },
     ensureViewReady: (viewId) =>
       ensureSecondaryViewReady(viewId).catch((error) => {
         reportFeatureLoadError(error);
         throw error;
       }),
-    secondary: {
-      dispose: () => secondary.dispose(),
-    },
-  });
-
-  return {
-    ...bundle,
-    dispose(): void {
-      dashboardSpeedSourceStatus.dispose();
-      bundle.dispose();
-    },
-    shell: {
-      bindHandlers(): void {
-        dashboardSpeedSourceStatus.bindHandlers();
-        bundle.shell.bindHandlers();
-      },
-    },
     startup: {
-      ...bundle.startup,
       dashboard: {
         hydrateStartupState: () =>
-          bundle.startup.dashboard.hydrateStartupState().catch((error) => {
-            reportFeatureLoadError(error);
-            throw error;
-          }),
+          Promise.all([
+            loadDashboardStartupState(ctx.queryClient, state.settings),
+            dashboardSpeedSourceStatus.markStartupReady(),
+          ])
+            .then(() => undefined)
+            .catch((error) => {
+              reportFeatureLoadError(error);
+              throw error;
+            }),
+      },
+      realtime: {
+        refreshLocationOptions: () => realtime.refreshLocationOptions(),
+        refreshLoggingStatus: () => realtime.refreshLoggingStatus(),
       },
     },
   };

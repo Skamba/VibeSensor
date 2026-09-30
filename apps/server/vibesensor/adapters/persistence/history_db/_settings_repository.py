@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 import aiosqlite
 
-from vibesensor.shared.boundaries.settings.snapshot import (
+from vibesensor.shared.boundaries.settings import (
     settings_snapshot_from_json,
     settings_snapshot_to_json,
 )

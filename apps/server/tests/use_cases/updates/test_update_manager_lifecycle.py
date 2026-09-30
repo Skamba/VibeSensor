@@ -20,8 +20,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
-    UpdateTerminalStateReporter,
-    build_update_status_tracker,
+    UpdateStatusTracker,
 )
 
 
@@ -39,14 +38,11 @@ def _build_manager(
     timeout_s: float = 10.0,
 ) -> tuple[UpdateManager, UpdateStateStore, object, AsyncMock]:
     state_store = UpdateStateStore(tmp_path / "update_status.json")
-    tracker = build_update_status_tracker(state_store=state_store)
-    reporter = UpdateTerminalStateReporter(status=tracker)
+    tracker = UpdateStatusTracker(state_store=state_store)
     workflow_run = AsyncMock()
     manager = UpdateManager(
         status=tracker,
-        reporter=reporter,
-        workflow=SimpleNamespace(run=workflow_run),
-        startup_recovery=SimpleNamespace(recover=AsyncMock()),
+        job=SimpleNamespace(run=workflow_run, recover_interrupted=AsyncMock()),
         usb_status_service=MagicMock(),
         timeout_s=timeout_s,
     )

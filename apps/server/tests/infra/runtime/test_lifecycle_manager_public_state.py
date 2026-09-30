@@ -27,12 +27,12 @@ async def _wait_until(predicate, *, spins: int = 40) -> None:
 
 
 def _build_lifecycle(*, start_udp_receiver, **overrides):
-    runtime_state, _ = _make_runtime(**overrides)
+    runtime, _ = _make_runtime(**overrides)
     lifecycle = LifecycleManager(
-        runtime=runtime_state.lifecycle_runtime(),
+        runtime=runtime,
         start_udp_receiver=start_udp_receiver,
     )
-    return runtime_state, lifecycle
+    return runtime, lifecycle
 
 
 @pytest.mark.asyncio
@@ -172,7 +172,7 @@ async def test_start_clears_restartable_failure_after_successful_retry(
         obd_runner=obd_runner,
         update_manager=update_manager,
     )
-    monkeypatch.setattr("vibesensor.infra.runtime.task_supervisor.anyio.sleep", _fast_sleep)
+    monkeypatch.setattr("vibesensor.infra.runtime.background_tasks.anyio.sleep", _fast_sleep)
 
     await lifecycle.start()
     try:

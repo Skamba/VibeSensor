@@ -22,11 +22,11 @@ from vibesensor.adapters.pdf.pdf_text import (
     _wrap_lines,
 )
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
-    NextStep,
     ReportLabelValueRow,
 )
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan

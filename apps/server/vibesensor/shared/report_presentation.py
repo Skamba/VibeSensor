@@ -18,6 +18,7 @@ __all__ = [
     "candidate_signal_text",
     "coverage_label",
     "coverage_notes",
+    "display_lang",
     "display_location",
     "display_phase_label",
     "display_speed_band",
@@ -124,7 +125,7 @@ def display_location(value: object, *, short: bool = True, tr: Callable[..., str
     text = str(value or "").strip()
     if not text:
         return tr("UNKNOWN")
-    lang = _display_lang(tr)
+    lang = display_lang(tr)
     candidates = location_candidates(text)
     if len(candidates) == 2:
         return tr(
@@ -142,7 +143,8 @@ def display_location(value: object, *, short: bool = True, tr: Callable[..., str
     return human_location(text, short=short, lang=lang)
 
 
-def _display_lang(tr: Callable[..., str]) -> str:
+def display_lang(tr: Callable[..., str]) -> str:
+    """Infer the display language code (``nl``/``en``) from a translator callable."""
     try:
         return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
     except Exception:
@@ -169,7 +171,7 @@ def display_speed_band(value: object, *, tr: Callable[..., str]) -> str:
     text = str(value or "").strip()
     if not text:
         return ""
-    if _display_lang(tr) == "nl":
+    if display_lang(tr) == "nl":
         return text.replace("km/h", "km/u")
     return text
 
@@ -328,12 +330,12 @@ def append_unique_line(lines: list[str], text: object) -> None:
 
 def candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
     if finding.signature_labels:
-        lang = _display_lang(tr)
+        lang = display_lang(tr)
         return ", ".join(
             order_label_human(lang, str(label)) for label in finding.signature_labels[:2]
         )
     if finding.order:
-        return order_label_human(_display_lang(tr), finding.order)
+        return order_label_human(display_lang(tr), finding.order)
     if finding.frequency_hz is not None:
         return f"{finding.frequency_hz:.1f} Hz"
     return tr("REPORT_SIGNAL_FALLBACK")

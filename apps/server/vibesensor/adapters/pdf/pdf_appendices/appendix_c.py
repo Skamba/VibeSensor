@@ -44,7 +44,10 @@ __all__ = ["_appendix_c_page"]
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan
-    from vibesensor.shared.boundaries.reporting.document import AppendixCData, DenseEvidenceRow
+    from vibesensor.shared.boundaries.reporting.document.appendices import (
+        AppendixCData,
+        DenseEvidenceRow,
+    )
 
 
 def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:

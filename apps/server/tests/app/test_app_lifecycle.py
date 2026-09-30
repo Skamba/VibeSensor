@@ -31,7 +31,6 @@ def _write_config(tmp_path: Path) -> Path:
 async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) -> None:
     cfg_path = _write_config(tmp_path)
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
-    from vibesensor import app as app_module
     from vibesensor.app import bootstrap as bootstrap_mod
 
     async def _fake_udp_receiver(*args, **kwargs):
@@ -54,7 +53,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
     monkeypatch.setattr(SQLiteHistoryEngine, "aclose", _fake_close)
 
-    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
+    app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):
         pass
 
@@ -65,7 +64,6 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
 async def test_lifespan_startup_runtime_error_cleans_up(tmp_path: Path, monkeypatch) -> None:
     cfg_path = _write_config(tmp_path)
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
-    from vibesensor import app as app_module
     from vibesensor.app import bootstrap as bootstrap_mod
 
     async def _failing_start(self) -> None:
@@ -79,7 +77,7 @@ async def test_lifespan_startup_runtime_error_cleans_up(tmp_path: Path, monkeypa
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _failing_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
 
-    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
+    app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
 
     with pytest.raises(RuntimeError, match="start failed"):
         async with app.router.lifespan_context(app):
@@ -95,7 +93,6 @@ async def test_lifespan_startup_programmer_error_does_not_clean_up(
 ) -> None:
     cfg_path = _write_config(tmp_path)
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
-    from vibesensor import app as app_module
     from vibesensor.app import bootstrap as bootstrap_mod
 
     async def _failing_start(self) -> None:
@@ -109,7 +106,7 @@ async def test_lifespan_startup_programmer_error_does_not_clean_up(
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _failing_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
 
-    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
+    app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
 
     with pytest.raises(TypeError, match="bad bootstrap wiring"):
         async with app.router.lifespan_context(app):

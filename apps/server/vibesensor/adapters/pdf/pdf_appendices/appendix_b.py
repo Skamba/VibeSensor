@@ -22,14 +22,13 @@ from vibesensor.adapters.pdf.pdf_style import (
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import AppendixBData
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixBData
 
 from .tables import _draw_table, _fmt_db, _fmt_relative_db
 from .title_bar import draw_appendix_title_bar
 
 __all__ = [
     "_appendix_b_page",
-    "_has_appendix_b_content",
 ]
 
 if TYPE_CHECKING:
@@ -333,19 +332,3 @@ def _draw_appendix_b_bottom_panel(
                 count="{count}",
             ),
         )
-
-
-def _has_appendix_b_content(appendix: AppendixBData) -> bool:
-    return any(
-        (
-            appendix.dominant_corner,
-            appendix.runner_up_corner,
-            appendix.dominance_ratio_text,
-            appendix.proof_basis_note,
-            appendix.location_confidence,
-            appendix.coverage_label,
-            appendix.coverage_notes,
-            appendix.intensity_rows,
-            appendix.sensor_observation_rows,
-        )
-    )

@@ -11,7 +11,7 @@ from test_support.report_helpers import report_sample
 
 from vibesensor.adapters.history import ProjectedHistoryRunService
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.analysis_payloads import (
+from vibesensor.shared.boundaries.analysis_payloads.persisted import (
     persisted_analysis_from_storage_json_object,
     persisted_analysis_to_storage_json_object,
 )

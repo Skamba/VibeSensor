@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.transport.uplink_readiness import UpdateUplinkReadiness
-from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
+from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
@@ -70,7 +70,7 @@ class UpdateUsbInternetSession:
     def __init__(
         self,
         *,
-        status_service: UsbInternetStatusReader,
+        status_service: UsbInternetStatusService,
         commands: UpdateCommandExecutor,
         status: UpdateStatusTracker,
         config: UpdateWifiConfig,

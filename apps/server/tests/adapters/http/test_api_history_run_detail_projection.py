@@ -15,6 +15,7 @@ from _history_endpoint_helpers import (
 )
 from fastapi.testclient import TestClient
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.routes import iter_api_routes
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -275,7 +276,7 @@ def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     app = make_app_from_state(FakeState(db, FakeWsHub()))
     route = next(
         route
-        for route in app.router.routes
+        for route in iter_api_routes(app.router.routes)
         if getattr(route, "path", "") == "/api/history/{run_id}"
         and "GET" in getattr(route, "methods", set())
     )

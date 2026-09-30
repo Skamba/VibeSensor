@@ -1,0 +1,12 @@
+# Historical false positives (i18n label keys, storage key names, a WebSocket handshake header).
+6ce176eae15be241879d87f07d634caed7cb4a4f:apps/server/tests/adapters/pdf/test_report_dense_evidence.py:generic-api-key:34
+5f457eca888173fb2f0f5d904b9f94a4aec0186a:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:47
+5f457eca888173fb2f0f5d904b9f94a4aec0186a:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:48
+d7660e718853141dccc89f76266c263634a74aa5:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:12
+d7660e718853141dccc89f76266c263634a74aa5:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:13
+8aea59de01927189fe78d8d9c4cbfbf22ca0935f:apps/ui/src/app/runtime/ui_spectrum_controller.ts:generic-api-key:67
+8aea59de01927189fe78d8d9c4cbfbf22ca0935f:apps/ui/src/app/runtime/ui_spectrum_controller.ts:generic-api-key:68
+92388577d0772477ed6e298d04f4103ca7a6376d:apps/ui/src/legacy_main_runtime.ts:generic-api-key:113
+037609a96978b749430cccd2e91669d72e1c25ac:.github/workflows/ci.yml:generic-api-key:96
+9d61226d1d6c91746b5e9318c5cd1cb016578c4f:pi/public/app.js:generic-api-key:53
+cf55ec6ae5308c4e2e8fd1c0be58bd7ea990c6a8:ui/src/main.ts:generic-api-key:71

@@ -6,17 +6,17 @@ import asyncio
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING
 
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.adapters.obd.elm327 import Elm327Session, ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPollResult, execute_poll_plan
-from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
-from vibesensor.adapters.obd.runtime_connection_observation import (
-    ObdRuntimeConnectionObservation,
-)
 from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
+
+if TYPE_CHECKING:
+    from vibesensor.adapters.obd.service import ObdService
 
 __all__ = ["ObdConnectionExecutor", "ObdConnectionLoopState"]
 
@@ -40,9 +40,8 @@ class ObdConnectionExecutor:
 
     __slots__ = (
         "_admin_client",
-        "_connection_observation",
-        "_connection_control",
         "_monotonic",
+        "_obd",
         "_session_factory",
         "_sleep",
     )
@@ -51,15 +50,13 @@ class ObdConnectionExecutor:
         self,
         *,
         admin_client: ObdAdminClient,
-        connection_observation: ObdRuntimeConnectionObservation,
-        connection_control: ObdRuntimeConnectionControl,
+        obd: ObdService,
         session_factory: SessionFactory,
         monotonic: MonotonicFn = time.monotonic,
         sleep: SleepFn = asyncio.sleep,
     ) -> None:
         self._admin_client = admin_client
-        self._connection_observation = connection_observation
-        self._connection_control = connection_control
+        self._obd = obd
         self._session_factory = session_factory
         self._monotonic = monotonic
         self._sleep = sleep
@@ -117,7 +114,7 @@ class ObdConnectionExecutor:
         error: str | None,
         sleep_s: float,
     ) -> ObdConnectionLoopState:
-        self._connection_control.mark_disconnected(error=error)
+        self._obd.mark_disconnected(error=error)
         await self._sleep(sleep_s)
         return replace(state, reconnect_delay_s=_INITIAL_RECONNECT_DELAY_S)
 
@@ -128,7 +125,7 @@ class ObdConnectionExecutor:
         mac_address: str,
         configured_name: str | None,
     ) -> ObdConnectionLoopState:
-        self._connection_control.mark_connecting()
+        self._obd.mark_connecting()
         try:
             session, device = await asyncio.to_thread(
                 self._connect_blocking,
@@ -136,7 +133,7 @@ class ObdConnectionExecutor:
                 configured_name,
             )
         except (OperationalError, OSError, ObdTransportError) as exc:
-            self._connection_control.mark_disconnected(
+            self._obd.mark_disconnected(
                 error=str(exc),
                 reconnect_delay_s=state.reconnect_delay_s,
             )
@@ -145,7 +142,7 @@ class ObdConnectionExecutor:
                 state,
                 reconnect_delay_s=self._next_reconnect_delay(state.reconnect_delay_s),
             )
-        self._connection_control.mark_connected(device)
+        self._obd.mark_connected(device)
         return ObdConnectionLoopState(
             session=session,
             session_device_mac=device.mac_address,
@@ -164,7 +161,7 @@ class ObdConnectionExecutor:
     async def _run_poll_step(self, *, state: ObdConnectionLoopState) -> ObdConnectionLoopState:
         assert state.session is not None
         poll_result = await asyncio.to_thread(self._poll_cycle_blocking, state.session)
-        connection_lost = self._connection_control.apply_poll_cycle(
+        connection_lost = self._obd.apply_poll_cycle(
             poll_result,
             reconnect_delay_s=state.reconnect_delay_s,
         )
@@ -209,7 +206,7 @@ class ObdConnectionExecutor:
                 session.close()
 
     def _poll_cycle_blocking(self, session: Elm327Session) -> ObdPollResult:
-        plan = self._connection_observation.prepare_poll()
+        plan = self._obd.prepare_poll()
         return execute_poll_plan(session, plan=plan, monotonic=self._monotonic)
 
     async def _close_session_if_needed(

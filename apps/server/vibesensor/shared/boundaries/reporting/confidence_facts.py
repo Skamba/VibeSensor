@@ -26,9 +26,9 @@ from vibesensor.shared.types.history_analysis_contracts import (
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
-    from vibesensor.shared.boundaries.reporting.summary import (
-        ReportDiagnosisFactor,
-        ReportWholeRunDiagnosisSummary,
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+        DiagnosisFactor,
+        WholeRunDiagnosisSummary,
     )
 
 __all__ = [
@@ -120,7 +120,7 @@ def build_report_confidence_facts(
 
 
 def report_confidence_from_diagnosis_summary(
-    diagnosis_summary: ReportWholeRunDiagnosisSummary,
+    diagnosis_summary: WholeRunDiagnosisSummary,
 ) -> ReportConfidenceFacts:
     """Project report confidence directly from a persisted whole-run diagnosis summary."""
 
@@ -337,7 +337,7 @@ def _factor_details_payload(
 def _assessment_factor_from_summary_factor(
     factor: object,
 ) -> DiagnosisAssessmentFactor:
-    typed_factor = cast("ReportDiagnosisFactor", factor)
+    typed_factor = cast("DiagnosisFactor", factor)
     factor_key = cast(str, typed_factor.factor_key)
     polarity = cast(str, typed_factor.polarity)
     severity = cast(str, typed_factor.severity)
@@ -373,7 +373,7 @@ def _assessment_factor_from_summary_factor(
 
 def _raw_backed_sample_count(factors: tuple[object, ...]) -> int:
     for factor in factors:
-        typed_factor = cast("ReportDiagnosisFactor", factor)
+        typed_factor = cast("DiagnosisFactor", factor)
         if typed_factor.factor_key != "raw_backed":
             continue
         count = typed_factor.details.raw_backed_sample_count
@@ -381,7 +381,7 @@ def _raw_backed_sample_count(factors: tuple[object, ...]) -> int:
     return 0
 
 
-def _supporting_location_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> int:
+def _supporting_location_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         if factor.factor_key not in {
             "localized_support",
@@ -394,7 +394,7 @@ def _supporting_location_count(diagnosis_summary: ReportWholeRunDiagnosisSummary
     return diagnosis_summary.supporting_sensor_count or 0
 
 
-def _top_support_location(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> str | None:
+def _top_support_location(diagnosis_summary: WholeRunDiagnosisSummary) -> str | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         if factor.factor_key not in {
             "localized_support",
@@ -407,7 +407,7 @@ def _top_support_location(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> 
     return diagnosis_summary.dominant_location
 
 
-def _top_support_share(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> float | None:
+def _top_support_share(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         if factor.factor_key not in {
             "localized_support",
@@ -420,7 +420,7 @@ def _top_support_share(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> flo
     return None
 
 
-def _mean_relative_error(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> float | None:
+def _mean_relative_error(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         if factor.factor_key not in {"tight_order_lock", "loose_order_lock"}:
             continue
@@ -430,7 +430,7 @@ def _mean_relative_error(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> f
     return None
 
 
-def _snr_db(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> float | None:
+def _snr_db(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         if factor.factor_key not in {"clean_signal", "noisy_signal"}:
             continue
@@ -440,7 +440,7 @@ def _snr_db(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> float | None:
     return None
 
 
-def _speed_gap_window_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> int:
+def _speed_gap_window_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
     for factor in diagnosis_summary.counterevidence_factors:
         if factor.factor_key != "speed_context_gaps":
             continue
@@ -450,7 +450,7 @@ def _speed_gap_window_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -
     return 0
 
 
-def _rpm_gap_window_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> int:
+def _rpm_gap_window_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
     for factor in diagnosis_summary.counterevidence_factors:
         if factor.factor_key != "rpm_context_gaps":
             continue
@@ -461,7 +461,7 @@ def _rpm_gap_window_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> 
 
 
 def _car_data_reference_scope(
-    diagnosis_summary: ReportWholeRunDiagnosisSummary,
+    diagnosis_summary: WholeRunDiagnosisSummary,
 ) -> str | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         value = factor.details.car_data_reference_scope
@@ -471,7 +471,7 @@ def _car_data_reference_scope(
 
 
 def _car_data_confidence(
-    diagnosis_summary: ReportWholeRunDiagnosisSummary,
+    diagnosis_summary: WholeRunDiagnosisSummary,
 ) -> str | None:
     for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
         value = factor.details.car_data_confidence

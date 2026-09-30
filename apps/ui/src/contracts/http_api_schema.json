@@ -118,14 +118,6 @@
           "default_axle_for_speed": {
             "$ref": "#/components/schemas/TireSpeedAxle"
           },
-          "driveshaft_bandwidth_pct": {
-            "title": "Driveshaft Bandwidth Pct",
-            "type": "number"
-          },
-          "engine_bandwidth_pct": {
-            "title": "Engine Bandwidth Pct",
-            "type": "number"
-          },
           "final_drive_ratio": {
             "title": "Final Drive Ratio",
             "type": "number"
@@ -148,14 +140,6 @@
           },
           "gear_uncertainty_pct": {
             "title": "Gear Uncertainty Pct",
-            "type": "number"
-          },
-          "max_band_half_width_pct": {
-            "title": "Max Band Half Width Pct",
-            "type": "number"
-          },
-          "min_abs_band_hz": {
-            "title": "Min Abs Band Hz",
             "type": "number"
           },
           "rear_rim_in": {
@@ -193,10 +177,6 @@
           "tire_width_mm": {
             "title": "Tire Width Mm",
             "type": "number"
-          },
-          "wheel_bandwidth_pct": {
-            "title": "Wheel Bandwidth Pct",
-            "type": "number"
           }
         },
         "title": "AnalysisSettingsPayload",
@@ -232,30 +212,6 @@
               }
             ],
             "title": "Default Axle For Speed"
-          },
-          "driveshaft_bandwidth_pct": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Driveshaft Bandwidth Pct"
-          },
-          "engine_bandwidth_pct": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Engine Bandwidth Pct"
           },
           "final_drive_ratio": {
             "anyOf": [
@@ -328,30 +284,6 @@
               }
             ],
             "title": "Gear Uncertainty Pct"
-          },
-          "max_band_half_width_pct": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Max Band Half Width Pct"
-          },
-          "min_abs_band_hz": {
-            "anyOf": [
-              {
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min Abs Band Hz"
           },
           "rear_rim_in": {
             "anyOf": [
@@ -461,18 +393,6 @@
               }
             ],
             "title": "Tire Width Mm"
-          },
-          "wheel_bandwidth_pct": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wheel Bandwidth Pct"
           }
         },
         "title": "AnalysisSettingsRequest",
@@ -494,14 +414,6 @@
             ],
             "title": "Default Axle For Speed",
             "type": "string"
-          },
-          "driveshaft_bandwidth_pct": {
-            "title": "Driveshaft Bandwidth Pct",
-            "type": "number"
-          },
-          "engine_bandwidth_pct": {
-            "title": "Engine Bandwidth Pct",
-            "type": "number"
           },
           "final_drive_ratio": {
             "title": "Final Drive Ratio",
@@ -546,14 +458,6 @@
           },
           "gear_uncertainty_pct": {
             "title": "Gear Uncertainty Pct",
-            "type": "number"
-          },
-          "max_band_half_width_pct": {
-            "title": "Max Band Half Width Pct",
-            "type": "number"
-          },
-          "min_abs_band_hz": {
-            "title": "Min Abs Band Hz",
             "type": "number"
           },
           "rear_rim_in": {
@@ -612,10 +516,6 @@
           "tire_width_mm": {
             "title": "Tire Width Mm",
             "type": "number"
-          },
-          "wheel_bandwidth_pct": {
-            "title": "Wheel Bandwidth Pct",
-            "type": "number"
           }
         },
         "required": [
@@ -624,15 +524,10 @@
           "rim_in",
           "final_drive_ratio",
           "current_gear_ratio",
-          "wheel_bandwidth_pct",
-          "driveshaft_bandwidth_pct",
-          "engine_bandwidth_pct",
           "speed_uncertainty_pct",
           "tire_diameter_uncertainty_pct",
           "final_drive_uncertainty_pct",
           "gear_uncertainty_pct",
-          "min_abs_band_hz",
-          "max_band_half_width_pct",
           "tire_deflection_factor"
         ],
         "title": "AnalysisSettingsResponse",

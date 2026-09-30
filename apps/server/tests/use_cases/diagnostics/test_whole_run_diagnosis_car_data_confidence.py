@@ -5,16 +5,22 @@ from typing import cast
 import pytest
 
 from vibesensor.domain import CarOrderReferenceStatus, DrivingPhase, VehicleFieldConfidence
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
+from vibesensor.report_i18n import tr as report_tr
+from vibesensor.shared.boundaries.reporting.confidence_facts import (
+    report_confidence_from_diagnosis_summary,
+)
+from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
+from vibesensor.shared.report_confidence_presentation import confidence_caveat_text
+from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialLocationSummary,
 )
-from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
     WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (
@@ -105,6 +111,35 @@ def test_build_whole_run_diagnosis_summaries_projects_vehicle_data_caveats(
     )
     assert factor.details.car_data_reference_scope == expected_scope
     assert factor.details.car_data_confidence == typed_confidence
+
+
+def test_persisted_vehicle_data_caveat_survives_report_reload() -> None:
+    summaries = _build_ranked_summaries(
+        car_order_reference_status=CarOrderReferenceStatus(
+            selection_source_status="exact_row",
+            tire_dimensions_confidence="unverified",
+            final_drive_ratio_confidence="official_exact",
+            current_gear_ratio_confidence="official_exact",
+            transmission_confidence="official_exact",
+        ),
+        ref_sources=("speed+tire",),
+        suspected_source="wheel/tire",
+    )
+    reloaded = report_summary_from_mapping(
+        {"whole_run_diagnosis_summaries": [summary.to_json_object() for summary in summaries]}
+    ).whole_run_diagnosis_summaries
+
+    original_confidence = report_confidence_from_diagnosis_summary(summaries[0])
+    reloaded_confidence = report_confidence_from_diagnosis_summary(reloaded[0])
+
+    assert reloaded_confidence == original_confidence
+    assert "unverified_vehicle_data" in reloaded_confidence.caveat_keys
+    assert reloaded_confidence.car_data_confidence == "unverified"
+    caveat = confidence_caveat_text(
+        reloaded_confidence, tr=lambda key, **kwargs: report_tr("en", key, **kwargs)
+    )
+    assert caveat is not None
+    assert "unverifiable vehicle data" in caveat
 
 
 def test_build_whole_run_diagnosis_summaries_does_not_penalize_direct_engine_reference() -> None:

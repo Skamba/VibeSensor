@@ -64,6 +64,7 @@ __all__ = [
     "WholeRunSpectralCoverageSummary",
     "WholeRunWindowSpectralSummary",
     "RawCaptureRangeReader",
+    "build_fft_computer",
     "build_whole_run_spectral_artifact_bundle",
     "build_whole_run_spectral_artifact_bundle_from_ranges",
     "raw_capture_range_reader_from_capture",
@@ -667,10 +668,7 @@ def _process_chunk(
 ) -> _SpectralChunkResult:
     sensor_manifest = chunk.sensor.manifest
     sample_rate_hz = int(sensor_manifest.sample_rate_hz or 0)
-    fft_computer = _build_fft_computer(
-        metadata=metadata,
-        sample_rate_hz=sample_rate_hz,
-    )
+    fft_computer = build_fft_computer(metadata)
     freq_hz = tuple(float_list(fft_computer.fft_params(sample_rate_hz)[0]))
     spectrum_rows = np.zeros((len(chunk.windows), len(freq_hz)), dtype=np.float32)
     summaries = tuple(
@@ -922,6 +920,8 @@ def _compute_window_spectrum(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
     axes_by_time = window_f32.T
+    # compute_fft_spectrum removes the mean again; dropping this first pass
+    # changes float32 rounding of the persisted spectral sidecars.
     detrended = axes_by_time - np.mean(axes_by_time, axis=1, keepdims=True)
     fft_result = fft_computer.compute_fft_spectrum(
         detrended,
@@ -953,11 +953,8 @@ def _scale_samples_to_g(
     return window_f32
 
 
-def _build_fft_computer(
-    *,
-    metadata: RunMetadata,
-    sample_rate_hz: int,
-) -> SpectralAnalysisComputer:
+def build_fft_computer(metadata: RunMetadata) -> SpectralAnalysisComputer:
+    """FFT state for post-stop diagnostic spectra (raw replay and whole-run windows)."""
     return SpectralAnalysisComputer(
         fft_n=int(metadata.fft_window_size_samples or 0),
         spectrum_min_hz=SPECTRUM_MIN_HZ,

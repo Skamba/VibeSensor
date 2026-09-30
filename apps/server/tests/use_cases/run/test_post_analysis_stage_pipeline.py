@@ -3,7 +3,7 @@ from __future__ import annotations
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorClockSync,
@@ -24,10 +24,8 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
+from vibesensor.use_cases.run import post_analysis_executor
 from vibesensor.use_cases.run.post_analysis_executor import (
-    PostAnalysisExecutionConfig,
-    PostAnalysisExecutionRunner,
-    resolve_whole_run_builders,
     run_build_post_analysis_input_stage,
     run_load_run_stage,
     run_persist_analysis_summary_stage,
@@ -116,25 +114,6 @@ def _raw_capture_manifest_with_sensor(run_id: str) -> RawCaptureManifest:
     )
 
 
-def test_post_analysis_execution_runner_stage_order_is_explicit() -> None:
-    runner = PostAnalysisExecutionRunner(
-        run_id="run-stage-order",
-        db=object(),
-        config=PostAnalysisExecutionConfig(
-            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
-        ),
-        analysis_start=0.0,
-    )
-
-    assert runner.stage_names == (
-        "LoadRunStage",
-        "BuildPostAnalysisInputStage",
-        "WholeRunPipelineStages",
-        "BuildReportFactsStage",
-        "PersistAnalysisSummaryStage",
-    )
-
-
 def test_run_load_run_stage_returns_terminal_missing_metadata_result() -> None:
     stored_errors: list[tuple[str, str]] = []
 
@@ -160,7 +139,7 @@ def test_run_load_run_stage_returns_terminal_missing_metadata_result() -> None:
     assert stored_errors == [("run-missing-stage", "Metadata not found or corrupt; cannot analyse")]
 
 
-def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback() -> None:
+def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeypatch) -> None:
     stored: dict[str, object] = {}
     raw_capture_manifest = RawCaptureManifest(
         run_id="run-stage-pipeline",
@@ -214,21 +193,21 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback() -> No
         raw_capture_manifest=raw_capture_manifest,
     )
     run_input = run_build_post_analysis_input_stage(loaded).run_input
-    builders = resolve_whole_run_builders(
-        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(None),
-        whole_run_context_builder=lambda **_kwargs: context_bundle,
-        whole_run_order_trace_builder=lambda **_kwargs: None,
-        whole_run_order_trace_summary_builder=lambda **_kwargs: None,
-        whole_run_order_family_summary_builder=lambda **_kwargs: None,
-        whole_run_spatial_coherence_builder=lambda **_kwargs: None,
-        whole_run_diagnosis_summary_builder=lambda **_kwargs: (),
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_spectral_artifact_bundle_from_ranges",
+        lambda **_kwargs: _spectral_result(None),
+    )
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_context_artifact_bundle",
+        lambda **_kwargs: context_bundle,
     )
 
     result = run_whole_run_pipeline_stages(
         db=FakeDB(),
         loaded=loaded,
         run_input=run_input,
-        builders=builders,
     )
 
     assert [stage.stage_name for stage in result.stage_results] == [
@@ -249,7 +228,7 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback() -> No
     assert result.stored_artifact_manifest is not None
 
 
-def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader() -> None:
+def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader(monkeypatch) -> None:
     raw_capture_manifest = _raw_capture_manifest_with_sensor("run-range-pipeline")
     captured: dict[str, object] = {}
 
@@ -289,21 +268,21 @@ def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader() -> No
         raw_capture_manifest=raw_capture_manifest,
     )
     run_input = run_build_post_analysis_input_stage(loaded).run_input
-    builders = resolve_whole_run_builders(
-        whole_run_artifact_builder=artifact_builder,
-        whole_run_context_builder=lambda **_kwargs: None,
-        whole_run_order_trace_builder=lambda **_kwargs: None,
-        whole_run_order_trace_summary_builder=lambda **_kwargs: None,
-        whole_run_order_family_summary_builder=lambda **_kwargs: None,
-        whole_run_spatial_coherence_builder=lambda **_kwargs: None,
-        whole_run_diagnosis_summary_builder=lambda **_kwargs: (),
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_spectral_artifact_bundle_from_ranges",
+        artifact_builder,
+    )
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_context_artifact_bundle",
+        lambda **_kwargs: None,
     )
 
     result = run_whole_run_pipeline_stages(
         db=FakeDB(),
         loaded=loaded,
         run_input=run_input,
-        builders=builders,
     )
 
     assert result.stage_results[0].stage_name == "BuildWholeRunSpectraStage"

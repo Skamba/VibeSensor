@@ -4,8 +4,9 @@ from dataclasses import replace
 
 import pytest
 from test_support.findings import make_finding_payload
+from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.reporting import (
+from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
 )
@@ -17,43 +18,18 @@ from vibesensor.use_cases.history.report_document import (
 
 def test_prepare_report_input_prefers_connected_sensor_locations() -> None:
     prepared = prepare_report_input(
-        {
-            "lang": "en",
-            "metadata": {},
-            "report_date": "",
-            "record_length": "",
-            "start_time_utc": "",
-            "end_time_utc": "",
-            "findings": [],
-            "top_causes": [],
-            "sensor_locations": ["front-left", "rear-right"],
-            "sensor_locations_connected_throughout": ["rear-right"],
-            "speed_stats": {},
-            "most_likely_origin": {},
-            "run_suitability": [],
-        },
+        minimal_summary(
+            lang="en",
+            sensor_locations=["front-left", "rear-right"],
+            sensor_locations_connected_throughout=["rear-right"],
+        )
     )
     assert prepared.report_facts.sensor.active_locations == ("rear-right",)
 
 
 def test_prepare_report_input_rejects_blank_filename() -> None:
     prepared = prepare_report_input(
-        {
-            "run_id": "blank-filename",
-            "lang": "en",
-            "metadata": {"run_id": "blank-filename"},
-            "report_date": "",
-            "record_length": "",
-            "start_time_utc": "",
-            "end_time_utc": "",
-            "findings": [],
-            "top_causes": [],
-            "sensor_locations": [],
-            "sensor_locations_connected_throughout": [],
-            "speed_stats": {},
-            "most_likely_origin": {},
-            "run_suitability": [],
-        },
+        minimal_summary(run_id="blank-filename", lang="en", metadata={"run_id": "blank-filename"})
     )
 
     with pytest.raises(ValueError, match="filename must be non-empty"):
@@ -62,22 +38,7 @@ def test_prepare_report_input_rejects_blank_filename() -> None:
 
 def test_prepare_report_input_rejects_run_id_mismatch() -> None:
     prepared = prepare_report_input(
-        {
-            "run_id": "prepared-run",
-            "lang": "en",
-            "metadata": {"run_id": "prepared-run"},
-            "report_date": "",
-            "record_length": "",
-            "start_time_utc": "",
-            "end_time_utc": "",
-            "findings": [],
-            "top_causes": [],
-            "sensor_locations": [],
-            "sensor_locations_connected_throughout": [],
-            "speed_stats": {},
-            "most_likely_origin": {},
-            "run_suitability": [],
-        },
+        minimal_summary(run_id="prepared-run", lang="en", metadata={"run_id": "prepared-run"})
     )
 
     with pytest.raises(ValueError, match="run_id mismatch"):
@@ -308,7 +269,7 @@ def test_prepare_report_input_does_not_invent_traceable_whole_run_context() -> N
                 {
                     "segment_index": 0,
                     "phase": "cruise",
-                    "load_state": "light",
+                    "load_state": "steady",
                     "start_window_index": 0,
                     "end_window_index": 3,
                     "full_context_window_count": 4,

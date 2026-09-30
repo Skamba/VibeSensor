@@ -64,11 +64,27 @@ def test_ws_unexpected_update_error_propagates() -> None:
             ws.send_text(json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"}))
 
 
-def test_identify_client_404_when_sensor_not_in_registry() -> None:
-    registry = type("R", (), {"get": lambda self, cid: None})()
+@pytest.mark.parametrize(
+    ("known", "send_result", "status_code", "expected_json"),
+    [
+        pytest.param(False, None, 404, None, id="unknown-sensor-404"),
+        pytest.param(True, (False, None), 503, None, id="known-but-unreachable-503"),
+        pytest.param(
+            True, (True, 7), 200, {"status": "sent", "cmd_seq": 7}, id="reachable-sends-200"
+        ),
+    ],
+)
+def test_identify_client_status(
+    known: bool,
+    send_result: tuple[bool, int | None] | None,
+    status_code: int,
+    expected_json: dict[str, object] | None,
+) -> None:
+    registry = MagicMock()
+    registry.get.return_value = object() if known else None
     control_plane = MagicMock()
-    settings_store = MagicMock()
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
+    control_plane.send_identify.return_value = send_result
+    app = _client_routes_app(registry, control_plane, MagicMock(), MagicMock())
 
     with TestClient(app) as client:
         response = client.post(
@@ -76,41 +92,11 @@ def test_identify_client_404_when_sensor_not_in_registry() -> None:
             json={"duration_ms": 1000},
         )
 
-    assert response.status_code == 404
-    assert "not found" in response.json()["detail"].lower()
-
-
-def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
-    sentinel = object()
-    registry = type("R", (), {"get": lambda self, cid: sentinel})()
-    control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
-    settings_store = MagicMock()
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
-
-    with TestClient(app) as client:
-        response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
-            json={"duration_ms": 1000},
-        )
-
-    assert response.status_code == 503
-
-
-def test_identify_client_200_when_sensor_reachable() -> None:
-    sentinel = object()
-    registry = type("R", (), {"get": lambda self, cid: sentinel})()
-    control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
-    settings_store = MagicMock()
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
-
-    with TestClient(app) as client:
-        response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
-            json={"duration_ms": 1000},
-        )
-
-    assert response.status_code == 200
-    assert response.json() == {"status": "sent", "cmd_seq": 7}
+    assert response.status_code == status_code
+    if status_code == 404:
+        assert "not found" in response.json()["detail"].lower()
+    if expected_json is not None:
+        assert response.json() == expected_json
 
 
 def test_identify_client_normalizes_client_id_before_registry_and_control_plane() -> None:

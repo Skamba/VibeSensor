@@ -24,7 +24,7 @@ from vibesensor.domain import TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.history.report_document import build_report_document
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig

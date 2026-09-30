@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from test_support.findings import make_finding_payload
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
+from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialLocationSummary,
 )
+from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
 
 
 def context_interval(

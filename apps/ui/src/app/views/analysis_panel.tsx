@@ -10,7 +10,6 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import {
-  ORDER_BAND_FIELDS,
   UNCERTAINTY_FIELDS,
   type AnalysisPanelActionHandlers,
   type AnalysisPanelCarAvailability,
@@ -63,21 +62,6 @@ const EMPTY_GUIDANCE_MODEL: SettingsAnalysisGuidanceRenderModel = {
 
 const DEFAULT_ANALYSIS_PANEL_MODEL: AnalysisPanelRenderModel = {
   fields: {
-    wheel_bandwidth_pct: {
-      guidance: EMPTY_GUIDANCE_MODEL,
-      invalid: false,
-      value: "",
-    },
-    driveshaft_bandwidth_pct: {
-      guidance: EMPTY_GUIDANCE_MODEL,
-      invalid: false,
-      value: "",
-    },
-    engine_bandwidth_pct: {
-      guidance: EMPTY_GUIDANCE_MODEL,
-      invalid: false,
-      value: "",
-    },
     speed_uncertainty_pct: {
       guidance: EMPTY_GUIDANCE_MODEL,
       invalid: false,
@@ -94,16 +78,6 @@ const DEFAULT_ANALYSIS_PANEL_MODEL: AnalysisPanelRenderModel = {
       value: "",
     },
     gear_uncertainty_pct: {
-      guidance: EMPTY_GUIDANCE_MODEL,
-      invalid: false,
-      value: "",
-    },
-    min_abs_band_hz: {
-      guidance: EMPTY_GUIDANCE_MODEL,
-      invalid: false,
-      value: "",
-    },
-    max_band_half_width_pct: {
       guidance: EMPTY_GUIDANCE_MODEL,
       invalid: false,
       value: "",
@@ -125,15 +99,10 @@ function AnalysisPanel(props: {
   const state = props.state.value;
   const guidanceHelpRef = useRef<HTMLDetailsElement | null>(null);
   const inputRefs = useRef<Record<AnalysisPanelFieldKey, HTMLInputElement | null>>({
-    wheel_bandwidth_pct: null,
-    driveshaft_bandwidth_pct: null,
-    engine_bandwidth_pct: null,
     speed_uncertainty_pct: null,
     tire_diameter_uncertainty_pct: null,
     final_drive_uncertainty_pct: null,
     gear_uncertainty_pct: null,
-    min_abs_band_hz: null,
-    max_band_half_width_pct: null,
   });
 
   useSignalEffect(() => {
@@ -170,22 +139,6 @@ function AnalysisPanel(props: {
         )}
       </div>
       <div class="settings-groups">
-        <AnalysisFieldGroup
-          actions={state.actions}
-          fields={ORDER_BAND_FIELDS}
-          helpBody={[
-            {
-              key: "settings.analysis.group.order_band_widths_help",
-              fallback:
-                "These values control how far the app searches around each expected order. Wider bands tolerate more speed drift but can blend nearby faults together.",
-            },
-          ]}
-          helpId="analysisOrderBandHelp"
-          inputRefs={inputRefs.current}
-          modelFields={state.model.fields}
-          titleFallback="Order Band Widths"
-          titleKey="settings.group.order_band_widths"
-        />
         <AnalysisFieldGroup
           actions={state.actions}
           fields={UNCERTAINTY_FIELDS}

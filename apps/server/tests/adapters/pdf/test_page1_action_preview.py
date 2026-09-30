@@ -10,13 +10,11 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.adapters.pdf.page1_proof import _page1_diagram_findings
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_types import build_page1_render_plan
-from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import (
-    NextStep,
-    ReportDocument,
-    VerdictPageData,
-)
-from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
+from vibesensor.domain import Finding, VibrationSource
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 
@@ -175,15 +173,15 @@ def test_page_one_diagram_uses_verdict_dominant_corner() -> None:
             dominant_corner="Front-Right",
         ),
         top_causes=[
-            FindingPresentation(
-                suspected_source="wheel/tire",
+            Finding(
+                suspected_source=VibrationSource.WHEEL_TIRE,
                 strongest_location="Front Left",
-                effective_confidence=0.84,
+                confidence=0.84,
             ),
-            FindingPresentation(
-                suspected_source="engine",
+            Finding(
+                suspected_source=VibrationSource.ENGINE,
                 strongest_location="Front Right",
-                effective_confidence=0.73,
+                confidence=0.73,
             ),
         ],
     )

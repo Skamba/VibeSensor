@@ -60,7 +60,7 @@ import importlib
 
 package = importlib.import_module("vibesensor.app")
 bootstrap = importlib.import_module("vibesensor.app.bootstrap")
-from vibesensor.app import create_app, create_app_from_env, main
+from vibesensor.app.bootstrap import create_app, create_app_from_env, main
 
 _ = (package, bootstrap, create_app, create_app_from_env, main)
         """

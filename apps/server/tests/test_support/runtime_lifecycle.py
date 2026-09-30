@@ -15,10 +15,9 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
-from vibesensor.app.runtime_state import RuntimeState
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
@@ -252,14 +251,11 @@ def build_registry_with_hello(
 
 
 def build_runtime(**overrides: Any):
-    import vibesensor.infra.runtime as runtime_module
-
     config = overrides.pop("config", StubConfig(processing=StubProcessingConfig()))
     registry = overrides.pop("registry", StubRegistry())
     processor = overrides.pop("processor", StubProcessor())
     control_plane = overrides.pop("control_plane", MagicMock())
     worker_pool = overrides.pop("worker_pool", MagicMock())
-    settings_reader = overrides.pop("settings_reader", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     obd_runner = overrides.pop("obd_runner", MagicMock())
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
@@ -273,20 +269,20 @@ def build_runtime(**overrides: Any):
     payload_source = overrides.pop("payload_source", StubWsPayloadSource())
     ingest_diagnostics = overrides.pop("ingest_diagnostics", IngestDiagnosticsCollector())
     processing_state = ProcessingLoopState()
-    health_state = runtime_module.RuntimeHealthState()
-    rt = RuntimeState(
-        config=config,
+    health_state = RuntimeHealthState()
+    lifecycle_runtime = LifecycleRuntime(
+        health_state=health_state,
+        history_db_path=config.logging.history_db_path,
+        udp_data_host=config.udp.data_host,
+        udp_data_port=config.udp.data_port,
+        udp_data_queue_maxsize=config.udp.data_queue_maxsize,
+        gpsd_host=config.gps.gpsd_host,
+        gpsd_port=config.gps.gpsd_port,
+        shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
         registry=registry,
         processor=processor,
-        control_plane=control_plane,
-        worker_pool=worker_pool,
-        settings_reader=settings_reader,
-        gps_monitor=gps_monitor,
-        obd_runner=obd_runner,
-        history_db=history_db,
-        processing_loop_state=processing_state,
-        health_state=health_state,
         ingest_diagnostics=ingest_diagnostics,
+        control_plane=control_plane,
         processing_loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=config.processing.fft_update_hz,
@@ -303,26 +299,6 @@ def build_runtime(**overrides: Any):
             payload_source=payload_source,
         ),
         run_recorder=diagnostics,
-        update_manager=update_manager,
-        esp_flash_manager=esp_flash_manager,
-    )
-    lifecycle_runtime = LifecycleRuntime(
-        health_state=health_state,
-        history_db_path=config.logging.history_db_path,
-        udp_data_host=config.udp.data_host,
-        udp_data_port=config.udp.data_port,
-        udp_data_queue_maxsize=config.udp.data_queue_maxsize,
-        gpsd_host=config.gps.gpsd_host,
-        gpsd_port=config.gps.gpsd_port,
-        shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
-        registry=registry,
-        processor=processor,
-        ingest_diagnostics=ingest_diagnostics,
-        control_plane=control_plane,
-        processing_loop=rt.processing_loop,
-        ws_hub=rt.ws_hub,
-        ws_broadcast=rt.ws_broadcast,
-        run_recorder=diagnostics,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
         update_manager=update_manager,
@@ -331,7 +307,6 @@ def build_runtime(**overrides: Any):
         history_db=history_db,
     )
     lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())
-    if overrides:
-        for name, value in overrides.items():
-            setattr(rt, name, value)
-    return rt, lifecycle
+    for name, value in overrides.items():
+        setattr(lifecycle_runtime, name, value)
+    return lifecycle_runtime, lifecycle

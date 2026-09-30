@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import Car, Finding, Sensor, SensorPlacement, SpeedSource
-from vibesensor.shared.boundaries.reporting.document import Report
 
 
 @pytest.mark.parametrize(
@@ -29,7 +28,6 @@ from vibesensor.shared.boundaries.reporting.document import Report
         ),
         pytest.param(lambda: Car(), "name", "new", id="car"),
         pytest.param(lambda: Finding(finding_id="F001"), "finding_id", "F002", id="finding"),
-        pytest.param(lambda: Report(run_id="abc"), "title", "new", id="report"),
     ],
 )
 def test_domain_objects_are_immutable(factory, attribute: str, new_value: object) -> None:

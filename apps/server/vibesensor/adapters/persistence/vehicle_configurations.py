@@ -1,4 +1,9 @@
-"""Canonical exact vehicle-configuration loader."""
+"""Canonical exact vehicle-configuration loader.
+
+Rows are schema-checked (pydantic) and provenance refs are resolved here. The
+cross-field plausibility and source-evidence rules for the bundled data run in
+the test suite (``tests/test_support/car_library_validation``), not at startup.
+"""
 
 from __future__ import annotations
 
@@ -17,8 +22,6 @@ from ._vehicle_configuration_rows import (
     vehicle_configuration_from_row,
 )
 from ._vehicle_configuration_shards import ShardRefError, expand_shard_payload
-from .car_library_source_evidence import ensure_valid_vehicle_configuration_source_evidence
-from .car_library_validation import ensure_valid_vehicle_configurations
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,13 +104,10 @@ def _load_vehicle_configurations_snapshot(*, data_dir: Path) -> list[VehicleConf
         return []
 
     try:
-        configs = [vehicle_configuration_from_row(row) for row in rows]
-        ensure_valid_vehicle_configurations(configs)
-        ensure_valid_vehicle_configuration_source_evidence(configs)
-        return configs
+        return [vehicle_configuration_from_row(row) for row in rows]
     except ValueError as exc:
         LOGGER.warning(
-            "Could not validate exact vehicle configurations from %s: %s",
+            "Could not build exact vehicle configurations from %s: %s",
             data_dir,
             exc,
         )
@@ -115,7 +115,7 @@ def _load_vehicle_configurations_snapshot(*, data_dir: Path) -> list[VehicleConf
 
 
 def load_vehicle_configurations(*, data_dir: Path | None = None) -> list[VehicleConfiguration]:
-    """Load and return a fresh validated vehicle-configuration snapshot."""
+    """Load and return a fresh schema-checked vehicle-configuration snapshot."""
 
     resolved_data_dir = _VEHICLE_CONFIG_DATA_DIR if data_dir is None else data_dir
     return _load_vehicle_configurations_snapshot(data_dir=resolved_data_dir)

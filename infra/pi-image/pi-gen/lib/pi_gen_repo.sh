@@ -27,40 +27,32 @@ patch_export_image_boot_size() {
     "${export_prerun}"
 }
 
-patch_build_docker_qemu_interpreter() {
-  local build_docker="${PI_GEN_DIR}/build-docker.sh"
-  local stock_check='if ! qemu_arm=$(which qemu-arm) ; then'
-  local patched_check='if ! qemu_arm=$(command -v qemu-arm-static 2>/dev/null) && ! qemu_arm=$(command -v qemu-arm 2>/dev/null) ; then'
-
-  if grep -Fq "${patched_check}" "${build_docker}"; then
-    return
-  fi
-  if ! grep -Fq "${stock_check}" "${build_docker}"; then
-    echo "Unexpected build-docker.sh qemu lookup in ${build_docker}"
-    exit 1
-  fi
-
-  sed -i \
-    's/if ! qemu_arm=$(which qemu-arm) ; then/if ! qemu_arm=$(command -v qemu-arm-static 2>\/dev\/null) \&\& ! qemu_arm=$(command -v qemu-arm 2>\/dev\/null) ; then/' \
-    "${build_docker}"
-}
-
 patch_build_docker_base_image() {
   local build_docker="${PI_GEN_DIR}/build-docker.sh"
+  # Matches upstream pi-gen after RPi-Distro/pi-gen#933 (6a0419c), which added
+  # the docker.io/ prefix and an explicit --platform for the i386 base image.
   local stock_block='case "$(uname -m)" in
   x86_64|aarch64)
-    BASE_IMAGE=i386/debian:trixie
+    BASE_IMAGE=docker.io/i386/debian:trixie
+    # Without an explicit platform, Docker 20.10 (Debian 12'"'"'s docker.io) refuses
+    # the foreign-platform base image: "no matching manifest for linux/amd64"
+    PLATFORM=linux/386
     ;;
   *)
-    BASE_IMAGE=debian:trixie
+    BASE_IMAGE=docker.io/debian:trixie
+    PLATFORM=""
     ;;
 esac'
   local patched_block='case "$(uname -m)" in
   x86_64)
-    BASE_IMAGE=i386/debian:trixie
+    BASE_IMAGE=docker.io/i386/debian:trixie
+    # Without an explicit platform, Docker 20.10 (Debian 12'"'"'s docker.io) refuses
+    # the foreign-platform base image: "no matching manifest for linux/amd64"
+    PLATFORM=linux/386
     ;;
   *)
-    BASE_IMAGE=debian:trixie
+    BASE_IMAGE=docker.io/debian:trixie
+    PLATFORM=""
     ;;
 esac'
 
@@ -131,7 +123,6 @@ prepare_pi_gen_repo() {
   rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size
   patch_build_docker_base_image
-  patch_build_docker_qemu_interpreter
   refresh_stage0_bootstrap_keyring
 }
 

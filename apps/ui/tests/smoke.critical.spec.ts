@@ -195,20 +195,15 @@ test("critical journey: Settings saves analysis tuning", async ({ page }) => {
 
   await bootLiveDashboard(page, { installRoutes: false });
   await openAnalysisTab(page);
-  await page.locator("#wheelBandwidthInput").fill("7.5");
-  await page.locator("#driveshaftBandwidthInput").fill("8.5");
-  await page.locator("#engineBandwidthInput").fill("9.5");
   await page.locator("#speedUncertaintyInput").fill("3");
   await page.locator("#tireDiameterUncertaintyInput").fill("4");
   await page.locator("#finalDriveUncertaintyInput").fill("2");
   await page.locator("#gearUncertaintyInput").fill("4");
-  await page.locator("#minAbsBandHzInput").fill("0.7");
-  await page.locator("#maxBandHalfWidthInput").fill("12");
   await page.locator("#saveAnalysisBtn").click();
   await expect.poll(() => analysisPutCalls).toBe(1);
   await page.reload();
   await openAnalysisTab(page);
-  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
+  await expect(page.locator("#speedUncertaintyInput")).toHaveValue("3");
 });
 
 test("critical journey: car wizard creates and activates a manual car", async ({

@@ -11,15 +11,10 @@ export interface SettingsAnalysisGuidanceRenderModel {
 }
 
 export type AnalysisPanelFieldKey =
-  | "wheel_bandwidth_pct"
-  | "driveshaft_bandwidth_pct"
-  | "engine_bandwidth_pct"
   | "speed_uncertainty_pct"
   | "tire_diameter_uncertainty_pct"
   | "final_drive_uncertainty_pct"
-  | "gear_uncertainty_pct"
-  | "min_abs_band_hz"
-  | "max_band_half_width_pct";
+  | "gear_uncertainty_pct";
 
 export interface AnalysisPanelFieldRenderModel {
   guidance: SettingsAnalysisGuidanceRenderModel;
@@ -51,49 +46,6 @@ export type AnalysisFieldSpec = {
   labelKey: string;
   step: string;
 };
-
-export const ORDER_BAND_FIELDS: readonly AnalysisFieldSpec[] = [
-  {
-    fallbackLabel: "Wheel Bandwidth (%)",
-    guidanceId: "wheelBandwidthGuidance",
-    inputId: "wheelBandwidthInput",
-    key: "wheel_bandwidth_pct",
-    labelKey: "settings.wheel_bandwidth",
-    step: "0.1",
-  },
-  {
-    fallbackLabel: "Driveshaft Bandwidth (%)",
-    guidanceId: "driveshaftBandwidthGuidance",
-    inputId: "driveshaftBandwidthInput",
-    key: "driveshaft_bandwidth_pct",
-    labelKey: "settings.driveshaft_bandwidth",
-    step: "0.1",
-  },
-  {
-    fallbackLabel: "Engine Bandwidth (%)",
-    guidanceId: "engineBandwidthGuidance",
-    inputId: "engineBandwidthInput",
-    key: "engine_bandwidth_pct",
-    labelKey: "settings.engine_bandwidth",
-    step: "0.1",
-  },
-  {
-    fallbackLabel: "Min Half-width (Hz)",
-    guidanceId: "minAbsBandHzGuidance",
-    inputId: "minAbsBandHzInput",
-    key: "min_abs_band_hz",
-    labelKey: "settings.min_half_width",
-    step: "0.1",
-  },
-  {
-    fallbackLabel: "Max Half-width (%)",
-    guidanceId: "maxBandHalfWidthGuidance",
-    inputId: "maxBandHalfWidthInput",
-    key: "max_band_half_width_pct",
-    labelKey: "settings.max_half_width",
-    step: "0.1",
-  },
-] as const;
 
 export const UNCERTAINTY_FIELDS: readonly AnalysisFieldSpec[] = [
   {

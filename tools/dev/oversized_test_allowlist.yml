@@ -1,6 +1,0 @@
-# Oversized tracked test/spec files that are intentionally still above the
-# shared hygiene threshold. Each entry needs a human reason so growth stays
-# explicit instead of accidental.
-threshold_lines: 700
-report_limit: 10
-allowlist: {}

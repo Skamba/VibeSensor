@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import math
 import time
+from collections.abc import Callable
 from math import pi, sqrt
 from threading import Event, Thread
 
 import numpy as np
+import pytest
 
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.processing.time_align import compute_overlap
@@ -112,7 +114,36 @@ def test_clients_with_recent_data_filters_stale() -> None:
     assert result == ["c1"]
 
 
-def test_ingest_waits_while_same_client_buffer_lock_is_held() -> None:
+_LOCK_TEST_SAMPLES = np.zeros((10, 3), dtype=np.float32)
+
+
+@pytest.mark.parametrize(
+    ("action", "blocked", "evicts_held"),
+    [
+        pytest.param(
+            lambda p: p.ingest("held", _LOCK_TEST_SAMPLES, sample_rate_hz=800),
+            True,
+            False,
+            id="same-client-ingest-waits",
+        ),
+        pytest.param(
+            lambda p: p.ingest("free", _LOCK_TEST_SAMPLES, sample_rate_hz=800),
+            False,
+            False,
+            id="other-client-ingest-not-blocked",
+        ),
+        pytest.param(
+            lambda p: p.evict_clients({"keep"}),
+            False,
+            True,
+            id="evict-does-not-wait-on-stale-client-lock",
+        ),
+    ],
+)
+def test_per_client_buffer_lock_scope(
+    action: Callable[[SignalProcessor], None], blocked: bool, evicts_held: bool
+) -> None:
+    """Holding one client's buffer lock only blocks work on that same client."""
     processor = SignalProcessor(
         sample_rate_hz=800,
         waveform_seconds=8,
@@ -120,90 +151,31 @@ def test_ingest_waits_while_same_client_buffer_lock_is_held() -> None:
         fft_n=1024,
         spectrum_max_hz=200,
     )
-    samples = np.zeros((10, 3), dtype=np.float32)
+    processor.ingest("keep", _LOCK_TEST_SAMPLES, sample_rate_hz=800)
+    processor.ingest("held", _LOCK_TEST_SAMPLES, sample_rate_hz=800)
+    with processor._store.lock:
+        held_lock = processor._store._registry._client_locks["held"]
     done = Event()
 
-    def _ingest() -> None:
-        processor.ingest("c-lock", samples, sample_rate_hz=800)
+    def _run() -> None:
+        action(processor)
         done.set()
 
-    processor.ingest("c-lock", samples, sample_rate_hz=800)
-    with processor._store.lock:
-        client_lock = processor._store._registry._client_locks["c-lock"]
-    client_lock.acquire()
-    worker = Thread(target=_ingest)
+    held_lock.acquire()
+    worker = Thread(target=_run)
     worker.start()
     try:
-        assert not done.wait(timeout=0.05)
+        if blocked:
+            assert not done.wait(timeout=0.05)
+        else:
+            assert done.wait(timeout=0.2)
     finally:
-        client_lock.release()
+        held_lock.release()
     worker.join(timeout=1.0)
     assert done.is_set()
-
-
-def test_ingest_other_client_not_blocked_by_unrelated_client_lock() -> None:
-    processor = SignalProcessor(
-        sample_rate_hz=800,
-        waveform_seconds=8,
-        waveform_display_hz=100,
-        fft_n=1024,
-        spectrum_max_hz=200,
-    )
-    samples = np.zeros((10, 3), dtype=np.float32)
-    done = Event()
-
-    processor.ingest("c-lock", samples, sample_rate_hz=800)
-    with processor._store.lock:
-        client_lock = processor._store._registry._client_locks["c-lock"]
-    client_lock.acquire()
-
-    def _ingest() -> None:
-        processor.ingest("c-free", samples, sample_rate_hz=800)
-        done.set()
-
-    worker = Thread(target=_ingest)
-    worker.start()
-    try:
-        assert done.wait(timeout=0.2)
-    finally:
-        client_lock.release()
-    worker.join(timeout=1.0)
-    assert done.is_set()
-
-
-def test_evict_clients_does_not_wait_on_stale_client_lock() -> None:
-    processor = SignalProcessor(
-        sample_rate_hz=800,
-        waveform_seconds=8,
-        waveform_display_hz=100,
-        fft_n=1024,
-        spectrum_max_hz=200,
-    )
-    samples = np.zeros((10, 3), dtype=np.float32)
-    evicted = Event()
-
-    processor.ingest("keep", samples, sample_rate_hz=800)
-    processor.ingest("stale", samples, sample_rate_hz=800)
-    with processor._store.lock:
-        stale_lock = processor._store._registry._client_locks["stale"]
-    stale_lock.acquire()
-
-    def _evict() -> None:
-        processor.evict_clients({"keep"})
-        evicted.set()
-
-    worker = Thread(target=_evict)
-    worker.start()
-    try:
-        assert evicted.wait(timeout=0.2)
-    finally:
-        stale_lock.release()
-
-    worker.join(timeout=1.0)
-    assert evicted.is_set()
     assert "keep" in processor._store.buffers
-    assert "stale" not in processor._store.buffers
-    assert "stale" not in processor._store._registry._client_locks
+    assert ("held" in processor._store.buffers) is not evicts_held
+    assert ("held" in processor._store._registry._client_locks) is not evicts_held
 
 
 def test_ingest_not_blocked_during_compute() -> None:

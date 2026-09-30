@@ -94,28 +94,38 @@ class TestAnalysisTimeRange:
 # ---------------------------------------------------------------------------
 
 
-class TestTimeAlignmentInfoAligned:
-    """Verify multi-sensor windows are marked aligned when overlap stays sufficient."""
+class TestTimeAlignmentInfo:
+    """Multi-sensor windows are aligned only when their overlap stays sufficient."""
 
-    def test_two_sensors_same_time(self) -> None:
+    @pytest.mark.parametrize(
+        ("s2_mono_time", "aligned", "overlap_range", "shared_duration_range"),
+        [
+            pytest.param(100.0, True, (0.999, 1.001), (1.9, 2.1), id="same-time"),
+            pytest.param(100.5, True, (0.5, 1.0), (1.0, 2.0), id="small-offset-still-aligned"),
+            pytest.param(101.5, False, (0.0, 0.5), (0.4, 0.6), id="partial-overlap"),
+            pytest.param(110.0, False, (0.0, 0.0), None, id="stale-sensor-no-overlap"),
+        ],
+    )
+    def test_two_sensor_alignment(
+        self,
+        s2_mono_time: float,
+        aligned: bool,
+        overlap_range: tuple[float, float],
+        shared_duration_range: tuple[float, float] | None,
+    ) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", mono_time=100.0)
-        _fill_sensor(proc, "s2", mono_time=100.0)
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is True
-        assert info["overlap_ratio"] == pytest.approx(1.0)
-        assert info["shared_window"] is not None
-        assert info["shared_window"]["duration_s"] == pytest.approx(2.0, abs=0.1)
+        _fill_sensor(proc, "s2", mono_time=s2_mono_time)
 
-    def test_small_offset_still_aligned(self) -> None:
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        _fill_sensor(proc, "s1", mono_time=100.0)
-        _fill_sensor(proc, "s2", mono_time=100.5)  # 0.5 s offset
         info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is True
-        assert info["overlap_ratio"] > 0.5
-        assert info["shared_window"] is not None
-        assert info["shared_window"]["duration_s"] > 1.0
+
+        assert info["aligned"] is aligned
+        assert overlap_range[0] <= info["overlap_ratio"] <= overlap_range[1]
+        if shared_duration_range is None:
+            assert info["shared_window"] is None
+        else:
+            low, high = shared_duration_range
+            assert low <= info["shared_window"]["duration_s"] <= high
 
     def test_three_sensors_aligned(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
@@ -126,34 +136,6 @@ class TestTimeAlignmentInfoAligned:
         assert info["aligned"] is True
         assert len(info["sensors_included"]) == 3
         assert len(info["sensors_excluded"]) == 0
-
-
-# ---------------------------------------------------------------------------
-# time_alignment_info – misaligned sensors
-# ---------------------------------------------------------------------------
-
-
-class TestTimeAlignmentInfoMisaligned:
-    """Verify stale or offset sensor windows report partial or zero alignment correctly."""
-
-    def test_stale_sensor_not_aligned(self) -> None:
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        _fill_sensor(proc, "s1", mono_time=100.0)
-        _fill_sensor(proc, "s2", mono_time=110.0)  # 10 s later – no overlap
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is False
-        assert info["overlap_ratio"] == pytest.approx(0.0)
-        assert info["shared_window"] is None
-
-    def test_partial_overlap(self) -> None:
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        _fill_sensor(proc, "s1", mono_time=100.0)
-        _fill_sensor(proc, "s2", mono_time=101.5)  # 1.5 s offset → 0.5 s overlap
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["shared_window"] is not None
-        assert info["shared_window"]["duration_s"] == pytest.approx(0.5, abs=0.1)
-        # overlap_ratio < threshold → not aligned
-        assert info["aligned"] is False
 
     def test_one_sensor_no_data(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
@@ -408,7 +390,11 @@ class TestAnalysisTimeRangeEdgeCases:
         assert end_s == pytest.approx(10.0)
         assert start_s <= end_s
 
-    def test_zero_waveform_seconds_returns_none(self) -> None:
+    @pytest.mark.parametrize(
+        "waveform_seconds",
+        [pytest.param(0, id="zero"), pytest.param(-3, id="negative")],
+    )
+    def test_non_positive_waveform_seconds_returns_none(self, waveform_seconds: int) -> None:
         """Fix 10: waveform_seconds <= 0 must return None rather than a silent 1-sample window."""
         from vibesensor.infra.processing.time_align import analysis_time_range
 
@@ -416,23 +402,8 @@ class TestAnalysisTimeRangeEdgeCases:
             count=400,
             last_ingest_mono_s=10.5,
             sample_rate_hz=200,
-            waveform_seconds=0,
+            waveform_seconds=waveform_seconds,
             capacity=400,
-            last_t0_us=0,
-            samples_since_t0=0,
-        )
-        assert result is None
-
-    def test_negative_waveform_seconds_returns_none(self) -> None:
-        """Fix 10: waveform_seconds < 0 must also return None."""
-        from vibesensor.infra.processing.time_align import analysis_time_range
-
-        result = analysis_time_range(
-            count=200,
-            last_ingest_mono_s=5.0,
-            sample_rate_hz=100,
-            waveform_seconds=-3,
-            capacity=300,
             last_t0_us=0,
             samples_since_t0=0,
         )

@@ -1,119 +1,99 @@
-import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
+import { createCarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import {
   createHistoryFeature,
   type HistoryFeature,
 } from "./features/history_feature";
-import {
-  createSettingsFeature,
-  type SettingsFeature,
-} from "./features/settings_feature";
+import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
+import { createSpeedSourceFeature } from "./features/speed_source_feature";
 import { createUpdateFeature } from "./features/update_feature";
-import type { AppFeatureBundleDeps } from "./app_feature_bundle";
+import type { AppFeatureContext } from "./app_feature_bundle";
 
 export interface AppFeatureSecondaryBundle {
   dispose(): void;
   history: Pick<HistoryFeature, "refreshHistory">;
   openCarWizard(): void;
-  settings: Pick<
-    SettingsFeature,
-    | "loadAnalysisSettingsFromServer"
-    | "loadCarsFromServer"
-    | "loadSpeedSourceFromServer"
-  >;
+  settings: {
+    loadAnalysisSettingsFromServer(): Promise<void>;
+    loadSpeedSourceFromServer(): Promise<void>;
+  };
 }
 
 export function createAppFeatureSecondaryBundle(
-  deps: AppFeatureBundleDeps,
+  ctx: AppFeatureContext,
 ): AppFeatureSecondaryBundle {
-  const {
-    state,
-    shared: { services, formatting, serverState },
-    runtime,
-  } = deps;
-  const { panels } = runtime;
+  const { state, services, formatting, panels } = ctx;
 
   const history = createHistoryFeature({
     history: state.history,
     shell: state.shell,
     panel: panels.history,
-    navigation: runtime.navigation,
+    navigation: { activatePrimaryView: ctx.activatePrimaryView },
     services,
     formatting,
-    queryClient: serverState.queryClient,
+    queryClient: ctx.queryClient,
   });
 
-  let carsFeature: CarsFeature | null = null;
-  const settings = createSettingsFeature({
-    state: {
-      settings: state.settings,
-      shell: state.shell,
-    },
-    panels: {
-      settingsShell: panels.settingsShell,
-      analysisPanel: panels.settings.analysis,
-      carsPanel: panels.settings.cars.list,
-      speedSourcePanel: panels.settings.speedSource,
-    },
-    ports: {
-      openCarWizard: () => {
-        carsFeature?.openWizard();
-      },
-      activeViewId: runtime.navigation.activeViewId,
-      view: runtime.view,
-    },
+  const analysis = createSettingsAnalysisModule({
+    panel: panels.settings.analysis,
+    settings: state.settings,
+    lang: state.shell.lang,
+    queryClient: ctx.queryClient,
+    services,
+    refreshSpectrumDecorations: ctx.refreshSpectrumDecorations,
+  });
+
+  const speedSource = createSpeedSourceFeature({
+    panel: panels.settings.speedSource,
+    settings: state.settings,
+    queryClient: ctx.queryClient,
     services,
     formatting: {
       fmt: formatting.fmt,
     },
-    queryClient: serverState.queryClient,
+    getSpeedUnit: () => state.shell.speedUnit.value,
+    activeViewId: ctx.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
   });
 
   const cars = createCarsFeature({
-    panel: panels.settings.cars.wizard,
-    services: {
-      t: services.t,
-    },
+    settings: state.settings,
+    queryClient: ctx.queryClient,
+    panel: panels.settings.cars,
+    analysisPanel: panels.settings.analysis,
+    activeViewId: ctx.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
+    openAnalysisTab: () => panels.settingsShell.activateTab("analysisTab"),
+    refreshSpectrumDecorations: ctx.refreshSpectrumDecorations,
+    syncAnalysisInputs: analysis.syncSettingsInputs,
+    services,
     formatting: {
       fmt: formatting.fmt,
     },
-    queryClient: serverState.queryClient,
-    addCarFromWizard: (name, carType, aspects, orderReferenceStatus, variant) =>
-      settings.addCarFromWizard(
-        name,
-        carType,
-        aspects,
-        orderReferenceStatus,
-        variant,
-      ),
   });
-  carsFeature = cars;
 
   const update = createUpdateFeature({
     panels: {
       update: panels.settings.update,
       internet: panels.settings.internet,
     },
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
+    activeViewId: ctx.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
     services,
-    queryClient: serverState.queryClient,
+    queryClient: ctx.queryClient,
   });
 
   const espFlash = createEspFlashFeature({
     panel: panels.settings.espFlash,
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
+    activeViewId: ctx.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
     services,
-    queryClient: serverState.queryClient,
+    queryClient: ctx.queryClient,
   });
 
-  settings.bindHandlers();
-  cars.bindWizardHandlers();
+  cars.bindHandlers();
+  analysis.bindHandlers();
+  speedSource.bindHandlers();
   history.bindHandlers();
   update.bindUpdateHandlers();
   espFlash.bindHandlers();
@@ -123,20 +103,20 @@ export function createAppFeatureSecondaryBundle(
       espFlash.dispose();
       update.dispose();
       history.dispose();
-      settings.dispose();
+      speedSource.dispose();
+      analysis.dispose();
       cars.dispose();
     },
     history: {
       refreshHistory: () => history.refreshHistory(),
     },
     openCarWizard(): void {
-      cars.openWizard();
+      void cars.openWizard();
     },
     settings: {
-      loadSpeedSourceFromServer: () => settings.loadSpeedSourceFromServer(),
+      loadSpeedSourceFromServer: () => speedSource.loadSpeedSourceFromServer(),
       loadAnalysisSettingsFromServer: () =>
-        settings.loadAnalysisSettingsFromServer(),
-      loadCarsFromServer: () => settings.loadCarsFromServer(),
+        analysis.loadAnalysisSettingsFromServer(),
     },
   };
 }

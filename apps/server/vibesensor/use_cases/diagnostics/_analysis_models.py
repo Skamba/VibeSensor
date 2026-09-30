@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
@@ -28,9 +28,6 @@ class FindingsBuildRequest:
     lang: str
     per_sample_phases: PhaseLabels | None
     run_noise_baseline_g: float | None
-
-
-FindingsBuilder = Callable[[FindingsBuildRequest], tuple[DomainFinding, ...]]
 
 
 @dataclass(frozen=True, slots=True)

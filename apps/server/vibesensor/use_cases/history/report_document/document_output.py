@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.time_utils import format_utc_timestamp
 
 from .document_context import ReportDocumentContext

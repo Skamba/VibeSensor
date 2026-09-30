@@ -8,7 +8,7 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.page1_header import draw_header_strip
 from vibesensor.adapters.pdf.report_types import Page1RenderPlan
-from vibesensor.shared.boundaries.reporting.document import VerdictPageData
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 
 
 def test_draw_header_strip_truncates_long_car_name_to_single_line(

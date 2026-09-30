@@ -8,9 +8,7 @@ Backend test rules. Use `docs/testing.md` for the concise test map and command r
 - Use `test_support/findings.py` factories for finding payloads and `test_support/sample_scenarios.py` for synthetic sample/phase construction. Do not create local duplicates.
 - Replace helper re-exports with direct imports unless the helper adds real logic.
 - Prefer new focused test modules over adding to large omnibus regression files.
-- Test observable behavior, not source strings. Do not use `inspect.getsource` or `ast.parse` on production code in pytest; add needed AST/import guards to `tools/dev/verify_backend_static_guards.py` so `make lint` runs them.
+- Test observable behavior, not source strings. Do not use `inspect.getsource` or `ast.parse` on production code in pytest (Ruff `TID251` enforces this); express import-direction rules as import-linter contracts in `apps/server/pyproject.toml`.
 - Do not create per-file fake runtime classes. Use shared `FakeState` from `conftest.py` and customize it via constructor arguments.
 - Do not add private production bridge/shim methods solely for test access; test sub-components directly.
-- Oversized test/spec guardrails live in `tools/dev/check_hygiene.py`; intentional exceptions belong in `tools/dev/oversized_test_allowlist.yml`.
-- Mark dev/CI tooling orchestration tests `dev_tooling`; default backend shards exclude them, and `make test-tooling` runs them.
 - Focused validation: `pytest -q apps/server/tests/<module>/` from repo root, or `../.venv/bin/python -m pytest tests/<module>/ -q` from `apps/server` when the repo-managed backend environment must be pinned.

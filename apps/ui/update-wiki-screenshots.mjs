@@ -553,7 +553,7 @@ const CAPTURES = [
     fileName: "settings-analysis.png",
     capture: async (page) => {
       await openSettingsTab(page, "analysisTab");
-      await expect(page.locator("#wheelBandwidthInput")).toHaveValue("5");
+      await expect(page.locator("#speedUncertaintyInput")).toHaveValue("3");
       await expect(page.locator("#analysisGuidanceHelp")).toContainText(
         "Safe starting point",
       );

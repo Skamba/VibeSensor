@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from test_support.report_helpers import recapture_guidance_summary
 
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document.document_context import (
     build_report_document_context,
 )

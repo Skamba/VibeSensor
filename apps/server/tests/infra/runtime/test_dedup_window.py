@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.infra.runtime.dedup_window import DedupWindow
+from vibesensor.infra.runtime.registry import DedupWindow
 
 
 def test_dedup_window_contains_recorded_sequence() -> None:

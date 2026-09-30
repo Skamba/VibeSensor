@@ -10,7 +10,7 @@ import {
 } from "../ui_signals";
 import { SpeedSourceConfigPanel } from "./speed_source_config_panel";
 import { SpeedSourceDiagnosticsPanel } from "./speed_source_diagnostics_panel";
-import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./speed_source_panel_defaults";
+import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./settings_speed_source_presenter";
 import type {
   SettingsFeedbackMessage,
 } from "./settings_feedback";

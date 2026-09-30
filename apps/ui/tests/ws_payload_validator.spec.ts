@@ -284,19 +284,15 @@ describe("validateLiveWsPayload", () => {
     });
   });
 
-  test.each(
-    requiredFieldCases,
-  )("rejects representative missing required $field in $label", ({
-    field,
-    getTarget,
-    pathPrefix,
-    schemaRequired,
-  }) => {
-    expect(schemaRequired).toContain(field);
-    const payload = structuredClone(makeRepresentativePayload());
-    delete getTarget(payload)[field];
-    expect(() => validateLiveWsPayload(payload)).toThrow(
-      new RegExp(`Invalid websocket payload: ${pathPrefix}/${field}`),
-    );
-  });
+  test.each(requiredFieldCases)(
+    "rejects representative missing required $field in $label",
+    ({ field, getTarget, pathPrefix, schemaRequired }) => {
+      expect(schemaRequired).toContain(field);
+      const payload = structuredClone(makeRepresentativePayload());
+      delete getTarget(payload)[field];
+      expect(() => validateLiveWsPayload(payload)).toThrow(
+        new RegExp(`Invalid websocket payload: ${pathPrefix}/${field}`),
+      );
+    },
+  );
 });

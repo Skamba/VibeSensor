@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from test_support.sample_scenarios import make_sample
 
-from vibesensor.shared.boundaries.sensor_frames import SensorFrameDecodeError
+from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.boundaries.sensor_frames.fields import (
     SENSOR_FRAME_FIELD_NAMES,
     sensor_frame_from_mapping_payload,

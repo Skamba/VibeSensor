@@ -7,7 +7,8 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
-from vibesensor.shared.boundaries.reporting import prepare_report_facts, prepare_report_input
+from vibesensor.shared.boundaries.reporting.facts import prepare_report_facts
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
 from vibesensor.shared.run_context_warning import RunContextWarning
 from vibesensor.use_cases.history.report_document import build_report_document
@@ -280,7 +281,7 @@ def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_an
         {
             "segment_index": 0,
             "phase": "cruise",
-            "load_state": "light",
+            "load_state": "steady",
             "start_window_index": 0,
             "end_window_index": 2,
             "start_t_s": 0.0,
@@ -294,8 +295,8 @@ def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_an
         },
         {
             "segment_index": 1,
-            "phase": "accel",
-            "load_state": "pulling",
+            "phase": "acceleration",
+            "load_state": "transient",
             "start_window_index": 3,
             "end_window_index": 5,
             "start_t_s": 1.5,

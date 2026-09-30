@@ -166,13 +166,20 @@ math inputs are evidence-backed.
 
 ## Validation
 
-Canonical validation lives in:
+At runtime the loader (`vibesensor.adapters.persistence.vehicle_configurations`)
+only schema-checks rows and resolves shard refs. The cross-field plausibility
+and source-evidence rules gate the bundled data in the test suite instead of
+running at app startup:
 
-- `vibesensor.adapters.persistence.car_library_validation` for the public
-  validation facade. Adapter-internal modules split allowlists, legacy grouped
-  rows, exact-row checks, powertrain rules, tire rules, and duplicate detection.
-- `vibesensor.adapters.persistence.car_library_source_evidence` for
-  `evidence_refs` resolution against `car_sources/*.json`
+- `apps/server/tests/test_support/car_library_validation/` is the validation
+  facade. Its submodules split allowlists, legacy grouped rows, exact-row
+  checks, powertrain rules, tire rules, and duplicate detection.
+- `apps/server/tests/test_support/car_library_validation/source_evidence.py`
+  resolves `evidence_refs` against `car_sources/*.json`.
+- `test_bundled_vehicle_library_passes_validation` in
+  `apps/server/tests/adapters/persistence/test_car_library_validation.py`
+  runs both against the packaged shards, so bad data fails CI rather than
+  silently emptying the library on the device.
 
 The bundled grouped picker is a projection only. Canonical exact-row shards
 remain the single source of truth.
@@ -216,7 +223,7 @@ contract changes, update both at once.
 ## Duplicate detection
 
 `validate_vehicle_configurations` (in
-`vibesensor.adapters.persistence.car_library_validation`) flags duplicate
+`apps/server/tests/test_support/car_library_validation`) flags duplicate
 and near-duplicate exact rows after the per-row checks:
 
 - `duplicate_vehicle_configuration` (hard failure): two or more rows share

@@ -16,7 +16,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text, _wrap_lines
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import NextStep
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
 
 __all__ = [
     "draw_compact_action_card",

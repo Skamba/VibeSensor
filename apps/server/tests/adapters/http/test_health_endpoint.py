@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from test_support.routes import iter_api_routes
 
 
 @pytest.fixture
@@ -122,7 +123,9 @@ def test_health_endpoint_validates_through_fastapi_response_field(_health_client
     """Verify FastAPI can validate the declared /api/health response model."""
 
     client, _state, app = _health_client
-    route = next(r for r in app.router.routes if getattr(r, "path", "") == "/api/health")
+    route = next(
+        r for r in iter_api_routes(app.router.routes) if getattr(r, "path", "") == "/api/health"
+    )
 
     response = client.get("/api/health")
     payload = response.json()

@@ -8,7 +8,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
     OrderTraceSummaryResponse,
     OrderTraceSupportIntervalResponse,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
+from vibesensor.shared.types.order_trace_contracts import (
     OrderHarmonicEvidenceSummary,
     OrderTracePhaseSupport,
     OrderTracePoint,

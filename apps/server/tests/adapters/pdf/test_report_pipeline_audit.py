@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.report_i18n import tr
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.report_presentation import (
     peak_classification_text as _peak_classification_text,
 )

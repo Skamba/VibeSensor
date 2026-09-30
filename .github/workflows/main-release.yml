@@ -32,7 +32,7 @@ jobs:
           echo "Manual release workflow runs must use the main branch; got ${GITHUB_REF}." >&2
           exit 1
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # workflow_run releases must build the exact commit that completed CI successfully.
@@ -58,7 +58,7 @@ jobs:
           "${python_bin}" tools/release/main_release.py compute-version \
             --github-output "${GITHUB_OUTPUT}"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: npm

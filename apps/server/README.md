@@ -22,15 +22,12 @@ Backend ownership boundaries:
 See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backend-package-layout)
 for the detailed backend ownership map. This README stays focused on
 backend-specific setup, configuration, routes, updates, and testing.
-Package-level backend dependency direction is declared in
-`apps/server/pyproject.toml` under `[tool.importlinter]`; keep repo-specific
-root-module and structural guardrails in `tools/dev/verify_backend_static_guards.py`.
-That static-guard layer now also carries the higher-signal seam messages that
-import-linter cannot: `use_cases/**` must stay off adapter imports directly,
-analysis/history core must stay off `adapters/pdf`, and live telemetry/runtime
-surfaces must stay off post-run diagnosis/report conclusion modules. When one of
-those fails, move the dependency behind the documented shared port or report
-boundary seam instead of widening the outer import.
+Backend dependency direction is declared in `apps/server/pyproject.toml` under
+`[tool.importlinter]`: the package layer order, plus narrower seams such as live
+telemetry staying off post-run diagnosis/report modules and the PDF adapter
+staying off diagnostics. When a contract fails, move the dependency behind the
+documented shared port or report boundary seam instead of widening the outer
+import.
 
 ## Shared layer ownership
 
@@ -64,7 +61,7 @@ state. Current `main` is intentionally split more narrowly:
   (`UiPreferencesService`), and canonical sensor metadata
   (`SensorSettingsService`). A shared settings snapshot coordinator owns only
   the single stored snapshot's load/save/rollback mechanics.
-  `build_settings_service_bundle()` in `vibesensor.app.container` groups those
+  `build_settings_service_bundle()` in `vibesensor.app.composition.settings` groups those
   focused services into explicit runtime and HTTP dependency bundles.
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
@@ -75,11 +72,11 @@ state. Current `main` is intentionally split more narrowly:
   Route-facing HTTP modules should stay on shared ports or adapter-local
   protocol seams, while `clients.py` remains the only HTTP surface allowed to
   delegate location writes through `assign_sensor_location()`.
-- `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
-  It delegates speed/OBD setup, history/reporting services, live runtime
-  services, update deps, lifecycle state, and router wiring to focused builder
-  functions with explicit bundles rather than extending one monolithic
-  composition function.
+- `vibesensor.app.container.build_runtime()` is the composition root. It calls
+  the per-subsystem builders in `vibesensor.app.composition` (history, speed,
+  settings, live runtime, updates) and assembles their outputs directly into
+  one `AppRuntime`: the infra-owned `LifecycleRuntime` consumed by
+  `LifecycleManager` plus the `RouterDeps` consumed by the HTTP router.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow
@@ -157,7 +154,7 @@ alongside the editable install path.
 Updater status persistence and `/api/update/status` now share one msgspec-owned
 boundary in `vibesensor/use_cases/updates/status/payload_codec.py`. Persisted
 settings snapshots now follow the same pattern in
-`vibesensor/shared/boundaries/settings/snapshot.py`.
+`vibesensor/shared/boundaries/settings.py`.
 
 - Keep the domain models (`UpdateJobStatus`, `UpdateRuntimeDetails`,
   `UpdateIssue`) as the internal source of truth.
@@ -401,7 +398,9 @@ The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`
 
 Production devices use the wheel-based updater in
 `apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public
-facade over the focused updater modules.
+API and `job.py` holding the linear update flow (validate, prepare transport,
+check release, stage/snapshot/install with rollback via `rollback.py`,
+complete, clean up).
 
 Firmware update code lives under
 `apps/server/vibesensor/use_cases/updates/firmware/`:
@@ -418,8 +417,8 @@ code lives under `apps/server/vibesensor/use_cases/updates/wifi/` and
   `wifi/wifi_hotspot_recovery.py` handles hotspot restore retries,
   `transport/uplink_readiness.py` handles DNS readiness polling, and
   `releases/release_validation.py` handles packaged smoke-server startup
-  polling. `restart_scheduler.py` stays custom because it is a two-command
-  fallback path, not a timed retry policy.
+  polling. Backend restart scheduling in `job.py` stays custom because it is
+  a two-command fallback path, not a timed retry policy.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.

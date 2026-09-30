@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import importlib.util
-import shlex
 import signal
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from types import ModuleType
-
-CommandTokenNormalizer = Callable[[str], str]
 
 
 def _repo_python_major_minor(repo_root: Path) -> tuple[int, int]:
@@ -58,91 +55,6 @@ def ensure_repo_python_version(
         "Run `make setup`, then use a Makefile target or "
         f"`{repo_root / '.venv' / 'bin' / 'python'} {label}`."
     )
-
-
-def walk_files(repo_root: Path, excluded_dirs: Iterable[str]) -> list[str]:
-    excluded = set(excluded_dirs)
-    files: list[str] = []
-    for path in repo_root.rglob("*"):
-        if not path.is_file():
-            continue
-        rel = path.relative_to(repo_root)
-        if any(part in excluded for part in rel.parts):
-            continue
-        files.append(rel.as_posix())
-    return files
-
-
-def tracked_files(repo_root: Path, excluded_dirs: Iterable[str]) -> list[str]:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "ls-files", "--cached"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        tracked = [line for line in result.stdout.splitlines() if line]
-        if tracked:
-            return tracked
-    except (OSError, subprocess.CalledProcessError):
-        pass
-    return walk_files(repo_root, excluded_dirs)
-
-
-def normalize_tokenized_command(
-    tokens: list[str],
-    *,
-    command_token_normalizer: CommandTokenNormalizer | None = None,
-) -> str:
-    if not tokens:
-        return ""
-    normalized = list(tokens)
-    command_index = 0
-    if normalized[0] == "env":
-        command_index = 1
-        while command_index < len(normalized) and "=" in normalized[command_index]:
-            command_index += 1
-        if command_index >= len(normalized):
-            return shlex.join(normalized)
-    if command_token_normalizer is not None:
-        normalized[command_index] = command_token_normalizer(normalized[command_index])
-    return shlex.join(normalized)
-
-
-def normalize_shell_command(
-    command: str,
-    *,
-    command_token_normalizer: CommandTokenNormalizer | None = None,
-) -> str:
-    tokens = shlex.split(command)
-    if "&&" not in tokens:
-        return normalize_tokenized_command(
-            tokens,
-            command_token_normalizer=command_token_normalizer,
-        )
-
-    parts: list[str] = []
-    current: list[str] = []
-    for token in tokens:
-        if token == "&&":
-            if current:
-                parts.append(
-                    normalize_tokenized_command(
-                        current,
-                        command_token_normalizer=command_token_normalizer,
-                    )
-                )
-                current = []
-            continue
-        current.append(token)
-    if current:
-        parts.append(
-            normalize_tokenized_command(
-                current,
-                command_token_normalizer=command_token_normalizer,
-            )
-        )
-    return " && ".join(parts)
 
 
 def load_module_from_path(module_name: str, module_path: Path) -> ModuleType:

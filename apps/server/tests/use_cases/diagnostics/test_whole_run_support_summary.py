@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.whole_run_support_summary import (
     build_phase_support,
     build_support_intervals,

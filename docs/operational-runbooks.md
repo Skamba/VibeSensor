@@ -243,7 +243,7 @@ make lint
 make typecheck-backend
 make ui-typecheck
 make coverage
-make test-all
+make ci
 docker compose build --pull
 docker compose up -d
 docker compose ps
@@ -259,7 +259,7 @@ only place the default asyncio loop remains expected.
 
 When a PR check fails:
 
-1. Reproduce the failing job locally with the matching `run_ci_parallel.py` or focused pytest command.
+1. Reproduce the failing job locally with the matching `make` target or focused pytest command.
 2. If the failure is e2e-only, inspect Docker logs and rerun the smallest failing scenario.
 3. If the failure is workflow or packaging related, validate the built wheel or Docker image locally before changing application code.
 

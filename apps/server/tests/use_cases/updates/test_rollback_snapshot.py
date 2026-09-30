@@ -4,7 +4,7 @@ from pathlib import Path
 
 from test_support.update_status import build_update_status_harness
 
-from vibesensor.use_cases.updates.rollback_snapshot import (
+from vibesensor.use_cases.updates.rollback import (
     RollbackSnapshotMetadata,
     RollbackSnapshotStore,
 )

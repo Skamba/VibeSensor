@@ -10,12 +10,12 @@ from vibesensor.domain import SpeedProfile
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as _reconstruct,
 )
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 
 
 @pytest.fixture(scope="module")

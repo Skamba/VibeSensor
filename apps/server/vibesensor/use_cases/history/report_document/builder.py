@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting import (
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.validation import validate_report_document
+from vibesensor.shared.boundaries.reporting.input import (
     PreparedReportInput,
     validate_prepared_report_input,
-)
-from vibesensor.shared.boundaries.reporting.document import (
-    ReportDocument,
-    validate_report_document,
 )
 
 from .composition import compose_report_document

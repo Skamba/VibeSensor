@@ -95,15 +95,10 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
     rim_in: 21,
     final_drive_ratio: 3.08,
     current_gear_ratio: 0.64,
-    wheel_bandwidth_pct: 7.5,
-    driveshaft_bandwidth_pct: 8.5,
-    engine_bandwidth_pct: 9.5,
     speed_uncertainty_pct: 3,
     tire_diameter_uncertainty_pct: 4,
     final_drive_uncertainty_pct: 2,
     gear_uncertainty_pct: 5,
-    min_abs_band_hz: 0.7,
-    max_band_half_width_pct: 12,
     tire_deflection_factor: 0.97,
   };
 
@@ -213,7 +208,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
 
   await openAnalysisTab(page);
 
-  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
+  await expect(page.locator("#speedUncertaintyInput")).toHaveValue("3");
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();

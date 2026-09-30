@@ -11,7 +11,7 @@ from vibesensor.domain import (
     SuitabilityCheck,
 )
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.codecs import driving_phase_summary_from_mapping
+from vibesensor.shared.boundaries.codecs.summaries import driving_phase_summary_from_mapping
 from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_payload
 
 
@@ -216,83 +216,75 @@ class TestSuitabilityCheck:
         assert isinstance(ref, dict)
         assert ref["_i18n_key"] == expected_key
 
-    def test_explanation_i18n_ref_saturation_warn_includes_sat_count(self) -> None:
-        c = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            state="warn",
-            details=(("sat_count", 5),),
-        )
-        ref = c.explanation_i18n_ref()
+    @pytest.mark.parametrize(
+        ("check_key", "details", "expected_params"),
+        [
+            pytest.param(
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                (("sat_count", 5),),
+                {"sat_count": 5},
+                id="saturation-sat-count",
+            ),
+            pytest.param(
+                "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                (("total_dropped", 10), ("total_overflow", 3)),
+                {"total_dropped": 10, "total_overflow": 3},
+                id="frame-integrity-counts",
+            ),
+            pytest.param(
+                "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                (("stride", 4),),
+                {"stride": "4"},
+                id="sampling-stride-as-text",
+            ),
+        ],
+    )
+    def test_explanation_i18n_ref_includes_warning_params(
+        self, check_key: str, details: tuple, expected_params: dict[str, object]
+    ) -> None:
+        ref = SuitabilityCheck(check_key=check_key, state="warn", details=details)
+        ref = ref.explanation_i18n_ref()
         assert isinstance(ref, dict)
-        assert ref["sat_count"] == 5
+        assert {key: ref[key] for key in expected_params} == expected_params
 
-    def test_explanation_i18n_ref_frame_integrity_warn_includes_counts(self) -> None:
-        c = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_FRAME_INTEGRITY",
-            state="warn",
-            details=(("total_dropped", 10), ("total_overflow", 3)),
-        )
-        ref = c.explanation_i18n_ref()
-        assert isinstance(ref, dict)
-        assert ref["total_dropped"] == 10
-        assert ref["total_overflow"] == 3
-
-    def test_explanation_i18n_ref_stride_includes_stride(self) -> None:
-        c = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-            state="warn",
-            details=(("stride", 4),),
-        )
-        ref = c.explanation_i18n_ref()
-        assert isinstance(ref, dict)
-        assert ref["stride"] == "4"
-
-    def test_explanation_i18n_ref_stride_no_details_returns_empty(self) -> None:
-        c = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-            state="warn",
-        )
-        assert c.explanation_i18n_ref() == ""
-
-    def test_explanation_i18n_ref_unknown_key_returns_empty(self) -> None:
-        c = SuitabilityCheck(check_key="UNKNOWN_CHECK", state="warn")
-        assert c.explanation_i18n_ref() == ""
+    @pytest.mark.parametrize(
+        "check_key",
+        [
+            pytest.param("SUITABILITY_CHECK_ANALYSIS_SAMPLING", id="stride-without-details"),
+            pytest.param("UNKNOWN_CHECK", id="unknown-check-key"),
+        ],
+    )
+    def test_explanation_i18n_ref_empty_without_explanation(self, check_key: str) -> None:
+        assert SuitabilityCheck(check_key=check_key, state="warn").explanation_i18n_ref() == ""
 
 
 class TestRunSuitability:
-    def test_overall_pass(self) -> None:
+    @pytest.mark.parametrize(
+        ("second_state", "overall", "is_usable", "has_warnings", "failed_keys"),
+        [
+            pytest.param("pass", "pass", True, False, [], id="all-pass"),
+            pytest.param("warn", "caution", True, True, [], id="warn-is-caution"),
+            pytest.param("fail", "fail", False, False, ["b"], id="fail-is-unusable"),
+        ],
+    )
+    def test_overall(
+        self,
+        second_state: str,
+        overall: str,
+        is_usable: bool,
+        has_warnings: bool,
+        failed_keys: list[str],
+    ) -> None:
         rs = RunSuitability(
             checks=(
                 SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="pass"),
+                SuitabilityCheck(check_key="b", state=second_state),
             )
         )
-        assert rs.overall == "pass"
-        assert rs.is_usable
-        assert not rs.has_warnings
-
-    def test_overall_caution(self) -> None:
-        rs = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="warn"),
-            )
-        )
-        assert rs.overall == "caution"
-        assert rs.is_usable
-        assert rs.has_warnings
-
-    def test_overall_fail(self) -> None:
-        rs = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="fail"),
-            )
-        )
-        assert rs.overall == "fail"
-        assert not rs.is_usable
-        assert len(rs.failed_checks) == 1
-        assert rs.failed_checks[0].check_key == "b"
+        assert rs.overall == overall
+        assert rs.is_usable is is_usable
+        assert rs.has_warnings is has_warnings
+        assert [check.check_key for check in rs.failed_checks] == failed_keys
 
     def test_empty_checks(self) -> None:
         rs = RunSuitability()
@@ -345,28 +337,14 @@ class TestRunSuitability:
         rs = run_suitability_from_payload([{"check_key": "speed_profile", "state": "pass"}])
         assert rs.checks[0].check_key == "speed_profile"
 
-    def test_has_reference_gaps_true_when_not_passing(self) -> None:
-        rs = RunSuitability(
-            checks=(
-                SuitabilityCheck(
-                    check_key="SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-                    state="warn",
-                ),
-            )
-        )
-        assert rs.has_reference_gaps
-
-    def test_has_reference_gaps_false_when_passing(self) -> None:
-        rs = RunSuitability(
-            checks=(
-                SuitabilityCheck(
-                    check_key="SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-                    state="pass",
-                ),
-            )
-        )
-        assert not rs.has_reference_gaps
-
-    def test_has_reference_gaps_false_when_absent(self) -> None:
-        rs = RunSuitability(checks=(SuitabilityCheck(check_key="other", state="pass"),))
-        assert not rs.has_reference_gaps
+    @pytest.mark.parametrize(
+        ("check_key", "state", "expected"),
+        [
+            pytest.param("SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "warn", True, id="warn"),
+            pytest.param("SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "pass", False, id="pass"),
+            pytest.param("other", "pass", False, id="absent"),
+        ],
+    )
+    def test_has_reference_gaps(self, check_key: str, state: str, expected: bool) -> None:
+        rs = RunSuitability(checks=(SuitabilityCheck(check_key=check_key, state=state),))
+        assert rs.has_reference_gaps is expected

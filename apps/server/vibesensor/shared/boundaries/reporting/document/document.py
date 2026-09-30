@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.domain import Finding, LocationHotspotRow, LocationIntensitySummary
 
-from ..findings import FindingPresentation
 from .appendices import (
     AppendixAData,
     AppendixBData,
@@ -17,30 +16,8 @@ from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
 from .sections import PeakRow, VerdictPageData
 
 __all__ = [
-    "Report",
     "ReportDocument",
 ]
-
-
-@dataclass(frozen=True, slots=True)
-class Report:
-    """Run-level metadata carrier consumed by report assembly."""
-
-    run_id: str
-    title: str = ""
-    lang: str = "en"
-    car_name: str | None = None
-    car_type: str | None = None
-    report_date: str | None = None
-    duration_s: float | None = None
-    sample_count: int = 0
-    sensor_count: int = 0
-
-    def __post_init__(self) -> None:
-        if not self.run_id:
-            raise ValueError("run_id must be non-empty")
-        if self.duration_s is not None and self.duration_s < 0:
-            raise ValueError("duration_s must be non-negative")
 
 
 @dataclass
@@ -70,8 +47,8 @@ class ReportDocument:
     peak_rows: list[PeakRow] = field(default_factory=list)
     lang: str = "en"
     certainty_tier_key: str = "A"
-    findings: list[FindingPresentation] = field(default_factory=list)
-    top_causes: list[FindingPresentation] = field(default_factory=list)
+    findings: list[Finding] = field(default_factory=list)
+    top_causes: list[Finding] = field(default_factory=list)
     sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
     location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
     proof_sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)

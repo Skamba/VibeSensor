@@ -12,8 +12,7 @@ from vibesensor.app.composition.speed import SpeedRuntimeBundle
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop
-from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
