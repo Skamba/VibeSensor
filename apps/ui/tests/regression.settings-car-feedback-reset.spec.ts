@@ -75,12 +75,13 @@ test("clears transient car creation feedback after leaving and re-entering the c
   await expect(createdRow).toHaveClass(/car-list-row--highlighted/);
   await expect(createdRow).toHaveAttribute("data-highlighted", "true");
   await expect(createdRow).toContainText("New");
+  // Creating a car through the wizard also activates it (createAndActivateCar).
   await expect(createdRow.locator(".car-active-pill")).toHaveAttribute(
     "data-state",
-    "inactive",
+    "active",
   );
   await expect.poll(() => createCarCalls).toBe(1);
-  await expect.poll(() => activateCarCalls).toBe(0);
+  await expect.poll(() => activateCarCalls).toBe(1);
 
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await page.locator('[data-settings-tab="carTab"]').click();
@@ -99,6 +100,10 @@ test("clears transient car creation feedback after leaving and re-entering the c
   await expect(createdRow).toHaveAttribute("data-highlighted", "false");
   await expect(createdRow).not.toContainText("New");
   await expect(createdRow.locator("strong")).toHaveText("Track Demo");
+  await expect(createdRow.locator(".car-active-pill")).toHaveAttribute(
+    "data-state",
+    "active",
+  );
   await expect.poll(() => createCarCalls).toBe(1);
-  await expect.poll(() => activateCarCalls).toBe(0);
+  await expect.poll(() => activateCarCalls).toBe(1);
 });
