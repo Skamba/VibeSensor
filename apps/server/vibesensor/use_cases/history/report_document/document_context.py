@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
-from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts, ReportRunFacts
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_presentation import (
     coverage_label,

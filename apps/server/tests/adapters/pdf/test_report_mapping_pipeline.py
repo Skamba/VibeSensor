@@ -3,14 +3,14 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding_payload
 
-import vibesensor.shared.boundaries.reporting as shared_reporting
-from vibesensor.shared.boundaries.reporting import (
-    PreparedReportInput,
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
 )
-from vibesensor.shared.boundaries.reporting import document as shared_report_document
-from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
+from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history import report_document
 
@@ -51,13 +51,10 @@ def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     prepared = _prepared_report_input()
     document = report_document.build_report_document(prepared)
 
-    assert isinstance(prepared, shared_reporting.PreparedReportInput)
-    assert isinstance(prepared.report_facts, shared_reporting.PreparedReportFacts)
-    assert isinstance(
-        prepared.report_facts.decision.primary_candidate,
-        shared_report_projection.PrimaryReportFacts,
-    )
-    assert isinstance(document, shared_report_document.ReportDocument)
+    assert isinstance(prepared, PreparedReportInput)
+    assert isinstance(prepared.report_facts, PreparedReportFacts)
+    assert isinstance(prepared.report_facts.decision.primary_candidate, PrimaryReportFacts)
+    assert isinstance(document, ReportDocument)
 
 
 def test_prepare_report_input_exposes_canonical_report_facts() -> None:

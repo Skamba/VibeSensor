@@ -13,7 +13,7 @@ from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.infra.runtime.registry import ClientRegistry, _resolve_now_mono
-from vibesensor.shared.boundaries.clients import snapshot_for_api
+from vibesensor.shared.boundaries.clients.api_rows import snapshot_for_api
 
 _CLIENT_ID = "aabbccddeeff"
 

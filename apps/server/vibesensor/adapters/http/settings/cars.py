@@ -17,7 +17,7 @@ from vibesensor.adapters.http.models.settings import (
     CarUpsertRequest,
 )
 from vibesensor.adapters.http.settings.dependencies import CarSettingsRouteDeps
-from vibesensor.shared.boundaries.settings import (
+from vibesensor.shared.boundaries.settings.cars import (
     car_config_update_payload_from_mapping,
     cars_response_payload,
 )

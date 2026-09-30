@@ -13,8 +13,10 @@ from vibesensor.domain import (
     CarSnapshot,
     RunContextSnapshot,
 )
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
+)
+from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )

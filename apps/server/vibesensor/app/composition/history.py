@@ -15,7 +15,7 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.shared.boundaries.reporting import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.ports import SettingsReader
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService

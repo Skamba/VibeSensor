@@ -29,7 +29,7 @@ from vibesensor.infra.runtime.health_snapshot import build_system_health_snapsho
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState, ProcessingTickRunner
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.use_cases.history.report_document import build_report_document

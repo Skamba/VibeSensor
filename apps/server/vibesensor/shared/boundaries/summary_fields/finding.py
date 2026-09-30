@@ -13,7 +13,7 @@ from vibesensor.domain import (
     VibrationSource,
 )
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.codecs import finding_evidence_from_mapping
+from vibesensor.shared.boundaries.codecs.finding_evidence import finding_evidence_from_mapping
 from vibesensor.shared.boundaries.summary_fields.evidence_metrics import build_evidence_metrics
 from vibesensor.shared.boundaries.summary_fields.order_match import (
     order_match_observations_from_sequence,

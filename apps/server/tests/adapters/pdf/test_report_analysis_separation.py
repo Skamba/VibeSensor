@@ -13,14 +13,13 @@ from _paths import SERVER_ROOT
 from _report_pdf_test_helpers import extract_pdf_pages_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
-    NextStep,
-    PatternEvidence,
     RankedCandidateRow,
-    ReportDocument,
-    VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep, PatternEvidence
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 
 # ---------------------------------------------------------------------------
 # 1.  Runtime import guard — verify the report package can be loaded

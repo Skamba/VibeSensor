@@ -29,7 +29,7 @@ from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frames import (
+from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
@@ -51,7 +51,7 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 def _real_pdf_renderer(prepared: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.shared.boundaries.reporting import PreparedReportInput
+    from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 
     assert isinstance(prepared, PreparedReportInput)
     return build_prepared_report_pdf(prepared)

@@ -8,7 +8,10 @@ from typing import Any
 
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import FONT, FONT_B, FS_SMALL, REPORT_COLORS
-from vibesensor.shared.boundaries.reporting.document import TimelineGraphData, TimelineGraphInterval
+from vibesensor.shared.boundaries.reporting.document.sections import (
+    TimelineGraphData,
+    TimelineGraphInterval,
+)
 
 __all__ = ["run_timeline_graph"]
 

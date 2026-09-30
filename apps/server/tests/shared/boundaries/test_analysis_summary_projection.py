@@ -7,7 +7,7 @@ from dataclasses import replace
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding, VibrationSource
-from vibesensor.shared.boundaries.analysis_payloads import (
+from vibesensor.shared.boundaries.analysis_payloads.projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )

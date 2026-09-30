@@ -5,15 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain import Finding, LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
-    NextStep,
-    ReportDocument,
     ReportLabelValueRow,
-    VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [

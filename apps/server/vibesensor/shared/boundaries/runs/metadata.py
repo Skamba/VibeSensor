@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import msgspec
 
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
 )

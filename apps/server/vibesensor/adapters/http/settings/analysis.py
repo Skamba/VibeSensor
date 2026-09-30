@@ -13,7 +13,7 @@ from vibesensor.adapters.http.models.settings import (
     AnalysisSettingsResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import AnalysisSettingsRouteDeps
-from vibesensor.shared.boundaries.settings import (
+from vibesensor.shared.boundaries.settings.analysis import (
     analysis_settings_response_payload,
     analysis_settings_update_payload_from_mapping,
 )

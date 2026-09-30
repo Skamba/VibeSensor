@@ -17,10 +17,10 @@ from vibesensor.adapters.persistence.history_db import (
     RunHistoryRepository,
     create_history_persistence_adapters,
 )
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.runs.log import normalize_sample_record
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frame_to_json_object
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_to_json_object
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.report_document import build_report_document

@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    PatternEvidence,
-    VerdictPageData,
-)
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
+from vibesensor.shared.boundaries.reporting.document.panels import PatternEvidence
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (

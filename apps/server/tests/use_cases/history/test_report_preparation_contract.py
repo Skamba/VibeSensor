@@ -5,7 +5,7 @@ from dataclasses import replace
 import pytest
 from test_support.findings import make_finding_payload
 
-from vibesensor.shared.boundaries.reporting import (
+from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
 )

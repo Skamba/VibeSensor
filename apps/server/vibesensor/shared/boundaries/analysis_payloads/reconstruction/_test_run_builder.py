@@ -13,7 +13,7 @@ from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )

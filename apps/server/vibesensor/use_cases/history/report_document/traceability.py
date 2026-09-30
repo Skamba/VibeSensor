@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
+from vibesensor.shared.boundaries.reporting.document.appendices import ReportLabelValueRow
 
 __all__ = ["build_traceability_rows"]
 

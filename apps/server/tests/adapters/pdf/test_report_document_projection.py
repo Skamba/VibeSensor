@@ -14,8 +14,8 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 

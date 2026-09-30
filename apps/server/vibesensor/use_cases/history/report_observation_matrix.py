@@ -6,7 +6,7 @@ from collections.abc import Callable
 from math import isfinite
 
 from vibesensor.domain import Finding, TestRun
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     SensorObservationCell,
     SensorObservationMatrixRow,
 )

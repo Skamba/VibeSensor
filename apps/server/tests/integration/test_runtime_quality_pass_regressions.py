@@ -24,7 +24,7 @@ from vibesensor.adapters.persistence.history_db import (
 )
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.sampling import bounded_sample as _bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame

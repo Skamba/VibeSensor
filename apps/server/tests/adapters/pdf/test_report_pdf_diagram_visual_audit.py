@@ -6,10 +6,8 @@ from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.domain import LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixBData,
-    ReportDocument,
-)
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixBData
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 
 
 def test_report_pdf_renders_sensor_topology_context_without_primitive_pinning() -> None:

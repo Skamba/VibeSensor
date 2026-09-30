@@ -30,7 +30,7 @@ from test_support.history_db_lifecycle import (
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
-from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 
 
 def _create_corrupted_history_db(tmp_path: Path, *, truncate_bytes: int = 100) -> Path:

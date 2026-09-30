@@ -12,7 +12,7 @@ from test_support.runtime_lifecycle import make_hello_message as _make_hello_mes
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.clients import snapshot_for_api
+from vibesensor.shared.boundaries.clients.api_rows import snapshot_for_api
 
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:

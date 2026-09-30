@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.shared.boundaries.sensor_frames import (
-    SENSOR_FRAME_FIELD_NAMES,
+from vibesensor.shared.boundaries.sensor_frames.fields import SENSOR_FRAME_FIELD_NAMES
+from vibesensor.shared.boundaries.sensor_frames.rows import (
     sensor_frame_from_row,
     sensor_frame_to_row_values,
 )

@@ -6,8 +6,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts
-from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
+from vibesensor.shared.boundaries.reporting.document.appendices import ReportLabelValueRow
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
 from vibesensor.shared.report_confidence_presentation import confidence_snapshot_text
 from vibesensor.shared.report_presentation import (
     display_location,

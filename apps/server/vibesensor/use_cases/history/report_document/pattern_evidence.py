@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, TestRun, VibrationOrigin
 from vibesensor.report_i18n import resolve_i18n
-from vibesensor.shared.boundaries.reporting.document import PatternEvidence
+from vibesensor.shared.boundaries.reporting.document.panels import PatternEvidence
 from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
 from vibesensor.shared.report_presentation import (
     display_location,

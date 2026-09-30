@@ -19,9 +19,7 @@ from vibesensor.adapters.pdf.pdf_text import (
     _draw_text,
     _wrap_lines,
 )
-from vibesensor.shared.boundaries.reporting.document import (
-    ReportLabelValueRow,
-)
+from vibesensor.shared.boundaries.reporting.document.appendices import ReportLabelValueRow
 
 __all__ = ["_draw_table", "_draw_traceability_row", "_fmt_db", "_fmt_hz", "_fmt_relative_db"]
 

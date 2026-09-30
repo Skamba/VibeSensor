@@ -6,7 +6,10 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.reporting.document import AppendixBData, TopologyIntensityRow
+from vibesensor.shared.boundaries.reporting.document.appendices import (
+    AppendixBData,
+    TopologyIntensityRow,
+)
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_presentation import (
     display_location,

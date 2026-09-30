@@ -22,7 +22,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import AppendixBData
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixBData
 
 from .tables import _draw_table, _fmt_db, _fmt_relative_db
 from .title_bar import draw_appendix_title_bar

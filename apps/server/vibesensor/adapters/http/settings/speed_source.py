@@ -15,7 +15,7 @@ from vibesensor.adapters.http.models.settings import (
 )
 from vibesensor.adapters.http.settings.dependencies import SpeedSourceRouteDeps
 from vibesensor.adapters.http.settings.presentation import speed_source_status_response
-from vibesensor.shared.boundaries.settings import (
+from vibesensor.shared.boundaries.settings.speed_source import (
     speed_source_response_payload,
     speed_source_update_payload_from_mapping,
 )

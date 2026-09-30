@@ -4,8 +4,8 @@ from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
 from vibesensor import report_i18n
-from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 

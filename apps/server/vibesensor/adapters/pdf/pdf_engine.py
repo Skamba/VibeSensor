@@ -15,11 +15,9 @@ from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE
 from vibesensor.adapters.pdf.render_planner import build_report_render_plan
-from vibesensor.shared.boundaries.reporting import PreparedReportInput
-from vibesensor.shared.boundaries.reporting.document import (
-    ReportDocument,
-    validate_report_document,
-)
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.validation import validate_report_document
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 
 __all__ = ["build_prepared_report_pdf", "build_report_pdf"]
 

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from math import ceil
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
+from vibesensor.shared.boundaries.analysis_payloads.summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )

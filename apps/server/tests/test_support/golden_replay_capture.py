@@ -11,7 +11,7 @@ from test_support.core import ALL_SENSORS, standard_metadata
 from test_support.golden_replay_types import GoldenReplayFixture, GoldenReplayRun
 from test_support.sample_scenarios import make_sample
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,

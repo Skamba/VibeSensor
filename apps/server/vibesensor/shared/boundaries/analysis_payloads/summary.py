@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_to_json_objects
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
 from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization import (

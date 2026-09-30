@@ -3,7 +3,7 @@ from __future__ import annotations
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,

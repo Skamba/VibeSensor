@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
-from vibesensor.shared.boundaries.reporting.document import AppendixAData, RankedCandidateRow
+from vibesensor.shared.boundaries.reporting.document.appendices import (
+    AppendixAData,
+    RankedCandidateRow,
+)
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_confidence_presentation import confidence_pct_text, proof_caveat_text
 from vibesensor.shared.report_diagnostics import check_state, has_warning_code, nonpass_detail_lines

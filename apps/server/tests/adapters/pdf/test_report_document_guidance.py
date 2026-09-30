@@ -11,7 +11,7 @@ from test_support.report_helpers import (
     trunk_primary_guidance_summary,
 )
 
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 

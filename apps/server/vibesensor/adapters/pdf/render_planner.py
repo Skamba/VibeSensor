@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 
 from .pdf_appendices.action_matrix import worksheet_step_pages
 from .report_types import (

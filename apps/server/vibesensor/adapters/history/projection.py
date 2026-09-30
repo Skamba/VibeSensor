@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping
 from typing import cast
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.analysis_payloads import (
+from vibesensor.shared.boundaries.analysis_payloads.projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )

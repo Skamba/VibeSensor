@@ -15,7 +15,7 @@ from vibesensor.adapters.http.models.settings import (
     SpeedUnitResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import UiPreferencesRouteDeps
-from vibesensor.shared.boundaries.settings import (
+from vibesensor.shared.boundaries.settings.preferences import (
     language_response_payload,
     speed_unit_response_payload,
 )

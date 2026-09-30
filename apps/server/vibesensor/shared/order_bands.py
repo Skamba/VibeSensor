@@ -7,7 +7,9 @@ from math import isfinite, sqrt
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.boundaries.codecs import analysis_settings_snapshot_from_mapping
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.constants.analysis import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
