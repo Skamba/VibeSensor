@@ -15,6 +15,7 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
@@ -250,8 +251,6 @@ def build_registry_with_hello(
 
 
 def build_runtime(**overrides: Any):
-    import vibesensor.infra.runtime as runtime_module
-
     config = overrides.pop("config", StubConfig(processing=StubProcessingConfig()))
     registry = overrides.pop("registry", StubRegistry())
     processor = overrides.pop("processor", StubProcessor())
@@ -270,7 +269,7 @@ def build_runtime(**overrides: Any):
     payload_source = overrides.pop("payload_source", StubWsPayloadSource())
     ingest_diagnostics = overrides.pop("ingest_diagnostics", IngestDiagnosticsCollector())
     processing_state = ProcessingLoopState()
-    health_state = runtime_module.RuntimeHealthState()
+    health_state = RuntimeHealthState()
     lifecycle_runtime = LifecycleRuntime(
         health_state=health_state,
         history_db_path=config.logging.history_db_path,

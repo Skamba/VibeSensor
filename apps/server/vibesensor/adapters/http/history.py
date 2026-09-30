@@ -13,7 +13,7 @@ from vibesensor.adapters.http._helpers import (
     safe_filename,
 )
 from vibesensor.adapters.http.error_boundary import route_errors_to_http
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.history import (
     DeleteHistoryRunResponse,
     HistoryInsightsAnalyzingResponse,
     HistoryInsightsResponse,

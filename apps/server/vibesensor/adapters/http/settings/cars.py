@@ -11,7 +11,7 @@ from vibesensor.adapters.http._helpers import (
     normalize_car_id_or_400,
 )
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.settings import (
     ActiveCarRequest,
     CarsResponse,
     CarUpsertRequest,

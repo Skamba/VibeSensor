@@ -10,7 +10,7 @@ from typing import cast
 
 from pydantic import TypeAdapter
 
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.history import (
     DeleteHistoryRunResponse,
     HistoryInsightsResponse,
     HistoryListEntryResponse,

@@ -10,7 +10,7 @@ from test_support.settings_services import build_settings_services
 
 from tests.conftest import FakeState
 from vibesensor.adapters.http import create_router
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.settings import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
     CarUpsertRequest,

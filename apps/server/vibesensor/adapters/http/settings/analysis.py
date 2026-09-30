@@ -8,7 +8,7 @@ from fastapi import APIRouter
 
 from vibesensor.adapters.http._helpers import OpenAPIResponses
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.settings import (
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
 )

@@ -16,7 +16,7 @@ from vibesensor.adapters.http.dependencies import (
     ClientRegistryProtocol,
 )
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.clients import (
     ClientLocationsResponse,
     ClientsResponse,
     IdentifyRequest,

@@ -24,7 +24,7 @@ from vibesensor.adapters.http.dependencies import (
 )
 from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.domain import RunStatus
-from vibesensor.infra.runtime import RuntimeHealthState
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
@@ -359,7 +359,7 @@ class FakeState:
                 "buffer_overflow_drops": lambda self: 0,
             },
         )()
-        from vibesensor.infra.runtime import ProcessingLoopState
+        from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 
         self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()

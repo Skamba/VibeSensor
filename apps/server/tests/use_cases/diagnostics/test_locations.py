@@ -90,7 +90,7 @@ def test_wheel_location_codes_are_complete() -> None:
 class TestSetLocationRequestAcceptsEmptyCode:
     """Verify that SetLocationRequest allows empty location_code for clearing."""
 
-    from vibesensor.adapters.http.models import SetLocationRequest as _Req
+    from vibesensor.adapters.http.models.clients import SetLocationRequest as _Req
 
     @pytest.mark.parametrize(
         "code",
