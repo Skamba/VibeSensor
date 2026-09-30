@@ -10,14 +10,21 @@ from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import RoadSceneController
 from vibesensor.adapters.udp.protocol import (
     CMD_IDENTIFY,
+    CMD_SYNC_CLOCK,
+    CMD_SYNC_CLOCK_STRUCT,
     HELLO_CAP_EXPLICIT_ACK,
     MSG_CMD,
+    MSG_HELLO_ACK,
     pack_ack,
+    pack_ack_sync_clock,
     pack_data,
     pack_hello,
     parse_cmd,
+    parse_hello_ack,
 )
 from vibesensor.shared.exceptions import ProtocolError
+
+_HANDSHAKE_POLL_S = 0.05
 
 __all__ = [
     "ClientProtocol",
@@ -40,7 +47,12 @@ class ClientProtocol(asyncio.DatagramProtocol):
         self.sim.control_transport = cast(asyncio.DatagramTransport, transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
-        if not data or data[0] != MSG_CMD:
+        if not data:
+            return
+        if data[0] == MSG_HELLO_ACK:
+            self._handle_hello_ack(data)
+            return
+        if data[0] != MSG_CMD:
             return
         try:
             cmd = parse_cmd(data)
@@ -53,11 +65,48 @@ class ClientProtocol(asyncio.DatagramProtocol):
             duration_ms = int.from_bytes(cmd.params[:2], "little") if len(cmd.params) >= 2 else 1000
             print(f"{self.sim.name}: identify {duration_ms}ms from {addr[0]}:{addr[1]}")
             self.sim.pulse(1.4)
-            ack = pack_ack(self.sim.client_id, cmd.cmd_seq, status=0)
-            if self.sim.control_transport is not None:
-                self.sim.control_transport.sendto(
-                    ack, (self.sim.server_host, self.sim.server_control_port)
-                )
+            self._send_control(pack_ack(self.sim.client_id, cmd.cmd_seq, status=0))
+        elif cmd.cmd_id == CMD_SYNC_CLOCK:
+            self._handle_sync_clock(data, cmd.cmd_seq)
+
+    def _send_control(self, packet: bytes) -> None:
+        if self.sim.control_transport is not None:
+            self.sim.control_transport.sendto(
+                packet, (self.sim.server_host, self.sim.server_control_port)
+            )
+
+    def _handle_hello_ack(self, data: bytes) -> None:
+        try:
+            hello_ack = parse_hello_ack(data)
+        except (ProtocolError, ValueError):
+            return
+        if hello_ack.client_id == self.sim.client_id:
+            self.sim.handshake_complete = True
+
+    def _handle_sync_clock(self, data: bytes, cmd_seq: int) -> None:
+        """Mirror the firmware's CMD_SYNC_CLOCK handling (runtime_transport.cpp).
+
+        The server's offset estimate (from the previous exchange) is applied
+        once it carries a measured round trip, and the ACK reports device
+        receive/send timestamps so the server can refresh its estimate.
+        """
+        if len(data) < CMD_SYNC_CLOCK_STRUCT.size:
+            return
+        device_receive_us = self.sim.device_time_us()
+        *_header, _server_time_us, applied_offset_us, round_trip_us = (
+            CMD_SYNC_CLOCK_STRUCT.unpack_from(data, 0)
+        )
+        if round_trip_us > 0:
+            self.sim.clock_offset_us = int(applied_offset_us)
+        device_send_us = self.sim.device_time_us()
+        self._send_control(
+            pack_ack_sync_clock(
+                self.sim.client_id,
+                cmd_seq,
+                device_receive_us=device_receive_us,
+                device_send_us=device_send_us,
+            )
+        )
 
 
 class DataProtocol(asyncio.DatagramProtocol):
@@ -139,25 +188,41 @@ async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asynci
 
 
 async def data_loop(sim: SimClient, stop_event: asyncio.Event) -> None:
+    """Stream DATA frames the way the ESP firmware does.
+
+    Like the firmware, streaming starts only after the server's HELLO_ACK.
+    Samples are scheduled on the simulated device timer, so consecutive frames
+    are exactly ``frame_samples / sample_rate_hz`` apart in ``t0_us`` (device
+    time plus the synced clock offset), independent of transmit jitter.
+    """
     if sim.rng is None:
         raise RuntimeError("SimClient.rng must be initialised before data_loop")
-    frame_period = (sim.frame_samples / sim.sample_rate_hz) * sim.send_period_scale
-    loop = asyncio.get_running_loop()
-    next_send = loop.time() + sim.start_offset_s
+    while not sim.handshake_complete:
+        if stop_event.is_set():
+            return
+        await asyncio.sleep(_HANDSHAKE_POLL_S)
+    frame_duration_us = (sim.frame_samples * 1_000_000.0) / sim.sample_rate_hz
+    first_due_us = float(sim.device_time_us()) + (sim.start_offset_s * 1_000_000.0)
+    frame_index = 0
     while not stop_event.is_set():
+        frame_start_us = first_due_us + (frame_index * frame_duration_us)
+        # A frame is ready once its last sample has been taken (device time).
+        ready_mono_s = sim.monotonic_at_device_us(frame_start_us + frame_duration_us)
+        tx_delay_s = float(sim.rng.uniform(0.0, sim.send_jitter_s))
+        await asyncio.sleep(max(0.0, (ready_mono_s + tx_delay_s) - time.monotonic()))
+        if stop_event.is_set():
+            break
+        samples = sim.make_frame()
         if sim.data_transport is not None:
-            samples = sim.make_frame()
             packet = pack_data(
                 client_id=sim.client_id,
                 seq=sim.seq,
-                t0_us=time.monotonic_ns() // 1000,
+                t0_us=max(0, int(round(frame_start_us)) + sim.clock_offset_us),
                 samples=samples,
             )
             sim.data_transport.sendto(packet, (sim.server_host, sim.server_data_port))
-            sim.seq = (sim.seq + 1) & 0xFFFFFFFF
-        next_send += frame_period
-        jitter = float(sim.rng.uniform(-sim.send_jitter_s, sim.send_jitter_s))
-        await asyncio.sleep(max(0.0, (next_send + jitter) - loop.time()))
+        sim.seq = (sim.seq + 1) & 0xFFFFFFFF
+        frame_index += 1
 
 
 async def auto_stop(delay_s: float, stop_event: asyncio.Event) -> None:
