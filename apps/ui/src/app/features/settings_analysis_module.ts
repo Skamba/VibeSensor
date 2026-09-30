@@ -58,51 +58,16 @@ interface AnalysisFieldState {
 }
 
 const EDITABLE_ANALYSIS_KEYS = [
-  "wheel_bandwidth_pct",
-  "driveshaft_bandwidth_pct",
-  "engine_bandwidth_pct",
   "speed_uncertainty_pct",
   "tire_diameter_uncertainty_pct",
   "final_drive_uncertainty_pct",
   "gear_uncertainty_pct",
-  "min_abs_band_hz",
-  "max_band_half_width_pct",
 ] as const satisfies readonly AnalysisPanelFieldKey[];
 
 const ANALYSIS_FIELD_CONFIGS: Record<
   AnalysisPanelFieldKey,
   AnalysisFieldConfig
 > = {
-  wheel_bandwidth_pct: {
-    key: "wheel_bandwidth_pct",
-    labelKey: "settings.wheel_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.wheel_bandwidth_pct,
-  },
-  driveshaft_bandwidth_pct: {
-    key: "driveshaft_bandwidth_pct",
-    labelKey: "settings.driveshaft_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 10,
-    defaultValue: defaultVehicleSettings.driveshaft_bandwidth_pct,
-  },
-  engine_bandwidth_pct: {
-    key: "engine_bandwidth_pct",
-    labelKey: "settings.engine_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.engine_bandwidth_pct,
-  },
   speed_uncertainty_pct: {
     key: "speed_uncertainty_pct",
     labelKey: "settings.speed_uncertainty",
@@ -143,26 +108,6 @@ const ANALYSIS_FIELD_CONFIGS: Record<
     guidedMax: 4,
     defaultValue: defaultVehicleSettings.gear_uncertainty_pct,
   },
-  min_abs_band_hz: {
-    key: "min_abs_band_hz",
-    labelKey: "settings.min_half_width",
-    unit: " Hz",
-    hardMin: 0,
-    hardMax: 500,
-    guidedMin: 0,
-    guidedMax: 2,
-    defaultValue: defaultVehicleSettings.min_abs_band_hz,
-  },
-  max_band_half_width_pct: {
-    key: "max_band_half_width_pct",
-    labelKey: "settings.max_half_width",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 1,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.max_band_half_width_pct,
-  },
 };
 
 function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
@@ -172,15 +117,6 @@ function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
 function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
   const vehicleSettings = settings.analysis.vehicleSettings.value;
   return {
-    wheel_bandwidth_pct: formatSettingValue(
-      vehicleSettings.wheel_bandwidth_pct,
-    ),
-    driveshaft_bandwidth_pct: formatSettingValue(
-      vehicleSettings.driveshaft_bandwidth_pct,
-    ),
-    engine_bandwidth_pct: formatSettingValue(
-      vehicleSettings.engine_bandwidth_pct,
-    ),
     speed_uncertainty_pct: formatSettingValue(
       vehicleSettings.speed_uncertainty_pct,
     ),
@@ -192,10 +128,6 @@ function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
     ),
     gear_uncertainty_pct: formatSettingValue(
       vehicleSettings.gear_uncertainty_pct,
-    ),
-    min_abs_band_hz: formatSettingValue(vehicleSettings.min_abs_band_hz),
-    max_band_half_width_pct: formatSettingValue(
-      vehicleSettings.max_band_half_width_pct,
     ),
   };
 }
@@ -246,11 +178,6 @@ export function createSettingsAnalysisModule(ctx: {
   function buildPanelModel(): AnalysisPanelRenderModel {
     return {
       fields: {
-        wheel_bandwidth_pct: buildFieldRenderModel("wheel_bandwidth_pct"),
-        driveshaft_bandwidth_pct: buildFieldRenderModel(
-          "driveshaft_bandwidth_pct",
-        ),
-        engine_bandwidth_pct: buildFieldRenderModel("engine_bandwidth_pct"),
         speed_uncertainty_pct: buildFieldRenderModel("speed_uncertainty_pct"),
         tire_diameter_uncertainty_pct: buildFieldRenderModel(
           "tire_diameter_uncertainty_pct",
@@ -259,10 +186,6 @@ export function createSettingsAnalysisModule(ctx: {
           "final_drive_uncertainty_pct",
         ),
         gear_uncertainty_pct: buildFieldRenderModel("gear_uncertainty_pct"),
-        min_abs_band_hz: buildFieldRenderModel("min_abs_band_hz"),
-        max_band_half_width_pct: buildFieldRenderModel(
-          "max_band_half_width_pct",
-        ),
       },
       saveFeedback: saveFeedback.value,
     };
@@ -366,19 +289,12 @@ export function createSettingsAnalysisModule(ctx: {
       saveFeedback.value = null;
       await syncAnalysisSettingsToServer(
         {
-          wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
-          driveshaft_bandwidth_pct:
-            defaultVehicleSettings.driveshaft_bandwidth_pct,
-          engine_bandwidth_pct: defaultVehicleSettings.engine_bandwidth_pct,
           speed_uncertainty_pct: defaultVehicleSettings.speed_uncertainty_pct,
           tire_diameter_uncertainty_pct:
             defaultVehicleSettings.tire_diameter_uncertainty_pct,
           final_drive_uncertainty_pct:
             defaultVehicleSettings.final_drive_uncertainty_pct,
           gear_uncertainty_pct: defaultVehicleSettings.gear_uncertainty_pct,
-          min_abs_band_hz: defaultVehicleSettings.min_abs_band_hz,
-          max_band_half_width_pct:
-            defaultVehicleSettings.max_band_half_width_pct,
         },
         generation,
       );

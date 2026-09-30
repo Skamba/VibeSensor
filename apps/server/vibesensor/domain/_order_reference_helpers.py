@@ -24,15 +24,10 @@ ORDER_REFERENCE_KEYS: tuple[str, ...] = (
     "default_axle_for_speed",
     "final_drive_ratio",
     "current_gear_ratio",
-    "wheel_bandwidth_pct",
-    "driveshaft_bandwidth_pct",
-    "engine_bandwidth_pct",
     "speed_uncertainty_pct",
     "tire_diameter_uncertainty_pct",
     "final_drive_uncertainty_pct",
     "gear_uncertainty_pct",
-    "min_abs_band_hz",
-    "max_band_half_width_pct",
     "tire_deflection_factor",
 )
 
@@ -99,15 +94,10 @@ def order_reference_spec_from_mapping(
         tire_setup=tire_setup,
         final_drive_ratio=_f("final_drive_ratio"),
         current_gear_ratio=_f("current_gear_ratio"),
-        wheel_bandwidth_pct=_f("wheel_bandwidth_pct"),
-        driveshaft_bandwidth_pct=_f("driveshaft_bandwidth_pct"),
-        engine_bandwidth_pct=_f("engine_bandwidth_pct"),
         speed_uncertainty_pct=_f("speed_uncertainty_pct"),
         tire_diameter_uncertainty_pct=_f("tire_diameter_uncertainty_pct"),
         final_drive_uncertainty_pct=_f("final_drive_uncertainty_pct"),
         gear_uncertainty_pct=_f("gear_uncertainty_pct"),
-        min_abs_band_hz=_f("min_abs_band_hz"),
-        max_band_half_width_pct=_f("max_band_half_width_pct"),
     )
 
 

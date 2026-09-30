@@ -149,7 +149,7 @@ describe("createLazyUiPanels", () => {
     lazyPanels.panels.settings.internet.actions.value = internetActions;
     lazyPanels.panels.settings.internet.focusSsidInput();
     lazyPanels.panels.settings.analysis.openGuidance();
-    lazyPanels.panels.settings.analysis.focusField("wheel_bandwidth_pct");
+    lazyPanels.panels.settings.analysis.focusField("gear_uncertainty_pct");
     lazyPanels.panels.settings.cars.wizard.focus("finish");
     lazyPanels.panels.settings.speedSource.model.value = speedSourceModel;
     lazyPanels.panels.settings.speedSource.actions.value = speedSourceActions;
@@ -173,7 +173,7 @@ describe("createLazyUiPanels", () => {
 
     expect(settingsShell.activations).toEqual(["updateTab"]);
     expect(analysisPanel.guidanceOpens).toBe(1);
-    expect(analysisPanel.focusFields).toEqual(["wheel_bandwidth_pct"]);
+    expect(analysisPanel.focusFields).toEqual(["gear_uncertainty_pct"]);
     expect(carsPanel.focusTargets).toEqual(["finish"]);
     expect(internetPanel.focusCalls).toBe(1);
     expect(speedSourcePanel.focusManualCalls).toBe(1);
@@ -190,7 +190,7 @@ describe("createLazyUiPanels", () => {
 
     expect(analysisPanel.guidanceOpens).toBe(2);
     expect(analysisPanel.focusFields).toEqual([
-      "wheel_bandwidth_pct",
+      "gear_uncertainty_pct",
       "speed_uncertainty_pct",
     ]);
     expect(carsPanel.focusTargets).toEqual(["finish", "close"]);
@@ -213,7 +213,7 @@ describe("createLazyUiPanels", () => {
 
     lazyPanels.panels.settingsShell.activateTab("updateTab");
     lazyPanels.panels.settings.analysis.openGuidance();
-    lazyPanels.panels.settings.analysis.focusField("wheel_bandwidth_pct");
+    lazyPanels.panels.settings.analysis.focusField("gear_uncertainty_pct");
     lazyPanels.panels.settings.cars.wizard.focus("finish");
     lazyPanels.panels.settings.internet.focusSsidInput();
     lazyPanels.panels.settings.speedSource.focusManualSpeedInput();

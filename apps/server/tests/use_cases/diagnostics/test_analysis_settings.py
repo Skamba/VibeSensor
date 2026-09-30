@@ -176,19 +176,19 @@ def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
 def test_sanitize_clamps_absurd_values() -> None:
     out = sanitize_settings(
         {
-            "wheel_bandwidth_pct": 99999,
+            "final_drive_ratio": 99999,
             "speed_uncertainty_pct": 99999,
-            "min_abs_band_hz": 99999,
+            "gear_uncertainty_pct": 99999,
         },
     )
-    assert out["wheel_bandwidth_pct"] == 100.0
+    assert out["final_drive_ratio"] == 20.0
     assert out["speed_uncertainty_pct"] == 100.0
-    assert out["min_abs_band_hz"] == 500.0
+    assert out["gear_uncertainty_pct"] == 100.0
 
 
 def test_sanitize_keeps_normal_values_unchanged() -> None:
-    out = sanitize_settings({"wheel_bandwidth_pct": 6.0, "speed_uncertainty_pct": 0.6})
-    assert out["wheel_bandwidth_pct"] == 6.0
+    out = sanitize_settings({"final_drive_ratio": 3.5, "speed_uncertainty_pct": 0.6})
+    assert out["final_drive_ratio"] == 3.5
     assert out["speed_uncertainty_pct"] == 0.6
 
 
@@ -282,15 +282,10 @@ def test_engine_hz_returns_none_without_gear() -> None:
         tire_setup=AxleTireSetup.square(tire),
         final_drive_ratio=3.08,
         current_gear_ratio=0.0,
-        wheel_bandwidth_pct=5.0,
-        driveshaft_bandwidth_pct=4.5,
-        engine_bandwidth_pct=5.2,
         speed_uncertainty_pct=1.0,
         tire_diameter_uncertainty_pct=1.0,
         final_drive_uncertainty_pct=0.1,
         gear_uncertainty_pct=0.2,
-        min_abs_band_hz=0.2,
-        max_band_half_width_pct=6.0,
     )
     assert spec.engine_hz(10.0) is None
 

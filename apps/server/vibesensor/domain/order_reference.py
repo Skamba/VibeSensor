@@ -42,15 +42,10 @@ class OrderReferenceSpec:
     tire_setup: AxleTireSetup
     final_drive_ratio: float
     current_gear_ratio: float
-    wheel_bandwidth_pct: float
-    driveshaft_bandwidth_pct: float
-    engine_bandwidth_pct: float
     speed_uncertainty_pct: float
     tire_diameter_uncertainty_pct: float
     final_drive_uncertainty_pct: float
     gear_uncertainty_pct: float
-    min_abs_band_hz: float
-    max_band_half_width_pct: float
 
     @property
     def tire_spec(self) -> TireSpec:
@@ -214,15 +209,10 @@ def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, flo
         "rim_in": boundary_tire.rim_in,
         "final_drive_ratio": spec.final_drive_ratio,
         "current_gear_ratio": spec.current_gear_ratio,
-        "wheel_bandwidth_pct": spec.wheel_bandwidth_pct,
-        "driveshaft_bandwidth_pct": spec.driveshaft_bandwidth_pct,
-        "engine_bandwidth_pct": spec.engine_bandwidth_pct,
         "speed_uncertainty_pct": spec.speed_uncertainty_pct,
         "tire_diameter_uncertainty_pct": spec.tire_diameter_uncertainty_pct,
         "final_drive_uncertainty_pct": spec.final_drive_uncertainty_pct,
         "gear_uncertainty_pct": spec.gear_uncertainty_pct,
-        "min_abs_band_hz": spec.min_abs_band_hz,
-        "max_band_half_width_pct": spec.max_band_half_width_pct,
         "tire_deflection_factor": boundary_tire.deflection_factor,
     }
     setup = spec.tire_setup

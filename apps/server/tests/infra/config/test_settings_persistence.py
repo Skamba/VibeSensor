@@ -139,6 +139,40 @@ def test_settings_snapshot_rejects_invalid_stored_payload(
     assert {key: snapshot[key] for key in expected} == expected
 
 
+def test_settings_snapshot_drops_removed_band_width_aspects(tmp_path: Path) -> None:
+    removed_keys = {
+        "wheel_bandwidth_pct",
+        "driveshaft_bandwidth_pct",
+        "engine_bandwidth_pct",
+        "min_abs_band_hz",
+        "max_band_half_width_pct",
+    }
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(
+        db.lifecycle,
+        (
+            '{"cars": [{"id": "car-1", "name": "Old", "type": "sedan", "aspects": '
+            '{"tire_width_mm": 225, "rim_in": 17, "speed_uncertainty_pct": 2.5, '
+            '"wheel_bandwidth_pct": 7.5, "driveshaft_bandwidth_pct": 8.5, '
+            '"engine_bandwidth_pct": 9.5, "min_abs_band_hz": 0.7, '
+            '"max_band_half_width_pct": 12}}], "activeCarId": "car-1"}'
+        ),
+    )
+    services = build_settings_services(db=db.settings_snapshot_repository)
+
+    aspects = services.coordinator.snapshot()["cars"][0]["aspects"]
+    assert removed_keys.isdisjoint(aspects)
+    assert aspects["tire_width_mm"] == 225.0
+    assert aspects["speed_uncertainty_pct"] == 2.5
+    analysis = services.analysis_settings.analysis_settings_snapshot()
+    assert analysis.rim_in == 17.0
+
+    services.analysis_settings.update_active_car_aspects({"rim_in": 18.0})
+    persisted = db.settings_snapshot_repository.get_settings_snapshot()
+    assert persisted is not None
+    assert removed_keys.isdisjoint(persisted["cars"][0]["aspects"])
+
+
 def test_settings_snapshot_invalid_active_car_id_clears_selection(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     write_raw_settings_snapshot(

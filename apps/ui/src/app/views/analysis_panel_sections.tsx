@@ -122,7 +122,7 @@ export function AnalysisGuidanceDialog(props: {
         <div class="subtle">
           {t(
             "settings.analysis.guidance_intro",
-            "Most users should keep the defaults. Use wider bands or higher uncertainty only when your data is unusually noisy or your vehicle specs are approximate.",
+            "Most users should keep the defaults. Raise uncertainty only when your data is unusually noisy or your vehicle specs are approximate.",
           )}
         </div>
         <div class="subtle">
