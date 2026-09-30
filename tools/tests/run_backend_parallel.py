@@ -431,7 +431,10 @@ def main(argv: list[str] | None = None) -> int:
         "--junitxml",
         str(junit_path),
         *marker_args,
-        *selected_targets,
+        # Keep each directory's files contiguous: pytest 9.1.x loses a
+        # directory's conftest fixtures when its file arguments are interleaved
+        # with files from another directory (pytest-dev/pytest#14635).
+        *sorted(selected_targets),
     ]
     started = time.monotonic()
     rc = _run(pytest_cmd, log_path=log_path, timeout_s=args.timeout_s)

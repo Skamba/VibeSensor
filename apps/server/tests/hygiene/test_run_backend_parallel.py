@@ -132,6 +132,35 @@ def test_main_builds_pytest_command_for_selected_backend_shard(
     assert any("running shard 1/1" in line for line in emitted)
 
 
+def test_main_passes_shard_files_to_pytest_grouped_by_directory(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_run_backend_parallel_module()
+    captured, _emitted = _install_main_fakes(module, monkeypatch, tmp_path)
+    collected = [
+        "apps/server/tests/use_cases/run/test_a.py::test_one",
+        "apps/server/tests/use_cases/test_parent.py::test_one",
+        "apps/server/tests/use_cases/run/test_b.py::test_one",
+    ]
+    monkeypatch.setattr(module, "collect_test_ids", lambda _pytest_args: collected)
+    # Duration-balanced order would interleave run/ with its parent directory.
+    monkeypatch.setattr(
+        module,
+        "_load_duration_cache",
+        lambda _path: {collected[0]: 3.0, collected[1]: 2.0, collected[2]: 1.0},
+    )
+
+    assert module.main([]) == 0
+
+    targets = [arg for arg in captured["cmd"] if arg.endswith(".py")]
+    assert targets == [
+        "apps/server/tests/use_cases/run/test_a.py",
+        "apps/server/tests/use_cases/run/test_b.py",
+        "apps/server/tests/use_cases/test_parent.py",
+    ]
+
+
 def test_main_reads_xdist_workers_from_env(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_backend_parallel_module()
     monkeypatch.setenv(module._XDIST_WORKERS_ENV, "5")
