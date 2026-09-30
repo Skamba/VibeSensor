@@ -14,9 +14,6 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
 from vibesensor.use_cases.diagnostics.spectrogram import (
     aggregate_fft_spectrum as _aggregate_fft_spectrum,
 )
-from vibesensor.use_cases.diagnostics.spectrogram import (
-    aggregate_fft_spectrum_raw as _aggregate_fft_spectrum_raw,
-)
 
 
 def _typed_samples(samples: list[dict]) -> list:
@@ -64,14 +61,14 @@ class TestAggregateFFTSpectrum:
                 peaks.append({"hz": 50.0, "amp": 0.80})
             samples.append(sample(float(i), 80.0, peaks))
 
-        raw = _aggregate_fft_spectrum_raw(_typed_samples(samples), freq_bin_hz=2.0)
+        raw = _aggregate_fft_spectrum(_typed_samples(samples), freq_bin_hz=2.0, aggregation="max")
         raw_dict = dict(raw)
         spike_val = raw_dict.get(51.0, raw_dict.get(50.0, 0.0))
         assert spike_val >= 0.80
 
     def test_empty_samples(self) -> None:
         assert _aggregate_fft_spectrum([]) == []
-        assert _aggregate_fft_spectrum_raw([]) == []
+        assert _aggregate_fft_spectrum([], aggregation="max") == []
 
     def test_persistence_spectrum_uses_run_noise_baseline(self) -> None:
         low_noise_samples = uniform_samples(20, 30.0, 0.06, dt=1.0, strength_floor_amp_g=0.01)
