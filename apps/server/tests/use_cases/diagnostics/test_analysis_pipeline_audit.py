@@ -199,8 +199,9 @@ class TestSteadySpeedSinglePoint:
 class TestNoPipelineErrorIsolation:
     """Demonstrate that a failure in one stage kills the entire summary."""
 
-    def test_findings_failure_kills_entire_summary(self):
+    def test_findings_failure_kills_entire_summary(self, monkeypatch):
         from vibesensor.adapters.analysis_summary import summarize_run_data
+        from vibesensor.use_cases.diagnostics import findings_bundle
 
         metadata: dict[str, Any] = {
             "run_id": "test-run",
@@ -226,12 +227,7 @@ class TestNoPipelineErrorIsolation:
         def _failing_findings_builder(_request: object) -> tuple[()]:
             raise RuntimeError("simulated findings failure")
 
+        monkeypatch.setattr(findings_bundle, "_build_findings", _failing_findings_builder)
         with pytest.raises(RuntimeError, match="simulated findings failure"):
-            summarize_run_data(
-                metadata,
-                samples,
-                lang="en",
-                file_name="test",
-                findings_builder=_failing_findings_builder,
-            )
+            summarize_run_data(metadata, samples, lang="en", file_name="test")
         # Bug: the entire summary is lost; no partial results are available

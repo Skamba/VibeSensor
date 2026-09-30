@@ -50,8 +50,8 @@ the active profile, filter chains, and whether raw diagnostic evidence was
 preserved.
 
 The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
-`use_cases/run/post_analysis_executor.py` through
-`use_cases/run/post_analysis_whole_run_builders.py`. Whole-run spectra now use
+the whole-run stage functions in `use_cases/run/post_analysis_executor.py`,
+which call the diagnostics builders directly. Whole-run spectra now use
 `RawCaptureManifest` plus `RunPersistence.aload_raw_capture_sensor_range(...)`
 instead of receiving a full `RawRunCapture`; compact summary-row replay may still
 load full raw capture before compact report-facing summaries are persisted.
@@ -126,9 +126,10 @@ load/store boundary around the injected analysis dependency.
 
 ## Pipeline Steps
 
-`RunAnalysis.summarize()` in `run_analysis.py` delegates to
-`analysis_pipeline.py` for the compact summary/report-facing analysis over
-summary-style samples. `execute_post_analysis()` runs the whole-run sidecar
+`RunAnalysis.summarize()` in `run_analysis.py` runs the compact
+summary/report-facing analysis over summary-style samples:
+`prepare_analysis_context()` → `build_findings_bundle()` →
+`build_analysis_result()`. `execute_post_analysis()` runs the whole-run sidecar
 stages before this compact summary is stored, then appends whole-run metadata and
 summaries to the persisted analysis.
 
@@ -158,8 +159,7 @@ summaries to the persisted analysis.
 | `_context_projection.py` | ~80 | Projection helpers that rehydrate metadata, car, symptom, and configuration snapshots from `DiagnosticsContext` |
 | `_analysis_models.py` | ~80 | Typed request and bundle dataclasses shared across findings and result assembly |
 | `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
-| `run_analysis.py` | ~130 | Public typed entrypoint: `RunAnalysis`, raw-boundary findings helper, and language normalization |
-| `analysis_pipeline.py` | ~120 | Typed execution pipeline over already-prepared diagnostics inputs |
+| `run_analysis.py` | ~130 | Public typed entrypoint: `RunAnalysis` (context → findings bundle → result), raw-boundary findings helper, and language normalization |
 | `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
 | `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / diagnostics-local artifact assembly |
 | `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
@@ -215,7 +215,7 @@ Input: persisted summary samples + metadata (+ optional raw-capture manifest/fil
   │    ├─ loads persisted summary rows and caps compact-analysis input
   │    └─ loads full RawRunCapture when raw capture is available
   │
-  ├─ post_analysis_whole_run_builders.build_whole_run_artifacts()
+  ├─ post_analysis_executor.run_whole_run_pipeline_stages()
   │    ├─ whole_run_spectra.py → dense spectral sidecars + spectral summaries
   │    ├─ whole_run_context.py → context-window-labels sidecar + compact intervals
   │    ├─ orders/whole_run_traces.py → dense order-trace sidecar

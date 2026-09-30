@@ -27,13 +27,13 @@ Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
     → execute_post_analysis() [vibesensor.use_cases.run.post_analysis_executor]
       → load_post_analysis_run() [vibesensor.use_cases.run.post_analysis_loader]
-      → build_whole_run_artifacts() [vibesensor.use_cases.run.post_analysis_whole_run_builders]
+      → run_whole_run_pipeline_stages() [vibesensor.use_cases.run.post_analysis_executor]
         → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
         → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
       → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]
       → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis_summary]
         → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
-        → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py
+        → run_analysis.py + run_data_preparation.py + _summary_steps.py + _summary_result.py
         → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
       → append compact whole-run report-facing summaries
       → astore_analysis() [vibesensor.adapters.persistence.history_db]

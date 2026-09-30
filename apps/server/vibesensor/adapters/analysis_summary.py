@@ -12,7 +12,6 @@ from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_fro
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
 from vibesensor.use_cases.diagnostics.run_analysis import (
@@ -27,7 +26,6 @@ def summarize_sensor_frames(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Analyze typed run data and serialize the explicit boundary summary payload."""
     run = build_diagnostics_run_input(metadata, samples, file_name=file_name)
@@ -36,7 +34,6 @@ def summarize_sensor_frames(
         file_name=file_name,
         lang=lang,
         include_samples=include_samples,
-        findings_builder=findings_builder,
     ).summarize()
     return analysis_result_to_summary(result)
 
@@ -46,7 +43,6 @@ def build_findings_for_samples(
     metadata: Mapping[str, object],
     samples: Sequence[Mapping[str, object]],
     lang: str | None = None,
-    findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
     """Boundary helper that decodes raw payloads once before typed analysis."""
 
@@ -54,7 +50,6 @@ def build_findings_for_samples(
         metadata=run_metadata_from_mapping(metadata),
         samples=sensor_frames_from_mappings(samples),
         lang=lang,
-        findings_builder=findings_builder,
     )
 
 
@@ -64,7 +59,6 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Decode boundary payloads once, then execute the typed diagnostics core."""
     return summarize_sensor_frames(
@@ -73,7 +67,6 @@ def summarize_run_data(
         lang=lang,
         file_name=file_name,
         include_samples=include_samples,
-        findings_builder=findings_builder,
     )
 
 
@@ -81,7 +74,6 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Read a JSONL run file, analyse it, and serialize the boundary summary."""
     metadata, samples, _warnings = load_run(log_path)
@@ -91,7 +83,6 @@ def summarize_log(
         lang=lang,
         file_name=log_path.name,
         include_samples=include_samples,
-        findings_builder=findings_builder,
     )
 
 
