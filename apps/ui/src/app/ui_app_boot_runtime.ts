@@ -2,11 +2,9 @@ import { fmt, fmtTs, formatIntLocale } from "../format";
 import {
   createAppFeatureBundle,
   type AppFeatureBundle,
-  type AppFeatureBundleRuntimePorts,
-  type AppFeatureBundleSharedDeps,
 } from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
-import type { UiLazyPanels, UiMountedPanels } from "./ui_lazy_panels";
+import type { UiLazyPanels } from "./ui_lazy_panels";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
@@ -19,49 +17,6 @@ import type {
   UiShellChromeActions,
   UiShellChromeBindings,
 } from "./runtime/ui_shell_chrome";
-
-function createUiAppSharedDeps(
-  shell: UiShellController,
-  state: AppState,
-): Pick<AppFeatureBundleSharedDeps, "formatting" | "services"> {
-  return {
-    services: {
-      t: (key, vars) => shell.t(key, vars),
-      requestConfirmation: (message) => shell.requestConfirmation(message),
-      showError: (message) => shell.showError(message),
-    },
-    formatting: {
-      fmt,
-      fmtTs,
-      formatInt: (value) => formatIntLocale(value, state.shell.lang.value),
-    },
-  };
-}
-
-function createUiAppFeatureRuntimePorts(deps: {
-  panels: UiMountedPanels;
-  shell: UiShellController;
-  spectrum: UiSpectrumController;
-  transport: UiLiveTransportController;
-}): AppFeatureBundleRuntimePorts {
-  const { panels, shell, spectrum, transport } = deps;
-  return {
-    panels,
-    navigation: {
-      activatePrimaryView: (viewId) => shell.setActiveView(viewId),
-      activeViewId: shell.activeViewId,
-    },
-    realtimeChrome: {
-      setShellLiveStatus: (variant, text) => shell.setLiveStatus(variant, text),
-    },
-    view: {
-      refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
-    },
-    transport: {
-      sendSelection: () => transport.sendSelection(),
-    },
-  };
-}
 
 export interface UiAppBootRuntime {
   dispose(): void;
@@ -76,14 +31,14 @@ export function createUiAppBootRuntime(deps: {
 }): UiAppBootRuntime {
   const queryClient = createUiQueryClient();
   queryClient.mount();
-  let featurePorts!: AppFeatureBundle;
+  let features!: AppFeatureBundle;
   const shell = new UiShellController({
-    bindFeatureHandlers: () => featurePorts.shell.bindHandlers(),
+    bindFeatureHandlers: () => features.bindHandlers(),
     state: deps.state,
     chrome: deps.shellChrome.view,
     chromeActions: deps.shellChromeActions,
     liveOverview: deps.lazyPanels.panels.dashboard.liveOverview,
-    onViewActivated: (viewId) => featurePorts.ensureViewReady(viewId),
+    onViewActivated: (viewId) => features.ensureViewReady(viewId),
     queryClient,
   });
   const spectrum = new UiSpectrumController({
@@ -96,25 +51,30 @@ export function createUiAppBootRuntime(deps: {
     state: deps.state,
     payloadErrorMessage: () => shell.t("ws.payload_error"),
   });
-  featurePorts = createAppFeatureBundle({
+  features = createAppFeatureBundle({
     state: deps.state,
-    shared: {
-      ...createUiAppSharedDeps(shell, deps.state),
-      serverState: {
-        queryClient,
-      },
+    services: {
+      t: (key, vars) => shell.t(key, vars),
+      requestConfirmation: (message) => shell.requestConfirmation(message),
+      showError: (message) => shell.showError(message),
     },
-    runtime: createUiAppFeatureRuntimePorts({
-      panels: deps.lazyPanels.panels,
-      shell,
-      spectrum,
-      transport,
-    }),
+    formatting: {
+      fmt,
+      fmtTs,
+      formatInt: (value) => formatIntLocale(value, deps.state.shell.lang.value),
+    },
+    queryClient,
+    panels: deps.lazyPanels.panels,
+    activeViewId: shell.activeViewId,
+    activatePrimaryView: (viewId) => shell.setActiveView(viewId),
+    setShellLiveStatus: (variant, text) => shell.setLiveStatus(variant, text),
+    sendSelection: () => transport.sendSelection(),
+    refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
   });
   const startup = new UiStartupCoordinator({
     shell,
     transport,
-    features: featurePorts.startup,
+    features: features.startup,
     defaultViewId: DEFAULT_SHELL_VIEW_ID,
   });
   let started = false;
@@ -126,7 +86,7 @@ export function createUiAppBootRuntime(deps: {
         return;
       }
       disposed = true;
-      featurePorts.dispose();
+      features.dispose();
       queryClient.clear();
       queryClient.unmount();
       transport.dispose();

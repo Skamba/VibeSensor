@@ -1,11 +1,22 @@
 import { expect, test } from "vitest";
 import { createRealtimeFeatureViewState } from "../src/app/features/realtime_feature_view_state";
-import { createRealtimeFeatureWorkflowState } from "../src/app/features/realtime_feature_workflow";
+import type { RealtimeLoggingError } from "../src/app/features/realtime_feature";
 import { createAppState } from "../src/app/ui_app_state";
+import { signal } from "../src/app/ui_signals";
+import type { RealtimeLoggingPendingAction } from "../src/app/views/realtime_logging_view_models";
+
+/** The controller-owned logging signals the view state derives from. */
+function createLoggingSignals() {
+  return {
+    handlersBound: signal(false),
+    pendingLoggingAction: signal<RealtimeLoggingPendingAction>(null),
+    loggingError: signal<RealtimeLoggingError | null>(null),
+  };
+}
 
 test("realtime view state only re-arms its elapsed timer when logging tick inputs change", () => {
   const state = createAppState();
-  const workflow = createRealtimeFeatureWorkflowState();
+  const workflow = createLoggingSignals();
   const originalSetInterval = globalThis.setInterval;
   const originalClearInterval = globalThis.clearInterval;
   const createdTimerIds: Array<ReturnType<typeof setInterval>> = [];
@@ -89,7 +100,7 @@ test("realtime view state only re-arms its elapsed timer when logging tick input
 
 test("realtime view state preserves the last completed elapsed text through processing and saved states", () => {
   const state = createAppState();
-  const workflow = createRealtimeFeatureWorkflowState();
+  const workflow = createLoggingSignals();
   const originalDateNow = Date.now;
   const originalSetInterval = globalThis.setInterval;
   const originalClearInterval = globalThis.clearInterval;

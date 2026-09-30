@@ -1,9 +1,9 @@
 import { classifyDataFreshness } from "./data_freshness";
 import { createRealtimeSensorState } from "./realtime_sensor_state";
 import type {
-  RealtimeFeatureWorkflowLoggingError,
-  RealtimeFeatureWorkflowSignals,
-} from "./realtime_feature_workflow";
+  RealtimeLoggingError,
+  RealtimeLoggingSignals,
+} from "./realtime_feature";
 import type { RealtimeState } from "../realtime_state";
 import type { SettingsState } from "../settings_state";
 import type { ShellState } from "../shell_state";
@@ -37,7 +37,7 @@ interface RealtimeFeatureViewStateDeps {
   formatting: {
     formatInt: (value: number) => string;
   };
-  workflow: RealtimeFeatureWorkflowSignals;
+  workflow: RealtimeLoggingSignals;
 }
 
 export interface RealtimeFeatureViewState {
@@ -126,7 +126,7 @@ function buildLoggingUnavailableModel(
 }
 
 function buildLoggingErrorModel(
-  error: RealtimeFeatureWorkflowLoggingError,
+  error: RealtimeLoggingError,
   baseModel: RealtimeLoggingPanelRenderModel,
   t: (key: string, vars?: Record<string, unknown>) => string,
 ): RealtimeLoggingPanelRenderModel {

@@ -253,21 +253,19 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that owns Comlink worker lifecycle for heavy spectrum frame preparation, splits data refreshes from lighter settings-driven decoration refreshes, and wires overlay, canvas, interaction, and panel modules |
-| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
-| `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
+| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner (and its startup-only feature contract) that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable chart buffer reuse for same-shape frames, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_frame_preparer.ts` | Typed spectrum frame-prep contract plus pure interpolation/dB conversion core shared by worker and focused tests |
 | `app/runtime/spectrum_frame_preparer_worker.ts` | Canonical Comlink worker entrypoint for off-main-thread spectrum frame preparation plus transferable response packing |
 | `app/runtime/spectrum_frame_preparer_worker_client.ts` | Runtime-owned worker client wrapper that creates, proxies, and disposes the spectrum frame-prep worker |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
-| `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
+| `app/app_feature_bundle.ts` | Composition root for feature controllers: builds realtime and the dashboard speed-status poller eagerly, lazy-loads `app_feature_secondary_bundle.ts` (history, settings, cars, update, ESP flash) per view, and returns handler binding, view readiness, startup loads, and disposal to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
 | `app/features/esp_flash_feature.ts` | ESP flash controller for query-backed port refreshes, flash status polling while the ESP flash tab is visible, log/history hydration, and start/cancel orchestration behind the typed panel bridge |
 | `app/features/cars_feature.ts` | Car-management controller: saved-car list activation/deletion and creation feedback plus the add-car wizard (step transitions, car-library loading, finish validation), calling the `api/*` wrappers directly behind the typed `CarsPanelView` bridge |
 | `app/features/cars_wizard_state.ts` | Pure add-car wizard state helpers: wizard step state, option load states, manual spec input store, finish readiness, and summary data |
-| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
-| `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for query-backed logging status refreshes, logging actions, location updates, and client mutations |
+| `app/features/realtime_feature.ts` | Realtime controller for query-backed logging status polling and start/stop, idle capture-readiness refreshes, location updates, and client mutations, binding the logging and sensors panel actions |
 | `app/features/settings_analysis_module.ts` | Analysis-settings controller for validation, save/reset orchestration (gated on a resolved active car), language-driven draft resync, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
 | `app/features/speed_source_feature.ts` | Speed-source settings controller for draft state, validation, query-backed save/load, OBD scan/pair with background rescans, and the tab's GPS/OBD status polling behind the typed speed-source panel bridge |
 | `app/views/analysis_panel.tsx` | Signal-backed Preact owner for the analysis-settings shell; local refs/effects handle guidance and field focus while analysis and car-selection modules feed typed model and availability updates |
@@ -350,10 +348,11 @@ loading inside that one tree; only the settings subtree keeps its internal
 tab-panel mount path so the per-tab settings panels can keep their existing
 typed view bindings. The spectrum island owns its chart host refs internally
 and passes that typed bridge to the runtime. `app_feature_bundle.ts` creates
-the concrete features, wires explicit cross-feature ports, and returns only the
-shell, transport, and startup contracts the runtime needs, while
-`ui_startup_coordinator.ts` runs the startup-only load/refresh ports from a
-small declarative sync/async plan instead of a handwritten boot call chain.
+the feature controllers from one `AppFeatureContext` (state, services, query
+client, mounted panels, and the few runtime callbacks) and wires the remaining
+cross-feature calls as plain closures, while `ui_startup_coordinator.ts` runs
+the startup-only loads from a small declarative sync/async plan instead of a
+handwritten boot call chain.
 `startUiApp()` now returns a public dispose handle, and that top-level teardown
 flows through `ui_app_runtime.ts` to stop long-lived effects, polling loops,
 WebSocket reconnect/stale timers, spectrum RAF work, and deferred settings
@@ -374,10 +373,9 @@ status models into island-owned hosts. Those seams should use semantic methods
 like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
 loops.
 
-Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
-facade, `realtime_feature_workflow.ts` owns the controller-style polling,
-mutation flow, and signal-backed workflow state, `realtime_feature_view_state.ts`
-derives the live overview/logging/sensors models plus idle readiness signatures
+Realtime follows the same controller shape: `realtime_feature.ts` owns the
+polling, mutation flow, logging state signals, and panel action binding,
+`realtime_feature_view_state.ts` derives the live overview/logging/sensors models plus idle readiness signatures
 from shared AppState slices, `app/views/realtime_live_overview.tsx` and
 `app/views/realtime_logging_panel.tsx` consume bound model signals inside their
 signal-backed islands, `realtime_capture_readiness_models.ts` owns the
