@@ -1,4 +1,8 @@
-"""Public validation facade for bundled vehicle library data."""
+"""Plausibility validation for the bundled vehicle library data.
+
+The app does not run these rules at startup; the test suite runs them against
+the packaged JSON (see ``tests/adapters/persistence/test_car_library_validation.py``).
+"""
 
 from __future__ import annotations
 
@@ -6,16 +10,16 @@ from collections.abc import Mapping, Sequence
 
 from vibesensor.domain import VehicleConfiguration
 
-from ._car_library_validation_allowlist import (
+from ._allowlist import (
     filter_allowlisted_issues,
     load_car_library_validation_allowlist,
 )
-from ._car_library_validation_common import CarLibraryValidationIssue
-from ._car_library_validation_exact import (
+from ._common import CarLibraryValidationIssue
+from ._exact import (
     validate_vehicle_configuration,
     validate_vehicle_configuration_duplicates,
 )
-from ._car_library_validation_legacy import validate_legacy_entry
+from ._legacy import validate_legacy_entry
 
 __all__ = [
     "CarLibraryValidationIssue",

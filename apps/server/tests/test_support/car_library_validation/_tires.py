@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain import AxleTireSetup, TireSpec
 
-from ._car_library_validation_common import (
+from ._common import (
     RIM_SUFFIX_RE,
     TIRE_DIAMETER_RANGE_MM,
     CarLibraryValidationIssue,

@@ -6,7 +6,7 @@ from collections.abc import Mapping
 
 from vibesensor.domain import VehicleConfiguration
 
-from ._car_library_validation_common import (
+from ._common import (
     AWD_BADGE_TOKENS,
     FINAL_DRIVE_RANGE,
     GEAR_RATIO_RANGE,

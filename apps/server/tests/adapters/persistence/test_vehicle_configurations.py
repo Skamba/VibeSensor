@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 from typing import cast
 
+from test_support.car_library_validation.source_evidence import (
+    load_car_source_registry,
+    validate_vehicle_configuration_source_evidence,
+)
 from test_support.vehicle_configuration_shards import (
     load_sample_vehicle_configuration_shards,
     write_vehicle_configuration_shard,
@@ -53,7 +57,7 @@ def test_load_vehicle_configurations_fails_closed_for_invalid_shard(tmp_path: Pa
     assert _load_configs_from_data_dir(tmp_path) == []
 
 
-def test_load_vehicle_configurations_fails_closed_when_required_evidence_refs_are_missing(
+def test_source_evidence_validation_flags_loaded_rows_missing_required_evidence_refs(
     tmp_path: Path,
 ) -> None:
     relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
@@ -67,7 +71,12 @@ def test_load_vehicle_configurations_fails_closed_when_required_evidence_refs_ar
     }
     write_vehicle_configuration_shard(tmp_path, relative_path, bad_payload)
 
-    assert _load_configs_from_data_dir(tmp_path) == []
+    issues = validate_vehicle_configuration_source_evidence(
+        _load_configs_from_data_dir(tmp_path),
+        registry=load_car_source_registry(),
+    )
+
+    assert [issue.rule for issue in issues] == ["missing_required_evidence_refs"]
 
 
 def test_load_vehicle_configurations_expands_notes_and_evidence_refs(tmp_path: Path) -> None:

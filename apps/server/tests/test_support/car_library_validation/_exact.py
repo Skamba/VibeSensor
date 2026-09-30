@@ -6,19 +6,19 @@ from collections.abc import Sequence
 
 from vibesensor.domain import VehicleConfiguration, VehicleConfigurationField
 
-from ._car_library_validation_common import (
+from ._common import (
     CarLibraryValidationIssue,
     variant_entity,
     vehicle_configuration_fuzzy_label_key,
     vehicle_configuration_identity_key,
 )
-from ._car_library_validation_powertrain import (
+from ._powertrain import (
     validate_drivetrain_badges,
     validate_final_drive_layout,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
 )
-from ._car_library_validation_tires import validate_tire_setup, validate_tire_spec
+from ._tires import validate_tire_setup, validate_tire_spec
 
 
 def validate_vehicle_configuration(

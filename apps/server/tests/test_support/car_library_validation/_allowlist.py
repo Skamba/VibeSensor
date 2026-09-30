@@ -8,7 +8,7 @@ from pathlib import Path
 
 from vibesensor.shared._data_files import resolve_static_data_file
 
-from ._car_library_validation_common import CarLibraryValidationIssue
+from ._common import CarLibraryValidationIssue
 
 _ALLOWLIST_FILE = resolve_static_data_file("car_library_validation_allowlist.json")
 

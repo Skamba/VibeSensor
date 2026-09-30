@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from vibesensor.adapters.persistence.car_library import load_car_library
-from vibesensor.adapters.persistence.car_library_validation import (
+from test_support.car_library_validation import (
+    ensure_valid_vehicle_configurations,
     load_car_library_validation_allowlist,
     validate_car_library_rows,
     validate_vehicle_configurations,
 )
+from test_support.car_library_validation.source_evidence import (
+    ensure_valid_vehicle_configuration_source_evidence,
+)
+
+from vibesensor.adapters.persistence.car_library import load_car_library
 from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 from vibesensor.domain import (
     AxleTireSetup,
@@ -289,3 +294,16 @@ def test_bundled_allowlist_entries_match_live_validation_issues() -> None:
     }
 
     assert sorted(set(allowlist) - (vehicle_issue_keys | row_issue_keys)) == []
+
+
+def test_bundled_vehicle_library_passes_validation() -> None:
+    """The packaged vehicle configurations must satisfy every plausibility/evidence rule.
+
+    The loader used to enforce these at app startup (failing closed to an empty
+    library); they now gate the bundled data here instead.
+    """
+    configs = load_vehicle_configurations()
+
+    assert configs
+    ensure_valid_vehicle_configurations(configs)
+    ensure_valid_vehicle_configuration_source_evidence(configs)
