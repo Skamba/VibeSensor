@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import copy
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
+import pytest
 from test_support.car_library_validation.source_evidence import (
     load_car_source_registry,
     validate_vehicle_configuration_source_evidence,
@@ -111,32 +113,6 @@ def test_load_vehicle_configurations_expands_notes_and_evidence_refs(tmp_path: P
     assert target.drivetrain_metadata.evidence_refs == tuple(evidence_list)
 
 
-def test_load_vehicle_configurations_fails_closed_for_unknown_notes_ref(tmp_path: Path) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    drivetrain = cast(dict[str, object], rows[0]["drivetrain"])
-    drivetrain.pop("notes", None)
-    drivetrain["notes_ref"] = "does_not_exist"
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
-
-
-def test_load_vehicle_configurations_fails_closed_for_unknown_evidence_refs_ref(
-    tmp_path: Path,
-) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    drivetrain = cast(dict[str, object], rows[0]["drivetrain"])
-    drivetrain.pop("evidence_refs", None)
-    drivetrain["evidence_refs_ref"] = "does_not_exist"
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
-
-
 def test_load_vehicle_configurations_rejects_legacy_array_shard(tmp_path: Path) -> None:
     """Bare array shards are no longer accepted; canonical shape is the shard object."""
 
@@ -189,34 +165,6 @@ def test_load_vehicle_configurations_row_overrides_default(tmp_path: Path) -> No
     for config_id, config in by_id.items():
         if config_id != overridden_id:
             assert config.brand == "DEFAULT_BRAND"
-
-
-def test_load_vehicle_configurations_fails_closed_when_defaults_miss_required(
-    tmp_path: Path,
-) -> None:
-    """Missing required fields after defaults expansion fail closed."""
-
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    defaults = cast(dict[str, object], fixture.setdefault("defaults", {}))
-    defaults.pop("brand", None)
-    for row in rows:
-        row.pop("brand", None)
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
-
-
-def test_load_vehicle_configurations_rejects_unknown_top_level_key(tmp_path: Path) -> None:
-    """Unknown shard top-level keys (e.g. typos) are rejected."""
-
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    fixture["unexpected"] = {"brand": "X"}
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
 
 
 def test_load_vehicle_configurations_expands_default_tire_setup_ref(tmp_path: Path) -> None:
@@ -283,34 +231,6 @@ def test_load_vehicle_configurations_expands_option_setup_ref(tmp_path: Path) ->
     assert matched[0].tire_setup.rear.rim_in == 19.0
 
 
-def test_load_vehicle_configurations_fails_closed_for_unknown_default_ref(
-    tmp_path: Path,
-) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    tires = cast(dict[str, object], rows[0]["tires"])
-    tires.pop("default", None)
-    tires["default_ref"] = "does_not_exist"
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
-
-
-def test_load_vehicle_configurations_fails_closed_for_unknown_setup_ref(
-    tmp_path: Path,
-) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    tires = cast(dict[str, object], rows[0]["tires"])
-    options = cast(list[dict[str, object]], tires.setdefault("options", []))
-    options.append({"name": "Bad Option", "setup_ref": "does_not_exist"})
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    assert _load_configs_from_data_dir(tmp_path) == []
-
-
 def test_load_vehicle_configurations_derives_order_analysis_policy_when_no_override(
     tmp_path: Path,
 ) -> None:
@@ -344,16 +264,87 @@ def test_load_vehicle_configurations_applies_order_analysis_policy_override(
     assert loaded[0].order_analysis_policy.usable_for_wheel_order is False
 
 
-def test_load_vehicle_configurations_fails_closed_for_unknown_override_field(
+def _first_row(shard: dict[str, object]) -> dict[str, object]:
+    return cast(list[dict[str, object]], shard["configurations"])[0]
+
+
+def _row_section(shard: dict[str, object], section: str) -> dict[str, object]:
+    return cast(dict[str, object], _first_row(shard)[section])
+
+
+def _unknown_notes_ref(shard: dict[str, object]) -> None:
+    drivetrain = _row_section(shard, "drivetrain")
+    drivetrain.pop("notes", None)
+    drivetrain["notes_ref"] = "does_not_exist"
+
+
+def _unknown_evidence_refs_ref(shard: dict[str, object]) -> None:
+    drivetrain = _row_section(shard, "drivetrain")
+    drivetrain.pop("evidence_refs", None)
+    drivetrain["evidence_refs_ref"] = "does_not_exist"
+
+
+def _defaults_miss_required_brand(shard: dict[str, object]) -> None:
+    cast(dict[str, object], shard.setdefault("defaults", {})).pop("brand", None)
+    for row in cast(list[dict[str, object]], shard["configurations"]):
+        row.pop("brand", None)
+
+
+def _unknown_default_ref(shard: dict[str, object]) -> None:
+    tires = _row_section(shard, "tires")
+    tires.pop("default", None)
+    tires["default_ref"] = "does_not_exist"
+
+
+def _unknown_setup_ref(shard: dict[str, object]) -> None:
+    tires = _row_section(shard, "tires")
+    options = cast(list[dict[str, object]], tires.setdefault("options", []))
+    options.append({"name": "Bad Option", "setup_ref": "does_not_exist"})
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(_unknown_notes_ref, id="unknown-notes-ref"),
+        pytest.param(_unknown_evidence_refs_ref, id="unknown-evidence-refs-ref"),
+        pytest.param(_defaults_miss_required_brand, id="defaults-miss-required-field"),
+        pytest.param(
+            lambda shard: shard.__setitem__("unexpected", {"brand": "X"}),
+            id="unknown-top-level-key",
+        ),
+        pytest.param(_unknown_default_ref, id="unknown-default-tire-ref"),
+        pytest.param(_unknown_setup_ref, id="unknown-option-setup-ref"),
+        pytest.param(
+            lambda shard: _row_section(shard, "tires").__setitem__(
+                "default_ref", "conflicting_default"
+            ),
+            id="tires-with-default-and-default-ref",
+        ),
+        pytest.param(
+            lambda shard: _row_section(shard, "drivetrain").__setitem__("value", "BOGUS"),
+            id="bad-drivetrain-value",
+        ),
+        pytest.param(
+            lambda shard: _first_row(shard).__setitem__(
+                "order_analysis_policy_override", {"reason": "broken", "bogus_field": True}
+            ),
+            id="unknown-override-field",
+        ),
+        pytest.param(
+            lambda shard: _first_row(shard).__setitem__(
+                "order_analysis_policy_override", {"usable_for_wheel_order": False}
+            ),
+            id="override-without-reason",
+        ),
+    ],
+)
+def test_load_vehicle_configurations_fails_closed_for_invalid_shard_content(
     tmp_path: Path,
+    mutate: Callable[[dict[str, object]], None],
 ) -> None:
     relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
     fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    rows[0]["order_analysis_policy_override"] = {
-        "reason": "broken",
-        "bogus_field": True,
-    }
+    mutate(fixture)
     write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
 
     assert _load_configs_from_data_dir(tmp_path) == []
