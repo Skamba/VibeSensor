@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from types import SimpleNamespace
 from unittest.mock import MagicMock
+
+import pytest
 
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -223,103 +226,156 @@ class TestBuildSystemHealthSnapshotOk:
         assert client["duplicates_received"] == 3
 
 
-class TestBuildSystemHealthSnapshotDegraded:
+_HEALTH_MUTATIONS: dict[str, Callable[[RuntimeHealthState], None]] = {
+    "startup_failed": lambda h: h.mark_failed("init", "something blew up"),
+    "task_failure": lambda h: h.record_task_failure("pump_task", "connection reset"),
+    "db_corrupted": lambda h: h.mark_db_corrupted("row 7 missing from index"),
+    "db_engine_unhealthy": lambda h: h.mark_db_engine_unhealthy(
+        "shutdown_timeout", "History DB engine loop did not stop"
+    ),
+    "startup_warning": lambda h: setattr(h, "startup_warnings", ["low disk space"]),
+}
+
+# Each scenario may set: loop (ProcessingLoopState kwargs), health (mutation name),
+# data_loss / persistence (snapshot overrides), fields (extra expected result fields).
+_SINGLE_CONDITION_CASES = [
+    pytest.param({"health": "startup_failed"}, "degraded", "startup_error", id="startup-error"),
+    pytest.param(
+        {
+            "health": "task_failure",
+            "fields": {"runtime": ["unhealthy", "background_task_failures"]},
+        },
+        "degraded",
+        "background_task_failures",
+        id="background-task-failure",
+    ),
+    pytest.param(
+        {"loop": {"processing_state": ProcessingHealth.FATAL}},
+        "degraded",
+        f"processing_state:{ProcessingHealth.FATAL}",
+        id="processing-state-not-ok",
+    ),
+    pytest.param(
+        {
+            "persistence": {"write_error": True},
+            "fields": {"recorder": ["unhealthy", "persistence_write_error"]},
+        },
+        "degraded",
+        "persistence_write_error",
+        id="persistence-write-error",
+    ),
+    pytest.param(
+        {"health": "db_corrupted", "fields": {"db_corruption_detected": True}},
+        "degraded",
+        "db_corruption_detected",
+        id="db-corruption",
+    ),
+    pytest.param(
+        {
+            "health": "db_engine_unhealthy",
+            "fields": {
+                "db_engine_unhealthy": True,
+                "db_engine_unhealthy_reason": "shutdown_timeout",
+            },
+        },
+        "degraded",
+        "db_engine_unhealthy",
+        id="db-engine-unhealthy",
+    ),
+    pytest.param({"health": "startup_warning"}, "warn", "startup_warnings", id="startup-warnings"),
+    pytest.param(
+        {"loop": {"processing_failure_count": 3}},
+        "warn",
+        "processing_failures",
+        id="processing-failures",
+    ),
+    pytest.param(
+        {"loop": {"last_failure_category": "io_error"}},
+        "warn",
+        "processing_failure:io_error",
+        id="last-failure-category",
+    ),
+    pytest.param(
+        {"data_loss": {"frames_dropped": 5}, "fields": {"ingest": ["degraded", "frames_dropped"]}},
+        "warn",
+        "frames_dropped",
+        id="frames-dropped",
+    ),
+    pytest.param(
+        {"loop": {"sample_rate_mismatch_logged": {"client_a"}}},
+        "warn",
+        "sample_rate_mismatch",
+        id="sample-rate-mismatch",
+    ),
+    pytest.param(
+        {"loop": {"frame_size_mismatch_logged": {"client_b"}}},
+        "warn",
+        "frame_size_mismatch",
+        id="frame-size-mismatch",
+    ),
+    pytest.param(
+        {"persistence": {"samples_dropped": 10}},
+        "warn",
+        "persistence_samples_dropped",
+        id="persistence-samples-dropped",
+    ),
+    pytest.param(
+        {"persistence": {"analyzing_run_count": 2}},
+        "warn",
+        "analyzing_runs_present",
+        id="analyzing-runs-present",
+    ),
+    pytest.param(
+        {"persistence": {"last_completed_run_error": True}},
+        "warn",
+        "last_analysis_failed",
+        id="last-analysis-failed",
+    ),
+]
+
+
+class TestBuildSystemHealthSnapshotSingleCondition:
+    @pytest.mark.parametrize(
+        ("scenario", "expected_status", "expected_reason"), _SINGLE_CONDITION_CASES
+    )
+    def test_single_condition_sets_status_and_reason(
+        self,
+        scenario: dict,
+        expected_status: str,
+        expected_reason: str,
+    ) -> None:
+        loop_state = ProcessingLoopState(**scenario.get("loop", {}))
+        health_state = _ready_health_state()
+        if "health" in scenario:
+            _HEALTH_MUTATIONS[scenario["health"]](health_state)
+        registry, run_recorder = _make_deps(
+            data_loss={**_clean_data_loss(), **scenario.get("data_loss", {})},
+            persistence={**_clean_persistence(), **scenario.get("persistence", {})},
+        )
+
+        result = _snapshot(loop_state, health_state, registry, run_recorder)
+
+        assert result["status"] == expected_status
+        assert expected_reason in result["degradation_reasons"]
+        for key, expected in scenario.get("fields", {}).items():
+            if key in result["subsystems"]:
+                status, reason_code = expected
+                assert result["subsystems"][key] == {
+                    "status": status,
+                    "reason_codes": [reason_code],
+                }
+            else:
+                assert result[key] == expected
+
     def test_startup_not_ready_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
         health_state = RuntimeHealthState()
         registry, run_recorder = _make_deps()
 
-        result = build_system_health_snapshot(
-            loop_state,
-            health_state,
-            _make_processor(),
-            registry,
-            run_recorder,
-            IngestDiagnosticsCollector(),
-        )
+        result = _snapshot(loop_state, health_state, registry, run_recorder)
 
         assert result["status"] == "degraded"
         assert any("startup_state" in reason for reason in result["degradation_reasons"])
-
-    def test_startup_error_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        health_state.mark_failed("init", "something blew up")
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert "startup_error" in result["degradation_reasons"]
-
-    def test_background_task_failure_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        health_state.record_task_failure("pump_task", "connection reset")
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert "background_task_failures" in result["degradation_reasons"]
-        assert result["subsystems"]["runtime"] == {
-            "status": "unhealthy",
-            "reason_codes": ["background_task_failures"],
-        }
-
-    def test_processing_state_not_ok_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState(processing_state=ProcessingHealth.FATAL)
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert any("processing_state" in reason for reason in result["degradation_reasons"])
-
-    def test_persistence_write_error_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps(
-            persistence={**_clean_persistence(), "write_error": True}
-        )
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert "persistence_write_error" in result["degradation_reasons"]
-        assert result["subsystems"]["recorder"] == {
-            "status": "unhealthy",
-            "reason_codes": ["persistence_write_error"],
-        }
-
-    def test_db_corruption_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        health_state.mark_db_corrupted("row 7 missing from index")
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert result["db_corruption_detected"] is True
-        assert "db_corruption_detected" in result["degradation_reasons"]
-
-    def test_db_engine_unhealthy_is_degraded(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        health_state.mark_db_engine_unhealthy(
-            "shutdown_timeout",
-            "History DB engine loop did not stop",
-        )
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "degraded"
-        assert result["db_engine_unhealthy"] is True
-        assert result["db_engine_unhealthy_reason"] == "shutdown_timeout"
-        assert "db_engine_unhealthy" in result["degradation_reasons"]
 
     def test_raw_capture_queue_overflow_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
@@ -345,53 +401,6 @@ class TestBuildSystemHealthSnapshotDegraded:
             "reason_codes": ["raw_capture_dropped_chunks", "raw_capture_pressure"],
         }
 
-
-class TestBuildSystemHealthSnapshotWarn:
-    def test_startup_warnings_only_is_warn(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        health_state.startup_warnings = ["low disk space"]
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "startup_warnings" in result["degradation_reasons"]
-
-    def test_processing_failures_gt_zero_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState(processing_failure_count=3)
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "processing_failures" in result["degradation_reasons"]
-
-    def test_last_failure_category_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState(last_failure_category="io_error")
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "processing_failure:io_error" in result["degradation_reasons"]
-
-    def test_frames_dropped_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps(data_loss={**_clean_data_loss(), "frames_dropped": 5})
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "frames_dropped" in result["degradation_reasons"]
-        assert result["subsystems"]["ingest"] == {
-            "status": "degraded",
-            "reason_codes": ["frames_dropped"],
-        }
-
     def test_buffer_overflow_drops_add_reason(self) -> None:
         loop_state = ProcessingLoopState()
         health_state = _ready_health_state()
@@ -410,62 +419,6 @@ class TestBuildSystemHealthSnapshotWarn:
         assert result["status"] == "warn"
         assert result["data_loss"]["buffer_overflow_drops"] == 3
         assert "buffer_overflow_drops" in result["degradation_reasons"]
-
-    def test_sample_rate_mismatch_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState(sample_rate_mismatch_logged={"client_a"})
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "sample_rate_mismatch" in result["degradation_reasons"]
-
-    def test_frame_size_mismatch_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState(frame_size_mismatch_logged={"client_b"})
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps()
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "frame_size_mismatch" in result["degradation_reasons"]
-
-    def test_persistence_samples_dropped_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps(
-            persistence={**_clean_persistence(), "samples_dropped": 10}
-        )
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "persistence_samples_dropped" in result["degradation_reasons"]
-
-    def test_analyzing_run_count_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps(
-            persistence={**_clean_persistence(), "analyzing_run_count": 2}
-        )
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "analyzing_runs_present" in result["degradation_reasons"]
-
-    def test_last_completed_run_error_adds_reason(self) -> None:
-        loop_state = ProcessingLoopState()
-        health_state = _ready_health_state()
-        registry, run_recorder = _make_deps(
-            persistence={**_clean_persistence(), "last_completed_run_error": True}
-        )
-
-        result = _snapshot(loop_state, health_state, registry, run_recorder)
-
-        assert result["status"] == "warn"
-        assert "last_analysis_failed" in result["degradation_reasons"]
 
 
 class TestBuildSystemHealthSnapshotMultipleReasons:
