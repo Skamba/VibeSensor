@@ -67,6 +67,7 @@ import {
   firstMissingManualInputField,
   getResolvedWizardSpecBranch,
   getWizardActionHint,
+  manualTireMatchesOption,
   resolveGearboxes,
   resolveTireOptions,
   tireInputsFromOption,
@@ -868,16 +869,33 @@ export function createCarsFeature(ctx: {
       focusWizard(MANUAL_INPUT_FOCUS_TARGETS[missingField]);
       return;
     }
+    // A library tire the user kept keeps its library setup and confidence;
+    // only values the user typed are marked user-confirmed.
+    const libraryTire =
+      state.selectedTire && manualTireMatchesOption(state.selectedTire, inputs)
+        ? state.selectedTire
+        : null;
+    const libraryTireAspects = libraryTire
+      ? tireSetupAspectsFromOption(libraryTire)
+      : {};
+    const keepsLibraryTire = Object.keys(libraryTireAspects).length > 0;
     await submitWizardCar(
       {
         current_gear_ratio: Number(inputs.topGear),
         final_drive_ratio: Number(inputs.finalDrive),
-        rim_in: Number(inputs.rim),
-        tire_aspect_pct: Number(inputs.tireAspect),
-        tire_width_mm: Number(inputs.tireWidth),
+        ...(keepsLibraryTire
+          ? libraryTireAspects
+          : {
+              rim_in: Number(inputs.rim),
+              tire_aspect_pct: Number(inputs.tireAspect),
+              tire_width_mm: Number(inputs.tireWidth),
+            }),
       },
       {
-        tire_dimensions_confidence: "user_confirmed",
+        tire_dimensions_confidence:
+          keepsLibraryTire && libraryTire
+            ? (libraryTire.source_confidence ?? "unverified")
+            : "user_confirmed",
         current_gear_ratio_confidence: "user_confirmed",
         final_drive_ratio_confidence: "user_confirmed",
         requires_manual_confirmation: false,

@@ -1,7 +1,10 @@
 import type { ComponentChildren, JSX } from "preact";
 import { useMemo } from "preact/hooks";
 
-import type { CarsFeatureManualInputState } from "../features/cars_wizard_state";
+import {
+  CARS_WIZARD_MANUAL_INPUT_EXAMPLES,
+  type CarsFeatureManualInputState,
+} from "../features/cars_wizard_state";
 import { getUiText as t } from "../ui_i18n";
 import {
   useSignalProperties,
@@ -255,6 +258,7 @@ function CarsManualInputForm(props: {
         <input
           id="wizTireWidth"
           type="number"
+          placeholder={CARS_WIZARD_MANUAL_INPUT_EXAMPLES.tireWidth}
           min="100"
           step="1"
           value={tireWidth.value}
@@ -269,6 +273,7 @@ function CarsManualInputForm(props: {
         <input
           id="wizTireAspect"
           type="number"
+          placeholder={CARS_WIZARD_MANUAL_INPUT_EXAMPLES.tireAspect}
           min="20"
           step="1"
           value={tireAspect.value}
@@ -283,6 +288,7 @@ function CarsManualInputForm(props: {
         <input
           id="wizRim"
           type="number"
+          placeholder={CARS_WIZARD_MANUAL_INPUT_EXAMPLES.rim}
           min="10"
           step="0.5"
           value={rim.value}
@@ -297,6 +303,7 @@ function CarsManualInputForm(props: {
         <input
           id="wizFinalDrive"
           type="number"
+          placeholder={CARS_WIZARD_MANUAL_INPUT_EXAMPLES.finalDrive}
           step="0.01"
           min="0.1"
           value={finalDrive.value}
@@ -311,6 +318,7 @@ function CarsManualInputForm(props: {
         <input
           id="wizGearRatio"
           type="number"
+          placeholder={CARS_WIZARD_MANUAL_INPUT_EXAMPLES.topGear}
           step="0.01"
           min="0.1"
           value={topGear.value}

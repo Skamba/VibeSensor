@@ -121,16 +121,16 @@ function createRenderState(
 }
 
 describe("car wizard view helpers", () => {
-  test("createClosedCarsWizardRenderModel preserves the manual-spec defaults before the first open", () => {
+  test("createClosedCarsWizardRenderModel starts with empty manual specs before the first open", () => {
     const model = createClosedCarsWizardRenderModel();
 
     expect(model.isOpen).toBe(false);
     expect(model.manualInputs).toEqual({
-      finalDrive: "3.08",
-      rim: "18",
-      tireAspect: "45",
-      tireWidth: "225",
-      topGear: "0.64",
+      finalDrive: "",
+      rim: "",
+      tireAspect: "",
+      tireWidth: "",
+      topGear: "",
     });
     expect(model.finishVisible).toBe(false);
   });

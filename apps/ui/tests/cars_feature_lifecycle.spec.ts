@@ -4,6 +4,7 @@ import { serverStateQueryKeys } from "../src/app/features/server_state_query_key
 import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import {
   createCarsHarness,
+  EXAMPLE_MANUAL_INPUTS,
   makeCarsPayload,
   makeModel,
 } from "./cars_feature_test_support";
@@ -138,6 +139,7 @@ describe("cars feature saved-car mutations", () => {
       type: "submit-custom-model",
       value: "Car",
     });
+    harness.updateManualInputs(EXAMPLE_MANUAL_INPUTS);
     await feature.handleWizardAction({ type: "finish" });
 
     expect(harness.errors).toEqual(["settings.car.activate_failed"]);

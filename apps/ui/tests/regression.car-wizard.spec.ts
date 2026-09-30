@@ -241,6 +241,9 @@ test("keeps the manual branch deliberate while summarizing selections and activa
     "Manual path selected",
   );
   await fillControlledNumberInput(page, "#wizTireWidth", "245");
+  await fillControlledNumberInput(page, "#wizTireAspect", "45");
+  await fillControlledNumberInput(page, "#wizRim", "18");
+  await fillControlledNumberInput(page, "#wizFinalDrive", "3.08");
   await fillControlledNumberInput(page, "#wizGearRatio", "0.68");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("245/45R18");
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
