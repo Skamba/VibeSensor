@@ -283,8 +283,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/views/cars_wizard_panel.tsx` | Modal shell for the add-car wizard; it keeps dialog chrome and typed action wiring small while delegating step content to focused wizard sections |
 | `app/views/cars_wizard_sections.tsx` | Extracted add-car wizard step sections, option grids, manual-spec inputs, and summary helpers that keep the main wizard panel readable while preserving the existing selectors and flow |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and derives update/internet query polling context from the shell and settings tab state |
-| `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for query-backed update polling, internet-status normalization, and start/cancel command orchestration |
+| `app/features/update_feature.ts` | Updater controller for query-backed update/health/internet polling while the internet or update tab is visible and start/cancel command orchestration, binding the typed update and internet panel actions |
 | `app/features/history_feature.ts` | Single owner for query-backed history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
 | `app/views/esp_flash_readiness_presenter.ts` | ESP flash readiness presenter that derives start-readiness, status-banner, selected-target, and recent-attempt summary models |
@@ -304,7 +303,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/views/realtime_logging_panel.tsx` | Signal-backed Preact owner for the run-recording card that renders typed logging/readiness models, owns the setup-layout marker locally, and binds start/stop plus summary CTA actions through the shared bridge |
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
 | `app/views/settings_speed_source_presenter.ts` | Pure speed-source view-model builders that turn controller render state and live status payloads into panel and diagnostics render models (plus their defaults) |
-| `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
+| `app/views/update_feature_presenter.ts` | Update presenter that owns the Wi-Fi form draft and derives typed update/internet panel models from controller state |
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_models.ts` | Shared update-status badge, row, and section interfaces consumed by the update and internet panels |
 | `app/views/update_journey_builder.ts` | Update journey and recovery-summary builders for phase formatting, staged progress, and retry guidance |

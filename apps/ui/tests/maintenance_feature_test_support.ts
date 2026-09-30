@@ -4,7 +4,7 @@ import { render } from "preact";
 
 import type { EspFlashFeatureDeps } from "../src/app/features/esp_flash_feature";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
-import type { UpdateFeatureDeps } from "../src/app/features/update_feature";
+import type { FeatureServices } from "../src/app/feature_deps_base";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import { type ReadonlySignal, signal } from "../src/app/ui_signals";
 import type {
@@ -24,8 +24,6 @@ import type {
 } from "../src/app/views/update_panel";
 import { installMountedDomGlobals } from "./dom_render_test_support";
 import { createTestQueryClient } from "./query_client_test_support";
-
-type FeatureServices = UpdateFeatureDeps["services"];
 
 const activeMaintenanceCleanups: Array<() => void> = [];
 const MAINTENANCE_TEST_TRANSLATIONS: Readonly<Record<string, string>> = {
@@ -394,7 +392,7 @@ async function createUpdateFeatureDeps() {
       internet,
       update,
     },
-    ports: navigation.ports,
+    ...navigation.ports,
     queryClient: createTestQueryClient(),
     services: createFeatureServices(),
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,
@@ -498,7 +496,7 @@ export async function createEspFlashFeatureHarness() {
 
 export async function createUpdateFeatureHarness() {
   const deps = await createUpdateFeatureDeps();
-  const feature = createUpdateFeature(deps as UpdateFeatureDeps);
+  const feature = createUpdateFeature(deps);
   const disposeFeature = feature.dispose.bind(feature);
 
   return {

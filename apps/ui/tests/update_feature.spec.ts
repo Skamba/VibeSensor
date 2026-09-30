@@ -1,14 +1,12 @@
-import { describe, expect, test } from "vitest";
-import {
-  createUpdateFeatureWorkflow,
-  type UpdateFeatureWorkflowViewPorts,
-} from "../src/app/features/update_feature_workflow";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../src/api/types";
-import { signal } from "../src/app/ui_signals";
+import { createUpdateFeature } from "../src/app/features/update_feature";
+import { effect, signal } from "../src/app/ui_signals";
+import type { InternetPanelView } from "../src/app/views/internet_panel";
 import {
   createDeferred,
   expectSingleInFlightOperation,
@@ -17,29 +15,74 @@ import {
 import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 import { createTestQueryClient } from "./query_client_test_support";
 
-type WorkflowHarness = {
+const api = vi.hoisted(() => ({
+  cancelUpdate: vi.fn(),
+  getHealthStatus: vi.fn(),
+  getUpdateInternetStatus: vi.fn(),
+  getUpdateStatus: vi.fn(),
+  startUpdate: vi.fn(),
+}));
+
+vi.mock("../src/api/settings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/api/settings")>()),
+  ...api,
+}));
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
+type FeatureHarness = {
   errors: string[];
   viewCalls: string[];
 };
 
-function createHarness(): WorkflowHarness {
+function createHarness(): FeatureHarness {
   return {
     errors: [],
     viewCalls: [],
   };
 }
 
-function createViewPorts(
-  harness: WorkflowHarness,
-): UpdateFeatureWorkflowViewPorts {
-  return {
+/**
+ * Builds the controller against fake panels (polling stays off because the
+ * update tab is not visible). `viewCalls` records SSID focus requests and the
+ * controller clearing the internet panel's password field.
+ */
+function createFeature(harness: FeatureHarness) {
+  const internet: InternetPanelView = {
+    actions: signal(null),
+    model: signal(null),
     focusSsidInput(): void {
       harness.viewCalls.push("focusSsidInput");
     },
-    clearPassword(): void {
-      harness.viewCalls.push("clearPassword");
-    },
   };
+  const feature = createUpdateFeature({
+    panels: {
+      internet,
+      update: { actions: signal(null), model: signal(null) },
+    },
+    activeViewId: signal("dashboardView"),
+    activeSettingsTabId: signal("updateTab"),
+    queryClient: createTestQueryClient(),
+    services: {
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+    },
+  });
+  feature.bindUpdateHandlers();
+  internet.actions.value?.onPasswordInput("secret");
+  let previousPassword = "secret";
+  effect(() => {
+    const password = internet.model.value?.value.passwordInputValue ?? "";
+    if (previousPassword !== "" && password === "") {
+      harness.viewCalls.push("clearPassword");
+    }
+    previousPassword = password;
+  });
+  return feature;
 }
 
 function makeStatus(
@@ -97,7 +140,7 @@ function makeInternet(
   };
 }
 
-describe("createUpdateFeatureWorkflow", () => {
+describe("createUpdateFeature", () => {
   test("refreshes update status through a no-DOM workflow seam", async () => {
     const harness = createHarness();
     const status = makeStatus({
@@ -113,30 +156,20 @@ describe("createUpdateFeatureWorkflow", () => {
       interface_name: "usb0",
       diagnostic: "USB internet is ready on usb0.",
     });
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async getUpdateStatus() {
-          return status;
-        },
-        async getHealthStatus() {
-          return health;
-        },
-        async getUpdateInternetStatus() {
-          return internet;
-        },
-      },
+    api.getUpdateStatus.mockImplementation(async () => {
+      return status;
     });
+    api.getHealthStatus.mockImplementation(async () => {
+      return health;
+    });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return internet;
+    });
+    const workflow = createFeature(harness);
 
     await workflow.refreshStatus();
 
-    const renderState = workflow.getRenderState();
+    const renderState = workflow.renderState.value;
     expect(renderState).toMatchObject({
       updateState: "running",
       updateTransport: "usb_internet",
@@ -158,29 +191,19 @@ describe("createUpdateFeatureWorkflow", () => {
       state: "running",
       transport: "wifi",
     });
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          return runningStatus;
-        },
-        async startUpdate(payload) {
-          startPayload = payload;
-        },
-      },
+    api.getHealthStatus.mockImplementation(async () => {
+      return makeHealth();
     });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return makeInternet();
+    });
+    api.getUpdateStatus.mockImplementation(async () => {
+      return runningStatus;
+    });
+    api.startUpdate.mockImplementation(async (payload: unknown) => {
+      startPayload = payload;
+    });
+    const workflow = createFeature(harness);
 
     await workflow.startUpdate({
       canStart: true,
@@ -196,27 +219,17 @@ describe("createUpdateFeatureWorkflow", () => {
       password: "secret",
     });
     expect(harness.viewCalls).toContain("clearPassword");
-    expect(workflow.getRenderState().updateStatus).toEqual(runningStatus);
+    expect(workflow.renderState.value.updateStatus).toEqual(runningStatus);
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
 
   test("focuses the SSID input instead of calling the API when wifi start is blocked", async () => {
     const harness = createHarness();
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async startUpdate() {
-          throw new Error("should not be called");
-        },
-      },
+    api.startUpdate.mockImplementation(async () => {
+      throw new Error("should not be called");
     });
+    const workflow = createFeature(harness);
 
     await workflow.startUpdate({
       canStart: false,
@@ -233,20 +246,10 @@ describe("createUpdateFeatureWorkflow", () => {
 
   test("still validates wifi inputs when a recovery retry bypasses readiness blocking", async () => {
     const harness = createHarness();
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async startUpdate() {
-          throw new Error("should not be called");
-        },
-      },
+    api.startUpdate.mockImplementation(async () => {
+      throw new Error("should not be called");
     });
+    const workflow = createFeature(harness);
 
     await workflow.startUpdate({
       canStart: true,
@@ -263,28 +266,18 @@ describe("createUpdateFeatureWorkflow", () => {
 
   test("surfaces runtime-boundary failures instead of silently normalizing them", async () => {
     const harness = createHarness();
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          throw new Error(
-            'Invalid update status response: /state Expected one of ["idle","running","success","failed"]',
-          );
-        },
-      },
+    api.getHealthStatus.mockImplementation(async () => {
+      return makeHealth();
     });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return makeInternet();
+    });
+    api.getUpdateStatus.mockImplementation(async () => {
+      throw new Error(
+        'Invalid update status response: /state Expected one of ["idle","running","success","failed"]',
+      );
+    });
+    const workflow = createFeature(harness);
 
     await expect(workflow.refreshStatus()).rejects.toThrow(
       /Invalid update status response: \/state/,
@@ -300,30 +293,20 @@ describe("createUpdateFeatureWorkflow", () => {
     const olderStatus = createDeferred<UpdateStatusPayload>();
     const newerStatus = createDeferred<UpdateStatusPayload>();
     const statusRequests = [olderStatus, newerStatus];
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          const request = statusRequests.shift();
-          if (!request) {
-            throw new Error("unexpected status request");
-          }
-          return request.promise;
-        },
-      },
+    api.getHealthStatus.mockImplementation(async () => {
+      return makeHealth();
     });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return makeInternet();
+    });
+    api.getUpdateStatus.mockImplementation(async () => {
+      const request = statusRequests.shift();
+      if (!request) {
+        throw new Error("unexpected status request");
+      }
+      return request.promise;
+    });
+    const workflow = createFeature(harness);
 
     const olderRefresh = workflow.refreshStatus();
     await flushAsyncWork();
@@ -334,8 +317,8 @@ describe("createUpdateFeatureWorkflow", () => {
     olderStatus.resolve(makeStatus({ phase: "idle", state: "idle" }));
     await olderRefresh;
 
-    expect(workflow.getRenderState().updateState).toBe("running");
-    expect(workflow.getRenderState().updateStatus?.phase).toBe("installing");
+    expect(workflow.renderState.value.updateState).toBe("running");
+    expect(workflow.renderState.value.updateStatus?.phase).toBe("installing");
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
@@ -343,20 +326,10 @@ describe("createUpdateFeatureWorkflow", () => {
   test("does not clear password or show errors when start resolves after disposal", async () => {
     const harness = createHarness();
     const start = createDeferred<unknown>();
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async startUpdate() {
-          return start.promise;
-        },
-      },
+    api.startUpdate.mockImplementation(async () => {
+      return start.promise;
     });
+    const workflow = createFeature(harness);
 
     const starting = workflow.startUpdate({
       canStart: true,
@@ -378,30 +351,20 @@ describe("createUpdateFeatureWorkflow", () => {
     const harness = createHarness();
     const start = createDeferred<unknown>();
     let startCalls = 0;
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          return makeStatus({ phase: "installing", state: "running" });
-        },
-        async startUpdate() {
-          startCalls += 1;
-          return start.promise;
-        },
-      },
+    api.getHealthStatus.mockImplementation(async () => {
+      return makeHealth();
     });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return makeInternet();
+    });
+    api.getUpdateStatus.mockImplementation(async () => {
+      return makeStatus({ phase: "installing", state: "running" });
+    });
+    api.startUpdate.mockImplementation(async () => {
+      startCalls += 1;
+      return start.promise;
+    });
+    const workflow = createFeature(harness);
     const intent = {
       canStart: true,
       password: "secret",
@@ -426,28 +389,18 @@ describe("createUpdateFeatureWorkflow", () => {
   test("refreshes status after a successful update cancel", async () => {
     const harness = createHarness();
     let statusRequests = 0;
-    const workflow = createUpdateFeatureWorkflow({
-      t: (key) => key,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      view: createViewPorts(harness),
-      pollingEnabled: signal(false),
-      queryClient: createTestQueryClient(),
-      api: {
-        async cancelUpdate() {},
-        async getHealthStatus() {
-          return makeHealth();
-        },
-        async getUpdateInternetStatus() {
-          return makeInternet();
-        },
-        async getUpdateStatus() {
-          statusRequests += 1;
-          return makeStatus();
-        },
-      },
+    api.cancelUpdate.mockImplementation(async () => {});
+    api.getHealthStatus.mockImplementation(async () => {
+      return makeHealth();
     });
+    api.getUpdateInternetStatus.mockImplementation(async () => {
+      return makeInternet();
+    });
+    api.getUpdateStatus.mockImplementation(async () => {
+      statusRequests += 1;
+      return makeStatus();
+    });
+    const workflow = createFeature(harness);
 
     await workflow.cancelUpdate();
 

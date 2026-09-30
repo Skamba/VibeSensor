@@ -82,10 +82,8 @@ export function createAppFeatureSecondaryBundle(
       update: panels.settings.update,
       internet: panels.settings.internet,
     },
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
+    activeViewId: runtime.navigation.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
     services,
     queryClient: serverState.queryClient,
   });

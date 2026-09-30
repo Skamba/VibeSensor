@@ -62,11 +62,6 @@ export interface UpdateFeaturePanelModels {
   updatePanel: UpdatePanelRenderModel;
 }
 
-export interface UpdateFeaturePresenterDeps {
-  renderState: ReadonlySignal<UpdateFeatureRenderState>;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-}
-
 export interface UpdateFeaturePresenter {
   readonly internetPanelModel: ReadonlySignal<InternetPanelRenderModel>;
   readonly updatePanelModel: ReadonlySignal<UpdatePanelRenderModel>;
@@ -337,7 +332,7 @@ function buildInternetPanelRenderModel(
 export function buildUpdateFeaturePanelModels(
   state: UpdateFeatureRenderState,
   form: UpdateFeatureFormSnapshot,
-  deps: Pick<UpdateFeaturePresenterDeps, "t">,
+  deps: { t: (key: string, vars?: Record<string, unknown>) => string },
 ): UpdateFeaturePanelModels {
   const actionSummary = buildActionSummary(state, form, deps.t);
   return {
@@ -353,9 +348,10 @@ export function buildUpdateFeaturePanelModels(
   };
 }
 
-export function createUpdateFeaturePresenter(
-  ctx: UpdateFeaturePresenterDeps,
-): UpdateFeaturePresenter {
+export function createUpdateFeaturePresenter(ctx: {
+  renderState: ReadonlySignal<UpdateFeatureRenderState>;
+  t: (key: string, vars?: Record<string, unknown>) => string;
+}): UpdateFeaturePresenter {
   const { renderState, t } = ctx;
   const passwordInputValue = signal("");
   const passwordVisible = signal(false);
