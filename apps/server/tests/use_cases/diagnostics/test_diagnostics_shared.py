@@ -5,8 +5,12 @@ from math import inf, nan
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
-    tolerance_for_order,
+    build_order_bands,
+    order_peak_tolerance_hz,
     vehicle_orders_hz,
+)
+from vibesensor.use_cases.diagnostics.orders._hypothesis_catalog import (
+    order_hypothesis_path_compliance_by_key,
 )
 
 _DEFAULT_SPEED_MPS = 27.7777777778  # 100 km/h
@@ -20,16 +24,34 @@ def _default_settings_and_orders() -> tuple[AnalysisSettingsSnapshot, dict[str, 
     return settings, orders
 
 
-def test_tolerance_for_order_honors_floor_and_cap() -> None:
-    rel = tolerance_for_order(
-        6.0,
-        5.0,
-        0.0,
-        min_abs_band_hz=0.5,
-        max_band_half_width_pct=8.0,
+def test_order_peak_tolerance_hz_honors_floor_and_compliance() -> None:
+    # 0.5 Hz absolute floor dominates at low frequency.
+    assert order_peak_tolerance_hz(predicted_hz=5.0, path_compliance=1.0) == 0.5
+    # Above the floor: 8% relative, widened by sqrt(path compliance).
+    assert order_peak_tolerance_hz(predicted_hz=20.0, path_compliance=1.0) == 20.0 * 0.08
+    assert (
+        abs(
+            order_peak_tolerance_hz(predicted_hz=20.0, path_compliance=1.5) - 20.0 * 0.08 * 1.5**0.5
+        )
+        < 1e-12
     )
-    # 0.5 Hz absolute minimum at 5 Hz means at least 10% relative, but cap is 8%.
-    assert rel == 0.08
+
+
+def test_live_order_bands_match_diagnostics_match_window() -> None:
+    """Live bands must show exactly the window post-run diagnostics match peaks in."""
+    settings = build_diagnostic_settings({})
+    for speed_mps in (5.0, _DEFAULT_SPEED_MPS, 40.0):
+        orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
+        assert orders is not None
+        compliance_by_key = order_hypothesis_path_compliance_by_key()
+        for band in build_order_bands(orders, settings):
+            key = "driveshaft_1x" if band["key"] == "driveshaft_engine_1x" else band["key"]
+            expected_half_width_hz = order_peak_tolerance_hz(
+                predicted_hz=band["center_hz"],
+                path_compliance=compliance_by_key[key],
+            )
+            half_width_hz = band["center_hz"] * band["tolerance"]
+            assert abs(half_width_hz - expected_half_width_hz) < 1e-9, band
 
 
 def test_vehicle_orders_hz_uses_tire_deflection_factor() -> None:

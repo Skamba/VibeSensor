@@ -92,6 +92,13 @@ ORDER_TOLERANCE_MIN_HZ: Final[float] = 0.5
 """Minimum absolute frequency tolerance (Hz) for order matching, preventing
 overly tight matches at low frequencies."""
 
+WHEEL_ORDER_PATH_COMPLIANCE: Final[float] = 1.5
+"""Path compliance for wheel orders: tire, hub and suspension bushings broaden
+the peak, so wheel-order tolerance is widened by ``sqrt(1.5)``."""
+
+RIGID_ORDER_PATH_COMPLIANCE: Final[float] = 1.0
+"""Path compliance for stiffly coupled driveshaft and engine orders."""
+
 ORDER_MIN_MATCH_POINTS: Final[int] = 4
 """Minimum number of matched sample points for an order finding to be emitted."""
 

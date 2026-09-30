@@ -77,35 +77,22 @@ without loading dense sidecar artifacts during normal report generation.
 
 ## Uncertainty and tolerance bands
 
-Order matching is not based on a single exact frequency bin. Each reference
-order gets an uncertainty-aware tolerance band.
-
-`OrderReferenceSpec` combines uncertainty in stages:
-
-- wheel uncertainty = speed + tire diameter
-- driveshaft uncertainty = wheel uncertainty + final-drive uncertainty
-- engine uncertainty = driveshaft uncertainty + gear uncertainty
-
-The shared helper `combined_relative_uncertainty()` uses
-`sqrt(sum(part^2))`, so wider uncertainty produces wider matching bands.
-
-`tolerance_for_order()` then turns the nominal order frequency plus uncertainty
-into a half-bandwidth:
+Order matching is not based on a single exact frequency bin. Post-run
+diagnostics and the live spectrum use one tolerance model,
+`order_peak_tolerance_hz()` in `shared/order_bands.py`, so a peak drawn inside a
+live band is a peak the report counts as an order match:
 
 ```text
-base_half_rel = base_bandwidth_pct / 200
-abs_floor     = min_abs_band_hz / order_hz
-combined      = sqrt(base_half_rel^2 + uncertainty_pct^2)
-tolerance     = min(max_half_rel, max(combined, abs_floor))
+tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL * sqrt(path_compliance))
+             = max(0.5 Hz, predicted_hz * 8% * sqrt(path_compliance))
 ```
 
-That tolerance means a match is accepted inside:
+`path_compliance` is 1.5 for wheel orders (tire, hub and bushings broaden the
+peak, about ±9.8%) and 1.0 for driveshaft and engine orders (±8%).
 
-```text
-[center_hz * (1 - tolerance), center_hz * (1 + tolerance)]
-```
-
-`build_order_bands()` uses those tolerances to emit the live band payloads:
+`build_order_bands()` emits the live band payloads with
+`tolerance = tolerance_hz / center_hz`, so the UI draws
+`[center_hz * (1 - tolerance), center_hz * (1 + tolerance)]`:
 
 - `wheel_1x`
 - `wheel_2x`
@@ -113,8 +100,10 @@ That tolerance means a match is accepted inside:
 - `engine_1x` when it does not overlap driveshaft
 - `engine_2x`
 
-The driveshaft and engine 1x bands collapse into `driveshaft_engine_1x` when
-their centers are already inside the combined uncertainty envelope.
+`OrderReferenceSpec` still combines reference uncertainty in stages (wheel =
+speed + tire diameter; driveshaft adds final drive; engine adds gear). That
+combined uncertainty decides when the driveshaft and engine 1x bands collapse
+into `driveshaft_engine_1x`; it no longer widens the bands.
 
 ## Post-stop hypothesis testing
 
@@ -177,7 +166,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | File | Responsibility |
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
-| `apps/server/vibesensor/shared/order_bands.py` | Shared uncertainty, tolerance-band, and live band-payload helpers. |
+| `apps/server/vibesensor/shared/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |

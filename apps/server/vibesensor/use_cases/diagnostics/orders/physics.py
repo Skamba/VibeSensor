@@ -10,6 +10,10 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
+from vibesensor.shared.constants.analysis import (
+    RIGID_ORDER_PATH_COMPLIANCE,
+    WHEEL_ORDER_PATH_COMPLIANCE,
+)
 from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import (
@@ -140,26 +144,50 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
     # Wheel orders travel through tire sidewall → hub → knuckle → control
     # arms → bushings → subframe → body → sensor.  Each rubber component
     # broadens the peak and reduces tracking precision.
-    OrderHypothesis("wheel_1x", VibrationSource.WHEEL_TIRE, "wheel", 1, path_compliance=1.5),
-    OrderHypothesis("wheel_2x", VibrationSource.WHEEL_TIRE, "wheel", 2, path_compliance=1.5),
+    OrderHypothesis(
+        "wheel_1x",
+        VibrationSource.WHEEL_TIRE,
+        "wheel",
+        1,
+        path_compliance=WHEEL_ORDER_PATH_COMPLIANCE,
+    ),
+    OrderHypothesis(
+        "wheel_2x",
+        VibrationSource.WHEEL_TIRE,
+        "wheel",
+        2,
+        path_compliance=WHEEL_ORDER_PATH_COMPLIANCE,
+    ),
     # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
     OrderHypothesis(
         "driveshaft_1x",
         VibrationSource.DRIVELINE,
         "driveshaft",
         1,
-        path_compliance=1.0,
+        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
     ),
     OrderHypothesis(
         "driveshaft_2x",
         VibrationSource.DRIVELINE,
         "driveshaft",
         2,
-        path_compliance=1.0,
+        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
     ),
     # Engine is stiffly mounted on most vehicles.
-    OrderHypothesis("engine_1x", VibrationSource.ENGINE, "engine", 1, path_compliance=1.0),
-    OrderHypothesis("engine_2x", VibrationSource.ENGINE, "engine", 2, path_compliance=1.0),
+    OrderHypothesis(
+        "engine_1x",
+        VibrationSource.ENGINE,
+        "engine",
+        1,
+        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
+    ),
+    OrderHypothesis(
+        "engine_2x",
+        VibrationSource.ENGINE,
+        "engine",
+        2,
+        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
+    ),
 )
 
 
