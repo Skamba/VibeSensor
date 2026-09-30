@@ -8,7 +8,7 @@ from vibesensor.domain import Finding
 from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-from vibesensor.shared.report_presentation import display_location, human_source
+from vibesensor.shared.report_presentation import display_lang, display_location, human_source
 
 __all__ = [
     "confidence_caveat_text",
@@ -286,7 +286,7 @@ def _localized_fallback_reason(value: object, *, tr: Callable[..., str]) -> str:
     text = str(value or "").strip()
     if not text:
         return ""
-    if _display_lang(tr) != "nl":
+    if display_lang(tr) != "nl":
         return text
     replacements = {
         "missing reference data may affect accuracy": "Referentie ontbreekt",
@@ -299,10 +299,3 @@ def _localized_fallback_reason(value: object, *, tr: Callable[..., str]) -> str:
             continue
         clauses.append(replacements.get(cleaned.casefold(), cleaned))
     return "; ".join(clauses)
-
-
-def _display_lang(tr: Callable[..., str]) -> str:
-    try:
-        return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
-    except Exception:
-        return "en"

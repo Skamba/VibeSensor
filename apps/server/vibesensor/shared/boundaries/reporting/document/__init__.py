@@ -14,7 +14,7 @@ from .appendices import (
     SensorObservationMatrixRow,
     TopologyIntensityRow,
 )
-from .document import Report, ReportDocument
+from .document import ReportDocument
 from .panels import DataTrustItem, NextStep, PartSuggestion, PatternEvidence, SystemFindingCard
 from .sections import (
     PeakRow,
@@ -38,7 +38,6 @@ __all__ = [
     "PeakRow",
     "ProofWindowRow",
     "RankedCandidateRow",
-    "Report",
     "ReportLabelValueRow",
     "ReportDocument",
     "SensorObservationCell",

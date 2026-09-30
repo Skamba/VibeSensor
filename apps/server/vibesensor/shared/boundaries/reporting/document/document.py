@@ -17,30 +17,8 @@ from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
 from .sections import PeakRow, VerdictPageData
 
 __all__ = [
-    "Report",
     "ReportDocument",
 ]
-
-
-@dataclass(frozen=True, slots=True)
-class Report:
-    """Run-level metadata carrier consumed by report assembly."""
-
-    run_id: str
-    title: str = ""
-    lang: str = "en"
-    car_name: str | None = None
-    car_type: str | None = None
-    report_date: str | None = None
-    duration_s: float | None = None
-    sample_count: int = 0
-    sensor_count: int = 0
-
-    def __post_init__(self) -> None:
-        if not self.run_id:
-            raise ValueError("run_id must be non-empty")
-        if self.duration_s is not None and self.duration_s < 0:
-            raise ValueError("duration_s must be non-negative")
 
 
 @dataclass

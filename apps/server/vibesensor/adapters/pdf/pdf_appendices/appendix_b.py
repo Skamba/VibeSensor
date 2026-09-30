@@ -29,7 +29,6 @@ from .title_bar import draw_appendix_title_bar
 
 __all__ = [
     "_appendix_b_page",
-    "_has_appendix_b_content",
 ]
 
 if TYPE_CHECKING:
@@ -334,18 +333,3 @@ def _draw_appendix_b_bottom_panel(
             ),
         )
 
-
-def _has_appendix_b_content(appendix: AppendixBData) -> bool:
-    return any(
-        (
-            appendix.dominant_corner,
-            appendix.runner_up_corner,
-            appendix.dominance_ratio_text,
-            appendix.proof_basis_note,
-            appendix.location_confidence,
-            appendix.coverage_label,
-            appendix.coverage_notes,
-            appendix.intensity_rows,
-            appendix.sensor_observation_rows,
-        )
-    )

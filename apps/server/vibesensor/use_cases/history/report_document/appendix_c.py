@@ -15,6 +15,7 @@ from vibesensor.shared.boundaries.reporting.document import (
 )
 from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunOrderSummary
 from vibesensor.shared.report_presentation import (
+    display_lang,
     display_phase_label,
     display_speed_band,
     human_source,
@@ -93,7 +94,7 @@ def _build_dense_evidence_rows(
         rows.append(
             DenseEvidenceRow(
                 source_name=human_source(summary.suspected_source, tr=tr),
-                order_label=order_label_human(_display_lang(tr), summary.order_label),
+                order_label=order_label_human(display_lang(tr), summary.order_label),
                 confidence_label=_dense_confidence_label(report_facts, summary, tr=tr),
                 support=_dense_support_text(summary, tr=tr),
                 support_ratio=summary.support_ratio,
@@ -139,10 +140,6 @@ def _dense_confidence_label(
         return tr("UNKNOWN")
     label_key, _tone, pct_text = Finding.classify_confidence(finding.effective_confidence)
     return f"{tr(label_key)} ({pct_text})"
-
-
-def _display_lang(tr: Callable[..., str]) -> str:
-    return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
 
 
 def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
