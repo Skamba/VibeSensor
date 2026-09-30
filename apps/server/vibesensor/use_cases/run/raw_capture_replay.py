@@ -10,7 +10,6 @@ import numpy as np
 
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.boundaries.codecs.strength_metrics import strength_metrics_from_mapping
-from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_quality import (
@@ -39,6 +38,7 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.use_cases.diagnostics.whole_run_spectra import build_fft_computer
 
 __all__ = [
     "RawReplayResult",
@@ -532,7 +532,7 @@ def _build_replay_context(
     return _ReplayBuildContext(
         fft_n=fft_n,
         timelines=timelines,
-        fft_computer=_build_fft_computer(metadata),
+        fft_computer=build_fft_computer(metadata),
         accel_scale_g_per_lsb=metadata.accel_scale_g_per_lsb,
     )
 
@@ -713,14 +713,6 @@ def _build_fft_unavailable_replay_result(
             )
             for sample in samples
         ),
-    )
-
-
-def _build_fft_computer(metadata: RunMetadata) -> SpectralAnalysisComputer:
-    return SpectralAnalysisComputer(
-        fft_n=int(metadata.fft_window_size_samples or 0),
-        spectrum_min_hz=SPECTRUM_MIN_HZ,
-        spectrum_max_hz=SPECTRUM_MAX_HZ,
     )
 
 
