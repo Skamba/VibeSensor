@@ -196,6 +196,39 @@ def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
     assert registry.get(client_id.hex()).duplicates_received == 0
 
 
+def test_rebooted_sensor_with_rewound_clock_starts_a_new_session(tmp_path: Path) -> None:
+    """A rebooted sensor restarts seq and device time; its frames must not be dropped as late."""
+    registry, client_id = _make_registry_with_hello(tmp_path)
+
+    # Previous session ran for a while: seq 400, t0 = 60 s (server-synced clock).
+    registry.update_from_data(_data_msg(client_id, 400, 60_000_000), ("10.4.0.2", 50000), now=2.0)
+
+    # After a reboot: seq restarts near 0 and t0 restarts on the unsynced device clock.
+    r = registry.update_from_data(_data_msg(client_id, 1, 250_000), ("10.4.0.2", 50000), now=3.0)
+    assert r.reset_detected is True
+    assert r.is_late is False
+    assert r.is_duplicate is False
+
+    r2 = registry.update_from_data(_data_msg(client_id, 2, 500_000), ("10.4.0.2", 50000), now=3.25)
+    assert r2.is_late is False
+    record = registry.get(client_id.hex())
+    assert record.last_seq == 2
+    assert record.last_t0_us == 500_000
+    assert record.reset_count == 1
+
+
+def test_reordered_frame_slightly_behind_is_still_late(tmp_path: Path) -> None:
+    """Millisecond-scale reordering must keep the late-packet path, not a session reset."""
+    registry, client_id = _make_registry_with_hello(tmp_path)
+    registry.update_from_data(_data_msg(client_id, 400, 60_000_000), ("10.4.0.2", 50000), now=2.0)
+
+    r = registry.update_from_data(
+        _data_msg(client_id, 399, 59_750_000), ("10.4.0.2", 50000), now=2.1
+    )
+    assert r.is_late is True
+    assert r.reset_detected is False
+
+
 def test_short_session_restart_beyond_dedup_window_not_flagged_as_duplicate(
     tmp_path: Path,
 ) -> None:

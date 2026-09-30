@@ -47,6 +47,11 @@ __all__ = [
 
 _DEFAULT_DEDUP_WINDOW_SIZE = 128
 _RESTART_SEQ_GAP = 1000
+# A sensor that reboots restarts its sequence counter and its device clock; until
+# the server's clock offset is re-applied (second sync, ~10 s after boot) its
+# t0_us is far behind the previous session. Genuine late/reordered UDP frames are
+# only milliseconds behind, so a rewind this large means a new session.
+_RESTART_T0_REWIND_US = 2_000_000
 _JITTER_EMA_ALPHA = 0.2
 _SEQ_MASK = 0xFFFFFFFF
 _SEQ_HALF = 0x80000000
@@ -294,6 +299,22 @@ def _is_short_session_restart(
     )
 
 
+def _is_rebooted_session(
+    record: ClientRecord,
+    *,
+    seq: int,
+    t0_us: int,
+) -> bool:
+    last_seq = record.last_seq
+    last_t0_us = record.last_t0_us
+    return (
+        last_seq is not None
+        and last_t0_us is not None
+        and _is_seq_behind(seq=seq, last_seq=last_seq)
+        and t0_us < last_t0_us - _RESTART_T0_REWIND_US
+    )
+
+
 def _is_seq_behind(*, seq: int, last_seq: int) -> bool:
     return seq != last_seq and ((last_seq - seq) & _SEQ_MASK) < _SEQ_HALF
 
@@ -339,6 +360,18 @@ def apply_data_message_update(
         record.timing_jitter_us_ema = 0.0
         record.timing_drift_us_total = 0.0
 
+    rebooted = _is_rebooted_session(record, seq=seq, t0_us=t0_us)
+    if rebooted:
+        # Treat the rewound frame as the first frame of a new session instead of
+        # discarding every frame as "late" until the sensor's clock catches up.
+        record.reset_count += 1
+        record.last_reset_time = now_ts
+        record.last_seq = None
+        record.last_t0_us = None
+        record.timing_jitter_us_ema = 0.0
+        record.timing_drift_us_total = 0.0
+        record.dedup_window.clear()
+
     if record.dedup_window.track(seq):
         record.duplicates_received += 1
         return DataUpdateResult(is_duplicate=True)
@@ -346,7 +379,7 @@ def apply_data_message_update(
         return DataUpdateResult(is_late=True)
 
     record.frames_total += 1
-    reset_detected = False
+    reset_detected = rebooted
     if (
         record.sample_rate_hz > 0
         and sample_count > 0

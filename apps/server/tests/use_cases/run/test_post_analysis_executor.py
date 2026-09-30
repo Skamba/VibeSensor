@@ -10,6 +10,7 @@ from test_support.tracing import configured_trace_output, read_trace_output
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._validation import MissingStrengthMetricsError
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionConfig,
     execute_post_analysis,
@@ -216,6 +217,44 @@ def test_execute_post_analysis_propagates_unexpected_analysis_failure() -> None:
                 analysis_runner=lambda _run: (_ for _ in ()).throw(RuntimeError("boom")),
             ),
         )
+
+
+def test_execute_post_analysis_fails_run_without_strength_metrics_instead_of_raising() -> None:
+    """A recording shorter than one analysis window is a run failure, not a worker bug."""
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        async def astore_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        async def astore_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    def _too_short(_run: PostAnalysisRunInput):
+        raise MissingStrengthMetricsError(
+            "Missing required precomputed strength metrics in sample index 0: vibration_strength_db"
+        )
+
+    result = execute_post_analysis(
+        run_id="run-too-short",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=_too_short,
+        ),
+    )
+
+    assert not isinstance(result, PostAnalysisExecutionSuccess)
+    assert result.completed_error is not None
+    assert "strength metrics" in result.completed_error
+    assert [run_id for run_id, _ in stored_errors] == ["run-too-short"]
 
 
 def test_execute_post_analysis_reports_persistence_failure() -> None:
