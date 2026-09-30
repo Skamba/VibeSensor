@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from typing import cast
+from urllib.error import URLError
 
 from vibesensor.adapters.simulator.commands import apply_command
-from vibesensor.adapters.simulator.profiles import PROFILE_LIBRARY
+from vibesensor.adapters.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LIBRARY
+from vibesensor.adapters.simulator.server_http import fetch_active_car_order_hz
 from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import RoadSceneController
 from vibesensor.adapters.udp.protocol import (
@@ -25,10 +28,12 @@ from vibesensor.adapters.udp.protocol import (
 from vibesensor.shared.exceptions import ProtocolError
 
 _HANDSHAKE_POLL_S = 0.05
+_ACTIVE_CAR_POLL_S = 2.0
 
 __all__ = [
     "ClientProtocol",
     "DataProtocol",
+    "active_car_order_loop",
     "auto_stop",
     "command_loop",
     "data_loop",
@@ -223,6 +228,45 @@ async def data_loop(sim: SimClient, stop_event: asyncio.Event) -> None:
             sim.data_transport.sendto(packet, (sim.server_host, sim.server_data_port))
         sim.seq = (sim.seq + 1) & 0xFFFFFFFF
         frame_index += 1
+
+
+async def active_car_order_loop(
+    clients: list[SimClient],
+    stop_event: asyncio.Event,
+    *,
+    server_host: str,
+    server_http_port: int,
+    server_check_timeout: float,
+    poll_interval_s: float = _ACTIVE_CAR_POLL_S,
+) -> None:
+    """Keep order-locked tones on the server's active car (tire size, ratios).
+
+    Real sensors see the car's actual wheel/driveline orders; without this the
+    simulator would inject orders for the default car profile, several percent
+    away from whatever car the server analyzes against.
+    """
+    applied: dict[str, float] | None = None
+    while not stop_event.is_set():
+        try:
+            order_hz = await asyncio.to_thread(
+                fetch_active_car_order_hz,
+                server_host,
+                server_http_port,
+                server_check_timeout,
+            )
+        except (URLError, OSError, TimeoutError, ValueError):
+            order_hz = None
+        if order_hz is not None and order_hz != applied:
+            for client in clients:
+                client.order_hz = dict(order_hz)
+            applied = order_hz
+            print(
+                "[car] order tones follow the active car: "
+                f"wheel1={order_hz['wheel_1x']:.3f}Hz shaft1={order_hz['shaft_1x']:.3f}Hz "
+                f"engine1={order_hz['engine_1x']:.3f}Hz at {DEFAULT_SPEED_KMH:.0f} km/h"
+            )
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(stop_event.wait(), timeout=poll_interval_s)
 
 
 async def auto_stop(delay_s: float, stop_event: asyncio.Event) -> None:

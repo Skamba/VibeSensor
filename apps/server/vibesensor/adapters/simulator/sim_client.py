@@ -23,11 +23,12 @@ _TWO_PI = 2.0 * np.pi
 # ESP32 crystals are specified around ±10-40 ppm; stay within that envelope.
 _MAX_CLOCK_DRIFT_PPM = 40.0
 
-_COMMON_TONES: tuple[tuple[float, tuple[float, float, float]], ...] = (
-    (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
-    (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
-    (DEFAULT_ORDER_HZ["shaft_1x"], (95.0, 76.0, 110.0)),
-    (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
+# Driveline orders shared by every sensor, as (order_key, multiple, amps_xyz).
+_COMMON_ORDER_TONES: tuple[tuple[str, float, tuple[float, float, float]], ...] = (
+    ("wheel_1x", 1.0, (70.0, 58.0, 82.0)),
+    ("wheel_2x", 1.0, (46.0, 38.0, 54.0)),
+    ("shaft_1x", 1.0, (95.0, 76.0, 110.0)),
+    ("engine_2x", 1.0, (64.0, 52.0, 78.0)),
 )
 
 
@@ -71,6 +72,9 @@ class SimClient:
     bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     rng: np.random.Generator | None = None
+    # Order frequencies at DEFAULT_SPEED_KMH for the simulated car; the
+    # simulator refreshes them from the server's active car when reachable.
+    order_hz: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_ORDER_HZ))
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
@@ -142,17 +146,21 @@ class SimClient:
             (self.frame_samples, 3), dtype=np.float32
         )
 
-        # Compute speed-scaling ratio for order-based profiles.
-        # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
-        # reference speed; scale them proportionally to the current speed.
+        # Order tones are defined at the reference speed; scale them
+        # proportionally to the current speed.
         speed_ratio = 1.0
         if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
             speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
 
         _sin = np.sin
         _phase = self.phase_offsets
-        for freq_hz, amps_xyz in profile.tones:
-            effective_hz = freq_hz * speed_ratio
+        order_hz = self.order_hz
+        local_tones = [(freq_hz * speed_ratio, amps_xyz) for freq_hz, amps_xyz in profile.tones]
+        local_tones.extend(
+            (order_hz[order_key] * multiple * speed_ratio, amps_xyz)
+            for order_key, multiple, amps_xyz in profile.order_tones
+        )
+        for effective_hz, amps_xyz in local_tones:
             if effective_hz <= 0:
                 continue
             omega_t = _TWO_PI * effective_hz * t
@@ -169,8 +177,8 @@ class SimClient:
                 else 1.0
             )
             _gain = self.common_event_gain
-            for freq_hz, amps_xyz in _COMMON_TONES:
-                effective_hz = freq_hz * common_speed_ratio
+            for order_key, multiple, amps_xyz in _COMMON_ORDER_TONES:
+                effective_hz = order_hz[order_key] * multiple * common_speed_ratio
                 if effective_hz <= 0:
                     continue
                 omega_t = _TWO_PI * effective_hz * t
