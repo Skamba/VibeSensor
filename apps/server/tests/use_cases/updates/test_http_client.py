@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -274,57 +275,54 @@ def test_download_release_asset_closes_fd_when_fdopen_fails(tmp_path: Path) -> N
     assert list(tmp_path.glob("*.dl_tmp")) == []
 
 
-def test_download_release_asset_maps_status_errors(httpx_mock: HTTPXMock, tmp_path: Path) -> None:
-    url = "https://api.github.com/repos/owner/repo/releases/assets/1"
-    add_text_response(httpx_mock, url=url, text="busy", status_code=503)
-
-    with pytest.raises(OSError, match="HTTP 503"):
-        download_release_asset(
-            client=GitHubApiClient(),
-            url=url,
-            dest=tmp_path / "artifact.whl",
-            timeout_s=30.0,
-            max_bytes=1024,
-            chunk_size=4,
-            size_limit_message="too large",
-        )
+_ASSET_URL = "https://api.github.com/repos/owner/repo/releases/assets/1"
 
 
-def test_download_release_asset_maps_connection_failures(
-    httpx_mock: HTTPXMock, tmp_path: Path
+@pytest.mark.parametrize(
+    ("respond", "max_bytes", "expected_error", "match"),
+    [
+        pytest.param(
+            lambda mock: add_text_response(mock, url=_ASSET_URL, text="busy", status_code=503),
+            1024,
+            OSError,
+            "HTTP 503",
+            id="status-error",
+        ),
+        pytest.param(
+            lambda mock: add_httpx_exception(
+                mock, url=_ASSET_URL, exception=httpx.ConnectError("connection refused")
+            ),
+            1024,
+            OSError,
+            "connection refused",
+            id="connection-failure",
+        ),
+        pytest.param(
+            lambda mock: add_bytes_response(mock, url=_ASSET_URL, content=b"0123456789"),
+            4,
+            ValueError,
+            "too large",
+            id="oversized-payload",
+        ),
+    ],
+)
+def test_download_release_asset_maps_failures(
+    httpx_mock: HTTPXMock,
+    tmp_path: Path,
+    respond: Callable[[HTTPXMock], None],
+    max_bytes: int,
+    expected_error: type[Exception],
+    match: str,
 ) -> None:
-    url = "https://api.github.com/repos/owner/repo/releases/assets/1"
-    add_httpx_exception(
-        httpx_mock,
-        url=url,
-        exception=httpx.ConnectError("connection refused"),
-    )
+    respond(httpx_mock)
 
-    with pytest.raises(OSError, match="connection refused"):
+    with pytest.raises(expected_error, match=match):
         download_release_asset(
             client=GitHubApiClient(),
-            url=url,
+            url=_ASSET_URL,
             dest=tmp_path / "artifact.whl",
             timeout_s=30.0,
-            max_bytes=1024,
-            chunk_size=4,
-            size_limit_message="too large",
-        )
-
-
-def test_download_release_asset_rejects_oversized_payload(
-    httpx_mock: HTTPXMock, tmp_path: Path
-) -> None:
-    url = "https://api.github.com/repos/owner/repo/releases/assets/1"
-    add_bytes_response(httpx_mock, url=url, content=b"0123456789")
-
-    with pytest.raises(ValueError, match="too large"):
-        download_release_asset(
-            client=GitHubApiClient(),
-            url=url,
-            dest=tmp_path / "artifact.whl",
-            timeout_s=30.0,
-            max_bytes=4,
+            max_bytes=max_bytes,
             chunk_size=2,
             size_limit_message="too large",
         )

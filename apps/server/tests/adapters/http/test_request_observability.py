@@ -123,9 +123,11 @@ def test_unhandled_errors_keep_request_id_in_logs(caplog: pytest.LogCaptureFixtu
     assert failure_log.failure_kind == "programmer"
 
 
-def test_operational_errors_use_http_handlers_and_keep_request_id(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
+class _Payload(BaseModel):
+    value: int
+
+
+def _handled_error_app() -> FastAPI:
     app = FastAPI()
     install_http_exception_handlers(app)
     install_request_logging_middleware(app)
@@ -134,68 +136,48 @@ def test_operational_errors_use_http_handlers_and_keep_request_id(
     async def dependency_down() -> dict[str, bool]:
         raise ServiceUnavailableError("helper unavailable")
 
-    with caplog.at_level(logging.INFO):
-        with TestClient(app, raise_server_exceptions=False) as client:
-            response = client.get(
-                "/dependency-down",
-                headers={REQUEST_ID_HEADER: "operational-request"},
-            )
-
-    assert response.status_code == 503
-    assert response.json() == {"detail": "helper unavailable"}
-    assert response.headers[REQUEST_ID_HEADER] == "operational-request"
-    request_log = _log_record(caplog, "http_request")
-    assert request_log.request_id == "operational-request"
-    assert request_log.status_code == 503
-    assert all(rec.message != "http_request_failed" for rec in caplog.records)
-
-
-def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptureFixture) -> None:
-    app = FastAPI()
-    install_request_logging_middleware(app)
-
     @app.get("/teapot")
     async def teapot() -> None:
         raise HTTPException(status_code=418, detail="teapot")
 
-    with caplog.at_level(logging.INFO):
-        with TestClient(app, raise_server_exceptions=False) as client:
-            response = client.get("/teapot", headers={REQUEST_ID_HEADER: "teapot-request"})
-
-    assert response.status_code == 418
-    assert response.headers[REQUEST_ID_HEADER] == "teapot-request"
-    request_log = _log_record(caplog, "http_request")
-    assert request_log.request_id == "teapot-request"
-    assert request_log.status_code == 418
-    assert all(rec.message != "http_request_failed" for rec in caplog.records)
-
-
-def test_request_validation_error_keeps_status_code_and_request_id(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    app = FastAPI()
-    install_request_logging_middleware(app)
-
-    class Payload(BaseModel):
-        value: int
-
     @app.post("/items")
-    async def create_item(payload: Payload) -> dict[str, int]:
+    async def create_item(payload: _Payload) -> dict[str, int]:
         return {"value": payload.value}
 
+    return app
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body", "status_code", "detail"),
+    [
+        pytest.param(
+            "GET", "/dependency-down", None, 503, "helper unavailable", id="operational-error"
+        ),
+        pytest.param("GET", "/teapot", None, 418, "teapot", id="http-exception"),
+        pytest.param("POST", "/items", {"value": "bad"}, 422, None, id="request-validation"),
+    ],
+)
+def test_handled_errors_keep_status_code_and_request_id(
+    caplog: pytest.LogCaptureFixture,
+    method: str,
+    path: str,
+    body: dict[str, object] | None,
+    status_code: int,
+    detail: str | None,
+) -> None:
     with caplog.at_level(logging.INFO):
-        with TestClient(app, raise_server_exceptions=False) as client:
-            response = client.post(
-                "/items",
-                json={"value": "bad"},
-                headers={REQUEST_ID_HEADER: "validation-request"},
+        with TestClient(_handled_error_app(), raise_server_exceptions=False) as client:
+            response = client.request(
+                method, path, json=body, headers={REQUEST_ID_HEADER: "handled-request"}
             )
 
-    assert response.status_code == 422
-    assert response.headers[REQUEST_ID_HEADER] == "validation-request"
+    assert response.status_code == status_code
+    if detail is not None:
+        assert response.json() == {"detail": detail}
+    assert response.headers[REQUEST_ID_HEADER] == "handled-request"
     request_log = _log_record(caplog, "http_request")
-    assert request_log.request_id == "validation-request"
-    assert request_log.status_code == 422
+    assert request_log.request_id == "handled-request"
+    assert request_log.status_code == status_code
     assert all(rec.message != "http_request_failed" for rec in caplog.records)
 
 

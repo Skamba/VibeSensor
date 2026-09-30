@@ -160,35 +160,6 @@ def test_start_update_with_usb_internet_returns_started_response(update_client) 
     )
 
 
-def test_start_update_maps_configuration_error_to_400(update_client) -> None:
-    client, state = update_client
-    state.update_manager.start.side_effect = ConfigurationError("SSID must be 1-64 characters")
-
-    response = client.post(
-        "/api/update/start",
-        json={"transport": "wifi", "ssid": "x", "password": ""},
-    )
-
-    assert response.status_code == 400
-    assert response.json()["detail"] == "SSID must be 1-64 characters"
-
-
-def test_start_update_maps_update_conflict_to_409(update_client) -> None:
-    client, state = update_client
-    state.update_manager.start.side_effect = UpdateError(
-        "Update already in progress",
-        status="conflict",
-    )
-
-    response = client.post(
-        "/api/update/start",
-        json={"transport": "wifi", "ssid": "GarageNet", "password": ""},
-    )
-
-    assert response.status_code == 409
-    assert response.json()["detail"] == "Update already in progress"
-
-
 def test_cancel_update_returns_cancelled_flag(update_client) -> None:
     client, state = update_client
     state.update_manager.cancel.return_value = True
@@ -250,31 +221,6 @@ def test_start_esp_flash_rejects_missing_port_when_auto_detect_disabled(update_c
 
     assert response.status_code == 422
     assert "port is required when auto_detect is False" in str(response.json())
-
-
-def test_start_esp_flash_maps_configuration_error_to_400(update_client) -> None:
-    client, state = update_client
-    state.esp_flash_manager.start.side_effect = ConfigurationError(
-        "port is required when auto_detect is False"
-    )
-
-    response = client.post("/api/esp-flash/start", json={"port": None, "auto_detect": True})
-
-    assert response.status_code == 400
-    assert response.json()["detail"] == "port is required when auto_detect is False"
-
-
-def test_start_esp_flash_maps_update_conflict_to_409(update_client) -> None:
-    client, state = update_client
-    state.esp_flash_manager.start.side_effect = UpdateError(
-        "Flash already in progress",
-        status="conflict",
-    )
-
-    response = client.post("/api/esp-flash/start", json={"port": None, "auto_detect": True})
-
-    assert response.status_code == 409
-    assert response.json()["detail"] == "Flash already in progress"
 
 
 def test_get_esp_flash_status_returns_serialized_status(update_client) -> None:
@@ -370,3 +316,52 @@ def test_get_esp_flash_history_returns_attempts(update_client) -> None:
             }
         ]
     }
+
+
+_UPDATE_START = ("update_manager", "/api/update/start", {"transport": "wifi", "ssid": "x"})
+_FLASH_START = ("esp_flash_manager", "/api/esp-flash/start", {"port": None, "auto_detect": True})
+
+
+@pytest.mark.parametrize(
+    ("endpoint", "error", "status_code"),
+    [
+        pytest.param(
+            _UPDATE_START,
+            ConfigurationError("SSID must be 1-64 characters"),
+            400,
+            id="update-configuration-error-400",
+        ),
+        pytest.param(
+            _UPDATE_START,
+            UpdateError("Update already in progress", status="conflict"),
+            409,
+            id="update-conflict-409",
+        ),
+        pytest.param(
+            _FLASH_START,
+            ConfigurationError("port is required when auto_detect is False"),
+            400,
+            id="esp-flash-configuration-error-400",
+        ),
+        pytest.param(
+            _FLASH_START,
+            UpdateError("Flash already in progress", status="conflict"),
+            409,
+            id="esp-flash-conflict-409",
+        ),
+    ],
+)
+def test_start_endpoints_map_errors_to_http_status(
+    update_client,
+    endpoint: tuple[str, str, dict[str, object]],
+    error: Exception,
+    status_code: int,
+) -> None:
+    client, state = update_client
+    manager_name, path, body = endpoint
+    getattr(state, manager_name).start.side_effect = error
+
+    response = client.post(path, json=body)
+
+    assert response.status_code == status_code
+    assert response.json()["detail"] == str(error)
