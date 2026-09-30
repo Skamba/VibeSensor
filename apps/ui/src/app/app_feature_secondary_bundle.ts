@@ -90,10 +90,8 @@ export function createAppFeatureSecondaryBundle(
 
   const espFlash = createEspFlashFeature({
     panel: panels.settings.espFlash,
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
+    activeViewId: runtime.navigation.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
     services,
     queryClient: serverState.queryClient,
   });

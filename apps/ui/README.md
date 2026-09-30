@@ -263,8 +263,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
-| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view query polling context together |
-| `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for query-backed port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
+| `app/features/esp_flash_feature.ts` | ESP flash controller for query-backed port refreshes, flash status polling while the ESP flash tab is visible, log/history hydration, and start/cancel orchestration behind the typed panel bridge |
 | `app/features/cars_feature.ts` | Car-management controller: saved-car list activation/deletion and creation feedback plus the add-car wizard (step transitions, car-library loading, finish validation), calling the `api/*` wrappers directly behind the typed `CarsPanelView` bridge |
 | `app/features/cars_wizard_state.ts` | Pure add-car wizard state helpers: wizard step state, option load states, manual spec input store, finish readiness, and summary data |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
@@ -286,9 +285,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/features/update_feature.ts` | Updater controller for query-backed update/health/internet polling while the internet or update tab is visible and start/cancel command orchestration, binding the typed update and internet panel actions |
 | `app/features/history_feature.ts` | Single owner for query-backed history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
-| `app/views/esp_flash_readiness_presenter.ts` | ESP flash readiness presenter that derives start-readiness, status-banner, selected-target, and recent-attempt summary models |
-| `app/views/esp_flash_journey_presenter.ts` | ESP flash journey presenter that derives staged lifecycle progress and terminal stage state for the maintenance journey card |
-| `app/views/esp_flash_feature_presenter.ts` | Top-level ESP flash presenter that composes journey, readiness, log, and history panel models for the island-owned ESP flash bridge |
+| `app/views/esp_flash_feature_presenter.ts` | Pure ESP flash view-model builders: start readiness, status banner, staged journey progress, log, and recent-attempt history models composed into the panel render model |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_heatmap_presenter.ts` | Heatmap presenter helpers that normalize location labels and turn preview intensity stats into typed history heatmap zones |
 | `app/views/history_detail_presenter.ts` | Expanded history detail presenter that builds typed findings, warnings, and heatmap-backed diagnosis sections |

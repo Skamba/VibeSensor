@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 
 import { render } from "preact";
 
-import type { EspFlashFeatureDeps } from "../src/app/features/esp_flash_feature";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import type { FeatureServices } from "../src/app/feature_deps_base";
 import { createUpdateFeature } from "../src/app/features/update_feature";
@@ -331,7 +330,7 @@ async function createEspFlashFeatureDeps() {
       return els.espFlashStartSummary;
     },
     panel,
-    ports: navigation.ports,
+    ...navigation.ports,
     queryClient: createTestQueryClient(),
     services: createFeatureServices(),
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,
@@ -472,7 +471,7 @@ export function installMaintenanceFeatureGlobals(): () => void {
 
 export async function createEspFlashFeatureHarness() {
   const deps = await createEspFlashFeatureDeps();
-  const feature = createEspFlashFeature(deps as EspFlashFeatureDeps);
+  const feature = createEspFlashFeature(deps);
   const disposeFeature = feature.dispose.bind(feature);
 
   return {
