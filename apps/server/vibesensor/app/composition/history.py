@@ -12,12 +12,7 @@ from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
-from vibesensor.adapters.http.dependencies import (
-    HistoryDeps,
-    HistoryExportServiceProtocol,
-    HistoryReportServiceProtocol,
-    HistoryRunServiceProtocol,
-)
+from vibesensor.adapters.http.dependencies import HistoryDeps
 from vibesensor.adapters.persistence.history_db import (
     HistoryPersistenceAdapters,
     create_history_persistence_adapters,
@@ -46,9 +41,9 @@ class HistoryAdapterFactory(Protocol):
 class HistoryServiceBundle:
     """History and reporting services derived from shared persistence adapters."""
 
-    run_service: HistoryRunServiceProtocol
-    report_service: HistoryReportServiceProtocol
-    export_service: HistoryExportServiceProtocol
+    run_service: ProjectedHistoryRunService
+    report_service: HistoryReportService
+    export_service: ProjectedHistoryExportService
 
     def http_deps(self) -> HistoryDeps:
         """Return the focused HTTP history dependency group."""

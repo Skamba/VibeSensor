@@ -12,13 +12,15 @@ from typing import TYPE_CHECKING
 
 from vibesensor.adapters.http.dependencies import RouterDeps
 from vibesensor.app.config_schema import AppConfig
+from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
-from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
+from vibesensor.shared.ports import SettingsReader
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -39,8 +41,8 @@ class RuntimeState:
     """Lifecycle-focused runtime dependencies."""
 
     config: AppConfig
-    registry: ClientTracker
-    processor: SignalSource
+    registry: ClientRegistry
+    processor: SignalProcessor
     control_plane: UDPControlPlane
     worker_pool: WorkerPool
     settings_reader: SettingsReader

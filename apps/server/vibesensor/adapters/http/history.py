@@ -22,11 +22,11 @@ from vibesensor.adapters.http.models import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.http.dependencies import (
-        HistoryExportServiceProtocol,
-        HistoryReportServiceProtocol,
-        HistoryRunServiceProtocol,
+    from vibesensor.adapters.history import (
+        ProjectedHistoryExportService,
+        ProjectedHistoryRunService,
     )
+    from vibesensor.use_cases.history.reports import HistoryReportService
 
 _RUN_NOT_FOUND_RESPONSE: OpenAPIResponses = {
     404: {"description": "Requested run was not found."},
@@ -69,9 +69,9 @@ _EXPORT_RESPONSES: OpenAPIResponses = {
 
 def create_history_routes(
     *,
-    run_service: HistoryRunServiceProtocol,
-    report_service: HistoryReportServiceProtocol,
-    export_service: HistoryExportServiceProtocol,
+    run_service: ProjectedHistoryRunService,
+    report_service: HistoryReportService,
+    export_service: ProjectedHistoryExportService,
 ) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter(tags=["history"])

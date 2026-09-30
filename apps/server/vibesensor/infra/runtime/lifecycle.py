@@ -15,7 +15,7 @@ import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -28,21 +28,18 @@ from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, U
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
+if TYPE_CHECKING:
+    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+    from vibesensor.infra.workers.worker_pool import WorkerPool
+
 
 class LifecycleControlPlane(Protocol):
     async def start(self) -> None: ...
 
     def close(self) -> None: ...
-
-
-class LifecycleProcessingLoop(Protocol):
-    async def run(self) -> object: ...
-
-
-class LifecycleWsBroadcast(Protocol):
-    def build_payload(self, selected_client: str | None) -> LiveWsPayload: ...
-
-    def on_tick(self) -> None: ...
 
 
 class LifecycleWsHub(Protocol):
@@ -98,10 +95,6 @@ class LifecycleUpdateManager(LifecycleManagedJobs, Protocol):
     async def startup_recover(self) -> object: ...
 
 
-class LifecycleWorkerPool(Protocol):
-    def shutdown(self, wait: bool) -> None: ...
-
-
 class LifecycleHistoryDb(Protocol):
     async def aclose(self) -> None: ...
 
@@ -118,19 +111,19 @@ class LifecycleRuntime:
     gpsd_host: str
     gpsd_port: int
     shutdown_analysis_timeout_s: float
-    registry: object
-    processor: object
+    registry: ClientRegistry
+    processor: SignalProcessor
     ingest_diagnostics: IngestDiagnosticsCollector
     control_plane: LifecycleControlPlane
-    processing_loop: LifecycleProcessingLoop
+    processing_loop: ProcessingLoop
     ws_hub: LifecycleWsHub
-    ws_broadcast: LifecycleWsBroadcast
+    ws_broadcast: WsBroadcastService
     run_recorder: LifecycleRunRecorder
     gps_monitor: LifecycleGpsMonitor
     obd_runner: LifecycleObdRunner
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
-    worker_pool: LifecycleWorkerPool
+    worker_pool: WorkerPool
     history_db: LifecycleHistoryDb
 
 
