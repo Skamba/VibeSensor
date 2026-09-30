@@ -42,9 +42,10 @@ GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
     → HistoryReportRequestLoader.load_report_request() [vibesensor.use_cases.history.report_loader]
     → prepare_report_input() [vibesensor.shared.boundaries.reporting.preparation]
-    → _build_pdf_bytes() [vibesensor.app.container]
-      → build_report_document(prepared_input) [vibesensor.use_cases.history.report_document]
-      → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
+    → _build_prepared_pdf_bytes() [vibesensor.app.composition.history]
+      → build_prepared_report_pdf(prepared_input) [vibesensor.adapters.pdf.pdf_engine]
+        → build_report_document(prepared_input) [vibesensor.use_cases.history.report_document]
+        → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
 ```
 
 ## Key Architectural Rules

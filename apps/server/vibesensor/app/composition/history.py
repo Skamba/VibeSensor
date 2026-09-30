@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Protocol
 
 import aiosqlite
 
@@ -27,34 +24,6 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 LOGGER = logging.getLogger(__name__)
 
 
-class HistoryAdapterFactory(Protocol):
-    def __call__(
-        self,
-        db_path: Path,
-        *,
-        corruption_reporter: Callable[[str], None] | None = None,
-        engine_failure_reporter: Callable[[str, str], None] | None = None,
-    ) -> HistoryPersistenceAdapters: ...
-
-
-@dataclass(frozen=True, slots=True)
-class HistoryServiceBundle:
-    """History and reporting services derived from shared persistence adapters."""
-
-    run_service: ProjectedHistoryRunService
-    report_service: HistoryReportService
-    export_service: ProjectedHistoryExportService
-
-    def http_deps(self) -> HistoryDeps:
-        """Return the focused HTTP history dependency group."""
-
-        return HistoryDeps(
-            run_service=self.run_service,
-            report_service=self.report_service,
-            export_service=self.export_service,
-        )
-
-
 def _build_prepared_pdf_bytes(prepared: PreparedReportInput) -> bytes:
     """Render a prepared report input through the PDF adapter boundary."""
     from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
@@ -67,10 +36,9 @@ def create_history_db(
     *,
     corruption_reporter: Callable[[str], None] | None = None,
     engine_failure_reporter: Callable[[str, str], None] | None = None,
-    adapter_factory: HistoryAdapterFactory = create_history_persistence_adapters,
 ) -> HistoryPersistenceAdapters:
     """Create and initialise the shared history persistence collaborators."""
-    history = adapter_factory(
+    history = create_history_persistence_adapters(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
         engine_failure_reporter=engine_failure_reporter,
@@ -135,23 +103,23 @@ def create_history_db(
     return history
 
 
-def build_history_service_bundle(
+def build_history_deps(
     *,
     history: HistoryPersistenceAdapters,
     current_car_reader: SettingsReader,
-) -> HistoryServiceBundle:
-    """Build the focused history/reporting services over shared persistence."""
+) -> HistoryDeps:
+    """Build the history/reporting HTTP services over shared persistence."""
 
-    history_run_service = HistoryRunService(history.run_repository)
-    history_export_service = HistoryExportService(history.run_repository)
-    return HistoryServiceBundle(
+    return HistoryDeps(
         run_service=ProjectedHistoryRunService(
-            history_run_service,
+            HistoryRunService(history.run_repository),
             current_car_reader=current_car_reader,
         ),
         report_service=HistoryReportService(
             history.run_repository,
             pdf_renderer=_build_prepared_pdf_bytes,
         ),
-        export_service=ProjectedHistoryExportService(history_export_service),
+        export_service=ProjectedHistoryExportService(
+            HistoryExportService(history.run_repository),
+        ),
     )

@@ -25,11 +25,11 @@ from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashMana
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
+    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.adapters.history import (
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
-    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.shared.types.speed_source_config import (

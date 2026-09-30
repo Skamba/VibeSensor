@@ -71,7 +71,7 @@ Deep dives: `docs/run_lifecycle.md`, `docs/analysis_pipeline.md`
 | Field | Value |
 |------|-------------|
 | Source | Persisted run metadata, persisted analysis outputs, and already-derived report facts |
-| Main path | history DB -> `use_cases/history/report_loader.py` -> shared report boundaries/fact builders -> `app/container.py::_build_pdf_bytes` -> PDF/UI consumers |
+| Main path | history DB -> `use_cases/history/report_loader.py` -> shared report boundaries/fact builders -> `app/composition/history.py::_build_prepared_pdf_bytes` -> PDF/UI consumers |
 | Boundary | History/report loading reads persisted truth only; it does not rerun live processing or raw replay directly |
 | Final consumer | History detail UI, quick report readiness, and generated PDFs |
 | Data shape | Persisted, replay-free report state |

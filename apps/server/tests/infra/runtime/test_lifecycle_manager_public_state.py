@@ -27,12 +27,12 @@ async def _wait_until(predicate, *, spins: int = 40) -> None:
 
 
 def _build_lifecycle(*, start_udp_receiver, **overrides):
-    runtime_state, _ = _make_runtime(**overrides)
+    runtime, _ = _make_runtime(**overrides)
     lifecycle = LifecycleManager(
-        runtime=runtime_state.lifecycle_runtime(),
+        runtime=runtime,
         start_udp_receiver=start_udp_receiver,
     )
-    return runtime_state, lifecycle
+    return runtime, lifecycle
 
 
 @pytest.mark.asyncio

@@ -61,7 +61,7 @@ state. Current `main` is intentionally split more narrowly:
   (`UiPreferencesService`), and canonical sensor metadata
   (`SensorSettingsService`). A shared settings snapshot coordinator owns only
   the single stored snapshot's load/save/rollback mechanics.
-  `build_settings_service_bundle()` in `vibesensor.app.container` groups those
+  `build_settings_service_bundle()` in `vibesensor.app.composition.settings` groups those
   focused services into explicit runtime and HTTP dependency bundles.
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
@@ -72,11 +72,11 @@ state. Current `main` is intentionally split more narrowly:
   Route-facing HTTP modules should stay on shared ports or adapter-local
   protocol seams, while `clients.py` remains the only HTTP surface allowed to
   delegate location writes through `assign_sensor_location()`.
-- `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
-  It delegates speed/OBD setup, history/reporting services, live runtime
-  services, update deps, lifecycle state, and router wiring to focused builder
-  functions with explicit bundles rather than extending one monolithic
-  composition function.
+- `vibesensor.app.container.build_runtime()` is the composition root. It calls
+  the per-subsystem builders in `vibesensor.app.composition` (history, speed,
+  settings, live runtime, updates) and assembles their outputs directly into
+  one `AppRuntime`: the infra-owned `LifecycleRuntime` consumed by
+  `LifecycleManager` plus the `RouterDeps` consumed by the HTTP router.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow

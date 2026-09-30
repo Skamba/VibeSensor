@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
-from vibesensor.app import container as container_module
+from vibesensor.app.composition import history as history_composition
 
 
 def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupted(
@@ -38,7 +38,7 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
         return fake_history
 
     monkeypatch.setattr(
-        container_module,
+        history_composition,
         "create_history_persistence_adapters",
         _fake_history_adapters,
     )
@@ -50,7 +50,7 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
         ),
     )
 
-    result = container_module.create_history_db(
+    result = history_composition.create_history_db(
         config,
         corruption_reporter=lambda _details: None,
     )
@@ -94,7 +94,7 @@ def test_create_history_db_prunes_old_terminal_runs_on_startup(
         return fake_history
 
     monkeypatch.setattr(
-        container_module,
+        history_composition,
         "create_history_persistence_adapters",
         _fake_history_adapters,
     )
@@ -106,7 +106,7 @@ def test_create_history_db_prunes_old_terminal_runs_on_startup(
         ),
     )
 
-    result = container_module.create_history_db(
+    result = history_composition.create_history_db(
         config,
         corruption_reporter=lambda _details: None,
     )
@@ -143,7 +143,7 @@ def test_create_history_db_prunes_raw_capture_before_summary_retention_when_conf
         return fake_history
 
     monkeypatch.setattr(
-        container_module,
+        history_composition,
         "create_history_persistence_adapters",
         _fake_history_adapters,
     )
@@ -155,7 +155,7 @@ def test_create_history_db_prunes_raw_capture_before_summary_retention_when_conf
         ),
     )
 
-    result = container_module.create_history_db(
+    result = history_composition.create_history_db(
         config,
         corruption_reporter=lambda _details: None,
     )
@@ -191,7 +191,7 @@ def test_create_history_db_continues_when_retention_prune_fails(
         return fake_history
 
     monkeypatch.setattr(
-        container_module,
+        history_composition,
         "create_history_persistence_adapters",
         _fake_history_adapters,
     )
@@ -204,7 +204,7 @@ def test_create_history_db_continues_when_retention_prune_fails(
     )
 
     with caplog.at_level("WARNING"):
-        result = container_module.create_history_db(
+        result = history_composition.create_history_db(
             config,
             corruption_reporter=lambda _details: None,
         )
