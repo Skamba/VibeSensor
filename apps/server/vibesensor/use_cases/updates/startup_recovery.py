@@ -10,10 +10,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
-from vibesensor.use_cases.updates.status import (
-    UpdateStatusTracker,
-    UpdateTerminalStateReporter,
-)
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 
 __all__ = ["UpdateStartupRecoveryCoordinator"]
@@ -31,7 +28,6 @@ class UpdateStartupRecoveryCoordinator:
     """Recover transport-owned updater state after an interrupted server restart."""
 
     __slots__ = (
-        "_reporter",
         "_rollback_snapshots",
         "_rollback_verifier",
         "_status",
@@ -42,12 +38,10 @@ class UpdateStartupRecoveryCoordinator:
         self,
         *,
         status: UpdateStatusTracker,
-        reporter: UpdateTerminalStateReporter,
         transport_coordinator: UpdateTransportCoordinator,
         rollback_snapshots: RollbackSnapshotStore | None = None,
         rollback_verifier: RollbackDeploymentVerifier | None = None,
     ) -> None:
-        self._reporter = reporter
         self._status = status
         self._transport_coordinator = transport_coordinator
         self._rollback_snapshots = rollback_snapshots
@@ -61,7 +55,7 @@ class UpdateStartupRecoveryCoordinator:
             return
         if status.state != UpdateState.running or status.finished_at is not None:
             return
-        self._reporter.mark_interrupted("Update interrupted by server restart")
+        self._status.mark_interrupted("Update interrupted by server restart")
         await self._transport_coordinator.recover_interrupted(status)
         await self._verify_rollback_after_interruption(status)
 

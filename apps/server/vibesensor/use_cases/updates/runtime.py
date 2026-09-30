@@ -60,7 +60,6 @@ def build_update_manager(
         runner=active_runner,
         commands=core.commands,
         status=core.status,
-        reporter=core.reporter,
         rollback_snapshots=rollback_snapshots,
         rollback_verifier=rollback_verifier,
         wifi_config=config.wifi_config,
@@ -76,7 +75,6 @@ def build_update_manager(
     )
     return UpdateManager(
         status=core.status,
-        reporter=core.reporter,
         usb_status_service=transport.usb_status_service,
         startup_recovery=transport.startup_recovery,
         workflow=workflow,

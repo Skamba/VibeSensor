@@ -13,8 +13,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
-    UpdateTerminalStateReporter,
-    build_update_status_tracker,
+    UpdateStatusTracker,
 )
 
 
@@ -38,7 +37,7 @@ class RecordingRestartScheduler:
 
 @pytest.mark.asyncio
 async def test_completion_finishes_transport_then_schedules_restart(tmp_path: Path) -> None:
-    status = build_update_status_tracker(
+    status = UpdateStatusTracker(
         state_store=UpdateStateStore(tmp_path / "update_status.json"),
         status=UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.installing),
     )
@@ -46,7 +45,6 @@ async def test_completion_finishes_transport_then_schedules_restart(tmp_path: Pa
     prepared_transport = RecordingPreparedTransport()
     coordinator = UpdateCompletionCoordinator(
         restart_scheduler=restart_scheduler,
-        reporter=UpdateTerminalStateReporter(status=status),
         status=status,
     )
 
@@ -65,7 +63,7 @@ async def test_completion_finishes_transport_then_schedules_restart(tmp_path: Pa
 
 @pytest.mark.asyncio
 async def test_completion_records_issue_when_restart_scheduling_fails(tmp_path: Path) -> None:
-    status = build_update_status_tracker(
+    status = UpdateStatusTracker(
         state_store=UpdateStateStore(tmp_path / "update_status.json"),
         status=UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.checking),
     )
@@ -73,7 +71,6 @@ async def test_completion_records_issue_when_restart_scheduling_fails(tmp_path: 
     prepared_transport = RecordingPreparedTransport()
     coordinator = UpdateCompletionCoordinator(
         restart_scheduler=restart_scheduler,
-        reporter=UpdateTerminalStateReporter(status=status),
         status=status,
     )
 

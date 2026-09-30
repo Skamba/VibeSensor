@@ -1,11 +1,20 @@
-"""msgspec codecs for updater status persistence and HTTP payloads."""
+"""msgspec codecs and the persistent JSON state store for updater status."""
 
 from __future__ import annotations
 
+import contextlib
+import logging
+import os
+import tempfile
 import time
+from pathlib import Path
 
 import msgspec
 
+from vibesensor.shared.process_settings import (
+    DEFAULT_UPDATE_STATE_PATH,
+    load_update_env_settings,
+)
 from vibesensor.shared.types.json_types import (
     JsonObject,
     is_json_object,
@@ -20,15 +29,21 @@ from vibesensor.use_cases.updates.models import (
 )
 
 __all__ = [
+    "DEFAULT_STATE_PATH",
     "UpdateIssuePayload",
     "UpdateJobStatusPayload",
     "UpdateRuntimeDetailsPayload",
+    "UpdateStateStore",
     "update_status_from_builtins",
     "update_status_from_json",
     "update_status_to_builtins",
     "update_status_to_json",
     "update_status_to_payload",
 ]
+
+LOGGER = logging.getLogger(__name__)
+
+DEFAULT_STATE_PATH = str(DEFAULT_UPDATE_STATE_PATH)
 
 
 class UpdateIssuePayload(msgspec.Struct, kw_only=True, frozen=True):
@@ -147,3 +162,60 @@ def _phase_elapsed_s(status: UpdateJobStatus, *, now_s: float | None) -> float |
     if status.state != UpdateState.running or status.phase_started_at is None:
         return None
     return max(0.0, (time.time() if now_s is None else now_s) - status.phase_started_at)
+
+
+class UpdateStateStore:
+    """Load / save :class:`UpdateJobStatus` to a JSON file.
+
+    Writes are atomic (write-to-temp + ``os.replace``) so a crash mid-write
+    never corrupts the file. Reads tolerate missing or malformed JSON and
+    return ``None`` with a logged warning.
+    """
+
+    __slots__ = ("_path",)
+
+    def __init__(self, path: str | Path | None = None) -> None:
+        if path is not None:
+            self._path = Path(path).expanduser()
+        else:
+            self._path = load_update_env_settings().update_state_path
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    def load(self) -> UpdateJobStatus | None:
+        """Load persisted status. Returns ``None`` if missing or corrupt."""
+        if not self._path.is_file():
+            return None
+        try:
+            return update_status_from_json(self._path.read_bytes())
+        except (msgspec.DecodeError, msgspec.ValidationError, ValueError, TypeError) as exc:
+            LOGGER.warning("Corrupt update state file %s: %s", self._path, exc)
+            return None
+        except OSError as exc:
+            LOGGER.warning("Cannot read update state file %s: %s", self._path, exc)
+            return None
+
+    def save(self, status: UpdateJobStatus) -> None:
+        """Persist *status* atomically (temp-file + ``os.replace``)."""
+        payload = update_status_to_json(status)
+        tmp: str | None = None
+        try:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            fd, tmp = tempfile.mkstemp(
+                dir=str(self._path.parent),
+                prefix=".update_status_",
+                suffix=".tmp",
+            )
+            try:
+                os.write(fd, payload)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            Path(tmp).replace(self._path)
+        except OSError as exc:
+            LOGGER.warning("Failed to persist update state to %s: %s", self._path, exc)
+            if tmp is not None:
+                with contextlib.suppress(OSError):
+                    Path(tmp).unlink()

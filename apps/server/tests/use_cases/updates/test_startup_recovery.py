@@ -15,8 +15,7 @@ from vibesensor.use_cases.updates.models import (
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
-    UpdateTerminalStateReporter,
-    build_update_status_tracker,
+    UpdateStatusTracker,
 )
 
 
@@ -61,14 +60,13 @@ def _make_recovery(
     rollback_snapshots: SnapshotStore | None = None,
     rollback_verifier: RollbackVerifier | None = None,
 ) -> tuple[UpdateStartupRecoveryCoordinator, RecordingTransportCoordinator]:
-    status_tracker = build_update_status_tracker(
+    status_tracker = UpdateStatusTracker(
         state_store=UpdateStateStore(tmp_path / "update_status.json"),
         status=status,
     )
     transport_coordinator = RecordingTransportCoordinator()
     coordinator = UpdateStartupRecoveryCoordinator(
         status=status_tracker,
-        reporter=UpdateTerminalStateReporter(status=status_tracker),
         transport_coordinator=transport_coordinator,
         rollback_snapshots=rollback_snapshots,
         rollback_verifier=rollback_verifier,

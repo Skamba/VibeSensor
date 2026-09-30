@@ -29,8 +29,7 @@ from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
-    UpdateTerminalStateReporter,
-    build_update_status_tracker,
+    UpdateStatusTracker,
     collect_runtime_details,
     update_status_to_builtins,
 )
@@ -69,8 +68,7 @@ def _build_manager_with_cancellation_cleanup(
     repo = tmp_path / "repo"
     repo.mkdir()
     state_store = UpdateStateStore(tmp_path / "update_status.json")
-    tracker = build_update_status_tracker(state_store=state_store)
-    reporter = UpdateTerminalStateReporter(status=tracker)
+    tracker = UpdateStatusTracker(state_store=state_store)
     prepared_transport = SimpleNamespace(cleanup_after_update=AsyncMock())
 
     async def plan_with_cancellation(_request, *, on_prepared=None):
@@ -96,7 +94,6 @@ def _build_manager_with_cancellation_cleanup(
     )
     manager = UpdateManager(
         status=tracker,
-        reporter=reporter,
         workflow=workflow,
         startup_recovery=SimpleNamespace(recover=AsyncMock()),
         usb_status_service=MagicMock(),

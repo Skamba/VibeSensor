@@ -10,10 +10,7 @@ from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
-from vibesensor.use_cases.updates.status import (
-    UpdateStatusTracker,
-    UpdateTerminalStateReporter,
-)
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport.lifecycles import UpdateTransportLifecycles
 from vibesensor.use_cases.updates.transport.usb_internet import UpdateUsbInternetSession
@@ -41,7 +38,6 @@ def build_update_transport_runtime(
     runner: CommandRunner,
     commands: UpdateCommandExecutor,
     status: UpdateStatusTracker,
-    reporter: UpdateTerminalStateReporter,
     wifi_config: UpdateWifiConfig,
     usb_internet_service: UsbInternetStatusReader | None,
     logger: logging.Logger,
@@ -62,7 +58,6 @@ def build_update_transport_runtime(
         coordinator=coordinator,
         startup_recovery=UpdateStartupRecoveryCoordinator(
             status=status,
-            reporter=reporter,
             transport_coordinator=coordinator,
             rollback_snapshots=rollback_snapshots,
             rollback_verifier=rollback_verifier,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
@@ -33,9 +32,6 @@ from vibesensor.use_cases.updates.transport.runtime import UpdateTransportRuntim
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 from vibesensor.use_cases.updates.workflow_planner import UpdateWorkflowPlanner
-
-if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateTerminalStateReporter
 
 __all__ = ["build_update_workflow"]
 
@@ -70,7 +66,6 @@ def build_update_workflow(
         workflow_executor=_build_workflow_executor(
             commands=core.commands,
             status=core.status,
-            reporter=core.reporter,
             config=config,
             release_fetcher=release_fetcher,
         ),
@@ -104,7 +99,6 @@ def _build_workflow_executor(
     *,
     commands: UpdateCommandExecutor,
     status: UpdateStatusTracker,
-    reporter: UpdateTerminalStateReporter,
     config: UpdateRuntimeConfig,
     release_fetcher: ServerReleaseFetcher,
 ) -> UpdateWorkflowExecutor:
@@ -122,7 +116,6 @@ def _build_workflow_executor(
             service_name=execution_config.service_name,
             restart_unit=execution_config.restart_unit,
         ),
-        reporter=reporter,
         status=status,
     )
     installer = UpdateInstaller(
