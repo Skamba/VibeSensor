@@ -98,7 +98,6 @@ test("settings analysis module renders guidance and surfaces invalid input throu
   const module = createSettingsAnalysisModule({
     panel,
     hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
     refreshSpectrumDecorations: () => undefined,
     queryClient: createTestQueryClient(),
@@ -200,7 +199,6 @@ test("settings analysis module keeps active-car geometry when loading server ana
       openGuidance: () => undefined,
     },
     hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
     refreshSpectrumDecorations: () => {
       refreshSpectrumDecorationCalls += 1;
@@ -333,7 +331,6 @@ function createAnalysisModuleHarness(
   const module = createSettingsAnalysisModule({
     panel,
     hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
     refreshSpectrumDecorations:
       options.refreshSpectrumDecorations ?? (() => undefined),

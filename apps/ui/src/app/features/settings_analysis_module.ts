@@ -28,7 +28,6 @@ export interface SettingsAnalysisModuleDeps {
   services: FeatureServices;
   refreshSpectrumDecorations: () => void;
   hasValidActiveCar: () => boolean;
-  onMissingActiveCar: () => void;
   onSaveError: (error: unknown) => void;
 }
 
@@ -343,7 +342,6 @@ export function createSettingsAnalysisModule(
       return;
     }
     if (!ctx.hasValidActiveCar()) {
-      ctx.onMissingActiveCar();
       return;
     }
     mutationInFlight = true;
@@ -466,7 +464,6 @@ export function createSettingsAnalysisModule(
       return;
     }
     if (!ctx.hasValidActiveCar()) {
-      ctx.onMissingActiveCar();
       return;
     }
     clearFieldValidationState();

@@ -1,4 +1,4 @@
-import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
+import type { CarsFeatureManualInputState } from "../features/cars_wizard_state";
 import { getUiText as t } from "../ui_i18n";
 import {
   useSignalProperties,

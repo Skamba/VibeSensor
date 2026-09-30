@@ -1,7 +1,7 @@
 import { useRef } from "preact/hooks";
 import { render } from "preact";
 
-import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
+import type { CarsFeatureFocusTarget } from "../features/cars_feature";
 import {
   computed,
   signal,

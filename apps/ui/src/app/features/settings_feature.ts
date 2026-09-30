@@ -1,6 +1,5 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { CarOrderReferenceStatus, CarsPayload } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState } from "../settings_state";
@@ -18,11 +17,6 @@ import {
   createSettingsSpeedSourceModule,
   type SettingsSpeedSourceModule,
 } from "./settings_speed_source_module";
-import {
-  createSettingsCarsModule,
-  type SettingsCarsModule,
-} from "./settings_cars_module";
-import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import type { SettingsShellView } from "../views/settings_shell";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
@@ -34,13 +28,11 @@ interface SettingsFeatureStateDeps {
 
 interface SettingsFeaturePanelDeps {
   settingsShell: SettingsShellView;
-  carsPanel: CarsListPanelView;
   analysisPanel: AnalysisPanelView;
   speedSourcePanel: SpeedSourcePanelView;
 }
 
 interface SettingsFeaturePortDeps {
-  openCarWizard: () => void;
   activeViewId: ReadonlySignal<string>;
   view: SettingsFeatureViewPorts;
 }
@@ -60,23 +52,11 @@ export interface SettingsFeatureViewPorts {
 }
 
 export interface SettingsFeature {
-  addCarFromWizard(
-    name: string,
-    carType: string,
-    aspects: Record<string, number | string>,
-    orderReferenceStatus?: CarOrderReferenceStatus,
-    variant?: string,
-  ): Promise<void>;
   bindHandlers(): void;
   dispose(): void;
   syncSettingsInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
   loadAnalysisSettingsFromServer(): Promise<void>;
-  loadCarsFromServer(): Promise<void>;
-  renderCarList(): void;
-  syncCarsPayload(payload: CarsPayload): void;
-  syncActiveCarToInputs(): void;
-  showCarCreationSuccess(carId: string, carName: string): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
 }
@@ -88,7 +68,6 @@ export function createSettingsFeature(
   const settings = ctx.state.settings;
   const carSelection = createCarSelectionDerivedState(settings.car);
   let handlersBound = false;
-  let carsModule!: SettingsCarsModule;
 
   function showSettingsSaveError(error: unknown): void {
     services.showError(
@@ -98,10 +77,6 @@ export function createSettingsFeature(
     );
   }
 
-  function openSettingsTab(tabId: string): void {
-    ctx.panels.settingsShell.activateTab(tabId);
-  }
-
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
     panel: ctx.panels.analysisPanel,
     settings,
@@ -109,7 +84,6 @@ export function createSettingsFeature(
     services,
     refreshSpectrumDecorations: ctx.ports.view.refreshSpectrumDecorations,
     hasValidActiveCar: () => carSelection.hasResolvedActiveCar.value,
-    onMissingActiveCar: () => carsModule.renderCarList(),
     onSaveError: showSettingsSaveError,
   });
   const speedSourceModule: SettingsSpeedSourceModule =
@@ -142,25 +116,6 @@ export function createSettingsFeature(
           speedSourceModule.syncSpeedSourceSelectionUi,
       },
     });
-  carsModule = createSettingsCarsModule({
-    settings,
-    queryClient: ctx.queryClient,
-    panels: {
-      analysisPanel: ctx.panels.analysisPanel,
-      panel: ctx.panels.carsPanel,
-    },
-    ports: {
-      openAnalysisTab: () => openSettingsTab("analysisTab"),
-      openCarWizard: ctx.ports.openCarWizard,
-      activeViewId: ctx.ports.activeViewId,
-      activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
-      refreshSpectrumDecorations: ctx.ports.view.refreshSpectrumDecorations,
-      syncAnalysisInputs: analysisModule.syncSettingsInputs,
-    },
-    services,
-    formatting,
-  });
-
   const disposeLanguageSync = effectOnChange(ctx.state.shell.lang, () => {
     untracked(() => {
       analysisModule.syncSettingsInputs();
@@ -172,7 +127,6 @@ export function createSettingsFeature(
       return;
     }
     handlersBound = true;
-    carsModule.bindHandlers();
     analysisModule.bindHandlers();
     speedSourceModule.bindHandlers();
     gpsStatusModule.bindHandlers();
@@ -187,28 +141,17 @@ export function createSettingsFeature(
   }
 
   return {
-    addCarFromWizard: carsModule.addCarFromWizard,
     bindHandlers,
     dispose(): void {
       disposeLanguageSync();
       gpsStatusModule.dispose();
       speedSourceModule.dispose();
-      carsModule.dispose();
       analysisModule.dispose();
     },
     syncSettingsInputs: analysisModule.syncSettingsInputs,
     loadSpeedSourceFromServer,
     loadAnalysisSettingsFromServer:
       analysisModule.loadAnalysisSettingsFromServer,
-    loadCarsFromServer: carsModule.loadCarsFromServer,
-    renderCarList: carsModule.renderCarList,
-    syncCarsPayload(payload: CarsPayload): void {
-      carsModule.syncCarsPayload(payload);
-    },
-    syncActiveCarToInputs: carsModule.syncActiveCarToInputs,
-    showCarCreationSuccess(carId: string, carName: string): void {
-      carsModule.showCarCreationSuccess(carId, carName);
-    },
     saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
     saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
   };

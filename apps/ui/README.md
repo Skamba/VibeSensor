@@ -265,13 +265,10 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
 | `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view query polling context together |
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for query-backed port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
-| `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
-| `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
-| `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
+| `app/features/cars_feature.ts` | Car-management controller: saved-car list activation/deletion and creation feedback plus the add-car wizard (step transitions, car-library loading, finish validation), calling the `api/*` wrappers directly behind the typed `CarsPanelView` bridge |
+| `app/features/cars_wizard_state.ts` | Pure add-car wizard state helpers: wizard step state, option load states, manual spec input store, finish readiness, and summary data |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for query-backed logging status refreshes, logging actions, location updates, and client mutations |
-| `app/features/settings_cars_module.ts` | Settings-side car controller that owns query-backed list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
-| `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
 | `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
 | `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, pure presenter, typed panel actions, and typed navigation subscriptions into the shared panel bridge |
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |

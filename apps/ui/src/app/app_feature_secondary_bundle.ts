@@ -1,4 +1,4 @@
-import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
+import { createCarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import {
   createHistoryFeature,
@@ -17,9 +17,7 @@ export interface AppFeatureSecondaryBundle {
   openCarWizard(): void;
   settings: Pick<
     SettingsFeature,
-    | "loadAnalysisSettingsFromServer"
-    | "loadCarsFromServer"
-    | "loadSpeedSourceFromServer"
+    "loadAnalysisSettingsFromServer" | "loadSpeedSourceFromServer"
   >;
 }
 
@@ -43,7 +41,6 @@ export function createAppFeatureSecondaryBundle(
     queryClient: serverState.queryClient,
   });
 
-  let carsFeature: CarsFeature | null = null;
   const settings = createSettingsFeature({
     state: {
       settings: state.settings,
@@ -52,13 +49,9 @@ export function createAppFeatureSecondaryBundle(
     panels: {
       settingsShell: panels.settingsShell,
       analysisPanel: panels.settings.analysis,
-      carsPanel: panels.settings.cars.list,
       speedSourcePanel: panels.settings.speedSource,
     },
     ports: {
-      openCarWizard: () => {
-        carsFeature?.openWizard();
-      },
       activeViewId: runtime.navigation.activeViewId,
       view: runtime.view,
     },
@@ -70,24 +63,20 @@ export function createAppFeatureSecondaryBundle(
   });
 
   const cars = createCarsFeature({
-    panel: panels.settings.cars.wizard,
-    services: {
-      t: services.t,
-    },
+    settings: state.settings,
+    queryClient: serverState.queryClient,
+    panel: panels.settings.cars,
+    analysisPanel: panels.settings.analysis,
+    activeViewId: runtime.navigation.activeViewId,
+    activeSettingsTabId: panels.settingsShell.activeTabId,
+    openAnalysisTab: () => panels.settingsShell.activateTab("analysisTab"),
+    refreshSpectrumDecorations: runtime.view.refreshSpectrumDecorations,
+    syncAnalysisInputs: settings.syncSettingsInputs,
+    services,
     formatting: {
       fmt: formatting.fmt,
     },
-    queryClient: serverState.queryClient,
-    addCarFromWizard: (name, carType, aspects, orderReferenceStatus, variant) =>
-      settings.addCarFromWizard(
-        name,
-        carType,
-        aspects,
-        orderReferenceStatus,
-        variant,
-      ),
   });
-  carsFeature = cars;
 
   const update = createUpdateFeature({
     panels: {
@@ -112,8 +101,8 @@ export function createAppFeatureSecondaryBundle(
     queryClient: serverState.queryClient,
   });
 
+  cars.bindHandlers();
   settings.bindHandlers();
-  cars.bindWizardHandlers();
   history.bindHandlers();
   update.bindUpdateHandlers();
   espFlash.bindHandlers();
@@ -130,13 +119,12 @@ export function createAppFeatureSecondaryBundle(
       refreshHistory: () => history.refreshHistory(),
     },
     openCarWizard(): void {
-      cars.openWizard();
+      void cars.openWizard();
     },
     settings: {
       loadSpeedSourceFromServer: () => settings.loadSpeedSourceFromServer(),
       loadAnalysisSettingsFromServer: () =>
         settings.loadAnalysisSettingsFromServer(),
-      loadCarsFromServer: () => settings.loadCarsFromServer(),
     },
   };
 }

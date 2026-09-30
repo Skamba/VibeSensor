@@ -1,4 +1,4 @@
-import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
+import type { CarsFeatureFocusTarget } from "../features/cars_feature";
 import { useRef } from "preact/hooks";
 
 export type CarsWizardFocusElements = {

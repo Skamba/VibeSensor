@@ -6,7 +6,6 @@ export {
   setSettingsLanguage,
   getSettingsSpeedUnit,
   setSettingsSpeedUnit,
-  getSettingsCars,
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,

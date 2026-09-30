@@ -3,9 +3,11 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api";
-import type { CarsFeatureRenderState } from "../features/cars_feature_workflow";
-import type { CarsFeatureOptionsState } from "../features/cars_option_state";
-import { DEFAULT_CARS_WIZARD_MANUAL_INPUTS } from "../features/cars_wizard_state";
+import type { CarsFeatureRenderState } from "../features/cars_feature";
+import {
+  DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
+  type CarsFeatureOptionsState,
+} from "../features/cars_wizard_state";
 import { formatCarLibraryTireOption } from "../features/cars_tire_setup";
 
 type FormatNumber = (value: number, digits?: number) => string;
