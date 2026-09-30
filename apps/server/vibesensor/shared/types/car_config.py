@@ -214,5 +214,5 @@ def _optional_confidence(value: object) -> VehicleFieldConfidence | None:
         "unverified",
         "user_confirmed",
     }:
-        return cast(VehicleFieldConfidence, value)
+        return value
     return None

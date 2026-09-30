@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
-from vibesensor.domain import CarOrderReferenceSourceStatus, VehicleFieldConfidence
 from vibesensor.shared.types.car_config import (
     CarConfigPayload,
     CarConfigUpdatePayload,
@@ -71,10 +69,7 @@ def _car_order_reference_status_payload_from_mapping(
     status: CarOrderReferenceStatusPayload = {}
     selection_source_status = payload.get("selection_source_status")
     if selection_source_status in {"exact_row", "manual_entry"}:
-        status["selection_source_status"] = cast(
-            CarOrderReferenceSourceStatus,
-            selection_source_status,
-        )
+        status["selection_source_status"] = selection_source_status
     for key in (
         "tire_dimensions_confidence",
         "current_gear_ratio_confidence",
@@ -90,7 +85,7 @@ def _car_order_reference_status_payload_from_mapping(
             "unverified",
             "user_confirmed",
         }:
-            status[key] = cast(VehicleFieldConfidence, value)
+            status[key] = value
     transmission_name = payload.get("transmission_name")
     if isinstance(transmission_name, str):
         status["transmission_name"] = transmission_name

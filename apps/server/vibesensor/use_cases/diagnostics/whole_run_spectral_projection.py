@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Literal, cast
+from typing import Literal
 
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_timeline import (
@@ -514,5 +514,5 @@ def _text_or_none(value: object) -> str | None:
 
 def _coverage_state(value: object) -> RawCaptureCoverageState:
     if value in {"missing", "empty", "partial", "full"}:
-        return cast(RawCaptureCoverageState, value)
+        return value
     return "missing"
