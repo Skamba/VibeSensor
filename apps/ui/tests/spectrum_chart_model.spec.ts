@@ -41,15 +41,14 @@ describe("spectrum chart model", () => {
         y: { min: 0, max: 90 },
       },
     },
-  ])("calculates readable ranges for $name", ({
-    data,
-    expected,
-    visibleSeriesIndexes,
-  }) => {
-    expect(calculateSpectrumChartRanges(data, visibleSeriesIndexes)).toEqual(
-      expected,
-    );
-  });
+  ])(
+    "calculates readable ranges for $name",
+    ({ data, expected, visibleSeriesIndexes }) => {
+      expect(calculateSpectrumChartRanges(data, visibleSeriesIndexes)).toEqual(
+        expected,
+      );
+    },
+  );
 
   test("maps axis ticks and cursor positions to spectrum values", () => {
     const box = createSpectrumChartBox(400, 260);
