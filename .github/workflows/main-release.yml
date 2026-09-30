@@ -58,7 +58,7 @@ jobs:
           "${python_bin}" tools/release/main_release.py compute-version \
             --github-output "${GITHUB_OUTPUT}"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: npm
