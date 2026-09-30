@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS, AnalysisSettingsSnapshot
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.order_bands import vehicle_orders_hz
 
@@ -34,7 +37,7 @@ def calc_order_hz(
 
 
 def calc_default_orders() -> dict[str, float]:
-    orders = calc_order_hz(AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS))
+    orders = calc_order_hz(analysis_settings_snapshot_from_mapping(ANALYSIS_SETTINGS_DEFAULTS))
     if orders is None:
         raise ValueError("Failed to compute order frequencies from default car specs")
     return orders
