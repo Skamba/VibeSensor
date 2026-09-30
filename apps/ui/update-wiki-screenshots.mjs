@@ -329,11 +329,15 @@ async function installWikiRoutes(page) {
         isReady: true,
         sensors: {
           state: "pass",
-          reasonKey: "ready",
-          details: { connected: 5, assigned: 5 },
+          reasonKey: "sensors_ready",
+          details: { live_sensor_count: 5 },
         },
-        reference: { state: "pass", reasonKey: "ready" },
-        speed: { state: "pass", reasonKey: "ready" },
+        reference: { state: "pass", reasonKey: "reference_ready" },
+        speed: {
+          state: "pass",
+          reasonKey: "speed_stable",
+          details: { dwell_elapsed_s: 8 },
+        },
         overall: { state: "pass", reasonKey: "capture_ready" },
       }),
     });
@@ -509,6 +513,9 @@ const CAPTURES = [
         ),
       ).toHaveCount(5);
       await expect(page.locator("#liveSensorRoster article")).toHaveCount(5);
+      await expect(page.locator("#loggingChecklist")).toContainText(
+        "5 live sensor(s) are assigned and streaming cleanly.",
+      );
       await assertSpectrumHasData(page);
     },
   },

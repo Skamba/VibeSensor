@@ -538,8 +538,8 @@ export const wikiShellPayload = {
     driveshaft: { rpm: 1476, mode: "calculated", reason: null },
     engine: { rpm: 2208, mode: "calculated", reason: null },
     order_bands: [
-      { key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 },
-      { key: "wheel_2x", center_hz: 24.6, tolerance: 0.08 },
+      { key: "wheel_1x", center_hz: 12.3, tolerance: 0.098 },
+      { key: "wheel_2x", center_hz: 24.6, tolerance: 0.098 },
       { key: "driveshaft_1x", center_hz: 24.6, tolerance: 0.08 },
       { key: "engine_1x", center_hz: 36.8, tolerance: 0.08 },
     ],

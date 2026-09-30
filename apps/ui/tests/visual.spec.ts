@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { defaultAnalysisSettings } from "../src/constants";
+import { installSettingsRoutes, speedSourceSettings } from "./smoke.helpers";
+
 /** Assert the spectrum canvas has visible coloured (non-background) pixels (i.e. plotted graph data). */
 async function assertSpectrumHasData(page: Page): Promise<void> {
   await expect
@@ -51,7 +54,8 @@ test.describe("Live view", () => {
       "hidden",
       false,
     );
-    await expect(page.locator("#liveSensorRoster article")).toHaveCount(3);
+    // Demo mode streams five sensors (four wheels plus the engine bay).
+    await expect(page.locator("#liveSensorRoster article")).toHaveCount(5);
     await assertSpectrumHasData(page);
 
     await expect(page).toHaveScreenshot("live-view.png", { fullPage: true });
@@ -60,6 +64,13 @@ test.describe("Live view", () => {
 
 test.describe("Settings view", () => {
   test("renders analysis tab", async ({ page }) => {
+    // Demo mode only simulates the live feed. Opening Settings waits for the
+    // speed-source and analysis settings from the server, and the preview
+    // server has no backend, so serve deterministic payloads here.
+    await installSettingsRoutes(page, {
+      "GET /api/settings/analysis": defaultAnalysisSettings,
+      "GET /api/settings/speed-source": speedSourceSettings(),
+    });
     await page.goto("/?demo=1");
     await page.click('[data-view="settingsView"]');
     await page.click('[data-settings-tab="analysisTab"]');
