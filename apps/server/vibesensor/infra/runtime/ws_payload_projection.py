@@ -9,7 +9,7 @@ from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
-from vibesensor.shared.boundaries.clients.api_rows import snapshot_for_api
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 from vibesensor.shared.ports import (
     SensorMetadataReader,
     SettingsReader,

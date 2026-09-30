@@ -13,7 +13,7 @@ from test_support.runtime_lifecycle import make_data_message as _data_msg
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.clients.api_rows import snapshot_for_api
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:

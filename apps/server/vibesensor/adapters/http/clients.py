@@ -27,7 +27,7 @@ from vibesensor.adapters.http.models.clients import (
     SetLocationRequest,
 )
 from vibesensor.adapters.udp.protocol import client_id_mac
-from vibesensor.shared.boundaries.clients.api_rows import snapshot_for_api
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 from vibesensor.shared.locations import all_locations
 from vibesensor.shared.ports import SensorMetadataStore
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation

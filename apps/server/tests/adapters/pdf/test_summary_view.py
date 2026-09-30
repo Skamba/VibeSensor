@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from vibesensor.adapters.history.projection import project_analysis_summary
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -13,7 +14,6 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
-from vibesensor.shared.boundaries.analysis_payloads.projection import project_analysis_summary
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as _test_run_from_summary,
 )

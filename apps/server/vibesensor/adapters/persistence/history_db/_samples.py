@@ -9,11 +9,12 @@ to keep the schema-specific column definitions and conversion logic in one place
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 
-from vibesensor.shared.boundaries.sensor_frames.fields import SENSOR_FRAME_FIELD_NAMES
-from vibesensor.shared.boundaries.sensor_frames.rows import (
-    sensor_frame_from_row,
-    sensor_frame_to_row_values,
+from vibesensor.shared.boundaries.sensor_frames.fields import (
+    SENSOR_FRAME_FIELD_NAMES,
+    sensor_frame_from_row_payload,
+    sensor_frame_to_row_payload,
 )
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -55,3 +56,26 @@ def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:
         row_offset=_V2_COL_OFFSET,
         source=f"samples_v2 row id={row_id}",
     )
+
+
+def sensor_frame_from_row(
+    row: Sequence[object],
+    *,
+    row_offset: int = 0,
+    source: str = "sample row",
+) -> SensorFrame:
+    """Decode one ordered storage row into the canonical typed sample object."""
+
+    return sensor_frame_from_row_payload(row, row_offset=row_offset, source=source)
+
+
+def sensor_frames_from_rows(rows: Sequence[Sequence[object]]) -> list[SensorFrame]:
+    """Decode ordered rows into canonical typed sample objects."""
+
+    return [sensor_frame_from_row(row) for row in rows]
+
+
+def sensor_frame_to_row_values(frame: SensorFrame) -> tuple[object, ...]:
+    """Encode one typed sample into flat ordered row values for storage."""
+
+    return sensor_frame_to_row_payload(frame)

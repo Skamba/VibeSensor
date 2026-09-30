@@ -154,7 +154,7 @@ alongside the editable install path.
 Updater status persistence and `/api/update/status` now share one msgspec-owned
 boundary in `vibesensor/use_cases/updates/status/payload_codec.py`. Persisted
 settings snapshots now follow the same pattern in
-`vibesensor/shared/boundaries/settings/snapshot.py`.
+`vibesensor/shared/boundaries/settings.py`.
 
 - Keep the domain models (`UpdateJobStatus`, `UpdateRuntimeDetails`,
   `UpdateIssue`) as the internal source of truth.

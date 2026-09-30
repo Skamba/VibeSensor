@@ -15,10 +15,7 @@ from vibesensor.adapters.http.models.settings import (
     SpeedUnitResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import UiPreferencesRouteDeps
-from vibesensor.shared.boundaries.settings.preferences import (
-    language_response_payload,
-    speed_unit_response_payload,
-)
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
 
 _SET_LANGUAGE_RESPONSES: OpenAPIResponses = {
     400: {"description": "Unsupported language code."},
@@ -85,3 +82,18 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
         return SpeedUnitResponse.model_validate(speed_unit_response_payload(unit))
 
     return router
+
+
+def language_response_payload(language: LanguageCode) -> dict[str, object]:
+    """Project the active language code into the HTTP response shape."""
+
+    return {"language": language}
+
+
+def speed_unit_response_payload(speed_unit: SpeedUnitCode) -> dict[str, object]:
+    """Project the active speed-unit code into the HTTP response shape."""
+
+    return {"speed_unit": speed_unit}
+
+
+__all__ = ["language_response_payload", "speed_unit_response_payload"]

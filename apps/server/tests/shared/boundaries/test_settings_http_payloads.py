@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from vibesensor.domain import AnalysisSettingsSnapshot, SpeedSourceKind
-from vibesensor.shared.boundaries.settings.analysis import (
+from vibesensor.adapters.http.settings.analysis import (
     analysis_settings_response_payload,
     analysis_settings_update_payload_from_mapping,
 )
-from vibesensor.shared.boundaries.settings.cars import (
+from vibesensor.adapters.http.settings.cars import (
     car_config_update_payload_from_mapping,
     cars_response_payload,
 )
-from vibesensor.shared.boundaries.settings.preferences import (
+from vibesensor.adapters.http.settings.preferences import (
     language_response_payload,
     speed_unit_response_payload,
 )
-from vibesensor.shared.boundaries.settings.speed_source import (
+from vibesensor.adapters.http.settings.speed_source import (
     speed_source_response_payload,
     speed_source_update_payload_from_mapping,
 )
+from vibesensor.domain import AnalysisSettingsSnapshot, SpeedSourceKind
 from vibesensor.shared.types.car_config import CarsSnapshot
 
 
