@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
     from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
-    from vibesensor.shared.boundaries.reporting.findings import PreparedReportFindings
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.boundaries.reporting.summary import (
         NormalizedReportSummary,
@@ -55,10 +54,6 @@ from vibesensor.shared.boundaries.reporting.fallback_reasons import (
     dedupe_report_fallback_reasons,
     derive_report_fallback_reasons,
     finalization_stage_fallback_reasons,
-)
-from vibesensor.shared.boundaries.reporting.findings import (
-    PreparedReportFindings,
-    prepare_report_findings,
 )
 from vibesensor.shared.boundaries.reporting.projection import (
     PrimaryReportFacts,
@@ -177,7 +172,6 @@ class PreparedReportFacts:
     confidence: ReportConfidenceFacts
     whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
     whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
-    findings: PreparedReportFindings
 
     @property
     def report_surface_diagnosis_summaries(
@@ -306,7 +300,6 @@ def prepare_report_facts(
         confidence=confidence_facts,
         whole_run_order_summaries=summary.whole_run_order_summaries,
         whole_run_diagnosis_summaries=whole_run_diagnosis_summaries,
-        findings=prepare_report_findings(test_run),
     )
 
 

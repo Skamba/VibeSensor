@@ -173,12 +173,9 @@ def test_next_steps_consume_prepared_actions() -> None:
 
 
 def test_reporting_document_boundary_exposes_document_models_only() -> None:
-    from vibesensor.shared.boundaries.reporting import FindingPresentation
     from vibesensor.shared.boundaries.reporting import document as document_boundary
 
     assert not hasattr(document_boundary, "build_report_from_summary")
-    assert not hasattr(document_boundary, "FindingPresentation")
-    assert FindingPresentation is not None
 
 
 def test_report_facts_hold_canonical_document_sections_without_builder_shims() -> None:

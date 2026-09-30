@@ -48,7 +48,9 @@ def build_appendix_c_data(
     tr: Callable[..., str],
 ) -> AppendixCData:
     evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)[:1]
-    dense_evidence_rows = _build_dense_evidence_rows(report_facts, tr=tr)
+    dense_evidence_rows = _build_dense_evidence_rows(
+        report_facts, findings=aggregate.findings, tr=tr
+    )
     proof_window_rows = _build_proof_window_rows(primary, tr=tr)
     speed_windows = [row.speed_window for row in evidence_rows if row.speed_window]
     speed_summary = (
@@ -87,6 +89,7 @@ def build_appendix_c_data(
 def _build_dense_evidence_rows(
     report_facts: PreparedReportFacts,
     *,
+    findings: tuple[Finding, ...],
     tr: Callable[..., str],
 ) -> list[DenseEvidenceRow]:
     rows: list[DenseEvidenceRow] = []
@@ -95,7 +98,7 @@ def _build_dense_evidence_rows(
             DenseEvidenceRow(
                 source_name=human_source(summary.suspected_source, tr=tr),
                 order_label=order_label_human(display_lang(tr), summary.order_label),
-                confidence_label=_dense_confidence_label(report_facts, summary, tr=tr),
+                confidence_label=_dense_confidence_label(findings, summary, tr=tr),
                 support=_dense_support_text(summary, tr=tr),
                 support_ratio=summary.support_ratio,
                 reference_coverage_ratio=summary.reference_coverage_ratio,
@@ -113,7 +116,7 @@ def _build_dense_evidence_rows(
 
 
 def _dense_confidence_label(
-    report_facts: PreparedReportFacts,
+    findings: tuple[Finding, ...],
     summary: ReportWholeRunOrderSummary,
     *,
     tr: Callable[..., str],
@@ -121,7 +124,7 @@ def _dense_confidence_label(
     finding = next(
         (
             candidate
-            for candidate in report_facts.findings.all_findings
+            for candidate in findings
             if candidate.suspected_source == summary.suspected_source
             and candidate.order == summary.order_label
         ),
@@ -131,7 +134,7 @@ def _dense_confidence_label(
         finding = next(
             (
                 candidate
-                for candidate in report_facts.findings.all_findings
+                for candidate in findings
                 if candidate.suspected_source == summary.suspected_source
             ),
             None,

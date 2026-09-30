@@ -117,8 +117,8 @@ needs:
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
 - **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
 - **Peak rows**: top diagnostic peaks with classification
-- **Rendering context**: pre-computed findings (as ``FindingPresentation``
-  snapshots), top causes, sensor intensity, location hotspot rows
+- **Rendering context**: domain ``Finding`` objects for findings and effective
+  top causes, sensor intensity, location hotspot rows
 
 ### Mapping examples
 

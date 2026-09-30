@@ -332,4 +332,3 @@ def _draw_appendix_b_bottom_panel(
                 count="{count}",
             ),
         )
-

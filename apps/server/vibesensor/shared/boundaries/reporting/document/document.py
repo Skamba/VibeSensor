@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.domain import Finding, LocationHotspotRow, LocationIntensitySummary
 
-from ..findings import FindingPresentation
 from .appendices import (
     AppendixAData,
     AppendixBData,
@@ -48,8 +47,8 @@ class ReportDocument:
     peak_rows: list[PeakRow] = field(default_factory=list)
     lang: str = "en"
     certainty_tier_key: str = "A"
-    findings: list[FindingPresentation] = field(default_factory=list)
-    top_causes: list[FindingPresentation] = field(default_factory=list)
+    findings: list[Finding] = field(default_factory=list)
+    top_causes: list[Finding] = field(default_factory=list)
     sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
     location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
     proof_sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)

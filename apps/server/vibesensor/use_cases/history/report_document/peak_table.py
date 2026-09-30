@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from vibesensor.domain import VibrationSource
-from vibesensor.shared.boundaries.reporting import FindingPresentation
+from vibesensor.domain import Finding, VibrationSource
 from vibesensor.shared.boundaries.reporting.document import PeakRow
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.report_presentation import (
@@ -33,7 +32,7 @@ _PEAK_FINDING_TOLERANCE_HZ = 2.0
 def build_peak_rows(
     rows: Sequence[PeakTableRow],
     *,
-    findings: Sequence[FindingPresentation] = (),
+    findings: Sequence[Finding] = (),
     lang: str,
     tr: Callable[..., str],
 ) -> list[PeakRow]:
@@ -47,7 +46,7 @@ def build_peak_rows(
 def build_peak_row(
     row: PeakTableRow,
     *,
-    findings: Sequence[FindingPresentation] = (),
+    findings: Sequence[Finding] = (),
     lang: str,
     tr: Callable[..., str],
 ) -> PeakRow:
@@ -79,7 +78,7 @@ def build_peak_row(
 def peak_row_system_label(
     row: PeakTableRow,
     *,
-    findings: Sequence[FindingPresentation] = (),
+    findings: Sequence[Finding] = (),
     tr: Callable[..., str],
 ) -> str:
     """Resolve the system label shown for one peak row."""
@@ -93,7 +92,7 @@ def peak_row_system_label(
 def _peak_row_source_hint(
     row: PeakTableRow,
     *,
-    findings: Sequence[FindingPresentation],
+    findings: Sequence[Finding],
 ) -> str:
     """Return the best available source hint for a peak row."""
     source_hint = str(row.get("suspected_source") or "").strip().lower()
@@ -111,7 +110,7 @@ def _peak_row_source_hint(
 def _source_hint_for_order(
     row: PeakTableRow,
     *,
-    findings: Sequence[FindingPresentation],
+    findings: Sequence[Finding],
 ) -> str | None:
     """Match peak rows to findings by shared order label before frequency fallback."""
     order_label = str(row.get("order_label") or "").strip().lower()
@@ -129,7 +128,7 @@ def _source_hint_for_order(
 def _source_hint_for_frequency(
     row: PeakTableRow,
     *,
-    findings: Sequence[FindingPresentation],
+    findings: Sequence[Finding],
 ) -> str | None:
     """Match peak rows to the closest recognized finding frequency."""
     frequency_hz = _as_float(row.get("frequency_hz"))

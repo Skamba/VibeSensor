@@ -66,8 +66,8 @@ def test_prepare_report_input_exposes_canonical_report_facts() -> None:
     assert prepared.report_facts.run.run_id == "prepared-contract"
     assert prepared.report_facts.run.sample_count == 32
     assert prepared.report_facts.run.sensor_count == 2
-    assert len(prepared.report_facts.findings.all_findings) == 1
-    assert len(prepared.report_facts.findings.top_causes) == 1
+    assert len(prepared.domain_test_run.findings) == 1
+    assert len(prepared.domain_test_run.effective_top_causes()) == 1
 
 
 def test_prepare_report_input_rejects_non_projectable_payload() -> None:

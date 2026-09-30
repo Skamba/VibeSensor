@@ -22,7 +22,6 @@ from .fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     ReportFallbackReason,
 )
-from .findings import FindingPresentation, PreparedReportFindings
 from .input import PreparedReportInput, validate_prepared_report_input
 
 # Reconstructed prepared-input entrypoints.
@@ -51,11 +50,9 @@ __all__ = [
     "ActionStatusKey",
     "build_report_decision_facts",
     "build_report_confidence_facts",
-    "FindingPresentation",
     "LocationConfidenceKey",
     "NormalizedReportSummary",
     "PreparedReportFacts",
-    "PreparedReportFindings",
     "PreparedReportInput",
     "PrimaryReportFacts",
     "REPORT_ANALYSIS_METADATA_STABLE_KEYS",

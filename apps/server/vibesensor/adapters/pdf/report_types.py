@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting import FindingPresentation
+from vibesensor.domain import Finding, LocationHotspotRow, LocationIntensitySummary
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
@@ -48,8 +47,8 @@ class Page1RenderPlan:
     proof_location_hotspot_rows: tuple[LocationHotspotRow, ...]
     verdict_page: VerdictPageData
     next_steps: tuple[NextStep, ...]
-    findings: tuple[FindingPresentation, ...]
-    top_causes: tuple[FindingPresentation, ...]
+    findings: tuple[Finding, ...]
+    top_causes: tuple[Finding, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,8 +69,8 @@ class AppendixBRenderPlan:
 
     lang: str
     appendix: AppendixBData
-    findings: tuple[FindingPresentation, ...]
-    top_causes: tuple[FindingPresentation, ...]
+    findings: tuple[Finding, ...]
+    top_causes: tuple[Finding, ...]
     sensor_locations: tuple[str, ...]
     sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
     location_hotspot_rows: tuple[LocationHotspotRow, ...]
