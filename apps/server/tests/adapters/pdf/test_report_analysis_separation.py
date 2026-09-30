@@ -1,7 +1,8 @@
 """Guardrail tests enforcing the analysis/report separation.
 
-These tests verify the architectural invariant that the ``vibesensor.adapters.pdf``
-package is renderer-only and never imports from ``vibesensor.use_cases.diagnostics``.
+The static "never import diagnostics" rule lives in the import-linter contracts in
+``apps/server/pyproject.toml``; these tests cover the runtime lazy-import behaviour
+and rendering from a bare ``ReportDocument``.
 """
 
 from __future__ import annotations
@@ -22,44 +23,16 @@ from vibesensor.shared.boundaries.reporting.document.panels import NextStep, Pat
 from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 
 # ---------------------------------------------------------------------------
-# 1.  Runtime import guard — verify the report package can be loaded
-#     without pulling in the analysis package.
+# 1.  Runtime import guard — verify the report package does not pull in
+#     shared report-interpretation helpers at module import time.
+#     (The static "PDF adapter renders report documents, not diagnostics"
+#     import-linter contract forbids direct and indirect diagnostics imports.)
 # ---------------------------------------------------------------------------
 
 _REPORT_DIR = SERVER_ROOT / "vibesensor" / "adapters" / "pdf"
 _REPORT_MODULES = [
     p for p in _REPORT_DIR.glob("*.py") if p.name not in ("__init__.py", "mapping.py")
 ]
-
-
-def test_report_package_imports_without_analysis() -> None:
-    """Importing ``vibesensor.adapters.pdf`` must not import diagnostics."""
-    # Clear cached modules so we get a clean import.
-    analysis_modules_before = {
-        name for name in sys.modules if name.startswith("vibesensor.use_cases.diagnostics")
-    }
-
-    # Re-import report modules (they may already be cached, so just verify
-    # that none of them pull in analysis at module level).
-    for mod_path in _REPORT_MODULES:
-        mod_name = f"vibesensor.adapters.pdf.{mod_path.stem}"
-        if mod_name in sys.modules:
-            continue
-        importlib.import_module(mod_name)
-
-    analysis_modules_after = {
-        name for name in sys.modules if name.startswith("vibesensor.use_cases.diagnostics")
-    }
-    # The explicit static-guard tool covers import structure. This runtime check
-    # still catches module-level side-effect imports.
-    new_analysis = analysis_modules_after - analysis_modules_before
-    assert not new_analysis, f"Importing report modules pulled in analysis modules: {new_analysis}"
-
-
-# ---------------------------------------------------------------------------
-# 2.  Runtime import guard — verify the report package does not pull in
-#     shared report-interpretation helpers at module import time.
-# ---------------------------------------------------------------------------
 
 
 def test_report_package_imports_without_shared_report_projection() -> None:
@@ -100,7 +73,7 @@ def test_report_package_imports_without_shared_report_projection() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 3.  Report generation fails clearly when ReportData is missing
+# 2.  Report generation fails clearly when ReportData is missing
 # ---------------------------------------------------------------------------
 
 
@@ -121,7 +94,7 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 4.  Report output fidelity — rendered facts match ReportData
+# 3.  Report output fidelity — rendered facts match ReportData
 # ---------------------------------------------------------------------------
 
 

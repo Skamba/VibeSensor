@@ -219,7 +219,8 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "PDF adapter renders report documents, not diagnostics"
 type = "forbidden"
-allow_indirect_imports = true
+# Indirect imports are forbidden too: rendering must never pull in diagnostics,
+# not even transitively through shared or history modules.
 source_modules = ["vibesensor.adapters.pdf"]
 forbidden_modules = ["vibesensor.use_cases.diagnostics"]
 
