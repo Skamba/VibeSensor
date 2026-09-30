@@ -17,7 +17,7 @@ from vibesensor.shared.report_presentation import (
 __all__ = ["build_evidence_snapshot_rows"]
 
 if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 
 def build_evidence_snapshot_rows(
@@ -203,7 +203,7 @@ def _counterevidence_text(report_facts: PreparedReportFacts, *, tr: Callable[...
 
 def _diagnosis_counterevidence_texts(
     *,
-    diagnosis: ReportWholeRunDiagnosisSummary,
+    diagnosis: WholeRunDiagnosisSummary,
     tr: Callable[..., str],
 ) -> tuple[str, ...]:
     notes: list[str] = []

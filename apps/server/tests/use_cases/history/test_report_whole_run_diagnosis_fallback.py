@@ -251,7 +251,7 @@ def test_prepare_persisted_report_input_marks_partial_whole_run_inputs_as_incomp
             {
                 "segment_index": 0,
                 "phase": "cruise",
-                "load_state": "light",
+                "load_state": "steady",
                 "start_window_index": 0,
                 "end_window_index": 5,
                 "start_t_s": 0.0,

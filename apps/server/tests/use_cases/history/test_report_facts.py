@@ -280,7 +280,7 @@ def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_an
         {
             "segment_index": 0,
             "phase": "cruise",
-            "load_state": "light",
+            "load_state": "steady",
             "start_window_index": 0,
             "end_window_index": 2,
             "start_t_s": 0.0,
@@ -294,8 +294,8 @@ def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_an
         },
         {
             "segment_index": 1,
-            "phase": "accel",
-            "load_state": "pulling",
+            "phase": "acceleration",
+            "load_state": "transient",
             "start_window_index": 3,
             "end_window_index": 5,
             "start_t_s": 1.5,

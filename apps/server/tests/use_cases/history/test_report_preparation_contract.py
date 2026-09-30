@@ -308,7 +308,7 @@ def test_prepare_report_input_does_not_invent_traceable_whole_run_context() -> N
                 {
                     "segment_index": 0,
                     "phase": "cruise",
-                    "load_state": "light",
+                    "load_state": "steady",
                     "start_window_index": 0,
                     "end_window_index": 3,
                     "full_context_window_count": 4,

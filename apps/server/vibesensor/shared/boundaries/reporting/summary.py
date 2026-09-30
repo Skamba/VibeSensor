@@ -1,69 +1,57 @@
-"""Canonical reporting summary boundary for history and PDF preparation."""
+"""Canonical reporting summary boundary for history and PDF preparation.
+
+Persisted whole-run summaries are decoded straight into their canonical
+``shared.types`` dataclasses. Report/history reload stays tolerant of legacy or
+partial payloads: :func:`lenient_row` coerces each field from the dataclass
+type hints and drops rows that lack required identity fields or fail the
+dataclass validation.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import cast
+from dataclasses import MISSING, dataclass, fields, is_dataclass, replace
+from enum import Enum
+from functools import cache
+from types import UnionType
+from typing import (
+    Literal,
+    TypeAliasType,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from vibesensor.domain import LocationIntensitySummary
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.boundaries.codecs.scalars import (
     coerce_count,
     optional_float,
     text_or_none,
-)
-from vibesensor.shared.boundaries.reporting._summary_row_codec import (
-    _bool_field,
-    _count_field,
-    _decode_row,
-    _decode_rows,
-    _enum_field,
-    _float_field,
-    _float_or_field,
-    _literal_text_or_none,
-    _optional_count_field,
-    _payload_field,
-    _row_field,
-    _RowDecoder,
-    _rows_field,
-    _text_field,
-    _text_tuple_field,
 )
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
-from vibesensor.shared.types.history_analysis_contracts import (
-    DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES,
-    DiagnosisDataQualityLimitation,
-    DiagnosisExemplarKind,
-    DiagnosisFactorKey,
-    DiagnosisFactorPolarity,
-    DiagnosisFactorSeverity,
-    LocationProofBasis,
-    WholeRunDiagnosisDataBasis,
-)
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
+from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    DiagnosisFactor,
+    WholeRunDiagnosisSummary,
+)
 
 __all__ = [
     "NormalizedReportSummary",
-    "ReportDiagnosisExemplarReference",
-    "ReportDiagnosisDataQualitySummary",
-    "ReportDiagnosisFactor",
-    "ReportDiagnosisFactorDetails",
-    "ReportOrderHarmonicEvidenceSummary",
-    "ReportOrderTracePhaseSupport",
-    "ReportOrderTraceSupportInterval",
-    "ReportSpatialLocationSummary",
-    "ReportWholeRunContextInterval",
-    "ReportWholeRunDiagnosisSummary",
-    "ReportWholeRunOrderSummary",
-    "ReportWholeRunSpatialSummary",
     "ReportSummaryNormalizer",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
+    "lenient_row",
+    "lenient_rows",
+    "report_diagnosis_summaries",
     "report_summary_from_mapping",
     "require_projectable_report_payload",
 ]
@@ -79,256 +67,6 @@ class ReportTimelineInterval:
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     has_fault_evidence: bool
-
-
-@dataclass(frozen=True, slots=True)
-class ReportWholeRunContextInterval:
-    """Typed whole-run context interval normalized for report/history preparation."""
-
-    segment_index: int
-    phase: str
-    load_state: str
-    start_window_index: int
-    end_window_index: int
-    start_t_s: float | None
-    end_t_s: float | None
-    speed_min_kmh: float | None
-    speed_max_kmh: float | None
-    speed_band: str | None
-    full_context_window_count: int
-    partial_context_window_count: int
-    missing_context_window_count: int
-
-    @property
-    def window_count(self) -> int:
-        return (self.end_window_index - self.start_window_index) + 1
-
-
-@dataclass(frozen=True, slots=True)
-class ReportOrderTraceSupportInterval:
-    """Typed persisted support interval normalized for report/history consumers."""
-
-    interval_index: int
-    start_window_index: int
-    end_window_index: int
-    matched_window_count: int
-    support_ratio: float
-    start_t_s: float | None
-    end_t_s: float | None
-    phase: str | None
-    load_state: str | None
-    speed_band: str | None
-    mean_relative_error: float | None
-
-
-@dataclass(frozen=True, slots=True)
-class ReportOrderTracePhaseSupport:
-    """Typed persisted phase-support row for one whole-run order summary."""
-
-    phase: str
-    eligible_window_count: int
-    matched_window_count: int
-    support_ratio: float
-
-
-@dataclass(frozen=True, slots=True)
-class ReportOrderHarmonicEvidenceSummary:
-    """Typed persisted harmonic evidence row for one whole-run order summary."""
-
-    harmonic: int
-    order_label: str
-    eligible_window_count: int
-    matched_window_count: int
-    support_ratio: float
-    reference_coverage_ratio: float
-    contiguous_support_ratio: float
-    lock_score: float
-    mean_relative_error: float | None
-    relative_error_stddev: float | None
-    drift_score: float
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-
-
-@dataclass(frozen=True, slots=True)
-class ReportWholeRunOrderSummary:
-    """Typed persisted whole-run order summary for report/history reload paths."""
-
-    hypothesis_key: str
-    suspected_source: str
-    order_family: str
-    order_label: str
-    total_window_count: int
-    eligible_window_count: int
-    matched_window_count: int
-    support_ratio: float
-    reference_coverage_ratio: float
-    longest_contiguous_support_window_count: int
-    contiguous_support_ratio: float
-    usable_window_count: int
-    limited_window_count: int
-    excluded_window_count: int
-    shock_transient_window_count: int
-    sensor_clipping_window_count: int
-    sensor_mounting_artifact_window_count: int
-    sensor_timing_integrity_window_count: int
-    speed_context_limited_window_count: int
-    mean_quality_score: float | None
-    support_intervals: tuple[ReportOrderTraceSupportInterval, ...]
-    phase_support: tuple[ReportOrderTracePhaseSupport, ...]
-    harmonic_summaries: tuple[ReportOrderHarmonicEvidenceSummary, ...]
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    exemplar_interval_index: int | None
-    dominant_phase: str | None
-    dominant_speed_band: str | None
-    strongest_location: str | None
-    mean_relative_error: float | None
-    relative_error_stddev: float | None
-    drift_score: float
-    lock_score: float
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-    ref_sources: tuple[str, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class ReportDiagnosisExemplarReference:
-    """Typed persisted exemplar reference for one fused whole-run diagnosis."""
-
-    kind: DiagnosisExemplarKind
-    order_hypothesis_key: str | None
-    support_interval_index: int | None
-    spatial_candidate_key: str | None
-    context_segment_index: int | None
-    location: str | None
-    phase: str | None
-    speed_band: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class ReportDiagnosisFactorDetails:
-    """Typed structured details for one persisted diagnosis factor row."""
-
-    raw_backed_sample_count: int | None
-    supporting_window_count: int | None
-    supporting_duration_s: float | None
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    frequency_span_hz: float | None
-    supporting_location_count: int | None
-    top_support_location: str | None
-    top_support_share: float | None
-    mean_relative_error: float | None
-    snr_db: float | None
-    alternative_source: str | None
-    speed_gap_window_count: int | None
-    rpm_gap_window_count: int | None
-    fallback_reason: str | None
-    car_data_reference_scope: str | None
-    car_data_confidence: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class ReportDiagnosisFactor:
-    """Typed support or counterevidence factor for one fused diagnosis."""
-
-    factor_key: DiagnosisFactorKey
-    polarity: DiagnosisFactorPolarity
-    severity: DiagnosisFactorSeverity
-    weight: float
-    details: ReportDiagnosisFactorDetails
-
-
-@dataclass(frozen=True, slots=True)
-class ReportDiagnosisDataQualitySummary:
-    """Typed persisted data-quality summary for report/history reload paths."""
-
-    usable_window_count: int | None
-    limited_window_count: int | None
-    excluded_window_count: int | None
-    mean_quality_score: float | None
-    speed_context_limited_window_count: int
-    sensor_timing_integrity_window_count: int
-    sensor_mounting_artifact_window_count: int
-    sensor_clipping_window_count: int
-    shock_transient_window_count: int
-    limitation_keys: tuple[DiagnosisDataQualityLimitation, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class ReportSpatialLocationSummary:
-    """Typed persisted per-location spatial evidence row for report/history reload."""
-
-    location: str
-    sensor_ids: tuple[str, ...]
-    supporting_window_count: int
-    support_ratio: float
-    coherent_window_count: int
-    coherence_ratio: float | None
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-
-
-@dataclass(frozen=True, slots=True)
-class ReportWholeRunSpatialSummary:
-    """Typed persisted whole-run spatial summary for report/history reload paths."""
-
-    candidate_key: str
-    suspected_source: str
-    proof_basis: LocationProofBasis
-    total_window_count: int
-    supporting_window_count: int
-    supporting_sensor_count: int
-    coherent_window_count: int
-    coherence_ratio: float | None
-    dominant_location: str | None
-    runner_up_location: str | None
-    location_separation_db: float | None
-    dominance_ratio: float | None
-    ambiguous_location: bool
-    weak_spatial_separation: bool
-    location_summaries: tuple[ReportSpatialLocationSummary, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class ReportWholeRunDiagnosisSummary:
-    """Typed persisted fused diagnosis summary for report/history reload paths."""
-
-    diagnosis_key: str
-    suspected_source: str
-    rank: int
-    data_basis: WholeRunDiagnosisDataBasis
-    support_score: float | None
-    counterevidence_score: float | None
-    total_score: float | None
-    order_hypothesis_key: str | None
-    spatial_candidate_key: str | None
-    location_proof_basis: LocationProofBasis | None
-    supporting_window_count: int | None
-    supporting_duration_s: float | None
-    supporting_sensor_count: int | None
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    dominant_location: str | None
-    runner_up_location: str | None
-    dominant_phase: str | None
-    dominant_speed_band: str | None
-    location_separation_db: float | None
-    dominance_ratio: float | None
-    alternative_source: str | None
-    confidence_gap_to_alternative: float | None
-    ambiguous_diagnosis: bool
-    ambiguous_location: bool
-    suspicious: bool
-    weak_spatial_separation: bool
-    has_reference_gap: bool
-    uses_summary_fallback: bool
-    fallback_reason: str | None
-    data_quality_summary: ReportDiagnosisDataQualitySummary
-    exemplar_references: tuple[ReportDiagnosisExemplarReference, ...]
-    support_factors: tuple[ReportDiagnosisFactor, ...]
-    counterevidence_factors: tuple[ReportDiagnosisFactor, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -348,376 +86,164 @@ class NormalizedReportSummary:
     sensor_intensity_rows: tuple[LocationIntensitySummary, ...]
     peak_table_rows: tuple[PeakTableRow, ...]
     timeline_intervals: tuple[ReportTimelineInterval, ...]
-    whole_run_context_intervals: tuple[ReportWholeRunContextInterval, ...]
-    whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
-    whole_run_spatial_summaries: tuple[ReportWholeRunSpatialSummary, ...]
-    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
+    whole_run_context_intervals: tuple[WholeRunContextInterval, ...]
+    whole_run_order_summaries: tuple[OrderTraceSummary, ...]
+    whole_run_spatial_summaries: tuple[SpatialEvidenceSummary, ...]
+    whole_run_diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...]
 
 
-def _data_quality_limitations(raw_values: object) -> tuple[DiagnosisDataQualityLimitation, ...]:
-    if not isinstance(raw_values, list):
+# ---------------------------------------------------------------------------
+# Tolerant row decoding driven by the canonical dataclass type hints
+# ---------------------------------------------------------------------------
+
+
+type _FieldSpec = tuple[str, object, bool, object]
+
+
+@cache
+def _row_field_specs(cls: type) -> tuple[_FieldSpec, ...]:
+    hints = get_type_hints(cls)
+    specs: list[_FieldSpec] = []
+    for field in fields(cls):
+        field_type, optional = _optional_inner(hints[field.name])
+        default: object = MISSING
+        if field.default is not MISSING:
+            default = field.default
+        elif field.default_factory is not MISSING:
+            default = field.default_factory()
+        specs.append((field.name, field_type, optional, default))
+    return tuple(specs)
+
+
+def _unalias(tp: object) -> object:
+    while isinstance(tp, TypeAliasType):
+        tp = tp.__value__
+    return tp
+
+
+def _optional_inner(tp: object) -> tuple[object, bool]:
+    tp = _unalias(tp)
+    if get_origin(tp) in (Union, UnionType):
+        args = get_args(tp)
+        non_none = [arg for arg in args if arg is not type(None)]
+        if len(non_none) == 1 and len(args) == 2:
+            return _unalias(non_none[0]), True
+    return tp, False
+
+
+def _optional_count(raw_value: object) -> int | None:
+    if raw_value is None or isinstance(raw_value, bool):
+        return None
+    return coerce_count(raw_value)
+
+
+def _lenient_tuple(item_type: object, raw_value: object) -> tuple[object, ...]:
+    if not isinstance(raw_value, list):
         return ()
-    limitations: list[DiagnosisDataQualityLimitation] = []
-    seen: set[str] = set()
-    for raw_value in raw_values:
-        limitation = _literal_text_or_none(raw_value, DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES)
-        if limitation is not None and limitation not in seen:
-            limitations.append(limitation)
-            seen.add(limitation)
-    return tuple(limitations)
-
-
-_PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
-    {
-        "whole_run_summary",
-        "supporting_windows_raw_backed",
-        "supporting_windows_summary_only",
-    }
-)
-_DIAGNOSIS_EXEMPLAR_KIND_VALUES: frozenset[DiagnosisExemplarKind] = frozenset(
-    {
-        "order_support_interval",
-        "whole_run_context_interval",
-        "spatial_location",
-    }
-)
-_DIAGNOSIS_DATA_BASIS_VALUES: frozenset[WholeRunDiagnosisDataBasis] = frozenset(
-    {"raw_backed", "partial_raw_backed", "summary_only"}
-)
-_DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
-    {
-        "raw_backed",
-        "repeated_support",
-        "sustained_support",
-        "stable_frequency",
-        "tight_order_lock",
-        "localized_support",
-        "clean_signal",
-        "summary_only",
-        "raw_replay_incomplete",
-        LEGACY_CONTEXT_CAVEAT_KEY,
-        "speed_context_gaps",
-        "rpm_context_gaps",
-        "sparse_support",
-        "brief_support",
-        "drifting_frequency",
-        "loose_order_lock",
-        "mixed_support_locations",
-        "noisy_signal",
-        "weak_spatial",
-        "close_alternative",
-        "incomplete_reference",
-    }
-)
-_DIAGNOSIS_FACTOR_POLARITY_VALUES: frozenset[DiagnosisFactorPolarity] = frozenset(
-    {"support", "counterevidence"}
-)
-_DIAGNOSIS_FACTOR_SEVERITY_VALUES: frozenset[DiagnosisFactorSeverity] = frozenset(
-    {"low", "medium", "high"}
-)
-
-_TIMELINE_INTERVAL_DECODER = _RowDecoder(
-    factory=ReportTimelineInterval,
-    fields=(
-        _text_field("phase"),
-        _float_field("start_t_s"),
-        _float_field("end_t_s"),
-        _float_field("speed_min_kmh"),
-        _float_field("speed_max_kmh"),
-        _bool_field("has_fault_evidence"),
-    ),
-    required_fields=frozenset({"phase"}),
-)
-_WHOLE_RUN_CONTEXT_INTERVAL_DECODER = _RowDecoder(
-    factory=ReportWholeRunContextInterval,
-    fields=(
-        _count_field("segment_index"),
-        _text_field("phase"),
-        _text_field("load_state"),
-        _count_field("start_window_index"),
-        _count_field("end_window_index"),
-        _float_field("start_t_s"),
-        _float_field("end_t_s"),
-        _float_field("speed_min_kmh"),
-        _float_field("speed_max_kmh"),
-        _text_field("speed_band"),
-        _count_field("full_context_window_count"),
-        _count_field("partial_context_window_count"),
-        _count_field("missing_context_window_count"),
-    ),
-    required_fields=frozenset({"phase", "load_state"}),
-)
-_ORDER_SUPPORT_INTERVAL_DECODER = _RowDecoder(
-    factory=ReportOrderTraceSupportInterval,
-    fields=(
-        _count_field("interval_index"),
-        _count_field("start_window_index"),
-        _count_field("end_window_index"),
-        _count_field("matched_window_count"),
-        _float_or_field("support_ratio"),
-        _float_field("start_t_s"),
-        _float_field("end_t_s"),
-        _text_field("phase"),
-        _text_field("load_state"),
-        _text_field("speed_band"),
-        _float_field("mean_relative_error"),
-    ),
-)
-_ORDER_PHASE_SUPPORT_DECODER = _RowDecoder(
-    factory=ReportOrderTracePhaseSupport,
-    fields=(
-        _text_field("phase"),
-        _count_field("eligible_window_count"),
-        _count_field("matched_window_count"),
-        _float_or_field("support_ratio"),
-    ),
-    required_fields=frozenset({"phase"}),
-)
-_ORDER_HARMONIC_SUMMARY_DECODER = _RowDecoder(
-    factory=ReportOrderHarmonicEvidenceSummary,
-    fields=(
-        _count_field("harmonic"),
-        _text_field("order_label"),
-        _count_field("eligible_window_count"),
-        _count_field("matched_window_count"),
-        _float_or_field("support_ratio"),
-        _float_or_field("reference_coverage_ratio"),
-        _float_or_field("contiguous_support_ratio"),
-        _float_or_field("lock_score"),
-        _float_field("mean_relative_error"),
-        _float_field("relative_error_stddev"),
-        _float_or_field("drift_score"),
-        _float_field("peak_intensity_db"),
-        _float_field("mean_vibration_strength_db"),
-    ),
-    required_fields=frozenset({"order_label"}),
-)
-_SPATIAL_LOCATION_SUMMARY_DECODER = _RowDecoder(
-    factory=ReportSpatialLocationSummary,
-    fields=(
-        _text_field("location"),
-        _text_tuple_field("sensor_ids"),
-        _count_field("supporting_window_count"),
-        _float_or_field("support_ratio"),
-        _count_field("coherent_window_count"),
-        _float_field("coherence_ratio"),
-        _float_field("peak_intensity_db"),
-        _float_field("mean_vibration_strength_db"),
-    ),
-    required_fields=frozenset({"location"}),
-)
-_DIAGNOSIS_EXEMPLAR_REFERENCE_DECODER = _RowDecoder(
-    factory=ReportDiagnosisExemplarReference,
-    fields=(
-        _enum_field("kind", _DIAGNOSIS_EXEMPLAR_KIND_VALUES),
-        _text_field("order_hypothesis_key"),
-        _optional_count_field("support_interval_index"),
-        _text_field("spatial_candidate_key"),
-        _optional_count_field("context_segment_index"),
-        _text_field("location"),
-        _text_field("phase"),
-        _text_field("speed_band"),
-    ),
-    required_fields=frozenset({"kind"}),
-)
-_DIAGNOSIS_FACTOR_DETAILS_DECODER = _RowDecoder(
-    factory=ReportDiagnosisFactorDetails,
-    fields=(
-        _optional_count_field("raw_backed_sample_count"),
-        _optional_count_field("supporting_window_count"),
-        _float_field("supporting_duration_s"),
-        _float_field("stable_frequency_min_hz"),
-        _float_field("stable_frequency_max_hz"),
-        _float_field("frequency_span_hz"),
-        _optional_count_field("supporting_location_count"),
-        _text_field("top_support_location"),
-        _float_field("top_support_share"),
-        _float_field("mean_relative_error"),
-        _float_field("snr_db"),
-        _text_field("alternative_source"),
-        _optional_count_field("speed_gap_window_count"),
-        _optional_count_field("rpm_gap_window_count"),
-        _text_field("fallback_reason"),
-        _text_field("car_data_reference_scope"),
-        _text_field("car_data_confidence"),
-    ),
-)
-_EMPTY_DIAGNOSIS_FACTOR_DETAILS = ReportDiagnosisFactorDetails(
-    raw_backed_sample_count=None,
-    supporting_window_count=None,
-    supporting_duration_s=None,
-    stable_frequency_min_hz=None,
-    stable_frequency_max_hz=None,
-    frequency_span_hz=None,
-    supporting_location_count=None,
-    top_support_location=None,
-    top_support_share=None,
-    mean_relative_error=None,
-    snr_db=None,
-    alternative_source=None,
-    speed_gap_window_count=None,
-    rpm_gap_window_count=None,
-    fallback_reason=None,
-    car_data_reference_scope=None,
-    car_data_confidence=None,
-)
-
-
-def _diagnosis_factor_details_from_mapping(raw_details: object) -> ReportDiagnosisFactorDetails:
-    details = _decode_row(
-        raw_details if isinstance(raw_details, Mapping) else {},
-        _DIAGNOSIS_FACTOR_DETAILS_DECODER,
+    if isinstance(item_type, type) and is_dataclass(item_type):
+        return lenient_rows(item_type, raw_value)
+    if get_origin(item_type) is Literal:
+        allowed = get_args(item_type)
+        unique: list[str] = []
+        for raw_item in raw_value:
+            item = text_or_none(raw_item)
+            if item is not None and item in allowed and item not in unique:
+                unique.append(item)
+        return tuple(unique)
+    return tuple(
+        value for value in (text_or_none(raw_item) for raw_item in raw_value) if value is not None
     )
-    return details if details is not None else _EMPTY_DIAGNOSIS_FACTOR_DETAILS
 
 
-_DIAGNOSIS_FACTOR_DECODER = _RowDecoder(
-    factory=ReportDiagnosisFactor,
-    fields=(
-        _enum_field("factor_key", _DIAGNOSIS_FACTOR_KEY_VALUES),
-        _enum_field("polarity", _DIAGNOSIS_FACTOR_POLARITY_VALUES),
-        _enum_field("severity", _DIAGNOSIS_FACTOR_SEVERITY_VALUES),
-        _float_or_field("weight"),
-        _payload_field("details", _diagnosis_factor_details_from_mapping),
-    ),
-    required_fields=frozenset({"factor_key", "polarity", "severity"}),
+def _lenient_value(field_type: object, raw_value: object, *, optional: bool) -> object:
+    if field_type is str:
+        return text_or_none(raw_value)
+    if field_type is bool:
+        return bool(raw_value)
+    if field_type is int:
+        return _optional_count(raw_value) if optional else coerce_count(raw_value)
+    if field_type is float:
+        value = optional_float(raw_value)
+        return value if optional else (value or 0.0)
+    if get_origin(field_type) is Literal:
+        text = text_or_none(raw_value)
+        return text if text in get_args(field_type) else None
+    if get_origin(field_type) is tuple:
+        return _lenient_tuple(_unalias(get_args(field_type)[0]), raw_value)
+    if isinstance(field_type, type) and issubclass(field_type, Enum):
+        text = text_or_none(raw_value)
+        try:
+            return field_type(text) if text is not None else None
+        except ValueError:
+            return None
+    if isinstance(field_type, type) and is_dataclass(field_type):
+        return lenient_row(field_type, raw_value)
+    raise TypeError(f"unsupported report summary field type {field_type!r}")
+
+
+def lenient_row[RowT](cls: type[RowT], raw: object) -> RowT | None:
+    """Tolerantly decode one persisted summary row into its canonical dataclass.
+
+    Scalars are coerced (missing counts and required ratios default to ``0``,
+    invalid optional values become ``None``, booleans use truthiness, unknown
+    enum values are discarded). Nested rows are decoded the same way and
+    invalid ones are dropped. The row itself is dropped (``None``) when a
+    required text/enum field is missing or the dataclass rejects the values.
+    """
+    if not isinstance(raw, Mapping):
+        return None
+    values: dict[str, object] = {}
+    for name, field_type, optional, default in _row_field_specs(cast(type, cls)):
+        value = _lenient_value(field_type, raw.get(name), optional=optional)
+        if value is None and not optional:
+            if default is MISSING or not is_dataclass(field_type):
+                return None
+            value = default
+        values[name] = value
+    try:
+        return cls(**values)
+    except ValueError:
+        return None
+
+
+def lenient_rows[RowT](cls: type[RowT], raw_rows: object) -> tuple[RowT, ...]:
+    """Tolerantly decode a persisted list of summary rows, dropping invalid rows."""
+    if not isinstance(raw_rows, list):
+        return ()
+    return tuple(row for raw in raw_rows if (row := lenient_row(cls, raw)) is not None)
+
+
+# Diagnosis factor keys the report reload path has never accepted: the report
+# decoder's own factor-key list predates them. Dropping them keeps report and
+# history output unchanged.
+_REPORT_IGNORED_DIAGNOSIS_FACTOR_KEYS: frozenset[str] = frozenset(
+    {
+        "user_confirmed_vehicle_data",
+        "secondary_vehicle_data",
+        "approximate_vehicle_data",
+        "unverified_vehicle_data",
+    }
 )
-_DIAGNOSIS_DATA_QUALITY_DECODER = _RowDecoder(
-    factory=ReportDiagnosisDataQualitySummary,
-    fields=(
-        _optional_count_field("usable_window_count"),
-        _optional_count_field("limited_window_count"),
-        _optional_count_field("excluded_window_count"),
-        _float_field("mean_quality_score"),
-        _count_field("speed_context_limited_window_count"),
-        _count_field("sensor_timing_integrity_window_count"),
-        _count_field("sensor_mounting_artifact_window_count"),
-        _count_field("sensor_clipping_window_count"),
-        _count_field("shock_transient_window_count"),
-        _payload_field("limitation_keys", _data_quality_limitations),
-    ),
-)
-_EMPTY_DIAGNOSIS_DATA_QUALITY = ReportDiagnosisDataQualitySummary(
-    usable_window_count=None,
-    limited_window_count=None,
-    excluded_window_count=None,
-    mean_quality_score=None,
-    speed_context_limited_window_count=0,
-    sensor_timing_integrity_window_count=0,
-    sensor_mounting_artifact_window_count=0,
-    sensor_clipping_window_count=0,
-    shock_transient_window_count=0,
-    limitation_keys=(),
-)
-_WHOLE_RUN_ORDER_SUMMARY_DECODER = _RowDecoder(
-    factory=ReportWholeRunOrderSummary,
-    fields=(
-        _text_field("hypothesis_key"),
-        _text_field("suspected_source"),
-        _text_field("order_family"),
-        _text_field("order_label"),
-        _count_field("total_window_count"),
-        _count_field("eligible_window_count"),
-        _count_field("matched_window_count"),
-        _float_or_field("support_ratio"),
-        _float_or_field("reference_coverage_ratio"),
-        _count_field("longest_contiguous_support_window_count"),
-        _float_or_field("contiguous_support_ratio"),
-        _count_field("usable_window_count"),
-        _count_field("limited_window_count"),
-        _count_field("excluded_window_count"),
-        _count_field("shock_transient_window_count"),
-        _count_field("sensor_clipping_window_count"),
-        _count_field("sensor_mounting_artifact_window_count"),
-        _count_field("sensor_timing_integrity_window_count"),
-        _count_field("speed_context_limited_window_count"),
-        _float_field("mean_quality_score"),
-        _rows_field("support_intervals", _ORDER_SUPPORT_INTERVAL_DECODER),
-        _rows_field("phase_support", _ORDER_PHASE_SUPPORT_DECODER),
-        _rows_field("harmonic_summaries", _ORDER_HARMONIC_SUMMARY_DECODER),
-        _float_field("stable_frequency_min_hz"),
-        _float_field("stable_frequency_max_hz"),
-        _optional_count_field("exemplar_interval_index"),
-        _text_field("dominant_phase"),
-        _text_field("dominant_speed_band"),
-        _text_field("strongest_location"),
-        _float_field("mean_relative_error"),
-        _float_field("relative_error_stddev"),
-        _float_or_field("drift_score"),
-        _float_or_field("lock_score"),
-        _float_field("peak_intensity_db"),
-        _float_field("mean_vibration_strength_db"),
-        _text_tuple_field("ref_sources"),
-    ),
-    required_fields=frozenset(
-        {"hypothesis_key", "suspected_source", "order_family", "order_label"}
-    ),
-)
-_WHOLE_RUN_SPATIAL_SUMMARY_DECODER = _RowDecoder(
-    factory=ReportWholeRunSpatialSummary,
-    fields=(
-        _text_field("candidate_key"),
-        _text_field("suspected_source"),
-        _enum_field("proof_basis", _PROOF_BASIS_VALUES),
-        _count_field("total_window_count"),
-        _count_field("supporting_window_count"),
-        _count_field("supporting_sensor_count"),
-        _count_field("coherent_window_count"),
-        _float_field("coherence_ratio"),
-        _text_field("dominant_location"),
-        _text_field("runner_up_location"),
-        _float_field("location_separation_db"),
-        _float_field("dominance_ratio"),
-        _bool_field("ambiguous_location"),
-        _bool_field("weak_spatial_separation"),
-        _rows_field("location_summaries", _SPATIAL_LOCATION_SUMMARY_DECODER),
-    ),
-    required_fields=frozenset({"candidate_key", "suspected_source", "proof_basis"}),
-)
-_WHOLE_RUN_DIAGNOSIS_SUMMARY_DECODER = _RowDecoder(
-    factory=ReportWholeRunDiagnosisSummary,
-    fields=(
-        _text_field("diagnosis_key"),
-        _text_field("suspected_source"),
-        _count_field("rank"),
-        _enum_field("data_basis", _DIAGNOSIS_DATA_BASIS_VALUES),
-        _float_field("support_score"),
-        _float_field("counterevidence_score"),
-        _float_field("total_score"),
-        _text_field("order_hypothesis_key"),
-        _text_field("spatial_candidate_key"),
-        _enum_field("location_proof_basis", _PROOF_BASIS_VALUES),
-        _optional_count_field("supporting_window_count"),
-        _float_field("supporting_duration_s"),
-        _optional_count_field("supporting_sensor_count"),
-        _float_field("stable_frequency_min_hz"),
-        _float_field("stable_frequency_max_hz"),
-        _text_field("dominant_location"),
-        _text_field("runner_up_location"),
-        _text_field("dominant_phase"),
-        _text_field("dominant_speed_band"),
-        _float_field("location_separation_db"),
-        _float_field("dominance_ratio"),
-        _text_field("alternative_source"),
-        _float_field("confidence_gap_to_alternative"),
-        _bool_field("ambiguous_diagnosis"),
-        _bool_field("ambiguous_location"),
-        _bool_field("suspicious"),
-        _bool_field("weak_spatial_separation"),
-        _bool_field("has_reference_gap"),
-        _bool_field("uses_summary_fallback"),
-        _text_field("fallback_reason"),
-        _row_field(
-            "data_quality_summary",
-            _DIAGNOSIS_DATA_QUALITY_DECODER,
-            _EMPTY_DIAGNOSIS_DATA_QUALITY,
-        ),
-        _rows_field("exemplar_references", _DIAGNOSIS_EXEMPLAR_REFERENCE_DECODER),
-        _rows_field("support_factors", _DIAGNOSIS_FACTOR_DECODER),
-        _rows_field("counterevidence_factors", _DIAGNOSIS_FACTOR_DECODER),
-    ),
-    required_fields=frozenset({"diagnosis_key", "suspected_source", "data_basis"}),
-)
+
+
+def _report_factors(factors: tuple[DiagnosisFactor, ...]) -> tuple[DiagnosisFactor, ...]:
+    return tuple(
+        factor
+        for factor in factors
+        if factor.factor_key not in _REPORT_IGNORED_DIAGNOSIS_FACTOR_KEYS
+    )
+
+
+def report_diagnosis_summaries(raw_rows: object) -> tuple[WholeRunDiagnosisSummary, ...]:
+    """Tolerantly decode persisted whole-run diagnosis summaries for report/history use."""
+    return tuple(
+        replace(
+            summary,
+            support_factors=_report_factors(summary.support_factors),
+            counterevidence_factors=_report_factors(summary.counterevidence_factors),
+        )
+        for summary in lenient_rows(WholeRunDiagnosisSummary, raw_rows)
+    )
 
 
 class ReportSummaryNormalizer:
@@ -743,25 +269,24 @@ class ReportSummaryNormalizer:
             active_sensor_locations=self._active_sensor_locations(),
             sensor_intensity_rows=self._sensor_intensity_rows(),
             peak_table_rows=self._peak_table_rows(),
-            timeline_intervals=_decode_rows(
+            timeline_intervals=lenient_rows(
+                ReportTimelineInterval,
                 self._payload.get("phase_timeline"),
-                _TIMELINE_INTERVAL_DECODER,
             ),
-            whole_run_context_intervals=_decode_rows(
+            whole_run_context_intervals=lenient_rows(
+                WholeRunContextInterval,
                 self._payload.get("whole_run_context_intervals"),
-                _WHOLE_RUN_CONTEXT_INTERVAL_DECODER,
             ),
-            whole_run_order_summaries=_decode_rows(
+            whole_run_order_summaries=lenient_rows(
+                OrderTraceSummary,
                 self._payload.get("whole_run_order_summaries"),
-                _WHOLE_RUN_ORDER_SUMMARY_DECODER,
             ),
-            whole_run_spatial_summaries=_decode_rows(
+            whole_run_spatial_summaries=lenient_rows(
+                SpatialEvidenceSummary,
                 self._payload.get("whole_run_spatial_summaries"),
-                _WHOLE_RUN_SPATIAL_SUMMARY_DECODER,
             ),
-            whole_run_diagnosis_summaries=_decode_rows(
+            whole_run_diagnosis_summaries=report_diagnosis_summaries(
                 self._payload.get("whole_run_diagnosis_summaries"),
-                _WHOLE_RUN_DIAGNOSIS_SUMMARY_DECODER,
             ),
         )
 

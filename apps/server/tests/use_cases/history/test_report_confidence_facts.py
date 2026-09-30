@@ -99,7 +99,7 @@ def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_s
                     {
                         "segment_index": 0,
                         "phase": "cruise",
-                        "load_state": "light",
+                        "load_state": "steady",
                         "start_window_index": 0,
                         "end_window_index": 7,
                         "start_t_s": 0.0,
@@ -304,7 +304,7 @@ def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> 
                     {
                         "segment_index": 0,
                         "phase": "cruise",
-                        "load_state": "light",
+                        "load_state": "steady",
                         "start_window_index": 0,
                         "end_window_index": 7,
                         "start_t_s": 0.0,
@@ -318,8 +318,8 @@ def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> 
                     },
                     {
                         "segment_index": 1,
-                        "phase": "accel",
-                        "load_state": "pulling",
+                        "phase": "acceleration",
+                        "load_state": "transient",
                         "start_window_index": 8,
                         "end_window_index": 11,
                         "start_t_s": 4.0,

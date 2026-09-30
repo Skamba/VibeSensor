@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
+from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 
 def test_report_summary_from_mapping_drops_rows_missing_required_identity_fields() -> None:
@@ -108,3 +110,61 @@ def test_report_summary_from_mapping_decodes_diagnosis_data_quality_summary() ->
     assert quality.sensor_timing_integrity_window_count == 2
     assert quality.sensor_clipping_window_count == 1
     assert quality.limitation_keys == ("speed_context", "sensor_timing")
+
+
+def test_report_summary_from_mapping_decodes_canonical_summary_types() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "whole_run_diagnosis_summaries": [
+                {
+                    "diagnosis_key": "wheel_1x",
+                    "suspected_source": "wheel/tire",
+                    "rank": 1,
+                    "data_basis": "raw_backed",
+                }
+            ],
+            "whole_run_order_summaries": [
+                {
+                    "hypothesis_key": "wheel",
+                    "suspected_source": "wheel/tire",
+                    "order_family": "wheel",
+                    "order_label": "wheel family",
+                }
+            ],
+        }
+    )
+
+    assert isinstance(summary.whole_run_diagnosis_summaries[0], WholeRunDiagnosisSummary)
+    assert isinstance(summary.whole_run_order_summaries[0], OrderTraceSummary)
+
+
+def test_report_summary_from_mapping_keeps_ignoring_vehicle_data_factors() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "whole_run_diagnosis_summaries": [
+                {
+                    "diagnosis_key": "wheel_1x",
+                    "suspected_source": "wheel/tire",
+                    "rank": 1,
+                    "data_basis": "raw_backed",
+                    "support_factors": [
+                        {
+                            "factor_key": "user_confirmed_vehicle_data",
+                            "polarity": "support",
+                            "severity": "low",
+                            "weight": 0.1,
+                        },
+                        {
+                            "factor_key": "raw_backed",
+                            "polarity": "support",
+                            "severity": "high",
+                            "weight": 0.4,
+                        },
+                    ],
+                }
+            ]
+        }
+    )
+
+    factors = summary.whole_run_diagnosis_summaries[0].support_factors
+    assert [factor.factor_key for factor in factors] == ["raw_backed"]

@@ -32,7 +32,7 @@ from .section_context import VerdictPageContext
 from .timeline_graph import build_timeline_graph_data
 
 if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
     from .document_context import ReportDocumentContext
 
@@ -61,7 +61,7 @@ def build_verdict_page_data(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_confidence: ReportConfidenceFacts,
-    diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary],
+    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary],
     duration_text: str | None,
     verdict_context: VerdictPageContext,
     suitability_checks: Sequence[SuitabilityCheck],

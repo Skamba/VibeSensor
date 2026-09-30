@@ -31,11 +31,11 @@ if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.summary import (
         NormalizedReportSummary,
         ReportTimelineInterval,
-        ReportWholeRunContextInterval,
-        ReportWholeRunDiagnosisSummary,
-        ReportWholeRunOrderSummary,
     )
     from vibesensor.shared.types.analysis_views import PeakTableRow
+    from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
+    from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 from vibesensor.shared.boundaries.reporting.confidence_facts import (
     apply_report_confidence_fallback,
@@ -64,7 +64,7 @@ from vibesensor.shared.boundaries.reporting.sensor_facts import (
     build_report_sensor_facts,
     enrich_location_proof_sensor_facts,
 )
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.summary import report_diagnosis_summaries
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import DiagnosisFactorResponse
 
@@ -114,7 +114,7 @@ class ReportContextFacts:
     traceable: bool
     source: str
     interval_count: int
-    intervals: tuple[ReportWholeRunContextInterval, ...]
+    intervals: tuple[WholeRunContextInterval, ...]
     window_count: int | None
     full_window_count: int
     partial_window_count: int
@@ -170,20 +170,20 @@ class PreparedReportFacts:
     decision: ReportDecisionFacts
     evidence: ReportEvidenceFacts
     confidence: ReportConfidenceFacts
-    whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
-    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
+    whole_run_order_summaries: tuple[OrderTraceSummary, ...]
+    whole_run_diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...]
 
     @property
     def report_surface_diagnosis_summaries(
         self,
-    ) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+    ) -> tuple[WholeRunDiagnosisSummary, ...]:
         return _report_surface_diagnosis_summaries(
             self.whole_run_diagnosis_summaries,
             summary_primary_source=text_or_none(self.decision.primary_candidate.primary_source),
         )
 
     @property
-    def primary_diagnosis(self) -> ReportWholeRunDiagnosisSummary | None:
+    def primary_diagnosis(self) -> WholeRunDiagnosisSummary | None:
         report_surface = self.report_surface_diagnosis_summaries
         if not report_surface:
             return None
@@ -427,7 +427,7 @@ def _report_whole_run_diagnosis_summaries(
     context_facts: ReportContextFacts,
     fallback_reasons: tuple[ReportFallbackReason, ...],
     analysis_metadata: ReportAnalysisMetadata,
-) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+) -> tuple[WholeRunDiagnosisSummary, ...]:
     if summary.whole_run_diagnosis_summaries:
         return summary.whole_run_diagnosis_summaries
     primary_candidate = decision_facts.primary_candidate
@@ -499,8 +499,7 @@ def _report_whole_run_diagnosis_summaries(
                 "speed_band": first_interval.speed_band,
             }
         ]
-    normalized = report_summary_from_mapping({"whole_run_diagnosis_summaries": [diagnosis_payload]})
-    return normalized.whole_run_diagnosis_summaries
+    return report_diagnosis_summaries([diagnosis_payload])
 
 
 def _whole_run_diagnosis_fallback_reason(
@@ -555,7 +554,7 @@ def _report_fallback_reasons(
 
 
 def _report_surface_confidence_facts(
-    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...],
+    whole_run_diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...],
     *,
     summary_primary_source: str | None,
     fallback_confidence: ReportConfidenceFacts,
@@ -573,10 +572,10 @@ def _report_surface_confidence_facts(
 
 
 def _report_surface_diagnosis_summaries(
-    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...],
+    whole_run_diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...],
     *,
     summary_primary_source: str | None,
-) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+) -> tuple[WholeRunDiagnosisSummary, ...]:
     if not whole_run_diagnosis_summaries:
         return ()
     primary = whole_run_diagnosis_summaries[0]

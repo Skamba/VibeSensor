@@ -13,7 +13,6 @@ from vibesensor.shared.boundaries.reporting.document import (
     MeasurementRow,
     ProofWindowRow,
 )
-from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunOrderSummary
 from vibesensor.shared.report_presentation import (
     display_lang,
     display_phase_label,
@@ -21,6 +20,7 @@ from vibesensor.shared.report_presentation import (
     human_source,
     order_label_human,
 )
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 
 from ._candidate_resolver import PrimaryCandidateContext
 from .evidence_snapshot import build_evidence_snapshot_rows
@@ -117,7 +117,7 @@ def _build_dense_evidence_rows(
 
 def _dense_confidence_label(
     findings: tuple[Finding, ...],
-    summary: ReportWholeRunOrderSummary,
+    summary: OrderTraceSummary,
     *,
     tr: Callable[..., str],
 ) -> str:
@@ -145,7 +145,7 @@ def _dense_confidence_label(
     return f"{tr(label_key)} ({pct_text})"
 
 
-def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+def _dense_support_text(summary: OrderTraceSummary, *, tr: Callable[..., str]) -> str:
     return tr(
         "REPORT_DENSE_EVIDENCE_SUPPORT_VALUE",
         matched=summary.matched_window_count,
@@ -155,7 +155,7 @@ def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[...
     )
 
 
-def _dense_frequency_band(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+def _dense_frequency_band(summary: OrderTraceSummary, *, tr: Callable[..., str]) -> str:
     low = summary.stable_frequency_min_hz
     high = summary.stable_frequency_max_hz
     if low is not None and high is not None:
@@ -172,7 +172,7 @@ def _dense_frequency_band(summary: ReportWholeRunOrderSummary, *, tr: Callable[.
 
 
 def _dense_caveat_text(
-    summary: ReportWholeRunOrderSummary,
+    summary: OrderTraceSummary,
     *,
     tr: Callable[..., str],
 ) -> str | None:

@@ -26,7 +26,7 @@ from vibesensor.shared.run_context_warning import RunContextWarning
 from .section_context import AppendixAContext, RecaptureAssessment
 
 if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "build_appendix_a_data",
@@ -102,7 +102,7 @@ def build_appendix_a_data(
 def build_ranked_candidates(
     aggregate: TestRun,
     *,
-    diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary] = (),
+    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary] = (),
     tr: Callable[..., str],
 ) -> tuple[RankedCandidateRow, ...]:
     if diagnosis_summaries and not diagnosis_summaries[0].uses_summary_fallback:
@@ -143,7 +143,7 @@ def build_ranked_candidates(
 def _ranked_candidate_row_from_diagnosis_summary(
     aggregate: TestRun,
     *,
-    summary: ReportWholeRunDiagnosisSummary,
+    summary: WholeRunDiagnosisSummary,
     index: int,
     tr: Callable[..., str],
 ) -> RankedCandidateRow:
@@ -343,7 +343,7 @@ def _candidate_reason_text(
 def _finding_for_diagnosis_summary(
     aggregate: TestRun,
     *,
-    summary: ReportWholeRunDiagnosisSummary,
+    summary: WholeRunDiagnosisSummary,
 ) -> Finding | None:
     for finding in aggregate.effective_top_causes():
         if str(finding.suspected_source) == summary.suspected_source:
@@ -355,7 +355,7 @@ def _finding_for_diagnosis_summary(
 
 
 def _diagnosis_summary_reason_text(
-    summary: ReportWholeRunDiagnosisSummary,
+    summary: WholeRunDiagnosisSummary,
     *,
     matched_finding: Finding | None,
     tr: Callable[..., str],
@@ -388,7 +388,7 @@ def _append_quality_summary(support_text: str, quality_text: str | None) -> str:
 
 
 def _diagnosis_quality_text(
-    summary: ReportWholeRunDiagnosisSummary,
+    summary: WholeRunDiagnosisSummary,
     *,
     tr: Callable[..., str],
 ) -> str | None:
