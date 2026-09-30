@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.domain import AnalysisSettingsSnapshot, DrivingPhase
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -92,143 +94,84 @@ def test_normalize_whole_run_context_labels_aligns_to_centers_and_groups_rows() 
     assert labels[2].engine_rpm_source == "estimated_from_speed_and_ratios"
 
 
-def test_normalize_whole_run_context_labels_marks_stale_context_explicitly() -> None:
-    metadata = _metadata()
-    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
-    samples = sensor_frames_from_mappings(
-        [
+def _gps(t_s: float, speed_kmh: float) -> dict[str, object]:
+    return {"t_s": t_s, "client_id": "sensor-a", "speed_kmh": speed_kmh, "speed_source": "gps"}
+
+
+def _geared(t_s: float, speed_source: str) -> dict[str, object]:
+    return {
+        "t_s": t_s,
+        "client_id": "sensor-a",
+        "speed_kmh": 30.0,
+        "speed_source": speed_source,
+        "gear": 0.64,
+        "final_drive_ratio": 3.08,
+    }
+
+
+_STALE_ASSUMED = {
+    "context_coverage": "partial",
+    "speed_validity": "assumed",
+    "rpm_validity": "estimated",
+    "speed_is_stale": True,
+    "rpm_is_stale": True,
+    "speed_context_reasons": ("speed_assumed", "speed_stale"),
+    "phase": DrivingPhase.SPEED_UNKNOWN,
+    "load_state": "unknown",
+}
+
+
+@pytest.mark.parametrize(
+    ("rows", "expected"),
+    [
+        pytest.param([_geared(0.50, "manual")], _STALE_ASSUMED, id="stale-manual-context"),
+        pytest.param(
+            [_geared(1.28, "fallback_manual")],
+            {**_STALE_ASSUMED, "speed_source": "fallback_manual", "speed_band": None},
+            id="fallback-manual-is-stale-provenance",
+        ),
+        pytest.param(
+            [],
             {
-                "t_s": 0.50,
-                "client_id": "sensor-a",
-                "speed_kmh": 30.0,
-                "speed_source": "manual",
-                "gear": 0.64,
-                "final_drive_ratio": 3.08,
-            }
-        ]
-    )
-
-    label = normalize_whole_run_context_labels(
-        metadata=metadata,
-        samples=samples,
-        window_plan=window_plan,
-    )[0]
-
-    assert label.context_coverage == "partial"
-    assert label.speed_validity == "assumed"
-    assert label.rpm_validity == "estimated"
-    assert label.speed_is_stale is True
-    assert label.rpm_is_stale is True
-    assert label.speed_context_reasons == ("speed_assumed", "speed_stale")
-    assert label.phase == DrivingPhase.SPEED_UNKNOWN
-    assert label.load_state == "unknown"
-
-
-def test_normalize_whole_run_context_labels_marks_fallback_manual_as_stale_provenance() -> None:
-    metadata = _metadata()
-    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
-    samples = sensor_frames_from_mappings(
-        [
-            {
-                "t_s": 1.28,
-                "client_id": "sensor-a",
-                "speed_kmh": 30.0,
-                "speed_source": "fallback_manual",
-                "gear": 0.64,
-                "final_drive_ratio": 3.08,
-            }
-        ]
-    )
-
-    label = normalize_whole_run_context_labels(
-        metadata=metadata,
-        samples=samples,
-        window_plan=window_plan,
-    )[0]
-
-    assert label.context_coverage == "partial"
-    assert label.speed_validity == "assumed"
-    assert label.rpm_validity == "estimated"
-    assert label.speed_source == "fallback_manual"
-    assert label.speed_is_stale is True
-    assert label.rpm_is_stale is True
-    assert label.speed_context_reasons == ("speed_assumed", "speed_stale")
-    assert label.speed_band is None
-    assert label.phase == DrivingPhase.SPEED_UNKNOWN
-    assert label.load_state == "unknown"
-
-
-def test_normalize_whole_run_context_labels_keeps_missing_windows_explicit() -> None:
-    metadata = _metadata()
-    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
-
-    label = normalize_whole_run_context_labels(
-        metadata=metadata,
-        samples=(),
-        window_plan=window_plan,
-    )[0]
-
-    assert label.context_coverage == "missing"
-    assert label.speed_validity == "missing"
-    assert label.rpm_validity == "missing"
-    assert label.speed_source is None
-    assert label.engine_rpm_source is None
-    assert label.speed_is_stale is False
-    assert label.rpm_is_stale is False
-    assert label.speed_context_reasons == ("speed_unavailable",)
-    assert label.phase == DrivingPhase.SPEED_UNKNOWN
-
-
-def test_normalize_whole_run_context_labels_marks_unstable_speed_windows() -> None:
-    metadata = _metadata()
-    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
-    samples = sensor_frames_from_mappings(
-        [
-            {
-                "t_s": 1.20,
-                "client_id": "sensor-a",
-                "speed_kmh": 30.0,
-                "speed_source": "gps",
+                "context_coverage": "missing",
+                "speed_validity": "missing",
+                "rpm_validity": "missing",
+                "speed_source": None,
+                "engine_rpm_source": None,
+                "speed_is_stale": False,
+                "rpm_is_stale": False,
+                "speed_context_reasons": ("speed_unavailable",),
+                "phase": DrivingPhase.SPEED_UNKNOWN,
             },
+            id="missing-window-stays-explicit",
+        ),
+        pytest.param(
+            [_gps(1.20, 30.0), _gps(1.35, 70.0)],
             {
-                "t_s": 1.35,
-                "client_id": "sensor-a",
-                "speed_kmh": 70.0,
-                "speed_source": "gps",
+                "speed_validity": "measured",
+                "speed_is_stale": False,
+                "speed_context_reasons": ("speed_unstable",),
             },
-        ]
-    )
-
-    label = normalize_whole_run_context_labels(
-        metadata=metadata,
-        samples=samples,
-        window_plan=window_plan,
-    )[0]
-
-    assert label.speed_validity == "measured"
-    assert label.speed_is_stale is False
-    assert label.speed_context_reasons == ("speed_unstable",)
-
-
-def test_normalize_whole_run_context_labels_marks_idle_when_fresh_speed_is_zero() -> None:
+            id="unstable-speed-window",
+        ),
+        pytest.param(
+            [_gps(1.28, 0.0)],
+            {"phase": DrivingPhase.IDLE, "load_state": "idle"},
+            id="fresh-zero-speed-is-idle",
+        ),
+    ],
+)
+def test_normalize_whole_run_context_labels_first_window(
+    rows: list[dict[str, object]],
+    expected: dict[str, object],
+) -> None:
     metadata = _metadata()
     window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
-    samples = sensor_frames_from_mappings(
-        [
-            {
-                "t_s": 1.28,
-                "client_id": "sensor-a",
-                "speed_kmh": 0.0,
-                "speed_source": "gps",
-            }
-        ]
-    )
 
     label = normalize_whole_run_context_labels(
         metadata=metadata,
-        samples=samples,
+        samples=sensor_frames_from_mappings(rows),
         window_plan=window_plan,
     )[0]
 
-    assert label.phase == DrivingPhase.IDLE
-    assert label.load_state == "idle"
+    assert {name: getattr(label, name) for name in expected} == expected

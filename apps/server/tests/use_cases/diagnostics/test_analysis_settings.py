@@ -32,19 +32,21 @@ def test_tire_circumference_typical_spec() -> None:
     assert abs(result - expected_diameter_m * pi) < 1e-9
 
 
-def test_tire_circumference_with_deflection_factor() -> None:
-    # Deflection factor of 0.97 reduces circumference by 3%.
+@pytest.mark.parametrize(
+    ("deflection_factor", "expected_scale"),
+    [
+        pytest.param(0.97, 0.97, id="deflection-reduces-circumference"),
+        pytest.param(1.0, 1.0, id="factor-one-is-identity"),
+        pytest.param(1.5, 1.0, id="factor-above-one-ignored"),
+    ],
+)
+def test_tire_circumference_deflection_factor(
+    deflection_factor: float, expected_scale: float
+) -> None:
     no_deflection = _circ(285.0, 30.0, 21.0)
-    with_deflection = _circ(285.0, 30.0, 21.0, df=0.97)
-    assert no_deflection is not None and with_deflection is not None
-    assert abs(with_deflection - no_deflection * 0.97) < 1e-9
-
-
-def test_tire_circumference_deflection_factor_one_is_identity() -> None:
-    no_deflection = _circ(285.0, 30.0, 21.0)
-    factor_one = _circ(285.0, 30.0, 21.0, df=1.0)
-    assert no_deflection is not None and factor_one is not None
-    assert abs(factor_one - no_deflection) < 1e-9
+    deflected = _circ(285.0, 30.0, 21.0, df=deflection_factor)
+    assert no_deflection is not None and deflected is not None
+    assert abs(deflected - no_deflection * expected_scale) < 1e-9
 
 
 def test_tire_deflection_factor_in_default_analysis_settings() -> None:
@@ -52,33 +54,25 @@ def test_tire_deflection_factor_in_default_analysis_settings() -> None:
     assert DEFAULT_ANALYSIS_SETTINGS["tire_deflection_factor"] == 0.97
 
 
-def test_tire_circumference_returns_none_for_none_inputs() -> None:
-    assert TireSpec.from_aspects({"tire_aspect_pct": 30.0, "rim_in": 21.0}) is None
-    assert TireSpec.from_aspects({"tire_width_mm": 285.0, "rim_in": 21.0}) is None
-    assert TireSpec.from_aspects({"tire_width_mm": 285.0, "tire_aspect_pct": 30.0}) is None
-
-
 _D = {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0}
 
 
-def test_tire_circumference_returns_none_for_zero_or_negative() -> None:
-    assert TireSpec.from_aspects({**_D, "tire_width_mm": 0}) is None
-    assert TireSpec.from_aspects({**_D, "tire_aspect_pct": 0}) is None
-    assert TireSpec.from_aspects({**_D, "rim_in": 0}) is None
-    assert TireSpec.from_aspects({**_D, "tire_width_mm": -1}) is None
-
-
-def test_tire_circumference_returns_none_for_non_finite_values() -> None:
-    assert TireSpec.from_aspects({**_D, "tire_width_mm": nan}) is None
-    assert TireSpec.from_aspects({**_D, "tire_aspect_pct": inf}) is None
-
-
-def test_tire_circumference_deflection_factor_above_one_ignored() -> None:
-    """Deflection factor > 1.0 is physically unrealistic and must be ignored."""
-    no_deflection = _circ(285.0, 30.0, 21.0)
-    above_one = _circ(285.0, 30.0, 21.0, df=1.5)
-    assert no_deflection is not None and above_one is not None
-    assert abs(above_one - no_deflection) < 1e-9  # factor ignored
+@pytest.mark.parametrize(
+    "aspects",
+    [
+        pytest.param({"tire_aspect_pct": 30.0, "rim_in": 21.0}, id="missing-width"),
+        pytest.param({"tire_width_mm": 285.0, "rim_in": 21.0}, id="missing-aspect"),
+        pytest.param({"tire_width_mm": 285.0, "tire_aspect_pct": 30.0}, id="missing-rim"),
+        pytest.param({**_D, "tire_width_mm": 0}, id="zero-width"),
+        pytest.param({**_D, "tire_aspect_pct": 0}, id="zero-aspect"),
+        pytest.param({**_D, "rim_in": 0}, id="zero-rim"),
+        pytest.param({**_D, "tire_width_mm": -1}, id="negative-width"),
+        pytest.param({**_D, "tire_width_mm": nan}, id="nan-width"),
+        pytest.param({**_D, "tire_aspect_pct": inf}, id="inf-aspect"),
+    ],
+)
+def test_tire_spec_from_aspects_rejects_invalid_inputs(aspects: dict[str, float]) -> None:
+    assert TireSpec.from_aspects(aspects) is None
 
 
 def test_car_tire_circumference_happy_path() -> None:
@@ -109,15 +103,17 @@ def test_wheel_hz_returns_none_for_non_finite_speed() -> None:
 # -- sanitize_settings --------------------------------------------------------
 
 
-def test_sanitize_rejects_negative_positive_required() -> None:
-    result = sanitize_settings({"tire_width_mm": -1.0, "rim_in": 0.0})
-    assert "tire_width_mm" not in result
-    assert "rim_in" not in result
-
-
-def test_sanitize_rejects_negative_non_negative_field() -> None:
-    result = sanitize_settings({"speed_uncertainty_pct": -0.1})
-    assert "speed_uncertainty_pct" not in result
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param({"tire_width_mm": -1.0, "rim_in": 0.0}, id="non-positive-required"),
+        pytest.param({"speed_uncertainty_pct": -0.1}, id="negative-non-negative-field"),
+        pytest.param({"unknown_field": 42.0}, id="unknown-key"),
+        pytest.param({"tire_width_mm": nan, "rim_in": inf}, id="non-finite"),
+    ],
+)
+def test_sanitize_drops_invalid_values(raw: dict[str, float]) -> None:
+    assert sanitize_settings(raw) == {}
 
 
 def test_sanitize_allows_zero_for_non_negative() -> None:
@@ -125,20 +121,9 @@ def test_sanitize_allows_zero_for_non_negative() -> None:
     assert result["speed_uncertainty_pct"] == 0.0
 
 
-def test_sanitize_ignores_unknown_keys() -> None:
-    result = sanitize_settings({"unknown_field": 42.0})
-    assert "unknown_field" not in result
-
-
 def test_sanitize_converts_to_float() -> None:
     result = sanitize_settings({"tire_width_mm": 285})
     assert isinstance(result["tire_width_mm"], float)
-
-
-def test_sanitize_rejects_non_finite_values() -> None:
-    result = sanitize_settings({"tire_width_mm": nan, "rim_in": inf})
-    assert "tire_width_mm" not in result
-    assert "rim_in" not in result
 
 
 # -- SettingsStore analysis settings snapshot / update ------------------------

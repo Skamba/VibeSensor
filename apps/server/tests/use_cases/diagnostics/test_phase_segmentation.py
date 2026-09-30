@@ -28,49 +28,37 @@ def _typed(samples: list[dict]) -> list:
 
 
 class TestEstimateSpeedDerivative:
-    def test_steady_speed_derivative_near_zero(self) -> None:
-        speeds = [80.0, 80.0, 80.0, 80.0, 80.0]
-        times = [0.0, 1.0, 2.0, 3.0, 4.0]
-        deriv = _estimate_speed_derivative(speeds, times, 2)
+    @pytest.mark.parametrize(
+        ("speeds", "index", "sign"),
+        [
+            pytest.param([80.0, 80.0, 80.0, 80.0, 80.0], 2, 0, id="steady-near-zero"),
+            pytest.param([60.0, 65.0, 70.0, 75.0, 80.0], 2, 1, id="accelerating"),
+            pytest.param([80.0, 75.0, 70.0, 65.0, 60.0], 2, -1, id="decelerating"),
+            pytest.param([60.0, 70.0, 80.0], 0, 1, id="first-index-forward-difference"),
+            pytest.param([60.0, 70.0, 80.0], 2, 1, id="last-index-backward-difference"),
+        ],
+    )
+    def test_derivative_sign(self, speeds: list[float], index: int, sign: int) -> None:
+        times = [float(i) for i in range(len(speeds))]
+        deriv = _estimate_speed_derivative(speeds, times, index)
         assert deriv is not None
-        assert abs(deriv) < 0.01
+        if sign == 0:
+            assert abs(deriv) < 0.01
+        else:
+            assert deriv * sign > 0
 
-    def test_accelerating(self) -> None:
-        speeds = [60.0, 65.0, 70.0, 75.0, 80.0]
-        times = [0.0, 1.0, 2.0, 3.0, 4.0]
-        deriv = _estimate_speed_derivative(speeds, times, 2)
-        assert deriv is not None
-        assert deriv > 0
-
-    def test_decelerating(self) -> None:
-        speeds = [80.0, 75.0, 70.0, 65.0, 60.0]
-        times = [0.0, 1.0, 2.0, 3.0, 4.0]
-        deriv = _estimate_speed_derivative(speeds, times, 2)
-        assert deriv is not None
-        assert deriv < 0
-
-    def test_out_of_range_index(self) -> None:
-        assert _estimate_speed_derivative([80.0], [0.0], 5) is None
-        assert _estimate_speed_derivative([80.0], [0.0], -1) is None
-
-    def test_none_speed_at_neighbors(self) -> None:
-        speeds: list[float | None] = [None, 80.0, None]
-        times: list[float | None] = [0.0, 1.0, 2.0]
-        deriv = _estimate_speed_derivative(speeds, times, 1)
-        # No valid neighbors → None
-        assert deriv is None
-
-    def test_boundary_index_zero(self) -> None:
-        speeds = [60.0, 70.0, 80.0]
-        times = [0.0, 1.0, 2.0]
-        deriv = _estimate_speed_derivative(speeds, times, 0)
-        assert deriv is not None  # one-sided (forward) should work
-
-    def test_boundary_last_index(self) -> None:
-        speeds = [60.0, 70.0, 80.0]
-        times = [0.0, 1.0, 2.0]
-        deriv = _estimate_speed_derivative(speeds, times, 2)
-        assert deriv is not None
+    @pytest.mark.parametrize(
+        ("speeds", "times", "index"),
+        [
+            pytest.param([80.0], [0.0], 5, id="index-past-end"),
+            pytest.param([80.0], [0.0], -1, id="negative-index"),
+            pytest.param([None, 80.0, None], [0.0, 1.0, 2.0], 1, id="no-valid-neighbors"),
+        ],
+    )
+    def test_derivative_unavailable(
+        self, speeds: list[float | None], times: list[float | None], index: int
+    ) -> None:
+        assert _estimate_speed_derivative(speeds, times, index) is None
 
 
 # ---------------------------------------------------------------------------
