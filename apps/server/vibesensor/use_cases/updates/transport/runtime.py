@@ -6,8 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
+from vibesensor.use_cases.updates.rollback import RollbackDeploymentVerifier, RollbackSnapshotStore
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import UpdateStatusTracker

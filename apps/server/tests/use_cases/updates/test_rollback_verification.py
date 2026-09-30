@@ -6,13 +6,13 @@ import pytest
 from test_support.update_status import build_update_status_harness
 
 from vibesensor.use_cases.updates.models import UpdateRuntimeDetails
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotMetadata
-from vibesensor.use_cases.updates.rollback_verification import (
+from vibesensor.use_cases.updates.rollback import (
     ROLLBACK_CONFIG_MISSING,
     ROLLBACK_SERVICE_UNHEALTHY,
     ROLLBACK_SMOKE_FAILED,
     ROLLBACK_STATIC_MISMATCH,
     RollbackDeploymentVerifier,
+    RollbackSnapshotMetadata,
     RollbackVerificationConfig,
 )
 

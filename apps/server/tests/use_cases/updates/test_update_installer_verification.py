@@ -16,8 +16,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
 )
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher, FirmwareRefreshResult
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
+from vibesensor.use_cases.updates.rollback import RollbackDeploymentVerifier, RollbackSnapshotStore
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult

@@ -6,13 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
-from vibesensor.use_cases.updates.rollback_executor import RollbackExecutor
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.rollback_snapshot_builder import RollbackSnapshotBuilder
-from vibesensor.use_cases.updates.rollback_verification import (
-    RollbackDeploymentVerifier,
-    RollbackVerificationConfig,
-)
+from vibesensor.use_cases.updates.rollback import UpdateRollback
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor, WheelInstallResult
@@ -29,12 +23,7 @@ class UpdateInstallerConfig:
 class UpdateInstaller:
     """Expose install-time primitives without embedding rollback policy decisions."""
 
-    __slots__ = (
-        "_config",
-        "_rollback_executor",
-        "_rollback_snapshot_builder",
-        "_wheel_install_executor",
-    )
+    __slots__ = ("_config", "_rollback", "_wheel_install_executor")
 
     def __init__(
         self,
@@ -44,7 +33,6 @@ class UpdateInstaller:
         config: UpdateInstallerConfig,
     ) -> None:
         self._config = config
-        rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, status)
         wheel_validator = WheelArtifactValidator(
             status=status,
         )
@@ -55,31 +43,18 @@ class UpdateInstaller:
             reinstall_timeout_s=config.reinstall_timeout_s,
             wheel_validator=wheel_validator,
         )
-        self._rollback_snapshot_builder = RollbackSnapshotBuilder(
+        self._rollback = UpdateRollback(
             commands=commands,
             status=status,
             repo=config.repo,
             rollback_dir=config.rollback_dir,
-            rollback_snapshots=rollback_snapshots,
             config_path=config.smoke_config_path,
-        )
-        rollback_verifier = RollbackDeploymentVerifier(
-            status=status,
-            config=RollbackVerificationConfig(
-                repo=config.repo,
-                source_config=config.smoke_config_path,
-            ),
-        )
-        self._rollback_executor = RollbackExecutor(
-            status=status,
-            rollback_snapshots=rollback_snapshots,
             wheel_validator=wheel_validator,
             wheel_install_executor=self._wheel_install_executor,
-            rollback_verifier=rollback_verifier,
         )
 
     async def snapshot_for_rollback(self) -> bool:
-        return await self._rollback_snapshot_builder.snapshot_for_rollback()
+        return await self._rollback.snapshot_for_rollback()
 
     async def install_release(
         self,
@@ -92,4 +67,4 @@ class UpdateInstaller:
         )
 
     async def rollback(self) -> bool:
-        return await self._rollback_executor.rollback()
+        return await self._rollback.rollback()

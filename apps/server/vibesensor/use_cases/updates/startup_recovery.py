@@ -8,8 +8,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateState,
     UpdateTerminalState,
 )
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.rollback_verification import RollbackDeploymentVerifier
+from vibesensor.use_cases.updates.rollback import RollbackDeploymentVerifier, RollbackSnapshotStore
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 

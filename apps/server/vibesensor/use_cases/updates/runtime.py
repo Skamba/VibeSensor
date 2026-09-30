@@ -6,9 +6,9 @@ import logging
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
-from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.rollback_verification import (
+from vibesensor.use_cases.updates.rollback import (
     RollbackDeploymentVerifier,
+    RollbackSnapshotStore,
     RollbackVerificationConfig,
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
