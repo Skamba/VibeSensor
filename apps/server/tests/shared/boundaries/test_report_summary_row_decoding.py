@@ -138,7 +138,7 @@ def test_report_summary_from_mapping_decodes_canonical_summary_types() -> None:
     assert isinstance(summary.whole_run_order_summaries[0], OrderTraceSummary)
 
 
-def test_report_summary_from_mapping_keeps_ignoring_vehicle_data_factors() -> None:
+def test_report_summary_from_mapping_keeps_vehicle_data_factors() -> None:
     summary = report_summary_from_mapping(
         {
             "whole_run_diagnosis_summaries": [
@@ -167,4 +167,7 @@ def test_report_summary_from_mapping_keeps_ignoring_vehicle_data_factors() -> No
     )
 
     factors = summary.whole_run_diagnosis_summaries[0].support_factors
-    assert [factor.factor_key for factor in factors] == ["raw_backed"]
+    assert [factor.factor_key for factor in factors] == [
+        "user_confirmed_vehicle_data",
+        "raw_backed",
+    ]

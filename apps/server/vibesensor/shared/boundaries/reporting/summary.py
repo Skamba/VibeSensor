@@ -10,7 +10,7 @@ dataclass validation.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import MISSING, dataclass, fields, is_dataclass, replace
+from dataclasses import MISSING, dataclass, fields, is_dataclass
 from enum import Enum
 from functools import cache
 from types import UnionType
@@ -40,7 +40,6 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
 from vibesensor.shared.types.whole_run_diagnosis_contracts import (
-    DiagnosisFactor,
     WholeRunDiagnosisSummary,
 )
 
@@ -213,37 +212,9 @@ def lenient_rows[RowT](cls: type[RowT], raw_rows: object) -> tuple[RowT, ...]:
     return tuple(row for raw in raw_rows if (row := lenient_row(cls, raw)) is not None)
 
 
-# Diagnosis factor keys the report reload path has never accepted: the report
-# decoder's own factor-key list predates them. Dropping them keeps report and
-# history output unchanged.
-_REPORT_IGNORED_DIAGNOSIS_FACTOR_KEYS: frozenset[str] = frozenset(
-    {
-        "user_confirmed_vehicle_data",
-        "secondary_vehicle_data",
-        "approximate_vehicle_data",
-        "unverified_vehicle_data",
-    }
-)
-
-
-def _report_factors(factors: tuple[DiagnosisFactor, ...]) -> tuple[DiagnosisFactor, ...]:
-    return tuple(
-        factor
-        for factor in factors
-        if factor.factor_key not in _REPORT_IGNORED_DIAGNOSIS_FACTOR_KEYS
-    )
-
-
 def report_diagnosis_summaries(raw_rows: object) -> tuple[WholeRunDiagnosisSummary, ...]:
     """Tolerantly decode persisted whole-run diagnosis summaries for report/history use."""
-    return tuple(
-        replace(
-            summary,
-            support_factors=_report_factors(summary.support_factors),
-            counterevidence_factors=_report_factors(summary.counterevidence_factors),
-        )
-        for summary in lenient_rows(WholeRunDiagnosisSummary, raw_rows)
-    )
+    return lenient_rows(WholeRunDiagnosisSummary, raw_rows)
 
 
 class ReportSummaryNormalizer:
