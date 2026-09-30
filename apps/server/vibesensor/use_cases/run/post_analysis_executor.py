@@ -40,6 +40,7 @@ from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics._validation import MissingStrengthMetricsError
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WholeRunOrderFamilySummaryArtifactBundle,
     build_whole_run_order_family_summary_artifact_bundle,
@@ -113,7 +114,9 @@ from vibesensor.use_cases.run.post_analysis_whole_run_projection import (
 
 LOGGER = logging.getLogger(__name__)
 
-_STAGE_ERRORS = (aiosqlite.Error, OSError, MemoryError)
+# MissingStrengthMetricsError is a data outcome (recording shorter than one
+# analysis window), so it fails the run instead of halting the worker.
+_STAGE_ERRORS = (aiosqlite.Error, OSError, MemoryError, MissingStrengthMetricsError)
 
 type PostAnalysisStageStatus = Literal["ok", "skipped", "degraded", "failed"]
 

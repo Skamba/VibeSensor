@@ -30,8 +30,7 @@ if TYPE_CHECKING:
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
-    from vibesensor.adapters.obd import ObdService
-    from vibesensor.adapters.obd.models import ObdStatusSnapshot
+    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
@@ -43,6 +42,21 @@ class SettingsSpeedServiceProtocol(Protocol):
     def status_snapshot(self) -> SpeedSourceStatusSnapshot: ...
 
     def obd_status(self) -> ObdStatusSnapshot: ...
+
+
+class ObdAdminServiceProtocol(Protocol):
+    """Bluetooth OBD admin operations the settings routes are allowed to call.
+
+    Routes get this narrow seam rather than the whole OBD service so they cannot
+    reach connection-loop state transitions (``mark_connected`` and friends),
+    which belong to the OBD runtime alone.
+    """
+
+    def scan_obd_devices(self) -> list[ObdDeviceSnapshot]: ...
+
+    def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
+
+    def refresh_obd_status(self) -> None: ...
 
 
 class SpeedSourceSettingsServiceProtocol(Protocol):
@@ -105,7 +119,7 @@ class SettingsDeps:
     ui_preferences: UiPreferencesStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
-    obd_admin_service: ObdService
+    obd_admin_service: ObdAdminServiceProtocol
 
 
 @dataclass(slots=True)

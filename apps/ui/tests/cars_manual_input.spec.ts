@@ -25,7 +25,7 @@ describe("createCarsManualInputStore", () => {
       seenSnapshots.push(formatManualInputs(store.state.value));
     });
 
-    expect(seenSnapshots).toEqual(["3.08:18:45:225:0.64"]);
+    expect(seenSnapshots).toEqual(["::::"]);
 
     store.write({
       finalDrive: "4.10",
@@ -35,10 +35,7 @@ describe("createCarsManualInputStore", () => {
       topGear: "0.71",
     });
 
-    expect(seenSnapshots).toEqual([
-      "3.08:18:45:225:0.64",
-      "4.10:20:40:285:0.71",
-    ]);
+    expect(seenSnapshots).toEqual(["::::", "4.10:20:40:285:0.71"]);
 
     dispose();
   });

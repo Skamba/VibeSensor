@@ -44,6 +44,8 @@ export interface CarsWizardOptionItem {
 
 export interface CarsWizardOptionsRenderModel {
   attribute: WizardOptionAttribute;
+  /** Set when loading this step's library options failed; the view offers recovery actions. */
+  errorText: string | null;
   layout: WizardOptionLayout;
   messageText: string | null;
   options: readonly CarsWizardOptionItem[];
@@ -110,6 +112,7 @@ function createOptionsModel(
 ): CarsWizardOptionsRenderModel {
   return {
     attribute,
+    errorText: null,
     layout,
     messageText: null,
     options: [],
@@ -122,11 +125,21 @@ function buildOptionsModel<TOption>(
   buildItem: (option: TOption, index: number) => CarsWizardOptionItem,
   layout: WizardOptionLayout = "chips",
 ): CarsWizardOptionsRenderModel {
-  if (state.status === "loading" || state.status === "error") {
+  if (state.status === "loading") {
     return {
       attribute,
+      errorText: null,
       layout,
       messageText: state.message ?? "",
+      options: [],
+    };
+  }
+  if (state.status === "error") {
+    return {
+      attribute,
+      errorText: state.message ?? "",
+      layout,
+      messageText: null,
       options: [],
     };
   }
@@ -135,6 +148,7 @@ function buildOptionsModel<TOption>(
   }
   return {
     attribute,
+    errorText: null,
     layout,
     messageText: null,
     options: state.options.map((option, index) => buildItem(option, index)),
@@ -146,6 +160,7 @@ function buildVariantOptionsModel(
 ): CarsWizardOptionsRenderModel {
   return {
     attribute: "data-idx",
+    errorText: null,
     layout: "list",
     messageText: null,
     options: variants.map((variant, index) => ({
@@ -166,6 +181,7 @@ function buildTireOptionsModel(
 ): CarsWizardOptionsRenderModel {
   return {
     attribute: "data-tire-idx",
+    errorText: null,
     layout: "chips",
     messageText: null,
     options: tireOptions.map((tireOption, index) => ({
@@ -186,6 +202,7 @@ function buildGearboxOptionsModel(
   if (noGearboxesMessage) {
     return {
       attribute: "data-idx",
+      errorText: null,
       layout: "list",
       messageText: noGearboxesMessage,
       options: [],
@@ -193,6 +210,7 @@ function buildGearboxOptionsModel(
   }
   return {
     attribute: "data-idx",
+    errorText: null,
     layout: "list",
     messageText: null,
     options: gearboxes.map((gearbox, index) => ({

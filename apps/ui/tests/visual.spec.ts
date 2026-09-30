@@ -1,5 +1,43 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { defaultAnalysisSettings } from "../src/constants";
+import { installSettingsRoutes, speedSourceSettings } from "./smoke.helpers";
+
+/**
+ * Screenshot the whole page without Playwright's `fullPage` capture.
+ *
+ * In Chromium, a `fullPage` capture under touch emulation (the tablet audit
+ * projects) drops the touch emulation: `navigator.maxTouchPoints` becomes 0
+ * and `(pointer: coarse)` stops matching for the rest of the page's life.
+ * That switches the app out of its tablet sizing mode mid-assertion, so the
+ * first capture and the retries render different layouts (e.g. 1804 px vs
+ * 1761 px tall). Growing the viewport to the document height and taking a
+ * plain viewport capture keeps the emulated device intact.
+ */
+async function expectFullPageScreenshot(
+  page: Page,
+  name: string,
+): Promise<void> {
+  const viewport = page.viewportSize();
+  if (!viewport) {
+    throw new Error("visual tests need a fixed viewport");
+  }
+  let height = viewport.height;
+  // Resizing can reflow the page, so repeat until the height settles.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const documentHeight = await page.evaluate(
+      () => document.documentElement.scrollHeight,
+    );
+    const nextHeight = Math.max(viewport.height, documentHeight);
+    if (nextHeight === height && attempt > 0) {
+      break;
+    }
+    height = nextHeight;
+    await page.setViewportSize({ width: viewport.width, height });
+  }
+  await expect(page).toHaveScreenshot(name);
+}
+
 /** Assert the spectrum canvas has visible coloured (non-background) pixels (i.e. plotted graph data). */
 async function assertSpectrumHasData(page: Page): Promise<void> {
   await expect
@@ -51,15 +89,23 @@ test.describe("Live view", () => {
       "hidden",
       false,
     );
-    await expect(page.locator("#liveSensorRoster article")).toHaveCount(3);
+    // Demo mode streams five sensors (four wheels plus the engine bay).
+    await expect(page.locator("#liveSensorRoster article")).toHaveCount(5);
     await assertSpectrumHasData(page);
 
-    await expect(page).toHaveScreenshot("live-view.png", { fullPage: true });
+    await expectFullPageScreenshot(page, "live-view.png");
   });
 });
 
 test.describe("Settings view", () => {
   test("renders analysis tab", async ({ page }) => {
+    // Demo mode only simulates the live feed. Opening Settings waits for the
+    // speed-source and analysis settings from the server, and the preview
+    // server has no backend, so serve deterministic payloads here.
+    await installSettingsRoutes(page, {
+      "GET /api/settings/analysis": defaultAnalysisSettings,
+      "GET /api/settings/speed-source": speedSourceSettings(),
+    });
     await page.goto("/?demo=1");
     await page.click('[data-view="settingsView"]');
     await page.click('[data-settings-tab="analysisTab"]');
@@ -71,8 +117,6 @@ test.describe("Settings view", () => {
       "Safe starting point",
     );
     await expect(page.locator("#saveAnalysisBtn")).toBeVisible();
-    await expect(page).toHaveScreenshot("settings-analysis.png", {
-      fullPage: true,
-    });
+    await expectFullPageScreenshot(page, "settings-analysis.png");
   });
 });

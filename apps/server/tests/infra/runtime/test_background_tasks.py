@@ -244,3 +244,102 @@ async def test_close_clears_finished_tasks() -> None:
     assert coordinator.tasks == []
     await coordinator.cancel_all(timeout_s=1.0)
     await coordinator.close()
+
+
+# Upper bound for the immediate-stop regression tests: generous for a loaded CI
+# host, but the pre-fix behaviour was an unbounded hang inside close().
+_IMMEDIATE_STOP_DEADLINE_S = 5.0
+
+
+@pytest.mark.asyncio
+async def test_cancel_all_then_close_immediately_after_start_does_not_hang() -> None:
+    coordinator = BackgroundTaskCoordinator(
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+    )
+    await coordinator.open()
+    body_entered = False
+
+    async def _park_forever() -> None:
+        nonlocal body_entered
+        body_entered = True
+        await anyio.sleep_forever()
+
+    # No checkpoint between start() and cancel_all(): the spawned task has not run yet.
+    coordinator.start(_park_forever, name="not-yet-running")
+    assert coordinator.tasks == ["not-yet-running"]
+
+    async with asyncio.timeout(_IMMEDIATE_STOP_DEADLINE_S):
+        lingering = await coordinator.cancel_all(timeout_s=1.0)
+        await coordinator.close()
+
+    assert lingering == []
+    assert coordinator.tasks == []
+    assert body_entered is False
+
+
+@pytest.mark.asyncio
+async def test_close_immediately_after_start_does_not_hang() -> None:
+    coordinator = BackgroundTaskCoordinator(
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+    )
+    await coordinator.open()
+    coordinator.start(anyio.sleep_forever, name="not-yet-running")
+
+    async with asyncio.timeout(_IMMEDIATE_STOP_DEADLINE_S):
+        await coordinator.close()
+
+    assert coordinator.tasks == []
+
+
+@pytest.mark.asyncio
+async def test_start_after_cancel_all_is_cancelled_before_running() -> None:
+    coordinator = BackgroundTaskCoordinator(
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+    )
+    await coordinator.open()
+    assert await coordinator.cancel_all(timeout_s=1.0) == []
+    body_entered = False
+
+    async def _park_forever() -> None:
+        nonlocal body_entered
+        body_entered = True
+        await anyio.sleep_forever()
+
+    coordinator.start(_park_forever, name="late-start")
+
+    async with asyncio.timeout(_IMMEDIATE_STOP_DEADLINE_S):
+        await coordinator.close()
+
+    assert body_entered is False
+    assert coordinator.tasks == []
+
+
+@pytest.mark.asyncio
+async def test_supervised_task_stopped_before_running_records_no_failure() -> None:
+    health_state = RuntimeHealthState()
+    supervisor = TaskSupervisor(
+        health_state=health_state,
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+    )
+    coordinator = BackgroundTaskCoordinator(
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+    )
+    await coordinator.open()
+    factory_calls = 0
+
+    async def _park_forever() -> None:
+        nonlocal factory_calls
+        factory_calls += 1
+        await anyio.sleep_forever()
+
+    coordinator.start(
+        lambda: supervisor.run(_park_forever, name="processing-loop"),
+        name="processing-loop",
+    )
+
+    async with asyncio.timeout(_IMMEDIATE_STOP_DEADLINE_S):
+        assert await coordinator.cancel_all(timeout_s=1.0) == []
+        await coordinator.close()
+
+    assert factory_calls == 0
+    assert health_state.background_task_failures == {}

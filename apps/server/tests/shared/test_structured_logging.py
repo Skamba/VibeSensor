@@ -6,6 +6,8 @@ import json
 import logging
 from pathlib import Path
 
+import pytest
+
 from vibesensor.shared.structured_logging import (
     StructuredLogFormatter,
     bind_request_id,
@@ -77,6 +79,42 @@ def test_configure_logging_preserves_non_managed_root_handlers(tmp_path: Path) -
         for handler in original_handlers:
             root_logger.addHandler(handler)
         root_logger.setLevel(original_level)
+
+
+def test_configure_logging_console_tracebacks_omit_frame_locals(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Console exception logs use plain tracebacks, never rich locals dumps.
+
+    Rendering every frame's locals (rich's default when importable) runs on
+    the event loop and stalled failing HTTP responses for many seconds.
+    """
+    root_logger = logging.getLogger()
+    original_handlers = list(root_logger.handlers)
+    original_level = root_logger.level
+    try:
+        configure_logging(None)
+        secret_local = "frame-local-marker-value"
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            logging.getLogger("vibesensor.test").exception("request_failed")
+        for handler in root_logger.handlers:
+            handler.flush()
+        del secret_local
+    finally:
+        for handler in list(root_logger.handlers):
+            root_logger.removeHandler(handler)
+            handler.close()
+        for handler in original_handlers:
+            root_logger.addHandler(handler)
+        root_logger.setLevel(original_level)
+
+    stderr = capsys.readouterr().err
+    assert "request_failed" in stderr
+    assert "Traceback (most recent call last):" in stderr
+    assert "ValueError: boom" in stderr
+    assert "frame-local-marker-value" not in stderr
 
 
 def test_configure_logging_writes_structured_json_file(tmp_path: Path) -> None:

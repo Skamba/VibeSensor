@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import random
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -19,11 +20,15 @@ __all__ = ["SimClient", "make_client_id"]
 
 _TWO_PI = 2.0 * np.pi
 
-_COMMON_TONES: tuple[tuple[float, tuple[float, float, float]], ...] = (
-    (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
-    (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
-    (DEFAULT_ORDER_HZ["shaft_1x"], (95.0, 76.0, 110.0)),
-    (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
+# ESP32 crystals are specified around ±10-40 ppm; stay within that envelope.
+_MAX_CLOCK_DRIFT_PPM = 40.0
+
+# Driveline orders shared by every sensor, as (order_key, multiple, amps_xyz).
+_COMMON_ORDER_TONES: tuple[tuple[str, float, tuple[float, float, float]], ...] = (
+    ("wheel_1x", 1.0, (70.0, 58.0, 82.0)),
+    ("wheel_2x", 1.0, (46.0, 38.0, 54.0)),
+    ("shaft_1x", 1.0, (95.0, 76.0, 110.0)),
+    ("engine_2x", 1.0, (64.0, 52.0, 78.0)),
 )
 
 
@@ -50,7 +55,16 @@ class SimClient:
     paused: bool = False
     # Current simulated speed – used to scale order-based profile tones.
     current_speed_kmh: float = DEFAULT_SPEED_KMH
-    send_period_scale: float = 1.0
+    # Sensor-clock model mirroring the ESP firmware (see firmware/esp/src):
+    # samples are scheduled on the device's own microsecond timer, which
+    # drifts by a few tens of ppm against the server clock; ``t0_us`` is the
+    # first sample's due time plus the server-provided clock offset.
+    clock_drift_ppm: float = 0.0
+    device_boot_mono_s: float = 0.0
+    clock_offset_us: int = 0
+    handshake_complete: bool = False
+    # Network/scheduling delay between a frame completing and its transmit.
+    # It only affects arrival time, never the frame's sample timestamps.
     send_jitter_s: float = 0.0
     start_offset_s: float = 0.0
     control_transport: asyncio.DatagramTransport | None = None
@@ -58,15 +72,22 @@ class SimClient:
     bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     rng: np.random.Generator | None = None
+    # Order frequencies at DEFAULT_SPEED_KMH for the simulated car; the
+    # simulator refreshes them from the server's active car when reachable.
+    order_hz: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_ORDER_HZ))
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
         self.rng = np.random.default_rng(seed)
         self.phase_offsets = np.asarray(self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32)
-        # Intentional slight timing mismatch between sensors to mimic real deployments.
-        self.send_period_scale = float(self.rng.uniform(0.997, 1.003))
+        # Per-sensor crystal error, like real ESP32 boards (tens of ppm), so
+        # sensors run at slightly different true rates, as in real deployments.
+        self.clock_drift_ppm = float(self.rng.uniform(-_MAX_CLOCK_DRIFT_PPM, _MAX_CLOCK_DRIFT_PPM))
         self.send_jitter_s = float(self.rng.uniform(0.001, 0.007))
         self.start_offset_s = float(self.rng.uniform(0.0, 0.045))
+        # The device timer counts from its own boot, unrelated to the server
+        # clock, so t0_us only becomes server-relative after clock sync.
+        self.device_boot_mono_s = time.monotonic() - float(self.rng.uniform(1.0, 30.0))
 
     @property
     def profile(self) -> Profile:
@@ -75,6 +96,19 @@ class SimClient:
     @property
     def mac_address(self) -> str:
         return client_id_mac(self.client_id)
+
+    @property
+    def _device_clock_scale(self) -> float:
+        return 1.0 + (self.clock_drift_ppm * 1e-6)
+
+    def device_time_us(self, mono_s: float | None = None) -> int:
+        """Return the simulated device timer (``esp_timer_get_time``) in µs."""
+        now_s = time.monotonic() if mono_s is None else mono_s
+        return int((now_s - self.device_boot_mono_s) * 1_000_000.0 * self._device_clock_scale)
+
+    def monotonic_at_device_us(self, device_us: float) -> float:
+        """Return the host monotonic time at which the device timer reads *device_us*."""
+        return self.device_boot_mono_s + (device_us / (1_000_000.0 * self._device_clock_scale))
 
     def pulse(self, strength: float) -> None:
         vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
@@ -88,7 +122,7 @@ class SimClient:
             f"floor={self.noise_floor_std:.1f} "
             f"scene={self.scene_mode}:{self.scene_gain:.2f} "
             f"common={self.common_event_gain:.2f} paused={self.paused} "
-            f"tx_scale={self.send_period_scale:.5f} "
+            f"clock_drift={self.clock_drift_ppm:+.1f}ppm "
             f"tx_jitter={self.send_jitter_s * 1000:.1f}ms "
             f"offset={self.start_offset_s * 1000:.1f}ms"
         )
@@ -112,17 +146,21 @@ class SimClient:
             (self.frame_samples, 3), dtype=np.float32
         )
 
-        # Compute speed-scaling ratio for order-based profiles.
-        # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
-        # reference speed; scale them proportionally to the current speed.
+        # Order tones are defined at the reference speed; scale them
+        # proportionally to the current speed.
         speed_ratio = 1.0
         if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
             speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
 
         _sin = np.sin
         _phase = self.phase_offsets
-        for freq_hz, amps_xyz in profile.tones:
-            effective_hz = freq_hz * speed_ratio
+        order_hz = self.order_hz
+        local_tones = [(freq_hz * speed_ratio, amps_xyz) for freq_hz, amps_xyz in profile.tones]
+        local_tones.extend(
+            (order_hz[order_key] * multiple * speed_ratio, amps_xyz)
+            for order_key, multiple, amps_xyz in profile.order_tones
+        )
+        for effective_hz, amps_xyz in local_tones:
             if effective_hz <= 0:
                 continue
             omega_t = _TWO_PI * effective_hz * t
@@ -139,8 +177,8 @@ class SimClient:
                 else 1.0
             )
             _gain = self.common_event_gain
-            for freq_hz, amps_xyz in _COMMON_TONES:
-                effective_hz = freq_hz * common_speed_ratio
+            for order_key, multiple, amps_xyz in _COMMON_ORDER_TONES:
+                effective_hz = order_hz[order_key] * multiple * common_speed_ratio
                 if effective_hz <= 0:
                     continue
                 omega_t = _TWO_PI * effective_hz * t

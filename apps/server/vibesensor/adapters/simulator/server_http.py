@@ -7,6 +7,10 @@ import sys
 import time
 from pathlib import Path
 
+from vibesensor.adapters.simulator.profiles import calc_order_hz
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.use_cases.updates.http_client import read_json_response, read_text_response
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
@@ -35,6 +39,22 @@ def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
         return status == 200
     except OSError:
         return False
+
+
+def _analysis_settings_url(host: str, port: int) -> str:
+    return f"http://{_normalize_http_host(host)}:{port}/api/settings/analysis"
+
+
+def fetch_active_car_order_hz(host: str, port: int, timeout_s: float) -> dict[str, float] | None:
+    """Return order frequencies (at the profile reference speed) for the active car."""
+    parsed = read_json_response(
+        _analysis_settings_url(host, port),
+        timeout_s=timeout_s,
+        context="simulator active-car settings",
+    )
+    if not isinstance(parsed, dict):
+        return None
+    return calc_order_hz(analysis_settings_snapshot_from_mapping(parsed))
 
 
 def set_server_speed_override_kmh(

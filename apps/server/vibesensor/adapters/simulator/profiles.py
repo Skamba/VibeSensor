@@ -2,35 +2,45 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import TireSpec
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS, AnalysisSettingsSnapshot
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.order_bands import vehicle_orders_hz
 
 DEFAULT_SPEED_KMH = 100.0
-DEFAULT_DEFLECTION_FACTOR = AnalysisSettingsSnapshot.DEFAULTS["tire_deflection_factor"]
-DEFAULT_FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
-DEFAULT_GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]
+
+
+def calc_order_hz(
+    settings: AnalysisSettingsSnapshot,
+    *,
+    speed_kmh: float = DEFAULT_SPEED_KMH,
+) -> dict[str, float] | None:
+    """Return wheel/shaft/engine order frequencies for a car at ``speed_kmh``.
+
+    Uses the same order-reference math as the analysis, so simulated order
+    tones land exactly on the orders the server tracks for that car.
+    """
+    orders = vehicle_orders_hz(speed_mps=speed_kmh * KMH_TO_MPS, settings=settings)
+    if orders is None:
+        return None
+    wheel_1x = float(orders["wheel_hz"])
+    engine_1x = float(orders["engine_hz"])
+    return {
+        "wheel_1x": wheel_1x,
+        "wheel_2x": wheel_1x * 2.0,
+        "shaft_1x": float(orders["drive_hz"]),
+        "engine_1x": engine_1x,
+        "engine_2x": engine_1x * 2.0,
+    }
 
 
 def calc_default_orders() -> dict[str, float]:
-    speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
-    _tire = TireSpec.from_aspects(
-        AnalysisSettingsSnapshot.DEFAULTS,
-        deflection_factor=DEFAULT_DEFLECTION_FACTOR,
-    )
-    if _tire is None:
-        raise ValueError("Failed to compute tire circumference from default specs")
-    circumference = _tire.circumference_m
-    wheel_1x = speed_mps / circumference
-    shaft_1x = wheel_1x * DEFAULT_FINAL_DRIVE
-    engine_1x = shaft_1x * DEFAULT_GEAR_RATIO
-    return {
-        "wheel_1x": float(wheel_1x),
-        "wheel_2x": float(wheel_1x * 2.0),
-        "shaft_1x": float(shaft_1x),
-        "engine_1x": float(engine_1x),
-        "engine_2x": float(engine_1x * 2.0),
-    }
+    orders = calc_order_hz(analysis_settings_snapshot_from_mapping(ANALYSIS_SETTINGS_DEFAULTS))
+    if orders is None:
+        raise ValueError("Failed to compute order frequencies from default car specs")
+    return orders
 
 
 DEFAULT_ORDER_HZ = calc_default_orders()
@@ -46,9 +56,13 @@ class Profile:
     bump_strength: tuple[float, float, float]
     modulation_hz: float
     modulation_depth: float
-    # When set, tone frequencies are order-based and were defined at this speed.
-    # At runtime ``make_frame()`` scales them by ``current_speed / reference_speed``.
-    # ``None`` means tone frequencies are absolute (e.g. engine_idle, rough_road).
+    # Order-locked tones as ``(order_key, multiple, amps_xyz)``; ``order_key``
+    # indexes the client's ``order_hz`` (orders at ``reference_speed_kmh`` for
+    # the simulated car), so they track both speed and the active car.
+    order_tones: tuple[tuple[str, float, tuple[float, float, float]], ...] = ()
+    # Speed at which ``order_hz`` is defined; ``make_frame()`` scales order
+    # tones by ``current_speed / reference_speed``. ``None`` means the
+    # profile has only absolute tones (e.g. engine_idle, rough_road).
     reference_speed_kmh: float | None = None
 
 
@@ -69,10 +83,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "engine_order": Profile(
         name="engine_order",
-        tones=(
-            (DEFAULT_ORDER_HZ["engine_1x"], (185.0, 128.0, 248.0)),
-            (DEFAULT_ORDER_HZ["engine_2x"], (62.0, 46.0, 92.0)),
-            (DEFAULT_ORDER_HZ["engine_1x"] * 0.5, (30.0, 22.0, 44.0)),
+        tones=(),
+        order_tones=(
+            ("engine_1x", 1.0, (185.0, 128.0, 248.0)),
+            ("engine_2x", 1.0, (62.0, 46.0, 92.0)),
+            ("engine_1x", 0.5, (30.0, 22.0, 44.0)),
         ),
         noise_std=18.0,
         bump_probability=0.001,
@@ -98,10 +113,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "wheel_imbalance": Profile(
         name="wheel_imbalance",
-        tones=(
-            (DEFAULT_ORDER_HZ["wheel_1x"], (220.0, 125.0, 170.0)),
-            (DEFAULT_ORDER_HZ["wheel_2x"], (80.0, 52.0, 72.0)),
-            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (24.0, 18.0, 30.0)),
+        tones=(),
+        order_tones=(
+            ("wheel_1x", 1.0, (220.0, 125.0, 170.0)),
+            ("wheel_2x", 1.0, (80.0, 52.0, 72.0)),
+            ("wheel_1x", 0.52, (24.0, 18.0, 30.0)),
         ),
         noise_std=24.0,
         bump_probability=0.004,
@@ -113,10 +129,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "wheel_mild_imbalance": Profile(
         name="wheel_mild_imbalance",
-        tones=(
-            (DEFAULT_ORDER_HZ["wheel_1x"], (105.0, 62.0, 80.0)),
-            (DEFAULT_ORDER_HZ["wheel_2x"], (28.0, 18.0, 24.0)),
-            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (8.0, 6.0, 10.0)),
+        tones=(),
+        order_tones=(
+            ("wheel_1x", 1.0, (105.0, 62.0, 80.0)),
+            ("wheel_2x", 1.0, (28.0, 18.0, 24.0)),
+            ("wheel_1x", 0.52, (8.0, 6.0, 10.0)),
         ),
         noise_std=14.0,
         bump_probability=0.001,

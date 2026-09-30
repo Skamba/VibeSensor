@@ -67,6 +67,7 @@ import {
   firstMissingManualInputField,
   getResolvedWizardSpecBranch,
   getWizardActionHint,
+  manualTireMatchesOption,
   resolveGearboxes,
   resolveTireOptions,
   tireInputsFromOption,
@@ -126,6 +127,8 @@ export interface CarsFeature {
 }
 
 const LIBRARY_STALE_TIME_MS = 5 * 60 * 1000;
+/** Model label used when manual specs are chosen before any model was named. */
+const MANUAL_FALLBACK_MODEL_NAME = "Custom";
 
 const MANUAL_INPUT_FOCUS_TARGETS: Record<
   keyof CarsFeatureManualInputState,
@@ -866,16 +869,33 @@ export function createCarsFeature(ctx: {
       focusWizard(MANUAL_INPUT_FOCUS_TARGETS[missingField]);
       return;
     }
+    // A library tire the user kept keeps its library setup and confidence;
+    // only values the user typed are marked user-confirmed.
+    const libraryTire =
+      state.selectedTire && manualTireMatchesOption(state.selectedTire, inputs)
+        ? state.selectedTire
+        : null;
+    const libraryTireAspects = libraryTire
+      ? tireSetupAspectsFromOption(libraryTire)
+      : {};
+    const keepsLibraryTire = Object.keys(libraryTireAspects).length > 0;
     await submitWizardCar(
       {
         current_gear_ratio: Number(inputs.topGear),
         final_drive_ratio: Number(inputs.finalDrive),
-        rim_in: Number(inputs.rim),
-        tire_aspect_pct: Number(inputs.tireAspect),
-        tire_width_mm: Number(inputs.tireWidth),
+        ...(keepsLibraryTire
+          ? libraryTireAspects
+          : {
+              rim_in: Number(inputs.rim),
+              tire_aspect_pct: Number(inputs.tireAspect),
+              tire_width_mm: Number(inputs.tireWidth),
+            }),
       },
       {
-        tire_dimensions_confidence: "user_confirmed",
+        tire_dimensions_confidence:
+          keepsLibraryTire && libraryTire
+            ? (libraryTire.source_confidence ?? "unverified")
+            : "user_confirmed",
         current_gear_ratio_confidence: "user_confirmed",
         final_drive_ratio_confidence: "user_confirmed",
         requires_manual_confirmation: false,
@@ -901,8 +921,16 @@ export function createCarsFeature(ctx: {
     }
     updateWizardState((state) => {
       state.step -= 1;
+      // Skip steps whose prerequisites were never chosen (no variants, or the
+      // manual fallback skipped the library before a brand/type was picked).
       if (state.step === 3 && !state.selectedModel?.variants?.length) {
         state.step = 2;
+      }
+      if (state.step === 2 && !state.carType) {
+        state.step = 1;
+      }
+      if (state.step === 1 && !state.brand) {
+        state.step = 0;
       }
     });
     await loadCurrentStep();
@@ -996,6 +1024,17 @@ export function createCarsFeature(ctx: {
     await loadCurrentStep();
   }
 
+  /**
+   * Leaves the car library (e.g. after a failed library load) and continues
+   * on the specs step with manual wheel and gearbox entry, keeping whatever
+   * brand and type were already chosen.
+   */
+  async function continueWithManualSpecs(): Promise<void> {
+    await submitCustomModel(
+      wizardState.value.model || MANUAL_FALLBACK_MODEL_NAME,
+    );
+  }
+
   function handleManualInputChanged(
     field: keyof CarsFeatureManualInputState,
     value: string,
@@ -1035,6 +1074,10 @@ export function createCarsFeature(ctx: {
         return;
       case "back":
         return goBack();
+      case "retry-load":
+        return loadCurrentStep();
+      case "continue-manual":
+        return continueWithManualSpecs();
       case "select-brand":
         return action.value ? selectBrand(action.value) : undefined;
       case "select-type":

@@ -4,6 +4,7 @@ import { serverStateQueryKeys } from "../src/app/features/server_state_query_key
 import {
   acceptCarCreation,
   createCarsHarness,
+  EXAMPLE_MANUAL_INPUTS,
   makeCarsPayload,
   makeGearbox,
   makeModel,
@@ -50,11 +51,11 @@ function mockLibrary(library: {
 
 function createDefaultManualInputs() {
   return {
-    finalDrive: "3.08",
-    rim: "18",
-    tireAspect: "45",
-    tireWidth: "225",
-    topGear: "0.64",
+    finalDrive: "",
+    rim: "",
+    tireAspect: "",
+    tireWidth: "",
+    topGear: "",
   };
 }
 
@@ -77,6 +78,241 @@ describe("cars feature wizard", () => {
     });
   });
 
+  test("turns a failed model load into a recoverable error instead of an endless loading state", async () => {
+    mockLibrary({ brands: ["Audi"], types: ["Coupe"] });
+    api.getCarLibraryModels.mockRejectedValueOnce(
+      new Error("500 Internal Server Error"),
+    );
+    const harness = createCarsHarness();
+    const { feature } = harness;
+
+    await feature.openWizard();
+    await feature.handleWizardAction({ type: "select-brand", value: "Audi" });
+    await feature.handleWizardAction({ type: "select-type", value: "Coupe" });
+
+    expect(harness.renderState()).toMatchObject({
+      modelOptions: {
+        message: "settings.wizard.load_failed_models",
+        options: [],
+        status: "error",
+      },
+      step: 2,
+    });
+    const errorModel = harness.panel.wizard.model.value?.value.modelOptions;
+    expect(errorModel).toMatchObject({
+      errorText: "settings.wizard.load_failed_models",
+      messageText: null,
+      options: [],
+    });
+    expect(harness.panel.wizard.model.value?.value.backVisible).toBe(true);
+    expect(harness.focuses.at(-1)).toBe("custom-model");
+
+    // Retry re-requests the same step and recovers once the library answers.
+    api.getCarLibraryModels.mockResolvedValueOnce({
+      models: [
+        makeModel({ brand: "Audi", model: "TT RS Coupe", type: "Coupe" }),
+      ],
+    });
+    await feature.handleWizardAction({ type: "retry-load" });
+
+    expect(api.getCarLibraryModels).toHaveBeenCalledTimes(2);
+    expect(api.getCarLibraryModels).toHaveBeenLastCalledWith("Audi", "Coupe");
+    expect(harness.renderState().modelOptions.status).toBe("ready");
+    expect(harness.panel.wizard.model.value?.value.modelOptions).toMatchObject({
+      errorText: null,
+      messageText: null,
+    });
+  });
+
+  test("continues with manual specs after a failed model load and can go back to retry", async () => {
+    mockLibrary({ brands: ["Audi"], types: ["Coupe"] });
+    api.getCarLibraryModels.mockRejectedValue(new Error("offline"));
+    const requests = acceptCarCreation(api);
+    const harness = createCarsHarness();
+    const { feature } = harness;
+
+    await feature.openWizard();
+    await feature.handleWizardAction({ type: "select-brand", value: "Audi" });
+    await feature.handleWizardAction({ type: "select-type", value: "Coupe" });
+    await feature.handleWizardAction({ type: "continue-manual" });
+
+    expect(harness.renderState()).toMatchObject({
+      resolvedSpecBranch: "manual",
+      step: 4,
+    });
+    expect(harness.focuses.at(-1)).toBe("manual-tire-width");
+
+    await feature.handleWizardAction({ type: "back" });
+    expect(harness.renderState().step).toBe(2);
+    expect(harness.renderState().modelOptions.status).toBe("error");
+
+    await feature.handleWizardAction({ type: "continue-manual" });
+    await feature.handleWizardAction({ type: "finish" });
+    expect(requests).toEqual([]);
+    expect(harness.focuses.at(-1)).toBe("manual-tire-width");
+
+    harness.updateManualInputs(EXAMPLE_MANUAL_INPUTS);
+    await feature.handleWizardAction({ type: "finish" });
+
+    expect(requests).toEqual([
+      expect.objectContaining({
+        name: "Audi Custom",
+        order_reference_status: expect.objectContaining({
+          selection_source_status: "manual_entry",
+        }),
+        type: "Coupe",
+      }),
+    ]);
+    expect(harness.renderState().isOpen).toBe(false);
+  });
+
+  test("routes a library model without gearboxes to manual gearbox entry with library tires", async () => {
+    const tire = makeTireOption({
+      front: { width_mm: 245, aspect_pct: 35, rim_in: 19 },
+      rim_in: 19,
+      tire_aspect_pct: 35,
+      tire_width_mm: 245,
+    });
+    mockLibrary({
+      brands: ["Audi"],
+      models: [
+        makeModel({
+          brand: "Audi",
+          gearboxes: [],
+          model: "TT RS Coupe (8S, 2022)",
+          tire_options: [tire],
+          type: "Coupe",
+          variants: [
+            {
+              drivetrain: "AWD",
+              gearboxes: [],
+              name: "TT RS",
+              tire_options: [tire],
+            },
+          ],
+        }),
+      ],
+      types: ["Coupe"],
+    });
+    const requests = acceptCarCreation(api);
+    const harness = createCarsHarness();
+    const { feature } = harness;
+
+    await feature.openWizard();
+    await feature.handleWizardAction({ type: "select-brand", value: "Audi" });
+    await feature.handleWizardAction({ type: "select-type", value: "Coupe" });
+    await feature.handleWizardAction({ type: "select-model", index: 0 });
+    await feature.handleWizardAction({ type: "select-variant", index: 0 });
+
+    expect(harness.renderState()).toMatchObject({
+      noGearboxesMessage: "settings.wizard.no_gearboxes",
+      resolvedSpecBranch: "manual",
+      step: 4,
+    });
+    expect(harness.renderState().manualInputs).toMatchObject({
+      rim: "19",
+      tireAspect: "35",
+      tireWidth: "245",
+      finalDrive: "",
+      topGear: "",
+    });
+
+    await feature.handleWizardAction({ type: "finish" });
+    expect(requests).toEqual([]);
+    expect(harness.focuses.at(-1)).toBe("manual-final-drive");
+
+    harness.updateManualInputs({ finalDrive: "3.25", topGear: "0.635" });
+    await feature.handleWizardAction({ type: "finish" });
+
+    expect(requests).toEqual([
+      expect.objectContaining({
+        aspects: expect.objectContaining({
+          current_gear_ratio: 0.635,
+          final_drive_ratio: 3.25,
+          rim_in: 19,
+          tire_aspect_pct: 35,
+          tire_width_mm: 245,
+        }),
+        name: "Audi TT RS Coupe (8S, 2022) TT RS",
+        order_reference_status: expect.objectContaining({
+          final_drive_ratio_confidence: "user_confirmed",
+          tire_dimensions_confidence: tire.source_confidence ?? "unverified",
+        }),
+        variant: "TT RS",
+      }),
+    ]);
+  });
+
+  test("marks a library tire as user-confirmed only when the user changes it", async () => {
+    const tire = makeTireOption({
+      front: { width_mm: 245, aspect_pct: 35, rim_in: 19 },
+      rim_in: 19,
+      tire_aspect_pct: 35,
+      tire_width_mm: 245,
+    });
+    mockLibrary({
+      brands: ["Audi"],
+      models: [
+        makeModel({
+          brand: "Audi",
+          gearboxes: [],
+          model: "TT RS Coupe (8S, 2022)",
+          tire_options: [tire],
+          type: "Coupe",
+          variants: [
+            {
+              drivetrain: "AWD",
+              gearboxes: [],
+              name: "TT RS",
+              tire_options: [tire],
+            },
+          ],
+        }),
+      ],
+      types: ["Coupe"],
+    });
+    const requests = acceptCarCreation(api);
+    const harness = createCarsHarness();
+    const { feature } = harness;
+
+    await feature.openWizard();
+    await feature.handleWizardAction({ type: "select-brand", value: "Audi" });
+    await feature.handleWizardAction({ type: "select-type", value: "Coupe" });
+    await feature.handleWizardAction({ type: "select-model", index: 0 });
+    await feature.handleWizardAction({ type: "select-variant", index: 0 });
+    harness.updateManualInputs({
+      tireWidth: "255",
+      finalDrive: "3.25",
+      topGear: "0.635",
+    });
+    await feature.handleWizardAction({ type: "finish" });
+
+    expect(requests).toEqual([
+      expect.objectContaining({
+        aspects: expect.objectContaining({ tire_width_mm: 255 }),
+        order_reference_status: expect.objectContaining({
+          tire_dimensions_confidence: "user_confirmed",
+        }),
+      }),
+    ]);
+  });
+
+  test("going back after skipping the library from the brand step returns to the brand step", async () => {
+    api.getCarLibraryBrands.mockRejectedValue(new Error("offline"));
+    const harness = createCarsHarness();
+    const { feature } = harness;
+
+    await feature.openWizard();
+    await feature.handleWizardAction({ type: "continue-manual" });
+    expect(harness.renderState().step).toBe(4);
+
+    await feature.handleWizardAction({ type: "back" });
+
+    expect(harness.renderState().step).toBe(0);
+    expect(api.getCarLibraryModels).not.toHaveBeenCalled();
+    expect(api.getCarLibraryTypes).not.toHaveBeenCalled();
+  });
+
   test("finishes the manual branch without DOM fixtures and closes the wizard", async () => {
     mockLibrary({ brands: ["BMW"], models: [makeModel()], types: ["SUV"] });
     const requests = acceptCarCreation(api);
@@ -90,7 +326,11 @@ describe("cars feature wizard", () => {
       type: "submit-custom-model",
       value: "X5 M60i",
     });
-    harness.updateManualInputs({ tireWidth: "245", topGear: "0.68" });
+    harness.updateManualInputs({
+      ...EXAMPLE_MANUAL_INPUTS,
+      tireWidth: "245",
+      topGear: "0.68",
+    });
 
     await feature.handleWizardAction({ type: "finish" });
 
@@ -407,6 +647,7 @@ describe("cars feature saved-car list", () => {
         type: "submit-custom-model",
         value: "Demo",
       });
+      harness.updateManualInputs(EXAMPLE_MANUAL_INPUTS);
       await harness.feature.handleWizardAction({ type: "finish" });
     }
 
@@ -593,6 +834,7 @@ describe("cars feature saved-car list", () => {
       type: "submit-custom-model",
       value: "M3",
     });
+    harness.updateManualInputs(EXAMPLE_MANUAL_INPUTS);
     await feature.handleWizardAction({ type: "finish" });
 
     expect(harness.errors).toEqual(["settings.car.create_failed"]);

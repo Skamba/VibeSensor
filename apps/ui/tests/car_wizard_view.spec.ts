@@ -121,16 +121,16 @@ function createRenderState(
 }
 
 describe("car wizard view helpers", () => {
-  test("createClosedCarsWizardRenderModel preserves the manual-spec defaults before the first open", () => {
+  test("createClosedCarsWizardRenderModel starts with empty manual specs before the first open", () => {
     const model = createClosedCarsWizardRenderModel();
 
     expect(model.isOpen).toBe(false);
     expect(model.manualInputs).toEqual({
-      finalDrive: "3.08",
-      rim: "18",
-      tireAspect: "45",
-      tireWidth: "225",
-      topGear: "0.64",
+      finalDrive: "",
+      rim: "",
+      tireAspect: "",
+      tireWidth: "",
+      topGear: "",
     });
     expect(model.finishVisible).toBe(false);
   });
@@ -167,8 +167,12 @@ describe("car wizard view helpers", () => {
       "BMW",
       "Volvo",
     ]);
-    expect(model.typeOptions.messageText).toBe("Types offline");
+    // Load failures surface as errorText (recoverable error panel), not as the
+    // plain loading/info message.
+    expect(model.typeOptions.errorText).toBe("Types offline");
+    expect(model.typeOptions.messageText).toBeNull();
     expect(model.modelOptions.messageText).toBe("Loading models");
+    expect(model.modelOptions.errorText).toBeNull();
     expect(model.summary.rows).toEqual([
       {
         labelText: "settings.car.wizard_summary_brand",

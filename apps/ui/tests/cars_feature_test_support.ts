@@ -271,3 +271,12 @@ export function makeCarsPayload(activeCarId: string | null): CarsPayload {
     ],
   };
 }
+
+/** Manual spec values a user would type; the wizard no longer pre-fills any. */
+export const EXAMPLE_MANUAL_INPUTS = {
+  finalDrive: "3.08",
+  rim: "18",
+  tireAspect: "45",
+  tireWidth: "225",
+  topGear: "0.64",
+} as const;

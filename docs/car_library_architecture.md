@@ -124,6 +124,16 @@ That means:
 3. numeric order-analysis consumers read normalized values from canonical exact
    rows, not from model-family defaults
 
+A picker gearbox option needs a driven final-drive ratio, so only exact rows
+that carry one become gearbox options. Rows may leave the final drive
+unresolved on purpose (the manufacturer publishes none, or publishes split
+final-drive values that the single `final_drive_front`/`final_drive_rear`
+fields cannot encode faithfully; see the row's `unresolved` items). A variant
+or model built only from such rows is served with `gearboxes: []`, and the UI
+falls back to manual gearbox entry. Do not invent a final drive to fill the
+list. `apps/server/tests/adapters/http/test_car_library_bundled_contract.py`
+checks that every bundled brand/type/model passes the HTTP response models.
+
 ## Confidence vocabulary
 
 Field-level confidence values:
