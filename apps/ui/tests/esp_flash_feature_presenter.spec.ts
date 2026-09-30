@@ -1,10 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   buildEspFlashPanelRenderModel,
-  createEspFlashFeaturePresenter,
   type EspFlashFeatureRenderState,
 } from "../src/app/views/esp_flash_feature_presenter";
-import { signal } from "../src/app/ui_signals";
 import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
@@ -224,9 +222,9 @@ describe("buildEspFlashPanelRenderModel", () => {
   });
 });
 
-describe("createEspFlashFeaturePresenter", () => {
+describe("buildEspFlashPanelRenderModel log output", () => {
   test("renders log output without a DOM-backed panel view", () => {
-    const renderState = signal(
+    const latestModel = buildEspFlashPanelRenderModel(
       makeState({
         availablePorts: [makePort()],
         logText: "build ok\nflash ok\n",
@@ -236,12 +234,8 @@ describe("createEspFlashFeaturePresenter", () => {
           state: "running",
         }),
       }),
+      { t: (key) => key },
     );
-    const presenter = createEspFlashFeaturePresenter({
-      renderState,
-      t: (key) => key,
-    });
-    const latestModel = presenter.model.value;
 
     expect(latestModel?.log.emptyState).toBeNull();
     expect(latestModel?.log.text).toContain("flash ok");

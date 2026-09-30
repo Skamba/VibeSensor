@@ -1,12 +1,14 @@
-"""Tests for client_snapshot_projection — pure projection function."""
+"""Tests for the pure registry-to-ClientSnapshot projection."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
-from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
-from vibesensor.infra.runtime.registry import ClientRecord
+from vibesensor.infra.runtime.registry import (
+    ClientLivenessPolicy,
+    ClientRecord,
+    project_client_snapshots,
+)
 
 
 def _make_record(
@@ -39,21 +41,22 @@ _POLICY = ClientLivenessPolicy(live_ttl_seconds=10.0, retention_ttl_seconds=30.0
 class TestProjectClientSnapshots:
     """Cover connected/offline projection, ages, and optional metrics attachment."""
 
-    def test_connected_record(self) -> None:
-        """Active record with recent mono time → connected=True."""
-        rec = _make_record(last_seen_mono=100.0)
-        clients = {rec.client_id: rec}
-        meta = _make_metadata([rec.client_id])
+    def test_connected_record_projects_age_and_metrics(self) -> None:
+        """Active record within the live TTL → connected, with age and optional metrics."""
+        rec = _make_record(last_seen=1000.0, last_seen_mono=100.0)
         snaps = project_client_snapshots(
-            clients,
-            meta,
-            now_wall=1001.0,
-            now_mono=105.0,
+            {rec.client_id: rec},
+            _make_metadata([rec.client_id]),
+            now_wall=1002.5,
+            now_mono=102.5,
             policy=_POLICY,
+            metrics_by_client={rec.client_id: {"rms": 0.5}},
         )
         assert len(snaps) == 1
-        assert snaps[0].connected is True
         assert snaps[0].client_id == rec.client_id
+        assert snaps[0].connected is True
+        assert snaps[0].last_seen_age_ms == 2500
+        assert snaps[0].latest_metrics == {"rms": 0.5}
 
     def test_disconnected_record_past_ttl(self) -> None:
         """Record whose mono time exceeds TTL → connected=False."""
@@ -83,31 +86,3 @@ class TestProjectClientSnapshots:
         assert len(snaps) == 1
         assert snaps[0].connected is False
         assert snaps[0].name == "My Sensor"
-
-    def test_metrics_attached_when_provided(self) -> None:
-        rec = _make_record(last_seen_mono=100.0)
-        clients = {rec.client_id: rec}
-        meta = _make_metadata([rec.client_id])
-        metrics = {rec.client_id: {"rms": 0.5}}
-        snaps = project_client_snapshots(
-            clients,
-            meta,
-            now_wall=1001.0,
-            now_mono=105.0,
-            policy=_POLICY,
-            metrics_by_client=metrics,
-        )
-        assert snaps[0].latest_metrics == {"rms": 0.5}
-
-    def test_age_ms_computed(self) -> None:
-        rec = _make_record(last_seen=1000.0, last_seen_mono=100.0)
-        clients = {rec.client_id: rec}
-        meta = _make_metadata([rec.client_id])
-        snaps = project_client_snapshots(
-            clients,
-            meta,
-            now_wall=1002.5,
-            now_mono=102.5,
-            policy=_POLICY,
-        )
-        assert snaps[0].last_seen_age_ms == 2500

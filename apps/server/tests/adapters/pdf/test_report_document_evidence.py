@@ -9,7 +9,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor import report_i18n
-from vibesensor.shared.boundaries.reporting import (
+from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
 )

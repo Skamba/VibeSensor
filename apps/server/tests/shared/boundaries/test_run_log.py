@@ -273,49 +273,41 @@ def test_read_jsonl_run_file_not_found(tmp_path: Path) -> None:
         read_jsonl_run(path)
 
 
-def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:
-    path = tmp_path / "blanks.jsonl"
-    metadata = _make_run_metadata(run_id="r1")
-    lines = [json.dumps(metadata), "", "  ", json.dumps({"record_type": "sample", "t_s": 1.0})]
+def _sample_line(t_s: float) -> str:
+    return json.dumps({"record_type": "sample", "t_s": t_s})
+
+
+@pytest.mark.parametrize(
+    ("body_lines", "expected_t_s"),
+    [
+        pytest.param(["", "  ", _sample_line(1.0)], [1.0], id="blank-lines-skipped"),
+        pytest.param(
+            [_sample_line(1.0), '{CORRUPT LINE "not valid json', _sample_line(2.0)],
+            [1.0, 2.0],
+            id="corrupt-line-mid-file-skipped",
+        ),
+        pytest.param(
+            [
+                _sample_line(1.0),
+                _sample_line(2.0),
+                '{"record_type": "sample", "t_s": 3.0, "accel_x',
+            ],
+            [1.0, 2.0],
+            id="truncated-last-line-dropped",
+        ),
+    ],
+)
+def test_read_jsonl_run_tolerates_damaged_lines(
+    tmp_path: Path, body_lines: list[str], expected_t_s: list[float]
+) -> None:
+    path = tmp_path / "run.jsonl"
+    lines = [json.dumps(_make_run_metadata(run_id="r1")), *body_lines]
     path.write_text("\n".join(lines) + "\n")
+
     run_data = read_jsonl_run(path)
+
     assert run_data.metadata.run_id == "r1"
-    assert len(run_data.samples) == 1
-
-
-def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
-    """A corrupt JSON line mid-file is skipped; surrounding samples are kept."""
-    path = tmp_path / "corrupt_mid.jsonl"
-    metadata = _make_run_metadata(run_id="r2")
-    lines = [
-        json.dumps(metadata),
-        json.dumps({"record_type": "sample", "t_s": 1.0}),
-        '{CORRUPT LINE "not valid json',  # corrupt
-        json.dumps({"record_type": "sample", "t_s": 2.0}),
-    ]
-    path.write_text("\n".join(lines) + "\n")
-    run_data = read_jsonl_run(path)
-    assert run_data.metadata.run_id == "r2"
-    assert len(run_data.samples) == 2
-    assert run_data.samples[0].t_s == 1.0
-    assert run_data.samples[1].t_s == 2.0
-
-
-def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
-    """A truncated final line (simulating power loss) doesn't crash the reader."""
-    path = tmp_path / "truncated.jsonl"
-    metadata = _make_run_metadata(run_id="r3")
-    lines = [
-        json.dumps(metadata),
-        json.dumps({"record_type": "sample", "t_s": 1.0}),
-        json.dumps({"record_type": "sample", "t_s": 2.0}),
-        '{"record_type": "sample", "t_s": 3.0, "accel_x',  # truncated
-    ]
-    path.write_text("\n".join(lines) + "\n")
-    run_data = read_jsonl_run(path)
-    assert run_data.metadata.run_id == "r3"
-    assert len(run_data.samples) == 2
-    assert run_data.samples[-1].t_s == 2.0
+    assert [sample.t_s for sample in run_data.samples] == expected_t_s
 
 
 def test_read_jsonl_run_logs_warning_for_corrupt_lines(

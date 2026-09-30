@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
+    ReportLabelValueRow,
+)
+from vibesensor.shared.boundaries.reporting.document.panels import (
     DataTrustItem,
     NextStep,
     PatternEvidence,
-    PeakRow,
-    ReportLabelValueRow,
     SystemFindingCard,
-    VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.document.sections import PeakRow, VerdictPageData
 
 from ._card_builder import build_system_cards
 from .appendix_c import build_appendix_c_data

@@ -7,6 +7,7 @@ from test_support.findings import make_finding_payload
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics import findings_bundle
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import finalize_findings
 
@@ -19,16 +20,14 @@ _MINIMAL_META: dict[str, Any] = {
 }
 
 
-def _summary(*, findings_builder) -> dict[str, Any]:
-    return summarize_run_data(
-        _MINIMAL_META,
-        [],
-        lang="en",
-        findings_builder=findings_builder,
-    )
+def _summary(monkeypatch, *, findings_builder) -> dict[str, Any]:
+    monkeypatch.setattr(findings_bundle, "_build_findings", findings_builder)
+    return summarize_run_data(_MINIMAL_META, [], lang="en")
 
 
-def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() -> None:
+def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan(
+    monkeypatch,
+) -> None:
     payload = make_finding_payload(
         suspected_source="wheel/tire",
         confidence=0.82,
@@ -49,7 +48,7 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
     def _findings_builder(_: FindingsBuildRequest) -> tuple[Finding, ...]:
         return finalize_findings([finding_from_payload(payload)])
 
-    summary = _summary(findings_builder=_findings_builder)
+    summary = _summary(monkeypatch, findings_builder=_findings_builder)
 
     action_ids = [str(step.get("action_id") or "") for step in summary["test_plan"]]
 
@@ -58,8 +57,9 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
     assert all(step.get("what") != "PAYLOAD_ONLY_WHAT" for step in summary["test_plan"])
 
 
-def test_summary_test_plan_uses_boundary_step_shape_from_domain_actions() -> None:
+def test_summary_test_plan_uses_boundary_step_shape_from_domain_actions(monkeypatch) -> None:
     summary = _summary(
+        monkeypatch,
         findings_builder=lambda _request: finalize_findings(
             [finding_from_payload(make_finding_payload(suspected_source="engine"))]
         ),

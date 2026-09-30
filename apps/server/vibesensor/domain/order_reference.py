@@ -7,9 +7,32 @@ from dataclasses import dataclass
 
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
-__all__ = ["OrderReferenceSpec", "order_reference_mapping_from_spec"]
+__all__ = [
+    "OrderReferenceSpec",
+    "order_reference_mapping_from_spec",
+    "wheel_hz_from_speed_kmh",
+]
 
 _KMH_TO_MPS = 1.0 / 3.6
+
+
+def _wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> float | None:
+    if not math.isfinite(speed_mps) or speed_mps <= 0:
+        return None
+    if not math.isfinite(tire_circumference_m) or tire_circumference_m <= 0:
+        return None
+    result = speed_mps / tire_circumference_m
+    return result if math.isfinite(result) else None
+
+
+def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:
+    """Wheel rotational frequency (Hz) from vehicle speed (km/h) and tire circumference (m).
+
+    Returns ``None`` for non-positive or non-finite inputs or results.
+    """
+    if not math.isfinite(speed_kmh) or speed_kmh <= 0:
+        return None
+    return _wheel_hz_from_speed_mps(speed_kmh * _KMH_TO_MPS, tire_circumference_m)
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,15 +42,10 @@ class OrderReferenceSpec:
     tire_setup: AxleTireSetup
     final_drive_ratio: float
     current_gear_ratio: float
-    wheel_bandwidth_pct: float
-    driveshaft_bandwidth_pct: float
-    engine_bandwidth_pct: float
     speed_uncertainty_pct: float
     tire_diameter_uncertainty_pct: float
     final_drive_uncertainty_pct: float
     gear_uncertainty_pct: float
-    min_abs_band_hz: float
-    max_band_half_width_pct: float
 
     @property
     def tire_spec(self) -> TireSpec:
@@ -92,13 +110,7 @@ class OrderReferenceSpec:
 
     def wheel_hz(self, speed_mps: float) -> float | None:
         """Wheel rotational frequency (Hz) from vehicle speed (m/s)."""
-        if not math.isfinite(speed_mps) or speed_mps <= 0:
-            return None
-        circumference = self.tire_circumference_m
-        if not math.isfinite(circumference) or circumference <= 0:
-            return None
-        result = speed_mps / circumference
-        return result if math.isfinite(result) else None
+        return _wheel_hz_from_speed_mps(speed_mps, self.tire_circumference_m)
 
     def engine_hz(self, speed_mps: float) -> float | None:
         """Engine rotational frequency (Hz) from vehicle speed (m/s)."""
@@ -109,9 +121,7 @@ class OrderReferenceSpec:
         return result if math.isfinite(result) else None
 
     def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
-        if not math.isfinite(speed_kmh) or speed_kmh <= 0:
-            return None
-        return self.wheel_hz(speed_kmh * _KMH_TO_MPS)
+        return wheel_hz_from_speed_kmh(speed_kmh, self.tire_circumference_m)
 
     def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
         return self.wheel_hz(speed_mps)
@@ -199,15 +209,10 @@ def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, flo
         "rim_in": boundary_tire.rim_in,
         "final_drive_ratio": spec.final_drive_ratio,
         "current_gear_ratio": spec.current_gear_ratio,
-        "wheel_bandwidth_pct": spec.wheel_bandwidth_pct,
-        "driveshaft_bandwidth_pct": spec.driveshaft_bandwidth_pct,
-        "engine_bandwidth_pct": spec.engine_bandwidth_pct,
         "speed_uncertainty_pct": spec.speed_uncertainty_pct,
         "tire_diameter_uncertainty_pct": spec.tire_diameter_uncertainty_pct,
         "final_drive_uncertainty_pct": spec.final_drive_uncertainty_pct,
         "gear_uncertainty_pct": spec.gear_uncertainty_pct,
-        "min_abs_band_hz": spec.min_abs_band_hz,
-        "max_band_half_width_pct": spec.max_band_half_width_pct,
         "tire_deflection_factor": boundary_tire.deflection_factor,
     }
     setup = spec.tire_setup

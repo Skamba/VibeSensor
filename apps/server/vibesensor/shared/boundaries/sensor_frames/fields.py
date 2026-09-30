@@ -13,11 +13,13 @@ from vibesensor.shared.boundaries.codecs.sensor_frame_values import (
     strict_optional_float,
     strict_optional_int,
 )
+from vibesensor.shared.boundaries.codecs.strength_metrics import (
+    strength_peak_payloads,
+    strength_peaks_from_sequence,
+)
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import JsonArray, JsonObject, JsonValue, is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame
-
-from ..codecs import strength_peak_payloads, strength_peaks_from_sequence
 
 __all__ = [
     "SENSOR_FRAME_FIELD_NAMES",

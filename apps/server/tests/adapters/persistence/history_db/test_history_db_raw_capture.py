@@ -11,6 +11,7 @@ from test_support.history_db_lifecycle import (
     create_recording_run,
 )
 
+from vibesensor.adapters.persistence.history_db import HistoryPersistenceAdapters
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
@@ -77,8 +78,9 @@ def _load_raw_capture_range(
     )
 
 
-def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_raw_capture_round_trip_persists_manifest_and_samples(
+    db: HistoryPersistenceAdapters,
+) -> None:
     create_recording_run(db, "run-raw")
     first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
     second = np.asarray([[7, 8, 9]], dtype=np.int16)
@@ -129,8 +131,9 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
 
 
-def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(
+    tmp_path: Path, db: HistoryPersistenceAdapters
+) -> None:
     create_recording_run(db, "run-losses")
     samples = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
 
@@ -181,8 +184,9 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_pat
     assert stored.raw_capture_manifest.sensor_loss("sensor-b").losses.invalid_chunk_count == 1
 
 
-def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_delete_run_removes_raw_capture_artifacts(
+    tmp_path: Path, db: HistoryPersistenceAdapters
+) -> None:
     create_recording_run(db, "run-delete")
     samples = np.asarray([[11, 12, 13]], dtype=np.int16)
 
@@ -200,8 +204,8 @@ def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:
 
 def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
     tmp_path: Path,
+    db: HistoryPersistenceAdapters,
 ) -> None:
-    db = build_history_db(tmp_path)
     create_completed_run(db, "run-prune-raw")
     samples = np.asarray([[11, 12, 13]], dtype=np.int16)
 
@@ -234,9 +238,8 @@ def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
 
 
 def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capture(
-    tmp_path: Path,
+    db: HistoryPersistenceAdapters,
 ) -> None:
-    db = build_history_db(tmp_path)
     create_recording_run(db, "run-range")
     first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
     second = np.asarray([[7, 8, 9], [10, 11, 12], [13, 14, 15]], dtype=np.int16)
@@ -262,8 +265,9 @@ def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capt
     assert np.array_equal(loaded.samples_i16, np.vstack([first[1:], second[:2]]))
 
 
-def test_raw_capture_finalization_persists_corrected_observed_sample_rate(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_raw_capture_finalization_persists_corrected_observed_sample_rate(
+    db: HistoryPersistenceAdapters,
+) -> None:
     create_recording_run(db, "run-observed-rate")
     samples = np.asarray([[1, 2, 3]] * 8, dtype=np.int16)
 
@@ -294,8 +298,9 @@ def test_raw_capture_finalization_persists_corrected_observed_sample_rate(tmp_pa
     assert sensor_manifest.sample_rate_proof_state == "observed_consistent"
 
 
-def test_raw_capture_range_read_marks_partial_and_missing_coverage(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_raw_capture_range_read_marks_partial_and_missing_coverage(
+    db: HistoryPersistenceAdapters,
+) -> None:
     create_recording_run(db, "run-partial")
     samples = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.int16)
 
@@ -330,8 +335,9 @@ def test_raw_capture_range_read_marks_partial_and_missing_coverage(tmp_path: Pat
     assert missing.returned_sample_count == 0
 
 
-def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path) -> None:
-    db = build_history_db(tmp_path)
+def test_prune_terminal_runs_removes_raw_capture_artifacts(
+    tmp_path: Path, db: HistoryPersistenceAdapters
+) -> None:
     create_completed_run(db, "run-prune")
     samples = np.asarray([[21, 22, 23]], dtype=np.int16)
 

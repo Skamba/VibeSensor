@@ -8,10 +8,8 @@ from hashlib import sha256
 
 from opentelemetry.trace import SpanKind
 
-from vibesensor.shared.boundaries.reporting import (
-    PreparedReportInput,
-    prepare_persisted_report_input,
-)
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.json_utils import json_text_dumps

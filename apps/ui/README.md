@@ -110,7 +110,7 @@ Frontend server-state ownership is centralized on the runtime-owned
 - Keep feature-specific query keys in
   `src/app/features/server_state_query_keys.ts`.
 - Keep feature-owned observed-query bridges in
-  `src/app/features/server_state_query.ts` and the owning workflow/module.
+  `src/app/features/server_state_query.ts` and the owning feature controller.
 - Use TanStack Query for fetches, cache updates, background refetch intervals,
   and invalidation instead of reintroducing ad hoc loaders or poll loops.
 - Mutations should either write authoritative results into the cache with
@@ -186,8 +186,9 @@ Use MSW when the behavior under test depends on the real HTTP boundary:
 Do **not** use MSW when the test is already below the network seam:
 
 - pure presenters, state derivations, and DOM-only views should stay network-free
-- workflow/controller tests with injected transport ports should keep those
-  focused fakes instead of layering on MSW unnecessarily
+- feature controller tests that only need canned or deferred responses should
+  fake the `api/*` wrapper module the controller imports (`vi.mock("../src/api/settings", ...)`)
+  instead of layering on MSW; controllers do not take injectable transport ports
 - WebSocket behavior is separate; keep using the existing fake WebSocket helpers
   for live-session flows instead of trying to route WS traffic through MSW
 
@@ -250,51 +251,40 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/{shell,transport,realtime,history,settings,spectrum}_state.ts` | Feature-owned state types, defaults, factories, and pure update helpers for the top-level AppState slices |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
-| `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
+| `app/runtime/ui_shell_controller.ts` | Menu/view shell (including lazy view activation and the auto-hiding app error banner), language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners; preferences, status badges, and confirmations stay in their focused `ui_shell_*`/`ui_confirmation_module.ts` owners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that owns Comlink worker lifecycle for heavy spectrum frame preparation, splits data refreshes from lighter settings-driven decoration refreshes, and wires overlay, canvas, interaction, and panel modules |
-| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
-| `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
+| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner (and its startup-only feature contract) that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable chart buffer reuse for same-shape frames, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_frame_preparer.ts` | Typed spectrum frame-prep contract plus pure interpolation/dB conversion core shared by worker and focused tests |
 | `app/runtime/spectrum_frame_preparer_worker.ts` | Canonical Comlink worker entrypoint for off-main-thread spectrum frame preparation plus transferable response packing |
 | `app/runtime/spectrum_frame_preparer_worker_client.ts` | Runtime-owned worker client wrapper that creates, proxies, and disposes the spectrum frame-prep worker |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
-| `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
+| `app/app_feature_bundle.ts` | Composition root for feature controllers: builds realtime and the dashboard speed-status poller eagerly, lazy-loads `app_feature_secondary_bundle.ts` (history, settings, cars, update, ESP flash) per view, and returns handler binding, view readiness, startup loads, and disposal to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
-| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view query polling context together |
-| `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for query-backed port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
-| `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
-| `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
-| `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
-| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
-| `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for query-backed logging status refreshes, logging actions, location updates, and client mutations |
-| `app/features/settings_cars_module.ts` | Settings-side car controller that owns query-backed list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
-| `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
-| `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
-| `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, pure presenter, typed panel actions, and typed navigation subscriptions into the shared panel bridge |
-| `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
-| `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, query-backed save/load orchestration, and background OBD rescans |
+| `app/features/esp_flash_feature.ts` | ESP flash controller for query-backed port refreshes, flash status polling while the ESP flash tab is visible, log/history hydration, and start/cancel orchestration behind the typed panel bridge |
+| `app/features/cars_feature.ts` | Car-management controller: saved-car list activation/deletion and creation feedback plus the add-car wizard (step transitions, car-library loading, finish validation), calling the `api/*` wrappers directly behind the typed `CarsPanelView` bridge |
+| `app/features/cars_wizard_state.ts` | Pure add-car wizard state helpers: wizard step state, option load states, manual spec input store, finish readiness, and summary data |
+| `app/features/realtime_feature.ts` | Realtime controller for query-backed logging status polling and start/stop, idle capture-readiness refreshes, location updates, and client mutations, binding the logging and sensors panel actions |
+| `app/features/settings_analysis_module.ts` | Analysis-settings controller for validation, save/reset orchestration (gated on a resolved active car), language-driven draft resync, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
+| `app/features/speed_source_feature.ts` | Speed-source settings controller for draft state, validation, query-backed save/load, OBD scan/pair with background rescans, and the tab's GPS/OBD status polling behind the typed speed-source panel bridge |
 | `app/views/analysis_panel.tsx` | Signal-backed Preact owner for the analysis-settings shell; local refs/effects handle guidance and field focus while analysis and car-selection modules feed typed model and availability updates |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts, keep tab selection in signal-backed shell state, and expose typed settings navigation APIs |
 | `app/views/esp_flash_panel.tsx` | Signal-backed Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle while feature/presenter code updates a semantic panel bridge |
 | `app/views/internet_panel.tsx` | Signal-backed Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a semantic panel bridge |
 | `app/views/update_panel.tsx` | Signal-backed Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a semantic panel bridge |
 | `app/views/sensors_panel.tsx` | Signal-backed Preact owner for the sensors settings shell that keeps the sensor table reactive while exposing typed identify/remove/location callbacks to the realtime feature |
-| `app/views/speed_source_panel.tsx` | Signal-backed Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes semantic `setModel()` / `setDiagnostics()` bridge updates to the speed-source and GPS-status modules |
+| `app/views/speed_source_panel.tsx` | Signal-backed Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes semantic `setModel()` / `setDiagnostics()` bridge updates to the speed-source controller |
 | `app/views/cars_panel.tsx` | Signal-backed Preact owner for the full car-management surface; it renders saved-car guidance/list rows, delegates wizard focus/return-focus/scroll lifecycle to the extracted wizard focus hook, and exposes typed list and wizard bridges |
 | `app/views/cars_wizard_focus.ts` | Focus/ref owner for the add-car wizard that centralizes return-focus, scroll reset, requested-focus handling, and target resolution now that the wizard lifecycle lives beside the cars panel surface |
 | `app/views/cars_wizard_panel.tsx` | Modal shell for the add-car wizard; it keeps dialog chrome and typed action wiring small while delegating step content to focused wizard sections |
 | `app/views/cars_wizard_sections.tsx` | Extracted add-car wizard step sections, option grids, manual-spec inputs, and summary helpers that keep the main wizard panel readable while preserving the existing selectors and flow |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and derives update/internet query polling context from the shell and settings tab state |
-| `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for query-backed update polling, internet-status normalization, and start/cancel command orchestration |
+| `app/features/update_feature.ts` | Updater controller for query-backed update/health/internet polling while the internet or update tab is visible and start/cancel command orchestration, binding the typed update and internet panel actions |
 | `app/features/history_feature.ts` | Single owner for query-backed history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
-| `app/views/esp_flash_readiness_presenter.ts` | ESP flash readiness presenter that derives start-readiness, status-banner, selected-target, and recent-attempt summary models |
-| `app/views/esp_flash_journey_presenter.ts` | ESP flash journey presenter that derives staged lifecycle progress and terminal stage state for the maintenance journey card |
-| `app/views/esp_flash_feature_presenter.ts` | Top-level ESP flash presenter that composes journey, readiness, log, and history panel models for the island-owned ESP flash bridge |
+| `app/views/esp_flash_feature_presenter.ts` | Pure ESP flash view-model builders: start readiness, status banner, staged journey progress, log, and recent-attempt history models composed into the panel render model |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_heatmap_presenter.ts` | Heatmap presenter helpers that normalize location labels and turn preview intensity stats into typed history heatmap zones |
 | `app/views/history_detail_presenter.ts` | Expanded history detail presenter that builds typed findings, warnings, and heatmap-backed diagnosis sections |
@@ -308,8 +298,8 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/views/realtime_live_overview.tsx` | Signal-backed Preact owner for the live overview card that consumes typed status/sensor models without manual island rerender loops |
 | `app/views/realtime_logging_panel.tsx` | Signal-backed Preact owner for the run-recording card that renders typed logging/readiness models, owns the setup-layout marker locally, and binds start/stop plus summary CTA actions through the shared bridge |
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
-| `app/views/settings_speed_source_presenter.ts` | Pure speed-source presenter that turns typed workflow state and live status payloads into panel and diagnostics render models |
-| `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
+| `app/views/settings_speed_source_presenter.ts` | Pure speed-source view-model builders that turn controller render state and live status payloads into panel and diagnostics render models (plus their defaults) |
+| `app/views/update_feature_presenter.ts` | Update presenter that owns the Wi-Fi form draft and derives typed update/internet panel models from controller state |
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_models.ts` | Shared update-status badge, row, and section interfaces consumed by the update and internet panels |
 | `app/views/update_journey_builder.ts` | Update journey and recovery-summary builders for phase formatting, staged progress, and retry guidance |
@@ -359,10 +349,11 @@ loading inside that one tree; only the settings subtree keeps its internal
 tab-panel mount path so the per-tab settings panels can keep their existing
 typed view bindings. The spectrum island owns its chart host refs internally
 and passes that typed bridge to the runtime. `app_feature_bundle.ts` creates
-the concrete features, wires explicit cross-feature ports, and returns only the
-shell, transport, and startup contracts the runtime needs, while
-`ui_startup_coordinator.ts` runs the startup-only load/refresh ports from a
-small declarative sync/async plan instead of a handwritten boot call chain.
+the feature controllers from one `AppFeatureContext` (state, services, query
+client, mounted panels, and the few runtime callbacks) and wires the remaining
+cross-feature calls as plain closures, while `ui_startup_coordinator.ts` runs
+the startup-only loads from a small declarative sync/async plan instead of a
+handwritten boot call chain.
 `startUiApp()` now returns a public dispose handle, and that top-level teardown
 flows through `ui_app_runtime.ts` to stop long-lived effects, polling loops,
 WebSocket reconnect/stale timers, spectrum RAF work, and deferred settings
@@ -383,10 +374,9 @@ status models into island-owned hosts. Those seams should use semantic methods
 like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
 loops.
 
-Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
-facade, `realtime_feature_workflow.ts` owns the controller-style polling,
-mutation flow, and signal-backed workflow state, `realtime_feature_view_state.ts`
-derives the live overview/logging/sensors models plus idle readiness signatures
+Realtime follows the same controller shape: `realtime_feature.ts` owns the
+polling, mutation flow, logging state signals, and panel action binding,
+`realtime_feature_view_state.ts` derives the live overview/logging/sensors models plus idle readiness signatures
 from shared AppState slices, `app/views/realtime_live_overview.tsx` and
 `app/views/realtime_logging_panel.tsx` consume bound model signals inside their
 signal-backed islands, `realtime_capture_readiness_models.ts` owns the
@@ -449,16 +439,27 @@ instead of controller-side variant class interpolation.
   `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
   `ws_payload_validator.ts`; `app/**` code may import `transport/**` and
   `api/types.ts`, but not generated contract files directly.
-  `tools/dev/check_hygiene.py` enforces that boundary in the normal lint path
-  and its failure text now points at the exact replacement seam to use.
+  `npm run lint:deps` (dependency-cruiser) enforces that boundary.
 - Normal UI rendering belongs in Preact owner surfaces. If code outside an
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas chart lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
-- Expected feature shape is thin facade + focused workflow/transport/presenter
-  or derived view-state modules. Workflow modules stay DOM-free, render-state
-  derivation lives in one focused owner, and view surfaces decode local DOM
-  events into typed actions for the owning feature.
+- Expected feature shape is one DOM-free controller module per feature in
+  `app/features/` (for example `cars_feature.ts`, `speed_source_feature.ts`,
+  `update_feature.ts`) that owns the feature's signals, query/polling
+  lifecycles, and commands, calls the `api/*` wrappers directly, and binds the
+  typed actions of its panel bridge. Pure view-model builders for that panel
+  live in one `app/views/*` module next to the Preact surface; a separate
+  derived view-state module is only warranted when the derivation is large and
+  shared across panels (as with `realtime_feature_view_state.ts`), and pure
+  state helpers may sit in one `*_state.ts` module (as with
+  `cars_wizard_state.ts`). View surfaces decode local DOM events into typed
+  actions for the owning controller.
+- Do not add pass-through `*_transport.ts` wrappers, per-feature
+  `*Ports`/`*Deps` interfaces, or facade/workflow splits for a single
+  implementation. Pass controllers a plain context object; test HTTP by faking
+  the `api/*` module (or MSW when the real request matters) and view effects
+  through a fake panel bridge.
 - Mount Preact owner surfaces directly inside their owning runtime/view module.
   Do not scatter `preact.render(...)` calls across feature or presenter code.
 
@@ -481,7 +482,7 @@ Valibot-backed runtime validation now sits at the WebSocket boundary. Live paylo
   helper for frontend runtime boundaries.
 - `src/api/update_validators.ts` is the canonical HTTP pattern: parse once,
   validate once, then return typed data from the API module.
-- Feature/workflow code may surface validated boundary failures to the UI, but it
+- Feature controller code may surface validated boundary failures to the UI, but it
   must not rebuild ad hoc `typeof` normalizers for the same payload shape.
 - Keep custom fast-path validators only where large numeric arrays or similar hot
   paths would make generic schema validation measurably more expensive.

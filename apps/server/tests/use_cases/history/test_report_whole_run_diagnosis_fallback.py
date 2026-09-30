@@ -4,7 +4,7 @@ from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
-from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 
@@ -251,7 +251,7 @@ def test_prepare_persisted_report_input_marks_partial_whole_run_inputs_as_incomp
             {
                 "segment_index": 0,
                 "phase": "cruise",
-                "load_state": "light",
+                "load_state": "steady",
                 "start_window_index": 0,
                 "end_window_index": 5,
                 "start_t_s": 0.0,

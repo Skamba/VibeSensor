@@ -146,7 +146,6 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     )
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
 
-    from vibesensor import app as app_module
     from vibesensor.app import bootstrap as bootstrap_mod
 
     async def _fake_start(self):
@@ -171,7 +170,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     monkeypatch.setattr(SQLiteHistoryEngine, "aclose", _tracking_close)
     monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
 
-    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
+    app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):
         pass
 

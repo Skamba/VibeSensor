@@ -17,10 +17,10 @@ from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
     summarize_run_data,
 )
+from vibesensor.adapters.history.projection import project_analysis_summary
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
-from vibesensor.shared.boundaries.analysis_payloads import project_analysis_summary
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input

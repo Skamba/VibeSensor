@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import Finding, VibrationSource
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-from vibesensor.shared.boundaries.reporting import FindingPresentation
 from vibesensor.shared.report_presentation import (
     order_label_human,
     peak_classification_text,
@@ -132,8 +132,8 @@ def test_peak_row_system_label_falls_back_to_matching_finding_order() -> None:
             "suspected_source": "",
         },
         findings=[
-            FindingPresentation(
-                suspected_source="wheel/tire",
+            Finding(
+                suspected_source=VibrationSource.WHEEL_TIRE,
                 order="1x wheel",
                 frequency_hz=10.9,
             )

@@ -42,25 +42,25 @@
     "wiki:screenshots": "node update-wiki-screenshots.mjs"
   },
   "dependencies": {
-    "@preact/signals": "^2.9.0",
-    "@tanstack/query-core": "^5.100.13",
+    "@preact/signals": "^2.11.0",
+    "@tanstack/query-core": "^5.101.4",
     "comlink": "^4.4.2",
-    "preact": "^10.29.2",
-    "valibot": "^1.4.0"
+    "preact": "^10.29.8",
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
-    "@playwright/test": "^1.60.0",
-    "@preact/preset-vite": "^2.10.5",
+    "@biomejs/biome": "^2.5.12",
+    "@playwright/test": "^1.63.0",
+    "@preact/preset-vite": "^2.10.6",
     "dependency-cruiser": "^17.4.0",
-    "happy-dom": "^20.9.0",
-    "knip": "^6.14.2",
-    "linkedom": "^0.18.12",
-    "msw": "^2.14.6",
+    "happy-dom": "^20.14.0",
+    "knip": "^6.35.1",
+    "linkedom": "^0.18.13",
+    "msw": "^2.15.0",
     "openapi-typescript": "^7.13.0",
-    "rollup-plugin-visualizer": "^7.0.1",
+    "rollup-plugin-visualizer": "^7.1.1",
     "typescript": "^5.9.3",
-    "vite": "^8.0.16",
-    "vitest": "^4.1.7"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

@@ -68,22 +68,11 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     gps_monitor.status_snapshot.return_value = _gps_status_snapshot()
     gps_monitor.apply_speed_source_settings.return_value = None
 
-    obd_facts = MagicMock()
-    obd_projection = MagicMock()
-    obd_projection.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
-    obd_projection.status_snapshot.return_value = _obd_status_snapshot()
-    obd_projection.stale_timeout_s = 8.0
-    obd_device_admin = MagicMock()
-    obd_status_refresher = MagicMock()
-    obd_control = MagicMock()
-    services = build_speed_source_services(
-        gps_monitor=gps_monitor,
-        obd_facts=obd_facts,
-        obd_projection=obd_projection,
-        obd_device_admin=obd_device_admin,
-        obd_status_refresher=obd_status_refresher,
-        obd_control=obd_control,
-    )
+    obd = MagicMock()
+    obd.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
+    obd.status_snapshot.return_value = _obd_status_snapshot()
+    obd.stale_timeout_s = 8.0
+    services = build_speed_source_services(gps_monitor=gps_monitor, obd=obd)
 
     services.control.apply_speed_source_settings(
         effective_speed_kmh=None,
@@ -107,14 +96,7 @@ def test_observation_service_obd_status_is_side_effect_free() -> None:
     gps_monitor = MagicMock()
     gps_monitor.apply_speed_source_settings.return_value = None
     parts = build_obd_runtime_parts(clock=lambda: 100.0)
-    services = build_speed_source_services(
-        gps_monitor=gps_monitor,
-        obd_facts=parts.facts,
-        obd_projection=parts.projection,
-        obd_device_admin=MagicMock(),
-        obd_status_refresher=parts.admin,
-        obd_control=parts.settings,
-    )
+    services = build_speed_source_services(gps_monitor=gps_monitor, obd=parts.obd)
 
     services.control.apply_speed_source_settings(
         effective_speed_kmh=None,
@@ -132,18 +114,11 @@ def test_observation_service_obd_status_is_side_effect_free() -> None:
     assert status.trusted is False
 
 
-def test_admin_service_refreshes_obd_status_explicitly() -> None:
+def test_obd_service_refreshes_obd_status_explicitly() -> None:
     gps_monitor = MagicMock()
     gps_monitor.apply_speed_source_settings.return_value = None
     parts = build_obd_runtime_parts(clock=lambda: 100.0)
-    services = build_speed_source_services(
-        gps_monitor=gps_monitor,
-        obd_facts=parts.facts,
-        obd_projection=parts.projection,
-        obd_device_admin=MagicMock(),
-        obd_status_refresher=parts.admin,
-        obd_control=parts.settings,
-    )
+    services = build_speed_source_services(gps_monitor=gps_monitor, obd=parts.obd)
 
     services.control.apply_speed_source_settings(
         effective_speed_kmh=None,
@@ -155,7 +130,7 @@ def test_admin_service_refreshes_obd_status_explicitly() -> None:
     )
 
     before = services.observation.obd_status()
-    services.admin.refresh_obd_status()
+    parts.obd.refresh_obd_status()
 
     after = services.observation.obd_status()
 
@@ -166,9 +141,8 @@ def test_admin_service_refreshes_obd_status_explicitly() -> None:
     assert after.device_mac == "02000000004d"
 
 
-def test_admin_service_delegates_scan_and_pair_to_obd_device_admin() -> None:
-    gps_monitor = MagicMock()
-    obd_device_admin = MagicMock()
+def test_obd_service_delegates_scan_and_pair_to_admin_client() -> None:
+    admin_client = MagicMock()
     device = ObdDeviceSnapshot(
         mac_address="02000000004d",
         name="OBDLink MX+",
@@ -177,19 +151,14 @@ def test_admin_service_delegates_scan_and_pair_to_obd_device_admin() -> None:
         connected=False,
         rfcomm_channel=1,
     )
-    obd_device_admin.scan_devices.return_value = [device]
-    obd_device_admin.pair_device.return_value = device
-    services = build_speed_source_services(
-        gps_monitor=gps_monitor,
-        obd_facts=MagicMock(),
-        obd_projection=MagicMock(),
-        obd_device_admin=obd_device_admin,
-        obd_status_refresher=MagicMock(),
-        obd_control=MagicMock(),
-    )
+    admin_client.scan_devices.return_value = [device]
+    admin_client.pair_device.return_value = device
+    parts = build_obd_runtime_parts(clock=lambda: 100.0, admin_client=admin_client)
 
-    scanned = services.admin.scan_obd_devices()
-    paired = services.admin.pair_obd_device("02000000004d")
+    scanned = parts.obd.scan_obd_devices()
+    paired = parts.obd.pair_obd_device("02000000004d")
 
     assert scanned == [device]
     assert paired == device
+    admin_client.scan_devices.assert_called_once_with(timeout_s=8)
+    admin_client.pair_device.assert_called_once_with("02000000004d")

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
 
 from vibesensor.use_cases.updates.models import UsbInternetStatus
 from vibesensor.use_cases.updates.privilege import build_sudo_args
@@ -19,14 +18,7 @@ from vibesensor.use_cases.updates.usb_status_inspection import (
 
 _USB_ACTIVATION_WAIT_S = 15
 
-__all__ = [
-    "UsbInternetStatusReader",
-    "UsbInternetStatusService",
-]
-
-
-class UsbInternetStatusReader(Protocol):
-    async def snapshot(self, *, activate: bool = False) -> UsbInternetStatus: ...
+__all__ = ["UsbInternetStatusService"]
 
 
 class UsbInternetStatusService:

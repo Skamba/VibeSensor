@@ -14,7 +14,7 @@ from vibesensor.adapters.http.error_boundary import (
     http_exception_for_value_error,
     route_errors_to_http,
 )
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.settings import (
     ObdPairRequest,
     ObdPairResponse,
     ObdScanResponse,

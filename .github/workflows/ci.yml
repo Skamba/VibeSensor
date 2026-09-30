@@ -12,54 +12,75 @@ permissions:
   contents: read
 
 jobs:
-  ci-scope:
-    name: CI scope
+  changes:
+    name: Changed paths
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      run_docs_lint: ${{ steps.scope.outputs.run_docs_lint }}
-      run_repo_hygiene: ${{ steps.scope.outputs.run_repo_hygiene }}
-      run_shell_lint: ${{ steps.scope.outputs.run_shell_lint }}
-      run_backend_lint: ${{ steps.scope.outputs.run_backend_lint }}
-      run_backend_static_guards: ${{ steps.scope.outputs.run_backend_static_guards }}
-      run_backend_preflight: ${{ steps.scope.outputs.run_backend_preflight }}
-      run_backend_contract_drift: ${{ steps.scope.outputs.run_backend_contract_drift }}
-      run_backend_typecheck: ${{ steps.scope.outputs.run_backend_typecheck }}
-      run_frontend_typecheck: ${{ steps.scope.outputs.run_frontend_typecheck }}
-      run_ui_smoke: ${{ steps.scope.outputs.run_ui_smoke }}
-      run_backend_tests: ${{ steps.scope.outputs.run_backend_tests }}
-      run_release_smoke: ${{ steps.scope.outputs.run_release_smoke }}
-      run_firmware_native_tests: ${{ steps.scope.outputs.run_firmware_native_tests }}
-      run_e2e: ${{ steps.scope.outputs.run_e2e }}
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      firmware: ${{ steps.filter.outputs.firmware }}
+      shell: ${{ steps.filter.outputs.shell }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'apps/server/**'
+              - 'tools/**'
+              - 'infra/pi-image/**'
+              - 'docs/protocol.md'
+              - '.github/**'
+              - 'Makefile'
+              - '.python-version'
+              - 'docker-compose*.yml'
+            frontend:
+              - 'apps/ui/**'
+              - 'tools/ui/**'
+              - 'tools/config/**'
+              - '.github/**'
+              - 'Makefile'
+              - '.nvmrc'
+            firmware:
+              - 'firmware/**'
+              - 'tools/firmware/**'
+              - 'apps/server/vibesensor/adapters/udp/protocol*.py'
+              - '.github/**'
+            shell:
+              - '**/*.sh'
+              - '**/*.sh.template'
+              - '.githooks/**'
+              - 'infra/pi-image/**'
+              - '.github/**'
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Set up configured Python runtime
-        id: setup-python
-        uses: ./.github/actions/setup-python
-
-      - name: Determine changed-file CI scope
-        id: scope
+      - uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
-        run: >-
-          "${{ steps.setup-python.outputs.python-path }}"
-          tools/tests/ci_changed_scope.py --github-output "$GITHUB_OUTPUT"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   backend-lint:
     name: Backend lint
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_lint == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-backend
 
@@ -69,34 +90,20 @@ jobs:
       - name: Ruff format check
         run: python -m ruff format --check apps/server/vibesensor apps/server/tests tools
 
-  repo-hygiene:
-    name: Repo hygiene
-    needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_repo_hygiene == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-backend
-
-      - name: Repo hygiene checks
-        run: |
-          python tools/dev/check_hygiene.py
-          python tools/dev/loc_check.py
+      - name: Import layer contracts
+        working-directory: apps/server
+        run: lint-imports --config pyproject.toml
 
   shell-lint:
     name: Shell lint
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_shell_lint == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.shell == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-python
 
@@ -108,35 +115,16 @@ jobs:
       - name: ShellCheck deployment scripts
         run: make shell-lint
 
-  backend-static-guards:
-    name: Backend static guards
-    needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_static_guards == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-backend
-
-      - name: Backend architecture checks
-        working-directory: apps/server
-        run: |
-          lint-imports --config pyproject.toml
-          python ../../tools/dev/verify_backend_static_guards.py
-
   backend-preflight:
     name: Backend preflight
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_preflight == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-backend
 
@@ -156,40 +144,21 @@ jobs:
       - name: Config preflight (pi)
         run: python -m vibesensor.cli.preflight apps/server/config.pi.yaml
 
-  docs-lint:
-    name: Docs lint
-    needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_docs_lint == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - id: setup-python
-        uses: ./.github/actions/setup-python
-
-      - name: Docs lint
-        run: >-
-          "${{ steps.setup-python.outputs.python-path }}"
-          tools/dev/docs_lint.py
-
   backend-contract-drift:
     name: Backend contract drift
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_contract_drift == 'true' }}
+      - changes
+    if: ${{ (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - id: setup-backend
         uses: ./.github/actions/setup-backend
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -211,13 +180,13 @@ jobs:
   backend-typecheck:
     name: Backend type check
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_typecheck == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-backend
 
@@ -230,15 +199,15 @@ jobs:
   frontend-quality:
     name: Frontend quality
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_frontend_typecheck == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -267,15 +236,15 @@ jobs:
   frontend-typecheck:
     name: Frontend type check
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_frontend_typecheck == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -307,20 +276,20 @@ jobs:
   ui-unit:
     name: UI unit tests
     needs:
-      - ci-scope
+      - changes
       - frontend-typecheck
     if: >-
       ${{
-        needs.ci-scope.outputs.run_frontend_typecheck == 'true' &&
+        needs.changes.outputs.frontend == 'true' &&
         needs.frontend-typecheck.result == 'success'
       }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -351,20 +320,20 @@ jobs:
   ui-smoke:
     name: UI smoke tests
     needs:
-      - ci-scope
+      - changes
       - frontend-typecheck
     if: >-
       ${{
-        needs.ci-scope.outputs.run_ui_smoke == 'true' &&
+        needs.changes.outputs.frontend == 'true' &&
         needs.frontend-typecheck.result == 'success'
       }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -374,7 +343,7 @@ jobs:
         uses: ./.github/actions/setup-python
 
       - id: playwright-browser-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('apps/ui/package-lock.json') }}
@@ -409,21 +378,21 @@ jobs:
   ui-build-artifact:
     name: UI build artifact
     needs:
-      - ci-scope
+      - changes
       - frontend-typecheck
     if: >-
       ${{
         always() &&
-        needs.ci-scope.outputs.run_release_smoke == 'true' &&
+        (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
         needs.frontend-typecheck.result == 'success'
       }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -454,12 +423,9 @@ jobs:
   release-smoke:
     name: Release smoke
     needs:
-      - ci-scope
+      - changes
       - backend-lint
-      - repo-hygiene
-      - backend-static-guards
       - backend-preflight
-      - docs-lint
       - backend-contract-drift
       - backend-typecheck
       - frontend-quality
@@ -468,12 +434,9 @@ jobs:
     if: >-
       ${{
         always() &&
-        needs.ci-scope.outputs.run_release_smoke == 'true' &&
+        (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
         needs.backend-lint.result != 'failure' &&
-        needs.repo-hygiene.result != 'failure' &&
-        needs.backend-static-guards.result != 'failure' &&
         needs.backend-preflight.result != 'failure' &&
-        needs.docs-lint.result != 'failure' &&
         needs.backend-contract-drift.result != 'failure' &&
         needs.backend-typecheck.result != 'failure' &&
         needs.frontend-quality.result != 'failure' &&
@@ -484,7 +447,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up configured Python runtime
         id: setup-python
@@ -510,29 +473,23 @@ jobs:
   firmware-native-tests:
     name: Firmware native tests
     needs:
-      - ci-scope
+      - changes
       - backend-lint
-      - repo-hygiene
-      - backend-static-guards
       - backend-preflight
-      - docs-lint
       - backend-contract-drift
     if: >-
       ${{
         always() &&
-        needs.ci-scope.outputs.run_firmware_native_tests == 'true' &&
+        needs.changes.outputs.firmware == 'true' &&
         needs.backend-lint.result != 'failure' &&
-        needs.repo-hygiene.result != 'failure' &&
-        needs.backend-static-guards.result != 'failure' &&
         needs.backend-preflight.result != 'failure' &&
-        needs.docs-lint.result != 'failure' &&
         needs.backend-contract-drift.result != 'failure'
       }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-backend
         with:
@@ -546,113 +503,28 @@ jobs:
         run: pio test -e native
 
   backend-tests:
-    name: Backend tests (shard ${{ matrix.shard_label }})
+    name: Backend tests
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_tests == 'true' }}
+      - changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - logical_job_name: "backend-tests-1"
-            shard_label: "1/5"
-            shard_index: 1
-            cache_suffix: 1
-            junitxml: "artifacts/ai/logs/ci/backend-tests-1.xml"
-            artifact_name: "backend-test-artifacts-1"
-          - logical_job_name: "backend-tests-2"
-            shard_label: "2/5"
-            shard_index: 2
-            cache_suffix: 2
-            junitxml: "artifacts/ai/logs/ci/backend-tests-2.xml"
-            artifact_name: "backend-test-artifacts-2"
-          - logical_job_name: "backend-tests-3"
-            shard_label: "3/5"
-            shard_index: 3
-            cache_suffix: 3
-            junitxml: "artifacts/ai/logs/ci/backend-tests-3.xml"
-            artifact_name: "backend-test-artifacts-3"
-          - logical_job_name: "backend-tests-4"
-            shard_label: "4/5"
-            shard_index: 4
-            cache_suffix: 4
-            junitxml: "artifacts/ai/logs/ci/backend-tests-4.xml"
-            artifact_name: "backend-test-artifacts-4"
-          - logical_job_name: "backend-tests-5"
-            shard_label: "5/5"
-            shard_index: 5
-            cache_suffix: 5
-            junitxml: "artifacts/ai/logs/ci/backend-tests-5.xml"
-            artifact_name: "backend-test-artifacts-5"
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
+      - uses: ./.github/actions/setup-backend
 
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/vibesensor/backend-duration-cache.json
-          # Keep each run's write key distinct while still restoring from the stable test-history prefix.
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-${{ matrix.cache_suffix }}-${{ github.run_id }}
-          # Avoid restoring duration caches from older test-suite hashes: stale timings can
-          # rebalance whole-file shards badly enough to trip the 15-minute backend-test timeout.
-          restore-keys: |
-            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-
-      - name: Prepare backend test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tests shard ${{ matrix.shard_label }}
-        env:
-          VIBESENSOR_BACKEND_XDIST_WORKERS: "3"
-          VIBESENSOR_BACKEND_SHARD_TIMEOUT_S: "780"
+      - name: Backend tests
         run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index ${{ matrix.shard_index }}
-          --junitxml ${{ matrix.junitxml }}
+          python -m pytest -q -m "not diagnostic_matrix" apps/server/tests
+          --junitxml artifacts/ai/logs/ci/backend-tests.xml
 
       - name: Upload backend test artifacts
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.artifact_name }}
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  backend-tooling-tests:
-    name: Backend tooling tests
-    needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_backend_tests == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up configured backend Python runtime
-        uses: ./.github/actions/setup-backend
-
-      - name: Prepare backend tooling test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tooling tests
-        run: >-
-          python -m pytest -q -m dev_tooling apps/server/tests/hygiene
-          --junitxml artifacts/ai/logs/ci/backend-tooling-tests.xml
-
-      - name: Upload backend tooling test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-tooling-test-artifacts
+          name: backend-test-artifacts
           path: artifacts/ai/logs/ci/
           if-no-files-found: ignore
           retention-days: 7
@@ -660,19 +532,19 @@ jobs:
   e2e:
     name: E2E
     needs:
-      - ci-scope
-    if: ${{ needs.ci-scope.outputs.run_e2e == 'true' }}
+      - changes
+    if: ${{ (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up configured backend Python runtime
         id: setup-backend
         uses: ./.github/actions/setup-backend
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/vibesensor/e2e-duration-cache.json
           key: ${{ runner.os }}-e2e-durations-${{ hashFiles('tools/tests/run_e2e_parallel.py', 'apps/server/tests_e2e/**/*.py') }}-${{ github.run_id }}

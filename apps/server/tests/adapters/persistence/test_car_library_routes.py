@@ -13,11 +13,12 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 from test_support import response_payload
+from test_support.routes import iter_api_routes
 
 
 def _get_endpoint(router, path: str):
     """Return the endpoint callable registered for *path*, or raise."""
-    for route in router.routes:
+    for route in iter_api_routes(router.routes):
         if getattr(route, "path", "") == path:
             return route.endpoint
     raise KeyError(f"Route not found: {path}")

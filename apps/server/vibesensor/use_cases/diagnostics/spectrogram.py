@@ -157,23 +157,6 @@ def aggregate_fft_spectrum(
     return sorted(result.items())
 
 
-def aggregate_fft_spectrum_raw(
-    samples: Sequence[Sample],
-    *,
-    freq_bin_hz: float = 2.0,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> list[tuple[float, float]]:
-    """Return the raw max-amplitude FFT spectrum."""
-    return aggregate_fft_spectrum(
-        samples,
-        freq_bin_hz=freq_bin_hz,
-        aggregation="max",
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Spectrogram
 # ---------------------------------------------------------------------------
@@ -311,19 +294,4 @@ def spectrogram_from_peaks(
         y_bins=[y + (freq_bin_hz / 2.0) for y in y_bins],
         cells=cells,
         max_amp=max_amp,
-    )
-
-
-def spectrogram_from_peaks_raw(
-    samples: Sequence[Sample],
-    *,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> SpectrogramResultData:
-    """Build the raw/max-amplitude spectrogram view."""
-    return spectrogram_from_peaks(
-        samples,
-        aggregation="max",
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
     )

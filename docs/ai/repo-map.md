@@ -36,7 +36,7 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 
 ## Backend layer DAG
 
-Enforced by `apps/server/pyproject.toml` import-linter config and `tools/dev/verify_backend_static_guards.py`.
+Enforced by the import-linter contracts in `apps/server/pyproject.toml`.
 
 | Layer | May import |
 |---|---|

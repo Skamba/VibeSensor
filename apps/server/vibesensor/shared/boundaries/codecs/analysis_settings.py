@@ -33,9 +33,6 @@ _ANALYSIS_SETTINGS_PAIRS: tuple[
     ("default_axle_for_speed", lambda snapshot: snapshot.default_axle_for_speed),
     ("final_drive_ratio", lambda snapshot: snapshot.final_drive_ratio),
     ("current_gear_ratio", lambda snapshot: snapshot.current_gear_ratio),
-    ("wheel_bandwidth_pct", lambda snapshot: snapshot.wheel_bandwidth_pct),
-    ("driveshaft_bandwidth_pct", lambda snapshot: snapshot.driveshaft_bandwidth_pct),
-    ("engine_bandwidth_pct", lambda snapshot: snapshot.engine_bandwidth_pct),
     ("speed_uncertainty_pct", lambda snapshot: snapshot.speed_uncertainty_pct),
     (
         "tire_diameter_uncertainty_pct",
@@ -46,8 +43,6 @@ _ANALYSIS_SETTINGS_PAIRS: tuple[
         lambda snapshot: snapshot.final_drive_uncertainty_pct,
     ),
     ("gear_uncertainty_pct", lambda snapshot: snapshot.gear_uncertainty_pct),
-    ("min_abs_band_hz", lambda snapshot: snapshot.min_abs_band_hz),
-    ("max_band_half_width_pct", lambda snapshot: snapshot.max_band_half_width_pct),
     ("tire_deflection_factor", lambda snapshot: snapshot.tire_deflection_factor),
 )
 
@@ -73,15 +68,10 @@ def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettings
         or "rear",
         final_drive_ratio=float_or(payload.get("final_drive_ratio")),
         current_gear_ratio=float_or(payload.get("current_gear_ratio")),
-        wheel_bandwidth_pct=float_or(payload.get("wheel_bandwidth_pct")),
-        driveshaft_bandwidth_pct=float_or(payload.get("driveshaft_bandwidth_pct")),
-        engine_bandwidth_pct=float_or(payload.get("engine_bandwidth_pct")),
         speed_uncertainty_pct=float_or(payload.get("speed_uncertainty_pct")),
         tire_diameter_uncertainty_pct=float_or(payload.get("tire_diameter_uncertainty_pct")),
         final_drive_uncertainty_pct=float_or(payload.get("final_drive_uncertainty_pct")),
         gear_uncertainty_pct=float_or(payload.get("gear_uncertainty_pct")),
-        min_abs_band_hz=float_or(payload.get("min_abs_band_hz")),
-        max_band_half_width_pct=float_or(payload.get("max_band_half_width_pct")),
         tire_deflection_factor=float_or(payload.get("tire_deflection_factor"), default=1.0),
     )
 

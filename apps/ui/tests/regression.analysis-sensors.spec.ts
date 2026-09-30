@@ -38,17 +38,17 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   await page.locator('[data-settings-tab="analysisTab"]').click();
 
   const guidanceHelp = page.locator("#analysisGuidanceHelp");
-  const bandwidthInput = page.locator("#wheelBandwidthInput");
+  const uncertaintyInput = page.locator("#speedUncertaintyInput");
 
-  await bandwidthInput.fill("120");
+  await uncertaintyInput.fill("120");
   await page.locator("#saveAnalysisBtn").click();
 
   await expect.poll(() => analysisPutCalls).toBe(0);
   await expect(guidanceHelp).toHaveAttribute("open", "");
-  await expect(bandwidthInput).toHaveAttribute("aria-invalid", "true");
-  await expect(bandwidthInput).toBeFocused();
-  await expect(page.locator("#wheelBandwidthGuidance")).toContainText(
-    "Wheel Bandwidth (%) must stay between 0.1% and 100%",
+  await expect(uncertaintyInput).toHaveAttribute("aria-invalid", "true");
+  await expect(uncertaintyInput).toBeFocused();
+  await expect(page.locator("#speedUncertaintyGuidance")).toContainText(
+    "Speed Uncertainty (%) must stay between 0% and 100%",
   );
 
   await guidanceHelp.evaluate((element) => {
@@ -59,14 +59,14 @@ test("analysis guidance can reopen and refocus after repeated invalid saves", as
   });
   await expect(guidanceHelp).not.toHaveAttribute("open", "");
 
-  await bandwidthInput.fill("130");
+  await uncertaintyInput.fill("130");
   await page.locator("#saveAnalysisBtn").click();
 
   await expect.poll(() => analysisPutCalls).toBe(0);
   await expect(guidanceHelp).toHaveAttribute("open", "");
-  await expect(bandwidthInput).toHaveAttribute("aria-invalid", "true");
-  await expect(bandwidthInput).toBeFocused();
-  await expect(bandwidthInput).toHaveValue("130");
+  await expect(uncertaintyInput).toHaveAttribute("aria-invalid", "true");
+  await expect(uncertaintyInput).toBeFocused();
+  await expect(uncertaintyInput).toHaveValue("130");
 });
 
 test("sensor row actions stay wired while live updates keep arriving", async ({

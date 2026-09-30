@@ -38,18 +38,17 @@ below.
 - `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` uses raw capture
    only to rebuild FFT-derived metrics for those already-persisted summary rows.
 - `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` is the
-   canonical offline executor. `PostAnalysisExecutionRunner` owns the
-   declarative top-level stage order, using `PostAnalysisExecutionConfig` for
-   loader/runner/builder dependencies:
+   canonical offline executor. `execute_post_analysis()` runs one explicit
+   sequence of stage functions, using `PostAnalysisExecutionConfig` only for
+   the loader and analysis-runner dependencies:
   `LoadRunStage`, `BuildPostAnalysisInputStage`,
   `BuildWholeRunSpectraStage`, `BuildWholeRunContextStage`,
   `BuildOrderTraceStage`, `BuildOrderTraceSummaryStage`,
   `BuildOrderFamilySummaryStage`, `BuildSpatialSummaryStage`,
   `PersistArtifactsStage`, `BuildReportFactsStage`, and
   `PersistAnalysisSummaryStage`.
-- `apps/server/vibesensor/use_cases/diagnostics/run_analysis.py` and
-  `analysis_pipeline.py` still provide the compact summary/report-facing
-  analysis path over summary-style `SensorFrame` samples.
+- `apps/server/vibesensor/use_cases/diagnostics/run_analysis.py` still
+  provides the compact summary/report-facing analysis path over summary-style `SensorFrame` samples.
 
 ### Raw capture and dense sidecars
 
@@ -65,9 +64,9 @@ below.
    `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
 - Indexed raw range reads exist through
    `RunPersistence.aload_raw_capture_sensor_range(...)`.
-- The current connected dense sidecar path is owned by
-  `apps/server/vibesensor/use_cases/run/post_analysis_whole_run_builders.py` and
-  the `whole_run_*` diagnostics modules:
+- The current connected dense sidecar path is owned by the whole-run stage
+  functions in `apps/server/vibesensor/use_cases/run/post_analysis_executor.py`
+  and the `whole_run_*` diagnostics modules:
   - `whole_run_spectra.py` builds deterministic whole-run spectral sidecars from
     `RawCaptureManifest` plus bounded raw range reads, emitting spectral
     grids/matrices plus per-window compact spectral summaries.
@@ -85,9 +84,6 @@ below.
     windows and compact spatial summaries.
 - `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
   persists dense sidecar artifacts under `data/whole-run-artifacts/{run_id}/`.
-- The older `post_run_*` modules remain useful support/prototype code for legacy
-   dense DTOs and alternate bounded-window iteration, but they are not the
-   currently connected sidecar pipeline in `execute_post_analysis()`.
 
 ### Persisted analysis and reporting
 
@@ -145,11 +141,11 @@ raw capture manifest/files (#3065)
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `whole_run_spectra.py` resolves each window to bounded raw range reads |
-| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py`, `post_run_window_features.py`, and `post_run_vibration_episodes.py` remain support/prototype seams |
-| Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments; `post_run_vehicle_reference.py` owns the conservative vehicle-reference timeline for dense stages |
-| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability; `post_run_order_bands.py` owns the pre-classification per-window expected band grid |
+| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
+| Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
+| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
-| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts; `post_run_dense_findings.py` owns the first compact episode/order fusion DTO and compatibility projection |
+| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts |
 
 ## Early design decisions
 
@@ -319,7 +315,7 @@ The report path can still project compact location proof from these summaries,
 but the source artifact should be candidate-aware and whole-run aware.
 
 The current contract owner is
-`apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py`.
+`apps/server/vibesensor/shared/types/spatial_evidence_contracts.py`.
 It now settles:
 
 - dense `SpatialEvidenceWindow` rows keyed by
@@ -360,7 +356,7 @@ derived from supporting-window evidence.
 Support and counterevidence now use one shared persisted vocabulary instead of
 renderer-only prose. The canonical owner is the combination of:
 
-- `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`
+- `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`
   for compact persisted diagnosis rows
 - `apps/server/vibesensor/shared/types/history_analysis_contracts.py` for the
   outward history/report/schema contract
@@ -399,7 +395,7 @@ typed details payload so later fusion/report work can explain why a diagnosis
 ranked where it did without reparsing report prose.
 
 The contract owner for the fused output should now live in
-`apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`.
+`apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`.
 That layer should settle:
 
 - compact `WholeRunDiagnosisSummary` rows persisted as
@@ -433,10 +429,10 @@ scoring path instead of creating a second threshold table.
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
 | `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
 | `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` with compact report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
-| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
-| `SpatialEvidenceSummary` | `apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
+| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/shared/types/order_trace_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
+| `SpatialEvidenceSummary` | `apps/server/vibesensor/shared/types/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
 | `WholeRunSpatialAlignmentMatrix` / `AlignedSpatialWindow` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py` | Deterministic per-window sensor joins with explicit coverage-state semantics for later spatial scoring |
-| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py` with persisted projection in `shared/types/history_analysis_contracts.py` | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
+| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py` with persisted projection in `shared/types/history_analysis_contracts.py` | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
 
 For the context track:
 

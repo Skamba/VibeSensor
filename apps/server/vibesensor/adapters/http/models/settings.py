@@ -32,15 +32,10 @@ class AnalysisSettingsRequest(_FrozenBase):
     default_axle_for_speed: Literal["front", "rear", "average"] | None = None
     final_drive_ratio: float | None = Field(default=None, gt=0)
     current_gear_ratio: float | None = Field(default=None, gt=0)
-    wheel_bandwidth_pct: float | None = Field(default=None, gt=0)
-    driveshaft_bandwidth_pct: float | None = Field(default=None, gt=0)
-    engine_bandwidth_pct: float | None = Field(default=None, gt=0)
     speed_uncertainty_pct: float | None = Field(default=None, ge=0)
     tire_diameter_uncertainty_pct: float | None = Field(default=None, ge=0)
     final_drive_uncertainty_pct: float | None = Field(default=None, ge=0)
     gear_uncertainty_pct: float | None = Field(default=None, ge=0)
-    min_abs_band_hz: float | None = Field(default=None, ge=0)
-    max_band_half_width_pct: float | None = Field(default=None, gt=0)
     tire_deflection_factor: float | None = Field(default=None, ge=0.85, le=1.0)
 
 
@@ -234,13 +229,8 @@ class AnalysisSettingsResponse(BaseModel):
     default_axle_for_speed: Literal["front", "rear", "average"] = "rear"
     final_drive_ratio: float
     current_gear_ratio: float
-    wheel_bandwidth_pct: float
-    driveshaft_bandwidth_pct: float
-    engine_bandwidth_pct: float
     speed_uncertainty_pct: float
     tire_diameter_uncertainty_pct: float
     final_drive_uncertainty_pct: float
     gear_uncertainty_pct: float
-    min_abs_band_hz: float
-    max_band_half_width_pct: float
     tire_deflection_factor: float

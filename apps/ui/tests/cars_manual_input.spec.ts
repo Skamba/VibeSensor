@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   createCarsManualInputStore,
   type CarsFeatureManualInputState,
-} from "../src/app/features/cars_manual_input";
+} from "../src/app/features/cars_wizard_state";
 import { effect, signal } from "../src/app/ui_signals";
 
 function formatManualInputs(inputs: CarsFeatureManualInputState): string {

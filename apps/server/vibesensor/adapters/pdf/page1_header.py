@@ -22,7 +22,7 @@ from vibesensor.adapters.pdf.pdf_text import _draw_text, _truncate_single_line
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import Page1RenderPlan
-    from vibesensor.shared.boundaries.reporting.document import VerdictPageData
+    from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 
 __all__ = ["draw_header_strip", "draw_hero_block"]
 

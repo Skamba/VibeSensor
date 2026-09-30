@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.sections import (
     TimelineGraphData,
     TimelineGraphInterval,
 )
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
 
 __all__ = ["build_timeline_graph_data"]
 

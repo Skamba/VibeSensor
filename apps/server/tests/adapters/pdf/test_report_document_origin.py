@@ -9,7 +9,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.domain import VibrationOrigin
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.boundaries.summary_fields.origin import (
     build_origin_explanation,

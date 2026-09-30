@@ -7,16 +7,15 @@ from pypdf import PdfReader
 from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
     AppendixCData,
-    DataTrustItem,
-    NextStep,
     RankedCandidateRow,
-    ReportDocument,
     ReportLabelValueRow,
-    VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import DataTrustItem, NextStep
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 
 
 def _normalized_pdf_text(pdf_bytes: bytes) -> str:

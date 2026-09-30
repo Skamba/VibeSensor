@@ -18,9 +18,13 @@ from vibesensor.shared.run_context_warning import (
     normalize_run_context_warnings,
 )
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    WholeRunDiagnosisSummary,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
     WholeRunOrderFamilySummaryArtifactBundle,
@@ -33,13 +37,9 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
 )
-from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
     WholeRunContextArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
-    WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (
     build_whole_run_diagnosis_summaries,

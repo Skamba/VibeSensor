@@ -5,7 +5,7 @@ from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
 

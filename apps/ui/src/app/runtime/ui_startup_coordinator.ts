@@ -1,5 +1,15 @@
-import type { UiStartupFeaturePorts } from "./ui_startup_feature_ports";
 import { uiLogger } from "../../ui_logger";
+
+/** Startup-only feature loads run once the shell has started. */
+export type UiStartupFeatures = {
+  dashboard: {
+    hydrateStartupState(): Promise<void>;
+  };
+  realtime: {
+    refreshLocationOptions(): Promise<void>;
+    refreshLoggingStatus(): Promise<void>;
+  };
+};
 
 type StartupShell = {
   start(defaultViewId: string): void;
@@ -15,7 +25,7 @@ type StartupWarn = (message: string, error: unknown) => void;
 type UiStartupCoordinatorDeps = {
   shell: StartupShell;
   transport: StartupTransport;
-  features: UiStartupFeaturePorts;
+  features: UiStartupFeatures;
   defaultViewId: string;
   warn?: StartupWarn;
 };
@@ -36,7 +46,7 @@ export class UiStartupCoordinator {
 
   private readonly transport: StartupTransport;
 
-  private readonly features: UiStartupFeaturePorts;
+  private readonly features: UiStartupFeatures;
 
   private readonly defaultViewId: string;
 

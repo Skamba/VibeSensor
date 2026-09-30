@@ -8,10 +8,11 @@ from dataclasses import dataclass
 
 import msgspec
 
-from vibesensor.shared.boundaries.codecs import (
+from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
 )
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.runs._metadata_codecs import (
     PayloadFieldSpec,
     bool_decoder,
@@ -37,15 +38,16 @@ from vibesensor.shared.boundaries.runs._metadata_sections import (
     symptom_from_payload,
     symptom_to_json_object,
 )
-from vibesensor.shared.boundaries.runs.car import (
-    run_car_metadata_from_mapping,
-    run_car_metadata_to_json_object,
+from vibesensor.shared.types.car_config import (
+    car_order_reference_status_from_mapping,
+    car_order_reference_status_json_object_from_domain,
 )
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_schema import (
     PEAK_PICKER_METHOD,
     RUN_METADATA_TYPE,
     RUN_SCHEMA_VERSION,
+    RunCarMetadata,
     RunMetadata,
 )
 
@@ -319,3 +321,50 @@ def run_metadata_to_json_bytes(metadata: RunMetadata) -> bytes:
         strict=False,
     )
     return msgspec.json.encode(record)
+
+
+def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:
+    """Decode one raw mapping into the minimal persisted run-car metadata model."""
+
+    if not isinstance(payload, Mapping):
+        return None
+    run_car = RunCarMetadata(
+        car_id=text_or_none(payload.get("id")),
+        name=text_or_none(payload.get("name")),
+        car_type=text_or_none(payload.get("type")),
+        variant=text_or_none(payload.get("variant")),
+        order_reference_status=(
+            car_order_reference_status_from_mapping(order_reference_status)
+            if isinstance(
+                (order_reference_status := payload.get("order_reference_status")),
+                Mapping,
+            )
+            else None
+        ),
+    )
+    if (
+        run_car.car_id is None
+        and run_car.name is None
+        and run_car.car_type is None
+        and run_car.variant is None
+    ):
+        return None
+    return run_car
+
+
+def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObject | None:
+    """Project typed run-car metadata into the canonical persisted JSON shape."""
+
+    if run_car is None:
+        return None
+    payload: JsonObject = {
+        "id": run_car.car_id,
+        "name": run_car.name,
+        "type": run_car.car_type,
+        "variant": run_car.variant,
+    }
+    if run_car.order_reference_status is not None:
+        payload["order_reference_status"] = car_order_reference_status_json_object_from_domain(
+            run_car.order_reference_status
+        )
+    return payload

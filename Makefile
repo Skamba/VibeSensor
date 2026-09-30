@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean pristine format shell-lint lint maintainability-check typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-golden-replay test-diagnostic-matrix test-tooling plan-validation test-ci-fast test-ci-lite test-all test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev clean pristine format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-golden-replay test-diagnostic-matrix ci test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -89,18 +89,15 @@ shell-lint: ## Run ShellCheck over deployment, hook, and Pi-image shell scripts
 	@$(RESOLVE_PYTHON) \
 	shellcheck --severity=warning -x -s bash $$("$$PYTHON" tools/dev/shellcheck_targets.py)
 
-lint: ## Run repo hygiene, dependency/static guards, docs lint, and contract drift checks
+lint: ## Run Ruff, ShellCheck, dependency/import-layer checks, config preflight, and contract drift checks
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
-	"$$PYTHON" tools/dev/check_hygiene.py && \
-	"$$PYTHON" tools/dev/loc_check.py && \
 	$(MAKE) --no-print-directory shell-lint && \
-	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
+	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \
-	"$$PYTHON" tools/dev/docs_lint.py && \
 	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts -- --check
 
 typecheck-backend: ## Run backend mypy checks
@@ -110,13 +107,9 @@ typecheck-backend: ## Run backend mypy checks
 typecheck: ## Run backend and UI type checks
 typecheck: typecheck-backend ui-typecheck
 
-test: ## Run the fast backend pytest suite
+test: ## Run the backend pytest suite (excludes opt-in diagnostic matrices)
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m pytest -q -m "not dev_tooling" apps/server/tests
-
-test-changed: ## Run heuristic checks for files changed vs origin/main
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_changed.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
+	"$$PYTHON" -m pytest -q -m "not diagnostic_matrix" apps/server/tests
 
 test-golden-replay: ## Run fast generated dense post-run golden replay tests
 	@$(RESOLVE_PYTHON) \
@@ -124,27 +117,10 @@ test-golden-replay: ## Run fast generated dense post-run golden replay tests
 
 test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices excluded from default backend CI
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_backend_parallel.py --include-diagnostic-matrix
+	"$$PYTHON" -m pytest -q -m diagnostic_matrix apps/server/tests
 
-test-tooling: ## Run developer/CI tooling tests excluded from default backend shards
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m pytest -q -m dev_tooling apps/server/tests/hygiene
-
-plan-validation: ## Plan changed-file validation from CI path rules
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/plan_validation.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
-
-test-ci-fast: ## Run fast local CI gates without browser, release, firmware, e2e, or backend test suites
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_ci_parallel.py --ci-fast
-
-test-ci-lite: ## Run non-Docker workflow jobs except E2E locally
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_ci_parallel.py --ci-lite
-
-test-all: ## Run the broader local CI runner
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_ci_parallel.py
+ci: ## Run the main local CI gates: lint, type checks, backend tests, and UI unit tests
+ci: lint typecheck test ui-test
 
 test-full-suite: ## Run the full end-to-end suite locally
 	@$(RESOLVE_PYTHON) \
@@ -175,17 +151,6 @@ smoke: ## Run simulator and websocket smoke checks against a local server
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m vibesensor.adapters.simulator.sim_sender --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server && \
 	"$$PYTHON" -m vibesensor.adapters.simulator.ws_smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
-
-maintainability-check: ## Run file/function size maintainability gate
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/dev/loc_check.py
-
-loc: ## Run the repo file/function size maintainability gate
-loc: maintainability-check
-
-docs-lint: ## Run docs lint without the broader lint suite
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/dev/docs_lint.py
 
 ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint

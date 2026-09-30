@@ -25,14 +25,14 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import (
-    NextStep,
-    ReportDocument,
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
+from vibesensor.shared.boundaries.reporting.document.sections import (
     TimelineGraphData,
     TimelineGraphInterval,
     VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 _I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"

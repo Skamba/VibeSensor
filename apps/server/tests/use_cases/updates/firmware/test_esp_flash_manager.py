@@ -9,6 +9,7 @@ import pytest
 from fastapi import HTTPException
 from test_support import response_payload
 from test_support.firmware_bundles import write_firmware_bundle
+from test_support.routes import iter_api_routes
 
 from vibesensor.adapters.http.updates import create_update_routes
 from vibesensor.shared.exceptions import ConfigurationError, UpdateError
@@ -146,7 +147,7 @@ def _build_manager(
 
 
 def _route_endpoint(router, path: str, method: str):
-    for route in router.routes:
+    for route in iter_api_routes(router.routes):
         if getattr(route, "path", "") == path and method in getattr(route, "methods", set()):
             return route.endpoint
     raise AssertionError(f"Route not found: {path} [{method}]")
@@ -447,7 +448,7 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
     """EspFlashStartRequest must reject auto_detect=False with no port."""
     from pydantic import ValidationError
 
-    from vibesensor.adapters.http.models import EspFlashStartRequest
+    from vibesensor.adapters.http.models.updates import EspFlashStartRequest
 
     with pytest.raises(ValidationError):
         EspFlashStartRequest(port=None, auto_detect=False)
@@ -496,7 +497,7 @@ async def test_esp_flash_start_returns_400_on_configuration_error() -> None:
     router = create_update_routes(state.update_manager, state.esp_flash_manager)
 
     start_endpoint = None
-    for route in router.routes:
+    for route in iter_api_routes(router.routes):
         path_match = getattr(route, "path", "") == "/api/esp-flash/start"
         method_match = "POST" in getattr(route, "methods", set())
         if path_match and method_match:

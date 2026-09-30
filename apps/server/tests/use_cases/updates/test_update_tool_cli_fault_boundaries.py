@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -62,52 +63,6 @@ def test_fetch_latest_wheel_cli_prints_release_and_downloaded_artifact(
     assert wheel_path.is_file()
 
 
-def test_fetch_latest_wheel_cli_exits_for_operational_value_error(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    monkeypatch.setattr(sys, "argv", ["vibesensor-release-fetch"])
-
-    class _BrokenFetcher:
-        def __init__(self, _config) -> None:
-            pass
-
-        def find_latest_release(self) -> object:
-            raise ValueError("bad release metadata")
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.updates.releases.cli.ServerReleaseFetcher",
-        _BrokenFetcher,
-    )
-
-    with pytest.raises(SystemExit, match="1"):
-        fetch_latest_wheel_cli()
-
-    captured = capsys.readouterr()
-    assert "ERROR: bad release metadata" in captured.err
-
-
-def test_fetch_latest_wheel_cli_allows_programmer_errors_to_surface(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(sys, "argv", ["vibesensor-release-fetch"])
-
-    class _BrokenFetcher:
-        def __init__(self, _config) -> None:
-            pass
-
-        def find_latest_release(self) -> object:
-            raise AssertionError("programmer bug")
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.updates.releases.cli.ServerReleaseFetcher",
-        _BrokenFetcher,
-    )
-
-    with pytest.raises(AssertionError, match="programmer bug"):
-        fetch_latest_wheel_cli()
-
-
 def test_refresh_cache_cli_prints_refreshed_cache_metadata(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -159,47 +114,65 @@ def test_refresh_cache_cli_prints_refreshed_cache_metadata(
     assert f"Source: downloaded, SHA256: {'b' * 64}" in captured.out
 
 
-def test_refresh_cache_cli_exits_for_operational_os_error(
+_FETCH_CLI = (
+    fetch_latest_wheel_cli,
+    "vibesensor.use_cases.updates.releases.cli.ServerReleaseFetcher",
+    "find_latest_release",
+)
+_REFRESH_CLI = (
+    refresh_cache_cli,
+    "vibesensor.use_cases.updates.firmware.firmware_cache.FirmwareCache",
+    "refresh",
+)
+
+
+@pytest.mark.parametrize(
+    ("cli", "error", "expected_stderr"),
+    [
+        pytest.param(
+            _FETCH_CLI,
+            ValueError("bad release metadata"),
+            "ERROR: bad release metadata",
+            id="fetch-operational-value-error-exits",
+        ),
+        pytest.param(
+            _REFRESH_CLI,
+            OSError("network down"),
+            "ERROR: Firmware cache refresh failed: network down",
+            id="refresh-operational-os-error-exits",
+        ),
+        pytest.param(
+            _FETCH_CLI, AssertionError("programmer bug"), None, id="fetch-programmer-error-surfaces"
+        ),
+        pytest.param(
+            _REFRESH_CLI,
+            AssertionError("programmer bug"),
+            None,
+            id="refresh-programmer-error-surfaces",
+        ),
+    ],
+)
+def test_update_tool_cli_fault_boundaries(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    cli: tuple[Callable[[], None], str, str],
+    error: Exception,
+    expected_stderr: str | None,
 ) -> None:
-    monkeypatch.setattr(sys, "argv", ["vibesensor-fw-refresh"])
+    """Operational errors exit 1 with a message; programmer errors propagate unchanged."""
+    entrypoint, collaborator_path, failing_method = cli
+    monkeypatch.setattr(sys, "argv", ["vibesensor-cli"])
 
-    class _BrokenCache:
-        def __init__(self, _config) -> None:
-            pass
+    def _raise(self: object) -> object:
+        raise error
 
-        def refresh(self) -> object:
-            raise OSError("network down")
+    broken = type("_Broken", (), {"__init__": lambda self, _config: None, failing_method: _raise})
+    monkeypatch.setattr(collaborator_path, broken)
 
-    monkeypatch.setattr(
-        "vibesensor.use_cases.updates.firmware.firmware_cache.FirmwareCache",
-        _BrokenCache,
-    )
-
+    if expected_stderr is None:
+        with pytest.raises(type(error), match=str(error)):
+            entrypoint()
+        return
     with pytest.raises(SystemExit, match="1"):
-        refresh_cache_cli()
-
-    captured = capsys.readouterr()
-    assert "ERROR: Firmware cache refresh failed: network down" in captured.err
-
-
-def test_refresh_cache_cli_allows_programmer_errors_to_surface(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(sys, "argv", ["vibesensor-fw-refresh"])
-
-    class _BrokenCache:
-        def __init__(self, _config) -> None:
-            pass
-
-        def refresh(self) -> object:
-            raise AssertionError("programmer bug")
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.updates.firmware.firmware_cache.FirmwareCache",
-        _BrokenCache,
-    )
-
-    with pytest.raises(AssertionError, match="programmer bug"):
-        refresh_cache_cli()
+        entrypoint()
+    assert expected_stderr in capsys.readouterr().err

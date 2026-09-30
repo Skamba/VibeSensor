@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    PatternEvidence,
-    VerdictPageData,
-)
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
+from vibesensor.shared.boundaries.reporting.document.panels import PatternEvidence
+from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
@@ -32,7 +30,7 @@ from .section_context import VerdictPageContext
 from .timeline_graph import build_timeline_graph_data
 
 if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
     from .document_context import ReportDocumentContext
 
@@ -61,7 +59,7 @@ def build_verdict_page_data(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_confidence: ReportConfidenceFacts,
-    diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary],
+    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary],
     duration_text: str | None,
     verdict_context: VerdictPageContext,
     suitability_checks: Sequence[SuitabilityCheck],

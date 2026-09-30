@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.domain.vibration_origin import VibrationOrigin
 
-from ._analysis_models import FindingsBuilder, FindingsBundle, PreparedAnalysisContext
+from ._analysis_models import FindingsBundle, PreparedAnalysisContext
 from .findings import _build_findings
 from .run_analysis_projection import build_phase_timeline
 from .top_cause_selection import select_top_causes
@@ -12,15 +12,10 @@ from .top_cause_selection import select_top_causes
 __all__ = ["build_findings_bundle"]
 
 
-def build_findings_bundle(
-    context: PreparedAnalysisContext,
-    *,
-    findings_builder: FindingsBuilder | None = None,
-) -> FindingsBundle:
+def build_findings_bundle(context: PreparedAnalysisContext) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
 
-    builder = findings_builder or _build_findings
-    domain_findings = builder(context.findings_request())
+    domain_findings = _build_findings(context.findings_request())
     domain_findings = tuple(
         finding
         if finding.confidence_assessment is not None

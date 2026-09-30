@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import pytest
 from test_support.findings import make_finding_payload
 from test_support.pdf import extract_pdf_text
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.history.report_document import build_report_document
 
 
@@ -135,110 +136,60 @@ def test_build_report_pdf_renders_missing_reference_caveat() -> None:
     assert "6/8 (75%); lock 81%" in text
 
 
-def test_build_report_document_projects_dense_quality_caveat() -> None:
+_LIMITED_QUALITY = {
+    "mean_quality_score": 0.62,
+    "limited_window_count": 3,
+    "excluded_window_count": 2,
+}
+_MOUNTING_QUALITY = {"mean_quality_score": 0.86, "limited_window_count": 2}
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected_caveat"),
+    [
+        pytest.param({"drift_score": 0.3}, "Frequency drift across the run", id="frequency-drift"),
+        pytest.param(
+            _LIMITED_QUALITY,
+            "Usable window quality 62%; limited 3, excluded 2",
+            id="limited-window-quality",
+        ),
+        pytest.param(
+            {**_LIMITED_QUALITY, "shock_transient_window_count": 2},
+            "Road-shock windows filtered: 2",
+            id="shock-windows",
+        ),
+        pytest.param(
+            {**_LIMITED_QUALITY, "sensor_clipping_window_count": 2},
+            "Sensor clipping windows filtered: 2",
+            id="sensor-clipping",
+        ),
+        pytest.param(
+            {**_MOUNTING_QUALITY, "sensor_mounting_artifact_window_count": 2},
+            "Sensor mounting artifact windows limited diagnosis: 2",
+            id="sensor-mounting-artifact",
+        ),
+        pytest.param(
+            {**_MOUNTING_QUALITY, "sensor_timing_integrity_window_count": 2},
+            "Sensor timing integrity windows limited diagnosis: 2",
+            id="sensor-timing-integrity",
+        ),
+        pytest.param(
+            {"speed_context_limited_window_count": 3},
+            "Speed context limited order diagnosis: 3",
+            id="limited-speed-context",
+        ),
+    ],
+)
+def test_build_report_document_projects_dense_quality_caveat(
+    overrides: dict[str, object],
+    expected_caveat: str,
+) -> None:
     summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "drift_score": 0.3,
-        }
+        order_summary_overrides={"reference_coverage_ratio": 1.0, **overrides},
     )
     document = build_report_document(prepare_report_input(summary))
 
-    assert document.appendix_c.dense_evidence_rows[0].caveat == ("Frequency drift across the run")
-
-
-def test_build_report_document_projects_limited_window_quality_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "mean_quality_score": 0.62,
-            "limited_window_count": 3,
-            "excluded_window_count": 2,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == (
-        "Usable window quality 62%; limited 3, excluded 2"
-    )
-
-
-def test_build_report_document_projects_shock_window_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "mean_quality_score": 0.62,
-            "limited_window_count": 3,
-            "excluded_window_count": 2,
-            "shock_transient_window_count": 2,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == ("Road-shock windows filtered: 2")
-
-
-def test_build_report_document_projects_sensor_clipping_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "mean_quality_score": 0.62,
-            "limited_window_count": 3,
-            "excluded_window_count": 2,
-            "sensor_clipping_window_count": 2,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == (
-        "Sensor clipping windows filtered: 2"
-    )
-
-
-def test_build_report_document_projects_sensor_mounting_artifact_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "mean_quality_score": 0.86,
-            "limited_window_count": 2,
-            "sensor_mounting_artifact_window_count": 2,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == (
-        "Sensor mounting artifact windows limited diagnosis: 2"
-    )
-
-
-def test_build_report_document_projects_sensor_timing_integrity_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "mean_quality_score": 0.86,
-            "limited_window_count": 2,
-            "sensor_timing_integrity_window_count": 2,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == (
-        "Sensor timing integrity windows limited diagnosis: 2"
-    )
-
-
-def test_build_report_document_projects_limited_speed_context_caveat() -> None:
-    summary = _dense_summary(
-        order_summary_overrides={
-            "reference_coverage_ratio": 1.0,
-            "speed_context_limited_window_count": 3,
-        }
-    )
-    document = build_report_document(prepare_report_input(summary))
-
-    assert document.appendix_c.dense_evidence_rows[0].caveat == (
-        "Speed context limited order diagnosis: 3"
-    )
+    assert document.appendix_c.dense_evidence_rows[0].caveat == expected_caveat
 
 
 def test_build_report_document_skips_dense_evidence_when_artifacts_are_unavailable() -> None:

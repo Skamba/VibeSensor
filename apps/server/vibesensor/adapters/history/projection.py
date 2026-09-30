@@ -6,9 +6,10 @@ from collections.abc import Callable, Mapping
 from typing import cast
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.analysis_payloads import (
-    project_analysis_summary,
-    project_persisted_analysis,
+from vibesensor.domain.test_run import TestRun
+from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
 )
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     report_analysis_metadata_from_mapping,
@@ -26,6 +27,13 @@ from vibesensor.shared.boundaries.reporting.summary import (
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
+)
+from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.summary_fields.origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.summary_fields.test_plan import (
+    _has_structured_step_content,
+    step_payloads_from_plan,
 )
 from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -211,3 +219,38 @@ def build_projected_run_details_json(
         sample_count=sample_count,
         run_id=run_id,
     )
+
+
+def _project_analysis_payload(
+    analysis: Mapping[str, object],
+    *,
+    test_run: TestRun,
+) -> JsonObject:
+    projected: dict[str, object] = dict(analysis)
+    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
+    projected["top_causes"] = [
+        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+    ]
+    primary = test_run.primary_finding
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(primary) if primary is not None else {}
+    )
+    if not _has_structured_step_content(analysis.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+    return cast(JsonObject, projected)
+
+
+def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
+    """Reconstruct and re-serialize an outward analysis summary."""
+    test_run = test_run_from_summary(analysis)
+    return _project_analysis_payload(analysis, test_run=test_run), test_run
+
+
+def project_persisted_analysis(
+    analysis: PersistedAnalysis,
+) -> tuple[JsonObject, TestRun]:
+    """Reconstruct and re-serialize storage-owned persisted analysis."""
+    payload = analysis.to_json_object()
+    test_run = test_run_from_persisted_analysis(analysis)
+    return _project_analysis_payload(payload, test_run=test_run), test_run

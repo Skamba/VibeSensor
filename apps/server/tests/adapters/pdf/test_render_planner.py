@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from vibesensor.adapters.pdf.render_planner import build_report_render_plan
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
-    NextStep,
-    ReportDocument,
     ReportLabelValueRow,
 )
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
 
 
 def _document(**overrides: object) -> ReportDocument:

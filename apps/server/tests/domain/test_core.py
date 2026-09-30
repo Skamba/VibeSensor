@@ -48,81 +48,36 @@ class TestMeasurement:
         with pytest.raises(AttributeError):
             sample.x = 1.0
 
-    def test_to_vibration_reading_db_formula(self) -> None:
-        """Verify the dB conversion matches the canonical formula."""
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        noise_floor = 0.001
-        peak = math.sqrt(0.1**2)
+    @pytest.mark.parametrize(
+        ("axes", "noise_floor"),
+        [
+            pytest.param((0.1, 0.0, 0.0), 0.001, id="single-axis"),
+            pytest.param((0.03, 0.04, 0.0), 0.001, id="multi-axis-euclidean-peak"),
+            pytest.param((0.05, 0.0, 0.0), 0.0, id="zero-noise-floor-stays-finite"),
+        ],
+    )
+    def test_to_vibration_reading(
+        self, axes: tuple[float, float, float], noise_floor: float
+    ) -> None:
+        """Readings carry the canonical dB, Euclidean peak, sample identity and no spectrum."""
+        x, y, z = axes
+        sample = Measurement(x=x, y=y, z=z, timestamp=_NOW, sample_rate_hz=4096, sensor_id="abc123")
+        expected_peak = math.sqrt(x**2 + y**2 + z**2)
         expected_db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=peak,
+            peak_band_rms_amp_g=expected_peak,
             floor_amp_g=noise_floor,
         )
         reading = sample.to_vibration_reading(
-            noise_floor,
-            intensity_db=expected_db,
-            strength_bucket=bucket_for_strength(expected_db),
-        )
-        assert reading.intensity_db == pytest.approx(expected_db)
-        assert reading.peak_amplitude_g == pytest.approx(peak)
-        assert reading.noise_floor_g == noise_floor
-
-    def test_to_vibration_reading_multi_axis(self) -> None:
-        """Peak amplitude is the Euclidean magnitude across all three axes."""
-        sample = Measurement(x=0.03, y=0.04, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        expected_peak = math.sqrt(0.03**2 + 0.04**2)
-        expected_db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=expected_peak,
-            floor_amp_g=0.001,
-        )
-        reading = sample.to_vibration_reading(
-            noise_floor=0.001,
-            intensity_db=expected_db,
-            strength_bucket=bucket_for_strength(expected_db),
-        )
-        assert reading.peak_amplitude_g == pytest.approx(expected_peak)
-
-    def test_to_vibration_reading_zero_noise_floor(self) -> None:
-        """Zero noise floor should not cause a math error."""
-        sample = Measurement(x=0.05, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.05, floor_amp_g=0.0)
-        reading = sample.to_vibration_reading(
-            noise_floor=0.0,
+            noise_floor=noise_floor,
             intensity_db=expected_db,
             strength_bucket=bucket_for_strength(expected_db),
         )
         assert math.isfinite(reading.intensity_db)
-
-    def test_to_vibration_reading_frequency_is_zero(self) -> None:
-        """Single-sample readings carry no spectral info → frequency_hz == 0."""
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.1, floor_amp_g=0.001)
-        reading = sample.to_vibration_reading(
-            noise_floor=0.001,
-            intensity_db=expected_db,
-            strength_bucket=bucket_for_strength(expected_db),
-        )
+        assert reading.intensity_db == pytest.approx(expected_db)
+        assert reading.peak_amplitude_g == pytest.approx(expected_peak)
+        assert reading.noise_floor_g == noise_floor
         assert reading.frequency_hz == 0.0
-
-    def test_to_vibration_reading_preserves_sensor_id(self) -> None:
-        sample = Measurement(
-            x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096, sensor_id="abc123"
-        )
-        expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.1, floor_amp_g=0.001)
-        reading = sample.to_vibration_reading(
-            noise_floor=0.001,
-            intensity_db=expected_db,
-            strength_bucket=bucket_for_strength(expected_db),
-        )
         assert reading.sensor_id == "abc123"
-
-    def test_to_vibration_reading_preserves_timestamp(self) -> None:
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.1, floor_amp_g=0.001)
-        reading = sample.to_vibration_reading(
-            noise_floor=0.001,
-            intensity_db=expected_db,
-            strength_bucket=bucket_for_strength(expected_db),
-        )
         assert reading.timestamp == _NOW
 
     def test_peak_amplitude_g_returns_euclidean_magnitude(self) -> None:

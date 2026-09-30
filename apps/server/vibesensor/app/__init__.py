@@ -1,5 +1,1 @@
-"""Lightweight application package facade for explicit startup entrypoints."""
-
-from .bootstrap import create_app, create_app_from_env, main
-
-__all__ = ["create_app", "create_app_from_env", "main"]
+"""Application composition root, config loading, and the FastAPI/Granian bootstrap."""

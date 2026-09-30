@@ -6,7 +6,7 @@ from test_support.core import standard_metadata
 from test_support.sample_scenarios import make_sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.history.report_document import build_report_document
 

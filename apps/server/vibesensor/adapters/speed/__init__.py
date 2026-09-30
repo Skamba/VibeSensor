@@ -1,7 +1,6 @@
-"""Speed-source observation, control, and OBD admin adapters."""
+"""Speed-source observation and control adapters."""
 
 from .source_coordinator import (
-    SpeedSourceAdminService,
     SpeedSourceControlService,
     SpeedSourceObservationService,
     SpeedSourceServices,
@@ -9,7 +8,6 @@ from .source_coordinator import (
 )
 
 __all__ = [
-    "SpeedSourceAdminService",
     "SpeedSourceControlService",
     "SpeedSourceObservationService",
     "SpeedSourceServices",

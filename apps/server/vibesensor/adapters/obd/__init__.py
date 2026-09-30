@@ -1,22 +1,12 @@
-"""Bluetooth OBD runtime/admin adapters."""
+"""Bluetooth OBD speed/RPM adapters."""
 
 from .admin_client import ObdAdminClient
 from .models import ObdDeviceSnapshot, ObdStatusSnapshot
-from .runtime_services import (
-    ObdRuntime,
-    ObdRuntimeConnection,
-    ObdRuntimeControl,
-    ObdRuntimeObservation,
-    build_obd_runtime,
-)
+from .service import ObdService
 
 __all__ = [
     "ObdAdminClient",
     "ObdDeviceSnapshot",
-    "ObdRuntime",
-    "ObdRuntimeConnection",
-    "ObdRuntimeControl",
-    "ObdRuntimeObservation",
+    "ObdService",
     "ObdStatusSnapshot",
-    "build_obd_runtime",
 ]

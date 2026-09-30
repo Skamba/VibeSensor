@@ -1,4 +1,5 @@
 import { beforeEach, expect, test } from "vitest";
+import { applyCarsPayloadToSettings } from "../src/app/features/dashboard_startup_state";
 import { createSettingsAnalysisModule } from "../src/app/features/settings_analysis_module";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect, signal } from "../src/app/ui_signals";
@@ -40,8 +41,8 @@ function translate(key: string, vars?: Record<string, unknown>): string {
       return "Recommended range";
     case "settings.analysis.default_label":
       return "Default";
-    case "settings.wheel_bandwidth":
-      return "Wheel bandwidth";
+    case "settings.speed_uncertainty":
+      return "Speed uncertainty";
     case "settings.analysis.invalid_number":
       return `${vars?.field ?? "Field"} must be a number`;
     case "settings.analysis.invalid_value":
@@ -97,12 +98,10 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   const module = createSettingsAnalysisModule({
     panel,
-    hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations: () => undefined,
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: async () => true,
@@ -112,47 +111,49 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   module.bindHandlers();
 
-  expect(lastRender(renders).fields.wheel_bandwidth_pct.guidance.lines).toEqual(
-    [
-      {
-        label: "Recommended range",
-        value: "2-12%",
-      },
-      {
-        label: "Default",
-        value: "5%",
-      },
-    ],
-  );
+  expect(
+    lastRender(renders).fields.speed_uncertainty_pct.guidance.lines,
+  ).toEqual([
+    {
+      label: "Recommended range",
+      value: "0-5%",
+    },
+    {
+      label: "Default",
+      value: "1%",
+    },
+  ]);
 
   requireAnalysisActions(actions).onFieldInput({
-    field: "wheel_bandwidth_pct",
+    field: "speed_uncertainty_pct",
     value: "200",
   });
   module.saveAnalysisFromInputs();
 
   const invalidRender = lastRender(renders);
-  expect(invalidRender.fields.wheel_bandwidth_pct.invalid).toBe(true);
-  expect(invalidRender.fields.wheel_bandwidth_pct.guidance.error).toMatchObject(
-    {
-      body: "Wheel bandwidth must stay between 0.1 and 100%",
-      compact: true,
-      tone: "error",
-    },
-  );
-  expect(focusedField).toBe("wheel_bandwidth_pct");
+  expect(invalidRender.fields.speed_uncertainty_pct.invalid).toBe(true);
+  expect(
+    invalidRender.fields.speed_uncertainty_pct.guidance.error,
+  ).toMatchObject({
+    body: "Speed uncertainty must stay between 0 and 100%",
+    compact: true,
+    tone: "error",
+  });
+  expect(focusedField).toBe("speed_uncertainty_pct");
   expect(guidanceOpened).toBe(true);
 
   const rendersBeforeRecovery = renders.length;
   requireAnalysisActions(actions).onFieldInput({
-    field: "wheel_bandwidth_pct",
-    value: "5",
+    field: "speed_uncertainty_pct",
+    value: "1",
   });
 
   expect(renders).toHaveLength(rendersBeforeRecovery + 1);
   const recoveredRender = lastRender(renders);
-  expect(recoveredRender.fields.wheel_bandwidth_pct.invalid).toBe(false);
-  expect(recoveredRender.fields.wheel_bandwidth_pct.guidance.error).toBeNull();
+  expect(recoveredRender.fields.speed_uncertainty_pct.invalid).toBe(false);
+  expect(
+    recoveredRender.fields.speed_uncertainty_pct.guidance.error,
+  ).toBeNull();
 });
 
 test("settings analysis module keeps active-car geometry when loading server analysis settings", async () => {
@@ -170,9 +171,7 @@ test("settings analysis module keeps active-car geometry when loading server ana
   };
   state.analysis.vehicleSettings.value = {
     ...state.analysis.vehicleSettings.value,
-    wheel_bandwidth_pct: 5,
     speed_uncertainty_pct: 1,
-    min_abs_band_hz: 0.2,
   };
 
   mswServer.use(
@@ -184,9 +183,7 @@ test("settings analysis module keeps active-car geometry when loading server ana
         final_drive_ratio: 9.99,
         current_gear_ratio: 2.22,
         tire_deflection_factor: 0.5,
-        wheel_bandwidth_pct: 7.5,
         speed_uncertainty_pct: 2.5,
-        min_abs_band_hz: 1.5,
       }),
     }),
   );
@@ -199,14 +196,12 @@ test("settings analysis module keeps active-car geometry when loading server ana
       focusField: () => undefined,
       openGuidance: () => undefined,
     },
-    hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations: () => {
       refreshSpectrumDecorationCalls += 1;
     },
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: async () => true,
@@ -225,9 +220,7 @@ test("settings analysis module keeps active-car geometry when loading server ana
     tire_deflection_factor: 0.95,
   });
   expect(state.analysis.vehicleSettings.value).toMatchObject({
-    wheel_bandwidth_pct: 7.5,
     speed_uncertainty_pct: 2.5,
-    min_abs_band_hz: 1.5,
   });
   expect(refreshSpectrumDecorationCalls).toBe(1);
 });
@@ -249,10 +242,10 @@ test("settings analysis module ignores loaded settings after disposal", async ()
 
   const loading = module.loadAnalysisSettingsFromServer();
   module.dispose();
-  load.resolve(makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 9 }));
+  load.resolve(makeAnalysisSettingsPayload({ speed_uncertainty_pct: 9 }));
   await loading;
 
-  expect(state.analysis.vehicleSettings.value.wheel_bandwidth_pct).toBe(5);
+  expect(state.analysis.vehicleSettings.value.speed_uncertainty_pct).toBe(1);
   expect(refreshSpectrumDecorationCalls).toBe(0);
 });
 
@@ -265,7 +258,7 @@ test("settings analysis module ignores repeated reset confirmations while one is
     ...buildAnalysisSettingsHandlers({
       save: () => {
         saveCalls += 1;
-        return makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 5 });
+        return makeAnalysisSettingsPayload({ speed_uncertainty_pct: 1 });
       },
     }),
   );
@@ -296,7 +289,7 @@ test("settings analysis module ignores reset confirmation after disposal", async
     ...buildAnalysisSettingsHandlers({
       save: () => {
         saveCalls += 1;
-        return makeAnalysisSettingsPayload({ wheel_bandwidth_pct: 5 });
+        return makeAnalysisSettingsPayload({ speed_uncertainty_pct: 1 });
       },
     }),
   );
@@ -332,13 +325,11 @@ function createAnalysisModuleHarness(
   };
   const module = createSettingsAnalysisModule({
     panel,
-    hasValidActiveCar: () => true,
-    onMissingActiveCar: () => undefined,
-    onSaveError: () => undefined,
+    lang: signal("en"),
     refreshSpectrumDecorations:
       options.refreshSpectrumDecorations ?? (() => undefined),
     queryClient: createTestQueryClient(),
-    settings: state,
+    settings: withActiveCar(state),
     services: {
       t: translate,
       requestConfirmation: options.requestConfirmation ?? (async () => true),
@@ -356,4 +347,29 @@ function modulePanelActions(
     throw new Error("Expected analysis panel actions to be bound");
   }
   return actions;
+}
+
+/** Analysis saves require a resolved active car, as in the running app. */
+function withActiveCar(
+  state: ReturnType<typeof createAppState>["settings"],
+): ReturnType<typeof createAppState>["settings"] {
+  applyCarsPayloadToSettings(state.car, {
+    active_car_id: "car-1",
+    cars: [
+      {
+        id: "car-1",
+        name: "Track",
+        type: "Coupe",
+        variant: null,
+        aspects: {
+          current_gear_ratio: 0.72,
+          final_drive_ratio: 3.23,
+          rim_in: 19,
+          tire_aspect_pct: 40,
+          tire_width_mm: 245,
+        },
+      },
+    ],
+  });
+  return state;
 }

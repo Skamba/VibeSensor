@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import CarOrderReferenceStatus
-from vibesensor.shared.boundaries.runs.car import (
+from vibesensor.shared.boundaries.runs.metadata import (
     run_car_metadata_from_mapping,
     run_car_metadata_to_json_object,
 )

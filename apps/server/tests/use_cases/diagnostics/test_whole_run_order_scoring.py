@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.shared.types.order_trace_contracts import (
+    OrderTraceFamily,
+    OrderTracePoint,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderTraceFamily,
-    OrderTracePoint,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,

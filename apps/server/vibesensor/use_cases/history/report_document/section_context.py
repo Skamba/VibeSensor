@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.reporting.document import RankedCandidateRow
+from vibesensor.shared.boundaries.reporting.document.appendices import RankedCandidateRow
 
 __all__ = [
     "AppendixAContext",

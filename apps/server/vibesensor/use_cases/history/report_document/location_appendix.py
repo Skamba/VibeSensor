@@ -6,7 +6,10 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.reporting.document import AppendixBData, TopologyIntensityRow
+from vibesensor.shared.boundaries.reporting.document.appendices import (
+    AppendixBData,
+    TopologyIntensityRow,
+)
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_presentation import (
     display_location,
@@ -20,7 +23,7 @@ from vibesensor.use_cases.history.report_observation_matrix import (
 from .section_context import AppendixBContext
 
 if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = ["build_appendix_b_data"]
 
@@ -31,7 +34,7 @@ def build_appendix_b_data(
     primary_candidate_facts: PrimaryReportFacts,
     active_sensor_intensity: Sequence[LocationIntensitySummary],
     proof_basis: str,
-    diagnosis_summary: ReportWholeRunDiagnosisSummary | None = None,
+    diagnosis_summary: WholeRunDiagnosisSummary | None = None,
     appendix_context: AppendixBContext,
     tr: Callable[..., str],
 ) -> AppendixBData:

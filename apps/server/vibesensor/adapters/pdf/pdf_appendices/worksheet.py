@@ -24,10 +24,8 @@ from vibesensor.adapters.pdf.pdf_text import (
 )
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    NextStep,
-)
+from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
+from vibesensor.shared.boundaries.reporting.document.panels import NextStep
 
 from .action_matrix import draw_action_steps_continuation_page, draw_action_steps_panel
 from .guidance_page import draw_capture_guidance_page

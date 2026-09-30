@@ -9,17 +9,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.infra.runtime.processing_failure_policy import (
+from vibesensor.infra.runtime.processing_loop import (
     MAX_CONSECUTIVE_FAILURES,
     MAX_FATAL_BACKOFF_CYCLES,
-)
-from vibesensor.infra.runtime.processing_failures import (
     ProcessingFailureCategory,
+    ProcessingHealth,
+    ProcessingLoop,
+    ProcessingLoopState,
     ProcessingTickFailure,
+    ProcessingTickRunner,
 )
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop
-from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
-from vibesensor.infra.runtime.processing_tick import ProcessingTickRunner
 from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.runtime_failures import ProcessingLoopFailure
 
@@ -372,7 +371,7 @@ class TestProcessingLoopCadence:
             return func(*args, **kwargs)
 
         monkeypatch.setattr(
-            "vibesensor.infra.runtime.processing_tick.anyio.to_thread.run_sync",
+            "vibesensor.infra.runtime.processing_loop.anyio.to_thread.run_sync",
             fake_to_thread,
         )
 

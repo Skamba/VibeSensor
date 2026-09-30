@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.shared.boundaries.reporting.document.validation import require_non_empty_text
+
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
     from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
@@ -20,8 +22,8 @@ def validate_prepared_report_input(prepared: object) -> PreparedReportInput:
         raise TypeError(
             f"build_report_document expects PreparedReportInput, got {type(prepared).__name__}"
         )
-    _require_non_empty_text(prepared.language, field_name="language")
-    _require_non_empty_text(prepared.filename, field_name="filename")
+    require_non_empty_text(prepared.language, label="prepared report input language")
+    require_non_empty_text(prepared.filename, label="prepared report input filename")
     if not prepared.filename.lower().endswith(".pdf"):
         raise ValueError(
             f"prepared report input filename must end with .pdf, got {prepared.filename!r}"
@@ -34,11 +36,6 @@ def validate_prepared_report_input(prepared: object) -> PreparedReportInput:
             f"report_facts.run: {test_run_id!r} != {report_run_id!r}"
         )
     return prepared
-
-
-def _require_non_empty_text(value: str, *, field_name: str) -> None:
-    if not value.strip():
-        raise ValueError(f"prepared report input {field_name} must be non-empty")
 
 
 def _normalized_run_id(report_facts: PreparedReportFacts) -> str:

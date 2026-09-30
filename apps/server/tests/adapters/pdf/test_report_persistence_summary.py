@@ -11,7 +11,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
-from vibesensor.shared.boundaries.sensor_frames import (
+from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
 )
@@ -20,9 +20,6 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
 )
 from vibesensor.use_cases.diagnostics.spectrogram import (
     spectrogram_from_peaks as _spectrogram_from_peaks,
-)
-from vibesensor.use_cases.diagnostics.spectrogram import (
-    spectrogram_from_peaks_raw as _spectrogram_from_peaks_raw,
 )
 
 
@@ -117,7 +114,7 @@ class TestSpectrogramPersistence:
             samples.append(sample(float(i), 90.0, peaks))
 
         diagnostic = _spectrogram_from_peaks(sensor_frames_from_mappings(samples))
-        raw = _spectrogram_from_peaks_raw(sensor_frames_from_mappings(samples))
+        raw = _spectrogram_from_peaks(sensor_frames_from_mappings(samples), aggregation="max")
         assert diagnostic.max_amp < raw.max_amp
 
     def test_diagnostic_spectrogram_suppresses_broadband_near_floor(self) -> None:

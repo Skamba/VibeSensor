@@ -17,15 +17,10 @@ export interface CarAspectSettings {
 }
 
 export interface AnalysisTuningSettings {
-  wheel_bandwidth_pct: number;
-  driveshaft_bandwidth_pct: number;
-  engine_bandwidth_pct: number;
   speed_uncertainty_pct: number;
   tire_diameter_uncertainty_pct: number;
   final_drive_uncertainty_pct: number;
   gear_uncertainty_pct: number;
-  min_abs_band_hz: number;
-  max_band_half_width_pct: number;
 }
 
 export interface VehicleSettings
@@ -42,17 +37,12 @@ const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
 };
 
 const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
-  wheel_bandwidth_pct: defaultAnalysisSettings.wheel_bandwidth_pct,
-  driveshaft_bandwidth_pct: defaultAnalysisSettings.driveshaft_bandwidth_pct,
-  engine_bandwidth_pct: defaultAnalysisSettings.engine_bandwidth_pct,
   speed_uncertainty_pct: defaultAnalysisSettings.speed_uncertainty_pct,
   tire_diameter_uncertainty_pct:
     defaultAnalysisSettings.tire_diameter_uncertainty_pct,
   final_drive_uncertainty_pct:
     defaultAnalysisSettings.final_drive_uncertainty_pct,
   gear_uncertainty_pct: defaultAnalysisSettings.gear_uncertainty_pct,
-  min_abs_band_hz: defaultAnalysisSettings.min_abs_band_hz,
-  max_band_half_width_pct: defaultAnalysisSettings.max_band_half_width_pct,
 };
 
 export const defaultVehicleSettings: Readonly<VehicleSettings> =
@@ -68,15 +58,10 @@ const carAspectSettingKeys = [
 ] as const satisfies readonly (keyof CarAspectSettings)[];
 
 const analysisTuningSettingKeys = [
-  "wheel_bandwidth_pct",
-  "driveshaft_bandwidth_pct",
-  "engine_bandwidth_pct",
   "speed_uncertainty_pct",
   "tire_diameter_uncertainty_pct",
   "final_drive_uncertainty_pct",
   "gear_uncertainty_pct",
-  "min_abs_band_hz",
-  "max_band_half_width_pct",
 ] as const satisfies readonly (keyof AnalysisTuningSettings)[];
 
 type VehicleSettingsNumericPatch = Partial<

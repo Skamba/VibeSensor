@@ -14,12 +14,11 @@ from vibesensor.shared.constants.analysis import (
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_DURATION_S,
     ORDER_MIN_MATCH_POINTS,
-    ORDER_TOLERANCE_MIN_HZ,
-    ORDER_TOLERANCE_REL,
     ORDER_VARIABLE_MIN_CORRELATION,
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
     SPEED_BIN_WIDTH_KMH,
 )
+from vibesensor.shared.order_bands import order_peak_tolerance_hz
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
@@ -158,18 +157,6 @@ def best_order_peak_match(
         matched_hz=best_hz,
         amplitude_g=best_amp,
         relative_error=delta_hz / max(1e-9, predicted_hz),
-    )
-
-
-def order_peak_tolerance_hz(*, predicted_hz: float, path_compliance: float) -> float:
-    """Return the match tolerance for one predicted order frequency."""
-
-    compliance_scale = path_compliance**0.5
-    return float(
-        max(
-            ORDER_TOLERANCE_MIN_HZ,
-            predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
-        )
     )
 
 

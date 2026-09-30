@@ -39,7 +39,7 @@ def test_main_release_workflow_uses_ci_source_and_release_artifact_contracts() -
     steps = [step for step in release_job["steps"] if isinstance(step, dict)]
     run_script = _combined_run_script(steps)
 
-    checkout_step = next(step for step in steps if step.get("uses") == "actions/checkout@v6")
+    checkout_step = next(step for step in steps if step.get("uses") == "actions/checkout@v7")
     assert checkout_step["with"]["fetch-depth"] == 0
     assert "github.event.workflow_run.head_sha" in checkout_step["with"]["ref"]
     assert 'echo "sha=$(git rev-parse HEAD)"' in run_script

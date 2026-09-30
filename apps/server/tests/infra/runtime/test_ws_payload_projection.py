@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.domain import AnalysisSettingsSnapshot
-from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
-from vibesensor.infra.runtime.processing_tick import STALE_DATA_AGE_S
+from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
+from vibesensor.infra.runtime.registry import ClientSnapshot
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 

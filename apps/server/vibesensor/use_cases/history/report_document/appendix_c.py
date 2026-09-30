@@ -5,21 +5,22 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts
-from vibesensor.shared.boundaries.reporting.document import (
+from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixCData,
-    DataTrustItem,
     DenseEvidenceRow,
     MeasurementRow,
     ProofWindowRow,
 )
-from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunOrderSummary
+from vibesensor.shared.boundaries.reporting.document.panels import DataTrustItem
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
 from vibesensor.shared.report_presentation import (
+    display_lang,
     display_phase_label,
     display_speed_band,
     human_source,
     order_label_human,
 )
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 
 from ._candidate_resolver import PrimaryCandidateContext
 from .evidence_snapshot import build_evidence_snapshot_rows
@@ -47,7 +48,9 @@ def build_appendix_c_data(
     tr: Callable[..., str],
 ) -> AppendixCData:
     evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)[:1]
-    dense_evidence_rows = _build_dense_evidence_rows(report_facts, tr=tr)
+    dense_evidence_rows = _build_dense_evidence_rows(
+        report_facts, findings=aggregate.findings, tr=tr
+    )
     proof_window_rows = _build_proof_window_rows(primary, tr=tr)
     speed_windows = [row.speed_window for row in evidence_rows if row.speed_window]
     speed_summary = (
@@ -86,6 +89,7 @@ def build_appendix_c_data(
 def _build_dense_evidence_rows(
     report_facts: PreparedReportFacts,
     *,
+    findings: tuple[Finding, ...],
     tr: Callable[..., str],
 ) -> list[DenseEvidenceRow]:
     rows: list[DenseEvidenceRow] = []
@@ -93,8 +97,8 @@ def _build_dense_evidence_rows(
         rows.append(
             DenseEvidenceRow(
                 source_name=human_source(summary.suspected_source, tr=tr),
-                order_label=order_label_human(_display_lang(tr), summary.order_label),
-                confidence_label=_dense_confidence_label(report_facts, summary, tr=tr),
+                order_label=order_label_human(display_lang(tr), summary.order_label),
+                confidence_label=_dense_confidence_label(findings, summary, tr=tr),
                 support=_dense_support_text(summary, tr=tr),
                 support_ratio=summary.support_ratio,
                 reference_coverage_ratio=summary.reference_coverage_ratio,
@@ -112,15 +116,15 @@ def _build_dense_evidence_rows(
 
 
 def _dense_confidence_label(
-    report_facts: PreparedReportFacts,
-    summary: ReportWholeRunOrderSummary,
+    findings: tuple[Finding, ...],
+    summary: OrderTraceSummary,
     *,
     tr: Callable[..., str],
 ) -> str:
     finding = next(
         (
             candidate
-            for candidate in report_facts.findings.all_findings
+            for candidate in findings
             if candidate.suspected_source == summary.suspected_source
             and candidate.order == summary.order_label
         ),
@@ -130,7 +134,7 @@ def _dense_confidence_label(
         finding = next(
             (
                 candidate
-                for candidate in report_facts.findings.all_findings
+                for candidate in findings
                 if candidate.suspected_source == summary.suspected_source
             ),
             None,
@@ -141,11 +145,7 @@ def _dense_confidence_label(
     return f"{tr(label_key)} ({pct_text})"
 
 
-def _display_lang(tr: Callable[..., str]) -> str:
-    return "nl" if tr("UNKNOWN") == "Onbekend" else "en"
-
-
-def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+def _dense_support_text(summary: OrderTraceSummary, *, tr: Callable[..., str]) -> str:
     return tr(
         "REPORT_DENSE_EVIDENCE_SUPPORT_VALUE",
         matched=summary.matched_window_count,
@@ -155,7 +155,7 @@ def _dense_support_text(summary: ReportWholeRunOrderSummary, *, tr: Callable[...
     )
 
 
-def _dense_frequency_band(summary: ReportWholeRunOrderSummary, *, tr: Callable[..., str]) -> str:
+def _dense_frequency_band(summary: OrderTraceSummary, *, tr: Callable[..., str]) -> str:
     low = summary.stable_frequency_min_hz
     high = summary.stable_frequency_max_hz
     if low is not None and high is not None:
@@ -172,7 +172,7 @@ def _dense_frequency_band(summary: ReportWholeRunOrderSummary, *, tr: Callable[.
 
 
 def _dense_caveat_text(
-    summary: ReportWholeRunOrderSummary,
+    summary: OrderTraceSummary,
     *,
     tr: Callable[..., str],
 ) -> str | None:

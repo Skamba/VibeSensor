@@ -7,11 +7,11 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-
-from vibesensor.adapters.persistence.car_library_source_evidence import (
+from test_support.car_library_validation.source_evidence import (
     load_car_source_registry,
     validate_vehicle_configuration_source_evidence,
 )
+
 from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 
 

@@ -1,11 +1,10 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import { getSettingsCars, getSettingsSpeedSource } from "../../api/settings";
 import type { CarsPayload, SpeedSourcePayload } from "../../api/types";
 import type { SettingsState } from "../settings_state";
 import { batch } from "../ui_signals";
 import { serverStateQueryKeys } from "./server_state_query_keys";
-import { createSettingsCarsTransport } from "./settings_cars_transport";
-import { createSettingsSpeedSourceTransport } from "./settings_speed_source_transport";
 
 export function applyCarsPayloadToSettings(
   settings: SettingsState["car"],
@@ -44,16 +43,14 @@ export async function loadDashboardStartupState(
   queryClient: QueryClient,
   settings: SettingsState,
 ): Promise<void> {
-  const carsTransport = createSettingsCarsTransport(undefined);
-  const speedSourceTransport = createSettingsSpeedSourceTransport();
   const [carsPayload, speedSourcePayload] = await Promise.all([
     queryClient.fetchQuery({
-      queryFn: () => carsTransport.loadCars(),
+      queryFn: () => getSettingsCars(),
       queryKey: serverStateQueryKeys.settings.cars(),
       staleTime: 0,
     }),
     queryClient.fetchQuery({
-      queryFn: () => speedSourceTransport.loadSpeedSource(),
+      queryFn: () => getSettingsSpeedSource(),
       queryKey: serverStateQueryKeys.settings.speedSource(),
       staleTime: 0,
     }),

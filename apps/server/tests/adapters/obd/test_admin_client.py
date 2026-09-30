@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -114,12 +116,20 @@ def test_default_helper_script_walks_up_to_repo_scripts_dir(
         / "admin_client.py"
     )
     package_file.parent.mkdir(parents=True)
-    package_file.write_text("", encoding="utf-8")
+    # Load a copy of the module from an installed-package-like location instead of
+    # monkeypatching the real module's ``__file__``: coverage.py prefers a frame's
+    # ``__file__`` global, so patching it misattributes the real module's lines.
+    package_file.write_text(
+        Path(admin_client_module.__file__).read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    spec = importlib.util.spec_from_file_location("_installed_admin_client", package_file)
+    assert spec is not None and spec.loader is not None
+    installed_module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, spec.name, installed_module)
+    spec.loader.exec_module(installed_module)
 
     helper_script = tmp_path / "scripts" / "vibesensor_obd_admin.py"
     helper_script.parent.mkdir(parents=True)
     helper_script.write_text("", encoding="utf-8")
 
-    monkeypatch.setattr(admin_client_module, "__file__", str(package_file))
-
-    assert admin_client_module._default_helper_script() == helper_script
+    assert installed_module._default_helper_script() == helper_script

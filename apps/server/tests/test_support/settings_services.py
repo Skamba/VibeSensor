@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from vibesensor.app.container import build_settings_service_bundle
+from vibesensor.app.composition.settings import build_settings_service_bundle
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.infra.config.sensor_settings import SensorSettingsService

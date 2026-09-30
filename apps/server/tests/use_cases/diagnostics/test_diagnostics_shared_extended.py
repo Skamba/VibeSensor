@@ -6,8 +6,6 @@ from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
-    combined_relative_uncertainty,
-    tolerance_for_order,
     vehicle_orders_hz,
 )
 
@@ -48,40 +46,6 @@ def test_build_diagnostic_settings_override() -> None:
 def test_build_diagnostic_settings_ignores_unknown() -> None:
     result = build_diagnostic_settings({"unknown_key": 99.0})
     assert not hasattr(result, "unknown_key")
-
-
-# -- combined_relative_uncertainty ---------------------------------------------
-
-
-def test_combined_uncertainty_zero() -> None:
-    assert combined_relative_uncertainty(0.0, 0.0) == 0.0
-
-
-def test_combined_uncertainty_single() -> None:
-    assert abs(combined_relative_uncertainty(3.0) - 3.0) < 1e-9
-
-
-def test_combined_uncertainty_negative_ignored() -> None:
-    assert combined_relative_uncertainty(-1.0, 3.0) == 3.0
-
-
-# -- tolerance_for_order -------------------------------------------------------
-
-
-def test_tolerance_for_order_zero_hz() -> None:
-    result = tolerance_for_order(
-        6.0,
-        0.0,
-        0.01,
-        min_abs_band_hz=0.4,
-        max_band_half_width_pct=8.0,
-    )
-    assert result == 0.0
-
-
-def test_tolerance_for_order_basic() -> None:
-    result = tolerance_for_order(6.0, 10.0, 0.01, min_abs_band_hz=0.4, max_band_half_width_pct=8.0)
-    assert 0 < result < 0.08
 
 
 # -- vehicle_orders_hz --------------------------------------------------------

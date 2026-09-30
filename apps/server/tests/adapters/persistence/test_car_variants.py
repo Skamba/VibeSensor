@@ -60,7 +60,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
     """CarLibraryVariantEntry requires drivetrain field."""
     from pydantic import ValidationError
 
-    from vibesensor.adapters.http.models import CarLibraryVariantEntry
+    from vibesensor.adapters.http.models.car_library import CarLibraryVariantEntry
 
     # Valid
     v = CarLibraryVariantEntry(name="320i", drivetrain="RWD")

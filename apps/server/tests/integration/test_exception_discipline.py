@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.persistence.history_db import (
@@ -20,24 +21,9 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.exceptions import PersistenceError
-from vibesensor.shared.types.run_schema import RunMetadata
 
 # ── HistoryDB — sqlite3.Error caught, bugs propagate ─────────────────────
-
-
-def _metadata(run_id: str, **overrides: object) -> RunMetadata:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "source": "test",
-    }
-    payload.update(overrides)
-    return run_metadata_from_mapping(payload)
 
 
 def _assert_client_name_not_persisted(db: ClientNameRepository, client_id: str) -> None:
@@ -98,55 +84,47 @@ class TestHistoryDBExceptionDiscipline:
 class TestSettingsStoreExceptionDiscipline:
     """SettingsStore._persist catches (sqlite3.Error, OSError), wraps as PersistenceError."""
 
-    def test_sqlite_error_wrapped_as_persistence_error(self, tmp_path: Path) -> None:
-        """An sqlite3.OperationalError from the DB is wrapped as PersistenceError."""
+    @pytest.mark.parametrize(
+        ("error", "expected_type", "match"),
+        [
+            pytest.param(
+                sqlite3.OperationalError("disk I/O error"),
+                PersistenceError,
+                "Failed to persist",
+                id="sqlite-error-wrapped",
+            ),
+            pytest.param(
+                OSError("disk full"), PersistenceError, "Failed to persist", id="os-error-wrapped"
+            ),
+            pytest.param(
+                TypeError("bad argument type"),
+                TypeError,
+                "bad argument type",
+                id="type-error-propagates",
+            ),
+            pytest.param(
+                AttributeError("no such method"),
+                AttributeError,
+                "no such method",
+                id="attribute-error-propagates",
+            ),
+        ],
+    )
+    def test_persist_error_handling_keeps_state_unchanged(
+        self,
+        tmp_path: Path,
+        error: BaseException,
+        expected_type: type[BaseException],
+        match: str,
+    ) -> None:
+        """Storage errors are wrapped as PersistenceError; code bugs propagate unwrapped."""
         db = create_history_persistence_adapters(tmp_path / "test.db")
         services = build_settings_services(db=db.settings_snapshot_repository)
         before = services.car_settings.get_cars()
         services.coordinator._db = MagicMock()
-        services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
-            "disk I/O error"
-        )
+        services.coordinator._db.set_settings_snapshot.side_effect = error
 
-        with pytest.raises(PersistenceError, match="Failed to persist"):
-            services.car_settings.add_car({"name": "Test"})
-        assert services.car_settings.get_cars() == before
-
-    def test_os_error_wrapped_as_persistence_error(self, tmp_path: Path) -> None:
-        """An OSError from the DB is wrapped as PersistenceError."""
-        db = create_history_persistence_adapters(tmp_path / "test.db")
-        services = build_settings_services(db=db.settings_snapshot_repository)
-        before = services.car_settings.get_cars()
-        services.coordinator._db = MagicMock()
-        services.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
-
-        with pytest.raises(PersistenceError, match="Failed to persist"):
-            services.car_settings.add_car({"name": "Test"})
-        assert services.car_settings.get_cars() == before
-
-    def test_type_error_propagates_through_persist(self, tmp_path: Path) -> None:
-        """TypeError from the DB is NOT wrapped — it propagates as a code bug."""
-        db = create_history_persistence_adapters(tmp_path / "test.db")
-        services = build_settings_services(db=db.settings_snapshot_repository)
-        before = services.car_settings.get_cars()
-        services.coordinator._db = MagicMock()
-        services.coordinator._db.set_settings_snapshot.side_effect = TypeError("bad argument type")
-
-        with pytest.raises(TypeError, match="bad argument type"):
-            services.car_settings.add_car({"name": "Test"})
-        assert services.car_settings.get_cars() == before
-
-    def test_attribute_error_propagates_through_persist(self, tmp_path: Path) -> None:
-        """AttributeError from the DB is NOT wrapped — it's a code bug."""
-        db = create_history_persistence_adapters(tmp_path / "test.db")
-        services = build_settings_services(db=db.settings_snapshot_repository)
-        before = services.car_settings.get_cars()
-        services.coordinator._db = MagicMock()
-        services.coordinator._db.set_settings_snapshot.side_effect = AttributeError(
-            "no such method"
-        )
-
-        with pytest.raises(AttributeError, match="no such method"):
+        with pytest.raises(expected_type, match=match):
             services.car_settings.add_car({"name": "Test"})
         assert services.car_settings.get_cars() == before
 

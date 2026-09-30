@@ -10,11 +10,6 @@ import {
 test.describe.configure({ timeout: 12_000 });
 
 const analysisSettingsPayload = {
-  wheel_bandwidth_pct: 5,
-  driveshaft_bandwidth_pct: 5,
-  engine_bandwidth_pct: 5,
-  min_abs_band_hz: 0.5,
-  max_band_half_width_pct: 6,
   speed_uncertainty_pct: 3,
   tire_diameter_uncertainty_pct: 4,
   final_drive_uncertainty_pct: 1,

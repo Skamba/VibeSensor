@@ -5,13 +5,21 @@ import type {
   AnalysisSettingsRequest,
 } from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
+import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { FeatureServices } from "../feature_deps_base";
 import {
   defaultVehicleSettings,
   mergeAnalysisTuningSettings,
   type SettingsState,
 } from "../settings_state";
-import { batch, computed, signal } from "../ui_signals";
+import {
+  batch,
+  computed,
+  effectOnChange,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
@@ -20,17 +28,6 @@ import type {
 } from "../views/analysis_panel";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import { serverStateQueryKeys } from "./server_state_query_keys";
-
-export interface SettingsAnalysisModuleDeps {
-  panel: AnalysisPanelView;
-  settings: SettingsState;
-  queryClient: QueryClient;
-  services: FeatureServices;
-  refreshSpectrumDecorations: () => void;
-  hasValidActiveCar: () => boolean;
-  onMissingActiveCar: () => void;
-  onSaveError: (error: unknown) => void;
-}
 
 export interface SettingsAnalysisModule {
   bindHandlers(): void;
@@ -61,51 +58,16 @@ interface AnalysisFieldState {
 }
 
 const EDITABLE_ANALYSIS_KEYS = [
-  "wheel_bandwidth_pct",
-  "driveshaft_bandwidth_pct",
-  "engine_bandwidth_pct",
   "speed_uncertainty_pct",
   "tire_diameter_uncertainty_pct",
   "final_drive_uncertainty_pct",
   "gear_uncertainty_pct",
-  "min_abs_band_hz",
-  "max_band_half_width_pct",
 ] as const satisfies readonly AnalysisPanelFieldKey[];
 
 const ANALYSIS_FIELD_CONFIGS: Record<
   AnalysisPanelFieldKey,
   AnalysisFieldConfig
 > = {
-  wheel_bandwidth_pct: {
-    key: "wheel_bandwidth_pct",
-    labelKey: "settings.wheel_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.wheel_bandwidth_pct,
-  },
-  driveshaft_bandwidth_pct: {
-    key: "driveshaft_bandwidth_pct",
-    labelKey: "settings.driveshaft_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 10,
-    defaultValue: defaultVehicleSettings.driveshaft_bandwidth_pct,
-  },
-  engine_bandwidth_pct: {
-    key: "engine_bandwidth_pct",
-    labelKey: "settings.engine_bandwidth",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 2,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.engine_bandwidth_pct,
-  },
   speed_uncertainty_pct: {
     key: "speed_uncertainty_pct",
     labelKey: "settings.speed_uncertainty",
@@ -146,26 +108,6 @@ const ANALYSIS_FIELD_CONFIGS: Record<
     guidedMax: 4,
     defaultValue: defaultVehicleSettings.gear_uncertainty_pct,
   },
-  min_abs_band_hz: {
-    key: "min_abs_band_hz",
-    labelKey: "settings.min_half_width",
-    unit: " Hz",
-    hardMin: 0,
-    hardMax: 500,
-    guidedMin: 0,
-    guidedMax: 2,
-    defaultValue: defaultVehicleSettings.min_abs_band_hz,
-  },
-  max_band_half_width_pct: {
-    key: "max_band_half_width_pct",
-    labelKey: "settings.max_half_width",
-    unit: "%",
-    hardMin: 0.1,
-    hardMax: 100,
-    guidedMin: 1,
-    guidedMax: 12,
-    defaultValue: defaultVehicleSettings.max_band_half_width_pct,
-  },
 };
 
 function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
@@ -175,15 +117,6 @@ function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
 function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
   const vehicleSettings = settings.analysis.vehicleSettings.value;
   return {
-    wheel_bandwidth_pct: formatSettingValue(
-      vehicleSettings.wheel_bandwidth_pct,
-    ),
-    driveshaft_bandwidth_pct: formatSettingValue(
-      vehicleSettings.driveshaft_bandwidth_pct,
-    ),
-    engine_bandwidth_pct: formatSettingValue(
-      vehicleSettings.engine_bandwidth_pct,
-    ),
     speed_uncertainty_pct: formatSettingValue(
       vehicleSettings.speed_uncertainty_pct,
     ),
@@ -196,10 +129,6 @@ function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
     gear_uncertainty_pct: formatSettingValue(
       vehicleSettings.gear_uncertainty_pct,
     ),
-    min_abs_band_hz: formatSettingValue(vehicleSettings.min_abs_band_hz),
-    max_band_half_width_pct: formatSettingValue(
-      vehicleSettings.max_band_half_width_pct,
-    ),
   };
 }
 
@@ -209,11 +138,22 @@ function formatSettingValue(value: number): string {
     : String(Number(value.toFixed(1)));
 }
 
-export function createSettingsAnalysisModule(
-  ctx: SettingsAnalysisModuleDeps,
-): SettingsAnalysisModule {
+/**
+ * Analysis-settings controller: validation, save/reset orchestration, field
+ * guidance, and spectrum refreshes behind the typed analysis-panel bridge.
+ * Saves require a resolved active car; language changes resync the drafts.
+ */
+export function createSettingsAnalysisModule(ctx: {
+  panel: AnalysisPanelView;
+  settings: SettingsState;
+  lang: ReadonlySignal<string>;
+  queryClient: QueryClient;
+  services: FeatureServices;
+  refreshSpectrumDecorations: () => void;
+}): SettingsAnalysisModule {
   const { panel, settings, services } = ctx;
   const { t } = services;
+  const carSelection = createCarSelectionDerivedState(settings.car);
   const draftValues = signal(buildDraftValues(settings));
   const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
   const fieldErrorMessages = signal<
@@ -238,11 +178,6 @@ export function createSettingsAnalysisModule(
   function buildPanelModel(): AnalysisPanelRenderModel {
     return {
       fields: {
-        wheel_bandwidth_pct: buildFieldRenderModel("wheel_bandwidth_pct"),
-        driveshaft_bandwidth_pct: buildFieldRenderModel(
-          "driveshaft_bandwidth_pct",
-        ),
-        engine_bandwidth_pct: buildFieldRenderModel("engine_bandwidth_pct"),
         speed_uncertainty_pct: buildFieldRenderModel("speed_uncertainty_pct"),
         tire_diameter_uncertainty_pct: buildFieldRenderModel(
           "tire_diameter_uncertainty_pct",
@@ -251,10 +186,6 @@ export function createSettingsAnalysisModule(
           "final_drive_uncertainty_pct",
         ),
         gear_uncertainty_pct: buildFieldRenderModel("gear_uncertainty_pct"),
-        min_abs_band_hz: buildFieldRenderModel("min_abs_band_hz"),
-        max_band_half_width_pct: buildFieldRenderModel(
-          "max_band_half_width_pct",
-        ),
       },
       saveFeedback: saveFeedback.value,
     };
@@ -342,8 +273,7 @@ export function createSettingsAnalysisModule(
     if (disposed || mutationInFlight) {
       return;
     }
-    if (!ctx.hasValidActiveCar()) {
-      ctx.onMissingActiveCar();
+    if (!carSelection.hasResolvedActiveCar.value) {
       return;
     }
     mutationInFlight = true;
@@ -359,19 +289,12 @@ export function createSettingsAnalysisModule(
       saveFeedback.value = null;
       await syncAnalysisSettingsToServer(
         {
-          wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
-          driveshaft_bandwidth_pct:
-            defaultVehicleSettings.driveshaft_bandwidth_pct,
-          engine_bandwidth_pct: defaultVehicleSettings.engine_bandwidth_pct,
           speed_uncertainty_pct: defaultVehicleSettings.speed_uncertainty_pct,
           tire_diameter_uncertainty_pct:
             defaultVehicleSettings.tire_diameter_uncertainty_pct,
           final_drive_uncertainty_pct:
             defaultVehicleSettings.final_drive_uncertainty_pct,
           gear_uncertainty_pct: defaultVehicleSettings.gear_uncertainty_pct,
-          min_abs_band_hz: defaultVehicleSettings.min_abs_band_hz,
-          max_band_half_width_pct:
-            defaultVehicleSettings.max_band_half_width_pct,
         },
         generation,
       );
@@ -431,7 +354,9 @@ export function createSettingsAnalysisModule(
           error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
       };
-      ctx.onSaveError(error);
+      services.showError(
+        error instanceof Error ? error.message : t("settings.save_failed"),
+      );
     }
   }
 
@@ -465,8 +390,7 @@ export function createSettingsAnalysisModule(
     if (disposed || mutationInFlight) {
       return;
     }
-    if (!ctx.hasValidActiveCar()) {
-      ctx.onMissingActiveCar();
+    if (!carSelection.hasResolvedActiveCar.value) {
       return;
     }
     clearFieldValidationState();
@@ -590,9 +514,14 @@ export function createSettingsAnalysisModule(
     };
   }
 
+  const disposeLanguageSync = effectOnChange(ctx.lang, () => {
+    untracked(syncSettingsInputs);
+  });
+
   return {
     bindHandlers,
     dispose(): void {
+      disposeLanguageSync();
       disposed = true;
       requestGeneration += 1;
       mutationInFlight = false;

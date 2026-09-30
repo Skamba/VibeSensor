@@ -62,7 +62,7 @@ async def test_executor_marks_disconnected_and_backs_off_after_connect_failure()
         ),
     )
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     assert sleeps == [2.0]
     assert status.connection_state == "disconnected"
     assert status.last_error == "rfcomm busy"
@@ -85,7 +85,7 @@ async def test_executor_connect_step_marks_connected_without_closing_initialized
         ),
     )
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     assert next_state.session is parts.session
     assert next_state.session_device_mac == "02000000004d"
     assert next_state.reconnect_delay_s == pytest.approx(1.0)
@@ -117,7 +117,7 @@ async def test_executor_connect_step_backs_off_after_initialize_transport_error(
         ),
     )
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     session.close.assert_called_once_with()
     assert sleeps == [2.0]
     assert status.connection_state == "disconnected"
@@ -174,7 +174,7 @@ async def test_executor_closes_session_and_backs_off_after_poll_connection_loss(
         step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
     )
 
-    status = parts.projection.status_snapshot()
+    status = parts.obd.status_snapshot()
     parts.session.close.assert_called_once_with()
     assert sleeps == [4.0]
     assert status.connection_state == "disconnected"

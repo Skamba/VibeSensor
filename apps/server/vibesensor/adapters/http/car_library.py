@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from vibesensor.adapters.http._helpers import OpenAPIResponses
-from vibesensor.adapters.http.models import (
+from vibesensor.adapters.http.models.car_library import (
     CarLibraryBrandsResponse,
     CarLibraryModelEntry,
     CarLibraryModelsResponse,

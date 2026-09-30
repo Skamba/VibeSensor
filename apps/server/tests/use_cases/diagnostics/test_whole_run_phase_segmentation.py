@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, DrivingPhase
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics.phase_segmentation import (

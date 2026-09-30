@@ -14,9 +14,9 @@ from vibesensor.adapters.udp.protocol import HelloMessage, pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
+from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
 from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.use_cases.history.report_document import build_report_document

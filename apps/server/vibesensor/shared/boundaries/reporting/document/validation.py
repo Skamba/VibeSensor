@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 
-__all__ = ["validate_report_document"]
+__all__ = ["require_non_empty_text", "validate_report_document"]
 
 _VALID_CERTAINTY_TIERS = frozenset({"A", "B", "C"})
 _VALID_APPENDIX_A_MODES = frozenset({"workflow", "recapture"})
@@ -15,9 +15,9 @@ def validate_report_document(data: object) -> ReportDocument:
 
     if not isinstance(data, ReportDocument):
         raise TypeError(f"build_report_pdf expects ReportDocument, got {type(data).__name__}")
-    _require_non_empty_text(data.title, field_name="title")
-    _require_non_empty_text(data.run_id, field_name="run_id")
-    _require_non_empty_text(data.lang, field_name="lang")
+    require_non_empty_text(data.title, label="report document title")
+    require_non_empty_text(data.run_id, label="report document run_id")
+    require_non_empty_text(data.lang, label="report document lang")
     if data.sample_count < 0:
         raise ValueError("report document sample_count must be non-negative")
     if data.sensor_count < 0:
@@ -35,6 +35,7 @@ def validate_report_document(data: object) -> ReportDocument:
     return data
 
 
-def _require_non_empty_text(value: str | None, *, field_name: str) -> None:
+def require_non_empty_text(value: str | None, *, label: str) -> None:
+    """Raise ``ValueError`` naming *label* when *value* is missing or blank."""
     if value is None or not value.strip():
-        raise ValueError(f"report document {field_name} must be non-empty")
+        raise ValueError(f"{label} must be non-empty")

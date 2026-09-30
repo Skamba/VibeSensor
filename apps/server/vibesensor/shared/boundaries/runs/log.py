@@ -9,11 +9,9 @@ from pathlib import Path
 
 import msgspec
 
+from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_json
-from vibesensor.shared.boundaries.sensor_frames import (
-    SensorFrameDecodeError,
-    sensor_frame_from_mapping,
-)
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.run_schema import (
     RUN_END_TYPE,

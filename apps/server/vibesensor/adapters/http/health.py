@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.adapters.http.models import HealthResponse
+from vibesensor.adapters.http.models.health import HealthResponse
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
-    from vibesensor.infra.runtime.processing_state import ProcessingLoopState
+    from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
     from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.use_cases.run import RunRecorder
 

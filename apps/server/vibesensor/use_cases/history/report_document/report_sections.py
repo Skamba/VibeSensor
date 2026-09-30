@@ -11,7 +11,7 @@ from vibesensor.report_i18n import (
     is_i18n_ref,
     resolve_i18n,
 )
-from vibesensor.shared.boundaries.reporting.document import DataTrustItem, NextStep
+from vibesensor.shared.boundaries.reporting.document.panels import DataTrustItem, NextStep
 from vibesensor.shared.report_diagnostics import localized_diagnostics
 from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.run_context_warning import RunContextWarning

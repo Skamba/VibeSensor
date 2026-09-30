@@ -99,45 +99,78 @@ def test_settings_snapshot_persists_with_protocol_shaped_store() -> None:
     assert snapshot["activeCarId"] == car_id
 
 
-def test_settings_snapshot_corrupted_json_falls_back_to_defaults(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("raw_snapshot", "expected"),
+    [
+        pytest.param(
+            "not-valid-json{{{",
+            {"cars": [], "activeCarId": None, "speedSource": "gps"},
+            id="corrupted-json-falls-back-to-defaults",
+        ),
+        pytest.param(
+            '{"cars": [{"id": "", "name": " Legacy ", "type": " coupe ", "aspects": {}}], '
+            '"activeCarId": "missing-car", "manualSpeedKph": "80", "language": " NL ", '
+            '"speedUnit": " MPS ", "sensorsByMac": {"11:22:33:44:55:66": '
+            '{"name": "Rear Left Wheel", "location_code": "rear_left_wheel"}}}',
+            {
+                "cars": [],
+                "activeCarId": None,
+                "speedSource": "gps",
+                "manualSpeedKph": None,
+                "language": "en",
+                "speedUnit": "kmh",
+                "sensorsByMac": {},
+            },
+            id="legacy-payload-falls-back-to-defaults",
+        ),
+        pytest.param(
+            '{"cars": [], "activeCarId": ""}',
+            {"cars": [], "activeCarId": None},
+            id="empty-cars-stay-empty",
+        ),
+    ],
+)
+def test_settings_snapshot_rejects_invalid_stored_payload(
+    tmp_path: Path, raw_snapshot: str, expected: dict[str, object]
+) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
-    write_raw_settings_snapshot(db.lifecycle, "not-valid-json{{{")
-    services = build_settings_services(db=db.settings_snapshot_repository)
-    snapshot = services.coordinator.snapshot()
-    assert snapshot["cars"] == []
-    assert snapshot["activeCarId"] is None
-    assert snapshot["speedSource"] == "gps"
+    write_raw_settings_snapshot(db.lifecycle, raw_snapshot)
+    snapshot = build_settings_services(db=db.settings_snapshot_repository).coordinator.snapshot()
+    assert {key: snapshot[key] for key in expected} == expected
 
 
-def test_settings_snapshot_legacy_payload_falls_back_to_defaults(tmp_path: Path) -> None:
+def test_settings_snapshot_drops_removed_band_width_aspects(tmp_path: Path) -> None:
+    removed_keys = {
+        "wheel_bandwidth_pct",
+        "driveshaft_bandwidth_pct",
+        "engine_bandwidth_pct",
+        "min_abs_band_hz",
+        "max_band_half_width_pct",
+    }
     db = create_history_persistence_adapters(tmp_path / "history.db")
     write_raw_settings_snapshot(
         db.lifecycle,
         (
-            '{"cars": [{"id": "", "name": " Legacy ", "type": " coupe ", "aspects": {}}], '
-            '"activeCarId": "missing-car", "manualSpeedKph": "80", "language": " NL ", '
-            '"speedUnit": " MPS ", "sensorsByMac": {"11:22:33:44:55:66": '
-            '{"name": "Rear Left Wheel", "location_code": "rear_left_wheel"}}}'
+            '{"cars": [{"id": "car-1", "name": "Old", "type": "sedan", "aspects": '
+            '{"tire_width_mm": 225, "rim_in": 17, "speed_uncertainty_pct": 2.5, '
+            '"wheel_bandwidth_pct": 7.5, "driveshaft_bandwidth_pct": 8.5, '
+            '"engine_bandwidth_pct": 9.5, "min_abs_band_hz": 0.7, '
+            '"max_band_half_width_pct": 12}}], "activeCarId": "car-1"}'
         ),
     )
     services = build_settings_services(db=db.settings_snapshot_repository)
-    snapshot = services.coordinator.snapshot()
-    assert snapshot["cars"] == []
-    assert snapshot["activeCarId"] is None
-    assert snapshot["speedSource"] == "gps"
-    assert snapshot["manualSpeedKph"] is None
-    assert snapshot["language"] == "en"
-    assert snapshot["speedUnit"] == "kmh"
-    assert snapshot["sensorsByMac"] == {}
 
+    aspects = services.coordinator.snapshot()["cars"][0]["aspects"]
+    assert removed_keys.isdisjoint(aspects)
+    assert aspects["tire_width_mm"] == 225.0
+    assert aspects["speed_uncertainty_pct"] == 2.5
+    analysis = services.analysis_settings.analysis_settings_snapshot()
+    assert analysis.rim_in == 17.0
 
-def test_settings_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    write_raw_settings_snapshot(db.lifecycle, '{"cars": [], "activeCarId": ""}')
-    services = build_settings_services(db=db.settings_snapshot_repository)
-    snapshot = services.coordinator.snapshot()
-    assert snapshot["cars"] == []
-    assert snapshot["activeCarId"] is None
+    services.analysis_settings.update_active_car_aspects({"rim_in": 18.0})
+    persisted = db.settings_snapshot_repository.get_settings_snapshot()
+    assert persisted is not None
+    assert removed_keys.isdisjoint(persisted["cars"][0]["aspects"])
 
 
 def test_settings_snapshot_invalid_active_car_id_clears_selection(tmp_path: Path) -> None:

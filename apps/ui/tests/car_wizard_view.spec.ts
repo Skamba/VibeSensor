@@ -4,8 +4,8 @@ import type {
   CarLibraryModel,
   CarLibraryTireOption,
 } from "../src/api/types";
-import type { CarsFeatureRenderState } from "../src/app/features/cars_feature_workflow";
-import type { CarsFeatureOptionsState } from "../src/app/features/cars_option_state";
+import type { CarsFeatureRenderState } from "../src/app/features/cars_feature";
+import type { CarsFeatureOptionsState } from "../src/app/features/cars_wizard_state";
 import {
   buildCarsWizardRenderModel,
   createClosedCarsWizardRenderModel,

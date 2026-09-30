@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
+from test_support.routes import iter_api_routes
 
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.middleware import install_local_mutation_safety_middleware
@@ -98,7 +99,7 @@ def test_all_mutating_http_routes_are_classified_by_method(fake_state) -> None:
             next(method for method in sorted(route.methods) if method in _UNSAFE_METHODS),
             route.path,
         )
-        for route in router.routes
+        for route in iter_api_routes(router.routes)
         if isinstance(route, APIRoute)
         and route.methods is not None
         and route.methods.intersection(_UNSAFE_METHODS)

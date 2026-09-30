@@ -463,7 +463,7 @@ def highlight_map(
     """Build a location → color highlight mapping from the top findings.
 
     *top_findings* are expected to be ``Mapping`` objects (dicts or
-    ``FindingPresentation``-like dataclasses accessed via attribute).
+    ``Finding`` objects accessed via attribute).
     """
     highlight: dict[str, str] = {}
     for finding in top_findings[:3]:

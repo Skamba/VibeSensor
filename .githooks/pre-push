@@ -1,31 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-guard_script="tools/privacy/privacy_guard.py"
-
-if [[ -x ".venv/bin/python" ]]; then
-  python_bin=".venv/bin/python"
-elif command -v python3 >/dev/null 2>&1; then
-  python_bin="python3"
-else
-  python_bin="python"
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-push: gitleaks not installed; skipping secret scan (see CONTRIBUTING.md)." >&2
+  exit 0
 fi
 
+zero_sha="0000000000000000000000000000000000000000"
+
 while read -r _local_ref local_sha _remote_ref remote_sha; do
-  if [[ -z "${local_sha:-}" || "${local_sha}" == "0000000000000000000000000000000000000000" ]]; then
+  if [[ -z "${local_sha:-}" || "${local_sha}" == "${zero_sha}" ]]; then
     continue
   fi
 
-  if [[ "${remote_sha}" == "0000000000000000000000000000000000000000" ]]; then
+  if [[ "${remote_sha}" == "${zero_sha}" ]]; then
     if git rev-parse --verify origin/main >/dev/null 2>&1; then
-      base_sha="$(git merge-base origin/main "${local_sha}")"
-      commit_range="${base_sha}..${local_sha}"
+      log_opts="$(git merge-base origin/main "${local_sha}")..${local_sha}"
     else
-      commit_range="${local_sha}"
+      log_opts="${local_sha}"
     fi
   else
-    commit_range="${remote_sha}..${local_sha}"
+    log_opts="${remote_sha}..${local_sha}"
   fi
 
-  "${python_bin}" "${guard_script}" check-range "${commit_range}"
+  gitleaks git --log-opts="${log_opts}" --redact --no-banner
 done

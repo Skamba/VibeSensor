@@ -3,10 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+import pytest
+
 from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
@@ -16,7 +19,6 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
@@ -29,9 +31,9 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralBuildResult,
     WholeRunSpectralCoverageSummary,
 )
+from vibesensor.use_cases.run import post_analysis_executor
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionConfig,
-    PostAnalysisWholeRunBuilderConfig,
     execute_post_analysis,
 )
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
@@ -309,34 +311,37 @@ def execute_artifact_persistence(
 ) -> PostAnalysisExecutionSuccess:
     _ = policy
     raw_capture_manifest = raw_manifest(run_id)
-    result = execute_post_analysis(
-        run_id=run_id,
-        db=db,
-        config=PostAnalysisExecutionConfig(
-            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
-                run_id=run_id,
-                metadata=run_metadata(run_id),
-                language="en",
-                samples=samples_payload or samples(),
-                total_summary_row_count=total_summary_row_count,
-                stride=1,
-                context_samples=context_samples,
-                raw_capture=raw_capture(raw_capture_manifest),
-                raw_capture_manifest=raw_capture_manifest,
-            ),
-            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
-                artifact_builder=lambda **_kwargs: spectral_result(
-                    spectral_manifest,
-                    spectral_contents,
-                ),
-                context_builder=context_builder,
-                order_trace_builder=order_trace_builder,
-                order_trace_summary_builder=order_trace_summary_builder,
-                order_family_summary_builder=order_family_summary_builder,
-                spatial_coherence_builder=spatial_coherence_builder,
-            ),
-            analysis_runner=lambda _run: analysis or analysis_payload(),
+    builder_overrides = {
+        "build_whole_run_spectral_artifact_bundle_from_ranges": lambda **_kwargs: spectral_result(
+            spectral_manifest, spectral_contents
         ),
-    )
+        "build_whole_run_context_artifact_bundle": context_builder,
+        "build_whole_run_order_trace_artifact_bundle": order_trace_builder,
+        "build_whole_run_order_trace_summary_artifact_bundle": order_trace_summary_builder,
+        "build_whole_run_order_family_summary_artifact_bundle": order_family_summary_builder,
+        "build_whole_run_spatial_coherence_artifact_bundle": spatial_coherence_builder,
+    }
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        for name, builder in builder_overrides.items():
+            if builder is not None:
+                monkeypatch.setattr(post_analysis_executor, name, builder)
+        result = execute_post_analysis(
+            run_id=run_id,
+            db=db,
+            config=PostAnalysisExecutionConfig(
+                load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                    run_id=run_id,
+                    metadata=run_metadata(run_id),
+                    language="en",
+                    samples=samples_payload or samples(),
+                    total_summary_row_count=total_summary_row_count,
+                    stride=1,
+                    context_samples=context_samples,
+                    raw_capture=raw_capture(raw_capture_manifest),
+                    raw_capture_manifest=raw_capture_manifest,
+                ),
+                analysis_runner=lambda _run: analysis or analysis_payload(),
+            ),
+        )
     assert isinstance(result, PostAnalysisExecutionSuccess)
     return result

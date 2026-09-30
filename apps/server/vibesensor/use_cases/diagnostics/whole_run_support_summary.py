@@ -7,6 +7,10 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
+from vibesensor.shared.types.order_trace_contracts import (
+    OrderTracePhaseSupport,
+    OrderTraceSupportInterval,
+)
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
 from vibesensor.use_cases.diagnostics.math_utils import (
@@ -14,10 +18,6 @@ from vibesensor.use_cases.diagnostics.math_utils import (
 )
 from vibesensor.use_cases.diagnostics.math_utils import (
     _ratio_or_zero as _ratio,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderTracePhaseSupport,
-    OrderTraceSupportInterval,
 )
 
 TIMING_QUALITY_REASONS = frozenset(

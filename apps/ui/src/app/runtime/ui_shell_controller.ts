@@ -12,19 +12,12 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
+import { createReplaceableTimeout } from "../timer_cleanup";
 import type { VisualVariant } from "../visual_variant";
 import {
   createUiConfirmationModule,
   type UiConfirmationModule,
 } from "./ui_confirmation_module";
-import {
-  createUiShellNavigationModule,
-  type UiShellNavigationModule,
-} from "./ui_shell_navigation_module";
-import {
-  createUiShellNotificationModule,
-  type UiShellNotificationModule,
-} from "./ui_shell_notification_module";
 import {
   createUiShellPreferencesModule,
   type UiShellPreferencesModule,
@@ -41,9 +34,28 @@ import type {
   UiShellChromePreferencesModel,
   UiShellChromeStatusModel,
   UiShellChromeView,
+  UiShellErrorBannerModel,
 } from "./ui_shell_chrome";
 import { SHELL_NAV_ITEMS, SPEED_UNIT_OPTIONS } from "./ui_shell_chrome";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
+
+export const DEFAULT_SHELL_VIEW_ID = "dashboardView";
+
+const SHELL_VIEW_IDS: readonly string[] = SHELL_NAV_ITEMS.map(
+  (item) => item.viewId,
+);
+
+const ERROR_BANNER_HIDE_MS = 5000;
+
+const HIDDEN_BANNER_MODEL: UiShellErrorBannerModel = {
+  hidden: true,
+  text: "",
+  variant: null,
+};
+
+function normalizeActiveViewId(viewId: string): string {
+  return SHELL_VIEW_IDS.includes(viewId) ? viewId : DEFAULT_SHELL_VIEW_ID;
+}
 
 type UiShellControllerDeps = {
   bindFeatureHandlers: () => void;
@@ -69,9 +81,16 @@ export class UiShellController {
 
   private readonly chrome: UiShellChromeView;
 
-  private readonly navigation: UiShellNavigationModule;
+  private readonly activeView: Signal<string>;
 
-  private readonly notifications: UiShellNotificationModule;
+  private pendingViewActivationToken = 0;
+
+  private readonly onViewActivated?: (viewId: string) => Promise<void>;
+
+  private readonly errorBanner =
+    signal<UiShellErrorBannerModel>(HIDDEN_BANNER_MODEL);
+
+  private readonly hideErrorBannerTimer = createReplaceableTimeout(window);
 
   private readonly preferences: UiShellPreferencesModule;
 
@@ -102,24 +121,11 @@ export class UiShellController {
     this.state = deps.state;
     this.chrome = deps.chrome;
     this.bindFeatureHandlers = deps.bindFeatureHandlers;
-    this.notifications = createUiShellNotificationModule({
-      window,
-    });
-    this.navigation = createUiShellNavigationModule({
-      onViewActivated: deps.onViewActivated,
-      onViewActivationFailed: (_viewId, error) => {
-        this.showError(
-          error instanceof Error
-            ? error.message
-            : this.t("status.view_load_failed"),
-        );
-      },
-      shell: this.state.shell,
-      viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
-      onDashboardViewActivated: () => {
-        this.state.spectrum.spectrumPlot.value?.resize();
-      },
-    });
+    this.onViewActivated = deps.onViewActivated;
+    this.activeView = signal(
+      normalizeActiveViewId(this.state.shell.activeViewId.value),
+    );
+    this.state.shell.activeViewId.value = this.activeView.value;
     this.status = createUiShellStatusModule({
       realtime: this.state.realtime,
       settings: this.state.settings,
@@ -159,7 +165,11 @@ export class UiShellController {
   }
 
   showError(message: string): void {
-    this.notifications.showError(message);
+    this.hideErrorBannerTimer.clear();
+    this.errorBanner.value = { hidden: false, text: message, variant: "bad" };
+    this.hideErrorBannerTimer.replace(() => {
+      this.errorBanner.value = HIDDEN_BANNER_MODEL;
+    }, ERROR_BANNER_HIDE_MS);
   }
 
   requestConfirmation(message: string): Promise<boolean> {
@@ -174,11 +184,47 @@ export class UiShellController {
   }
 
   get activeViewId(): ReadonlySignal<string> {
-    return this.navigation.activeViewId;
+    return this.activeView;
   }
 
+  /**
+   * Switches views; non-dashboard views first wait for `onViewActivated`
+   * (lazy chunk + data), and only the latest request wins.
+   */
   setActiveView(viewId: string): void {
-    this.navigation.setActiveView(viewId);
+    const nextViewId = normalizeActiveViewId(viewId);
+    const activationToken = ++this.pendingViewActivationToken;
+    const activation =
+      nextViewId === DEFAULT_SHELL_VIEW_ID
+        ? undefined
+        : this.onViewActivated?.(nextViewId);
+    if (activation === undefined) {
+      this.applyActiveView(nextViewId);
+      return;
+    }
+    void activation
+      .then(() => {
+        if (activationToken === this.pendingViewActivationToken) {
+          this.applyActiveView(nextViewId);
+        }
+      })
+      .catch((error) => {
+        if (activationToken === this.pendingViewActivationToken) {
+          this.showError(
+            error instanceof Error
+              ? error.message
+              : this.t("status.view_load_failed"),
+          );
+        }
+      });
+  }
+
+  private applyActiveView(viewId: string): void {
+    this.activeView.value = viewId;
+    this.state.shell.activeViewId.value = viewId;
+    if (viewId === DEFAULT_SHELL_VIEW_ID) {
+      this.state.spectrum.spectrumPlot.value?.resize();
+    }
   }
 
   start(defaultViewId: string): void {
@@ -189,7 +235,7 @@ export class UiShellController {
   dispose(): void {
     this.disposeReactiveLanguageSync();
     this.disposeDocumentLanguageSync();
-    this.notifications.dispose();
+    this.hideErrorBannerTimer.clear();
   }
 
   async hydratePersistedPreferences(): Promise<void> {
@@ -225,7 +271,7 @@ export class UiShellController {
 
   private createNavigationRenderModel(): ReadonlySignal<UiShellChromeNavigationModel> {
     return computed(() => ({
-      activeViewId: this.navigation.activeViewId.value,
+      activeViewId: this.activeView.value,
       navItems: SHELL_NAV_ITEMS.map((item) => ({
         labelText: this.t(item.labelKey) || item.fallbackLabel,
         tabId: item.tabId,
@@ -261,7 +307,7 @@ export class UiShellController {
 
   private createDialogRenderModel(): ReadonlySignal<UiShellChromeDialogModel> {
     return computed(() => ({
-      appErrorBanner: this.notifications.bannerModel.value,
+      appErrorBanner: this.errorBanner.value,
       confirmationDialog: this.confirmation.dialogModel.value,
     }));
   }

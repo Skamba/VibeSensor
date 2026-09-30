@@ -8,9 +8,8 @@ from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
-from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
-from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
+from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts, ReportRunFacts
+from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.report_confidence_presentation import proof_caveat_text
 from vibesensor.shared.report_presentation import (
     coverage_label,
@@ -35,7 +34,7 @@ from .section_context import (
 from .workflow_appendix import build_ranked_candidates, build_recapture_assessment
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
+    from vibesensor.domain import Finding, TestRun
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
 
@@ -53,8 +52,8 @@ class ReportDocumentContext:
     run_facts: ReportRunFacts
     sensor_facts: ReportSensorFacts
     decision_facts: ReportDecisionFacts
-    findings: tuple[FindingPresentation, ...]
-    top_causes: tuple[FindingPresentation, ...]
+    findings: tuple[Finding, ...]
+    top_causes: tuple[Finding, ...]
     primary: PrimaryCandidateContext
     run_datetime: str
     verdict_page_context: VerdictPageContext
@@ -76,7 +75,6 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
     run_facts = report_facts.run
     sensor_facts = report_facts.sensor
     decision_facts = report_facts.decision
-    prepared_findings = report_facts.findings
     coverage = sensor_facts.coverage
     active_locations = tuple(coverage.active_locations)
     coverage_label_text = coverage_label(
@@ -153,8 +151,8 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         run_facts=run_facts,
         sensor_facts=sensor_facts,
         decision_facts=decision_facts,
-        findings=prepared_findings.all_findings,
-        top_causes=prepared_findings.top_causes,
+        findings=test_run.findings,
+        top_causes=test_run.effective_top_causes(),
         primary=primary,
         run_datetime=_report_date_text(run_facts),
         verdict_page_context=VerdictPageContext(

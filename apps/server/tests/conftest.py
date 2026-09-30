@@ -31,7 +31,8 @@ from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.car_config import CarsSnapshot

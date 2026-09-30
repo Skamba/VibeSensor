@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,

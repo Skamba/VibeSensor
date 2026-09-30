@@ -7,6 +7,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.order_trace_contracts import (
+    OrderTracePoint,
+    OrderTraceSummary,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
@@ -27,10 +31,6 @@ from vibesensor.use_cases.diagnostics.math_utils import (
 )
 from vibesensor.use_cases.diagnostics.math_utils import (
     _stddev_or_none as _stddev,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
-    OrderTracePoint,
-    OrderTraceSummary,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WholeRunOrderTraceSummaryArtifactBundle,

@@ -64,166 +64,88 @@ def _make_override_plus_gps() -> GPSSpeedMonitor:
     return m
 
 
-@pytest.mark.parametrize(
-    "factory",
-    [
-        pytest.param(_make_fresh_gps, id="fresh_gps"),
-        pytest.param(_make_stale_gps, id="stale_gps"),
-        pytest.param(_make_manual_override, id="manual_override"),
-        pytest.param(_make_disconnected, id="disconnected"),
-        pytest.param(_make_override_plus_gps, id="override_plus_gps"),
-    ],
-)
-def test_resolve_speed_no_mutation(factory) -> None:
-    """resolve_speed() must never mutate the monitor."""
+def _make_stale_gps_with_fallback() -> GPSSpeedMonitor:
+    m = _make_stale_gps()
+    m.manual_source_selected = False  # GPS primary, override is fallback only
+    m.override_speed_mps = 25.0
+    return m
+
+
+def _make_manual_disconnected() -> GPSSpeedMonitor:
+    m = _make_manual_override()
+    m.connection_state = "disconnected"
+    return m
+
+
+_ALL_MONITOR_STATES = [
+    pytest.param(_make_fresh_gps, id="fresh_gps"),
+    pytest.param(_make_stale_gps, id="stale_gps"),
+    pytest.param(_make_stale_gps_with_fallback, id="stale_gps_with_fallback"),
+    pytest.param(_make_manual_override, id="manual_override"),
+    pytest.param(_make_disconnected, id="disconnected"),
+    pytest.param(_make_override_plus_gps, id="override_plus_gps"),
+]
+
+
+@pytest.mark.parametrize("factory", _ALL_MONITOR_STATES)
+def test_speed_reads_are_pure_and_repeatable(factory) -> None:
+    """resolve_speed()/effective_speed_mps/fallback_active never mutate and always agree."""
     m = factory()
     before = _snapshot(m)
-    m.resolve_speed()
+
+    results = [m.resolve_speed() for _ in range(5)]
+    speed_first, fallback_first = m.effective_speed_mps, m.fallback_active
+    fallback_second, speed_second = m.fallback_active, m.effective_speed_mps
+
     assert _snapshot(m) == before
-
-
-# ---------------------------------------------------------------------------
-# effective_speed_mps property does not mutate
-# ---------------------------------------------------------------------------
-
-
-class TestEffectiveSpeedNoMutation:
-    def test_effective_speed_does_not_mutate(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        before = _snapshot(m)
-        _ = m.effective_speed_mps
-        assert _snapshot(m) == before
-
-    def test_effective_speed_stale_does_not_mutate(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-        before = _snapshot(m)
-        _ = m.effective_speed_mps
-        assert _snapshot(m) == before
-
-
-# ---------------------------------------------------------------------------
-# status_snapshot() does not mutate connection_state
-# ---------------------------------------------------------------------------
+    assert all(r == results[0] for r in results)
+    assert speed_first == speed_second
+    assert fallback_first == fallback_second
 
 
 class TestStatusSnapshotNoMutation:
-    def test_status_snapshot_does_not_mutate_connection_state(self) -> None:
-        """Previously, GPS status reporting would change connection_state from
-        'connected' to 'stale' as a side effect.  It must no longer do so.
-        """
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.connection_state = "connected"
-        m.speed_mps = 5.0
-        set_gps_snapshot_age(m, age_s=999)  # stale
-
-        s = m.status_snapshot()
-        # The snapshot should report "stale" ...
-        assert s.connection_state == "stale"
-        # ... but the underlying attribute must remain unchanged.
-        assert m.connection_state == "connected"
-
-    def test_status_snapshot_does_not_mutate_on_fresh_data(self) -> None:
+    @pytest.mark.parametrize(
+        ("age_s", "reported_state"),
+        [pytest.param(None, "connected", id="fresh"), pytest.param(999, "stale", id="stale")],
+    )
+    def test_status_snapshot_does_not_mutate_connection_state(
+        self, age_s: float | None, reported_state: str
+    ) -> None:
+        """GPS status reporting used to flip connection_state to 'stale' as a side effect."""
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
+        if age_s is None:
+            set_gps_snapshot_age(m)
+        else:
+            set_gps_snapshot_age(m, age_s=age_s)
 
-        s = m.status_snapshot()
-        assert s.connection_state == "connected"
+        assert m.status_snapshot().connection_state == reported_state
         assert m.connection_state == "connected"
 
 
-# ---------------------------------------------------------------------------
-# fallback_active consistency
-# ---------------------------------------------------------------------------
-
-
-class TestFallbackActiveConsistency:
-    def test_fallback_active_consistent_with_speed_fresh_gps(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        r = m.resolve_speed()
-        assert r.speed_mps == 10.0
-        assert r.fallback_active is False
-        assert r.source == "gps"
-        # Property should agree
-        assert m.fallback_active is False
-        assert m.effective_speed_mps == 10.0
-
-    def test_fallback_active_consistent_with_speed_stale_gps(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = False  # GPS primary, override is fallback only
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-        m.override_speed_mps = 25.0
-        r = m.resolve_speed()
-        assert r.fallback_active is True
-        assert r.source == "fallback_manual"
-        assert r.speed_mps == 25.0
-        assert m.fallback_active is True
-        assert m.effective_speed_mps == 25.0
-
-    def test_fallback_active_consistent_disconnected(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = True
-        m.connection_state = "disconnected"
-        m.override_speed_mps = 25.0
-        # With manual source selected, override takes priority.
-        r = m.resolve_speed()
-        assert r.speed_mps == 25.0
-        assert r.fallback_active is False  # override wins, not fallback
-        assert r.source == "manual"
-
-    def test_fallback_active_consistent_disconnected_no_override(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.connection_state = "disconnected"
-        r = m.resolve_speed()
-        assert r.speed_mps is None
-        assert r.fallback_active is True
-        assert m.fallback_active is True
-
-
-# ---------------------------------------------------------------------------
-# Multiple reads per tick yield consistent results
-# ---------------------------------------------------------------------------
-
-
-class TestMultipleReadsConsistent:
-    def test_repeated_reads_consistent_fresh(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m)
-        results = [m.resolve_speed() for _ in range(5)]
-        assert all(r == results[0] for r in results)
-
-    def test_repeated_reads_consistent_stale(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = False  # GPS primary, override is fallback only
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-        m.override_speed_mps = 25.0
-        results = [m.resolve_speed() for _ in range(5)]
-        assert all(r == results[0] for r in results)
-
-    def test_effective_and_fallback_agree(self) -> None:
-        """Reading effective_speed_mps and fallback_active in any order must agree."""
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        set_gps_snapshot_age(m, age_s=999)
-
-        # Read in different orders — all should be consistent
-        speed1 = m.effective_speed_mps
-        fb1 = m.fallback_active
-        fb2 = m.fallback_active
-        speed2 = m.effective_speed_mps
-
-        assert speed1 == speed2
-        assert fb1 == fb2
+@pytest.mark.parametrize(
+    ("factory", "speed_mps", "fallback_active", "source"),
+    [
+        pytest.param(_make_fresh_gps, 10.0, False, "gps", id="fresh_gps"),
+        pytest.param(
+            _make_stale_gps_with_fallback, 25.0, True, "fallback_manual", id="stale_gps_fallback"
+        ),
+        pytest.param(_make_manual_disconnected, 25.0, False, "manual", id="manual_wins"),
+        pytest.param(_make_disconnected, None, True, None, id="disconnected_no_override"),
+    ],
+)
+def test_fallback_active_consistent_with_resolved_speed(
+    factory, speed_mps: float | None, fallback_active: bool, source: str | None
+) -> None:
+    m = factory()
+    r = m.resolve_speed()
+    assert r.speed_mps == speed_mps
+    assert r.fallback_active is fallback_active
+    if source is not None:
+        assert r.source == source
+    assert m.fallback_active is fallback_active
+    assert m.effective_speed_mps == speed_mps
 
 
 # ---------------------------------------------------------------------------

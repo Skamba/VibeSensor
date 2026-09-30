@@ -39,10 +39,8 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
 from vibesensor.use_cases.diagnostics.spectrogram import (
     PeakSampleScan,
     aggregate_fft_spectrum,
-    aggregate_fft_spectrum_raw,
     scan_peak_samples,
     spectrogram_from_peaks,
-    spectrogram_from_peaks_raw,
 )
 from vibesensor.vibration_strength import percentile
 
@@ -278,8 +276,9 @@ def _plot_data(
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=resolved_peak_scan,
         ),
-        fft_spectrum_raw=aggregate_fft_spectrum_raw(
+        fft_spectrum_raw=aggregate_fft_spectrum(
             samples,
+            aggregation="max",
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=resolved_peak_scan,
         ),
@@ -288,8 +287,9 @@ def _plot_data(
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=resolved_peak_scan,
         ),
-        peaks_spectrogram_raw=spectrogram_from_peaks_raw(
+        peaks_spectrogram_raw=spectrogram_from_peaks(
             samples,
+            aggregation="max",
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=resolved_peak_scan,
         ),
