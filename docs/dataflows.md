@@ -43,7 +43,7 @@ Deep dive: `docs/run_lifecycle.md`
 | Field | Value |
 |------|-------------|
 | Source | Optional per-run raw capture written alongside an active recording |
-| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_whole_run_builders.py` |
+| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_executor.py` (whole-run stages) |
 | Boundary | Raw capture is read through `RunPersistence`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
 | Final consumer | Offline post-stop analysis: raw replay compatibility plus whole-run sidecar builders |
 | Data shape | Persisted and replayable raw artifacts, dense sidecar artifacts, and compact persisted summaries |
@@ -53,8 +53,8 @@ use raw replay when the manifest/store exists, or fall back to persisted summary
 rows when it does not. When raw capture is available, whole-run spectra use
 bounded raw range reads, then the sidecar path builds context labels, order
 traces/summaries, family
-summaries, and spatial coherence through `post_analysis_whole_run_builders.py`
-and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
+summaries, and spatial coherence through the whole-run stage functions in
+`post_analysis_executor.py` and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
 `whole-run-artifacts/<run_id>/`; compact report-facing summaries and manifest
 metadata are appended to `analysis_json`.
 

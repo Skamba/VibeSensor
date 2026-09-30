@@ -38,18 +38,17 @@ below.
 - `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` uses raw capture
    only to rebuild FFT-derived metrics for those already-persisted summary rows.
 - `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` is the
-   canonical offline executor. `PostAnalysisExecutionRunner` owns the
-   declarative top-level stage order, using `PostAnalysisExecutionConfig` for
-   loader/runner/builder dependencies:
+   canonical offline executor. `execute_post_analysis()` runs one explicit
+   sequence of stage functions, using `PostAnalysisExecutionConfig` only for
+   the loader and analysis-runner dependencies:
   `LoadRunStage`, `BuildPostAnalysisInputStage`,
   `BuildWholeRunSpectraStage`, `BuildWholeRunContextStage`,
   `BuildOrderTraceStage`, `BuildOrderTraceSummaryStage`,
   `BuildOrderFamilySummaryStage`, `BuildSpatialSummaryStage`,
   `PersistArtifactsStage`, `BuildReportFactsStage`, and
   `PersistAnalysisSummaryStage`.
-- `apps/server/vibesensor/use_cases/diagnostics/run_analysis.py` and
-  `analysis_pipeline.py` still provide the compact summary/report-facing
-  analysis path over summary-style `SensorFrame` samples.
+- `apps/server/vibesensor/use_cases/diagnostics/run_analysis.py` still
+  provides the compact summary/report-facing analysis path over summary-style `SensorFrame` samples.
 
 ### Raw capture and dense sidecars
 
@@ -65,9 +64,9 @@ below.
    `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
 - Indexed raw range reads exist through
    `RunPersistence.aload_raw_capture_sensor_range(...)`.
-- The current connected dense sidecar path is owned by
-  `apps/server/vibesensor/use_cases/run/post_analysis_whole_run_builders.py` and
-  the `whole_run_*` diagnostics modules:
+- The current connected dense sidecar path is owned by the whole-run stage
+  functions in `apps/server/vibesensor/use_cases/run/post_analysis_executor.py`
+  and the `whole_run_*` diagnostics modules:
   - `whole_run_spectra.py` builds deterministic whole-run spectral sidecars from
     `RawCaptureManifest` plus bounded raw range reads, emitting spectral
     grids/matrices plus per-window compact spectral summaries.

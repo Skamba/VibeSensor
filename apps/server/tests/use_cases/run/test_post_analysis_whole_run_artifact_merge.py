@@ -7,7 +7,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.run.post_analysis_whole_run_builders import (
+from vibesensor.use_cases.run.post_analysis_executor import (
     StoredWholeRunArtifactBundle,
     merge_whole_run_artifact_bundles,
 )

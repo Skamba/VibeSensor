@@ -10,9 +10,9 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.run import post_analysis_executor
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionConfig,
-    PostAnalysisWholeRunBuilderConfig,
     execute_post_analysis,
 )
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -38,7 +38,9 @@ def _samples() -> list:
     return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 
 
-def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_loss() -> None:
+def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_loss(
+    monkeypatch,
+) -> None:
     stored: dict[str, object] = {}
     manifest = RawCaptureManifest(
         run_id="run-loss-gated",
@@ -63,6 +65,17 @@ def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_l
 
     def context_builder(**_kwargs):
         raise AssertionError("fatal raw-capture loss must skip whole-run context build")
+
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_spectral_artifact_bundle_from_ranges",
+        artifact_builder,
+    )
+    monkeypatch.setattr(
+        post_analysis_executor,
+        "build_whole_run_context_artifact_bundle",
+        context_builder,
+    )
 
     def analysis_runner(run: PostAnalysisRunInput):
         assert run.raw_replay.raw_capture_loss_policy_severity == "fatal"
@@ -102,10 +115,6 @@ def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_l
                 stride=1,
             ),
             analysis_runner=analysis_runner,
-            whole_run_builders=PostAnalysisWholeRunBuilderConfig(
-                artifact_builder=artifact_builder,
-                context_builder=context_builder,
-            ),
         ),
     )
 
