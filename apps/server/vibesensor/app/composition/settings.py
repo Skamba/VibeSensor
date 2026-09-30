@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.adapters.http.dependencies import (
+    ObdAdminServiceProtocol,
     SettingsDeps,
     SettingsSpeedServiceProtocol,
 )
-from vibesensor.adapters.obd import ObdService
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.infra.config.sensor_settings import SensorSettingsService
@@ -65,7 +65,7 @@ class SettingsServiceBundle:
         self,
         *,
         speed_status_service: SettingsSpeedServiceProtocol,
-        obd_admin_service: ObdService,
+        obd_admin_service: ObdAdminServiceProtocol,
     ) -> SettingsDeps:
         """Return the focused HTTP settings dependency group."""
 

@@ -11,6 +11,7 @@ from vibesensor.shared.operational_errors import ExternalCommandError
 
 
 def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicMock]:
+    from vibesensor.adapters.http.dependencies import ObdAdminServiceProtocol
     from vibesensor.adapters.http.settings.dependencies import ObdAdminRouteDeps
     from vibesensor.adapters.http.settings.obd import create_obd_admin_routes
 
@@ -36,7 +37,9 @@ def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicM
         speed_source="gps",
         stale_timeout_s=8.0,
     )
-    obd_admin_service = MagicMock()
+    # Spec'd to the admin seam: a route reaching for anything outside it (for
+    # example ObdService.mark_connected) fails with AttributeError.
+    obd_admin_service = MagicMock(spec=ObdAdminServiceProtocol)
     app = FastAPI()
     app.include_router(
         create_obd_admin_routes(

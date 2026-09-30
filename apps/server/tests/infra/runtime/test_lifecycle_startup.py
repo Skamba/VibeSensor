@@ -92,6 +92,21 @@ class TestStartupPhases:
             await lifecycle.stop()
 
     @pytest.mark.asyncio
+    async def test_stop_immediately_after_start_does_not_hang(self) -> None:
+        """Shutdown before the background services first run must not wedge close()."""
+        started: list[str] = []
+        lifecycle = LifecycleManager(
+            runtime=_make_runtime(started),
+            start_udp_receiver=AsyncMock(return_value=(None, None)),
+        )
+        await lifecycle.start()
+
+        async with asyncio.timeout(5.0):
+            await lifecycle.stop()
+
+        assert lifecycle.tasks == []
+
+    @pytest.mark.asyncio
     async def test_marks_failed_on_exception(self) -> None:
         """Health state records the failing phase on exception."""
         runtime = _make_runtime([])

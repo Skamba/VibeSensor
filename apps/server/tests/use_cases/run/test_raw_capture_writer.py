@@ -39,6 +39,36 @@ def _overfill_capture_queue(
         )
 
 
+class _FirstAppendBlocksHistoryDb:
+    """Park the writer worker on its first append until ``block_append`` is set.
+
+    Only the first append blocks: once released, the remaining queued chunks
+    are persisted without a per-chunk worker-thread hop, so draining a full
+    queue on shutdown costs one event-loop round trip per chunk instead of one
+    thread spawn per chunk (which made the drain CPU-load sensitive).
+    """
+
+    def __init__(self) -> None:
+        self.first_started = threading.Event()
+        self.block_append = threading.Event()
+
+    async def aappend_raw_capture_chunk(self, _run_id: str, _chunk: RawCaptureChunk) -> None:
+        if self.first_started.is_set():
+            return
+        self.first_started.set()
+        await asyncio.to_thread(self.block_append.wait)
+
+    async def afinalize_raw_capture(
+        self,
+        _run_id: str,
+        *,
+        run_start_monotonic_us: int | None = None,
+        sensor_clock_sync=None,
+        sensor_losses=None,
+    ) -> None:
+        del run_start_monotonic_us, sensor_clock_sync, sensor_losses
+
+
 def _merged_loss_stats(sensor_losses: dict[str, RawCaptureLossStats] | None) -> RawCaptureLossStats:
     merged = RawCaptureLossStats()
     for loss_stats in (sensor_losses or {}).values():
@@ -289,27 +319,7 @@ def test_raw_capture_writer_notifies_late_finalize_after_timeout() -> None:
 
 
 def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_queue_stays_full() -> None:
-    class SlowHistoryDb:
-        def __init__(self) -> None:
-            self.first_started = threading.Event()
-            self.block_append = threading.Event()
-
-        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
-            self.first_started.set()
-            await asyncio.to_thread(self.block_append.wait)
-
-        async def afinalize_raw_capture(
-            self,
-            _run_id: str,
-            *,
-            run_start_monotonic_us: int | None = None,
-            sensor_clock_sync=None,
-            sensor_losses=None,
-        ):
-            del run_start_monotonic_us, sensor_clock_sync, sensor_losses
-            return None
-
-    history_db = SlowHistoryDb()
+    history_db = _FirstAppendBlocksHistoryDb()
     writer = RunRawCaptureWriter(
         history_db=history_db,
         logger=logging.getLogger(__name__),
@@ -365,27 +375,7 @@ def test_raw_capture_writer_finalize_failure_returns_failed_result() -> None:
 
 
 def test_raw_capture_writer_shutdown_returns_false_when_queue_stays_full() -> None:
-    class SlowHistoryDb:
-        def __init__(self) -> None:
-            self.first_started = threading.Event()
-            self.block_append = threading.Event()
-
-        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
-            self.first_started.set()
-            await asyncio.to_thread(self.block_append.wait)
-
-        async def afinalize_raw_capture(
-            self,
-            _run_id: str,
-            *,
-            run_start_monotonic_us: int | None = None,
-            sensor_clock_sync=None,
-            sensor_losses=None,
-        ):
-            del run_start_monotonic_us, sensor_clock_sync, sensor_losses
-            return None
-
-    history_db = SlowHistoryDb()
+    history_db = _FirstAppendBlocksHistoryDb()
     writer = RunRawCaptureWriter(
         history_db=history_db,
         logger=logging.getLogger(__name__),

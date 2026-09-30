@@ -158,11 +158,19 @@ class TaskSupervisor:
 
 
 class BackgroundTaskCoordinator:
-    """Own the lifecycle-scoped AnyIO task group for background services."""
+    """Own the lifecycle-scoped AnyIO task group for background services.
+
+    A task is tracked, and cancellable, from the moment ``start()`` returns.
+    ``start_soon`` only schedules the task body, so its cancel scope is created
+    and registered synchronously in ``start()``; a task cancelled before it first
+    runs skips its body. Otherwise a ``cancel_all()``/``close()`` issued before
+    the spawned task was scheduled would find nothing to cancel and ``close()``
+    would wait forever on a body that started afterwards.
+    """
 
     __slots__ = (
-        "_active_names",
         "_all_done",
+        "_cancelling",
         "_logger",
         "_task_group",
         "_task_group_cm",
@@ -175,51 +183,62 @@ class BackgroundTaskCoordinator:
         logger: logging.Logger,
     ) -> None:
         self._logger = logger
-        self._active_names: set[str] = set()
         self._all_done = anyio.Event()
         self._all_done.set()
+        self._cancelling = False
         self._task_group: TaskGroup | None = None
         self._task_group_cm: AbstractAsyncContextManager[TaskGroup] | None = None
         self._task_scopes: dict[str, anyio.CancelScope] = {}
 
     @property
     def tasks(self) -> list[str]:
-        return sorted(self._active_names)
+        return sorted(self._task_scopes)
 
     async def open(self) -> None:
         if self._task_group is not None:
             return
+        self._cancelling = False
         self._task_group_cm = anyio.create_task_group()
         self._task_group = await self._task_group_cm.__aenter__()
 
     async def close(self) -> None:
+        """Cancel every tracked task and wait for the task group to exit."""
+
         if self._task_group_cm is None:
             return
+        self._cancel_tracked()
         await self._task_group_cm.__aexit__(None, None, None)
         self._task_group = None
         self._task_group_cm = None
+
+    def _cancel_tracked(self) -> None:
+        self._cancelling = True
+        for cancel_scope in list(self._task_scopes.values()):
+            cancel_scope.cancel()
+
+    def _untrack(self, name: str, cancel_scope: anyio.CancelScope) -> None:
+        if self._task_scopes.get(name) is cancel_scope:
+            del self._task_scopes[name]
+        if not self._task_scopes:
+            self._all_done.set()
 
     async def _run_tracked(
         self,
         task_factory: TaskFactory,
         name: str,
+        cancel_scope: anyio.CancelScope,
     ) -> None:
         cancelled_exc_class = anyio.get_cancelled_exc_class()
-        if not self._active_names:
-            self._all_done = anyio.Event()
-        with anyio.CancelScope() as cancel_scope:
-            self._active_names.add(name)
-            self._task_scopes[name] = cancel_scope
-            try:
+        try:
+            if cancel_scope.cancel_called:
+                return
+            with cancel_scope:
                 try:
                     await task_factory()
                 except cancelled_exc_class:
                     return
-            finally:
-                self._task_scopes.pop(name, None)
-                self._active_names.discard(name)
-                if not self._active_names:
-                    self._all_done.set()
+        finally:
+            self._untrack(name, cancel_scope)
 
     def start(
         self,
@@ -229,13 +248,20 @@ class BackgroundTaskCoordinator:
     ) -> None:
         if self._task_group is None:
             raise RuntimeError("BackgroundTaskCoordinator.start() called before open()")
-        self._task_group.start_soon(self._run_tracked, task_factory, name, name=name)
+        if name in self._task_scopes:
+            raise RuntimeError(f"background task {name!r} is already running")
+        cancel_scope = anyio.CancelScope()
+        if self._cancelling:
+            cancel_scope.cancel()
+        if not self._task_scopes:
+            self._all_done = anyio.Event()
+        self._task_scopes[name] = cancel_scope
+        self._task_group.start_soon(self._run_tracked, task_factory, name, cancel_scope, name=name)
 
     async def cancel_all(self, *, timeout_s: float) -> list[str]:
         if self._task_group is None:
             return []
-        for cancel_scope in list(self._task_scopes.values()):
-            cancel_scope.cancel()
+        self._cancel_tracked()
         with anyio.move_on_after(timeout_s) as scope:
             await self._all_done.wait()
         lingering = self.tasks if scope.cancel_called else []

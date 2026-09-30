@@ -21,10 +21,10 @@ from vibesensor.adapters.http.settings.speed_source import create_speed_source_r
 
 if TYPE_CHECKING:
     from vibesensor.adapters.http.dependencies import (
+        ObdAdminServiceProtocol,
         SettingsSpeedServiceProtocol,
         SpeedSourceSettingsServiceProtocol,
     )
-    from vibesensor.adapters.obd import ObdService
     from vibesensor.shared.ports import (
         AnalysisSettingsStore,
         CarSettingsStore,
@@ -38,7 +38,7 @@ def create_settings_routes(
     ui_preferences: UiPreferencesStore,
     speed_source_service: SpeedSourceSettingsServiceProtocol,
     speed_status_service: SettingsSpeedServiceProtocol,
-    obd_admin_service: ObdService,
+    obd_admin_service: ObdAdminServiceProtocol,
 ) -> APIRouter:
     """Compose the bounded-context settings micro-routers."""
     router = APIRouter()
