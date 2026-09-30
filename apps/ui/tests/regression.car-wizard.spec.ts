@@ -220,12 +220,11 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
     "BMW X5 M60i",
   );
-  await expect(page.locator("#wizardSummaryPanel")).toContainText("225/45R18");
+  // Manual specs start empty: nothing is pre-filled as user-confirmed data.
+  await expect(page.locator("#wizTireWidth")).toHaveValue("");
+  await expect(page.locator("#wizFinalDrive")).toHaveValue("");
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
-    "Final drive 3.08",
-  );
-  await expect(page.locator("#wizardSummaryPanel")).toContainText(
-    "Top gear 0.64",
+    "Not selected yet",
   );
   await expect(page.locator(".wizard-branch-card--library")).toContainText(
     "Library-matched specs",
@@ -238,14 +237,20 @@ test("keeps the manual branch deliberate while summarizing selections and activa
     "Enter specs manually below.",
   );
   await expect(page.locator("#wizardActionHint")).toContainText(
-    "Manual path selected",
+    "Enter positive tire and gearbox values to finish.",
   );
   await fillControlledNumberInput(page, "#wizTireWidth", "245");
   await fillControlledNumberInput(page, "#wizTireAspect", "45");
   await fillControlledNumberInput(page, "#wizRim", "18");
   await fillControlledNumberInput(page, "#wizFinalDrive", "3.08");
   await fillControlledNumberInput(page, "#wizGearRatio", "0.68");
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Manual path selected",
+  );
   await expect(page.locator("#wizardSummaryPanel")).toContainText("245/45R18");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Final drive 3.08",
+  );
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
     "Top gear 0.68",
   );
@@ -330,7 +335,7 @@ test("shows a recoverable error panel when the model library request fails", asy
   );
   await expect(page.locator("#wizTireWidth")).toBeFocused();
   await expect(page.locator("#wizardActionHint")).toContainText(
-    "Manual path selected",
+    "Enter positive tire and gearbox values to finish.",
   );
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
     "Audi Custom",
