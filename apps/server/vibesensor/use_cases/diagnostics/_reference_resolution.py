@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderReferenceSpec
-from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
+from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
+from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.types.run_schema import RunMetadata
 
 from ._types import Sample
@@ -70,6 +71,8 @@ def _effective_engine_rpm(
     ):
         return None, "missing"
 
-    whz = speed_kmh * KMH_TO_MPS / tire_circumference_m
+    whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+    if whz is None:
+        return None, "missing"
     rpm = whz * drive_ratio * gear_ratio * SECONDS_PER_MINUTE
     return float(rpm), "estimated_from_speed_and_ratios"
