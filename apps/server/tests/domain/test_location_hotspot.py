@@ -17,100 +17,53 @@ from vibesensor.shared.boundaries.summary_fields.hotspot import (
 from vibesensor.shared.boundaries.summary_fields.origin import location_hotspot_from_payload
 
 
+def _confidence(inputs: tuple[float, int, int]) -> float:
+    dominance_ratio, location_count, total_samples = inputs
+    return LocationHotspot.compute_confidence(
+        dominance_ratio=dominance_ratio,
+        location_count=location_count,
+        total_samples=total_samples,
+    )
+
+
 class TestComputeConfidence:
-    """LocationHotspot.compute_confidence staticmethod."""
+    """LocationHotspot.compute_confidence staticmethod.
 
-    def test_high_dominance_few_locations(self) -> None:
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=1.6,
-            location_count=1,
-            total_samples=20,
-        )
-        assert result > 0.9
+    confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component),
+    clamped to [0.05, 1.0]; dominance_component = (ratio - 1.0) / 0.5.
+    """
 
-    def test_low_dominance_many_locations(self) -> None:
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=1.05,
-            location_count=6,
-            total_samples=20,
-        )
-        assert result < 0.2
-
-    def test_zero_samples_gives_minimum(self) -> None:
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=1.5,
-            location_count=1,
-            total_samples=0,
-        )
-        assert result == pytest.approx(0.6 * 1.0 * 1.0, abs=0.01)
-        # dominance_component=1.0, location_component=1.0, sample_component=0.0
-        # confidence = 1.0 * 1.0 * (0.6 + 0.4*0.0) = 0.6
-
-    def test_minimum_floor(self) -> None:
-        # dominance_ratio <= 1.0 → dominance_component = 0 → confidence → 0
-        # but floor is 0.05
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=0.5,
-            location_count=1,
-            total_samples=100,
-        )
-        assert result == pytest.approx(0.05)
-
-    def test_maximum_cap(self) -> None:
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=10.0,
-            location_count=1,
-            total_samples=1000,
-        )
-        assert result == pytest.approx(1.0)
-
-    def test_dominance_exactly_one(self) -> None:
-        # (1.0 - 1.0) / 0.5 = 0.0 → dominance_component = 0
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=1.0,
-            location_count=1,
-            total_samples=50,
-        )
-        assert result == pytest.approx(0.05)
-
-    def test_partial_dominance(self) -> None:
-        # dominance_ratio=1.25 → (0.25/0.5)=0.5
-        # location_count=2 → 1/(1+0.15)=0.8696
-        # total_samples=10 → sample_component=1.0
-        # confidence = 0.5 * 0.8696 * 1.0 ≈ 0.4348
-        result = LocationHotspot.compute_confidence(
-            dominance_ratio=1.25,
-            location_count=2,
-            total_samples=10,
-        )
-        expected = 0.5 * (1.0 / 1.15) * (0.6 + 0.4 * 1.0)
+    @pytest.mark.parametrize(
+        ("dominance_ratio", "location_count", "total_samples", "expected"),
+        [
+            pytest.param(1.5, 1, 0, 0.6, id="zero-samples-keeps-sample-floor"),
+            pytest.param(0.5, 1, 100, 0.05, id="minimum-floor"),
+            pytest.param(1.0, 1, 50, 0.05, id="dominance-exactly-one"),
+            pytest.param(10.0, 1, 1000, 1.0, id="maximum-cap"),
+            pytest.param(1.25, 2, 10, 0.5 * (1.0 / 1.15), id="partial-dominance"),
+        ],
+    )
+    def test_exact_values(
+        self, dominance_ratio: float, location_count: int, total_samples: int, expected: float
+    ) -> None:
+        result = _confidence((dominance_ratio, location_count, total_samples))
         assert result == pytest.approx(expected, abs=0.001)
 
-    def test_low_sample_count_reduces_confidence(self) -> None:
-        high_samples = LocationHotspot.compute_confidence(
-            dominance_ratio=1.4,
-            location_count=1,
-            total_samples=50,
-        )
-        low_samples = LocationHotspot.compute_confidence(
-            dominance_ratio=1.4,
-            location_count=1,
-            total_samples=3,
-        )
-        assert high_samples > low_samples
+    def test_high_dominance_few_locations_is_confident(self) -> None:
+        assert _confidence((1.6, 1, 20)) > 0.9
+        assert _confidence((1.05, 6, 20)) < 0.2
 
-    def test_more_locations_reduces_confidence(self) -> None:
-        few = LocationHotspot.compute_confidence(
-            dominance_ratio=1.4,
-            location_count=1,
-            total_samples=20,
-        )
-        many = LocationHotspot.compute_confidence(
-            dominance_ratio=1.4,
-            location_count=5,
-            total_samples=20,
-        )
-        assert few > many
+    @pytest.mark.parametrize(
+        ("stronger", "weaker"),
+        [
+            pytest.param((1.4, 1, 50), (1.4, 1, 3), id="fewer-samples-reduce-confidence"),
+            pytest.param((1.4, 1, 20), (1.4, 5, 20), id="more-locations-reduce-confidence"),
+        ],
+    )
+    def test_monotonic_in_samples_and_locations(
+        self, stronger: tuple[float, int, int], weaker: tuple[float, int, int]
+    ) -> None:
+        assert _confidence(stronger) > _confidence(weaker)
 
 
 class TestLocationHotspotValueObject:
