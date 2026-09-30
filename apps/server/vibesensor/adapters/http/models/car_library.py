@@ -71,12 +71,19 @@ class CarLibraryVariantEntry(_StrictBase):
 
 
 class CarLibraryModelEntry(_StrictBase):
-    """A full car library entry with brand, model, tire options, and variants."""
+    """A full car library entry with brand, model, tire options, and variants.
+
+    ``gearboxes`` may be empty: a gearbox option needs a driven final-drive
+    ratio, and some exact library rows deliberately leave it unresolved
+    (for example when the manufacturer publishes none, or only split
+    final-drive values the canonical row cannot encode). Clients then fall
+    back to manual gearbox entry.
+    """
 
     brand: str
     type: str
     model: str
-    gearboxes: list[CarLibraryGearboxEntry] = Field(min_length=1)
+    gearboxes: list[CarLibraryGearboxEntry]
     tire_options: list[CarLibraryTireOptionEntry] = Field(min_length=1)
     tire_width_mm: float = Field(gt=0)
     tire_aspect_pct: float = Field(gt=0)
