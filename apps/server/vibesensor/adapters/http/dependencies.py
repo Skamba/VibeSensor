@@ -30,7 +30,8 @@ if TYPE_CHECKING:
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
-    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+    from vibesensor.adapters.obd import ObdService
+    from vibesensor.adapters.obd.models import ObdStatusSnapshot
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
@@ -42,14 +43,6 @@ class SettingsSpeedServiceProtocol(Protocol):
     def status_snapshot(self) -> SpeedSourceStatusSnapshot: ...
 
     def obd_status(self) -> ObdStatusSnapshot: ...
-
-
-class ObdAdminServiceProtocol(Protocol):
-    def scan_obd_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
-
-    def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
-
-    def refresh_obd_status(self) -> None: ...
 
 
 class SpeedSourceSettingsServiceProtocol(Protocol):
@@ -112,7 +105,7 @@ class SettingsDeps:
     ui_preferences: UiPreferencesStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
-    obd_admin_service: ObdAdminServiceProtocol
+    obd_admin_service: ObdService
 
 
 @dataclass(slots=True)
