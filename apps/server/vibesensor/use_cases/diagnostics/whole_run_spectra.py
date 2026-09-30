@@ -920,6 +920,8 @@ def _compute_window_spectrum(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
     axes_by_time = window_f32.T
+    # compute_fft_spectrum removes the mean again; dropping this first pass
+    # changes float32 rounding of the persisted spectral sidecars.
     detrended = axes_by_time - np.mean(axes_by_time, axis=1, keepdims=True)
     fft_result = fft_computer.compute_fft_spectrum(
         detrended,
