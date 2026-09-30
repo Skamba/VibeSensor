@@ -75,82 +75,6 @@ whole-run spectra and context sidecars are built:
 This split lets history/report consumers use compact report-facing summaries
 without loading dense sidecar artifacts during normal report generation.
 
-## Compatibility per-window post-run references
-
-The older `post_run_*` DTO path can still map vehicle context onto a
-deterministic window grid with
-`build_post_run_vehicle_reference_timeline()` in
-`use_cases/diagnostics/post_run_vehicle_reference.py`.
-
-The timeline keeps interpolation deliberately narrow:
-
-- speed and RPM interpolate only across short gaps from the same source
-- stale nearest samples remain unavailable instead of being stretched across long
-  gaps
-- gear and final-drive values are never interpolated across changed values
-- source switches, missing speed/RPM/gear, inconsistent sample rates, and missing
-  vehicle configuration are recorded as explicit unavailable reasons
-
-When inputs are valid, wheel/driveshaft/engine Hz are derived through
-`OrderReferenceSpec`; diagnostics does not duplicate the tire or driveline
-formulas. Missing RPM can still produce an engine reference only when speed,
-final drive, and gear ratio are available from aligned samples or settings, and
-the missing-RPM reason remains visible to downstream coverage scoring.
-
-## Compatibility per-window dense order bands
-
-`build_post_run_order_band_timeline()` consumes the compatibility
-`VehicleReferenceTimeline` and the run's `OrderReferenceSpec`. For each window it
-emits deterministic `OrderBand` rows for configured harmonics:
-
-- default wheel bands: `wheel_1x`, `wheel_2x`
-- default driveshaft bands: `driveshaft_1x`, `driveshaft_2x`
-- default engine bands: `engine_1x`, `engine_2x`
-
-Each row carries `label`, `source`, `harmonic`, `center_hz`, `min_hz`, `max_hz`,
-`uncertainty_pct`, `tolerance`, optional `reference_source`, and optional
-`unavailable_reason`. The band half-width is computed with the same
-`tolerance_for_order()` helper used by live order-band payloads:
-
-```text
-center_hz = base_reference_hz * harmonic
-min_hz    = max(config.min_frequency_hz, center_hz * (1 - tolerance))
-max_hz    = min(config.max_frequency_hz, center_hz * (1 + tolerance))
-```
-
-If the configured spectrum range does not overlap a band, the row stays present
-with `unavailable_reason = "outside_spectrum"`. Missing speed, tire,
-final-drive, gear, RPM, or whole order-reference settings also stay explicit on
-the affected rows. Engine bands can remain available from RPM even when
-speed-derived wheel/driveshaft bands are unavailable.
-
-## Compatibility dense episode classification
-
-`use_cases/diagnostics/post_run_dense_findings.py` consumes compatibility
-`VibrationEpisode` rows and the compatibility `PostRunOrderBandTimeline`. For each
-episode it checks the episode frequency at each supporting `window_index` against
-available order bands for wheel, driveshaft, and engine. A source hypothesis is
-scored from:
-
-- match ratio across eligible windows
-- reference completeness across all episode support windows
-- episode persistence and duration
-- peak vibration strength
-- sensor localization quality
-
-The highest-ranked source becomes the likely origin only when its match ratio
-meets the classifier threshold. Otherwise strong persistent episodes stay
-reportable as `unknown_resonance` instead of being forced into a weak mechanical
-order. Close competing scores add an `ambiguous_origin` caveat and reduce
-confidence. Missing bands/reference data, episode quality penalties, short
-usable duration, transient-only evidence, and conflicting multi-sensor evidence
-are also carried as caveats.
-
-Dense findings keep compact evidence windows plus alternatives and can project
-to the existing domain `Finding` model. This remains support/prototype logic;
-the active sidecar path persists compact whole-run order summaries from
-`orders/whole_run_family_summaries.py`.
-
 ## Uncertainty and tolerance bands
 
 Order matching is not based on a single exact frequency bin. Each reference
@@ -254,9 +178,6 @@ That shared ownership is why `shared/order_bands.py` exists outside
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
 | `apps/server/vibesensor/shared/order_bands.py` | Shared uncertainty, tolerance-band, and live band-payload helpers. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_vehicle_reference.py` | Compatibility/prototype per-window vehicle reference normalization and debug fixtures. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_order_bands.py` | Compatibility/prototype per-window order-band DTOs, clamping, unavailable reasons, and serializer rows. |
-| `apps/server/vibesensor/use_cases/diagnostics/post_run_dense_findings.py` | Compatibility/prototype dense vibration episode classification and domain `Finding` projection. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |

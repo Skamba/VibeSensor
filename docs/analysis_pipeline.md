@@ -81,13 +81,7 @@ Current whole-run sidecar stages:
    metadata/summaries into `PersistedAnalysis`, and then stores the report-facing
    summary through `RunPersistence.astore_analysis(...)`.
 
-The older `post_run_*` modules are compatibility/support/prototype components.
-`post_run_raw_windows.py` remains an alternate manifest-aware range-window
-iterator; `post_run_stft.py`, `post_run_window_features.py`,
-`post_run_vehicle_reference.py`, `post_run_order_bands.py`,
-`post_run_vibration_episodes.py`, and `post_run_dense_findings.py` preserve
-useful dense DTO and math seams, but the active sidecar pipeline is the
-`whole_run_*` implementation above. Shared quality scoring still marks clipped,
+The sidecar pipeline is the `whole_run_*` implementation above. Shared quality scoring still marks clipped,
 suspect-mounted, or timing-compromised windows as limited/excluded evidence
 rather than treating local sensor artifacts or corrupted sample timing as
 trustworthy vibration strength.
@@ -175,13 +169,6 @@ summaries to the persisted analysis.
 | `_reference_resolution.py` | ~80 | Engine/tire/reference resolution helpers reused by order analysis |
 | `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
 | `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
-| `post_run_raw_windows.py` | ~300 | Compatibility/support manifest-aware raw waveform range reader and configurable overlapping-window iterator |
-| `post_run_stft.py` | ~350 | Support/prototype in-memory dense STFT engine over range-read raw-window DTOs |
-| `post_run_window_features.py` | ~300 | Support/prototype window-level feature extraction over dense STFT frames |
-| `post_run_vehicle_reference.py` | ~350 | Support/prototype per-window vehicle speed/RPM/gear/final-drive reference normalization |
-| `post_run_order_bands.py` | ~400 | Support/prototype per-window wheel/driveshaft/engine order-band generation |
-| `post_run_vibration_episodes.py` | ~450 | Support/prototype deterministic grouping of dense window peaks into episodes |
-| `post_run_dense_findings.py` | ~500 | Support/prototype dense episode classification and domain-finding projection |
 | `whole_run_spectra.py` | ~900 | Active sidecar spectral executor over bounded raw range reads; emits dense spectra and compact spectral summaries |
 | `whole_run_context.py` | ~400 | Active sidecar context timeline and compact context intervals on the whole-run window grid |
 | `whole_run_spatial_coherence.py` | ~450 | Active candidate-level spatial evidence sidecars and compact spatial summaries |

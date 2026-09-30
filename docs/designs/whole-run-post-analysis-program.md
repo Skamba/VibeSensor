@@ -85,9 +85,6 @@ below.
     windows and compact spatial summaries.
 - `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
   persists dense sidecar artifacts under `data/whole-run-artifacts/{run_id}/`.
-- The older `post_run_*` modules remain useful support/prototype code for legacy
-   dense DTOs and alternate bounded-window iteration, but they are not the
-   currently connected sidecar pipeline in `execute_post_analysis()`.
 
 ### Persisted analysis and reporting
 
@@ -145,11 +142,11 @@ raw capture manifest/files (#3065)
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `whole_run_spectra.py` resolves each window to bounded raw range reads |
-| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling; `post_run_stft.py`, `post_run_window_features.py`, and `post_run_vibration_episodes.py` remain support/prototype seams |
-| Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments; `post_run_vehicle_reference.py` owns the conservative vehicle-reference timeline for dense stages |
-| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability; `post_run_order_bands.py` owns the pre-classification per-window expected band grid |
+| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
+| Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
+| Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
-| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts; `post_run_dense_findings.py` owns the first compact episode/order fusion DTO and compatibility projection |
+| Fusion/report summary | `use_cases/diagnostics/`, `shared/boundaries/reporting/` | Convert whole-run evidence into ranked diagnoses and compact persisted facts |
 
 ## Early design decisions
 

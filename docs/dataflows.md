@@ -58,8 +58,7 @@ and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
 `whole-run-artifacts/<run_id>/`; compact report-facing summaries and manifest
 metadata are appended to `analysis_json`.
 
-`use_cases/diagnostics/post_run_raw_windows.py` remains a compatibility/support
-bounded raw range-window iterator. The connected whole-run spectral executor is
+The whole-run spectral executor is
 `use_cases/diagnostics/whole_run_spectra.py`. Degraded or missing raw/whole-run
 state must propagate forward as
 lifecycle/artifact status and report context instead of triggering a second ad
