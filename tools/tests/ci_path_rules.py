@@ -54,6 +54,7 @@ DOCS_LINT_TOOL_FILES = {"tools/dev/docs_lint.py"}
 REPO_HYGIENE_TOOL_FILES = {"tools/dev/check_hygiene.py"}
 BACKEND_STATIC_GUARD_TOOL_FILES = {"tools/dev/verify_backend_static_guards.py"}
 BACKEND_TEST_TOOL_FILES = {"tools/tests/run_backend_parallel.py"}
+BACKEND_LINT_CONFIG_FILES = {"tools/ruff.toml"}
 RELEASE_TRIGGER_FILES = {"tools/tests/run_release_smoke.py", "tools/build_ui_static.py"}
 E2E_TRIGGER_FILES = {"tools/tests/run_e2e_parallel.py", "apps/server/Dockerfile.e2e"}
 SHELL_LINT_TRIGGER_PREFIXES = (".githooks/", "infra/pi-image/")
@@ -202,6 +203,9 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
     backend_test_tool_changed = any(
         path in BACKEND_TEST_TOOL_FILES for path in non_docs_paths
     )
+    backend_lint_config_changed = any(
+        path in BACKEND_LINT_CONFIG_FILES for path in non_docs_paths
+    )
     release_tool_changed = any(path in RELEASE_TRIGGER_FILES for path in non_docs_paths)
     e2e_tool_changed = any(path in E2E_TRIGGER_FILES for path in non_docs_paths)
     shell_lint_changed = any(is_shell_lint_path(path) for path in non_docs_paths)
@@ -219,7 +223,10 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         or contract_sync_changed
         or pi_image_changed,
         shell_lint=full_stack or shell_lint_changed,
-        backend_lint=full_stack or backend_changed or python_tool_changed,
+        backend_lint=full_stack
+        or backend_changed
+        or python_tool_changed
+        or backend_lint_config_changed,
         backend_static_guards=full_stack
         or backend_changed
         or backend_static_guard_tool_changed

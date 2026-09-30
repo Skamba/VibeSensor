@@ -178,6 +178,13 @@ _SELECTION_CASES = (
     ),
     pytest.param(
         SelectionCase(
+            changed_files=("tools/ruff.toml",),
+            expected_jobs=frozenset({"backend_lint"}),
+        ),
+        id="tools-ruff-config",
+    ),
+    pytest.param(
+        SelectionCase(
             changed_files=(".dockerignore",),
             expected_jobs=frozenset({"repo_hygiene"}),
         ),
