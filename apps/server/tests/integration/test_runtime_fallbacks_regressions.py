@@ -11,29 +11,15 @@ import math
 from pathlib import Path
 
 from _paths import SERVER_ROOT
+from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor import report_i18n
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
 )
-
-
-def _metadata(run_id: str, **overrides: object) -> RunMetadata:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "start_time_utc": "2024-01-01T00:00:00",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "source": "test",
-    }
-    payload.update(overrides)
-    return run_metadata_from_mapping(payload)
 
 
 class TestStrengthFloorFallback:

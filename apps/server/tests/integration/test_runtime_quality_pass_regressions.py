@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.persistence.history_db import (
@@ -23,10 +24,8 @@ from vibesensor.adapters.persistence.history_db import (
     create_history_persistence_adapters,
 )
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.sampling import bounded_sample as _bounded_sample
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- shared helpers ----------------------------------------------------------
@@ -37,19 +36,6 @@ def _make_history_db(
     name: str = "history.db",
 ) -> HistoryPersistenceAdapters:
     return create_history_persistence_adapters(tmp_path / name)
-
-
-def _metadata(run_id: str, **overrides: object) -> RunMetadata:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "source": "test",
-    }
-    payload.update(overrides)
-    return run_metadata_from_mapping(payload)
 
 
 def _seeded_history_db(
