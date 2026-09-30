@@ -126,6 +126,8 @@ export interface CarsFeature {
 }
 
 const LIBRARY_STALE_TIME_MS = 5 * 60 * 1000;
+/** Model label used when manual specs are chosen before any model was named. */
+const MANUAL_FALLBACK_MODEL_NAME = "Custom";
 
 const MANUAL_INPUT_FOCUS_TARGETS: Record<
   keyof CarsFeatureManualInputState,
@@ -901,8 +903,16 @@ export function createCarsFeature(ctx: {
     }
     updateWizardState((state) => {
       state.step -= 1;
+      // Skip steps whose prerequisites were never chosen (no variants, or the
+      // manual fallback skipped the library before a brand/type was picked).
       if (state.step === 3 && !state.selectedModel?.variants?.length) {
         state.step = 2;
+      }
+      if (state.step === 2 && !state.carType) {
+        state.step = 1;
+      }
+      if (state.step === 1 && !state.brand) {
+        state.step = 0;
       }
     });
     await loadCurrentStep();
@@ -996,6 +1006,17 @@ export function createCarsFeature(ctx: {
     await loadCurrentStep();
   }
 
+  /**
+   * Leaves the car library (e.g. after a failed library load) and continues
+   * on the specs step with manual wheel and gearbox entry, keeping whatever
+   * brand and type were already chosen.
+   */
+  async function continueWithManualSpecs(): Promise<void> {
+    await submitCustomModel(
+      wizardState.value.model || MANUAL_FALLBACK_MODEL_NAME,
+    );
+  }
+
   function handleManualInputChanged(
     field: keyof CarsFeatureManualInputState,
     value: string,
@@ -1035,6 +1056,10 @@ export function createCarsFeature(ctx: {
         return;
       case "back":
         return goBack();
+      case "retry-load":
+        return loadCurrentStep();
+      case "continue-manual":
+        return continueWithManualSpecs();
       case "select-brand":
         return action.value ? selectBrand(action.value) : undefined;
       case "select-type":

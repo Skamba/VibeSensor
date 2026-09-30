@@ -31,7 +31,7 @@ const CARS_WIZARD_STEPS_KEYS = [
   "typeOptions",
   "variantOptions",
 ] as const;
-const WIZARD_OPTIONS_KEYS = ["attribute", "layout", "messageText", "options"] as const;
+const WIZARD_OPTIONS_KEYS = ["attribute", "errorText", "layout", "messageText", "options"] as const;
 const WIZARD_MANUAL_INPUT_KEYS = [
   "finalDrive",
   "rim",
@@ -113,14 +113,56 @@ function WizardOptionButton(props: {
   );
 }
 
+export interface WizardLoadRecoveryHandlers {
+  onContinueManual(): void;
+  onRetryLoad(): void;
+}
+
+function WizardLoadError(props: {
+  errorText: string;
+  recovery: WizardLoadRecoveryHandlers;
+}) {
+  const { errorText, recovery } = props;
+  return (
+    <div class="wizard-load-error" role="alert">
+      <strong class="wizard-load-error__title">{errorText}</strong>
+      <div class="wizard-load-error__hint">
+        {t(
+          "settings.wizard.load_failed_hint",
+          "The car library is unavailable right now. Try again, go back, or continue with manual specs.",
+        )}
+      </div>
+      <div class="wizard-load-error__actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          data-wizard-recovery="retry"
+          onClick={recovery.onRetryLoad}
+        >
+          {t("settings.wizard.retry", "Try again")}
+        </button>
+        <button
+          type="button"
+          class="btn btn--muted"
+          data-wizard-recovery="manual"
+          onClick={recovery.onContinueManual}
+        >
+          {t("settings.wizard.continue_manual", "Continue with manual specs")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function WizardOptions(props: {
   firstOptionRef?: (element: HTMLButtonElement | null) => void;
   id: string;
   onSelectOption?: (item: CarsWizardOptionItem) => void;
+  recovery?: WizardLoadRecoveryHandlers;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
 }) {
-  const { firstOptionRef, id, onSelectOption } = props;
-  const { attribute, layout, messageText, options } = useSignalProperties(
+  const { firstOptionRef, id, onSelectOption, recovery } = props;
+  const { attribute, errorText, layout, messageText, options } = useSignalProperties(
     props.section,
     WIZARD_OPTIONS_KEYS,
   );
@@ -130,6 +172,11 @@ function WizardOptions(props: {
   return (
     <div class={className} id={id}>
       {messageText.value ? <em>{messageText.value}</em> : null}
+      {errorText.value && recovery ? (
+        <WizardLoadError errorText={errorText.value} recovery={recovery} />
+      ) : errorText.value ? (
+        <em>{errorText.value}</em>
+      ) : null}
       {options.value.map((item, index) => (
         <WizardOptionButton
           key={`${attribute.value}-${item.value}`}
@@ -277,12 +324,13 @@ function CarsManualInputForm(props: {
 
 function WizardBrandStep(props: {
   hidden: boolean;
+  recovery: WizardLoadRecoveryHandlers;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectBrand(value: string): void;
   onSubmitCustomBrand(value: string): void;
 }) {
-  const { onSelectBrand, onSubmitCustomBrand, refs, section } = props;
+  const { onSelectBrand, onSubmitCustomBrand, recovery, refs, section } = props;
   return (
     <div id="wizardStep0" class="wizard-step" hidden={props.hidden}>
       <h3>
@@ -291,6 +339,7 @@ function WizardBrandStep(props: {
       <WizardOptions
         id="wizardBrandList"
         onSelectOption={(item) => onSelectBrand(item.value)}
+        recovery={recovery}
         section={section}
         firstOptionRef={refs.setElementRef("brandOption")}
       />
@@ -310,12 +359,13 @@ function WizardBrandStep(props: {
 
 function WizardTypeStep(props: {
   hidden: boolean;
+  recovery: WizardLoadRecoveryHandlers;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectType(value: string): void;
   onSubmitCustomType(value: string): void;
 }) {
-  const { onSelectType, onSubmitCustomType, refs, section } = props;
+  const { onSelectType, onSubmitCustomType, recovery, refs, section } = props;
   return (
     <div id="wizardStep1" class="wizard-step" hidden={props.hidden}>
       <h3>
@@ -324,6 +374,7 @@ function WizardTypeStep(props: {
       <WizardOptions
         id="wizardTypeList"
         onSelectOption={(item) => onSelectType(item.value)}
+        recovery={recovery}
         section={section}
         firstOptionRef={refs.setElementRef("typeOption")}
       />
@@ -343,12 +394,13 @@ function WizardTypeStep(props: {
 
 function WizardModelStep(props: {
   hidden: boolean;
+  recovery: WizardLoadRecoveryHandlers;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectModel(index: number): void;
   onSubmitCustomModel(value: string): void;
 }) {
-  const { onSelectModel, onSubmitCustomModel, refs, section } = props;
+  const { onSelectModel, onSubmitCustomModel, recovery, refs, section } = props;
   return (
     <div id="wizardStep2" class="wizard-step" hidden={props.hidden}>
       <h3>
@@ -363,6 +415,7 @@ function WizardModelStep(props: {
           }
           onSelectModel(index);
         }}
+        recovery={recovery}
         section={section}
         firstOptionRef={refs.setElementRef("modelOption")}
       />
@@ -546,9 +599,11 @@ export function CarsWizardSteps(props: {
   onSubmitCustomBrand(value: string): void;
   onSubmitCustomModel(value: string): void;
   onSubmitCustomType(value: string): void;
+  recovery: WizardLoadRecoveryHandlers;
 }) {
   const {
     emitManualInputs,
+    recovery,
     onSelectBrand,
     onSelectGearbox,
     onSelectModel,
@@ -580,6 +635,7 @@ export function CarsWizardSteps(props: {
     <>
       <WizardBrandStep
         hidden={brandHidden}
+        recovery={recovery}
         refs={refs}
         section={brandOptions}
         onSelectBrand={onSelectBrand}
@@ -587,6 +643,7 @@ export function CarsWizardSteps(props: {
       />
       <WizardTypeStep
         hidden={typeHidden}
+        recovery={recovery}
         refs={refs}
         section={typeOptions}
         onSelectType={onSelectType}
@@ -594,6 +651,7 @@ export function CarsWizardSteps(props: {
       />
       <WizardModelStep
         hidden={modelHidden}
+        recovery={recovery}
         refs={refs}
         section={modelOptions}
         onSelectModel={onSelectModel}

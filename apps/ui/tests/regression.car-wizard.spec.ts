@@ -276,6 +276,64 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   );
 });
 
+test("shows a recoverable error panel when the model library request fails", async ({
+  page,
+}) => {
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "/api/settings/cars": selectedCarSettings({ name: "Audit Demo Car" }),
+    }),
+  });
+  let modelRequests = 0;
+  await page.route("**/api/car-library/**", async (route) => {
+    const path = requestPath(route);
+    if (path === "/api/car-library/brands") {
+      await fulfillJson(route, { brands: ["Audi"] });
+      return;
+    }
+    if (path === "/api/car-library/types") {
+      await fulfillJson(route, { types: ["Coupe"] });
+      return;
+    }
+    if (path === "/api/car-library/models") {
+      modelRequests += 1;
+      await route.fulfill({ status: 500, body: "Internal Server Error" });
+      return;
+    }
+    await fulfillJson(route, {});
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await page.locator("#addCarBtn").click();
+  await page.locator('#wizardBrandList [data-value="Audi"]').click();
+  await page.locator('#wizardTypeList [data-value="Coupe"]').click();
+
+  const alert = page.locator("#wizardModelList [role='alert']");
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText("Could not load models.");
+  await expect(page.locator("#wizardModelList")).not.toContainText("Loading");
+  await expect(page.locator("#wizardBackBtn")).toBeVisible();
+
+  await alert.locator("[data-wizard-recovery='retry']").click();
+  await expect.poll(() => modelRequests).toBe(2);
+  await expect(alert).toBeVisible();
+
+  await alert.locator("[data-wizard-recovery='manual']").click();
+  await expect(page.locator("#wizardProgressText")).toContainText(
+    "Step 5 of 5",
+  );
+  await expect(page.locator("#wizTireWidth")).toBeFocused();
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Manual path selected",
+  );
+  await expect(page.locator("#wizardSummaryPanel")).toContainText(
+    "Audi Custom",
+  );
+});
+
 test("completes the library branch on a short mobile screen without losing the final action", async ({
   page,
 }) => {

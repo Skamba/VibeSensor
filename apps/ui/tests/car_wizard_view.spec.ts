@@ -167,8 +167,12 @@ describe("car wizard view helpers", () => {
       "BMW",
       "Volvo",
     ]);
-    expect(model.typeOptions.messageText).toBe("Types offline");
+    // Load failures surface as errorText (recoverable error panel), not as the
+    // plain loading/info message.
+    expect(model.typeOptions.errorText).toBe("Types offline");
+    expect(model.typeOptions.messageText).toBeNull();
     expect(model.modelOptions.messageText).toBe("Loading models");
+    expect(model.modelOptions.errorText).toBeNull();
     expect(model.summary.rows).toEqual([
       {
         labelText: "settings.car.wizard_summary_brand",
