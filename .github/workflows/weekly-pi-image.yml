@@ -25,7 +25,7 @@ jobs:
           echo "Manual release workflow runs must use the main branch; got ${GITHUB_REF}." >&2
           exit 1
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
