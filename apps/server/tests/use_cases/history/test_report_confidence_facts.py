@@ -14,105 +14,94 @@ def _tr(key: str, **kwargs: object) -> str:
     return report_i18n.tr("en", key, **kwargs)
 
 
-def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_signals() -> None:
-    primary = make_finding_payload(
-        finding_id="F_CONFIDENT",
+_STABLE_WHEEL_POINTS = [
+    {
+        "t_s": 1.0 + 0.5 * index,
+        "speed_kmh": 64.0 + 2.0 * index,
+        "predicted_hz": predicted_hz,
+        "matched_hz": matched_hz,
+        "location": "Front Left",
+        "phase": "cruise",
+        "amp": amp,
+    }
+    for index, (predicted_hz, matched_hz, amp) in enumerate(
+        [(15.0, 15.1, 0.11), (15.1, 15.2, 0.10), (15.2, 15.2, 0.10), (15.3, 15.3, 0.09)]
+    )
+]
+
+
+def _stable_front_left_wheel_finding(finding_id: str) -> dict[str, object]:
+    """A well-localised wheel/tire finding with four tightly matched cruise points."""
+    return make_finding_payload(
+        finding_id=finding_id,
         suspected_source="wheel/tire",
         confidence=0.78,
         strongest_location="Front Left",
         strongest_speed_band="60-80 km/h",
-        matched_points=[
-            {
-                "t_s": 1.0,
-                "speed_kmh": 64.0,
-                "predicted_hz": 15.0,
-                "matched_hz": 15.1,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.11,
-            },
-            {
-                "t_s": 1.5,
-                "speed_kmh": 66.0,
-                "predicted_hz": 15.1,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.0,
-                "speed_kmh": 68.0,
-                "predicted_hz": 15.2,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.5,
-                "speed_kmh": 70.0,
-                "predicted_hz": 15.3,
-                "matched_hz": 15.3,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.09,
-            },
-        ],
-        evidence_metrics={
-            "mean_relative_error": 0.03,
-            "snr_db": 8.0,
-            "matched_samples": 4,
-        },
+        matched_points=_STABLE_WHEEL_POINTS,
+        evidence_metrics={"mean_relative_error": 0.03, "snr_db": 8.0, "matched_samples": 4},
     )
-    prepared = prepare_persisted_report_input(
-        PersistedAnalysis.from_json_object(
-            minimal_summary(
-                run_id="confidence-high",
-                lang="en",
-                metadata={
-                    "run_id": "confidence-high",
-                    "record_type": "metadata",
-                    "schema_version": "v2-jsonl",
-                    "feature_interval_s": 0.5,
-                },
-                sensor_count_used=2,
-                sensor_locations=["Front Left", "Rear Left"],
-                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
-                findings=[primary],
-                top_causes=[primary],
-                analysis_metadata={
-                    "raw_backed_sample_count": 48,
-                    "raw_capture_mode": "raw_backed",
-                    "whole_run_context_available": True,
-                    "whole_run_context_window_count": 8,
-                    "whole_run_context_interval_count": 1,
-                    "whole_run_context_full_window_count": 8,
-                    "whole_run_context_partial_window_count": 0,
-                    "whole_run_context_missing_window_count": 0,
-                    "whole_run_context_missing_speed_window_count": 0,
-                    "whole_run_context_missing_rpm_window_count": 0,
-                    "whole_run_context_stale_speed_window_count": 0,
-                    "whole_run_context_stale_rpm_window_count": 0,
-                },
-                whole_run_context_intervals=[
-                    {
-                        "segment_index": 0,
-                        "phase": "cruise",
-                        "load_state": "steady",
-                        "start_window_index": 0,
-                        "end_window_index": 7,
-                        "start_t_s": 0.0,
-                        "end_t_s": 4.0,
-                        "speed_min_kmh": 58.0,
-                        "speed_max_kmh": 70.0,
-                        "speed_band": "50-70",
-                        "full_context_window_count": 8,
-                        "partial_context_window_count": 0,
-                        "missing_context_window_count": 0,
-                    }
-                ],
-            )
+
+
+def _summary(run_id: str, **overrides: object) -> dict[str, object]:
+    return minimal_summary(
+        run_id=run_id,
+        lang="en",
+        metadata={
+            "run_id": run_id,
+            "record_type": "metadata",
+            "schema_version": "v2-jsonl",
+            "feature_interval_s": 0.5,
+        },
+        **overrides,
+    )
+
+
+def _prepare(summary: dict[str, object]):
+    return prepare_persisted_report_input(PersistedAnalysis.from_json_object(summary))
+
+
+def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_signals() -> None:
+    primary = _stable_front_left_wheel_finding("F_CONFIDENT")
+    prepared = _prepare(
+        _summary(
+            "confidence-high",
+            sensor_count_used=2,
+            sensor_locations=["Front Left", "Rear Left"],
+            sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+            findings=[primary],
+            top_causes=[primary],
+            analysis_metadata={
+                "raw_backed_sample_count": 48,
+                "raw_capture_mode": "raw_backed",
+                "whole_run_context_available": True,
+                "whole_run_context_window_count": 8,
+                "whole_run_context_interval_count": 1,
+                "whole_run_context_full_window_count": 8,
+                "whole_run_context_partial_window_count": 0,
+                "whole_run_context_missing_window_count": 0,
+                "whole_run_context_missing_speed_window_count": 0,
+                "whole_run_context_missing_rpm_window_count": 0,
+                "whole_run_context_stale_speed_window_count": 0,
+                "whole_run_context_stale_rpm_window_count": 0,
+            },
+            whole_run_context_intervals=[
+                {
+                    "segment_index": 0,
+                    "phase": "cruise",
+                    "load_state": "steady",
+                    "start_window_index": 0,
+                    "end_window_index": 7,
+                    "start_t_s": 0.0,
+                    "end_t_s": 4.0,
+                    "speed_min_kmh": 58.0,
+                    "speed_max_kmh": 70.0,
+                    "speed_band": "50-70",
+                    "full_context_window_count": 8,
+                    "partial_context_window_count": 0,
+                    "missing_context_window_count": 0,
+                }
+            ],
         )
     )
 
@@ -176,32 +165,23 @@ def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary
         strongest_location="Rear Right",
         strongest_speed_band="60-80 km/h",
     )
-    prepared = prepare_persisted_report_input(
-        PersistedAnalysis.from_json_object(
-            minimal_summary(
-                run_id="confidence-low",
-                lang="en",
-                metadata={
-                    "run_id": "confidence-low",
-                    "record_type": "metadata",
-                    "schema_version": "v2-jsonl",
-                    "feature_interval_s": 0.5,
-                },
-                sensor_count_used=4,
-                sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
-                sensor_locations_connected_throughout=[
-                    "Front Left",
-                    "Front Right",
-                    "Rear Left",
-                    "Rear Right",
-                ],
-                findings=[primary, alternative],
-                top_causes=[primary, alternative],
-                analysis_metadata={
-                    "raw_backed_sample_count": 0,
-                    "raw_capture_mode": "summary_only",
-                },
-            )
+    prepared = _prepare(
+        _summary(
+            "confidence-low",
+            sensor_count_used=4,
+            sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+            sensor_locations_connected_throughout=[
+                "Front Left",
+                "Front Right",
+                "Rear Left",
+                "Rear Right",
+            ],
+            findings=[primary, alternative],
+            top_causes=[primary, alternative],
+            analysis_metadata={
+                "raw_backed_sample_count": 0,
+                "raw_capture_mode": "summary_only",
+            },
         )
     )
 
@@ -220,116 +200,58 @@ def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary
 
 
 def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> None:
-    primary = make_finding_payload(
-        finding_id="F_CONTEXT_GAPS",
-        suspected_source="wheel/tire",
-        confidence=0.78,
-        strongest_location="Front Left",
-        strongest_speed_band="60-80 km/h",
-        matched_points=[
-            {
-                "t_s": 1.0,
-                "speed_kmh": 64.0,
-                "predicted_hz": 15.0,
-                "matched_hz": 15.1,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.11,
+    primary = _stable_front_left_wheel_finding("F_CONTEXT_GAPS")
+    prepared = _prepare(
+        _summary(
+            "context-gaps",
+            sensor_count_used=2,
+            sensor_locations=["Front Left", "Rear Left"],
+            sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+            findings=[primary],
+            top_causes=[primary],
+            analysis_metadata={
+                "raw_backed_sample_count": 48,
+                "raw_capture_mode": "raw_backed",
+                "whole_run_context_available": True,
+                "whole_run_context_window_count": 12,
+                "whole_run_context_interval_count": 2,
+                "whole_run_context_full_window_count": 9,
+                "whole_run_context_partial_window_count": 2,
+                "whole_run_context_missing_window_count": 1,
+                "whole_run_context_missing_speed_window_count": 1,
+                "whole_run_context_missing_rpm_window_count": 0,
+                "whole_run_context_stale_speed_window_count": 1,
+                "whole_run_context_stale_rpm_window_count": 1,
             },
-            {
-                "t_s": 1.5,
-                "speed_kmh": 66.0,
-                "predicted_hz": 15.1,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.0,
-                "speed_kmh": 68.0,
-                "predicted_hz": 15.2,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.5,
-                "speed_kmh": 70.0,
-                "predicted_hz": 15.3,
-                "matched_hz": 15.3,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.09,
-            },
-        ],
-        evidence_metrics={
-            "mean_relative_error": 0.03,
-            "snr_db": 8.0,
-            "matched_samples": 4,
-        },
-    )
-    prepared = prepare_persisted_report_input(
-        PersistedAnalysis.from_json_object(
-            minimal_summary(
-                run_id="context-gaps",
-                lang="en",
-                metadata={
-                    "run_id": "context-gaps",
-                    "record_type": "metadata",
-                    "schema_version": "v2-jsonl",
-                    "feature_interval_s": 0.5,
+            whole_run_context_intervals=[
+                {
+                    "segment_index": 0,
+                    "phase": "cruise",
+                    "load_state": "steady",
+                    "start_window_index": 0,
+                    "end_window_index": 7,
+                    "start_t_s": 0.0,
+                    "end_t_s": 4.0,
+                    "speed_min_kmh": 58.0,
+                    "speed_max_kmh": 68.0,
+                    "speed_band": "50-70",
+                    "full_context_window_count": 8,
+                    "partial_context_window_count": 0,
+                    "missing_context_window_count": 0,
                 },
-                sensor_count_used=2,
-                sensor_locations=["Front Left", "Rear Left"],
-                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
-                findings=[primary],
-                top_causes=[primary],
-                analysis_metadata={
-                    "raw_backed_sample_count": 48,
-                    "raw_capture_mode": "raw_backed",
-                    "whole_run_context_available": True,
-                    "whole_run_context_window_count": 12,
-                    "whole_run_context_interval_count": 2,
-                    "whole_run_context_full_window_count": 9,
-                    "whole_run_context_partial_window_count": 2,
-                    "whole_run_context_missing_window_count": 1,
-                    "whole_run_context_missing_speed_window_count": 1,
-                    "whole_run_context_missing_rpm_window_count": 0,
-                    "whole_run_context_stale_speed_window_count": 1,
-                    "whole_run_context_stale_rpm_window_count": 1,
+                {
+                    "segment_index": 1,
+                    "phase": "acceleration",
+                    "load_state": "transient",
+                    "start_window_index": 8,
+                    "end_window_index": 11,
+                    "start_t_s": 4.0,
+                    "end_t_s": 6.0,
+                    "full_context_window_count": 1,
+                    "partial_context_window_count": 2,
+                    "missing_context_window_count": 1,
                 },
-                whole_run_context_intervals=[
-                    {
-                        "segment_index": 0,
-                        "phase": "cruise",
-                        "load_state": "steady",
-                        "start_window_index": 0,
-                        "end_window_index": 7,
-                        "start_t_s": 0.0,
-                        "end_t_s": 4.0,
-                        "speed_min_kmh": 58.0,
-                        "speed_max_kmh": 68.0,
-                        "speed_band": "50-70",
-                        "full_context_window_count": 8,
-                        "partial_context_window_count": 0,
-                        "missing_context_window_count": 0,
-                    },
-                    {
-                        "segment_index": 1,
-                        "phase": "acceleration",
-                        "load_state": "transient",
-                        "start_window_index": 8,
-                        "end_window_index": 11,
-                        "start_t_s": 4.0,
-                        "end_t_s": 6.0,
-                        "full_context_window_count": 1,
-                        "partial_context_window_count": 2,
-                        "missing_context_window_count": 1,
-                    },
-                ],
-            )
+            ],
         )
     )
 
@@ -348,77 +270,19 @@ def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> 
 
 
 def test_prepare_persisted_report_input_marks_legacy_raw_backed_context_fallback() -> None:
-    primary = make_finding_payload(
-        finding_id="F_CONTEXT_LEGACY",
-        suspected_source="wheel/tire",
-        confidence=0.78,
-        strongest_location="Front Left",
-        strongest_speed_band="60-80 km/h",
-        matched_points=[
-            {
-                "t_s": 1.0,
-                "speed_kmh": 64.0,
-                "predicted_hz": 15.0,
-                "matched_hz": 15.1,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.11,
+    primary = _stable_front_left_wheel_finding("F_CONTEXT_LEGACY")
+    prepared = _prepare(
+        _summary(
+            "context-legacy",
+            sensor_count_used=2,
+            sensor_locations=["Front Left", "Rear Left"],
+            sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+            findings=[primary],
+            top_causes=[primary],
+            analysis_metadata={
+                "raw_backed_sample_count": 48,
+                "raw_capture_mode": "raw_backed",
             },
-            {
-                "t_s": 1.5,
-                "speed_kmh": 66.0,
-                "predicted_hz": 15.1,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.0,
-                "speed_kmh": 68.0,
-                "predicted_hz": 15.2,
-                "matched_hz": 15.2,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.10,
-            },
-            {
-                "t_s": 2.5,
-                "speed_kmh": 70.0,
-                "predicted_hz": 15.3,
-                "matched_hz": 15.3,
-                "location": "Front Left",
-                "phase": "cruise",
-                "amp": 0.09,
-            },
-        ],
-        evidence_metrics={
-            "mean_relative_error": 0.03,
-            "snr_db": 8.0,
-            "matched_samples": 4,
-        },
-    )
-    prepared = prepare_persisted_report_input(
-        PersistedAnalysis.from_json_object(
-            minimal_summary(
-                run_id="context-legacy",
-                lang="en",
-                metadata={
-                    "run_id": "context-legacy",
-                    "record_type": "metadata",
-                    "schema_version": "v2-jsonl",
-                    "feature_interval_s": 0.5,
-                },
-                sensor_count_used=2,
-                sensor_locations=["Front Left", "Rear Left"],
-                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
-                findings=[primary],
-                top_causes=[primary],
-                analysis_metadata={
-                    "raw_backed_sample_count": 48,
-                    "raw_capture_mode": "raw_backed",
-                },
-            )
         )
     )
 
