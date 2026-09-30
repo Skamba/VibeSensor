@@ -7,46 +7,51 @@ from test_support.settings_services import build_settings_services
 
 from vibesensor.shared.types.speed_source_config import _parse_manual_speed
 
+_MANUAL_80 = {"speedSource": "manual", "manualSpeedKph": 80}
 
-def test_speed_source_settings_update_manual() -> None:
+
+@pytest.mark.parametrize(
+    ("updates", "expected"),
+    [
+        pytest.param(
+            [_MANUAL_80],
+            {"speedSource": "manual", "manualSpeedKph": 80.0},
+            id="manual",
+        ),
+        pytest.param(
+            [_MANUAL_80, {"speedSource": "gps", "manualSpeedKph": None}],
+            {"speedSource": "gps", "manualSpeedKph": None},
+            id="gps-clears-manual",
+        ),
+        pytest.param(
+            [{"speedSource": "unknown"}],
+            {"speedSource": "gps"},
+            id="invalid-source-defaults-to-gps",
+        ),
+        pytest.param(
+            [
+                {
+                    "speedSource": "obd2",
+                    "obdDeviceMac": "00:04:3E:5A:4A:4D",
+                    "obdDeviceName": "OBDLink MX+ 80163",
+                }
+            ],
+            {
+                "speedSource": "obd2",
+                "obdDeviceMac": "00043e5a4a4d",
+                "obdDeviceName": "OBDLink MX+ 80163",
+            },
+            id="obd-device-config-normalized",
+        ),
+    ],
+)
+def test_speed_source_settings_update(
+    updates: list[dict[str, object]], expected: dict[str, object]
+) -> None:
     services = build_settings_services()
-    result = services.speed_source_settings.update_speed_source(
-        {"speedSource": "manual", "manualSpeedKph": 80}
-    )
-    assert result["speedSource"] == "manual"
-    assert result["manualSpeedKph"] == 80.0
-
-
-def test_speed_source_settings_update_gps_clears_manual() -> None:
-    services = build_settings_services()
-    services.speed_source_settings.update_speed_source(
-        {"speedSource": "manual", "manualSpeedKph": 80}
-    )
-    result = services.speed_source_settings.update_speed_source(
-        {"speedSource": "gps", "manualSpeedKph": None}
-    )
-    assert result["speedSource"] == "gps"
-    assert result["manualSpeedKph"] is None
-
-
-def test_speed_source_settings_invalid_source_defaults_to_gps() -> None:
-    services = build_settings_services()
-    result = services.speed_source_settings.update_speed_source({"speedSource": "unknown"})
-    assert result["speedSource"] == "gps"
-
-
-def test_speed_source_settings_persists_obd_device_config() -> None:
-    services = build_settings_services()
-    result = services.speed_source_settings.update_speed_source(
-        {
-            "speedSource": "obd2",
-            "obdDeviceMac": "00:04:3E:5A:4A:4D",
-            "obdDeviceName": "OBDLink MX+ 80163",
-        }
-    )
-    assert result["speedSource"] == "obd2"
-    assert result["obdDeviceMac"] == "00043e5a4a4d"
-    assert result["obdDeviceName"] == "OBDLink MX+ 80163"
+    for update in updates:
+        result = services.speed_source_settings.update_speed_source(update)
+    assert {key: result[key] for key in expected} == expected
 
 
 def test_speed_source_settings_exposes_canonical_config_copy() -> None:
