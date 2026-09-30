@@ -59,30 +59,8 @@ def test_build_report_document_prefers_non_ref_top_cause_for_observed_location()
     assert data.observed.strongest_location.lower() == "rear-left"
 
 
-def test_build_report_document_falls_back_when_top_cause_is_placeholder() -> None:
-    summary = _summary_with_top_order(
-        {
-            **_BASE_ORDER_FINDING,
-            "suspected_source": "wheel/tire",
-            "strongest_location": "rear-left",
-            "strongest_speed_band": "40-60 km/h",
-        },
-    )
-    summary["top_causes"] = [
-        {
-            "suspected_source": "unknown_resonance",
-            "strongest_location": "unknown",
-            "strongest_speed_band": "100-110 km/h",
-            "confidence": 0.95,
-        },
-    ]
-
-    data = build_report_document(prepare_report_input(summary))
-
-    assert data.observed.strongest_location.lower() == "rear-left"
-
-
 def test_build_report_document_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
+    """A placeholder top cause falls back to the real finding for observed + evidence."""
     summary = _summary_with_top_order(
         {
             **_BASE_ORDER_FINDING,

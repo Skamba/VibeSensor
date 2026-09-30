@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
@@ -30,37 +31,6 @@ def test_strength_text_value_with_peak_amp() -> None:
     assert " g" not in txt
 
 
-def test_build_report_document_strength_label_includes_peak_amp_when_available() -> None:
-    summary = minimal_summary(
-        top_causes=[_F_ORDER_CAUSE],
-        findings=[
-            {
-                "finding_id": "F_ORDER",
-                "amplitude_metric": {"value": 0.032, "units": "g"},
-            },
-        ],
-        sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
-    )
-    data = build_report_document(prepare_report_input(summary))
-    assert data.observed.strength_label is not None
-    assert "22.0 dB" in data.observed.strength_label
-    assert " g" not in data.observed.strength_label
-    assert data.observed.strength_peak_db == 22.0
-    assert data.pattern_evidence.strength_label is not None
-    assert " g" not in data.pattern_evidence.strength_label
-    assert data.pattern_evidence.strength_peak_db == 22.0
-
-
-def test_build_report_document_strength_label_falls_back_to_db_only_without_peak_amp() -> None:
-    summary = minimal_summary(sensor_intensity_by_location=[{"p95_intensity_db": 22.0}])
-    data = build_report_document(prepare_report_input(summary))
-    assert data.observed.strength_label is not None
-    assert "22.0 dB" in data.observed.strength_label
-    assert "g peak" not in data.observed.strength_label
-    assert data.observed.strength_peak_db == 22.0
-    assert data.pattern_evidence.strength_peak_db == 22.0
-
-
 def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
     # Label already contains "dB" → peak suffix should NOT be appended (avoids duplication)
     assert _strength_with_peak("Moderate (22.0 dB)", 0.032, fallback="N/A") == "Moderate (22.0 dB)"
@@ -72,53 +42,78 @@ def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
     assert _strength_with_peak("Moderate", 15.3, fallback="N/A") == "Moderate · 15.3 dB peak"
 
 
-def test_build_report_document_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
-    summary = minimal_summary(
-        top_causes=[_F_ORDER_CAUSE],
-        findings=[
+@pytest.mark.parametrize(
+    ("summary_overrides", "expected_db"),
+    [
+        pytest.param(
             {
-                "finding_id": "F_ORDER",
-                "amplitude_metric": {"value": 0.015, "units": "g"},
-                "evidence_metrics": {"vibration_strength_db": 23.4},
+                "top_causes": [_F_ORDER_CAUSE],
+                "findings": [
+                    {"finding_id": "F_ORDER", "amplitude_metric": {"value": 0.032, "units": "g"}},
+                ],
+                "sensor_intensity_by_location": [{"p95_intensity_db": 22.0}],
             },
-        ],
-    )
-    data = build_report_document(prepare_report_input(summary))
-    assert data.observed.strength_label is not None
-    assert "23.4 dB" in data.observed.strength_label
-    assert " g" not in data.observed.strength_label
-    assert data.observed.strength_peak_db == 23.4
-
-
-def test_build_report_document_strength_label_keeps_db_and_peak_from_same_finding() -> None:
-    summary = minimal_summary(
-        top_causes=[{"finding_id": "F_PRIMARY"}, {"finding_id": "F_SECONDARY"}],
-        findings=[
+            22.0,
+            id="sensor-db-ignores-peak-amp",
+        ),
+        pytest.param(
+            {"sensor_intensity_by_location": [{"p95_intensity_db": 22.0}]},
+            22.0,
+            id="sensor-db-without-findings",
+        ),
+        pytest.param(
             {
-                "finding_id": "F_PRIMARY",
-                "amplitude_metric": {"value": 0.011, "units": "g"},
+                "top_causes": [_F_ORDER_CAUSE],
+                "findings": [
+                    {
+                        "finding_id": "F_ORDER",
+                        "amplitude_metric": {"value": 0.015, "units": "g"},
+                        "evidence_metrics": {"vibration_strength_db": 23.4},
+                    },
+                ],
             },
+            23.4,
+            id="finding-db-when-sensor-rows-missing",
+        ),
+        pytest.param(
             {
-                "finding_id": "F_SECONDARY",
-                "evidence_metrics": {"vibration_strength_db": 40.0},
+                "top_causes": [{"finding_id": "F_PRIMARY"}, {"finding_id": "F_SECONDARY"}],
+                "findings": [
+                    {"finding_id": "F_PRIMARY", "amplitude_metric": {"value": 0.011, "units": "g"}},
+                    {
+                        "finding_id": "F_SECONDARY",
+                        "evidence_metrics": {"vibration_strength_db": 40.0},
+                    },
+                ],
+                "sensor_intensity_by_location": [{"p95_intensity_db": 22.0}],
             },
-        ],
-        sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
-    )
-    data = build_report_document(prepare_report_input(summary))
-    assert data.observed.strength_label is not None
-    assert "40.0 dB" in data.observed.strength_label
-    assert "g peak" not in data.observed.strength_label
+            40.0,
+            id="db-and-peak-from-same-finding",
+        ),
+        pytest.param(
+            {
+                "sensor_intensity_by_location": [
+                    {"location": "A", "p95_intensity_db": 12.0},
+                    {"location": "B", "p95_intensity_db": 28.0},
+                    {"location": "C", "p95_intensity_db": 20.0},
+                ],
+            },
+            28.0,
+            id="strongest-unsorted-sensor-row",
+        ),
+    ],
+)
+def test_build_report_document_strength_label_uses_db_source(
+    summary_overrides: dict[str, object],
+    expected_db: float,
+) -> None:
+    data = build_report_document(prepare_report_input(minimal_summary(**summary_overrides)))
 
-
-def test_build_report_document_strength_label_uses_strongest_sensor_row_when_unsorted() -> None:
-    summary = minimal_summary(
-        sensor_intensity_by_location=[
-            {"location": "A", "p95_intensity_db": 12.0},
-            {"location": "B", "p95_intensity_db": 28.0},
-            {"location": "C", "p95_intensity_db": 20.0},
-        ],
-    )
-    data = build_report_document(prepare_report_input(summary))
-    assert data.observed.strength_label is not None
-    assert "28.0 dB" in data.observed.strength_label
+    label = data.observed.strength_label
+    assert label is not None
+    assert f"{expected_db:.1f} dB" in label
+    assert " g" not in label
+    assert "g peak" not in label
+    assert data.observed.strength_peak_db == expected_db
+    assert data.pattern_evidence.strength_peak_db == expected_db
+    assert " g" not in (data.pattern_evidence.strength_label or "")
