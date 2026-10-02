@@ -5,11 +5,7 @@ import { applyLivePayloadUpdate } from "../src/app/realtime_state";
 import { createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
 import type { AdaptedPayload } from "../src/transport/live_models";
-import {
-  createDeferred,
-  flushSignalUpdates,
-  installWindowGlobal,
-} from "./async_test_helpers";
+import { flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
 import {
   createElementStub,
   installDocumentStub,
@@ -276,7 +272,7 @@ describe("UiSpectrumController", () => {
     }
   });
 
-  test("shows worker frame-preparation failures through the overlay", async () => {
+  test("shows frame-preparation failures through the overlay", async () => {
     const restoreDocument = installDocumentStub();
     try {
       const UiSpectrumController = await importUiSpectrumController();
@@ -291,8 +287,8 @@ describe("UiSpectrumController", () => {
           key === "spectrum.frame_prepare_error"
             ? `frame prep failed: ${String(vars?.message)}`
             : key,
-        framePreparer: createFramePreparerStub(async () => {
-          throw new Error("worker crashed");
+        framePreparer: createFramePreparerStub(() => {
+          throw new Error("frame prep crashed");
         }),
       });
 
@@ -301,85 +297,11 @@ describe("UiSpectrumController", () => {
 
       expect(panel.lastOverlayModel).toEqual({
         hidden: false,
-        text: "frame prep failed: worker crashed",
+        text: "frame prep failed: frame prep crashed",
       });
       expect(state.spectrum.framePrepareErrorDetail.value).toBe(
-        "worker crashed",
+        "frame prep crashed",
       );
-    } finally {
-      restoreDocument();
-    }
-  });
-
-  test("drops stale worker results and applies only newest spectrum frame", async () => {
-    const restoreDocument = installDocumentStub();
-    try {
-      const UiSpectrumController = await importUiSpectrumController();
-      const state = createAppState();
-      const panel = createPanelStub();
-      const first = createDeferred<{
-        entries: [];
-        freqAxis: [];
-        frame: null;
-        hasData: false;
-      }>();
-      const second = createDeferred<{
-        entries: [];
-        freqAxis: [];
-        frame: null;
-        hasData: false;
-      }>();
-      const calls: string[] = [];
-      const controller = new UiSpectrumController({
-        state,
-        panel: panel.panel,
-        t: (key) => key,
-        framePreparer: createFramePreparerStub(async (input) => {
-          calls.push(
-            String(input.spectraByClient["sensor-a"]?.combined[2] ?? "empty"),
-          );
-          if (calls.length === 1) {
-            return first.promise;
-          }
-          return second.promise;
-        }),
-      });
-      const applyCalls: string[] = [];
-      Object.defineProperty(controller, "applyPreparedSpectrum", {
-        value(prepared: { hasData: boolean }): void {
-          applyCalls.push(String(prepared.hasData));
-        },
-      });
-
-      applyLivePayloadUpdate({
-        realtime: state.realtime,
-        spectrum: state.spectrum,
-        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.3]),
-      });
-      applyLivePayloadUpdate({
-        realtime: state.realtime,
-        spectrum: state.spectrum,
-        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.4]),
-      });
-      first.resolve({
-        entries: [],
-        freqAxis: [],
-        frame: null,
-        hasData: false,
-      });
-      await flushSignalUpdates();
-      expect(applyCalls).toEqual([]);
-
-      second.resolve({
-        entries: [],
-        freqAxis: [],
-        frame: null,
-        hasData: false,
-      });
-      await flushSignalUpdates();
-
-      expect(calls).toEqual(["0.3", "0.4"]);
-      expect(applyCalls).toEqual(["false"]);
     } finally {
       restoreDocument();
     }

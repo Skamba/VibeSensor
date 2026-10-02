@@ -9,7 +9,6 @@ server over HTTP (REST) and WebSocket (live data).
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
 - **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
-- **comlink** — typed Web Worker bridge for off-main-thread spectrum frame preparation
 - **Vite** — build tool and dev server
 - **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
@@ -121,25 +120,19 @@ Frontend live transport ingress is signal-native end to end.
   spectrum or DOM performance. Do not reintroduce callback-style payload fan-out
   from `ws.ts` into app/runtime consumers.
 
-## Worker-owned spectrum frame preparation
+## Spectrum frame preparation
 
-Live spectrum payload adaptation stays on the main thread, but heavy spectrum
-frame preparation does not.
+Spectrum frames are prepared synchronously on the main thread (a handful of
+sensors at a few frames per second is cheap).
 
-- `src/app/runtime/ui_spectrum_controller.ts` owns worker startup, stale-result
-  suppression, surfaced worker failure state, and teardown.
-- `src/app/runtime/spectrum_frame_preparer_worker.ts` exposes the canonical
-  Comlink worker API. Do not add a second production owner for spectrum frame
-  preparation.
-- `src/app/runtime/spectrum_frame_preparer.ts` owns the shared typed frame-prep
-  contract plus the pure preparation core reused by the worker and focused
-  tests.
-- `src/app/runtime/spectrum_canvas_renderer.ts` no longer prepares frames from
+- `src/app/runtime/ui_spectrum_controller.ts` prepares a frame on every spectra
+  update, surfaces preparation failures in the overlay, and owns teardown.
+- `src/app/runtime/spectrum_frame_preparer.ts` owns the typed frame-prep
+  contract and the pure, cached preparation logic. Do not add a second owner
+  for spectrum frame preparation.
+- `src/app/runtime/spectrum_canvas_renderer.ts` does not prepare frames from
   raw AppState. It only composes chart-band metadata, owns the canvas chart
   lifecycle, and renders already prepared frames.
-- Worker responses may return transferable typed arrays (`Float64Array`) for the
-  prepared frequency/series payloads. Treat those series as read-only numeric
-  buffers.
 
 ## HTTP boundary tests with MSW
 

@@ -4,7 +4,7 @@ import type {
   SpectrumCanvasRendererDeps,
   SpectrumPreparedRenderData,
 } from "../src/app/runtime/spectrum_canvas_renderer";
-import { createSpectrumFramePreparerCore } from "../src/app/runtime/spectrum_frame_preparer";
+import { createSpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
 import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedClient } from "../src/transport/live_models";
 import {
@@ -122,7 +122,7 @@ export async function withSpectrumRendererHarness(
   run: (harness: SpectrumRendererHarness) => Promise<void> | void,
 ): Promise<void> {
   const restoreDocument = installDocumentStub();
-  const framePreparer = createSpectrumFramePreparerCore();
+  const framePreparer = createSpectrumFramePreparer();
   try {
     const { createSpectrumCanvasRenderer } = await import(
       "../src/app/runtime/spectrum_canvas_renderer"
