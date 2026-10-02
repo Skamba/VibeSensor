@@ -70,7 +70,7 @@ def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> No
     try:
         # Keep the representative pipeline smoke fast by using a reduced-sensor capture
         # while still proving ingest -> diagnosis -> export -> PDF works end to end.
-        _simulate(e2e_env, duration=3.0, count=2, names="front-left,rear-left")
+        _simulate(e2e_env, count=2, names="front-left,rear-left")
         api_json(base, "/api/recording/stop", method="POST")
         run = _wait_complete(base, run_id)
         assert run["status"] == "complete", (

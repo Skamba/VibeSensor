@@ -8,6 +8,7 @@ High-traffic validation router. Keep this concise; use Makefile targets and scri
 - Before pushing: `make ci` runs lint, backend/UI type checks, backend tests, and UI unit tests.
 - Docs/instruction-only changes need no local gate.
 - Broad synthetic diagnostic matrices: `make test-diagnostic-matrix` (default backend CI excludes `diagnostic_matrix` cases).
+- Simulator, UDP ingest, recording, post-analysis, or persistence changes: also run the process-backed e2e suite (`make test-e2e`); `make ci` does not run it.
 - UI validation: `make ui-typecheck`; add UI test/build commands below when the changed seam requires them.
 - Firmware and Pi image validation: use the narrow commands below; avoid hardware/full image builds unless required.
 - Local `shell-lint` needs host `shellcheck`; `make doctor` reports prerequisites.
@@ -20,6 +21,7 @@ make lint
 make typecheck
 make ci
 make test-diagnostic-matrix
+make test-e2e
 make test-full-suite
 
 pytest -q apps/server/tests/adapters/pdf/
@@ -27,6 +29,19 @@ pytest -q apps/server/tests/use_cases/history/
 pytest -q apps/server/tests/use_cases/updates/
 pytest -q apps/server/tests/integration/
 ```
+
+## Process-backed e2e
+
+```bash
+.venv/bin/python -m pytest -q -m "e2e and not long_sim" -n 6 apps/server/tests_e2e   # = make test-e2e (CI)
+.venv/bin/python -m pytest -q -m e2e -n 6 apps/server/tests_e2e                      # = make test-full-suite
+```
+
+- `apps/server/tests_e2e/conftest.py` starts one real server subprocess per pytest-xdist worker (session-scoped `e2e_server` fixture): a runtime dir under pytest's tmp dir with `config.docker.yaml` cloned and paths rewritten, seed data copied, and free loopback HTTP/UDP ports. The server is terminated at session end and also dies with its worker.
+- Tests drive it over HTTP and run `vibesensor.adapters.simulator.sim_sender` against it via the `e2e_env` fixture. Tests on one worker share that server sequentially, so each test restores the settings, clients, and runs it touches.
+- Failing e2e tests append the server and app log tails to the pytest report.
+- Simulated captures that must finish post-analysis need at least `ANALYZABLE_SIM_DURATION_S` (two FFT analysis windows); `_simulate()` defaults to it.
+- `long_sim` marks longer simulated runs; the fast selection excludes them. Override the worker count with `make test-e2e E2E_WORKERS=<n>`.
 
 Benchmarks are opt-in evidence, not default validation:
 

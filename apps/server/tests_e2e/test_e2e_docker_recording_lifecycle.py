@@ -50,7 +50,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
             message=f"first rollover run {run_1} did not finalize",
         )
 
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env)
         api_json(base, "/api/recording/stop", method="POST")
 
         final_1 = _wait_complete(base, run_1)

@@ -24,7 +24,7 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env)
         api_json(base, "/api/recording/stop", method="POST")
         detail = _wait_complete(base, run_id)
         summary_rows = api_json(base, "/api/history")["runs"]

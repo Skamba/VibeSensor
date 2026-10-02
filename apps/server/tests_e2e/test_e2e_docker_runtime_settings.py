@@ -49,7 +49,7 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
             body={"speed_source": "manual", "manual_speed_kph": 77},
         )
         run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env)
         api_json(base, "/api/recording/stop", method="POST")
         complete = _wait_complete(base, run_id)
         assert complete["status"] == "complete"
@@ -134,7 +134,7 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
         )
 
         run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env)
         api_json(base, "/api/recording/stop", method="POST")
         _wait_complete(base, run_id)
 

@@ -25,7 +25,7 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env)
         insights_while = api_json(base, f"/api/history/{run_id}/insights", expected_status=422)
         assert "analysis" in str(insights_while.get("detail", "")).lower()
 
