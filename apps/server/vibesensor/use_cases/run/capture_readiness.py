@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import CaptureReadiness, CaptureReadinessPolicy
+from vibesensor.domain.capture_readiness import CaptureReadiness, CaptureReadinessPolicy
 from vibesensor.use_cases.run.capture_readiness_evaluator import evaluate_capture_readiness
 from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
 from vibesensor.use_cases.run.capture_readiness_state import (

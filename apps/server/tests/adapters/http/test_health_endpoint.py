@@ -12,7 +12,7 @@ from test_support.routes import iter_api_routes
 def _health_client(fake_state):
     """Return ``(client, state, app)`` for health-endpoint tests."""
 
-    from vibesensor.adapters.http import create_router
+    from vibesensor.adapters.http.router import create_router
 
     fake_state.processing_loop_state.processing_state = "ok"
     fake_state.processing_loop_state.processing_failure_count = 0

@@ -16,9 +16,8 @@ from test_support.car_library_validation.source_evidence import (
 
 from vibesensor.adapters.persistence.car_library import load_car_library
 from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
-from vibesensor.domain import (
-    AxleTireSetup,
-    TireSpec,
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
+from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
     VehicleConfigurationTireOption,
     VehicleFieldConfidence,

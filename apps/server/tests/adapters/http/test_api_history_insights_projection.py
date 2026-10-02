@@ -5,7 +5,7 @@ from _history_endpoint_helpers import make_app_and_state, make_metadata, make_st
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.domain import CarSnapshot
+from vibesensor.domain.car import CarSnapshot
 
 
 @pytest.mark.parametrize(

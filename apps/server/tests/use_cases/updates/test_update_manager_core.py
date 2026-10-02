@@ -12,7 +12,10 @@ from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
 from vibesensor.use_cases.updates.runtime import build_update_manager
-from vibesensor.use_cases.updates.status import UpdateStateStore, update_status_to_builtins
+from vibesensor.use_cases.updates.status.payload_codec import (
+    UpdateStateStore,
+    update_status_to_builtins,
+)
 
 
 class TestUpdateManager:

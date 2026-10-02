@@ -4,7 +4,7 @@ from dataclasses import replace
 
 from test_support.findings import make_finding
 
-from vibesensor.domain import VibrationSource
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.use_cases.diagnostics._analysis_result_builder import _final_top_causes
 
 

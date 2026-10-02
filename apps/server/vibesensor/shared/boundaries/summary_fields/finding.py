@@ -5,15 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from vibesensor.domain import (
-    ConfidenceAssessment,
-    Finding,
-    FindingEvidence,
-    OrderMatchObservation,
-    Signature,
-    VibrationSource,
-    coerce_float,
-)
+from vibesensor.domain._numeric import coerce_float
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence, Signature
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.codecs.scalars import float_or, optional_float, text_or_none
 from vibesensor.shared.boundaries.summary_fields.origin import (
     location_hotspot_from_payload,

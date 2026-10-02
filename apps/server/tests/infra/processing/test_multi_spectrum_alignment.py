@@ -7,7 +7,7 @@ from math import pi
 
 import numpy as np
 
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 
 
 def _proc(**kwargs) -> SignalProcessor:

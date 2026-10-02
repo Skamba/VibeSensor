@@ -6,7 +6,7 @@ from test_support.history_db_lifecycle import create_recording_run
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.history_db_sql import execute_statements as _execute_statements
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
 
 def test_list_runs_includes_recorded_car_name(db: HistoryDB) -> None:

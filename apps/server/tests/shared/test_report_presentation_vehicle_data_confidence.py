@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import (
+from vibesensor.domain.diagnosis_assessment import (
     DiagnosisAssessmentFactor,
     DiagnosisAssessmentFactorDetails,
     diagnosis_assessment_from_components,

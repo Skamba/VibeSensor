@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import CarOrderReferenceStatus
+from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )

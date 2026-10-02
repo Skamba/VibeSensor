@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck
+from vibesensor.domain.capture_readiness import CaptureReadiness, CaptureReadinessCheck
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 
 

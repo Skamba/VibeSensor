@@ -11,7 +11,7 @@ import asyncio
 from collections.abc import Mapping
 from typing import cast
 
-from vibesensor.domain import RunStatus
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     RunNotFoundError,

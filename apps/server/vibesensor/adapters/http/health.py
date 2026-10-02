@@ -12,11 +12,11 @@ from vibesensor.infra.runtime.health_snapshot import build_system_health_snapsho
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
     from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.use_cases.run import RunRecorder
+    from vibesensor.use_cases.run.logger import RunRecorder
 
 
 def create_health_routes(

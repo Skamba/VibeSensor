@@ -17,7 +17,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 
 __all__ = [
     "WheelArtifactValidator",

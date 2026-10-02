@@ -30,8 +30,8 @@ from vibesensor.use_cases.updates.artifact_validation import (
 from vibesensor.use_cases.updates.models import UpdateRuntimeDetails
 from vibesensor.use_cases.updates.releases.release_validation import run_server_smoke
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor
 

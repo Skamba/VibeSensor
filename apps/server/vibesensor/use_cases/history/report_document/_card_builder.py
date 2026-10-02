@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import TestRun
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.document.panels import PartSuggestion, SystemFindingCard
 from vibesensor.shared.report_presentation import human_source, order_label_human
 from vibesensor.use_cases.history.report_document.pattern_parts import parts_for_pattern

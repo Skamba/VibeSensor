@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from test_support.persisted_analysis import make_persisted_analysis
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.order_trace_contracts import OrderTracePoint

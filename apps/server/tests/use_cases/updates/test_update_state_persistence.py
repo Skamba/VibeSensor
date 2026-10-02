@@ -24,12 +24,14 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.runtime import build_update_manager
-from vibesensor.use_cases.updates.status import (
-    UpdatePhaseTransitionError,
+from vibesensor.use_cases.updates.status.payload_codec import (
     UpdateStateStore,
-    UpdateStatusTracker,
     update_status_from_builtins,
     update_status_to_builtins,
+)
+from vibesensor.use_cases.updates.status.tracker import (
+    UpdatePhaseTransitionError,
+    UpdateStatusTracker,
 )
 
 # ---------------------------------------------------------------------------

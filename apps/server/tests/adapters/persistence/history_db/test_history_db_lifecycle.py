@@ -29,7 +29,7 @@ from test_support.history_db_sql import execute_statements as _execute_statement
 from test_support.history_db_sql import fetch_one as _fetch_one
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 
 

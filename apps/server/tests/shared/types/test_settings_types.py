@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import get_type_hints
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS

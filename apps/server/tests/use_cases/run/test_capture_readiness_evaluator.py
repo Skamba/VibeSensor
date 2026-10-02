@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import (
-    AnalysisSettingsSnapshot,
-    CaptureReadinessPolicy,
-    CarSnapshot,
-    RunContextSnapshot,
-)
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.capture_readiness import CaptureReadinessPolicy
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.use_cases.run.capture_readiness_evaluator import evaluate_capture_readiness
 from vibesensor.use_cases.run.capture_readiness_observation import (
     CaptureReadinessObservation,

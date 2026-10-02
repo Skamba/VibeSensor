@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from vibesensor.domain import VibrationSource
+from vibesensor.domain.finding_types import VibrationSource
 
 # ---------------------------------------------------------------------------
 # Static mapping tables

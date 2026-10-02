@@ -8,7 +8,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite
 
-from vibesensor.domain import DrivingPhase, speed_bin_label
+from vibesensor.domain.driving_segment import DrivingPhase
+from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (

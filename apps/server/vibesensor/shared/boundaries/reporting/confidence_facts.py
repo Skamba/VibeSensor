@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.domain import (
+from vibesensor.domain.diagnosis_assessment import (
     DiagnosisAssessment,
     DiagnosisAssessmentFactor,
     DiagnosisAssessmentFactorDetails,

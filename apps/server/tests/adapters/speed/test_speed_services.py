@@ -8,7 +8,7 @@ from test_support.obd_runtime import build_obd_runtime_parts
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-from vibesensor.adapters.speed import build_speed_source_services
+from vibesensor.adapters.speed.source_coordinator import build_speed_source_services
 
 
 def _gps_status_snapshot() -> SpeedSourceStatusSnapshot:

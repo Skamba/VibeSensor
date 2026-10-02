@@ -16,7 +16,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
     wheel_dependency_issues,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
 

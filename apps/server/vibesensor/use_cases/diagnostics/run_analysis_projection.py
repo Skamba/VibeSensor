@@ -6,9 +6,10 @@ import math
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary
-from vibesensor.domain import DrivingSegment as DomainDrivingSegment
-from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.driving_segment import DrivingPhaseInterval
+from vibesensor.domain.driving_segment import DrivingSegment as DomainDrivingSegment
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
     _locations_connected_throughout_run,

@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import (
-    DiagnosticCase,
-    RunCapture,
-    RunSetup,
-    Sensor,
-    SpeedSource,
-    TestRun,
-)
-from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.diagnostic_case import DiagnosticCase
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.run_capture import RunCapture, RunSetup
+from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import plan_test_actions
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_run_metadata
 from vibesensor.shared.boundaries.runs.projection import (
     car_from_run_metadata,

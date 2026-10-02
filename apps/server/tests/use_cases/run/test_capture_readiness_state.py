@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CaptureReadinessPolicy, RunContextSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.capture_readiness import CaptureReadinessPolicy
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.use_cases.run.capture_readiness_observation import (
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,

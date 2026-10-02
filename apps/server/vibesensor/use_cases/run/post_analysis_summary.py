@@ -43,12 +43,12 @@ from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 _MIN_POST_ANALYSIS_DURATION_S = 1.0
 
 if TYPE_CHECKING:
-    from vibesensor.domain import SuitabilityCheck
+    from vibesensor.domain.run_suitability import SuitabilityCheck
 
 
 def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     """Run diagnostics analysis and return the internal persisted-analysis object."""
-    from vibesensor.domain import SuitabilityCheck
+    from vibesensor.domain.run_suitability import SuitabilityCheck
     from vibesensor.report_i18n import tr
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
@@ -336,7 +336,7 @@ def _post_analysis_sample_rate_hz(run: PostAnalysisRunInput) -> int | None:
 
 
 def _short_run_check(run: PostAnalysisRunInput) -> SuitabilityCheck | None:
-    from vibesensor.domain import SuitabilityCheck
+    from vibesensor.domain.run_suitability import SuitabilityCheck
 
     required_raw_samples = _minimum_raw_sample_count(run)
     if run.raw_capture_available and run.raw_min_sensor_duration_s is not None:

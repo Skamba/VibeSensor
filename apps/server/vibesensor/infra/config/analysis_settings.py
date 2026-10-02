@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
 from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
 

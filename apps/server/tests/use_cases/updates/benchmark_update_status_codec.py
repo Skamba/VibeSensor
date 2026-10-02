@@ -12,7 +12,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateState,
     UpdateTransport,
 )
-from vibesensor.use_cases.updates.status import (
+from vibesensor.use_cases.updates.status.payload_codec import (
     update_status_from_json,
     update_status_to_json,
 )

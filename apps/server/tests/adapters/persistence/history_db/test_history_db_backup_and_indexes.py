@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
 
 def _query_plan_details(db_path: Path, sql: str) -> list[str]:

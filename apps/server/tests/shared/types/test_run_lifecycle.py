@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import RunStatus
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
 from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 

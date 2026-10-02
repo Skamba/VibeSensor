@@ -33,7 +33,7 @@ from vibesensor.shared.boundaries.reporting.document.sections import (
     VerdictPageData,
 )
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 _I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
 _RECAPTURE_SECTION_HEADING_KEYS = [

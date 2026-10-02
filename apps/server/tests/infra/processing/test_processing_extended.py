@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
+from vibesensor.infra.processing.buffers import MAX_CLIENT_SAMPLE_RATE_HZ
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.shared.fft_analysis import noise_floor
 
 

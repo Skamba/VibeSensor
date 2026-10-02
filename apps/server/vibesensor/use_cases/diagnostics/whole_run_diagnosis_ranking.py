@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.domain import (
+from vibesensor.domain.car import CarOrderReferenceStatus
+from vibesensor.domain.diagnosis_assessment import (
     DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP,
-    CarOrderReferenceStatus,
     DiagnosisAssessment,
     DiagnosisAssessmentInputs,
     score_diagnosis_assessment_inputs,

@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import (
-    DiagnosticCase,
-    DrivingPhaseInterval,
-    LocationIntensitySummary,
-    RunSuitability,
-    TestRun,
-)
+from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.driving_segment import DrivingPhaseInterval
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
+from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
+from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample

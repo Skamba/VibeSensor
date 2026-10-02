@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import OrderReferenceSpec, VibrationSource
-from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
 from vibesensor.shared.constants.analysis import (
     RIGID_ORDER_PATH_COMPLIANCE,
     WHEEL_ORDER_PATH_COMPLIANCE,

@@ -26,10 +26,10 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
-from vibesensor.use_cases.history.report_document import (
-    build_report_document,
+from vibesensor.use_cases.history.report_document._candidate_resolver import (
     resolve_primary_report_candidate,
 )
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 pytestmark = pytest.mark.smoke
 

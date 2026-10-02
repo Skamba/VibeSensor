@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from test_support.history_db_lifecycle import run_samples
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.domain import CarSnapshot
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.domain.car import CarSnapshot
 from vibesensor.use_cases.run import _recorder_runtime
 
 

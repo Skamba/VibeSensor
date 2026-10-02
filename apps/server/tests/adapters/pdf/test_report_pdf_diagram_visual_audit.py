@@ -5,7 +5,7 @@ from __future__ import annotations
 from test_support.pdf import extract_pdf_text
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixBData
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 

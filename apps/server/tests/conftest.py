@@ -15,7 +15,7 @@ import pytest
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-from vibesensor.adapters.history import (
+from vibesensor.adapters.history.services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
@@ -28,9 +28,9 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.adapters.websocket import LiveBroadcaster
-from vibesensor.domain import AnalysisSettingsSnapshot
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
@@ -39,7 +39,7 @@ from vibesensor.shared.types.car_config import CarsSnapshot
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.use_cases.run import RunRecorder
+from vibesensor.use_cases.run.logger import RunRecorder
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashStatus

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
+from vibesensor.domain.vehicle_configuration import (
     VehicleOrderAnalysisPolicy,
     VehicleOrderAnalysisPolicyOverride,
     apply_order_analysis_policy_override,

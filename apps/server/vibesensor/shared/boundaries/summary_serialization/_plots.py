@@ -6,7 +6,7 @@ import math
 from collections.abc import Sequence
 from typing import Protocol
 
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.types.analysis_views import (
     PeakTableRow,
     PhaseSpeedBreakdownRow,

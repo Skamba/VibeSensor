@@ -10,7 +10,7 @@ from vibesensor.adapters.gps.speed_resolution import SpeedResolution
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.obd.models import ObdStatusSnapshot
 from vibesensor.adapters.obd.service import ObdService
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot

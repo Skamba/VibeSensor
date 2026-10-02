@@ -7,7 +7,7 @@ from vibesensor.shared.boundaries.reporting.preparation import prepare_report_in
 from vibesensor.shared.report_presentation import (
     peak_classification_text as _peak_classification_text,
 )
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 # ---------------------------------------------------------------------------
 # Helpers

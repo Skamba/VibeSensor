@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from math import floor as _math_floor
 
-from vibesensor.domain import speed_bin_label
+from vibesensor.domain.finding import speed_bin_label
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
     _sample_top_peaks,

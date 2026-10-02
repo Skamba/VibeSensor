@@ -23,7 +23,7 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
+    from vibesensor.domain.test_run import TestRun
 
 __all__ = [
     "prepare_persisted_report_input",

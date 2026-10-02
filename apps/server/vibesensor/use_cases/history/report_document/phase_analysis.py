@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import Finding, TestRun, speed_band_sort_key
+from vibesensor.domain.finding import Finding, speed_band_sort_key
+from vibesensor.domain.test_run import TestRun
 from vibesensor.report_i18n import is_composite_location
 from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS

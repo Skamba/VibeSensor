@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import (
+from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
     PhaseIntensitySummary,
     StrengthBucketDistribution,

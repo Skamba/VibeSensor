@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
 
 def test_schema_version_ancient_no_migration_creates_backup_and_summary_export(

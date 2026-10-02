@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.boundaries.reporting.document.sections import PeakRow
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.report_presentation import (

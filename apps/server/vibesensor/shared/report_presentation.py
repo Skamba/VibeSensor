@@ -6,7 +6,10 @@ import logging
 import math
 from collections.abc import Callable, Sequence
 
-from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
+from vibesensor.domain.test_run import TestRun
 from vibesensor.report_i18n import human_location, location_candidates
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS

@@ -16,10 +16,8 @@ from vibesensor.use_cases.updates.models import (
     UpdateTerminalState,
     UpdateTransport,
 )
-from vibesensor.use_cases.updates.status import (
-    UpdateStateStore,
-    UpdateStatusTracker,
-)
+from vibesensor.use_cases.updates.status.payload_codec import UpdateStateStore
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:

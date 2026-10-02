@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
-from vibesensor.domain import RecommendedAction, SuitabilityCheck
+from vibesensor.domain.run_suitability import SuitabilityCheck
+from vibesensor.domain.test_plan import RecommendedAction
 from vibesensor.report_i18n import (
     is_body_like_location,
     is_composite_location,

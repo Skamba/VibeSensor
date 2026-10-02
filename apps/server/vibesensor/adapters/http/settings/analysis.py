@@ -13,7 +13,7 @@ from vibesensor.adapters.http.models.settings import (
     AnalysisSettingsResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import AnalysisSettingsRouteDeps
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_to_metadata,
 )

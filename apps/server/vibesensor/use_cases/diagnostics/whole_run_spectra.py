@@ -10,6 +10,7 @@ from typing import Protocol
 
 import numpy as np
 
+from vibesensor.shared._window_quality_scoring import score_window_quality
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list
 from vibesensor.shared.raw_capture_timeline import (
@@ -38,7 +39,6 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
-from vibesensor.shared.window_quality import score_window_quality
 from vibesensor.use_cases.diagnostics.whole_run_spectral_projection import (
     WholeRunSpectralCoverageSummary,
     WholeRunWindowSpectralSummary,

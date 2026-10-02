@@ -20,7 +20,7 @@ if TYPE_CHECKING:
         ReleaseInfo,
         ServerReleaseFetcher,
     )
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 
 
 @dataclass(frozen=True, slots=True)

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.boundaries.reporting.document.validation import require_non_empty_text
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
+    from vibesensor.domain.test_run import TestRun
     from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
     from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 

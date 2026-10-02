@@ -10,7 +10,7 @@ from _paths import SERVER_ROOT
 
 from vibesensor import report_i18n
 from vibesensor.adapters.pdf.diagram_layout import canonical_location
-from vibesensor.domain import DiagnosisAssessment
+from vibesensor.domain.diagnosis_assessment import DiagnosisAssessment
 from vibesensor.shared.report_confidence_presentation import confidence_reason_text
 from vibesensor.shared.report_presentation import (
     display_location,

@@ -18,7 +18,7 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.report_i18n import is_i18n_ref, tr
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 _TRANSLATED_MARKERS = [
     # Dutch markers

@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTerminalState,
     UpdateTransport,
 )
-from vibesensor.use_cases.updates.status import (
+from vibesensor.use_cases.updates.status.payload_codec import (
     update_status_from_builtins,
     update_status_to_builtins,
 )

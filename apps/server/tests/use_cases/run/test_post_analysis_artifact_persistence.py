@@ -31,7 +31,7 @@ from test_support.post_analysis_artifacts import (
     window_policy as _window_policy,
 )
 
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTracePoint,
     OrderTraceSummary,

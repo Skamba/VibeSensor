@@ -9,11 +9,11 @@ from test_support.update_status import build_update_status_harness
 
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.usb_internet import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
 from vibesensor.use_cases.updates.usb_status_inspection import parse_nmcli_device_status
-from vibesensor.use_cases.updates.wifi import build_default_wifi_config
+from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
 
 
 def _make_usb_interface(

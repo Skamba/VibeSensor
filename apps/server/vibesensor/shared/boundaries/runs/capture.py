@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import ConfigurationSnapshot
+from vibesensor.domain.run_capture import ConfigurationSnapshot
 from vibesensor.shared.types.run_schema import RunMetadata
 
 

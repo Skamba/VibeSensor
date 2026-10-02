@@ -6,7 +6,7 @@ import logging
 
 import msgspec
 
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.types.car_config import CarConfigPayload
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode

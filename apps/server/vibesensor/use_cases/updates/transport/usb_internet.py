@@ -11,7 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.transport.uplink_readiness import UpdateUplinkReadiness
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService

@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRecord

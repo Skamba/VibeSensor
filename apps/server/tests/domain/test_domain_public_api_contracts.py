@@ -5,26 +5,15 @@ from __future__ import annotations
 import pytest
 from test_support.settings_services import build_settings_services
 
-import vibesensor.domain as domain
-from vibesensor.domain import (
-    Car,
-    DrivingPhase,
-    Finding,
-    Run,
-    RunCapture,
-    RunStatus,
-    Sensor,
-    SensorPlacement,
-    SpeedSource,
-    SuitabilityCheck,
-    speed_bin_label,
-    transition_run,
-)
-
-
-def test_domain_facade_all_exports_are_importable() -> None:
-    missing = [name for name in domain.__all__ if not hasattr(domain, name)]
-    assert not missing
+from vibesensor.domain.car import Car
+from vibesensor.domain.driving_segment import DrivingPhase
+from vibesensor.domain.finding import Finding, speed_bin_label
+from vibesensor.domain.run import Run
+from vibesensor.domain.run_capture import RunCapture
+from vibesensor.domain.run_status import RunStatus, transition_run
+from vibesensor.domain.run_suitability import SuitabilityCheck
+from vibesensor.domain.sensor import Sensor, SensorPlacement
+from vibesensor.domain.speed_source import SpeedSource
 
 
 def test_public_domain_imports_support_run_ready_configuration() -> None:

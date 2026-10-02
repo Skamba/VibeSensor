@@ -17,8 +17,9 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
+from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
+from vibesensor.use_cases.updates.wifi.wifi_session import UpdateWifiSession
 
 
 def _build_session(

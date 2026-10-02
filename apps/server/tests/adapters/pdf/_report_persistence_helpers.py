@@ -49,7 +49,7 @@ def build_findings(
 
 
 def findings_at_freq(findings: Sequence[object], *freq_strs: str) -> list[object]:
-    from vibesensor.domain import Finding
+    from vibesensor.domain.finding import Finding
 
     def _matches(finding: object) -> bool:
         if isinstance(finding, Finding):

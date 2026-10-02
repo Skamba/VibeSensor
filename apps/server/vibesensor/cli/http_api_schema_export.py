@@ -17,7 +17,6 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.dependencies import (
     HealthDeps,
     HistoryDeps,
@@ -26,6 +25,7 @@ from vibesensor.adapters.http.dependencies import (
     SettingsDeps,
     UpdateDeps,
 )
+from vibesensor.adapters.http.router import create_router
 
 
 def _build_openapi_app() -> FastAPI:

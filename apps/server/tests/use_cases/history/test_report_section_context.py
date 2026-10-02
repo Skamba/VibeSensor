@@ -1,7 +1,7 @@
 from test_support.report_helpers import recapture_guidance_summary
 
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _report_document_for_mode(mode: str):

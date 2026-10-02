@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.domain import RunSuitability, SuitabilityCheck
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.report_i18n import is_i18n_ref, resolve_i18n
 from vibesensor.shared.run_context_warning import (
     RunContextWarning,

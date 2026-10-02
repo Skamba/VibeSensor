@@ -8,7 +8,7 @@ from vibesensor.adapters.http.settings.speed_source import (
     speed_source_response_payload,
     speed_source_update_payload_from_mapping,
 )
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 
 
 def test_speed_source_update_payload_from_mapping_projects_http_keys() -> None:

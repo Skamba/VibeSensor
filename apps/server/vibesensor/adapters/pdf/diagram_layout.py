@@ -10,7 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 
-from vibesensor.domain import LocationHotspotRow
+from vibesensor.domain.location_hotspot import LocationHotspotRow
 
 # ── Marker & label data types ────────────────────────────────────────────────
 

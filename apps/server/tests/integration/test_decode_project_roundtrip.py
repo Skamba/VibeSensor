@@ -20,8 +20,9 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history.projection import project_analysis_summary
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.domain import DiagnosticCase, TestRun
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.domain.diagnostic_case import DiagnosticCase
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun

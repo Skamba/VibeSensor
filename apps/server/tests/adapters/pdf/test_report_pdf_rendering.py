@@ -28,7 +28,7 @@ from vibesensor.shared.boundaries.reporting.document.appendices import AppendixA
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:

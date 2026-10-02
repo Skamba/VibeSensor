@@ -6,7 +6,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import SuitabilityCheck, TestRun
+from vibesensor.domain.run_suitability import SuitabilityCheck
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
 from vibesensor.shared.boundaries.reporting.document.panels import PatternEvidence

@@ -13,7 +13,7 @@ from tests.use_cases.run.test_metrics_log_helpers import (
     _started_snapshot,
     _started_snapshot_with_sample,
 )
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 

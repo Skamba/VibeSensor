@@ -5,7 +5,9 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.use_cases.diagnostics.orders.scoring as order_scoring_module
-from vibesensor.domain import LocationHotspot, OrderMatchObservation, VibrationSource
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders.heuristics import apply_localization_override
 from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import Finding, FindingEvidence, OrderMatchObservation, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 

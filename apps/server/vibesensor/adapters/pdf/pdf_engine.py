@@ -6,11 +6,9 @@ from io import BytesIO
 
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.pdf_appendices import (
-    _appendix_a_page,
-    _appendix_b_page,
-    _appendix_c_page,
-)
+from vibesensor.adapters.pdf.pdf_appendices.appendix_b import _appendix_b_page
+from vibesensor.adapters.pdf.pdf_appendices.appendix_c import _appendix_c_page
+from vibesensor.adapters.pdf.pdf_appendices.worksheet import _appendix_a_page
 from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE
@@ -24,7 +22,7 @@ __all__ = ["build_prepared_report_pdf", "build_report_pdf"]
 
 def build_prepared_report_pdf(prepared: PreparedReportInput) -> bytes:
     """Render prepared report input through document assembly and the PDF adapter."""
-    from vibesensor.use_cases.history.report_document import build_report_document
+    from vibesensor.use_cases.history.report_document.builder import build_report_document
 
     return build_report_pdf(build_report_document(prepared))
 

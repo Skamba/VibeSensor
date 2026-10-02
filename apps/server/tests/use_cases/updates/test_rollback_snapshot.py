@@ -8,7 +8,7 @@ from vibesensor.use_cases.updates.rollback import (
     RollbackSnapshotMetadata,
     RollbackSnapshotStore,
 )
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 
 
 def _make_store(tmp_path: Path) -> tuple[RollbackSnapshotStore, UpdateStatusTracker, Path]:

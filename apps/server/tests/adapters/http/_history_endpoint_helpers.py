@@ -12,8 +12,10 @@ from fastapi import FastAPI
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.history import ProjectedHistoryExportService, ProjectedHistoryRunService
-from vibesensor.adapters.http import create_router
+from vibesensor.adapters.history.services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+)
 from vibesensor.adapters.http.dependencies import (
     HealthDeps,
     HistoryDeps,
@@ -22,8 +24,9 @@ from vibesensor.adapters.http.dependencies import (
     SettingsDeps,
     UpdateDeps,
 )
+from vibesensor.adapters.http.router import create_router
 from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
-from vibesensor.domain import RunStatus
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,

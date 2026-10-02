@@ -16,7 +16,8 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
-from vibesensor.domain import Finding, OrderMatchObservation
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frames_from_mappings,
     sensor_frames_to_json_objects,

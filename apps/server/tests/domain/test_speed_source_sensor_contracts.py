@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Sensor, SensorPlacement, SpeedSource, SpeedSourceKind
+from vibesensor.domain.sensor import Sensor, SensorPlacement
+from vibesensor.domain.speed_source import SpeedSource, SpeedSourceKind
 
 
 @pytest.mark.parametrize(

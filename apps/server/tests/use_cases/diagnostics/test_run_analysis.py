@@ -13,7 +13,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
     summarize_sensor_frames,
 )
-from vibesensor.domain import SpeedProfile
+from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,

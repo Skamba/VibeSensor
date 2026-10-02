@@ -9,8 +9,8 @@ from collections.abc import Mapping
 from functools import cache
 from typing import Any
 
-from vibesensor.domain import TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.shared.constants.units import KMH_TO_MPS
 
 _DEFAULT_TIRE = TireSpec.from_aspects(

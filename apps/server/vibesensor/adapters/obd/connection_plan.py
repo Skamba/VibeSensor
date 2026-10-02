@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 
 __all__ = [
     "ObdConnectionLoopSnapshot",

@@ -22,7 +22,7 @@ from vibesensor.adapters.udp.protocol import (
     parse_data,
 )
 from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult
 from vibesensor.shared.exceptions import ProtocolError
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector

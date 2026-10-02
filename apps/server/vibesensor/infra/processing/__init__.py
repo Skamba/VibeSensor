@@ -11,12 +11,3 @@
 - :mod:`~vibesensor.shared.fft_analysis` — shared FFTW-backed spectral-analysis
   functions reused by processing, replay, diagnostics, and reporting.
 """
-
-from vibesensor.infra.processing.buffers import MAX_CLIENT_SAMPLE_RATE_HZ, ClientBuffer
-from vibesensor.infra.processing.processor import SignalProcessor
-
-__all__ = [
-    "MAX_CLIENT_SAMPLE_RATE_HZ",
-    "ClientBuffer",
-    "SignalProcessor",
-]

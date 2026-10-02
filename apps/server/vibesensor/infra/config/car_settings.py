@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Protocol, TypeVar
 
-from vibesensor.domain import Car, CarOrderReferenceStatus, CarSnapshot
+from vibesensor.domain.car import Car, CarOrderReferenceStatus, CarSnapshot
 from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.types.car_config import (

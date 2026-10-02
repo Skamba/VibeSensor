@@ -10,7 +10,7 @@ from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
-from vibesensor.domain import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )

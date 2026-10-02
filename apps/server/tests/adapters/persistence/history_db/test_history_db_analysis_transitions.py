@@ -6,7 +6,7 @@ from test_support.history_db_lifecycle import create_recording_run
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
 
 class TestHistoryDBAnalysisIdempotency:

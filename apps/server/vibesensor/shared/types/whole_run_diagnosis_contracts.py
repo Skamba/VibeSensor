@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Literal
 
-from vibesensor.domain import DiagnosisAssessmentFactor
+from vibesensor.domain.diagnosis_assessment import DiagnosisAssessmentFactor
 from vibesensor.shared.types.json_contract import (
     JsonContract,
     require_non_empty_text,

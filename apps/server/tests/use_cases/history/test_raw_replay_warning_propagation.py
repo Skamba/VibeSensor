@@ -14,7 +14,7 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -> None:

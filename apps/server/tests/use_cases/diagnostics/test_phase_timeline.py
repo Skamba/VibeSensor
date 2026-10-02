@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Finding
+from vibesensor.domain.finding import Finding
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.run_analysis_projection import (

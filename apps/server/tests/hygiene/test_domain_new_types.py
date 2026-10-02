@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
-    DrivingPhase,
-    DrivingPhaseInterval,
+from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseInterval
+from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
-    OrderMatchObservation,
     PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.summary_fields.finding import (
     order_match_observation_from_mapping,
 )

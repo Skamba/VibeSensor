@@ -7,8 +7,8 @@ from typing import cast
 
 from test_support.core import canonicalize_run_context_metadata
 from test_support.persisted_analysis import make_persisted_analysis
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.domain import RunStatus
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun

@@ -14,13 +14,14 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
+from vibesensor.use_cases.run.logger import RunRecorder
 
 # ---------------------------------------------------------------------------
 # Fake collaborators

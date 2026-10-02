@@ -4,12 +4,12 @@ import logging
 import sqlite3
 from collections.abc import Callable
 
-from vibesensor.adapters.history import (
+from vibesensor.adapters.history.services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
 from vibesensor.adapters.http.dependencies import HistoryDeps
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.ports import SettingsReader

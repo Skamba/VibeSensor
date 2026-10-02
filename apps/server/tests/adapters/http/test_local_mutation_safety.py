@@ -6,8 +6,8 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from test_support.routes import iter_api_routes
 
-from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.middleware import install_local_mutation_safety_middleware
+from vibesensor.adapters.http.router import create_router
 
 _UNSAFE_METHODS = {"DELETE", "PATCH", "POST", "PUT"}
 

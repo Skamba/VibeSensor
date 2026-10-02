@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.types.run_schema import RunMetadata, RunSensorMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis

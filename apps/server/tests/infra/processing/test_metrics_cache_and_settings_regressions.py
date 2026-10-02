@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from test_support.settings_services import PersistedSettingsServices, build_settings_services
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.use_cases.diagnostics._counters import counter_delta
 

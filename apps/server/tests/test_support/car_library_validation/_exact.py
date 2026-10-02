@@ -17,7 +17,7 @@ from test_support.car_library_validation._powertrain import (
     validate_single_gearbox,
 )
 from test_support.car_library_validation._tires import validate_tire_setup, validate_tire_spec
-from vibesensor.domain import VehicleConfiguration, VehicleConfigurationField
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration, VehicleConfigurationField
 
 
 def validate_vehicle_configuration(

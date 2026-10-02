@@ -8,11 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
-    AnalysisSettingsSnapshot,
-    CarSnapshot,
-    RunContextSnapshot,
-)
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
 )

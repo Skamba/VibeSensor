@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.processing.time_align import compute_overlap
 
 

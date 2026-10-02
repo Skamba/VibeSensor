@@ -13,7 +13,9 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import replace as _dc_replace
 
-from vibesensor.domain import Finding, Signature, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import Signature
+from vibesensor.domain.finding_types import VibrationSource
 
 _WHEEL_DRIVELINE_OVERLAP_REASON = (
     "Wheel and driveline evidence overlap, so the system could not strongly "

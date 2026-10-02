@@ -12,13 +12,13 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
     SpectrumByAxis,
 )
+from vibesensor.shared._window_quality_scoring import score_window_quality
 from vibesensor.shared.fft_analysis import AXES, SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.types.payload_types import AxisMetrics, ClientMetrics
 from vibesensor.shared.types.processing_profile import (
     PROCESSING_FILTER_MEDIAN_3_SAMPLE,
     PROCESSING_PROFILE_LIVE_DISPLAY,
 )
-from vibesensor.shared.window_quality import score_window_quality
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 

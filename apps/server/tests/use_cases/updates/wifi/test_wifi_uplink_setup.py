@@ -8,7 +8,7 @@ from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
 from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import (

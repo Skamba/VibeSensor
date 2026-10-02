@@ -26,7 +26,7 @@ from vibesensor.shared.ports import ClockSyncBroadcaster
 from vibesensor.shared.runtime_failures import ProcessingLoopFailure
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)

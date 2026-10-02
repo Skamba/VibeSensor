@@ -5,8 +5,8 @@ from math import pi
 import numpy as np
 import pytest
 
-from vibesensor.shared.window_quality import (
-    analyze_window_clipping,
+from vibesensor.shared._window_quality_metrics import analyze_window_clipping
+from vibesensor.shared._window_quality_scoring import (
     score_window_quality,
     window_quality_with_context,
 )

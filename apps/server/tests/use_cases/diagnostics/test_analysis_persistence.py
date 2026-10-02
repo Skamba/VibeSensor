@@ -15,7 +15,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
 from tests.conftest import FakeState
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
@@ -258,9 +258,10 @@ def _find_endpoint(router, path: str):
 def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) -> None:
     """Integration: stop_recording → post-analysis → analysis persisted in DB."""
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+    from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
+    from vibesensor.use_cases.run.logger import RunRecorder
 
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
@@ -337,7 +338,7 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
     from fastapi import FastAPI
 
     from vibesensor.adapters.analysis_summary import summarize_run_data
-    from vibesensor.adapters.http import create_router
+    from vibesensor.adapters.http.router import create_router
 
     metadata = {
         "run_id": "run-pdf",
@@ -393,7 +394,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
     from fastapi import FastAPI
 
     from vibesensor.adapters.analysis_summary import summarize_run_data
-    from vibesensor.adapters.http import create_router
+    from vibesensor.adapters.http.router import create_router
 
     metadata = {
         "run_id": "run-ins",
@@ -432,7 +433,7 @@ async def test_export_offloaded_to_thread() -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.adapters.http import create_router
+    from vibesensor.adapters.http.router import create_router
 
     samples = [_sample(i) for i in range(5)]
 

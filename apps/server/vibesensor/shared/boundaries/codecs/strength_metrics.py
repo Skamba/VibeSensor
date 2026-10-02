@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from vibesensor.domain import StrengthMetrics, StrengthPeak
+from vibesensor.domain.strength_metrics import StrengthMetrics, StrengthPeak
 from vibesensor.shared.boundaries.codecs.scalars import float_or, optional_float, text_or_none
 from vibesensor.shared.types.json_types import JsonObject
 

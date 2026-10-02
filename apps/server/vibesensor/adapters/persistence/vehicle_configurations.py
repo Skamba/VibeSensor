@@ -22,7 +22,7 @@ from vibesensor.adapters.persistence._vehicle_configuration_shards import (
     ShardRefError,
     expand_shard_payload,
 )
-from vibesensor.domain import VehicleConfiguration
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 from vibesensor.shared._data_files import resolve_static_data_file
 
 LOGGER = logging.getLogger(__name__)

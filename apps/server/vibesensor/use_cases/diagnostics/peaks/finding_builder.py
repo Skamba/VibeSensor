@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain import (
-    FindingEvidence,
-    FindingKind,
-    VibrationSource,
-)
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.finding_types import FindingKind, VibrationSource
 from vibesensor.use_cases.diagnostics.peaks.scoring import PeakBin
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points

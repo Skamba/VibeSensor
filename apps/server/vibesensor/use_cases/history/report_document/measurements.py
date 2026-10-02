@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import Finding, TestRun
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.document.appendices import (
     EvidenceChainRow,
     MeasurementRow,

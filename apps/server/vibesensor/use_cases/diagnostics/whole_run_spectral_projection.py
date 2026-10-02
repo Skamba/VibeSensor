@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
+from vibesensor.shared._window_quality_types import WindowQuality, clean_window_quality
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
@@ -23,7 +24,6 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorManifest,
 )
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.shared.window_quality import WindowQuality, clean_window_quality
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,

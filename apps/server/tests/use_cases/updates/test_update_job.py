@@ -18,7 +18,7 @@ from vibesensor.shared.exceptions import (
     UpdateReleaseError,
     UpdateTransportError,
 )
-from vibesensor.use_cases.updates.firmware import FirmwareRefreshResult
+from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefreshResult
 from vibesensor.use_cases.updates.job import UpdateJob
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
@@ -30,10 +30,8 @@ from vibesensor.use_cases.updates.models import (
     UpdateValidationConfig,
 )
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
-from vibesensor.use_cases.updates.status import (
-    UpdateStateStore,
-    UpdateStatusTracker,
-)
+from vibesensor.use_cases.updates.status.payload_codec import UpdateStateStore
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 
 CURRENT_VERSION = "2026.4.3"

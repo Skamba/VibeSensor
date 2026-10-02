@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
-from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
-from vibesensor.domain import (
-    Finding as DomainFinding,
-)
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.driving_segment import DrivingPhaseInterval
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
+from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload

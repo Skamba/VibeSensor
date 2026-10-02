@@ -16,7 +16,7 @@ import math
 import pytest
 from test_support.findings import make_finding_payload
 
-from vibesensor.domain import Finding
+from vibesensor.domain.finding import Finding
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 

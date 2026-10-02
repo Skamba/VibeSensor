@@ -13,7 +13,7 @@ from test_support.car_library_validation._common import (
     in_range,
     text,
 )
-from vibesensor.domain import AxleTireSetup, TireSpec
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
 
 @dataclass(frozen=True, slots=True)

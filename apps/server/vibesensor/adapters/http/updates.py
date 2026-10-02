@@ -25,7 +25,7 @@ from vibesensor.adapters.http.models.updates import (
     UpdateStatusResponse,
     UsbInternetStatusResponse,
 )
-from vibesensor.use_cases.updates.status import update_status_to_builtins
+from vibesensor.use_cases.updates.status.payload_codec import update_status_to_builtins
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager

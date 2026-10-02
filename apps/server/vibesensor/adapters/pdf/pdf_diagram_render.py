@@ -33,7 +33,7 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
-    from vibesensor.domain import LocationHotspotRow
+    from vibesensor.domain.location_hotspot import LocationHotspotRow
 
 __all__ = ["car_location_diagram"]
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.domain import (
-    TireSpec,
+from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
     VehicleFieldConfidence,
     VehicleFieldMetadata,

@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.types.finding_payload_parts import FindingPayload
 
 

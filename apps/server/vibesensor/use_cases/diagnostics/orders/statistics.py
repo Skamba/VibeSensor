@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
-from vibesensor.domain import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.constants.analysis import (
     LIGHT_STRENGTH_MAX_DB,
     NEGLIGIBLE_STRENGTH_MAX_DB,

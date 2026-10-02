@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Protocol
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot

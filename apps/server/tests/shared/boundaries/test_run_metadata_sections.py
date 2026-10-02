@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import Symptom
+from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.shared.boundaries.runs._metadata_codecs import (
     PayloadFieldSpec,
     decoded_values,

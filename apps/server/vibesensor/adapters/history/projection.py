@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import cast
 
-from vibesensor.domain import RunStatus
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_persisted_analysis,

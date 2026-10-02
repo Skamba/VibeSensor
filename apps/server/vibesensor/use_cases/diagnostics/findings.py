@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.use_cases.diagnostics import _reference_findings
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics._reference_resolution import _tire_reference_from_context

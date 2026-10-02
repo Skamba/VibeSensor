@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,

@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass, field
 from threading import RLock
 
-from vibesensor.domain import Sensor, SensorPlacement, normalize_sensor_id
+from vibesensor.domain.sensor import Sensor, SensorPlacement, normalize_sensor_id
 from vibesensor.infra.config.car_settings import _clamp_str, _UpdateWithRollback
 from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.infra.location_assignment_validator import (

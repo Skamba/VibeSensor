@@ -27,12 +27,3 @@
   coordinator that owns the recording lifecycle plus delegation to the
   focused helpers above.
 """
-
-from vibesensor.use_cases.run._recorder_types import RecorderShutdownReport, RunRecorderConfig
-from vibesensor.use_cases.run.logger import RunRecorder
-
-__all__ = [
-    "RunRecorder",
-    "RunRecorderConfig",
-    "RecorderShutdownReport",
-]

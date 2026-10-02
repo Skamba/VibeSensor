@@ -4,17 +4,13 @@ from __future__ import annotations
 
 from pydantic import TypeAdapter
 
-from vibesensor.domain import (
-    ConfidenceAssessment,
-    Finding,
-    FindingEvidence,
-    RunSuitability,
-    Signature,
-    SuitabilityCheck,
-    VibrationSource,
-)
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence, Signature
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.runs.suitability import (
     run_suitability_from_payload,

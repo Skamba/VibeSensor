@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import FindingEvidence
+from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.shared.boundaries.summary_fields.finding import finding_evidence_from_mapping
 
 

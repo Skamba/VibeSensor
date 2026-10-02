@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Finding, VibrationSource
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.report_presentation import (
     order_label_human,
     peak_classification_text,

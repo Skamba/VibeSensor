@@ -10,7 +10,7 @@ from vibesensor.shared.process_settings import (
     load_update_env_settings,
 )
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
-from vibesensor.use_cases.updates.firmware import FirmwareRefresher
+from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.job import UpdateJob
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateValidationConfig
@@ -23,11 +23,9 @@ from vibesensor.use_cases.updates.runner import (
     UpdateCommandExecutor,
     UpdateStatusCommandReporter,
 )
-from vibesensor.use_cases.updates.status import (
-    UpdateStateStore,
-    UpdateStatusTracker,
-    collect_runtime_details,
-)
+from vibesensor.use_cases.updates.status.payload_codec import UpdateStateStore
+from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport.usb_internet import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService

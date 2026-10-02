@@ -10,7 +10,7 @@ import pytest
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.history_db_sql import fetch_all, fetch_one
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 
 

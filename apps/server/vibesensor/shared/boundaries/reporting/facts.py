@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
+from vibesensor.domain.diagnosis_assessment import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     ReportAnalysisMetadata,
@@ -20,10 +20,8 @@ from vibesensor.shared.run_context_warning import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.domain import (
-        TestRun,
-        VibrationOrigin,
-    )
+    from vibesensor.domain.test_run import TestRun
+    from vibesensor.domain.vibration_origin import VibrationOrigin
     from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
     from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
@@ -306,7 +304,7 @@ def prepare_report_facts(
 
 
 def _tire_spec_text(tire_spec: object) -> str | None:
-    from vibesensor.domain import TireSpec
+    from vibesensor.domain.tire_spec import TireSpec
 
     if not isinstance(tire_spec, TireSpec):
         return None

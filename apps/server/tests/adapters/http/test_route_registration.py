@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 
 def test_assembled_router_serves_core_runtime_endpoints(fake_state) -> None:
-    from vibesensor.adapters.http import create_router
+    from vibesensor.adapters.http.router import create_router
 
     app = FastAPI()
     app.include_router(create_router(fake_state))

@@ -19,7 +19,7 @@ DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 
 def _make_signal_processor():
     """Create a SignalProcessor with standard test parameters."""
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.processing.processor import SignalProcessor
 
     return SignalProcessor(
         sample_rate_hz=800,

@@ -14,7 +14,7 @@ from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_report_input,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _tr(key: str, **kwargs: object) -> str:

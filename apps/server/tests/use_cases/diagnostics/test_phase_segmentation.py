@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import DrivingPhaseSegment
+from vibesensor.domain.driving_segment import DrivingPhaseSegment
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,

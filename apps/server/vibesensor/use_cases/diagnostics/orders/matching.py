@@ -6,7 +6,8 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from vibesensor.domain import OrderMatchObservation, speed_bin_label
+from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.constants.analysis import (
     MIN_ANALYSIS_FREQ_HZ,
     ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S,

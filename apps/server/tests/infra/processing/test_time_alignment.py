@@ -16,7 +16,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.payload_types import AlignmentInfoPayload
 

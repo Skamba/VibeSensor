@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import Finding, SuitabilityCheck, TestRun
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.run_suitability import SuitabilityCheck
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document.appendices import (
     AppendixAData,

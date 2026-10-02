@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
-from vibesensor.domain import Symptom
+from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.runs._metadata_codecs import (
     PayloadDecoder,

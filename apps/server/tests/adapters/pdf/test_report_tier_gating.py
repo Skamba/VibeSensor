@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import ConfidenceAssessment
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 # ---------------------------------------------------------------------------
 # Unit tests: ConfidenceAssessment.assess().tier domain thresholds

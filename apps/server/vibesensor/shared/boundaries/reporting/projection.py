@@ -5,14 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from vibesensor.domain import (
-    Finding,
-    FindingEvidence,
-    LocationHotspot,
-    LocationIntensitySummary,
-    TestRun,
-    VibrationOrigin,
-)
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.location_hotspot import LocationHotspot, LocationIntensitySummary
+from vibesensor.domain.test_run import TestRun
+from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.reporting.sensor_facts import sensor_fallback_strength_db
 
 __all__ = [

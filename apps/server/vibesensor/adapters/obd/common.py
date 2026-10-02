@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 
 __all__ = ["bluetooth_mac_address", "normalize_obd_mac"]
 

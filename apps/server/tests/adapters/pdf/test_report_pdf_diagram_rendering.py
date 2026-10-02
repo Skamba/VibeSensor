@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.adapters.pdf.diagram_layout import estimate_text_width
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
-from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 
 
 def _rectangles_overlap(
@@ -255,7 +255,7 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
 
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
     from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-    from vibesensor.use_cases.history.report_document import build_report_document
+    from vibesensor.use_cases.history.report_document.builder import build_report_document
 
     summary = minimal_summary(
         lang="en",

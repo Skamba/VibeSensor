@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from vibesensor.adapters.http.ws_message_router import route_ws_message
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.websocket import LiveBroadcaster
+    from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 
 __all__ = ["create_websocket_routes"]
 

@@ -23,7 +23,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _truncate_single_line
-from vibesensor.domain import VibrationSource
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.report_presentation import human_source
 
 if TYPE_CHECKING:

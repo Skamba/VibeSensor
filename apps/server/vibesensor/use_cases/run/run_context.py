@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.shared.order_reference_settings import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,

@@ -11,7 +11,7 @@ from test_support.history_db_lifecycle import make_analysis_summary as _analysis
 from test_support.history_db_sql import execute_statements, fetch_all, fetch_one
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,

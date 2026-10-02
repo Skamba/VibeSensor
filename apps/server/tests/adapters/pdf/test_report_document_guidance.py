@@ -12,7 +12,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def test_build_report_document_uses_domain_action_render_queries_for_next_steps() -> None:

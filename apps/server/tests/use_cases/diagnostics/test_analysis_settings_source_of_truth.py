@@ -8,11 +8,11 @@ from test_support.routes import iter_api_routes
 from test_support.settings_services import build_settings_services
 
 from tests.conftest import FakeState
-from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.models.settings import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
 )
+from vibesensor.adapters.http.router import create_router
 
 
 def _route(router, path: str, method: str = "GET"):
@@ -29,7 +29,7 @@ def _route(router, path: str, method: str = "GET"):
 @pytest.fixture
 def _wiring(tmp_path: Path):
     """Provide a wired (state, router) pair with one active car named 'Primary'."""
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     settings = build_settings_services(db=db)

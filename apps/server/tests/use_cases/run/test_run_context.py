@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,

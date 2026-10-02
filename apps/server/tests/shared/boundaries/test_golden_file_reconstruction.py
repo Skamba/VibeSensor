@@ -6,7 +6,7 @@ import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
-from vibesensor.domain import SpeedProfile
+from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as _reconstruct,
 )

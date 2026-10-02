@@ -11,7 +11,7 @@ from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
-from vibesensor.domain import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.locations import is_wheel_location
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 

@@ -4,9 +4,10 @@ from math import inf, nan, pi
 
 import pytest
 
-from vibesensor.domain import AxleTireSetup, OrderReferenceSpec, TireSpec
-from vibesensor.domain import Car as _Car
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import Car as _Car
+from vibesensor.domain.order_reference import OrderReferenceSpec
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
 
@@ -132,7 +133,7 @@ def test_sanitize_converts_to_float() -> None:
 def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)
@@ -145,7 +146,7 @@ def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
 def test_update_merges_valid_values(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)
@@ -160,7 +161,7 @@ def test_update_merges_valid_values(tmp_path) -> None:
 def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)

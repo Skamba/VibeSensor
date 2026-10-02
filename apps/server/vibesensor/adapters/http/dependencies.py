@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
@@ -20,18 +20,18 @@ from vibesensor.shared.ports import (
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.use_cases.history.reports import HistoryReportService
-from vibesensor.use_cases.run import RunRecorder
+from vibesensor.use_cases.run.logger import RunRecorder
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-    from vibesensor.adapters.history import (
+    from vibesensor.adapters.history.services import (
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-    from vibesensor.adapters.websocket import LiveBroadcaster
+    from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
         SpeedSourceUpdatePayload,

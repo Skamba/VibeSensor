@@ -11,7 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
-from vibesensor.use_cases.updates.status import update_status_to_builtins
+from vibesensor.use_cases.updates.status.payload_codec import update_status_to_builtins
 from vibesensor.use_cases.updates.venv_paths import (
     is_reinstall_venv_ready,
     reinstall_python_executable,

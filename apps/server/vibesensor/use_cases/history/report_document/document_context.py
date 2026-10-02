@@ -39,7 +39,8 @@ from vibesensor.use_cases.history.report_document.workflow_appendix import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.domain import Finding, TestRun
+    from vibesensor.domain.finding import Finding
+    from vibesensor.domain.test_run import TestRun
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
 

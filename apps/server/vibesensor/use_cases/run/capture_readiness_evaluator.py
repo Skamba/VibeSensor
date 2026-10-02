@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import math
 
-from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
+from vibesensor.domain.capture_readiness import (
+    CaptureReadiness,
+    CaptureReadinessCheck,
+    CaptureReadinessPolicy,
+)
 from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.use_cases.run.capture_readiness_observation import (

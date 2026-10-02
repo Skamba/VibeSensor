@@ -23,7 +23,7 @@ from pathlib import Path
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateReleaseError
 from vibesensor.shared.structured_logging import log_extra
-from vibesensor.use_cases.updates.firmware import FirmwareRefresher
+from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
@@ -40,7 +40,8 @@ from vibesensor.use_cases.updates.releases.release_fetcher import (
 from vibesensor.use_cases.updates.releases.version_policy import select_update_release
 from vibesensor.use_cases.updates.rollback import UpdateRollback
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker, collect_runtime_details
+from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport.lifecycles import PreparedUpdateTransport
 from vibesensor.use_cases.updates.validation import validate_prerequisites

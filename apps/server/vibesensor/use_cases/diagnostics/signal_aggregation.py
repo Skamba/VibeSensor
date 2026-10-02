@@ -7,12 +7,11 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import (
+from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
     PhaseIntensitySummary,
     StrengthBucketDistribution,
-    speed_band_sort_key,
-    speed_bin_label,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._counters import counter_delta

@@ -6,8 +6,8 @@ from collections.abc import Callable, Mapping
 from threading import RLock
 from uuid import uuid4
 
-from vibesensor.domain import RunContextSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.shared.ports import (
     ClientTracker,
     SensorMetadataReader,

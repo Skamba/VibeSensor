@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain import RunSuitability
+from vibesensor.domain.run_suitability import RunSuitability
 
 _SUITABILITY_DEFAULTS: dict[str, Any] = {
     "steady_speed": False,

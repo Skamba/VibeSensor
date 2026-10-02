@@ -20,7 +20,7 @@ from unittest.mock import patch
 import pytest
 from test_support.history_db_lifecycle import make_stored_run
 
-from vibesensor.domain import Run
+from vibesensor.domain.run import Run
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata

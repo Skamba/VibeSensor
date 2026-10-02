@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
-    Finding,
-    FindingEvidence,
-    FindingKind,
-    Signature,
-    VibrationSource,
-)
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence, Signature
+from vibesensor.domain.finding_types import FindingKind, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.summary_fields.finding import (

@@ -13,7 +13,7 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
     validate_update_request,
 )
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
 
 

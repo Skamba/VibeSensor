@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.use_cases.history.helpers import async_require_run
 

@@ -39,7 +39,7 @@ from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.adapters.obd.polling import ObdPollingCadence, ObdPollPlan, ObdPollResult
 from vibesensor.adapters.obd.runtime_policy import ObdRuntimePolicy
 from vibesensor.adapters.obd.runtime_state import ObdRuntimeState
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.timed_observation import (
     DEFAULT_ALIGNMENT_TOLERANCE_S,
     TimedObservationLookup,

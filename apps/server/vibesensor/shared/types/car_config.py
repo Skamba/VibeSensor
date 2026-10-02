@@ -9,11 +9,8 @@ from typing import TYPE_CHECKING, Annotated, NotRequired, TypedDict, cast
 
 from pydantic import StringConstraints
 
-from vibesensor.domain import (
-    CarOrderReferenceSourceStatus,
-    CarOrderReferenceStatus,
-    VehicleFieldConfidence,
-)
+from vibesensor.domain.car import CarOrderReferenceSourceStatus, CarOrderReferenceStatus
+from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
 from vibesensor.shared.analysis_settings_schema import (
     ANALYSIS_SETTINGS_DEFAULTS,
     sanitize_analysis_settings,
@@ -24,7 +21,7 @@ from vibesensor.shared.types.settings_types import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.domain import Car
+    from vibesensor.domain.car import Car
 
 __all__ = [
     "CarConfigPayload",
@@ -95,7 +92,7 @@ def new_car_id() -> str:
 def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
     """Decode one persisted/shared car payload into the canonical domain object."""
 
-    from vibesensor.domain import Car
+    from vibesensor.domain.car import Car
 
     raw_aspects = payload.get("aspects")
     aspects: dict[str, float | str] = dict(ANALYSIS_SETTINGS_DEFAULTS)

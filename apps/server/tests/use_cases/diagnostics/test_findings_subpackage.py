@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding, make_finding_payload
 
-from vibesensor.domain import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.summary_fields.finding import (
     finding_from_payload,
     finding_payload_from_domain,

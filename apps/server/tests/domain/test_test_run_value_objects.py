@@ -6,20 +6,14 @@ import dataclasses
 
 import pytest
 
-from vibesensor.domain import (
-    ConfidenceAssessment,
-    DrivingPhase,
-    DrivingPhaseSegment,
-    DrivingSegment,
-    Finding,
-    RunCapture,
-    RunSetup,
-    RunSuitability,
-    Sensor,
-    SpeedProfile,
-    SuitabilityCheck,
-    TestRun,
-)
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseSegment, DrivingSegment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.run_capture import RunCapture, RunSetup
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
+from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.speed_profile import SpeedProfile
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )

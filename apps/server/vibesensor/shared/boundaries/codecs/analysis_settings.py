@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import fields
 from typing import Any, cast
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.analysis_settings_schema import (
     ANALYSIS_SETTINGS_FIELDS,
     sanitize_analysis_settings,

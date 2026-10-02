@@ -12,7 +12,7 @@ from vibesensor.shared.boundaries.reporting.preparation import prepare_report_in
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 class TestMultiSensorLocalization:

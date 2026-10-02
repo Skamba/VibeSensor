@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import CarOrderReferenceStatus
+from vibesensor.domain.car import CarOrderReferenceStatus
 
 
 def test_requires_manual_confirmation_includes_tire_confidence() -> None:

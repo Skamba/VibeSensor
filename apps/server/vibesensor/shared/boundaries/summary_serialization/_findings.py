@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import (
-    Finding as DomainFinding,
-)
+from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 from vibesensor.shared.types.finding_payload_parts import FindingPayload
 

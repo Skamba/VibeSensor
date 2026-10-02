@@ -10,12 +10,13 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.adapters.pdf.page1_proof import _page1_diagram_findings
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_types import build_page1_render_plan
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.boundaries.reporting.document.panels import NextStep
 from vibesensor.shared.boundaries.reporting.document.sections import VerdictPageData
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _page_one_text(pdf: bytes) -> str:

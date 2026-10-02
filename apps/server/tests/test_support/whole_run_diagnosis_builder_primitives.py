@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from test_support.findings import make_finding_payload
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,

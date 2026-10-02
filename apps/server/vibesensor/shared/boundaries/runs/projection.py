@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import Car, Symptom
+from vibesensor.domain.car import Car
+from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [

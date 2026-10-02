@@ -4,7 +4,7 @@ import pytest
 from test_support.whole_run_diagnosis_scenarios import whole_run_diagnosis_scenarios
 
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 @pytest.mark.parametrize("scenario", whole_run_diagnosis_scenarios(), ids=lambda case: case.case_id)

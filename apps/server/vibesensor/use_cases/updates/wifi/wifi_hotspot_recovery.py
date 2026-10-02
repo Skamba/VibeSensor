@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 

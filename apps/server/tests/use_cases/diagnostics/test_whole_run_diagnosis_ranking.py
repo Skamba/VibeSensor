@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock, MagicMock
 
-from vibesensor.adapters.websocket import LiveBroadcaster, LivePayloadSource
+from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster, LivePayloadSource
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 

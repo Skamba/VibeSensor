@@ -20,7 +20,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 
 ## Backend/domain boundaries
 - Domain objects own classification, ranking, lifecycle, and computation. Boundary adapters translate; they do not duplicate domain logic.
-- Import domain objects from `vibesensor.domain`, not individual domain module files.
+- Import every name from the module that defines it; package `__init__.py` files stay empty or docstring-only (no re-export facades).
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 - Factories for already-typed internal metadata, snapshots, or computed state belong on domain objects or the owning use case, not boundary decoders.
 - Backend layer DAG, enforced by the import-linter contracts in `apps/server/pyproject.toml`: `domain` imports no project layers; `shared` may import `domain`; `use_cases` may import `domain, shared`; `infra` may import `domain, shared`; `adapters` may import `domain, shared, infra, use_cases`; `app` may import all. `shared -> domain` and `infra -> domain` are allowed; inward leakage such as `use_cases -> adapters` is not.

@@ -14,7 +14,7 @@ from test_support import (
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 class TestPdfContentForDiagnosedScenario:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from statistics import median as _median
 
-from vibesensor.domain import RunSuitability
+from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._analysis_models import (
     FindingsBuildRequest,

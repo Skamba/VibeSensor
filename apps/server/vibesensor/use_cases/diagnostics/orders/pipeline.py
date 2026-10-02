@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass, replace
 
-from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain import VibrationSource
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.constants.analysis import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,

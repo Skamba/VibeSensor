@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
 from vibesensor.infra.runtime.registry import ClientSnapshot
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
@@ -140,7 +140,7 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
     tmp_path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 

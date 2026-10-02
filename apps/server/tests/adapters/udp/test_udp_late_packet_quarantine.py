@@ -9,7 +9,7 @@ import pytest
 
 from vibesensor.adapters.udp.protocol import HelloMessage, pack_data, parse_data_ack
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
 
 _CLIENT_ID = bytes.fromhex("aabbccddeeff")

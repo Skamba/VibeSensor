@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from vibesensor.domain import RunContextSnapshot
+from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, TrackedClient
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.sensor_config import SensorConfigPayload

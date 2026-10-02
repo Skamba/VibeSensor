@@ -6,29 +6,27 @@ from collections.abc import Collection, Mapping, Sequence
 from copy import deepcopy
 from typing import Protocol
 
-from vibesensor.domain import (
-    DrivingPhaseInterval,
-    LocationIntensitySummary,
-    RunSuitability,
-    TestRun,
-)
-from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.driving_segment import DrivingPhaseInterval
+from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
+from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
+from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
 from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
-from vibesensor.shared.boundaries.summary_serialization import (
-    AccelStatisticsLike,
+from vibesensor.shared.boundaries.summary_serialization._data_quality import AccelStatisticsLike
+from vibesensor.shared.boundaries.summary_serialization._plots import (
     PeakTableRowLike,
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
     SpeedBreakdownRowLike,
-    build_analysis_summary,
     serialize_peak_table,
 )
+from vibesensor.shared.boundaries.summary_serialization._summary import build_analysis_summary
 from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     build_summary_warnings,

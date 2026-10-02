@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.reporting.preparation import (
     prepare_report_input,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.report_document import (
+from vibesensor.use_cases.history.report_document._candidate_resolver import (
     resolve_primary_report_candidate,
 )
 

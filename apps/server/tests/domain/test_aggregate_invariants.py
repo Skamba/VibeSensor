@@ -10,19 +10,13 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
-    ConfigurationSnapshot,
-    DiagnosticCase,
-    Finding,
-    FindingKind,
-    RecommendedAction,
-    RunCapture,
-    RunSuitability,
-    SuitabilityCheck,
-    TestPlan,
-    TestRun,
-    VibrationSource,
-)
+from vibesensor.domain.diagnostic_case import DiagnosticCase
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import FindingKind, VibrationSource
+from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan
+from vibesensor.domain.test_run import TestRun
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,7 +47,7 @@ def _run(
 ) -> TestRun:
     if top_causes is None:
         top_causes = findings
-    from vibesensor.domain import RunSetup
+    from vibesensor.domain.run_capture import RunSetup
 
     setup = RunSetup(configuration_snapshot=snapshot) if snapshot else RunSetup()
     return TestRun(

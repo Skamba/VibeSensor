@@ -15,14 +15,17 @@ from vibesensor.use_cases.updates.artifact_validation import (
     sha256_file,
     wheel_dependency_issues,
 )
-from vibesensor.use_cases.updates.firmware import FirmwareRefresher, FirmwareRefreshResult
+from vibesensor.use_cases.updates.firmware.firmware_refresh import (
+    FirmwareRefresher,
+    FirmwareRefreshResult,
+)
 from vibesensor.use_cases.updates.rollback import (
     RollbackDeploymentVerifier,
     RollbackSnapshotStore,
     UpdateRollback,
 )
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor, WheelInstallResult
 
 

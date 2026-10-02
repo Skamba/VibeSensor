@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
+from vibesensor.shared._window_quality_types import WindowQuality, clean_window_quality
 from vibesensor.shared.types.raw_capture import RawCaptureCoverageState
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
 )
-from vibesensor.shared.window_quality import WindowQuality, clean_window_quality
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     client_locations_by_sensor,
     fallback_location_label,

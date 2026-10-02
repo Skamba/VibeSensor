@@ -7,8 +7,9 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, ClientBuffer, SignalProcessor
+from vibesensor.infra.processing.buffers import MAX_CLIENT_SAMPLE_RATE_HZ, ClientBuffer
 from vibesensor.infra.processing.models import MetricsComputationResult, MetricsSnapshot
+from vibesensor.infra.processing.processor import SignalProcessor
 
 
 def _processor(**overrides: object) -> SignalProcessor:

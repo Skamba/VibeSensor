@@ -13,7 +13,8 @@ from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateTransport
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.runtime import build_update_manager
-from vibesensor.use_cases.updates.status import UpdateStateStore, collect_runtime_details
+from vibesensor.use_cases.updates.status.payload_codec import UpdateStateStore
+from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details
 
 
 def _build_fake_downloaded_wheel(path: Path, *, version: str) -> None:

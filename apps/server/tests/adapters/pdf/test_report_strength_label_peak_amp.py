@@ -7,7 +7,7 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.report_presentation import strength_text
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 # ---------------------------------------------------------------------------
 # Shared top-cause / finding templates

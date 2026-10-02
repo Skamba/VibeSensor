@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from vibesensor.domain import (
+from vibesensor.domain._numeric import coerce_float, coerce_int
+from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
     PhaseIntensitySummary,
     StrengthBucketDistribution,
-    coerce_float,
-    coerce_int,
 )
 
 __all__ = [

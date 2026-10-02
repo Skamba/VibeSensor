@@ -18,8 +18,8 @@ import pytest
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.sensor_frame import SensorFrame
 

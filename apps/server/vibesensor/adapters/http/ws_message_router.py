@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 from fastapi import WebSocket
 from pydantic import TypeAdapter, ValidationError
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.shared.types.payload_types import WsClientSelectionPayload
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.websocket import LiveBroadcaster
+    from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 
 LOGGER = logging.getLogger(__name__)
 

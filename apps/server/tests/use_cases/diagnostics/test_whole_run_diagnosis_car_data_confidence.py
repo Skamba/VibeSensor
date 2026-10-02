@@ -4,7 +4,9 @@ from typing import cast
 
 import pytest
 
-from vibesensor.domain import CarOrderReferenceStatus, DrivingPhase, VehicleFieldConfidence
+from vibesensor.domain.car import CarOrderReferenceStatus
+from vibesensor.domain.driving_segment import DrivingPhase
+from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
 from vibesensor.report_i18n import tr as report_tr
 from vibesensor.shared.boundaries.reporting.confidence_facts import (
     report_confidence_from_diagnosis_summary,

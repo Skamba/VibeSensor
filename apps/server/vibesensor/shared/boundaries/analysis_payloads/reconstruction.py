@@ -5,14 +5,17 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
-from vibesensor.domain import Finding, LocationHotspot, VibrationOrigin, coerce_int
+from vibesensor.domain._numeric import coerce_int
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
+from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,

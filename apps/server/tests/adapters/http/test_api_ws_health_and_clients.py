@@ -233,7 +233,7 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -276,7 +276,7 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 
 
 def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -312,7 +312,7 @@ def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) ->
 def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -361,7 +361,7 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -414,7 +414,7 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 

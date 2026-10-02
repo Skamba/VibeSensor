@@ -14,7 +14,7 @@ from vibesensor.adapters.pdf.diagram_layout import (
     resolve_marker_states,
     source_color,
 )
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.domain.location_hotspot import LocationHotspotRow, LocationIntensitySummary
 
 # ── estimate_text_width ──────────────────────────────────────────────────────
 

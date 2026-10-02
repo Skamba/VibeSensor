@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Literal
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,

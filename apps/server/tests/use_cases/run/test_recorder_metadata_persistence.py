@@ -6,8 +6,9 @@ import pytest
 from test_support.history_db_lifecycle import run_samples
 
 from tests.use_cases.run.test_metrics_log_helpers import _started_snapshot_with_sample
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 
 

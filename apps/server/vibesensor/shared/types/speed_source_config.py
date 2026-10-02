@@ -7,12 +7,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 
 if TYPE_CHECKING:
-    from vibesensor.domain import SpeedSource
+    from vibesensor.domain.speed_source import SpeedSource
 
 __all__ = [
     "ResolvedSpeedSource",
@@ -186,7 +186,7 @@ class SpeedSourceConfig:
 
     def to_speed_source(self) -> SpeedSource:
         """Return the domain ``SpeedSource`` value object for this config."""
-        from vibesensor.domain import SpeedSource
+        from vibesensor.domain.speed_source import SpeedSource
 
         return SpeedSource(
             kind=self.speed_source,

@@ -18,7 +18,7 @@ from test_support.car_library_validation._exact import (
     validate_vehicle_configuration_duplicates,
 )
 from test_support.car_library_validation._legacy import validate_legacy_entry
-from vibesensor.domain import VehicleConfiguration
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
 __all__ = [
     "CarLibraryValidationIssue",

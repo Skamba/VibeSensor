@@ -36,7 +36,7 @@ from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.processing_loop import ProcessingLoop
     from vibesensor.infra.runtime.registry import ClientRegistry
 

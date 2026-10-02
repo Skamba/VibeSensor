@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 

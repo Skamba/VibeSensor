@@ -10,7 +10,8 @@ from vibesensor.adapters.history.projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 

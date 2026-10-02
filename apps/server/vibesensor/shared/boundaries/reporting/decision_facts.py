@@ -6,7 +6,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from vibesensor.domain import Finding, SuitabilityCheck, TestRun
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.run_suitability import SuitabilityCheck
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.projection import (
     PrimaryReportFacts,
     resolve_primary_report_facts,
@@ -19,7 +21,9 @@ from vibesensor.shared.report_diagnostics import report_suitability_checks, repo
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 if TYPE_CHECKING:
-    from vibesensor.domain import RecommendedAction, SuitabilityCheck, TestRun
+    from vibesensor.domain.run_suitability import SuitabilityCheck
+    from vibesensor.domain.test_plan import RecommendedAction
+    from vibesensor.domain.test_run import TestRun
     from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput

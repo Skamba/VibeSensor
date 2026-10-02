@@ -15,7 +15,7 @@ from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor import report_i18n
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,

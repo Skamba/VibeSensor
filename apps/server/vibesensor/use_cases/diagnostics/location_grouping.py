@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Collection, Mapping, Sequence
 
-from vibesensor.domain import OrderMatchObservation, speed_bin_label
+from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain.order_match import OrderMatchObservation
 
 
 def group_matches_by_speed_bin(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import TestRun
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,

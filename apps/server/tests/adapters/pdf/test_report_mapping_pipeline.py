@@ -12,7 +12,7 @@ from vibesensor.shared.boundaries.reporting.preparation import (
 )
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history import report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _prepared_report_input() -> PreparedReportInput:
@@ -49,7 +49,7 @@ def _prepared_report_input() -> PreparedReportInput:
 
 def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     prepared = _prepared_report_input()
-    document = report_document.build_report_document(prepared)
+    document = build_report_document(prepared)
 
     assert isinstance(prepared, PreparedReportInput)
     assert isinstance(prepared.report_facts, PreparedReportFacts)

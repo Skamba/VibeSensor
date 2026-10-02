@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from time import monotonic as default_monotonic
 
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution, SpeedResolutionPolicy
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 
 __all__ = ["ObdPolicyUpdate", "ObdRuntimePolicy"]
 

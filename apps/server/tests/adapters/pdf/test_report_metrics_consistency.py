@@ -37,7 +37,7 @@ from test_support.sample_scenarios import (
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 # ---------------------------------------------------------------------------
 # Type alias
@@ -222,7 +222,7 @@ def _assert_unit_consistency(rd: ReportDocument) -> None:
 
 def _assert_certainty_tier_consistent(rd: ReportDocument, summary: dict) -> None:
     """Assert the tier stored in report matches ConfidenceAssessment.tier."""
-    from vibesensor.domain import ConfidenceAssessment
+    from vibesensor.domain.confidence_assessment import ConfidenceAssessment
     from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
         test_run_from_summary,
     )

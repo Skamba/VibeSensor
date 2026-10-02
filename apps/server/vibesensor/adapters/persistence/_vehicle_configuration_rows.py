@@ -6,9 +6,8 @@ from typing import Literal, NotRequired, TypedDict
 
 from pydantic import ConfigDict, TypeAdapter, with_config
 
-from vibesensor.domain import (
-    AxleTireSetup,
-    TireSpec,
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
+from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
     VehicleConfigurationConfidence,
     VehicleConfigurationIssue,

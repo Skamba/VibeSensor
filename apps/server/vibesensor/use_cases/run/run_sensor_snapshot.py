@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.run_schema import RunSensorMetadata
 from vibesensor.shared.types.sensor_config import SensorConfigPayload

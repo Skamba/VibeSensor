@@ -7,7 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarOrderReferenceStatus, CarSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarOrderReferenceStatus, CarSnapshot
 from vibesensor.shared.types.run_schema import RunCarMetadata
 from vibesensor.use_cases.run.run_metadata_builder import (
     build_run_metadata,

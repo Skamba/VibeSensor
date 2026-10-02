@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.shared.types.sensor_config import SensorConfigPayload
 
 __all__ = ["resolve_sensor_presentation"]

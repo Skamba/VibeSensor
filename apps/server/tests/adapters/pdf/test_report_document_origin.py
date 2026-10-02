@@ -8,7 +8,7 @@ from test_support.report_helpers import (
     minimal_summary,
 )
 
-from vibesensor.domain import VibrationOrigin
+from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.boundaries.summary_fields.origin import (
@@ -17,7 +17,7 @@ from vibesensor.shared.boundaries.summary_fields.origin import (
 from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _assert_no_phase_onset(explanation: object) -> None:

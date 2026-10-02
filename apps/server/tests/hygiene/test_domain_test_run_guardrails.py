@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.run_capture import RunCapture
+from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )
@@ -71,7 +74,7 @@ def test_test_run_effective_top_causes() -> None:
 def test_run_analysis_produces_test_run() -> None:
     """``RunAnalysis.summarize()`` must populate ``test_run``."""
     from vibesensor.adapters.analysis_summary import analysis_result_to_summary
-    from vibesensor.domain import TestRun
+    from vibesensor.domain.test_run import TestRun
     from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
     from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
@@ -214,7 +217,8 @@ def test_test_run_from_summary_populates_suitability() -> None:
 
 
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
-    from vibesensor.domain import DiagnosticCase, TestRun
+    from vibesensor.domain.diagnostic_case import DiagnosticCase
+    from vibesensor.domain.test_run import TestRun
     from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
     from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input

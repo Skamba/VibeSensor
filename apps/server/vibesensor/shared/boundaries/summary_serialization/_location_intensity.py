@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.shared.types.history_analysis_contracts import (
     LocationIntensitySummaryResponse as LocationIntensitySummaryPayload,
 )

@@ -6,6 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
+from vibesensor.shared._window_quality_scoring import window_quality_with_context
+from vibesensor.shared._window_quality_types import WindowQuality
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceFamily,
@@ -14,7 +16,6 @@ from vibesensor.shared.types.order_trace_contracts import (
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.shared.window_quality import WindowQuality, window_quality_with_context
 from vibesensor.use_cases.diagnostics._artifact_bundles import (
     build_single_artifact_bundle_parts,
 )

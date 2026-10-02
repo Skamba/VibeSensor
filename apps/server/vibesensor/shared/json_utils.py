@@ -14,7 +14,7 @@ from typing import cast
 
 import msgspec
 
-from vibesensor.domain import coerce_float
+from vibesensor.domain._numeric import coerce_float
 from vibesensor.shared.types.json_types import (
     JsonObject,
     JsonSchemaObject,

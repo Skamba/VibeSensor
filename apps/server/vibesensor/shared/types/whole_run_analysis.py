@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from math import isclose
 from typing import Literal
 
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared.types.json_contract import JsonContract, require_non_negative
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.raw_capture import RawCaptureManifest

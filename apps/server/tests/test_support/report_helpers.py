@@ -38,7 +38,7 @@ from test_support.report_record_builders import (
 from test_support.report_record_builders import (
     write_test_log as write_test_log,
 )
-from vibesensor.domain import LocationHotspot
+from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders import (
@@ -555,7 +555,7 @@ def call_build_order_findings(
 
 def max_non_ref_confidence(findings: tuple | list) -> float:
     """Return the highest confidence among non-reference findings."""
-    from vibesensor.domain import Finding
+    from vibesensor.domain.finding import Finding
 
     return max(
         float(f.confidence or 0.0) if isinstance(f, Finding) else float(f.get("confidence") or 0.0)

@@ -24,7 +24,7 @@ from typing import (
     get_type_hints,
 )
 
-from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.shared.boundaries.codecs.scalars import (
     coerce_count,
     optional_float,

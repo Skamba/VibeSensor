@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -28,7 +28,7 @@ from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunDat
 from vibesensor.use_cases.diagnostics.statistics import compute_accel_statistics
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
+    from vibesensor.domain.test_run import TestRun
 
 
 def summarize_origin(findings: tuple[DomainFinding, ...]) -> VibrationOrigin | None:

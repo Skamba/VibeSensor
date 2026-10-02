@@ -9,10 +9,10 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage, pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult
 
 # ---------------------------------------------------------------------------

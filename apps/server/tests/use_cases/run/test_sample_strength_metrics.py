@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import StrengthMetrics
+from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.boundaries.codecs.strength_metrics import (
     strength_metrics_from_mapping,
     strength_peak_payloads,

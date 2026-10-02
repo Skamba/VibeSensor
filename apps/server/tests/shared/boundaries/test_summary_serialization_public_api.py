@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from vibesensor.domain import DrivingPhase, DrivingPhaseInterval, LocationIntensitySummary
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseInterval
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.summary_serialization import build_analysis_summary
+from vibesensor.shared.boundaries.summary_serialization._summary import build_analysis_summary
 
 
 def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:

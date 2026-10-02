@@ -12,11 +12,12 @@ from test_support.analysis import run_analysis
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.report_helpers import report_sample
 
-from vibesensor.adapters.history import (
+from vibesensor.adapters.history.services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
-from vibesensor.domain import CarSnapshot, RunStatus
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError

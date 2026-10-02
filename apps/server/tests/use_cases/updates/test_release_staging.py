@@ -10,7 +10,7 @@ from test_support.update_status import build_update_status_harness
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status.tracker import UpdateStatusTracker
 
 
 def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:

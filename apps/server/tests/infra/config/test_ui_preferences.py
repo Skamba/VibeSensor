@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from test_support.settings_services import build_settings_services, write_raw_settings_snapshot
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 
 
 def test_ui_preferences_language_roundtrip() -> None:

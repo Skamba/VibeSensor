@@ -9,7 +9,7 @@ from test_support.runtime_lifecycle import build_history_db as _build_history_db
 from test_support.runtime_lifecycle import build_registry as _build_registry
 from test_support.runtime_lifecycle import make_hello_message as _make_hello_message
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import snapshot_for_api

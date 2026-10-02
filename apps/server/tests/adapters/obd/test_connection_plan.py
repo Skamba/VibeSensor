@@ -7,7 +7,7 @@ from vibesensor.adapters.obd.connection_plan import (
     ObdConnectionStepKind,
     plan_connection_step,
 )
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain.speed_source import SpeedSourceKind
 
 _CONNECTED_OBD: dict[str, object] = {
     "selected_source": SpeedSourceKind.OBD2,

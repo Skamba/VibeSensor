@@ -13,7 +13,7 @@ from test_support.scenario_ground_truth import (
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history import report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 from vibesensor.use_cases.history.report_document.composition import compose_report_document
 
 
@@ -53,7 +53,7 @@ def test_compose_report_document_returns_canonical_document() -> None:
 
     assert isinstance(document, ReportDocument)
     assert document.sensor_locations == ["rear-right"]
-    assert document == report_document.build_report_document(prepared)
+    assert document == build_report_document(prepared)
 
 
 def test_weak_location_report_does_not_repeat_same_runner_up_corner() -> None:
@@ -91,7 +91,7 @@ def test_weak_location_report_does_not_repeat_same_runner_up_corner() -> None:
         )
     )
 
-    document = report_document.build_report_document(prepare_report_input(summary))
+    document = build_report_document(prepare_report_input(summary))
 
     assert document.verdict_page.runner_up_corner != document.verdict_page.dominant_corner
     assert document.appendix_b.runner_up_corner != document.appendix_b.dominant_corner

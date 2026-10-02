@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.reporting.facts import prepare_report_facts
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
 from vibesensor.shared.run_context_warning import RunContextWarning
-from vibesensor.use_cases.history.report_document import build_report_document
+from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def _summary() -> dict[str, object]:

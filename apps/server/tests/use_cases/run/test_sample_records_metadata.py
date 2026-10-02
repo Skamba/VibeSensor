@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.use_cases.run.sample_builder import build_sample_records
 from vibesensor.use_cases.run.sample_speed_context import SpeedContext
 

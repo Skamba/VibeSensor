@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import StrengthPeak
+from vibesensor.domain.strength_metrics import StrengthPeak
 
 __all__ = ["SensorFrame"]
 

@@ -7,7 +7,8 @@ import json
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing import ClientBuffer, SignalProcessor
+from vibesensor.infra.processing.buffers import ClientBuffer
+from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 

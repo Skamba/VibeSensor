@@ -17,7 +17,7 @@ from test_support.car_library_validation._common import (
     is_single_speed_gearbox,
     text,
 )
-from vibesensor.domain import VehicleConfiguration
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
 
 def validate_gearboxes(

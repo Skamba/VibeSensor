@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain import StrengthPeak
+from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
