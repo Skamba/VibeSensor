@@ -258,7 +258,7 @@ def _find_endpoint(router, path: str):
 def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) -> None:
     """Integration: stop_recording → post-analysis → analysis persisted in DB."""
     from vibesensor.infra.processing.processor import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.speed.gps_speed import GPSSpeedMonitor
     from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
     from vibesensor.use_cases.run.logger import RunRecorder

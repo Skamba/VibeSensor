@@ -234,8 +234,8 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
     from test_support.settings_services import build_settings_services
 
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -277,8 +277,8 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 
 def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -313,8 +313,8 @@ def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) 
     from test_support.settings_services import build_settings_services
 
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -362,8 +362,8 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     monkeypatch,
 ) -> None:
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -382,8 +382,8 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
         registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
 
         now = {"wall": 9.0, "mono": 9.0}
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+        monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: now["wall"])
+        monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: now["mono"])
 
         control_plane = MagicMock()
         settings_store = MagicMock()
@@ -415,8 +415,8 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     from test_support.settings_services import build_settings_services
 
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -440,8 +440,8 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
             now=1.0,
             now_mono=1.0,
         )
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: 1.0)
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: 1.0)
+        monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: 1.0)
+        monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: 1.0)
 
         control_plane = MagicMock()
         processor = MagicMock()

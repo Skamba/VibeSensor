@@ -14,7 +14,7 @@ below.
 
 ### Live path
 
-- Raw UDP samples enter through `apps/server/vibesensor/adapters/udp/udp_data_rx.py`.
+- Raw UDP samples enter through `apps/server/vibesensor/ingest/udp_data_rx.py`.
 - Live FFT/strength coordination lives in
   `apps/server/vibesensor/infra/processing/compute.py`.
 - The canonical spectrum window is `FFT_N = 2048`; shared spectral primitives

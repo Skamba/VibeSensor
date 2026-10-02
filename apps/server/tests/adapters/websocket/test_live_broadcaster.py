@@ -11,7 +11,7 @@ import pytest
 from test_support.ws_hub import build_broadcaster, sent_json, sent_json_sequence
 
 from vibesensor.adapters.websocket.broadcaster import ERROR_PAYLOAD_TEXT
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 from vibesensor.shared.types.payload_types import (
     SCHEMA_VERSION,

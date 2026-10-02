@@ -9,10 +9,10 @@ from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.adapters.udp.protocol import HelloMessage, pack_data
-from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.processing.processor import SignalProcessor
-from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.ingest.protocol import HelloMessage, pack_data
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object

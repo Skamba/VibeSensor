@@ -26,11 +26,11 @@ from vibesensor.adapters.http.models.clients import (
     SetClientLocationResponse,
     SetLocationRequest,
 )
-from vibesensor.adapters.udp.protocol import client_id_mac
 from vibesensor.domain.locations import all_locations
+from vibesensor.ingest.client_payloads import snapshot_for_api
+from vibesensor.ingest.protocol import client_id_mac
 from vibesensor.settings.sensor_config import SensorConfigPayload
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.boundaries.clients import snapshot_for_api
 from vibesensor.shared.ports import SensorMetadataStore
 
 _IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {

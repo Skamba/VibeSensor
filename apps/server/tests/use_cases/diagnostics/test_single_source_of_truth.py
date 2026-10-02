@@ -113,7 +113,7 @@ def test_esp_protocol_constants_match_python() -> None:
     """ESP C++ protocol constants must match the Python protocol module."""
     import re
 
-    from vibesensor.adapters.udp.protocol import (
+    from vibesensor.ingest.protocol import (
         ACK_BYTES,
         ACK_SYNC_CLOCK_BYTES,
         CMD_HEADER_BYTES,
@@ -191,7 +191,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
     """docs/protocol.md byte sizes must match the Python protocol module."""
     import re
 
-    from vibesensor.adapters.udp.protocol import (
+    from vibesensor.ingest.protocol import (
         ACK_BYTES,
         ACK_SYNC_CLOCK_BYTES,
         CMD_HEADER_BYTES,

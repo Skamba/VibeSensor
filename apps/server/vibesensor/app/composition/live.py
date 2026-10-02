@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from vibesensor.adapters.http.dependencies import HealthDeps, LiveDeps
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
 from vibesensor.app.composition.speed import SpeedRuntimeBundle
@@ -13,8 +12,11 @@ from vibesensor.app.config_schema import AppConfig
 from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -25,9 +27,7 @@ from vibesensor.shared.constants.dsp import (
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import SensorMetadataStore
-from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder
 

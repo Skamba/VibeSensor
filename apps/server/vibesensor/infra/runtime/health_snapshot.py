@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
-from vibesensor.shared.ingest_diagnostics import (
+from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
     RawCaptureRuntimeSnapshot,
 )

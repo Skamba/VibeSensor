@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
 
 
 def _write_config(tmp_path: Path) -> Path:

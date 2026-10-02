@@ -9,7 +9,7 @@ import importlib
 
 import pytest
 
-from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+from vibesensor.ingest.client_metadata import sanitize_client_name
 from vibesensor.settings.car_config import new_car_id
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
@@ -125,7 +125,7 @@ class TestModuleAllExports:
                 {"SpeedSourceConfig", "SpeedSourcePayload", "ResolvedSpeedSource"},
             ),
             (
-                "vibesensor.adapters.udp.protocol",
+                "vibesensor.ingest.protocol",
                 {"DataMessage", "pack_data", "parse_data", "parse_hello"},
             ),
             (
@@ -134,7 +134,7 @@ class TestModuleAllExports:
             ),
             ("vibesensor.speed.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),
             (
-                "vibesensor.infra.runtime.registry",
+                "vibesensor.ingest.registry",
                 {"ClientRecord", "ClientRegistry", "DataUpdateResult"},
             ),
         ],

@@ -25,16 +25,16 @@ from vibesensor.adapters.http.dependencies import (
     SettingsDeps,
     UpdateDeps,
 )
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
-from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.report.service import HistoryReportService
 from vibesensor.settings.car_config import CarsSnapshot
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager

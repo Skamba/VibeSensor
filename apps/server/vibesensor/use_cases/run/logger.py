@@ -7,7 +7,7 @@ import time
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     ClientTracker,
     LanguageReader,

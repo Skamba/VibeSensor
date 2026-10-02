@@ -21,7 +21,7 @@ OUTPUT = (
     / "generated_protocol_contract_fixtures.h"
 )
 
-from vibesensor.adapters.udp.protocol import (  # noqa: E402
+from vibesensor.ingest.protocol import (  # noqa: E402
     HELLO_CAP_EXPLICIT_ACK,
     pack_ack,
     pack_ack_sync_clock,

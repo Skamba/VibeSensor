@@ -9,7 +9,7 @@ from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
-from vibesensor.shared.boundaries.clients import snapshot_for_api
+from vibesensor.ingest.client_payloads import snapshot_for_api
 from vibesensor.shared.ports import (
     SensorMetadataReader,
     SettingsReader,
@@ -21,7 +21,7 @@ from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing.processor import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.registry import ClientRegistry
 
 
 class LiveWsPayloadProjector:

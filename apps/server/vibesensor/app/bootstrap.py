@@ -27,7 +27,6 @@ from vibesensor.adapters.http.middleware import (
     install_request_logging_middleware,
 )
 from vibesensor.adapters.http.router import create_router
-from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.container import build_runtime
 from vibesensor.common.process_settings import (
@@ -36,6 +35,7 @@ from vibesensor.common.process_settings import (
     load_bootstrap_env_settings,
 )
 from vibesensor.infra.runtime.lifecycle import LifecycleManager
+from vibesensor.ingest.udp_data_rx import start_udp_data_receiver
 from vibesensor.shared.structured_logging import configure_logging
 
 __all__ = ["create_app", "create_app_from_env", "main"]

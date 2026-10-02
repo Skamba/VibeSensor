@@ -203,7 +203,7 @@ source_modules = [
   "vibesensor.infra.runtime.processing_loop",
   "vibesensor.adapters.websocket",
   "vibesensor.infra.runtime.ws_payload_projection",
-  "vibesensor.adapters.udp.udp_data_rx",
+  "vibesensor.ingest.udp_data_rx",
 ]
 forbidden_modules = [
   "vibesensor.use_cases",

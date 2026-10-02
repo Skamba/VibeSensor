@@ -9,13 +9,13 @@ from fastapi import APIRouter
 
 from vibesensor.adapters.http.models.health import HealthResponse
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
     from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.use_cases.run.logger import RunRecorder
 
 

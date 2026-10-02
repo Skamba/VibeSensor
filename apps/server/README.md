@@ -12,7 +12,7 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ## Current architecture
 
 ```text
-ESP32 nodes -> apps/server/vibesensor/adapters/udp/
+ESP32 nodes -> apps/server/vibesensor/ingest/
              -> live-processing layer + apps/server/vibesensor/use_cases/diagnostics/
              -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/adapters/http/ + apps/server/vibesensor/adapters/websocket/ -> apps/ui
              -> apps/server/vibesensor/use_cases/run/ + apps/server/vibesensor/adapters/persistence/history_db/ -> apps/server/vibesensor/use_cases/history/ -> apps/server/vibesensor/report/pdf/
@@ -204,7 +204,7 @@ transport/connection state only.
 For live sensor presence, `ClientRegistry` keeps reporting `connected: true` on
 `/api/clients` and `/ws` for 10 s after the last packet, and keeps stale clients
 and their metadata for 120 s before evicting them (see
-`vibesensor/infra/runtime/registry.py`).
+`vibesensor/ingest/registry.py`).
 
 Startup maintenance prunes terminal (`complete` / `error`) runs older than 7 days
 (`RUN_RETENTION_DAYS` in `vibesensor/app/composition/history.py`).

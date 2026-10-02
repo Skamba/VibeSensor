@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
-from vibesensor.infra.runtime.registry import ClientSnapshot
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
+from vibesensor.ingest.registry import ClientSnapshot
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
 
@@ -141,8 +141,8 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
     monkeypatch,
 ) -> None:
     from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-    from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -161,8 +161,8 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
         registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
 
         now = {"wall": 9.0, "mono": 9.0}
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
-        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+        monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: now["wall"])
+        monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: now["mono"])
 
         processor = _FakeProcessor(fresh_ids=[], spectra_payload={"freq": [], "clients": {}})
         gps_monitor = _FakeGpsMonitor(_SpeedResolution(12.5))

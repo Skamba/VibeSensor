@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,

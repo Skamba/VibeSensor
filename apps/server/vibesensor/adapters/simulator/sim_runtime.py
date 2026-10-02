@@ -11,7 +11,7 @@ from vibesensor.adapters.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LI
 from vibesensor.adapters.simulator.server_http import fetch_active_car_order_hz
 from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import RoadSceneController
-from vibesensor.adapters.udp.protocol import (
+from vibesensor.ingest.protocol import (
     CMD_IDENTIFY,
     CMD_SYNC_CLOCK,
     CMD_SYNC_CLOCK_STRUCT,

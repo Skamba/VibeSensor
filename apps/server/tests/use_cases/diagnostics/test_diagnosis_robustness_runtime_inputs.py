@@ -172,26 +172,26 @@ class TestSensorDropoutRejoin:
 
 class TestSensorNameNormalization:
     def test_sanitize_name_strips_null_bytes(self) -> None:
-        from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+        from vibesensor.ingest.client_metadata import sanitize_client_name
 
         assert "\x00" not in sanitize_client_name("abc\x00def")
 
     def test_sanitize_name_strips_control_chars(self) -> None:
-        from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+        from vibesensor.ingest.client_metadata import sanitize_client_name
 
         result = sanitize_client_name("sensor\x01\x02\x03test")
         for char in result:
             assert ord(char) >= 0x20 or char in ("\t", "\n")
 
     def test_sanitize_name_handles_emoji_truncation(self) -> None:
-        from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+        from vibesensor.ingest.client_metadata import sanitize_client_name
 
         result = sanitize_client_name("🔧" * 10)
         result.encode("utf-8")
         assert len(result.encode("utf-8")) <= 32
 
     def test_sanitize_name_empty_returns_empty(self) -> None:
-        from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+        from vibesensor.ingest.client_metadata import sanitize_client_name
 
         assert sanitize_client_name("") == ""
         assert sanitize_client_name("   ") == ""

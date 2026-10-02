@@ -10,14 +10,14 @@ import pytest
 
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
 from vibesensor.adapters.simulator.sim_runtime import ClientProtocol, data_loop
-from vibesensor.adapters.udp.protocol import (
+from vibesensor.ingest.protocol import (
     HelloMessage,
     pack_hello_ack,
     parse_ack,
     parse_data,
 )
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
 
 
 class _CapturingTransport:

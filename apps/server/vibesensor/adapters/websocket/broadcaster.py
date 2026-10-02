@@ -16,7 +16,7 @@ from typing import Protocol
 import anyio
 from fastapi import WebSocket
 
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload

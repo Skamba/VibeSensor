@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 
 # ---------------------------------------------------------------------------
 # Minimal stubs

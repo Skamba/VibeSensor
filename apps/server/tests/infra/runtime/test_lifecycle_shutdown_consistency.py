@@ -12,7 +12,7 @@ import pytest
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 
 
 def _make_lifecycle(*, update_job_task: asyncio.Task[None] | None = None) -> LifecycleManager:

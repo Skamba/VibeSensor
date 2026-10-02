@@ -14,7 +14,7 @@ from vibesensor.adapters.simulator.profiles import (
     PROFILE_LIBRARY,
     Profile,
 )
-from vibesensor.adapters.udp.protocol import client_id_mac
+from vibesensor.ingest.protocol import client_id_mac
 
 __all__ = ["SimClient", "make_client_id"]
 
