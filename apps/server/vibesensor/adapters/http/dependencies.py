@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         ProjectedHistoryRunService,
     )
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-    from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.adapters.websocket import LiveBroadcaster
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
         SpeedSourceUpdatePayload,
@@ -109,7 +109,7 @@ class LiveDeps:
     sensor_metadata_store: SensorMetadataStore
     processor: SignalProcessor
     run_recorder: RunRecorder
-    ws_hub: WebSocketHub
+    ws_broadcaster: LiveBroadcaster
 
 
 @dataclass(slots=True)

@@ -28,7 +28,7 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 - `vibesensor/domain/`: domain behavior; see `docs/domain-model.md`.
 - `vibesensor/shared/`: stable contracts, ports, codecs, constants, JSON helpers, and boundary serializers.
 - `vibesensor/use_cases/`: application workflows (`diagnostics`, `history`, `run`, `updates`).
-- `vibesensor/infra/`: runtime lifecycle/health, signal processing, config storage, workers.
+- `vibesensor/infra/`: runtime lifecycle/health, signal processing, config storage.
 - `vibesensor/adapters/http/`: route groups, HTTP dependencies, Pydantic models.
 - `vibesensor/adapters/{persistence,pdf,udp,gps,simulator,hotspot,websocket}/`: persistence, rendering, device, simulator, and transport adapters.
 - Report flow details: `docs/report_pipeline.md`.

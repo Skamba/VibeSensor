@@ -1,11 +1,12 @@
-"""Shared builders for WebSocket hub tests."""
+"""Shared builders for live WebSocket broadcaster tests."""
 
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
-from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.adapters.websocket import LiveBroadcaster, LivePayloadSource
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
 def make_websocket() -> AsyncMock:
@@ -22,11 +23,22 @@ def sent_json_sequence(ws: AsyncMock) -> list[dict[str, object]]:
     return [json.loads(call.args[0]) for call in ws.send_text.call_args_list]
 
 
-async def build_hub(*selected_client_ids: str | None) -> tuple[WebSocketHub, list[AsyncMock]]:
-    hub = WebSocketHub()
+def build_broadcaster(
+    payload_source: LivePayloadSource,
+    *selected_client_ids: str | None,
+    ingest_diagnostics: IngestDiagnosticsCollector | None = None,
+    push_hz: int = 10,
+    heavy_push_hz: int = 4,
+) -> tuple[LiveBroadcaster, list[AsyncMock]]:
+    broadcaster = LiveBroadcaster(
+        payload_source=payload_source,
+        ingest_diagnostics=ingest_diagnostics or MagicMock(spec=IngestDiagnosticsCollector),
+        push_hz=push_hz,
+        heavy_push_hz=heavy_push_hz,
+    )
     websockets: list[AsyncMock] = []
     for selected_client_id in selected_client_ids:
         ws = make_websocket()
-        await hub.add(ws, selected_client_id)
+        broadcaster.add(ws, selected_client_id)
         websockets.append(ws)
-    return hub, websockets
+    return broadcaster, websockets

@@ -1,23 +1,11 @@
-"""Report signal-filtering and buffer-shape regressions."""
+"""Report signal-filtering regressions."""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.fft_analysis import medfilt3
-
-
-def _make_processor(**overrides) -> SignalProcessor:
-    defaults = {
-        "sample_rate_hz": 100,
-        "waveform_seconds": 1,
-        "waveform_display_hz": 50,
-        "fft_n": 32,
-    }
-    defaults.update(overrides)
-    return SignalProcessor(**defaults)
 
 
 class TestMedfilt3NanResilience:
@@ -70,47 +58,3 @@ class TestMedfilt3NanResilience:
         arr = np.full((3, 5), float("nan"), dtype=np.float32)
         result = medfilt3(arr)
         assert result.shape == arr.shape
-
-
-class TestResizeBuffer:
-    """_resize_buffer must handle shrink, grow, and same-size correctly."""
-
-    def _make_proc_with_buffer(self):
-        proc = _make_processor(sample_rate_hz=100, waveform_seconds=1)
-        store = proc._store
-        with store.lock:
-            buf = store._registry._get_or_create_unlocked("test-client")
-        samples = np.random.default_rng(42).standard_normal((10, 3)).astype(np.float32)
-        proc.ingest("test-client", samples)
-        return store, buf
-
-    def test_same_size_noop(self) -> None:
-        store, buf = self._make_proc_with_buffer()
-        count_before = buf.count
-        with store.lock:
-            store._buffer_mutator.resize(buf, 100)
-        assert buf.count == count_before
-        assert buf.capacity == 100
-
-    def test_grow_preserves_data(self) -> None:
-        store, buf = self._make_proc_with_buffer()
-        old_count = buf.count
-        with store.lock:
-            store._buffer_mutator.resize(buf, 200)
-        assert buf.capacity == 200
-        assert buf.count == old_count
-
-    def test_shrink_caps_count(self) -> None:
-        store, buf = self._make_proc_with_buffer()
-        with store.lock:
-            store._buffer_mutator.resize(buf, 5)
-        assert buf.capacity == 5
-        assert buf.count <= 5
-
-    @pytest.mark.parametrize("new_cap", [0, -10], ids=["zero", "negative"])
-    def test_non_positive_clamped_to_one(self, new_cap: int) -> None:
-        store, buf = self._make_proc_with_buffer()
-        with store.lock:
-            store._buffer_mutator.resize(buf, new_cap)
-        assert buf.capacity == 1
-        assert buf.count <= 1

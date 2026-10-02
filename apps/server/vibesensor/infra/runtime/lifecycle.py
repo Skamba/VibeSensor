@@ -33,18 +33,14 @@ from vibesensor.infra.runtime.background_tasks import (
     task_failure_message,
 )
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 from vibesensor.shared.tracing import mark_span_error, start_span
-from vibesensor.shared.types.payload_types import LiveWsPayload
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.processing_loop import ProcessingLoop
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
-    from vibesensor.infra.workers.worker_pool import WorkerPool
 
 __all__ = [
     "LifecycleManager",
@@ -60,14 +56,8 @@ class LifecycleControlPlane(Protocol):
     def close(self) -> None: ...
 
 
-class LifecycleWsHub(Protocol):
-    async def run(
-        self,
-        hz: int,
-        payload_builder: Callable[[str | None], LiveWsPayload],
-        on_tick: Callable[[], None] | None = None,
-        metrics_recorder: Callable[[int, float], None] | None = None,
-    ) -> None: ...
+class LifecycleWsBroadcaster(Protocol):
+    async def run(self) -> None: ...
 
 
 class LifecycleShutdownReport(Protocol):
@@ -144,14 +134,12 @@ class LifecycleRuntime:
     ingest_diagnostics: IngestDiagnosticsCollector
     control_plane: LifecycleControlPlane
     processing_loop: ProcessingLoop
-    ws_hub: LifecycleWsHub
-    ws_broadcast: WsBroadcastService
+    ws_broadcaster: LifecycleWsBroadcaster
     run_recorder: LifecycleRunRecorder
     gps_monitor: LifecycleGpsMonitor
     obd_runner: LifecycleObdRunner
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
-    worker_pool: WorkerPool
     history_db: LifecycleHistoryDb
 
 
@@ -287,17 +275,7 @@ class LifecycleManager:
             (
                 "ws-broadcast",
                 lambda: self._start_supervised(
-                    lambda: r.ws_hub.run(
-                        UI_PUSH_HZ,
-                        r.ws_broadcast.build_payload,
-                        on_tick=r.ws_broadcast.on_tick,
-                        metrics_recorder=lambda connection_count, duration_s: (
-                            r.ingest_diagnostics.note_ws_publish(
-                                connection_count=connection_count,
-                                duration_s=duration_s,
-                            )
-                        ),
-                    ),
+                    lambda: r.ws_broadcaster.run(),
                     "ws-broadcast",
                     restartable_exceptions=(BroadcastTickLoopFailure,),
                 ),
@@ -379,10 +357,6 @@ class LifecycleManager:
             timeout_s=_MANAGED_JOB_CANCEL_TIMEOUT_S,
         )
         await self._drain_analysis()
-        try:
-            await anyio.to_thread.run_sync(r.worker_pool.shutdown, True)
-        except (OSError, RuntimeError) as exc:
-            issues.append(("Error shutting down worker pool", exc))
         try:
             await anyio.to_thread.run_sync(r.history_db.close)
         except (sqlite3.Error, OSError) as exc:

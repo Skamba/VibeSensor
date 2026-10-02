@@ -16,9 +16,7 @@ from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
-from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 
 
 @dataclass(slots=True)
@@ -156,27 +154,6 @@ class StubProcessor:
         pass
 
 
-class StubWsPayloadSource:
-    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
-        payload: LiveWsPayload = {
-            "schema_version": SCHEMA_VERSION,
-            "server_time": "2026-04-05T00:00:00Z",
-            "speed_mps": None,
-            "clients": [],
-            "selected_client_id": None,
-            "rotational_speeds": {
-                "basis_speed_source": None,
-                "wheel": {"rpm": None, "mode": None, "reason": None},
-                "driveshaft": {"rpm": None, "mode": None, "reason": None},
-                "engine": {"rpm": None, "mode": None, "reason": None},
-                "order_bands": None,
-            },
-        }
-        if include_heavy:
-            payload["spectra"] = {"freq": [], "clients": {}}
-        return payload
-
-
 def build_history_db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "history.db")
 
@@ -250,7 +227,6 @@ def build_runtime(**overrides: Any):
     registry = overrides.pop("registry", StubRegistry())
     processor = overrides.pop("processor", StubProcessor())
     control_plane = overrides.pop("control_plane", MagicMock())
-    worker_pool = overrides.pop("worker_pool", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     obd_runner = overrides.pop("obd_runner", MagicMock())
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
@@ -259,7 +235,6 @@ def build_runtime(**overrides: Any):
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
-    payload_source = overrides.pop("payload_source", StubWsPayloadSource())
     ingest_diagnostics = overrides.pop("ingest_diagnostics", IngestDiagnosticsCollector())
     processing_state = ProcessingLoopState()
     health_state = RuntimeHealthState()
@@ -285,18 +260,12 @@ def build_runtime(**overrides: Any):
             processor=processor,
             control_plane=control_plane,
         ),
-        ws_hub=overrides.pop("ws_hub", MagicMock()),
-        ws_broadcast=WsBroadcastService(
-            ui_push_hz=config.processing.ui_push_hz,
-            ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-            payload_source=payload_source,
-        ),
+        ws_broadcaster=overrides.pop("ws_broadcaster", MagicMock()),
         run_recorder=diagnostics,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
-        worker_pool=worker_pool,
         history_db=history_db,
     )
     lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())

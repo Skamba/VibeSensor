@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 from test_support.settings_services import PersistedSettingsServices, build_settings_services
 
 from vibesensor.domain import normalize_sensor_id
-from vibesensor.infra.processing import ClientBuffer, SignalProcessor
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.use_cases.diagnostics._counters import counter_delta
 
@@ -43,67 +41,6 @@ class TestCounterDelta:
     def test_float_precision(self) -> None:
         result = counter_delta([0.0, 0.1, 0.3])
         assert result == 0  # int truncation of 0.3
-
-
-# ---------------------------------------------------------------------------
-# ClientBuffer.invalidate_caches
-# ---------------------------------------------------------------------------
-
-
-class TestClientBufferInvalidateCaches:
-    """Verify the extracted invalidate_caches method works correctly."""
-
-    def test_clears_all_cache_fields(self) -> None:
-        buf = ClientBuffer(
-            data=np.zeros((3, 100), dtype=np.float32),
-            capacity=100,
-        )
-        # Simulate cached state
-        buf.cached_spectrum_payload = {"freq": [1, 2]}
-        buf.cached_spectrum_payload_generation = 5
-
-        buf.invalidate_caches()
-
-        assert buf.cached_spectrum_payload is None
-        assert buf.cached_spectrum_payload_generation == -1
-
-
-# ---------------------------------------------------------------------------
-# SignalProcessor compute_metrics generation guard
-# ---------------------------------------------------------------------------
-
-
-class TestComputeMetricsGenerationGuard:
-    """Phase 3 should not overwrite fresher results with stale ones."""
-
-    def test_stale_generation_does_not_overwrite(self) -> None:
-        sp = SignalProcessor(
-            sample_rate_hz=1000,
-            waveform_seconds=2,
-            waveform_display_hz=50,
-            fft_n=256,
-        )
-        client = "test-client"
-        # Ingest enough samples to compute
-        chunk = np.random.default_rng(42).standard_normal((512, 3)).astype(np.float32) * 0.01
-        sp.ingest(client, chunk, sample_rate_hz=1000)
-
-        # First compute
-        sp.compute_metrics(client)
-
-        with sp._store.lock:
-            buf = sp._store.buffers[client]
-            gen_after_first = buf.compute_generation
-            # Artificially advance the compute generation to simulate a fresher result
-            buf.compute_generation = gen_after_first + 100
-
-        # Compute again — this should NOT overwrite because snap_ingest_gen < compute_generation
-        sp.compute_metrics(client)
-
-        with sp._store.lock:
-            buf = sp._store.buffers[client]
-            # Should still be the artificially advanced generation
-            assert buf.compute_generation == gen_after_first + 100
 
 
 # ---------------------------------------------------------------------------

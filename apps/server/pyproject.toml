@@ -200,7 +200,7 @@ allow_indirect_imports = true
 source_modules = [
   "vibesensor.infra.processing",
   "vibesensor.infra.runtime.processing_loop",
-  "vibesensor.infra.runtime.ws_broadcast",
+  "vibesensor.adapters.websocket",
   "vibesensor.infra.runtime.ws_payload_projection",
   "vibesensor.adapters.udp.udp_data_rx",
 ]

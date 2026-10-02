@@ -6,12 +6,10 @@ Each test group validates one of the hate-list items to prevent regression.
 from __future__ import annotations
 
 import importlib
-import time
 
 import pytest
 
 from vibesensor.infra.runtime.client_metadata import sanitize_client_name
-from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
 from vibesensor.shared.types.car_config import new_car_id
@@ -76,38 +74,6 @@ class TestBuildOrderBandsLocation:
 
 
 # ---------------------------------------------------------------------------
-# Item 5: WorkerPool.submit() tracks timing
-# ---------------------------------------------------------------------------
-
-
-class TestWorkerPoolSubmitTiming:
-    """Verify WorkerPool.submit accumulates task counts and total runtime metrics."""
-
-    def test_submit_tracks_run_time(self) -> None:
-        pool = WorkerPool(max_workers=2)
-        try:
-            future = pool.submit(time.sleep, 0.05)
-            future.result()
-            stats = pool.stats()
-            assert stats["total_tasks"] == 1
-            assert stats["total_run_s"] >= 0.04
-        finally:
-            pool.shutdown()
-
-    def test_submit_run_time_accumulates(self) -> None:
-        pool = WorkerPool(max_workers=2)
-        try:
-            futures = [pool.submit(time.sleep, 0.02) for _ in range(3)]
-            for f in futures:
-                f.result()
-            stats = pool.stats()
-            assert stats["total_tasks"] == 3
-            assert stats["total_run_s"] >= 0.05
-        finally:
-            pool.shutdown()
-
-
-# ---------------------------------------------------------------------------
 # Item 6: sanitize_client_name truncation
 # ---------------------------------------------------------------------------
 
@@ -162,7 +128,6 @@ class TestModuleAllExports:
                 "vibesensor.adapters.udp.protocol",
                 {"DataMessage", "pack_data", "parse_data", "parse_hello"},
             ),
-            ("vibesensor.infra.workers.worker_pool", {"WorkerPool"}),
             (
                 "vibesensor.adapters.persistence.car_library",
                 {"load_car_library", "resolve_variant", "CarLibraryEntry"},
