@@ -148,8 +148,8 @@ coverage: ## Run backend coverage with optional COV_OPTS overrides
 
 smoke: ## Run simulator and websocket smoke checks against a local server
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m vibesensor.adapters.simulator.sim_sender --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server && \
-	"$$PYTHON" -m vibesensor.adapters.simulator.ws_smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
+	"$$PYTHON" -m vibesensor.simulator.sim_sender --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server && \
+	"$$PYTHON" -m vibesensor.simulator.ws_smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
 
 ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint

@@ -5,11 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.adapters.simulator.commands import apply_one_wheel_mild_scenario
-from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ
-from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import ProcessorConfig
+from vibesensor.simulator.commands import apply_one_wheel_mild_scenario
+from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ
+from vibesensor.simulator.sim_client import SimClient, make_client_id
 
 _TEST_PROCESSOR_CONFIG = ProcessorConfig(
     sample_rate_hz=800,

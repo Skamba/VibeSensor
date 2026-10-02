@@ -8,27 +8,27 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from vibesensor.adapters.simulator.commands import (
+from vibesensor.simulator.commands import (
     apply_engine_order_scenario,
     apply_one_wheel_mild_scenario,
     apply_road_fixed_scenario,
     choose_default_profile,
 )
-from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
-from vibesensor.adapters.simulator.scripted_scenario_catalog import (
+from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
+from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
     is_scripted_scenario,
     scripted_scenario_help,
     scripted_scenario_names,
 )
-from vibesensor.adapters.simulator.scripted_scenarios import run_scripted_scenario
-from vibesensor.adapters.simulator.scripted_targeting import apply_phase
-from vibesensor.adapters.simulator.server_http import (
+from vibesensor.simulator.scripted_scenarios import run_scripted_scenario
+from vibesensor.simulator.scripted_targeting import apply_phase
+from vibesensor.simulator.server_http import (
     maybe_start_server,
     set_server_speed_override_kmh,
 )
-from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
-from vibesensor.adapters.simulator.sim_runtime import (
+from vibesensor.simulator.sim_client import SimClient, make_client_id
+from vibesensor.simulator.sim_runtime import (
     active_car_order_loop,
     auto_stop,
     command_loop,
@@ -36,7 +36,7 @@ from vibesensor.adapters.simulator.sim_runtime import (
     run_client,
 )
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 _STATIC_SCENARIOS: tuple[str, ...] = ("road", "one-wheel-mild", "engine-order", "road-fixed")
 
 

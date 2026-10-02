@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.simulator.scripted_speed_sync import (
+from vibesensor.simulator.scripted_speed_sync import (
     apply_scripted_speed,
     speed_sync_disable_message,
 )
@@ -28,7 +28,7 @@ async def test_apply_scripted_speed_disables_sync_after_handled_http_error(
         raise OSError("connection refused")
 
     monkeypatch.setattr(
-        "vibesensor.adapters.simulator.scripted_speed_sync.set_server_speed_override_kmh",
+        "vibesensor.simulator.scripted_speed_sync.set_server_speed_override_kmh",
         fake_set_server_speed_override_kmh,
     )
 
@@ -64,7 +64,7 @@ async def test_apply_scripted_speed_skips_http_call_when_sync_is_already_disable
         return speed_kmh
 
     monkeypatch.setattr(
-        "vibesensor.adapters.simulator.scripted_speed_sync.set_server_speed_override_kmh",
+        "vibesensor.simulator.scripted_speed_sync.set_server_speed_override_kmh",
         fake_set_server_speed_override_kmh,
     )
 

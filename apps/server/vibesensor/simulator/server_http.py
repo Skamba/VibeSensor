@@ -7,10 +7,10 @@ import sys
 import time
 from pathlib import Path
 
-from vibesensor.adapters.simulator.profiles import calc_order_hz
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
+from vibesensor.simulator.profiles import calc_order_hz
 from vibesensor.updates.http_client import read_json_response, read_text_response
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}

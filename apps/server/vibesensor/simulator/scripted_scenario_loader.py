@@ -6,13 +6,13 @@ from typing import NotRequired, TypedDict
 import yaml
 from pydantic import ConfigDict, TypeAdapter, ValidationError, with_config
 
-from vibesensor.adapters.simulator.scripted_scenario_models import (
+from vibesensor.common.data_files import resolve_static_data_file
+from vibesensor.simulator.scripted_scenario_models import (
     PhaseOverride,
     PhasePulse,
     ScenarioPhase,
     ScriptedScenario,
 )
-from vibesensor.common.data_files import resolve_static_data_file
 
 __all__ = ["ScriptedScenarioDataError", "load_scripted_scenarios"]
 

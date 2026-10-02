@@ -8,8 +8,6 @@ from typing import cast
 
 import pytest
 
-from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
-from vibesensor.adapters.simulator.sim_runtime import ClientProtocol, data_loop
 from vibesensor.ingest.protocol import (
     HelloMessage,
     pack_hello_ack,
@@ -18,6 +16,8 @@ from vibesensor.ingest.protocol import (
 )
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.simulator.sim_client import SimClient, make_client_id
+from vibesensor.simulator.sim_runtime import ClientProtocol, data_loop
 
 
 class _CapturingTransport:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.adapters.simulator.scripted_scenario_loader import load_scripted_scenarios
-from vibesensor.adapters.simulator.scripted_scenario_models import ScriptedScenario
+from vibesensor.simulator.scripted_scenario_loader import load_scripted_scenarios
+from vibesensor.simulator.scripted_scenario_models import ScriptedScenario
 
 __all__ = [
     "SCRIPTED_SCENARIOS",

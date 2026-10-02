@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from vibesensor.adapters.simulator.sim_runtime import command_loop
+from vibesensor.simulator.sim_runtime import command_loop
 
 
 @dataclass

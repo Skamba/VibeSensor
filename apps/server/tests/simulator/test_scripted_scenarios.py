@@ -7,19 +7,19 @@ import asyncio
 import numpy as np
 import pytest
 
-from vibesensor.adapters.simulator import scripted_speed_sync
-from vibesensor.adapters.simulator.scripted_scenario_catalog import (
+from vibesensor.simulator import scripted_speed_sync
+from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
     scripted_scenario_names,
 )
-from vibesensor.adapters.simulator.scripted_scenario_models import (
+from vibesensor.simulator.scripted_scenario_models import (
     PhaseOverride,
     PhasePulse,
     ScenarioPhase,
     ScriptedScenario,
 )
-from vibesensor.adapters.simulator.scripted_scenarios import run_scripted_scenario
-from vibesensor.adapters.simulator.scripted_targeting import apply_phase
+from vibesensor.simulator.scripted_scenarios import run_scripted_scenario
+from vibesensor.simulator.scripted_targeting import apply_phase
 
 
 class _FakeSimClient:

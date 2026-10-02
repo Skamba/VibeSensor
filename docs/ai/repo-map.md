@@ -8,7 +8,7 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 - Backend HTTP assembly: `apps/server/vibesensor/adapters/http/router.py`, `apps/server/vibesensor/adapters/http/route_bundles.py`
 - Backend CLIs: `apps/server/vibesensor/cli/`
 - UI app/runtime: `apps/ui/src/main.ts`, `apps/ui/src/app/ui_app_runtime.ts`, `apps/ui/src/app/runtime/`
-- Simulator: `apps/server/vibesensor/adapters/simulator/`
+- Simulator: `apps/server/vibesensor/simulator/`
 - Firmware: `firmware/esp/src/main.cpp`, `firmware/esp/src/runtime_*.{h,cpp}`
 - Pi image: `infra/pi-image/pi-gen/build.sh`, `infra/pi-image/pi-gen/lib/`, `infra/pi-image/pi-gen/templates/`, `infra/pi-image/pi-gen/validate-image.sh`
 - Local stack: `docker-compose.yml`

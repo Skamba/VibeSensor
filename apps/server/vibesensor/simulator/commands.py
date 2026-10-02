@@ -5,7 +5,7 @@ import shlex
 from collections.abc import Sequence
 from typing import Protocol
 
-from vibesensor.adapters.simulator.sim_scene import _cross_corner_coupling, _normalize_wheel_slot
+from vibesensor.simulator.sim_scene import _cross_corner_coupling, _normalize_wheel_slot
 
 _DEFAULT_PROFILE_ORDER: tuple[str, ...] = (
     "engine_idle",

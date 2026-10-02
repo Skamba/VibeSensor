@@ -4,8 +4,8 @@ import asyncio
 from dataclasses import dataclass
 from urllib.error import URLError
 
-from vibesensor.adapters.simulator.server_http import set_server_speed_override_kmh
-from vibesensor.adapters.simulator.sim_client import SimClient
+from vibesensor.simulator.server_http import set_server_speed_override_kmh
+from vibesensor.simulator.sim_client import SimClient
 
 __all__ = ["ScriptedSpeedSyncResult", "apply_scripted_speed", "speed_sync_disable_message"]
 

@@ -9,7 +9,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 from test_support.httpx import add_httpx_exception, add_json_response, add_text_response
 
-from vibesensor.adapters.simulator.server_http import (
+from vibesensor.simulator.server_http import (
     check_server_running,
     set_server_speed_override_kmh,
 )

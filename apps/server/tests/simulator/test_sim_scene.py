@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.adapters.simulator.sim_scene import RoadSceneController
+from vibesensor.simulator.sim_scene import RoadSceneController
 
 
 class _FakeSimClient:

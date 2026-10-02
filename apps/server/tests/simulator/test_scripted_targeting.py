@@ -4,13 +4,13 @@ from typing import cast
 
 import pytest
 
-from vibesensor.adapters.simulator.scripted_scenario_catalog import SCRIPTED_SCENARIOS
-from vibesensor.adapters.simulator.scripted_targeting import (
+from vibesensor.simulator.scripted_scenario_catalog import SCRIPTED_SCENARIOS
+from vibesensor.simulator.scripted_targeting import (
     apply_phase,
     matches_scripted_target,
     target_specificity,
 )
-from vibesensor.adapters.simulator.sim_client import SimClient
+from vibesensor.simulator.sim_client import SimClient
 
 
 @pytest.mark.parametrize(

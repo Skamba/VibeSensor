@@ -4,7 +4,7 @@ import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.simulator.sim_client import SimClient
+    from vibesensor.simulator.sim_client import SimClient
 
 __all__ = ["RoadSceneController"]
 

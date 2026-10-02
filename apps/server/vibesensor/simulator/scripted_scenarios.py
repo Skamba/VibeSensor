@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import asyncio
 
-from vibesensor.adapters.simulator import scripted_scenario_catalog as _scenario_catalog
-from vibesensor.adapters.simulator import scripted_targeting as _targeting
-from vibesensor.adapters.simulator.scripted_scenario_models import PhasePulse, phase_speed_kmh
-from vibesensor.adapters.simulator.scripted_speed_sync import apply_scripted_speed
-from vibesensor.adapters.simulator.sim_client import SimClient
+from vibesensor.simulator import scripted_scenario_catalog as _scenario_catalog
+from vibesensor.simulator import scripted_targeting as _targeting
+from vibesensor.simulator.scripted_scenario_models import PhasePulse, phase_speed_kmh
+from vibesensor.simulator.scripted_speed_sync import apply_scripted_speed
+from vibesensor.simulator.sim_client import SimClient
 
 __all__ = ["run_scripted_scenario"]
 

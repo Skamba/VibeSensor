@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from vibesensor.adapters.simulator.scripted_scenario_models import ScenarioPhase
-from vibesensor.adapters.simulator.sim_client import SimClient
-from vibesensor.adapters.simulator.sim_scene import _normalize_wheel_slot
+from vibesensor.simulator.scripted_scenario_models import ScenarioPhase
+from vibesensor.simulator.sim_client import SimClient
+from vibesensor.simulator.sim_scene import _normalize_wheel_slot
 
 __all__ = ["apply_phase", "matches_scripted_target", "target_clients", "target_specificity"]
 

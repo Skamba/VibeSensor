@@ -8,13 +8,13 @@ from typing import Any
 
 import numpy as np
 
-from vibesensor.adapters.simulator.profiles import (
+from vibesensor.ingest.protocol import client_id_mac
+from vibesensor.simulator.profiles import (
     DEFAULT_ORDER_HZ,
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
     Profile,
 )
-from vibesensor.ingest.protocol import client_id_mac
 
 __all__ = ["SimClient", "make_client_id"]
 

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.simulator.scripted_scenario_loader import (
+from vibesensor.simulator.scripted_scenario_loader import (
     ScriptedScenarioDataError,
     load_scripted_scenarios,
 )
