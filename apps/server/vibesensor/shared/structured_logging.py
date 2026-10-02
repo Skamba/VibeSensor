@@ -1,4 +1,12 @@
-"""Structured logging helpers for request context and structlog-backed rendering."""
+"""Structured logging: JSON file formatter, readable console formatter, request ids.
+
+Both formatters are plain ``logging.Formatter`` subclasses. Fields passed via
+``extra=log_extra(event=..., ...)`` are emitted as top-level JSON keys in the
+file log and as ``key=value`` pairs on the console. The JSON fields are
+``timestamp`` (UTC ISO-8601), ``level``, ``logger``, ``message``, ``event``
+(defaults to the message), ``request_id`` (when bound), ``exception`` (when
+present), and any extra fields.
+"""
 
 from __future__ import annotations
 
@@ -6,11 +14,10 @@ import json
 import logging
 import string
 from contextvars import ContextVar, Token
+from datetime import UTC, datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from uuid import uuid4
-
-import structlog
 
 REQUEST_ID_HEADER = "X-Request-ID"
 
@@ -18,75 +25,66 @@ _REQUEST_ID: ContextVar[str | None] = ContextVar("vibesensor_request_id", defaul
 _ALLOWED_REQUEST_ID_CHARS = frozenset(string.ascii_letters + string.digits + "-._:/")
 _LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
 _LOG_BACKUP_COUNT = 3
-_HANDLER_MARKER = "_vibesensor_structlog_handler"
+_HANDLER_MARKER = "_vibesensor_log_handler"
+_STANDARD_RECORD_FIELDS = frozenset(vars(logging.makeLogRecord({}))) | {"message", "asctime"}
 
 
-def _add_request_id(
-    _logger: logging.Logger | None,
-    _method_name: str,
-    event_dict: structlog.typing.EventDict,
-) -> structlog.typing.EventDict:
-    if "request_id" not in event_dict:
-        request_id = current_request_id()
-        if request_id is not None:
-            event_dict["request_id"] = request_id
-    return event_dict
+def _timestamp(record: logging.LogRecord) -> str:
+    return datetime.fromtimestamp(record.created, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
-def _json_dumps(payload: object, **_: object) -> str:
-    return json.dumps(payload, ensure_ascii=True, sort_keys=True)
+def _record_fields(record: logging.LogRecord) -> dict[str, object]:
+    """Return the ``extra`` fields of *record* plus the bound request id."""
+    fields = {
+        key: value
+        for key, value in vars(record).items()
+        if key not in _STANDARD_RECORD_FIELDS and not key.startswith("_")
+    }
+    if "request_id" not in fields and (request_id := current_request_id()) is not None:
+        fields["request_id"] = request_id
+    return fields
 
 
-def _foreign_pre_chain() -> list[structlog.typing.Processor]:
-    return [
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.ExtraAdder(),
-        _add_request_id,
-        structlog.processors.TimeStamper(fmt="iso", utc=True, key="timestamp"),
-    ]
+class StructuredLogFormatter(logging.Formatter):
+    """Render one JSON object per log record for the application log file."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        message = record.getMessage()
+        payload: dict[str, object] = {
+            "timestamp": _timestamp(record),
+            "level": record.levelname.lower(),
+            "logger": record.name,
+            "message": message,
+            **_record_fields(record),
+        }
+        payload.setdefault("event", message)
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        if record.stack_info:
+            payload["stack"] = self.formatStack(record.stack_info)
+        return json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
 
 
-def _add_message_field(
-    _logger: logging.Logger | None,
-    _method_name: str,
-    event_dict: structlog.typing.EventDict,
-) -> structlog.typing.EventDict:
-    event_dict.setdefault("message", str(event_dict.get("event", "")))
-    return event_dict
+class ConsoleLogFormatter(logging.Formatter):
+    """Render ``<timestamp> [level] message [logger] key=value ...`` lines.
 
+    Tracebacks are plain text (no frame locals) so formatting stays cheap on
+    the event loop.
+    """
 
-def _shared_formatter_processors(
-    renderer: structlog.typing.Processor,
-    *,
-    format_exceptions: bool = True,
-) -> list[structlog.typing.Processor]:
-    processors: list[structlog.typing.Processor] = [
-        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-        _add_message_field,
-        structlog.processors.StackInfoRenderer(),
-    ]
-    if format_exceptions:
-        processors.append(structlog.processors.format_exc_info)
-    processors.append(renderer)
-    return processors
-
-
-def _configure_structlog() -> None:
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            _add_request_id,
-            structlog.processors.TimeStamper(fmt="iso", utc=True, key="timestamp"),
-            structlog.stdlib.render_to_log_kwargs,
-        ],
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,
-        cache_logger_on_first_use=True,
-    )
+    def format(self, record: logging.LogRecord) -> str:
+        message = record.getMessage()
+        fields = _record_fields(record)
+        if fields.get("event") == message:
+            fields.pop("event")
+        line = f"{_timestamp(record)} [{record.levelname.lower():<8}] {message} [{record.name}]"
+        if fields:
+            line += " " + " ".join(f"{key}={value!r}" for key, value in sorted(fields.items()))
+        if record.exc_info:
+            line += "\n" + self.formatException(record.exc_info)
+        if record.stack_info:
+            line += "\n" + self.formatStack(record.stack_info)
+        return line
 
 
 def _mark_handler(handler: logging.Handler) -> logging.Handler:
@@ -109,38 +107,12 @@ def _replace_managed_handlers(root_logger: logging.Logger, handlers: list[loggin
 def _build_console_handler() -> logging.Handler:
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
-    handler.setFormatter(
-        structlog.stdlib.ProcessorFormatter(
-            foreign_pre_chain=_foreign_pre_chain(),
-            processors=_shared_formatter_processors(
-                # Plain tracebacks: structlog otherwise switches to rich with
-                # show_locals whenever rich is importable (dev envs), and
-                # rendering every frame's locals runs synchronously on the
-                # event loop, stalling the failing response for seconds.
-                structlog.dev.ConsoleRenderer(
-                    colors=False,
-                    exception_formatter=structlog.dev.plain_traceback,
-                ),
-                format_exceptions=False,
-            ),
-        )
-    )
+    handler.setFormatter(ConsoleLogFormatter())
     return handler
 
 
-class StructuredLogFormatter(structlog.stdlib.ProcessorFormatter):
-    def __init__(self) -> None:
-        super().__init__(
-            foreign_pre_chain=_foreign_pre_chain(),
-            processors=_shared_formatter_processors(
-                structlog.processors.JSONRenderer(serializer=_json_dumps),
-            ),
-        )
-
-
 def configure_logging(log_path: Path | None) -> None:
-    """Install the canonical structlog-backed backend logging handlers."""
-    _configure_structlog()
+    """Install the console handler and, when *log_path* is set, the JSON file handler."""
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
 

@@ -10,6 +10,7 @@ from pathlib import Path
 from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.config_schema import AppConfig
+from vibesensor.shared.constants.dsp import SAMPLE_RATE_HZ
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.shared.process_settings import load_update_env_settings, summarize_process_settings
 
@@ -34,7 +35,7 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
             "control_port": cfg.udp.control_port,
         },
         "processing": {
-            "sample_rate_hz": cfg.processing.sample_rate_hz,
+            "sample_rate_hz": SAMPLE_RATE_HZ,
             "ui_push_hz": UI_PUSH_HZ,
             "ui_heavy_push_hz": UI_HEAVY_PUSH_HZ,
         },
@@ -54,8 +55,6 @@ def _writable_path_checks(cfg: AppConfig) -> tuple[_WritablePathCheck, ...]:
         checks.append(_WritablePathCheck("logging.app_log_path", cfg.logging.app_log_path))
     if cfg.ap.self_heal.enabled:
         checks.append(_WritablePathCheck("ap.self_heal.state_file", cfg.ap.self_heal.state_file))
-    if cfg.tracing.enabled:
-        checks.append(_WritablePathCheck("tracing.output_path", cfg.tracing.output_path))
     checks.extend(
         (
             _WritablePathCheck(

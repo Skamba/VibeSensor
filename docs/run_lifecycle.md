@@ -233,7 +233,7 @@ task/timeout helpers:
 | `apps/server/vibesensor/use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `apps/server/vibesensor/use_cases/run/logger.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
-| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as one sequence of stage functions that call the whole-run diagnostics builders directly. |
+| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as straight-line steps (one `post_analysis_step` log line each) that call the whole-run diagnostics builders directly. |
 | `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |
 | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spectra.py` | Current whole-run spectral sidecar builder over bounded raw range reads. |
 | `apps/server/vibesensor/use_cases/diagnostics/whole_run_context.py` | Current whole-run context labels and compact intervals. |

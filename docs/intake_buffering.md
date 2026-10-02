@@ -130,8 +130,8 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
 
 | Layer | Buffer | Max size | Overflow behaviour |
 |-------|--------|----------|--------------------|
-| UDP queue | `asyncio.Queue` | `data_queue_maxsize` (default 1024 packets) | Oldest arriving packet is dropped; warning logged (rate-limited to 1/10 s); `note_server_queue_drop` counter incremented on client record. |
-| Ring buffer | numpy array per client | `sample_rate_hz × waveform_seconds` (default 6400 samples) | Circular overwrite — oldest samples are silently replaced. |
+| UDP queue | `asyncio.Queue` | 1024 packets (`queue_maxsize` default in `adapters/udp/udp_data_rx.py`) | Oldest arriving packet is dropped; warning logged (rate-limited to 1/10 s); `note_server_queue_drop` counter incremented on client record. |
+| Ring buffer | numpy array per client | `SAMPLE_RATE_HZ × WAVEFORM_BUFFER_SECONDS` (800 × 8 = 6400 samples, `shared/constants/dsp.py`) | Circular overwrite — oldest samples are silently replaced. |
 | Processing loop | One async tick loop | 1 | The runtime loop computes on the current set of fresh clients, then sleeps until the next tick. |
 
 ## Observability

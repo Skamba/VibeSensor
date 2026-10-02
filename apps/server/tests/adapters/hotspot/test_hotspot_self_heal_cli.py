@@ -22,8 +22,9 @@ def test_hotspot_self_heal_cli_loads_config_and_runs_selected_mode(
     mode: str,
     expected_diagnostics_only: bool,
 ) -> None:
-    config = SimpleNamespace(ap=SimpleNamespace(), self_heal=SimpleNamespace())
-    config.ap.self_heal = config.self_heal
+    config = SimpleNamespace(
+        ap=SimpleNamespace(self_heal=SimpleNamespace(state_file=Path("/tmp/state.json"))),
+    )
 
     with (
         patch(
@@ -44,7 +45,7 @@ def test_hotspot_self_heal_cli_loads_config_and_runs_selected_mode(
     load_config.assert_called_once_with(Path("/tmp/test-config.yaml"))
     run_self_heal.assert_called_once_with(
         config.ap,
-        config.ap.self_heal,
+        Path("/tmp/state.json"),
         diagnostics_only=expected_diagnostics_only,
     )
     basic_config.assert_called_once()

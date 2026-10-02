@@ -8,7 +8,6 @@ from threading import RLock
 from typing import TYPE_CHECKING
 
 import numpy as np
-from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
@@ -21,7 +20,6 @@ from vibesensor.shared.ports import (
     SpeedProvider,
 )
 from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
     RawCaptureSensorClockSync,
@@ -327,56 +325,47 @@ class RunRecorder:
         )
 
     def start_recording(self) -> RunRecorderStatusSnapshot:
-        with start_span(__name__, "run.recording.start", kind=SpanKind.INTERNAL) as span:
-            completed_run_id: str | None = None
-            lifecycle_events: list[
-                tuple[str, str, str, str | None, str | None, int | None, int | None]
-            ] = []
-            try:
-                with self._lock:
-                    if self._lifecycle.shutdown_requested:
-                        LOGGER.info(
-                            "Ignoring start_recording() while metrics logger "
-                            "shutdown is in progress.",
-                        )
-                        span.set_attribute("vibesensor.ignored_shutdown", True)
-                        return self.status()
-                    if self.enabled and self._run_id:
-                        finalize_result = self._finalize_active_run_locked(reason="restart")
-                        completed_run_id = finalize_result.run_id_to_analyze
-                        if (
-                            finalize_result.run_id is not None
-                            and finalize_result.persistence_snapshot is not None
-                        ):
-                            lifecycle_events.append(
-                                (
-                                    "stopped",
-                                    finalize_result.run_id,
-                                    finalize_result.start_time_utc,
-                                    finalize_result.end_time_utc,
-                                    "restart",
-                                    finalize_result.persistence_snapshot.written_sample_count,
-                                    finalize_result.persistence_snapshot.dropped_sample_count,
-                                )
-                            )
-                    started_run = self._start_new_run_locked()
+        completed_run_id: str | None = None
+        lifecycle_events: list[
+            tuple[str, str, str, str | None, str | None, int | None, int | None]
+        ] = []
+        with self._lock:
+            if self._lifecycle.shutdown_requested:
+                LOGGER.info(
+                    "Ignoring start_recording() while metrics logger shutdown is in progress.",
+                )
+                return self.status()
+            if self.enabled and self._run_id:
+                finalize_result = self._finalize_active_run_locked(reason="restart")
+                completed_run_id = finalize_result.run_id_to_analyze
+                if (
+                    finalize_result.run_id is not None
+                    and finalize_result.persistence_snapshot is not None
+                ):
                     lifecycle_events.append(
                         (
-                            "started",
-                            started_run.run_id,
-                            started_run.start_time_utc,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "stopped",
+                            finalize_result.run_id,
+                            finalize_result.start_time_utc,
+                            finalize_result.end_time_utc,
+                            "restart",
+                            finalize_result.persistence_snapshot.written_sample_count,
+                            finalize_result.persistence_snapshot.dropped_sample_count,
                         )
                     )
-                    result = self.status()
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
-            span.set_attribute("vibesensor.run_id", result.run_id or "")
-            span.set_attribute("vibesensor.restarted_previous_run", completed_run_id is not None)
+            started_run = self._start_new_run_locked()
+            lifecycle_events.append(
+                (
+                    "started",
+                    started_run.run_id,
+                    started_run.start_time_utc,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+            )
+            result = self.status()
         for (
             event_action,
             event_run_id,
@@ -405,44 +394,31 @@ class RunRecorder:
         _only_if_run_id: str | None = None,
         reason: str = "manual",
     ) -> RunRecorderStatusSnapshot:
-        with start_span(
-            __name__,
-            "run.recording.stop",
-            kind=SpanKind.INTERNAL,
-            attributes={"vibesensor.stop_reason": reason},
-        ) as span:
-            lifecycle_event: (
-                tuple[str, str, str, str | None, str | None, int | None, int | None] | None
-            ) = None
-            try:
-                with self._lock:
-                    if _only_if_run_id is not None and self._run_id != _only_if_run_id:
-                        span.set_attribute("vibesensor.skipped_run_id_guard", True)
-                        return self.status()
-                    finalize_result = self._finalize_active_run_locked(reason=reason)
-                    run_id_to_analyze = finalize_result.run_id_to_analyze
-                    if (
-                        finalize_result.run_id is not None
-                        and finalize_result.persistence_snapshot is not None
-                    ):
-                        lifecycle_event = (
-                            "stopped",
-                            finalize_result.run_id,
-                            finalize_result.start_time_utc,
-                            finalize_result.end_time_utc,
-                            reason,
-                            finalize_result.persistence_snapshot.written_sample_count,
-                            finalize_result.persistence_snapshot.dropped_sample_count,
-                        )
-                    self._lifecycle.stop()
-                    self._persistence.reset()
-                    self._recording_session.clear_stopped_run()
-                    result = self.status()
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
-            span.set_attribute("vibesensor.run_id", lifecycle_event[1] if lifecycle_event else "")
-            span.set_attribute("vibesensor.post_analysis_scheduled", bool(run_id_to_analyze))
+        lifecycle_event: (
+            tuple[str, str, str, str | None, str | None, int | None, int | None] | None
+        ) = None
+        with self._lock:
+            if _only_if_run_id is not None and self._run_id != _only_if_run_id:
+                return self.status()
+            finalize_result = self._finalize_active_run_locked(reason=reason)
+            run_id_to_analyze = finalize_result.run_id_to_analyze
+            if (
+                finalize_result.run_id is not None
+                and finalize_result.persistence_snapshot is not None
+            ):
+                lifecycle_event = (
+                    "stopped",
+                    finalize_result.run_id,
+                    finalize_result.start_time_utc,
+                    finalize_result.end_time_utc,
+                    reason,
+                    finalize_result.persistence_snapshot.written_sample_count,
+                    finalize_result.persistence_snapshot.dropped_sample_count,
+                )
+            self._lifecycle.stop()
+            self._persistence.reset()
+            self._recording_session.clear_stopped_run()
+            result = self.status()
         if lifecycle_event is not None:
             (
                 event_action,

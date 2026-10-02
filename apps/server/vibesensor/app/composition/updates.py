@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.adapters.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME
 from vibesensor.adapters.http.dependencies import UpdateDeps
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
@@ -11,8 +12,8 @@ def build_update_deps(config: AppConfig) -> UpdateDeps:
 
     return UpdateDeps(
         update_manager=build_update_manager(
-            ap_con_name=config.ap.con_name,
-            wifi_ifname=config.ap.ifname,
+            ap_con_name=HOTSPOT_CON_NAME,
+            wifi_ifname=HOTSPOT_IFNAME,
             rollback_dir=str(config.update.rollback_dir),
         ),
         esp_flash_manager=EspFlashManager(),

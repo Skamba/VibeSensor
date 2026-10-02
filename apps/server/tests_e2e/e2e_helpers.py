@@ -16,12 +16,11 @@ from urllib.request import Request, urlopen
 
 from pypdf import PdfReader
 
-from vibesensor.app.config_defaults import DEFAULT_CONFIG
-from vibesensor.shared.constants.dsp import FFT_N
+from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ
 
 ROOT = Path(__file__).resolve().parents[3]
 
-ANALYSIS_WINDOW_S = FFT_N / DEFAULT_CONFIG["processing"]["sample_rate_hz"]
+ANALYSIS_WINDOW_S = FFT_N / SAMPLE_RATE_HZ
 """One server FFT analysis window (2048 samples at 800 Hz = 2.56 s)."""
 
 ANALYZABLE_SIM_DURATION_S = 2 * ANALYSIS_WINDOW_S

@@ -100,14 +100,14 @@ class TestPeakDbEqualsStrengthDb:
     """Peaks-table strength_db is always assigned p95_intensity_db,
     making the two columns redundant.
 
-    Evidence: plot_data.py line ~379: bucket["strength_db"] = p95_intensity_db
+    Evidence: peaks/table.py assigns bucket.strength_db = p95_intensity_db
     Root cause: strength_db should be computed differently from p95_intensity_db
       (e.g. using SNR-based canonical_vibration_db against MEMS noise floor)
       but currently just aliases p95_intensity_db.
     """
 
     def test_strength_db_equals_p95_intensity_db_in_source(self) -> None:
-        """Confirm the assignment in plot_data produces identical values."""
+        """Confirm the peak-table assignment produces identical values."""
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=22.3)
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
         data = build_report_document(prepare_report_input(summary))

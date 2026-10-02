@@ -27,7 +27,7 @@ Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
     → execute_post_analysis() [vibesensor.use_cases.run.post_analysis_executor]
       → load_post_analysis_run() [vibesensor.use_cases.run.post_analysis_loader]
-      → run_whole_run_pipeline_stages() [vibesensor.use_cases.run.post_analysis_executor]
+      → build_whole_run_artifacts() [vibesensor.use_cases.run.post_analysis_executor]
         → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
         → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
       → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]

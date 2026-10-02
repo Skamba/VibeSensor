@@ -23,10 +23,6 @@ class _RecordingHistoryDB:
         self.calls.append(("recover", None))
         return 0
 
-    def prune_raw_capture_artifacts_older_than_days(self, days: int) -> int:
-        self.calls.append(("raw", days))
-        return 1
-
     def prune_terminal_runs_older_than_days(self, days: int) -> int:
         self.calls.append(("summary", days))
         if self._prune_error is not None:
@@ -39,8 +35,6 @@ def _create_history_db(
     monkeypatch: pytest.MonkeyPatch,
     *,
     corrupted: bool = False,
-    run_retention_days: int = 7,
-    raw_capture_retention_days: int = 7,
     prune_error: Exception | None = None,
 ) -> tuple[object, _RecordingHistoryDB]:
     fake_history = _RecordingHistoryDB(corrupted=corrupted, prune_error=prune_error)
@@ -51,11 +45,7 @@ def _create_history_db(
 
     monkeypatch.setattr(history_composition, "HistoryDB", _fake_history_db)
     config = SimpleNamespace(
-        logging=SimpleNamespace(
-            history_db_path=tmp_path / "history.db",
-            run_retention_days=run_retention_days,
-            raw_capture_retention_days=raw_capture_retention_days,
-        ),
+        logging=SimpleNamespace(history_db_path=tmp_path / "history.db"),
     )
     result = history_composition.create_history_db(
         config,
@@ -74,39 +64,14 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
     assert fake_history.calls == []
 
 
-@pytest.mark.parametrize(
-    ("run_retention_days", "raw_capture_retention_days", "expected_calls"),
-    [
-        pytest.param(
-            14,
-            14,
-            [("recover", None), ("summary", 14)],
-            id="same-retention-skips-raw-prune",
-        ),
-        pytest.param(
-            21,
-            7,
-            [("recover", None), ("raw", 7), ("summary", 21)],
-            id="raw-capture-pruned-before-summary-retention",
-        ),
-    ],
-)
 def test_create_history_db_recovers_then_prunes_on_startup(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    run_retention_days: int,
-    raw_capture_retention_days: int,
-    expected_calls: list[tuple[str, int | None]],
 ) -> None:
-    result, fake_history = _create_history_db(
-        tmp_path,
-        monkeypatch,
-        run_retention_days=run_retention_days,
-        raw_capture_retention_days=raw_capture_retention_days,
-    )
+    result, fake_history = _create_history_db(tmp_path, monkeypatch)
 
     assert result is fake_history
-    assert fake_history.calls == expected_calls
+    assert fake_history.calls == [("recover", None), ("summary", 7)]
 
 
 def test_create_history_db_continues_when_retention_prune_fails(

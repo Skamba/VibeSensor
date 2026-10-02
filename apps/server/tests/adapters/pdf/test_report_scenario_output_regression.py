@@ -1,4 +1,4 @@
-"""Report-output-focused scenario regressions for metadata, plots, and references."""
+"""Report-output-focused scenario regressions for metadata and references."""
 
 from __future__ import annotations
 
@@ -13,30 +13,6 @@ from vibesensor.shared.boundaries.summary_fields.finding import finding_from_pay
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 from vibesensor.use_cases.history.report_document import build_report_document
-
-
-class TestPlotDataKeyFix:
-    """Plot payload keys should stay populated when their source tables do."""
-
-    def test_amp_vs_speed_populated(self) -> None:
-        # 30 samples from 30-120 km/h produce ten speed bins centered from 35-125 km/h.
-        summary = summarize_run_data(
-            standard_metadata(),
-            build_speed_sweep_samples(n=30, vib_db=20.0),
-        )
-        amp_points = summary.get("plots", {}).get("amp_vs_speed", [])
-        assert amp_points == [
-            (35.0, 20.0),
-            (45.0, 20.0),
-            (55.0, 20.0),
-            (65.0, 20.0),
-            (75.0, 20.0),
-            (85.0, 20.0),
-            (95.0, 20.0),
-            (105.0, 20.0),
-            (115.0, 20.0),
-            (125.0, 20.0),
-        ]
 
 
 class TestMultiSensorLocalization:

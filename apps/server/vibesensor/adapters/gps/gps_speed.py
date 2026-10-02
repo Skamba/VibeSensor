@@ -38,6 +38,12 @@ MIN_STALE_TIMEOUT_S = _speed_resolution.MIN_STALE_TIMEOUT_S
 MAX_STALE_TIMEOUT_S = _speed_resolution.MAX_STALE_TIMEOUT_S
 MAX_MANUAL_SPEED_KMH = _speed_resolution.MAX_MANUAL_SPEED_KMH
 
+GPSD_HOST = "127.0.0.1"
+"""gpsd runs on the Pi itself."""
+
+GPSD_PORT = 2947
+"""Standard gpsd TCP port."""
+
 __all__ = ["GPSSpeedMonitor", "SpeedResolution"]
 
 
@@ -352,7 +358,7 @@ class GPSSpeedMonitor:
             ),
         )
 
-    async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:
+    async def run(self, host: str = GPSD_HOST, port: int = GPSD_PORT) -> None:
         await self._transport.run(
             host=host,
             port=port,

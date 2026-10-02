@@ -1,4 +1,4 @@
-"""Tests for persistence-spectrum aggregation and peak classification helpers."""
+"""Tests for peak classification and peak-table ranking helpers."""
 
 from __future__ import annotations
 
@@ -10,9 +10,6 @@ from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_fro
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
-)
-from vibesensor.use_cases.diagnostics.spectrogram import (
-    aggregate_fft_spectrum as _aggregate_fft_spectrum,
 )
 
 
@@ -35,48 +32,6 @@ class TestClassifyPeakType:
     )
     def test_classification(self, presence_ratio: float, burstiness: float, expected: str) -> None:
         assert classify_peak_type(presence_ratio=presence_ratio, burstiness=burstiness) == expected
-
-
-class TestAggregateFFTSpectrum:
-    def test_persistent_signal_ranks_above_single_thud(self) -> None:
-        samples = []
-        for i in range(20):
-            peaks = [{"hz": 25.0, "amp": 0.05}]
-            if i == 5:
-                peaks.append({"hz": 50.0, "amp": 0.50})
-            samples.append(sample(float(i) * 0.5, 80.0 + i * 0.5, peaks))
-
-        spectrum = _aggregate_fft_spectrum(_typed_samples(samples), freq_bin_hz=2.0)
-        spectrum_dict = dict(spectrum)
-        persistent_val = spectrum_dict.get(25.0, spectrum_dict.get(26.0, 0.0))
-        transient_val = spectrum_dict.get(51.0, spectrum_dict.get(50.0, 0.0))
-
-        assert persistent_val > transient_val
-
-    def test_raw_spectrum_preserves_max(self) -> None:
-        samples = []
-        for i in range(10):
-            peaks = [{"hz": 25.0, "amp": 0.05}]
-            if i == 3:
-                peaks.append({"hz": 50.0, "amp": 0.80})
-            samples.append(sample(float(i), 80.0, peaks))
-
-        raw = _aggregate_fft_spectrum(_typed_samples(samples), freq_bin_hz=2.0, aggregation="max")
-        raw_dict = dict(raw)
-        spike_val = raw_dict.get(51.0, raw_dict.get(50.0, 0.0))
-        assert spike_val >= 0.80
-
-    def test_empty_samples(self) -> None:
-        assert _aggregate_fft_spectrum([]) == []
-        assert _aggregate_fft_spectrum([], aggregation="max") == []
-
-    def test_persistence_spectrum_uses_run_noise_baseline(self) -> None:
-        low_noise_samples = uniform_samples(20, 30.0, 0.06, dt=1.0, strength_floor_amp_g=0.01)
-        high_noise_samples = uniform_samples(20, 30.0, 0.06, dt=1.0, strength_floor_amp_g=0.05)
-
-        low_noise_score = dict(_aggregate_fft_spectrum(low_noise_samples)).get(31.0, 0.0)
-        high_noise_score = dict(_aggregate_fft_spectrum(high_noise_samples)).get(31.0, 0.0)
-        assert low_noise_score > high_noise_score
 
 
 class TestTopPeaksTableRows:

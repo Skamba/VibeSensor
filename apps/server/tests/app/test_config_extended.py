@@ -29,10 +29,6 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
                 "history_db_path": "/tmp/history.db",
                 "app_log_path": "/tmp/app.log",
             },
-            "tracing": {
-                "enabled": True,
-                "output_path": "/tmp/traces.jsonl",
-            },
             "ap": {
                 "self_heal": {
                     "state_file": "/tmp/hotspot-state.json",
@@ -48,7 +44,6 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
 
     assert result.logging.history_db_path == Path("/tmp/history.db")
     assert result.logging.app_log_path == Path("/tmp/app.log")
-    assert result.tracing.output_path == Path("/tmp/traces.jsonl")
     assert result.ap.self_heal.state_file == Path("/tmp/hotspot-state.json")
     assert result.update.rollback_dir == Path("/tmp/rollback")
 
@@ -61,10 +56,6 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
             "logging": {
                 "history_db_path": "data/history.db",
                 "app_log_path": "logs/app.log",
-            },
-            "tracing": {
-                "enabled": True,
-                "output_path": "logs/traces.jsonl",
             },
             "ap": {
                 "self_heal": {
@@ -81,7 +72,6 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
 
     assert result.logging.history_db_path == config_path.parent / "data/history.db"
     assert result.logging.app_log_path == config_path.parent / "logs/app.log"
-    assert result.tracing.output_path == config_path.parent / "logs/traces.jsonl"
     assert result.ap.self_heal.state_file == config_path.parent / "data/hotspot-state.json"
     assert result.update.rollback_dir == config_path.parent / "data/rollback"
 
@@ -154,21 +144,19 @@ def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True
-    assert result.ap.self_heal.diagnostics_lookback_minutes == 5
-    assert result.ap.self_heal.min_restart_interval_seconds == 120
     assert result.ap.self_heal.state_file == tmp_path / "data/hotspot-self-heal-state.json"
 
 
-def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
+def test_load_config_ap_overrides(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     _write_config(
         config_path,
         {
             "ap": {
+                "ssid": "Workshop",
+                "psk": "change-me-first",
                 "self_heal": {
-                    "enabled": True,
-                    "diagnostics_lookback_minutes": 7,
-                    "min_restart_interval_seconds": 240,
+                    "enabled": False,
                     "state_file": "/tmp/hotspot-heal-state.json",
                 },
             },
@@ -177,6 +165,7 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
 
     result = load_config(config_path)
 
-    assert result.ap.self_heal.diagnostics_lookback_minutes == 7
-    assert result.ap.self_heal.min_restart_interval_seconds == 240
+    assert result.ap.ssid == "Workshop"
+    assert result.ap.psk == "change-me-first"
+    assert result.ap.self_heal.enabled is False
     assert result.ap.self_heal.state_file == Path("/tmp/hotspot-heal-state.json")

@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from math import floor
 from statistics import median as _median
 
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain import speed_bin_label
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
+    _estimate_strength_floor_amp_g,
     _run_noise_baseline_g,
+    _sample_top_peaks,
 )
+from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics._view_types import PeakTableRowData
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
@@ -22,14 +27,65 @@ from vibesensor.use_cases.diagnostics.peaks.statistics import (
     compute_peak_spatial_uniformity,
     compute_peak_speed_uniformity,
 )
-from vibesensor.use_cases.diagnostics.spectrogram import (
-    PeakSampleScan,
-    scan_peak_samples,
-)
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
     _amplitude_weighted_speed_window,
 )
 from vibesensor.vibration_strength import compute_db, compute_db_or_none
+
+
+@dataclass(frozen=True, slots=True)
+class _PeakSampleScanRow:
+    speed_kmh: float | None
+    peaks: list[tuple[float, float]]
+    floor_amp_g: float | None
+    location: str | None
+    speed_bin: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class _PeakSampleScan:
+    sample_count: int
+    rows: list[_PeakSampleScanRow]
+    total_locations: set[str]
+    total_speed_bin_counts: dict[str, int]
+
+
+def _scan_peak_samples(samples: Sequence[Sample]) -> _PeakSampleScan:
+    """Scan typed samples once and collect the peak-facing data the table needs."""
+    rows: list[_PeakSampleScanRow] = []
+    total_locations: set[str] = set()
+    total_speed_bin_counts: dict[str, int] = defaultdict(int)
+    sample_count = 0
+
+    for sample in samples:
+        sample_count += 1
+        speed = sample.speed_kmh
+        peaks = [(hz, amp) for hz, amp in _sample_top_peaks(sample) if hz > 0 and amp > 0]
+        floor_amp = _estimate_strength_floor_amp_g(sample)
+        location = _location_label(sample)
+        speed_bin = speed_bin_label(speed) if speed is not None and speed > 0 else None
+
+        if location:
+            total_locations.add(location)
+        if speed_bin is not None:
+            total_speed_bin_counts[speed_bin] += 1
+
+        rows.append(
+            _PeakSampleScanRow(
+                speed_kmh=speed,
+                peaks=peaks,
+                floor_amp_g=floor_amp,
+                location=location,
+                speed_bin=speed_bin,
+            ),
+        )
+
+    return _PeakSampleScan(
+        sample_count=sample_count,
+        rows=rows,
+        total_locations=total_locations,
+        total_speed_bin_counts=dict(total_speed_bin_counts),
+    )
 
 
 @dataclass
@@ -65,10 +121,9 @@ def top_peaks_table_rows(
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
     run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
 ) -> list[PeakTableRowData]:
     """Build ranked peak-table rows using persistence-weighted scoring."""
-    resolved_scan = peak_scan or scan_peak_samples(samples)
+    resolved_scan = _scan_peak_samples(samples)
     grouped: dict[float, _PeakBucket] = {}
     total_locations = resolved_scan.total_locations
     total_speed_bin_counts = resolved_scan.total_speed_bin_counts

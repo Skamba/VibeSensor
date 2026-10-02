@@ -5,15 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.adapters.hotspot.constants import (
+    HOTSPOT_CHANNEL,
+    HOTSPOT_CON_NAME,
+    HOTSPOT_IFNAME,
+    HOTSPOT_IP,
+    MIN_RESTART_INTERVAL_S,
+)
 from vibesensor.adapters.hotspot.parsers import HealStateStore, parse_active_connection_names
 
 if TYPE_CHECKING:
     from vibesensor.adapters.hotspot.health_probe import HealthState
-    from vibesensor.adapters.hotspot.self_heal import (
-        CommandRunner,
-        HotspotApConfig,
-        HotspotSelfHealConfig,
-    )
+    from vibesensor.adapters.hotspot.self_heal import CommandRunner, HotspotCredentials
 
 __all__ = ["HealAction", "apply_heals"]
 
@@ -31,18 +34,18 @@ class HealAction:
 
 
 def _ensure_ap_connection(
-    ap: HotspotApConfig, runner: CommandRunner, channel: int | None = None
+    ap: HotspotCredentials, runner: CommandRunner, channel: int | None = None
 ) -> bool:
-    configured_channel = channel if channel is not None else ap.channel
+    configured_channel = channel if channel is not None else HOTSPOT_CHANNEL
     con_names = parse_active_connection_names(
         runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout,
     )
-    if not ap.psk and ap.con_name in con_names:
+    if not ap.psk and HOTSPOT_CON_NAME in con_names:
         # Recreate open AP profiles to guarantee no stale security fields remain.
-        runner.run(["nmcli", "connection", "delete", ap.con_name], timeout_s=8)
-        con_names = [name for name in con_names if name != ap.con_name]
+        runner.run(["nmcli", "connection", "delete", HOTSPOT_CON_NAME], timeout_s=8)
+        con_names = [name for name in con_names if name != HOTSPOT_CON_NAME]
 
-    if ap.con_name not in con_names:
+    if HOTSPOT_CON_NAME not in con_names:
         added = runner.run(
             [
                 "nmcli",
@@ -51,9 +54,9 @@ def _ensure_ap_connection(
                 "type",
                 "wifi",
                 "ifname",
-                ap.ifname,
+                HOTSPOT_IFNAME,
                 "con-name",
-                ap.con_name,
+                HOTSPOT_CON_NAME,
                 "autoconnect",
                 "yes",
                 "ssid",
@@ -68,7 +71,7 @@ def _ensure_ap_connection(
         "nmcli",
         "connection",
         "modify",
-        ap.con_name,
+        HOTSPOT_CON_NAME,
         "802-11-wireless.mode",
         "ap",
         "802-11-wireless.band",
@@ -78,7 +81,7 @@ def _ensure_ap_connection(
         "ipv4.method",
         "shared",
         "ipv4.addresses",
-        ap.ip,
+        HOTSPOT_IP,
         "ipv6.method",
         "ignore",
     ]
@@ -96,18 +99,18 @@ def _ensure_ap_connection(
     if modified.returncode != 0:
         return False
 
-    up = runner.run(["nmcli", "--wait", "12", "connection", "up", ap.con_name], timeout_s=15)
+    up = runner.run(["nmcli", "--wait", "12", "connection", "up", HOTSPOT_CON_NAME], timeout_s=15)
     return up.returncode == 0
 
 
-def _bounce_connection(ap: HotspotApConfig, runner: CommandRunner) -> None:
-    runner.run(["nmcli", "connection", "down", ap.con_name], timeout_s=8)
-    runner.run(["ip", "link", "set", ap.ifname, "up"], timeout_s=5)
-    runner.run(["nmcli", "--wait", "10", "connection", "up", ap.con_name], timeout_s=12)
+def _bounce_connection(runner: CommandRunner) -> None:
+    runner.run(["nmcli", "connection", "down", HOTSPOT_CON_NAME], timeout_s=8)
+    runner.run(["ip", "link", "set", HOTSPOT_IFNAME, "up"], timeout_s=5)
+    runner.run(["nmcli", "--wait", "10", "connection", "up", HOTSPOT_CON_NAME], timeout_s=12)
 
 
-def _recreate_connection(ap: HotspotApConfig, runner: CommandRunner) -> bool:
-    runner.run(["nmcli", "connection", "delete", ap.con_name], timeout_s=8)
+def _recreate_connection(ap: HotspotCredentials, runner: CommandRunner) -> bool:
+    runner.run(["nmcli", "connection", "delete", HOTSPOT_CON_NAME], timeout_s=8)
     return _ensure_ap_connection(ap, runner)
 
 
@@ -135,8 +138,7 @@ def _handle_port53_conflict(conflict: str, runner: CommandRunner) -> str:
 
 
 def apply_heals(
-    ap: HotspotApConfig,
-    self_heal: HotspotSelfHealConfig,
+    ap: HotspotCredentials,
     health: HealthState,
     runner: CommandRunner,
     state_store: HealStateStore,
@@ -145,7 +147,7 @@ def apply_heals(
     actions: list[HealAction] = []
 
     if not health.nm_running:
-        if state_store.allow("restart_networkmanager", self_heal.min_restart_interval_seconds):
+        if state_store.allow("restart_networkmanager", MIN_RESTART_INTERVAL_S):
             runner.run(["systemctl", "restart", "NetworkManager"], timeout_s=15)
             action = "systemctl restart NetworkManager"
         else:
@@ -182,12 +184,12 @@ def apply_heals(
         )
 
     if not health.iface_up and health.iface_exists:
-        runner.run(["ip", "link", "set", ap.ifname, "up"], timeout_s=8)
+        runner.run(["ip", "link", "set", HOTSPOT_IFNAME, "up"], timeout_s=8)
         actions.append(
             HealAction(
                 name="if_up",
                 detected="interface down",
-                action=f"ip link set {ap.ifname} up",
+                action=f"ip link set {HOTSPOT_IFNAME} up",
                 helped=False,
             ),
         )
@@ -198,7 +200,7 @@ def apply_heals(
             ensured = _recreate_connection(ap, runner)
         if not ensured:
             for fallback_channel in _FALLBACK_CHANNELS:
-                if fallback_channel == ap.channel:
+                if fallback_channel == HOTSPOT_CHANNEL:
                     continue
                 if _ensure_ap_connection(ap, runner, channel=fallback_channel):
                     actions.append(
@@ -220,7 +222,7 @@ def apply_heals(
         )
 
     if health.ap_conn_active and (not health.iface_up or not health.ap_mode):
-        _bounce_connection(ap, runner)
+        _bounce_connection(runner)
         actions.append(
             HealAction(
                 name="bounce_ap",
@@ -242,9 +244,11 @@ def apply_heals(
                 ),
             )
         _ensure_ap_connection(ap, runner)
-        if state_store.allow("restart_networkmanager", self_heal.min_restart_interval_seconds):
+        if state_store.allow("restart_networkmanager", MIN_RESTART_INTERVAL_S):
             runner.run(["systemctl", "restart", "NetworkManager"], timeout_s=15)
-            runner.run(["nmcli", "--wait", "12", "connection", "up", ap.con_name], timeout_s=15)
+            runner.run(
+                ["nmcli", "--wait", "12", "connection", "up", HOTSPOT_CON_NAME], timeout_s=15
+            )
             action = "re-applied AP connection and restarted NetworkManager"
         else:
             action = "restart skipped by backoff; AP re-applied"

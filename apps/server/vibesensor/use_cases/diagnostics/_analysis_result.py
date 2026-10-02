@@ -17,7 +17,7 @@ from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.types.run_schema import RunMetadata
 
 from ._types import AccelStatistics, Sample
-from ._view_types import PlotDataResultData
+from ._view_types import PeakTableRowData
 from .run_data_preparation import PreparedRunData
 
 __all__ = ["AnalysisResult"]
@@ -43,7 +43,7 @@ class AnalysisResult:
     sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
     summary_speed_stats: SpeedProfileSummary
     summary_phase_info: DrivingPhaseSummary
-    plot_data: PlotDataResultData
+    peaks_table: list[PeakTableRowData]
 
     test_run: TestRun
     diagnostic_case: DiagnosticCase

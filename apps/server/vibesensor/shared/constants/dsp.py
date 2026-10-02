@@ -13,6 +13,12 @@ PEAK_BANDWIDTH_HZ: Final[float] = _PEAK_BANDWIDTH_HZ
 PEAK_SEPARATION_HZ: Final[float] = _PEAK_SEPARATION_HZ
 """Minimum separation between neighbouring detected peaks (Hz)."""
 
+SAMPLE_RATE_HZ: Final[int] = 800
+"""Expected live accelerometer sample rate per sensor (Hz)."""
+
+WAVEFORM_BUFFER_SECONDS: Final[int] = 8
+"""Per-client ring-buffer window length (seconds)."""
+
 WAVEFORM_DISPLAY_HZ: Final[int] = 120
 """Decimated sample rate sent to the UI waveform chart (Hz)."""
 

@@ -22,14 +22,14 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RunRecorderConfig:
     """Static configuration bundle for :class:`RunRecorder`."""
 
-    metrics_log_hz: int
     sensor_model: str
     default_sample_rate_hz: int
     fft_window_size_samples: int
+    metrics_log_hz: int = 4
     accel_scale_g_per_lsb: float | None = None
     persist_history_db: bool = True
     no_data_timeout_s: float = 15.0

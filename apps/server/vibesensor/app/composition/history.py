@@ -19,6 +19,9 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 LOGGER = logging.getLogger(__name__)
 
+RUN_RETENTION_DAYS = 7
+"""Terminal runs (and their raw/whole-run sidecars) older than this are pruned at startup."""
+
 
 def _build_prepared_pdf_bytes(prepared: PreparedReportInput) -> bytes:
     """Render a prepared report input through the PDF adapter boundary."""
@@ -52,37 +55,14 @@ def create_history_db(
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
-    raw_capture_retention_days = config.logging.raw_capture_retention_days
-    summary_retention_days = config.logging.run_retention_days
-    if raw_capture_retention_days < summary_retention_days:
-        try:
-            pruned_raw_captures = history.prune_raw_capture_artifacts_older_than_days(
-                raw_capture_retention_days,
-            )
-        except (sqlite3.Error, OSError):
-            LOGGER.warning(
-                "Failed to prune raw capture artifacts older than %d day(s) during "
-                "startup maintenance",
-                raw_capture_retention_days,
-                exc_info=True,
-            )
-        else:
-            if pruned_raw_captures:
-                LOGGER.info(
-                    "Pruned raw capture artifacts for %d terminal run(s) older than %d "
-                    "day(s); summary retention remains %d day(s)",
-                    pruned_raw_captures,
-                    raw_capture_retention_days,
-                    summary_retention_days,
-                )
     try:
         pruned_runs = history.prune_terminal_runs_older_than_days(
-            summary_retention_days,
+            RUN_RETENTION_DAYS,
         )
     except (sqlite3.Error, OSError):
         LOGGER.warning(
             "Failed to prune terminal runs older than %d day(s) during startup maintenance",
-            summary_retention_days,
+            RUN_RETENTION_DAYS,
             exc_info=True,
         )
     else:
@@ -90,7 +70,7 @@ def create_history_db(
             LOGGER.info(
                 "Pruned %d terminal run(s) older than %d day(s) during startup maintenance",
                 pruned_runs,
-                summary_retention_days,
+                RUN_RETENTION_DAYS,
             )
     return history
 
