@@ -134,7 +134,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     tire_circ = _tire.circumference_m
 
     logger.start_recording()
-    snapshot = logger._session_snapshot()
+    snapshot = logger._lifecycle.snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
     start_utc = snapshot.start_time_utc
@@ -175,7 +175,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
         )
 
     logger.stop_recording()
-    assert logger.wait_for_post_analysis(timeout_s=20.0)
+    assert logger.post_analysis.wait(timeout_s=20.0)
 
     run = history_db.get_run(run_id)
     assert run is not None

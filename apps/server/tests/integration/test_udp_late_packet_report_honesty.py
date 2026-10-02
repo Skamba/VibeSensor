@@ -106,7 +106,7 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
         proto = DataDatagramProtocol(
             registry=registry,
             processor=processor,
-            raw_capture_sink=recorder,
+            raw_capture_sink=recorder.raw_capture,
             queue_maxsize=8,
         )
         proto.connection_made(_FakeTransport())
@@ -124,7 +124,7 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
         registry.set_location(_CLIENT_ID_HEX, "front-left")
 
         recorder.start_recording()
-        snapshot = recorder._session_snapshot()
+        snapshot = recorder._lifecycle.snapshot()
         assert snapshot is not None
         run_id = snapshot.run_id
 
@@ -136,9 +136,9 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
         proto._process_datagram(newest, _ADDR)
         proto._process_datagram(late, _ADDR)
 
-        monkeypatch.setattr(recorder, "schedule_post_analysis", lambda _run_id: None)
+        monkeypatch.setattr(recorder.post_analysis, "schedule", lambda _run_id: None)
         recorder.stop_recording()
-        recorder.shutdown_raw_capture()
+        recorder.raw_capture.shutdown()
 
         stored = history_db.get_run(run_id)
         assert stored is not None

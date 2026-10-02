@@ -71,7 +71,7 @@ def _flush_active_run_tick(
         snapshot = recorder._lifecycle.snapshot()
         if snapshot is None:
             return None, False
-        live_start_mono_s = recorder._live_start_mono_s
+        live_start_mono_s = recorder._recording_session.live_start_mono_s
     timestamp_utc = utc_now_iso()
     live_rows = recorder._sample_flush.build_sample_records(
         run_id=snapshot.run_id,

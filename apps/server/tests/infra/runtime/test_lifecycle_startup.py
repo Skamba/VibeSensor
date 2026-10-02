@@ -164,7 +164,7 @@ class TestUdpTransport:
                 port=9000,
                 registry=runtime.registry,
                 processor=runtime.processor,
-                raw_capture_sink=runtime.run_recorder,
+                raw_capture_sink=runtime.run_recorder.raw_capture,
                 ingest_diagnostics=runtime.ingest_diagnostics,
             )
         finally:

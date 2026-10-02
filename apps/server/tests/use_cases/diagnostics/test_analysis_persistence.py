@@ -313,7 +313,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
 
     # Stop logging - should trigger post-analysis
     logger.stop_recording()
-    logger.wait_for_post_analysis(timeout_s=5.0)
+    logger.post_analysis.wait(timeout_s=5.0)
 
     # Verify analysis is persisted
     run = db.get_run(run_id)
