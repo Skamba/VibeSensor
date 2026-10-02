@@ -1,13 +1,9 @@
-"""Verify registry snapshots stay frozen and point-in-time safe for callers."""
+"""Verify registry lookups return point-in-time copies that callers cannot mutate through."""
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
-
-import pytest
-
 from vibesensor.adapters.udp.protocol import HelloMessage
-from vibesensor.infra.runtime.registry import ClientRecordSnapshot, ClientRegistry
+from vibesensor.infra.runtime.registry import ClientRegistry
 
 
 def _make_registry_with_client() -> tuple[ClientRegistry, str]:
@@ -29,16 +25,17 @@ def _make_registry_with_client() -> tuple[ClientRegistry, str]:
     return registry, client_id
 
 
-def test_registry_get_returns_frozen_snapshot() -> None:
+def test_registry_get_returns_detached_copy() -> None:
     registry, client_id = _make_registry_with_client()
 
     record = registry.get(client_id)
 
-    assert isinstance(record, ClientRecordSnapshot)
     assert record is not None
     assert record.control_addr == ("10.4.0.2", 9010)
-    with pytest.raises(FrozenInstanceError):
-        record.name = "mutated"
+    record.name = "mutated"
+    current = registry.get(client_id)
+    assert current is not None
+    assert current.name == "node-1"
 
 
 def test_registry_get_returns_point_in_time_snapshot() -> None:

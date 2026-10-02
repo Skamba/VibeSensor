@@ -279,12 +279,6 @@ class GPSSpeedMonitor:
     def _tpv_mode(payload: JsonObject) -> int | None:
         return read_tpv_mode(payload)
 
-    def _accept_speed_sample(self, speed_mps: float) -> bool:
-        return self._transport._accept_speed_sample(speed_mps)
-
-    def _reset_fix_metadata(self) -> None:
-        self._transport._reset_fix_metadata()
-
     def _captured_snapshots(
         self,
     ) -> tuple[GPSTransportSnapshot, SpeedResolutionPolicySnapshot]:
