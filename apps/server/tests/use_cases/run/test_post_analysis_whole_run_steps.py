@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from test_support.persisted_analysis import make_persisted_analysis
+import logging
+
+import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
@@ -25,17 +27,9 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralCoverageSummary,
 )
 from vibesensor.use_cases.run import post_analysis_executor
-from vibesensor.use_cases.run.post_analysis_executor import (
-    run_build_post_analysis_input_stage,
-    run_load_run_stage,
-    run_persist_analysis_summary_stage,
-    run_whole_run_pipeline_stages,
-)
-from vibesensor.use_cases.run.post_analysis_loader import (
-    LoadedPostAnalysisRun,
-    MissingPostAnalysisMetadata,
-)
-from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionMissingMetadata
+from vibesensor.use_cases.run.post_analysis_executor import build_whole_run_artifacts
+from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input
+from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 
 
 def _run_metadata(run_id: str) -> RunMetadata:
@@ -114,32 +108,18 @@ def _raw_capture_manifest_with_sensor(run_id: str) -> RawCaptureManifest:
     )
 
 
-def test_run_load_run_stage_returns_terminal_missing_metadata_result() -> None:
-    stored_errors: list[tuple[str, str]] = []
-
-    class FakeDB:
-        def store_analysis_error(self, run_id, error):
-            stored_errors.append((run_id, error))
-
-    stage = run_load_run_stage(
-        run_id="run-missing-stage",
-        db=FakeDB(),
-        load_run=lambda *, run_id, db: MissingPostAnalysisMetadata(
-            run_id=run_id,
-            error_message="Metadata not found or corrupt; cannot analyse",
-        ),
-        analysis_start=0.0,
-        defer_retryable_error_storage=False,
-    )
-
-    assert stage.loaded is None
-    assert isinstance(stage.terminal_result, PostAnalysisExecutionMissingMetadata)
-    assert stage.stage_result.stage_name == "LoadRunStage"
-    assert stage.stage_result.status == "failed"
-    assert stored_errors == [("run-missing-stage", "Metadata not found or corrupt; cannot analyse")]
+def _step_statuses(caplog: pytest.LogCaptureFixture) -> dict[str, str]:
+    return {
+        record.step: record.step_status
+        for record in caplog.records
+        if getattr(record, "event", None) == "post_analysis_step"
+    }
 
 
-def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeypatch) -> None:
+def test_whole_run_artifacts_fall_back_to_sample_count_context(
+    monkeypatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     stored: dict[str, object] = {}
     raw_capture_manifest = RawCaptureManifest(
         run_id="run-stage-pipeline",
@@ -192,7 +172,7 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeyp
         stride=1,
         raw_capture_manifest=raw_capture_manifest,
     )
-    run_input = run_build_post_analysis_input_stage(loaded).run_input
+    run_input = build_post_analysis_input(loaded)
     monkeypatch.setattr(
         post_analysis_executor,
         "build_whole_run_spectral_artifact_bundle_from_ranges",
@@ -204,31 +184,28 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeyp
         lambda **_kwargs: context_bundle,
     )
 
-    result = run_whole_run_pipeline_stages(
-        db=FakeDB(),
-        loaded=loaded,
-        run_input=run_input,
-    )
+    with caplog.at_level(logging.INFO, logger=post_analysis_executor.__name__):
+        result = build_whole_run_artifacts(db=FakeDB(), loaded=loaded, run_input=run_input)
 
-    assert [stage.stage_name for stage in result.stage_results] == [
-        "BuildWholeRunSpectraStage",
-        "BuildWholeRunContextStage",
-        "BuildOrderTraceStage",
-        "BuildOrderTraceSummaryStage",
-        "BuildOrderFamilySummaryStage",
-        "BuildSpatialSummaryStage",
-        "PersistArtifactsStage",
-    ]
-    statuses = {stage.stage_name: stage.status for stage in result.stage_results}
-    assert statuses["BuildWholeRunSpectraStage"] == "ok"
-    assert statuses["BuildWholeRunContextStage"] == "degraded"
-    assert statuses["BuildOrderTraceStage"] == "skipped"
-    assert statuses["PersistArtifactsStage"] == "ok"
+    assert _step_statuses(caplog) == {
+        "whole_run_spectra": "ok",
+        "whole_run_context": "degraded",
+        "order_traces": "skipped",
+        "order_trace_summary": "skipped",
+        "order_family_summary": "skipped",
+        "spatial_summary": "skipped",
+        "persist_whole_run_artifacts": "ok",
+    }
+    assert result.context_bundle is context_bundle
+    assert result.order_trace_bundle is None
     assert stored["run_id"] == "run-stage-pipeline"
-    assert result.stored_artifact_manifest is not None
+    assert result.stored_manifest is not None
 
 
-def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader(monkeypatch) -> None:
+def test_whole_run_spectra_use_manifest_and_bounded_range_reader(
+    monkeypatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     raw_capture_manifest = _raw_capture_manifest_with_sensor("run-range-pipeline")
     captured: dict[str, object] = {}
 
@@ -267,7 +244,7 @@ def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader(monkeyp
         raw_capture=None,
         raw_capture_manifest=raw_capture_manifest,
     )
-    run_input = run_build_post_analysis_input_stage(loaded).run_input
+    run_input = build_post_analysis_input(loaded)
     monkeypatch.setattr(
         post_analysis_executor,
         "build_whole_run_spectral_artifact_bundle_from_ranges",
@@ -279,34 +256,12 @@ def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader(monkeyp
         lambda **_kwargs: None,
     )
 
-    result = run_whole_run_pipeline_stages(
-        db=FakeDB(),
-        loaded=loaded,
-        run_input=run_input,
-    )
+    with caplog.at_level(logging.INFO, logger=post_analysis_executor.__name__):
+        result = build_whole_run_artifacts(db=FakeDB(), loaded=loaded, run_input=run_input)
 
-    assert result.stage_results[0].stage_name == "BuildWholeRunSpectraStage"
-    assert result.stage_results[0].status == "ok"
+    assert _step_statuses(caplog)["whole_run_spectra"] == "ok"
+    assert result.spectral_result is not None
     artifact_kwargs = captured["artifact_kwargs"]
     assert artifact_kwargs["raw_capture_manifest"] == raw_capture_manifest
     assert "raw_capture" not in artifact_kwargs
     assert captured["range_read"] == ("run-range-pipeline", "sensor-a", 4, 8)
-
-
-def test_run_persist_analysis_summary_stage_stores_summary() -> None:
-    stored: list[tuple[str, object]] = []
-
-    class FakeDB:
-        def store_analysis(self, run_id, analysis):
-            stored.append((run_id, analysis))
-
-    summary = make_persisted_analysis({"run_suitability": []})
-    stage = run_persist_analysis_summary_stage(
-        db=FakeDB(),
-        run_id="run-persist-stage",
-        summary=summary,
-    )
-
-    assert stage.stage_name == "PersistAnalysisSummaryStage"
-    assert stage.status == "ok"
-    assert stored == [("run-persist-stage", summary)]

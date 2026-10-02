@@ -50,7 +50,7 @@ the active profile, filter chains, and whether raw diagnostic evidence was
 preserved.
 
 The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
-the whole-run stage functions in `use_cases/run/post_analysis_executor.py`,
+`build_whole_run_artifacts()` in `use_cases/run/post_analysis_executor.py`,
 which call the diagnostics builders directly. Whole-run spectra now use
 `RawCaptureManifest` plus `RunPersistence.load_raw_capture_sensor_range(...)`
 instead of receiving a full `RawRunCapture`; compact summary-row replay may still
