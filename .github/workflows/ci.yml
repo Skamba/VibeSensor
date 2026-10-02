@@ -520,24 +520,7 @@ jobs:
         id: setup-backend
         uses: ./.github/actions/setup-backend
 
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/vibesensor/e2e-duration-cache.json
-          key: ${{ runner.os }}-e2e-durations-${{ hashFiles('tools/tests/run_e2e_parallel.py', 'apps/server/tests_e2e/**/*.py') }}-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-e2e-durations-${{ hashFiles('tools/tests/run_e2e_parallel.py', 'apps/server/tests_e2e/**/*.py') }}-
-            ${{ runner.os }}-e2e-durations-
-
       - name: Process-backed e2e suite (skip already-owned checks)
         run: >-
           "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
-
-      - name: Upload e2e failure artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2e-failure-artifacts
-          path: artifacts/ai/logs/e2e_parallel/
-          if-no-files-found: ignore
-          retention-days: 7
+          -m pytest -q -m "e2e and not long_sim" -n 6 apps/server/tests_e2e
