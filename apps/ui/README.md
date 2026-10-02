@@ -402,7 +402,7 @@ happy path (`npx playwright install chromium` once, then `npm run test:smoke`).
 ## Signal-driven island tests
 
 - Prefer `tests/dom_render_test_support.ts::mountSignalView()` for isolated
-  island tests. It installs an isolated DOM, mounts the Preact view once, and
+  island tests. It resets the happy-dom body, mounts the Preact view once, and
   returns a typed bridge plus deterministic cleanup.
 - Drive island state with `signal()` and `computed()` inputs instead of
   rebuilding the old `render(model)` fixture pattern.

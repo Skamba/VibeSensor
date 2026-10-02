@@ -37,7 +37,6 @@
     "dependency-cruiser": "^17.4.0",
     "happy-dom": "^20.14.5",
     "knip": "^6.38.0",
-    "linkedom": "^0.18.13",
     "msw": "^2.15.0",
     "openapi-typescript": "^7.13.0",
     "rollup-plugin-visualizer": "^7.1.1",
