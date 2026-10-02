@@ -118,7 +118,6 @@ class TestBuildSystemHealthSnapshotOk:
             "startup_state",
             "startup_warnings",
             "db_corruption_detected",
-            "db_engine_unhealthy",
             "degradation_reasons",
             "data_loss",
             "persistence",
@@ -192,9 +191,6 @@ _HEALTH_MUTATIONS: dict[str, Callable[[RuntimeHealthState], None]] = {
     "startup_failed": lambda h: h.mark_failed("init", "something blew up"),
     "task_failure": lambda h: h.record_task_failure("pump_task", "connection reset"),
     "db_corrupted": lambda h: h.mark_db_corrupted("row 7 missing from index"),
-    "db_engine_unhealthy": lambda h: h.mark_db_engine_unhealthy(
-        "shutdown_timeout", "History DB engine loop did not stop"
-    ),
     "startup_warning": lambda h: setattr(h, "startup_warnings", ["low disk space"]),
 }
 
@@ -231,18 +227,6 @@ _SINGLE_CONDITION_CASES = [
         "degraded",
         "db_corruption_detected",
         id="db-corruption",
-    ),
-    pytest.param(
-        {
-            "health": "db_engine_unhealthy",
-            "fields": {
-                "db_engine_unhealthy": True,
-                "db_engine_unhealthy_reason": "shutdown_timeout",
-            },
-        },
-        "degraded",
-        "db_engine_unhealthy",
-        id="db-engine-unhealthy",
     ),
     pytest.param({"health": "startup_warning"}, "warn", "startup_warnings", id="startup-warnings"),
     pytest.param(

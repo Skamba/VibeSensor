@@ -92,9 +92,6 @@ def build_system_health_snapshot(
     if health_state.db_corruption_detected:
         degradation_reasons.append("db_corruption_detected")
         has_error = True
-    if health_state.db_engine_unhealthy:
-        degradation_reasons.append("db_engine_unhealthy")
-        has_error = True
     if loop_state.processing_state != ProcessingHealth.OK:
         degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
         has_error = True
@@ -209,9 +206,6 @@ def build_system_health_snapshot(
         "startup_warnings": list(health_state.startup_warnings),
         "background_task_failures": dict(health_state.background_task_failures),
         "db_corruption_detected": health_state.db_corruption_detected,
-        "db_engine_unhealthy": health_state.db_engine_unhealthy,
-        "db_engine_unhealthy_reason": health_state.db_engine_unhealthy_reason,
-        "db_engine_unhealthy_details": health_state.db_engine_unhealthy_details,
         "processing_state": loop_state.processing_state,
         "processing_failures": failures,
         "processing_failure_categories": failure_categories,
@@ -313,14 +307,7 @@ def _build_subsystem_health(
             degraded=["startup_warnings"] if health_state.startup_warnings else [],
         ),
         "database": _subsystem(
-            unhealthy=[
-                reason
-                for reason, active in (
-                    ("db_corruption_detected", health_state.db_corruption_detected),
-                    ("db_engine_unhealthy", health_state.db_engine_unhealthy),
-                )
-                if active
-            ],
+            unhealthy=["db_corruption_detected"] if health_state.db_corruption_detected else [],
         ),
         "processing": _subsystem(
             unhealthy=(
