@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import Iterator, Mapping
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
@@ -75,23 +75,26 @@ class ClockSyncBroadcaster(Protocol):
 
 
 class RunPersistence(Protocol):
-    """Async persistence operations needed by history queries and recording flows."""
+    """History-run persistence used by recording, post-analysis, and history queries.
 
-    async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
+    Synchronous; async callers offload with ``asyncio.to_thread``.
+    """
 
-    async def aget_run(self, run_id: str) -> StoredHistoryRun | None: ...
+    def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
 
-    async def aget_run_metadata(self, run_id: str) -> RunMetadata | None: ...
+    def get_run(self, run_id: str) -> StoredHistoryRun | None: ...
 
-    async def aget_active_run_id(self) -> str | None: ...
+    def get_run_metadata(self, run_id: str) -> RunMetadata | None: ...
 
-    async def astale_analyzing_run_ids(self) -> list[str]: ...
+    def analyzing_run_health(self) -> AnalyzingRunHealth: ...
 
-    async def aanalyzing_run_health(self) -> AnalyzingRunHealth: ...
+    def iter_run_samples(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+    ) -> Iterator[list[SensorFrame]]: ...
 
-    async def averify_run_integrity(self, run_id: str) -> list[str]: ...
-
-    async def acreate_run(
+    def create_run(
         self,
         run_id: str,
         start_time_utc: str,
@@ -99,11 +102,11 @@ class RunPersistence(Protocol):
         case_id: str | None = None,
     ) -> None: ...
 
-    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
 
-    async def aappend_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None: ...
+    def append_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None: ...
 
-    async def afinalize_run(
+    def finalize_run(
         self,
         run_id: str,
         end_time_utc: str,
@@ -111,13 +114,13 @@ class RunPersistence(Protocol):
         case_id: str | None = None,
     ) -> bool: ...
 
-    async def aupdate_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool: ...
+    def update_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool: ...
 
-    async def astore_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
+    def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
 
-    async def astore_analysis_error(self, run_id: str, error: str) -> bool: ...
+    def store_analysis_error(self, run_id: str, error: str) -> bool: ...
 
-    async def afinalize_raw_capture(
+    def finalize_raw_capture(
         self,
         run_id: str,
         *,
@@ -126,11 +129,9 @@ class RunPersistence(Protocol):
         sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None: ...
 
-    async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None: ...
+    def load_raw_capture(self, run_id: str) -> RawRunCapture | None: ...
 
-    async def aload_raw_capture(self, run_id: str) -> RawRunCapture | None: ...
-
-    async def aload_raw_capture_sensor_range(
+    def load_raw_capture_sensor_range(
         self,
         run_id: str,
         client_id: str,
@@ -139,7 +140,7 @@ class RunPersistence(Protocol):
         sample_count: int,
     ) -> RawCaptureSensorRange | None: ...
 
-    async def astore_whole_run_artifacts(
+    def store_whole_run_artifacts(
         self,
         run_id: str,
         manifest: WholeRunArtifactManifest,
@@ -147,34 +148,7 @@ class RunPersistence(Protocol):
         artifact_contents: dict[str, bytes],
     ) -> WholeRunArtifactManifest | None: ...
 
-    async def aget_whole_run_artifact_manifest(
-        self,
-        run_id: str,
-    ) -> WholeRunArtifactManifest | None: ...
-
-    async def aload_whole_run_artifact(
-        self,
-        run_id: str,
-        artifact_key: str,
-    ) -> bytes | None: ...
-
-    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
-
-    async def adelete_run(self, run_id: str) -> bool: ...
-
-    async def arecover_stale_recording_runs(self) -> int: ...
-
-    async def aprune_terminal_runs_older_than_days(self, retention_days: int) -> int: ...
-
-    async def aget_run_samples(self, run_id: str) -> list[SensorFrame]: ...
-
-    def aiter_run_samples(
-        self,
-        run_id: str,
-        batch_size: int = 1000,
-        *,
-        stride: int = 1,
-    ) -> AsyncIterator[list[SensorFrame]]: ...
+    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 
 
 class ActiveCarReader(Protocol):
@@ -268,11 +242,11 @@ class SensorMetadataStore(SensorMetadataReader, Protocol):
 
 
 class SettingsSnapshotPersistence(Protocol):
-    """Async settings snapshot persistence surface needed by focused settings services."""
+    """Settings snapshot persistence used by the settings coordinator."""
 
-    async def aget_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
+    def get_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
 
-    async def aset_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None: ...
+    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None: ...
 
 
 class SignalSource(Protocol):
@@ -343,13 +317,13 @@ class ClientTracker(Protocol):
 
 
 class ClientNamePersistence(Protocol):
-    """Async persisted client-name operations needed by ClientRegistry."""
+    """Persisted client-name operations used by ClientRegistry."""
 
-    async def alist_client_names(self) -> dict[str, str]: ...
+    def list_client_names(self) -> dict[str, str]: ...
 
-    async def aupsert_client_name(self, client_id: str, name: str) -> None: ...
+    def upsert_client_name(self, client_id: str, name: str) -> None: ...
 
-    async def adelete_client_name(self, client_id: str) -> bool | None: ...
+    def delete_client_name(self, client_id: str) -> bool: ...
 
 
 class RegistryHelloMessage(Protocol):

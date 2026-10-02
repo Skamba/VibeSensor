@@ -87,7 +87,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
 ) -> None:
     history_db = build_history_db(tmp_path)
     try:
-        registry = ClientRegistry(db=history_db.client_name_repository)
+        registry = ClientRegistry(db=history_db)
         processor = _processor()
         recorder = RunRecorder(
             RunRecorderConfig(
@@ -100,7 +100,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
             registry=registry,
             gps_monitor=_FakeSpeedProvider(),
             processor=processor,
-            history_db=history_db.run_repository,
+            history_db=history_db,
             language_reader=SimpleNamespace(language="en"),
         )
         proto = DataDatagramProtocol(
@@ -143,7 +143,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         recorder.stop_recording()
         recorder.shutdown_raw_capture()
 
-        stored = history_db.run_repository.get_run(run_id)
+        stored = history_db.get_run(run_id)
         assert stored is not None
         assert stored.raw_capture_manifest is not None
         manifest = stored.raw_capture_manifest
@@ -153,9 +153,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         assert sensor_loss is not None
         assert sensor_loss.losses.udp_ingest_queue_drop_count == 1
 
-        raw_capture = history_db.run_repository._run_sync(
-            history_db.run_repository.aload_raw_capture(run_id)
-        )
+        raw_capture = history_db.load_raw_capture(run_id)
         assert raw_capture is not None
 
         finding = make_finding_payload(
@@ -232,4 +230,4 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         assert ingest_drop_rows
         assert ingest_drop_rows[0].state == "warn"
     finally:
-        history_db.lifecycle.close()
+        history_db.close()

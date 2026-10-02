@@ -52,7 +52,7 @@ preserved.
 The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
 the whole-run stage functions in `use_cases/run/post_analysis_executor.py`,
 which call the diagnostics builders directly. Whole-run spectra now use
-`RawCaptureManifest` plus `RunPersistence.aload_raw_capture_sensor_range(...)`
+`RawCaptureManifest` plus `RunPersistence.load_raw_capture_sensor_range(...)`
 instead of receiving a full `RawRunCapture`; compact summary-row replay may still
 load full raw capture before compact report-facing summaries are persisted.
 
@@ -77,9 +77,9 @@ Current whole-run sidecar stages:
 6. `use_cases/diagnostics/whole_run_spatial_coherence.py` builds candidate-level
    multi-sensor spatial evidence windows and compact spatial summaries.
 7. `post_analysis_executor.py` persists dense artifacts through
-   `RunPersistence.astore_whole_run_artifacts(...)`, appends compact whole-run
+   `RunPersistence.store_whole_run_artifacts(...)`, appends compact whole-run
    metadata/summaries into `PersistedAnalysis`, and then stores the report-facing
-   summary through `RunPersistence.astore_analysis(...)`.
+   summary through `RunPersistence.store_analysis(...)`.
 
 The sidecar pipeline is the `whole_run_*` implementation above. Shared quality scoring still marks clipped,
 suspect-mounted, or timing-compromised windows as limited/excluded evidence
@@ -115,7 +115,7 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
                       ├─ append compact whole-run summaries/metadata to PersistedAnalysis
                       ├─ history_db.astore_whole_run_artifacts()
-                      └─ history_db.astore_analysis()
+                      └─ history_db.store_analysis()
                             ← persist sidecars and report-facing summary via injected RunPersistence
 ```
 
@@ -201,7 +201,7 @@ Input: PostAnalysisRunInput + optional whole-run stage output
   │
   ├─ post_analysis_executor.append_whole_run_*() → compact persisted summaries
   │
-  └─ history_db.astore_analysis() → PersistedAnalysis/report-facing summary
+  └─ history_db.store_analysis() → PersistedAnalysis/report-facing summary
 ```
 
 ## Persisted Outputs
@@ -217,7 +217,7 @@ During `execute_post_analysis()`, `PostAnalysisWorker`:
    stages produced them.
 4. Adds language-neutral trust warnings when the captured run context was
    incomplete for confident order analysis.
-5. Stores the summary via `history_db.astore_analysis()` as a versioned
+5. Stores the summary via `history_db.store_analysis()` as a versioned
    persistence envelope.
 
 History readers unwrap the envelope back to the summary shape. When a run has

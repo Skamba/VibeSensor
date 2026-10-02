@@ -36,18 +36,18 @@ pytestmark = pytest.mark.smoke
 class _RunPersistenceStub:
     run: StoredHistoryRun
 
-    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
+    def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if run_id != self.run.run_id:
             return None
         return self.run
 
-    async def aget_raw_capture_manifest(self, _run_id: str) -> RawCaptureManifest | None:
+    def get_raw_capture_manifest(self, _run_id: str) -> RawCaptureManifest | None:
         return None
 
-    async def aload_raw_capture(self, _run_id: str) -> RawRunCapture | None:
+    def load_raw_capture(self, _run_id: str) -> RawRunCapture | None:
         return None
 
-    async def aload_raw_capture_sensor_range(
+    def load_raw_capture_sensor_range(
         self,
         _run_id: str,
         client_id: str,

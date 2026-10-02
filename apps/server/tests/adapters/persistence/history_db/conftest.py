@@ -7,17 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
 @pytest.fixture
-def db(tmp_path: Path) -> Iterator[HistoryPersistenceAdapters]:
+def db(tmp_path: Path) -> Iterator[HistoryDB]:
     """A fresh HistoryDB at ``tmp_path / "history.db"``, closed after the test."""
-    adapters = create_history_persistence_adapters(tmp_path / "history.db")
+    adapters = HistoryDB(tmp_path / "history.db")
     try:
         yield adapters
     finally:
-        adapters.lifecycle.close()
+        adapters.close()

@@ -1,10 +1,17 @@
-"""Schema and shared constants for HistoryDB."""
+"""History DB schema plus open-time schema enforcement and incompatible-DB backup."""
 
 from __future__ import annotations
 
 import logging
+import sqlite3
+from datetime import UTC, datetime
+from pathlib import Path
+
+from vibesensor.shared.json_utils import json_text_dumps
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = ["SCHEMA_SQL", "SCHEMA_VERSION", "ensure_schema", "quick_check_problems"]
 
 
 SCHEMA_VERSION = 15
@@ -81,3 +88,174 @@ CREATE TABLE IF NOT EXISTS client_names (
     updated_at  TEXT NOT NULL
 );
 """
+
+
+_SUMMARY_EXPORT_COLUMNS = (
+    "run_id",
+    "status",
+    "start_time_utc",
+    "end_time_utc",
+    "created_at",
+    "analysis_completed_at",
+    "sample_count",
+    "error_message",
+    "metadata_json",
+    "analysis_json",
+)
+_USER_TABLES_SQL = """
+SELECT name FROM sqlite_master
+WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+"""
+
+
+def ensure_schema(conn: sqlite3.Connection, db_path: Path) -> None:
+    """Create or re-apply the current schema; back up and reject anything else.
+
+    Runs on the freshly opened writer connection before any other access.
+    """
+    row = conn.execute("PRAGMA user_version").fetchone()
+    version = int(row[0]) if row is not None else 0
+    if version == 0:
+        user_tables = {str(name) for (name,) in conn.execute(_USER_TABLES_SQL).fetchall()}
+        if "schema_meta" in user_tables:
+            _raise_incompatible_database(
+                db_path,
+                version=version,
+                reason="legacy-schema-meta",
+                message=(
+                    f"Database at {db_path} uses a legacy schema_meta table "
+                    f"incompatible with the current v{SCHEMA_VERSION} format."
+                ),
+            )
+        if user_tables:
+            _raise_incompatible_database(
+                db_path,
+                version=version,
+                reason="unexpected-user-tables",
+                message=(
+                    f"Database at {db_path} has user tables but no schema version and is "
+                    f"incompatible with the current v{SCHEMA_VERSION} format."
+                ),
+            )
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        conn.commit()
+        return
+    if version == SCHEMA_VERSION:
+        conn.executescript(SCHEMA_SQL)
+        conn.commit()
+        return
+    if version > SCHEMA_VERSION:
+        _raise_incompatible_database(
+            db_path,
+            version=version,
+            reason="newer-schema",
+            message=(
+                f"History DB schema version {version} is newer than supported {SCHEMA_VERSION}."
+            ),
+        )
+    _raise_incompatible_database(
+        db_path,
+        version=version,
+        reason="unsupported-schema",
+        message=f"Database schema v{version} is incompatible with current v{SCHEMA_VERSION}.",
+    )
+
+
+def quick_check_problems(conn: sqlite3.Connection) -> list[str]:
+    """Return ``PRAGMA quick_check`` findings other than ``ok``."""
+    return [
+        str(row[0]) for row in conn.execute("PRAGMA quick_check").fetchall() if str(row[0]) != "ok"
+    ]
+
+
+def _raise_incompatible_database(
+    db_path: Path,
+    *,
+    version: int,
+    reason: str,
+    message: str,
+) -> None:
+    try:
+        backup_path, summary_export_path = _protect_incompatible_database(
+            db_path,
+            version=version,
+            reason=reason,
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"{message} Automatic backup before rejection failed for {db_path}: {exc}. "
+            "The database was left untouched; keep it and back it up manually before any reset."
+        ) from exc
+    export_note = (
+        f" Run-summary export written to {summary_export_path}."
+        if summary_export_path is not None
+        else " Run-summary export was not available for this schema."
+    )
+    raise RuntimeError(f"{message} Backup written to {backup_path}.{export_note}")
+
+
+def _protect_incompatible_database(
+    db_path: Path,
+    *,
+    version: int,
+    reason: str,
+) -> tuple[Path, Path | None]:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    backup_dir = db_path.parent / "history-db-backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stem = db_path.stem or "history"
+    backup_path = backup_dir / f"{stem}.incompatible-v{version}-{reason}-{timestamp}.db"
+    summary_export_path = (
+        backup_dir / f"{stem}.incompatible-v{version}-{reason}-{timestamp}.run-summaries.jsonl"
+    )
+
+    source_conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    backup_conn = sqlite3.connect(str(backup_path))
+    try:
+        source_conn.backup(backup_conn)
+    finally:
+        backup_conn.close()
+        source_conn.close()
+
+    exported_summary = _export_incompatible_run_summaries(
+        backup_path=backup_path,
+        summary_export_path=summary_export_path,
+    )
+    return backup_path, exported_summary
+
+
+def _export_incompatible_run_summaries(
+    *,
+    backup_path: Path,
+    summary_export_path: Path,
+) -> Path | None:
+    conn = sqlite3.connect(f"file:{backup_path}?mode=ro", uri=True)
+    try:
+        table_names = {str(row[0]) for row in conn.execute(_USER_TABLES_SQL)}
+        if "runs" not in table_names:
+            return None
+        columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(runs)")}
+        export_columns = [column for column in _SUMMARY_EXPORT_COLUMNS if column in columns]
+        if "run_id" not in export_columns:
+            return None
+        order_column = next(
+            (
+                column
+                for column in ("analysis_completed_at", "end_time_utc", "created_at", "run_id")
+                if column in columns
+            ),
+            "run_id",
+        )
+        rows = conn.execute(
+            f"SELECT {', '.join(export_columns)} FROM runs ORDER BY {order_column} DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    with summary_export_path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            payload = {column: row[index] for index, column in enumerate(export_columns)}
+            handle.write(json_text_dumps(payload, sort_keys=True))
+            handle.write("\n")
+    return summary_export_path

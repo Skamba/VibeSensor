@@ -6,14 +6,11 @@ import re
 from pathlib import Path
 
 import pytest
-from test_support.history_db_async import execute_statements
+from test_support.history_db_sql import execute_statements
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -82,29 +79,29 @@ class TestHistoryDBAnalysisValidation:
     """Analysis stored in history must be type-checked as dict."""
 
     @staticmethod
-    def _make_db(tmp_path: Path) -> HistoryPersistenceAdapters:
-        db = create_history_persistence_adapters(tmp_path / "history.db")
-        db.run_repository.create_run("run-1", "2026-01-01T00:00:00Z", _metadata())
+    def _make_db(tmp_path: Path) -> HistoryDB:
+        db = HistoryDB(tmp_path / "history.db")
+        db.create_run("run-1", "2026-01-01T00:00:00Z", _metadata())
         return db
 
     def test_rejects_non_dict_analysis(self, tmp_path: Path) -> None:
         db = self._make_db(tmp_path)
         execute_statements(
-            db.lifecycle,
+            db,
             (
                 "UPDATE runs SET status='complete', analysis_json=? WHERE run_id=?",
                 ("[1,2,3]", "run-1"),
             ),
         )
-        run = db.run_repository.get_run("run-1")
+        run = db.get_run("run-1")
         assert run is not None
         assert run.analysis is None
         assert run.analysis_corrupt is True
 
     def test_accepts_dict_analysis(self, tmp_path: Path) -> None:
         db = self._make_db(tmp_path)
-        db.run_repository.store_analysis("run-1", make_persisted_analysis({"findings": []}))
-        run = db.run_repository.get_run("run-1")
+        db.store_analysis("run-1", make_persisted_analysis({"findings": []}))
+        run = db.get_run("run-1")
         assert run is not None
         assert run.analysis is not None
 

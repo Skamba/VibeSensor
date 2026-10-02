@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
 def test_schema_version_ancient_no_migration_creates_backup_and_summary_export(
@@ -43,7 +43,7 @@ def test_schema_version_ancient_no_migration_creates_backup_and_summary_export(
     conn.close()
 
     with pytest.raises(RuntimeError, match="incompatible"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)
     backup_dir = tmp_path / "history-db-backups"
     backups = list(backup_dir.glob("history.incompatible-v1-unsupported-schema-*.db"))
     exports = list(
@@ -56,15 +56,15 @@ def test_schema_version_ancient_no_migration_creates_backup_and_summary_export(
 
 def test_schema_version_future_creates_backup_before_rejection(tmp_path: Path) -> None:
     db_path = tmp_path / "history.db"
-    db = create_history_persistence_adapters(db_path)
-    db.lifecycle.close()
+    db = HistoryDB(db_path)
+    db.close()
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA user_version = 99")
     conn.commit()
     conn.close()
 
     with pytest.raises(RuntimeError, match="newer than supported"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)
     backups = list(
         (tmp_path / "history-db-backups").glob("history.incompatible-v99-newer-schema-*.db")
     )
@@ -104,7 +104,7 @@ def test_previous_schema_versions_are_rejected_with_backup(tmp_path: Path, versi
         conn.close()
 
     with pytest.raises(RuntimeError, match=f"schema v{version} is incompatible"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)
 
     backup_dir = tmp_path / "history-db-backups"
     backups = list(backup_dir.glob(f"history-v{version}.incompatible-v{version}-*.db"))
@@ -127,7 +127,7 @@ def test_legacy_schema_meta_table_fails_fast_with_clear_guidance(tmp_path: Path)
         conn.close()
 
     with pytest.raises(RuntimeError, match="legacy schema_meta table incompatible"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)
 
     backups = list(
         (tmp_path / "history-db-backups").glob(

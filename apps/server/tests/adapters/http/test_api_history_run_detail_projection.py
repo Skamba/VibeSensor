@@ -44,8 +44,8 @@ def test_history_run_includes_sample_count() -> None:
 def test_history_run_detail_includes_raw_capture_quality() -> None:
     @dataclass
     class RawManifestDB(FakeHistoryDB):
-        async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
-            run = await super().aget_run(run_id)
+        def get_run(self, run_id: str) -> StoredHistoryRun | None:
+            run = super().get_run(run_id)
             if run is None:
                 return None
             losses = RawCaptureLossStats(queue_overflow_chunk_count=120)
@@ -241,10 +241,10 @@ def test_history_run_includes_error_message_for_error_status() -> None:
 def test_history_run_strips_internal_analysis_fields() -> None:
     @dataclass
     class InternalFieldDB(FakeHistoryDB):
-        async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
+        def get_run(self, run_id: str) -> StoredHistoryRun | None:
             if run_id != "run-1":
                 return None
-            result = await super().aget_run(run_id)
+            result = super().get_run(run_id)
             assert result is not None
             analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
             analysis["_internal_secret"] = "should-not-appear"

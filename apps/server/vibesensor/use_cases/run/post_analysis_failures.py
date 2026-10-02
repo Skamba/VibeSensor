@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
-
-import aiosqlite
 
 from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
@@ -56,18 +55,9 @@ class UnexpectedPostAnalysisBugRecorder:
         db = self._history_db
         if db is None:
             return
-        astore = getattr(db, "astore_analysis_error", None)
-        if not callable(astore):
-            return
         try:
-            runner = getattr(db, "_run_on_engine_loop", None)
-            if callable(runner):
-                runner(astore(run_id, completed_error))
-            else:
-                import asyncio as _asyncio
-
-                _asyncio.run(astore(run_id, completed_error))
-        except (aiosqlite.Error, OSError):
+            db.store_analysis_error(run_id, completed_error)
+        except (sqlite3.Error, OSError):
             LOGGER.exception(
                 "Failed to persist unexpected analysis failure for run %s",
                 run_id,

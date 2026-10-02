@@ -14,10 +14,7 @@ from pypdf import PdfReader
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.domain import TireSpec
@@ -50,10 +47,10 @@ class _FakeTransport:
 
 
 @pytest.fixture
-def history_db(tmp_path: Path) -> Iterator[HistoryPersistenceAdapters]:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
+    db = HistoryDB(tmp_path / "history.db")
     yield db
-    db.lifecycle.close()
+    db.close()
 
 
 def _register_sensors(registry: ClientRegistry) -> None:
@@ -98,11 +95,9 @@ def _build_sensor_packet(
     )
 
 
-def test_multi_sensor_udp_to_report_pipeline(
-    history_db: HistoryPersistenceAdapters, tmp_path: Path
-) -> None:
+def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Path) -> None:
     """Exercise UDP parse/ingest → processing → recording → analysis → PDF for 4 sensors."""
-    registry = ClientRegistry(db=history_db.client_name_repository)
+    registry = ClientRegistry(db=history_db)
     processor = SignalProcessor(
         sample_rate_hz=_SAMPLE_RATE_HZ,
         waveform_seconds=4,
@@ -123,7 +118,7 @@ def test_multi_sensor_udp_to_report_pipeline(
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        history_db=history_db.run_repository,
+        history_db=history_db,
         language_reader=SimpleNamespace(language="en"),
     )
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=256)
@@ -182,14 +177,14 @@ def test_multi_sensor_udp_to_report_pipeline(
     logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=20.0)
 
-    run = history_db.run_repository.get_run(run_id)
+    run = history_db.get_run(run_id)
     assert run is not None
     assert run.status.value == "complete"
     analysis = run.analysis
     assert analysis is not None
 
     rows = []
-    for batch in history_db.run_repository.iter_run_samples(run_id, batch_size=512):
+    for batch in history_db.iter_run_samples(run_id, batch_size=512):
         rows.extend(batch)
     assert rows
     assert {r.client_id for r in rows} == _SENSOR_IDS_HEX

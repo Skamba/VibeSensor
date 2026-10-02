@@ -151,8 +151,8 @@ def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> No
         )
         idx: int = 0
 
-        async def aget_run(self, run_id: str):
-            result = await super().aget_run(run_id)
+        def get_run(self, run_id: str):
+            result = super().get_run(run_id)
             if result is None:
                 return None
             ts = self.timestamps[min(self.idx, len(self.timestamps) - 1)]
@@ -193,8 +193,8 @@ def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
         analyses: list[AnalysisSummary] = field(default_factory=list)
         idx: int = 0
 
-        async def aget_run(self, run_id: str):
-            result = await super().aget_run(run_id)
+        def get_run(self, run_id: str):
+            result = super().get_run(run_id)
             if result is None:
                 return None
             analysis = self.analyses[min(self.idx, len(self.analyses) - 1)]

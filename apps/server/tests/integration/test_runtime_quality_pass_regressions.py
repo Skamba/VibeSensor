@@ -18,10 +18,7 @@ import pytest
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -32,8 +29,8 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 def _make_history_db(
     tmp_path: Path,
     name: str = "history.db",
-) -> HistoryPersistenceAdapters:
-    return create_history_persistence_adapters(tmp_path / name)
+) -> HistoryDB:
+    return HistoryDB(tmp_path / name)
 
 
 def _seeded_history_db(
@@ -42,11 +39,11 @@ def _seeded_history_db(
     n_samples: int,
     *,
     name: str = "history.db",
-) -> HistoryPersistenceAdapters:
+) -> HistoryDB:
     """Create a HistoryDB with one run containing *n_samples* rows."""
     db = _make_history_db(tmp_path, name)
-    db.run_repository.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="test"))
-    db.run_repository.append_samples(
+    db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="test"))
+    db.append_samples(
         run_id,
         [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(n_samples)],
     )
@@ -109,7 +106,7 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
 def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
     db = _make_history_db(tmp_path, "settings.db")
     try:
-        services = build_settings_services(db=db.settings_snapshot_repository)
+        services = build_settings_services(db=db)
 
         # Default
         assert services.ui_preferences.speed_unit == "kmh"
@@ -119,14 +116,14 @@ def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
         assert services.ui_preferences.speed_unit == "mps"
 
         # Reload from DB
-        services2 = build_settings_services(db=db.settings_snapshot_repository)
+        services2 = build_settings_services(db=db)
         assert services2.ui_preferences.speed_unit == "mps"
 
         # Invalid falls back
         with pytest.raises(ValueError, match="speed_unit must be one of"):
             services.ui_preferences.set_speed_unit("mph")  # not a valid choice
     finally:
-        db.lifecycle.close()
+        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -139,24 +136,12 @@ def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
     db = _seeded_history_db(tmp_path, "r1", total)
     try:
         all_rows: list[SensorFrame] = []
-        for batch in db.run_repository.iter_run_samples("r1", batch_size=10):
+        for batch in db.iter_run_samples("r1", batch_size=10):
             all_rows.extend(batch)
         assert len(all_rows) == total
         assert [r.t_s for r in all_rows] == [float(i) for i in range(total)]
     finally:
-        db.lifecycle.close()
-
-
-def test_iter_run_samples_offset(tmp_path: Path) -> None:
-    db = _seeded_history_db(tmp_path, "r2", 20)
-    try:
-        all_rows: list[SensorFrame] = []
-        for batch in db.run_repository.iter_run_samples("r2", batch_size=5, offset=10):
-            all_rows.extend(batch)
-        assert len(all_rows) == 10
-        assert [r.t_s for r in all_rows] == [float(i) for i in range(10, 20)]
-    finally:
-        db.lifecycle.close()
+        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -194,4 +179,4 @@ CREATE TABLE samples (
     conn.close()
 
     with pytest.raises(RuntimeError, match="incompatible"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)

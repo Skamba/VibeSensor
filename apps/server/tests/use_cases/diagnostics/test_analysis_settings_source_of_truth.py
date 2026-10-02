@@ -31,17 +31,17 @@ def _route(router, path: str, method: str = "GET"):
 @pytest.fixture
 def _wiring(tmp_path: Path):
     """Provide a wired (state, router) pair with one active car named 'Primary'."""
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
 
-    db = create_history_persistence_adapters(tmp_path / "test.db")
-    settings = build_settings_services(db=db.settings_snapshot_repository)
+    db = HistoryDB(tmp_path / "test.db")
+    settings = build_settings_services(db=db)
     initial = settings.car_settings.add_car({"name": "Primary"})
     settings.car_settings.set_active_car(initial.cars[0]["id"])
     state = FakeState(
         settings_reader=settings.settings_reader,
         car_settings=settings.car_settings,
         analysis_settings=settings.analysis_settings,
-        history_db=db.run_repository,
+        history_db=db,
     )
     app = FastAPI()
     router = create_router(state)

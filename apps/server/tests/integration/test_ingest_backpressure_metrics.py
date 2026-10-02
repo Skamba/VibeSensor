@@ -21,10 +21,7 @@ import pytest
 from test_support.polling import async_wait_until
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.adapters.websocket.hub import WebSocketHub
@@ -75,10 +72,10 @@ class _FakeTransport:
 
 
 @pytest.fixture
-def history_db(tmp_path: Path) -> Iterator[HistoryPersistenceAdapters]:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
+    db = HistoryDB(tmp_path / "history.db")
     yield db
-    db.lifecycle.close()
+    db.close()
 
 
 def _sensor_specs(count: int) -> list[_SensorSpec]:
@@ -148,11 +145,11 @@ def _ready_health_state() -> RuntimeHealthState:
     return health_state
 
 
-def _build_smoke_context(history_db: HistoryPersistenceAdapters) -> _IngestSmokeContext:
+def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
     sensor_count = 3
     sensors = _sensor_specs(sensor_count)
     ingest_diagnostics = IngestDiagnosticsCollector()
-    registry = ClientRegistry(db=history_db.client_name_repository)
+    registry = ClientRegistry(db=history_db)
     processor = SignalProcessor(
         sample_rate_hz=_SAMPLE_RATE_HZ,
         waveform_seconds=4,
@@ -173,7 +170,7 @@ def _build_smoke_context(history_db: HistoryPersistenceAdapters) -> _IngestSmoke
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        history_db=history_db.run_repository,
+        history_db=history_db,
         language_reader=SimpleNamespace(language="en"),
         ingest_diagnostics=ingest_diagnostics,
     )
@@ -398,7 +395,7 @@ def _assert_smoke_health_contracts(
 
 @pytest.mark.asyncio
 async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
-    history_db: HistoryPersistenceAdapters,
+    history_db: HistoryDB,
 ) -> None:
     ctx = _build_smoke_context(history_db)
     websocket = AsyncMock()
@@ -456,7 +453,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
         )
         await asyncio.to_thread(ctx.recorder.stop_recording)
         assert await asyncio.to_thread(ctx.recorder.wait_for_post_analysis, timeout_s=30.0)
-        stored = await asyncio.to_thread(history_db.run_repository.get_run, run_id)
+        stored = await asyncio.to_thread(history_db.get_run, run_id)
         assert stored is not None
         assert stored.raw_capture_manifest is not None
     finally:

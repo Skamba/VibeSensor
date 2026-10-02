@@ -270,7 +270,7 @@ class RecordingPostAnalysisDB:
     def __init__(self) -> None:
         self.stored: dict[str, Any] = {}
 
-    async def astore_whole_run_artifacts(
+    def store_whole_run_artifacts(
         self,
         run_id: str,
         manifest: WholeRunArtifactManifest,
@@ -282,13 +282,13 @@ class RecordingPostAnalysisDB:
         self.stored["whole_run_artifact_contents"] = dict(artifact_contents)
         return manifest
 
-    async def astore_analysis(self, run_id: str, analysis: object) -> None:
+    def store_analysis(self, run_id: str, analysis: object) -> None:
         self.stored["analysis_run_id"] = run_id
         self.stored["analysis"] = (
             analysis.to_json_object() if hasattr(analysis, "to_json_object") else analysis
         )
 
-    async def astore_analysis_error(self, run_id: str, error: str) -> None:
+    def store_analysis_error(self, run_id: str, error: str) -> None:
         raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
 
