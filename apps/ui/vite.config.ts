@@ -1,4 +1,3 @@
-import preact from "@preact/preset-vite";
 import { defineConfig, loadEnv } from "vite";
 
 const VENDOR_CHUNK_PACKAGE_PATHS = [
@@ -33,7 +32,11 @@ export default defineConfig(({ mode }) => {
   const devPort = 5173;
 
   return {
-    plugins: [preact()],
+    // Preact automatic JSX runtime via Vite's built-in Oxc transform (matches
+    // tsconfig "jsx": "react-jsx" + "jsxImportSource": "preact").
+    oxc: {
+      jsx: { runtime: "automatic", importSource: "preact" },
+    },
     build: {
       // Align with tsconfig.json "target": "ES2022" so vite and tsc target the
       // same language level and avoid duplicate down-transpilation.

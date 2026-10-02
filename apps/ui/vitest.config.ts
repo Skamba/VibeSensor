@@ -1,4 +1,3 @@
-import preact from "@preact/preset-vite";
 import { defineConfig } from "vitest/config";
 
 // Vitest is the canonical frontend unit/integration test runner for logic-heavy
@@ -6,7 +5,9 @@ import { defineConfig } from "vitest/config";
 // pure helpers, signal-mounted islands). Playwright owns the browser smoke
 // suite in `tests/smoke*.spec.ts`.
 export default defineConfig({
-  plugins: [preact()],
+  oxc: {
+    jsx: { runtime: "automatic", importSource: "preact" },
+  },
   test: {
     environment: "happy-dom",
     include: ["tests/**/*.spec.ts"],
