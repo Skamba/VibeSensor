@@ -85,19 +85,6 @@ assert_wheel_static_data_contract() {
     exit 1
   fi
 
-  if [ ! -d "${venv_data_dir}/car_sources" ]; then
-    echo "Validation failed: missing ${venv_data_dir}/car_sources"
-    exit 1
-  fi
-
-  first_car_source="$(
-    find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" -print -quit
-  )"
-  if [ -z "${first_car_source}" ]; then
-    echo "Validation failed: no car source packs found under ${venv_data_dir}/car_sources"
-    exit 1
-  fi
-
   if [ -d "${root_mnt}/opt/VibeSensor/apps/server/vibesensor" ]; then
     echo "Validation failed: source tree still present at ${root_mnt}/opt/VibeSensor/apps/server/vibesensor"
     exit 1

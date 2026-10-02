@@ -6,11 +6,9 @@ import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from vibesensor.shared._data_files import resolve_static_data_file
-
 from ._common import CarLibraryValidationIssue
 
-_ALLOWLIST_FILE = resolve_static_data_file("car_library_validation_allowlist.json")
+_ALLOWLIST_FILE = Path(__file__).resolve().parent / "data" / "allowlist.json"
 
 
 def load_car_library_validation_allowlist(

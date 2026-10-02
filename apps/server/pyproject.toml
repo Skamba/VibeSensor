@@ -42,7 +42,6 @@ dev = [
   "deptry>=0.25,<0.26",
   "hypothesis>=6.131,<7",
   "import-linter>=2.11,<3",
-  "jsonschema>=4.21,<5",
   "mypy>=2.2,<3",
   "pypdf>=5,<7",
   "pypdfium2>=5.7.0,<6",
@@ -60,7 +59,6 @@ dev = [
 [project.scripts]
 vibesensor-server = "vibesensor.cli.server:main"
 vibesensor-report = "vibesensor.cli.report:main"
-vibesensor-http-api-schema-export = "vibesensor.cli.http_api_schema_export:main"
 vibesensor-hotspot-self-heal = "vibesensor.cli.hotspot_self_heal:main"
 vibesensor-hotspot-config = "vibesensor.cli.hotspot_config:main"
 vibesensor-sim = "vibesensor.adapters.simulator.sim_sender:main"

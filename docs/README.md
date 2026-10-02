@@ -90,4 +90,4 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | File | Description |
 |------|-------------|
 | `apps/server/vibesensor/data/vehicle_configurations/**/*.json` | Canonical exact vehicle-configuration shard arrays with inline ratio/tire confidence and evidence metadata. |
-| `apps/server/vibesensor/data/car_sources/*.json` | Reusable source-document metadata referenced from canonical vehicle configurations. |
+| `apps/server/tests/test_support/car_library_validation/data/car_sources/*.json` | Test-only source-document metadata that vehicle-configuration `evidence_refs` resolve against. |

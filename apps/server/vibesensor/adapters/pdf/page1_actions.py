@@ -10,14 +10,12 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.action_cards import (
     draw_compact_action_card,
-    estimate_compact_action_card_height,
 )
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
     FONT_B,
     FS_SMALL,
-    PANEL_HEADER_H,
     REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
@@ -27,7 +25,7 @@ from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import Page1RenderPlan
 
-__all__ = ["draw_actions_block", "estimate_actions_block_height"]
+__all__ = ["draw_actions_block"]
 
 ACTION_PANEL_TITLE_SIZE = 12.5
 BRIEF_LABEL_SIZE = 7.0
@@ -93,28 +91,6 @@ def _check_result_rows(
             ),
         ),
     ]
-
-
-def estimate_actions_block_height(
-    plan: Page1RenderPlan,
-    *,
-    tr: Callable[..., str],
-    w: float,
-) -> float:
-    """Estimate the page-1 action preview panel height."""
-
-    content_w = w - 8 * mm
-    content_h = 0.0
-    content_h += estimate_compact_action_card_height(
-        title=_primary_action_text(plan, tr=tr),
-        why=_primary_action_reason(plan),
-        width=content_w,
-        show_badge=False,
-    )
-    content_h += 78 * mm
-    if plan.verdict_page.timeline_graph is not None:
-        content_h += 24 * mm
-    return float(max(30 * mm, PANEL_HEADER_H + 2 * mm + content_h + 4 * mm))
 
 
 def draw_actions_block(

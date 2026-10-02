@@ -27,15 +27,6 @@ ANALYSIS_SETTINGS_NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
     },
 )
 
-ANALYSIS_SETTINGS_OPTIONAL_TIRE_SETUP_KEYS: tuple[str, ...] = (
-    "front_tire_width_mm",
-    "front_tire_aspect_pct",
-    "front_rim_in",
-    "rear_tire_width_mm",
-    "rear_tire_aspect_pct",
-    "rear_rim_in",
-)
-
 ANALYSIS_SETTINGS_BOUNDS: dict[str, tuple[float, float]] = {
     "speed_uncertainty_pct": (0.0, 100.0),
     "tire_diameter_uncertainty_pct": (0.0, 100.0),

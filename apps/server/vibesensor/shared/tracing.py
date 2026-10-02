@@ -176,12 +176,6 @@ def shutdown_tracing() -> None:
     current.provider.shutdown()
 
 
-def tracing_enabled() -> bool:
-    """Return whether span export is currently enabled."""
-
-    return _RUNTIME.enabled
-
-
 def _coerce_span_attribute(value: object) -> TracingAttributeValue:
     if isinstance(value, str | bool | int | float):
         return value

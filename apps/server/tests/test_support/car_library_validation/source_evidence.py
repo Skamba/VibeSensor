@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.domain import VehicleConfiguration, VehicleFieldMetadata
-from vibesensor.shared._data_files import resolve_static_data_file
 
 __all__ = [
     "CarSourceDocument",
@@ -19,7 +18,7 @@ __all__ = [
     "validate_vehicle_configuration_source_evidence",
 ]
 
-_SOURCE_PACKS_DIR = resolve_static_data_file("car_sources")
+_SOURCE_PACKS_DIR = Path(__file__).resolve().parent / "data" / "car_sources"
 
 
 @dataclass(frozen=True, slots=True)

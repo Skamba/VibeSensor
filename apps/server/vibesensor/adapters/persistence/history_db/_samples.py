@@ -69,12 +69,6 @@ def sensor_frame_from_row(
     return sensor_frame_from_row_payload(row, row_offset=row_offset, source=source)
 
 
-def sensor_frames_from_rows(rows: Sequence[Sequence[object]]) -> list[SensorFrame]:
-    """Decode ordered rows into canonical typed sample objects."""
-
-    return [sensor_frame_from_row(row) for row in rows]
-
-
 def sensor_frame_to_row_values(frame: SensorFrame) -> tuple[object, ...]:
     """Encode one typed sample into flat ordered row values for storage."""
 
