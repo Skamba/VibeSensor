@@ -112,41 +112,18 @@ jobs:
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           "${python_bin}" -m pipx install platformio
 
-      - name: Detect firmware directory
-        id: firmware_dir
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t platformio_files < <(git ls-files 'platformio.ini' ':(glob)**/platformio.ini' | sort)
-          if [ "${#platformio_files[@]}" -eq 0 ]; then
-            echo "No platformio.ini found in repository." >&2
-            exit 1
-          fi
-
-          selected_file="${platformio_files[0]}"
-          for candidate in "${platformio_files[@]}"; do
-            if [[ "${candidate}" == firmware/* ]]; then
-              selected_file="${candidate}"
-              break
-            fi
-          done
-
-          firmware_dir="$(dirname "${selected_file}")"
-          echo "Using firmware directory: ${firmware_dir}"
-          echo "path=${firmware_dir}" >> "${GITHUB_OUTPUT}"
-
       - name: Build firmware
         shell: bash
         run: |
           set -euo pipefail
-          cd "${{ steps.firmware_dir.outputs.path }}"
+          cd "firmware/esp"
           pio run
 
       - name: Package firmware artifacts
         shell: bash
         run: |
           set -euo pipefail
-          cd "${{ steps.firmware_dir.outputs.path }}"
+          cd "firmware/esp"
           mkdir -p dist
 
           mapfile -t firmware_bins < <(find .pio/build -mindepth 2 -maxdepth 2 -type f -name firmware.bin | sort)
@@ -179,7 +156,7 @@ jobs:
           set -euo pipefail
           python_bin="${{ steps.setup-python.outputs.python-path }}"
           "${python_bin}" tools/release/main_release.py generate-firmware-manifest \
-            --firmware-dir "${{ steps.firmware_dir.outputs.path }}" \
+            --firmware-dir "firmware/esp" \
             --generated-from "${{ steps.release_source.outputs.sha }}"
 
       - name: Validate firmware manifest
@@ -188,18 +165,18 @@ jobs:
           set -euo pipefail
           python_bin="${{ steps.setup-python.outputs.python-path }}"
           PYTHONPATH=apps/server "${python_bin}" -m vibesensor.use_cases.updates.releases.release_validation validate-firmware-manifest \
-            --dist-dir "${{ steps.firmware_dir.outputs.path }}/dist"
+            --dist-dir "firmware/esp/dist"
 
       - name: Create firmware bundle
         id: bundle
         shell: bash
         run: |
           set -euo pipefail
-          cd "${{ steps.firmware_dir.outputs.path }}"
+          cd "firmware/esp"
           bundle_name="${{ steps.version.outputs.bundle }}"
           rm -f "${bundle_name}"
           (cd dist && zip -r "../${bundle_name}" .)
-          echo "path=${{ steps.firmware_dir.outputs.path }}/${bundle_name}" >> "${GITHUB_OUTPUT}"
+          echo "path=firmware/esp/${bundle_name}" >> "${GITHUB_OUTPUT}"
 
       - name: Generate changelog
         id: changelog
@@ -232,32 +209,13 @@ jobs:
           ${{ steps.changelog.outputs.body }}
           EOF
 
-          mapfile -t wheel_files < <(find apps/server/dist -maxdepth 1 -type f -name '*.whl' | sort)
-          if [ "${#wheel_files[@]}" -eq 0 ]; then
-            echo "No server wheel artifacts found under apps/server/dist" >&2
-            exit 1
-          fi
-
-          bundle_path="${{ steps.bundle.outputs.path }}"
-          if [ ! -f "${bundle_path}" ]; then
-            echo "Expected release bundle is missing: ${bundle_path}" >&2
-            exit 1
-          fi
-
-          release_args=()
-          for wheel_file in "${wheel_files[@]}"; do
-            release_args+=(--asset "${wheel_file}")
-          done
-          release_args+=(--asset "${bundle_path}")
-
-          python_bin="${{ steps.setup-python.outputs.python-path }}"
-          "${python_bin}" tools/publish_github_release.py \
-            --repo "${GITHUB_REPOSITORY}" \
-            --tag "${{ steps.version.outputs.tag }}" \
+          # compute-version always picks an unused server-v* tag, so this creates a new release.
+          gh release create "${{ steps.version.outputs.tag }}" \
+            apps/server/dist/*.whl \
+            "${{ steps.bundle.outputs.path }}" \
             --target "${{ steps.release_source.outputs.sha }}" \
             --title "Wheel / ESP release ${{ steps.version.outputs.version }}" \
-            --notes-file "${notes_file}" \
-            "${release_args[@]}"
+            --notes-file "${notes_file}"
 
       - name: Remove superseded Wheel / ESP releases
         env:

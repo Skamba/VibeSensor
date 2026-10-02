@@ -357,7 +357,7 @@ Current route groups:
 ### HTTP API schema export and versioning stance
 
 - Refresh all committed contract artifacts with `make sync-contracts`; CI's
-  `backend-contract-drift` job reruns it and fails on any diff.
+  `integration` job reruns it and fails on any diff.
 - The current HTTP API intentionally remains a single unversioned `/api/*`
   surface because the backend and bundled UI ship atomically.
 - If independent or third-party clients become a real compatibility concern,
