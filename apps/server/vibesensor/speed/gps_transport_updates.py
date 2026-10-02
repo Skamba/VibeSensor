@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from vibesensor.common.json_types import JsonObject
 from vibesensor.common.type_checks import NUMERIC_TYPES
@@ -19,19 +19,11 @@ from vibesensor.speed.speed_validation import evaluate_speed_sample, is_speed_pl
 from vibesensor.speed.timed_observation import append_timed_observation
 
 if TYPE_CHECKING:
-    from vibesensor.speed.gps_transport import GPSTransportSnapshot
+    from vibesensor.speed.gps_transport import GPSTransportSnapshot, GPSTransportState
 
 TpvModeReader = Callable[[JsonObject], int | None]
 MetricReader = Callable[[JsonObject, str], float | None]
 MonotonicReader = Callable[[], float]
-
-
-class MutableTransportState(Protocol):
-    """Minimal transport-state seam required by ingest/update policy."""
-
-    def snapshot(self) -> GPSTransportSnapshot: ...
-
-    def _replace_transport(self, **changes: object) -> None: ...
 
 
 def normalize_optional_float(value: object) -> float | None:
@@ -67,7 +59,7 @@ def evaluate_snapshot_speed_sample(
 
 
 def accept_speed_sample(
-    state: MutableTransportState,
+    state: GPSTransportState,
     speed_mps: float,
 ) -> bool:
     """Update the zero-speed streak on *state* and return whether the sample is accepted."""
@@ -76,7 +68,7 @@ def accept_speed_sample(
     return accepted
 
 
-def reset_fix_metadata(state: MutableTransportState) -> None:
+def reset_fix_metadata(state: GPSTransportState) -> None:
     """Clear all fix metadata fields on the transport snapshot."""
     state._replace_transport(
         last_fix_mode=None,
@@ -107,7 +99,7 @@ def classify_transport_message(
 
 
 def apply_tpv(
-    state: MutableTransportState,
+    state: GPSTransportState,
     tpv: NormalizedTpvData,
     *,
     monotonic: MonotonicReader,

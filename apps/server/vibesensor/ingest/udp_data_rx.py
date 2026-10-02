@@ -10,9 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Protocol, cast
-
-import numpy as np
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -27,22 +25,12 @@ from vibesensor.ingest.protocol_validator import ProtocolVersionMismatch
 from vibesensor.ingest.registry import ClientRegistry, DataUpdateResult
 from vibesensor.live.processor import SignalProcessor
 
+if TYPE_CHECKING:
+    from vibesensor.recording.raw_capture_writer import RunRawCaptureWriter
+
 LOGGER = logging.getLogger(__name__)
 
 _QUEUE_DROP_LOG_INTERVAL_S: float = 2.0
-
-
-class RawCaptureSink(Protocol):
-    def capture_raw_samples(
-        self,
-        *,
-        client_id: str,
-        sample_rate_hz: int | None,
-        t0_us: int,
-        samples: np.ndarray,
-    ) -> None: ...
-
-    def note_late_packet_loss(self, *, client_id: str) -> None: ...
 
 
 class DatagramDispatchError(RuntimeError):
@@ -69,7 +57,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        raw_capture_sink: RawCaptureSink | None = None,
+        raw_capture_sink: RunRawCaptureWriter | None = None,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         queue_maxsize: int = 1024,
         queue_drop_log_interval_s: float = _QUEUE_DROP_LOG_INTERVAL_S,
@@ -261,7 +249,7 @@ async def start_udp_data_receiver(
     port: int,
     registry: ClientRegistry,
     processor: SignalProcessor,
-    raw_capture_sink: RawCaptureSink | None = None,
+    raw_capture_sink: RunRawCaptureWriter | None = None,
     ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, DataDatagramProtocol]:

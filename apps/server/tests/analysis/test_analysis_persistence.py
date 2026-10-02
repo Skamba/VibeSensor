@@ -13,6 +13,7 @@ from test_support import response_payload
 from test_support.history_db_sql import execute_statements, fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
+from test_support.speed import observed_speed
 
 from tests.conftest import FakeState
 from vibesensor.domain.run_status import RunStatus
@@ -283,7 +284,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
             persist_history_db=True,
         ),
         registry=registry,
-        gps_monitor=gps_monitor,
+        gps_monitor=observed_speed(gps_monitor),
         processor=processor,
         history_db=db,
         language_reader=SimpleNamespace(language="en"),

@@ -20,6 +20,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 from test_support.polling import async_wait_until
+from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
@@ -182,7 +183,7 @@ def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
             persist_history_db=True,
         ),
         registry=registry,
-        gps_monitor=gps_monitor,
+        gps_monitor=observed_speed(gps_monitor),
         processor=processor,
         history_db=history_db,
         language_reader=SimpleNamespace(language="en"),

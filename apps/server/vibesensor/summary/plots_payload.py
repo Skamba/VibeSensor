@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from typing import Protocol
+from typing import TYPE_CHECKING
 
-from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.summary.analysis_views import (
     PeakTableRow,
     PhaseSpeedBreakdownRow,
@@ -16,91 +15,17 @@ from vibesensor.summary.contracts import (
     PhaseSegmentSummaryResponse as PhaseSegmentSummaryPayload,
 )
 
-
-class SpeedBreakdownRowLike(Protocol):
-    @property
-    def speed_range(self) -> str: ...
-    @property
-    def count(self) -> int: ...
-    @property
-    def mean_vibration_strength_db(self) -> float | None: ...
-    @property
-    def max_vibration_strength_db(self) -> float | None: ...
-
-
-class PhaseSpeedBreakdownRowLike(Protocol):
-    @property
-    def phase(self) -> str: ...
-    @property
-    def count(self) -> int: ...
-    @property
-    def mean_speed_kmh(self) -> float | None: ...
-    @property
-    def max_speed_kmh(self) -> float | None: ...
-    @property
-    def mean_vibration_strength_db(self) -> float | None: ...
-    @property
-    def max_vibration_strength_db(self) -> float | None: ...
-
-
-class PeakTableRowLike(Protocol):
-    @property
-    def rank(self) -> int: ...
-    @property
-    def frequency_hz(self) -> float: ...
-    @property
-    def order_label(self) -> str: ...
-    @property
-    def suspected_source(self) -> str: ...
-    @property
-    def max_intensity_db(self) -> float | None: ...
-    @property
-    def median_intensity_db(self) -> float | None: ...
-    @property
-    def p95_intensity_db(self) -> float | None: ...
-    @property
-    def run_noise_baseline_db(self) -> float | None: ...
-    @property
-    def median_vs_run_noise_ratio(self) -> float: ...
-    @property
-    def p95_vs_run_noise_ratio(self) -> float: ...
-    @property
-    def strength_floor_db(self) -> float | None: ...
-    @property
-    def strength_db(self) -> float | None: ...
-    @property
-    def presence_ratio(self) -> float: ...
-    @property
-    def burstiness(self) -> float: ...
-    @property
-    def persistence_score(self) -> float: ...
-    @property
-    def peak_classification(self) -> str: ...
-    @property
-    def typical_speed_band(self) -> str: ...
-
-
-class PhaseSegmentLike(Protocol):
-    @property
-    def phase(self) -> DrivingPhase: ...
-    @property
-    def start_idx(self) -> int: ...
-    @property
-    def end_idx(self) -> int: ...
-    @property
-    def start_t_s(self) -> float: ...
-    @property
-    def end_t_s(self) -> float: ...
-    @property
-    def speed_min_kmh(self) -> float | None: ...
-    @property
-    def speed_max_kmh(self) -> float | None: ...
-    @property
-    def sample_count(self) -> int: ...
+if TYPE_CHECKING:
+    from vibesensor.analysis._view_types import (
+        PeakTableRowData,
+        PhaseSpeedBreakdownRowData,
+        SpeedBreakdownRowData,
+    )
+    from vibesensor.analysis.phase_segmentation import PhaseSegment
 
 
 def serialize_phase_segments(
-    phase_segments: Sequence[PhaseSegmentLike],
+    phase_segments: Sequence[PhaseSegment],
 ) -> list[PhaseSegmentSummaryPayload]:
     """Serialize phase segments to JSON-safe dicts."""
     return [
@@ -125,7 +50,7 @@ def serialize_phase_segments(
 
 
 def serialize_speed_breakdown(
-    rows: Sequence[SpeedBreakdownRowLike],
+    rows: Sequence[SpeedBreakdownRowData],
 ) -> list[SpeedBreakdownRow]:
     """Project speed-breakdown rows into their persisted summary payload shape."""
     payload_rows: list[SpeedBreakdownRow] = []
@@ -141,7 +66,7 @@ def serialize_speed_breakdown(
 
 
 def serialize_phase_speed_breakdown(
-    rows: Sequence[PhaseSpeedBreakdownRowLike],
+    rows: Sequence[PhaseSpeedBreakdownRowData],
 ) -> list[PhaseSpeedBreakdownRow]:
     """Project per-phase speed breakdown rows into persisted summary payloads."""
     payload_rows: list[PhaseSpeedBreakdownRow] = []
@@ -159,7 +84,7 @@ def serialize_phase_speed_breakdown(
 
 
 def serialize_peak_table(
-    rows: Sequence[PeakTableRowLike],
+    rows: Sequence[PeakTableRowData],
 ) -> list[PeakTableRow]:
     """Project peak-table rows into persisted summary payload dictionaries."""
     payload_rows: list[PeakTableRow] = []

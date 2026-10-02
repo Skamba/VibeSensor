@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.common.json_types import JsonObject, JsonValue
@@ -54,13 +55,14 @@ from vibesensor.summary.origin_fields import (
     build_origin_explanation,
 )
 from vibesensor.summary.plots_payload import (
-    PhaseSegmentLike,
-    PhaseSpeedBreakdownRowLike,
-    SpeedBreakdownRowLike,
     serialize_phase_segments,
     serialize_phase_speed_breakdown,
     serialize_speed_breakdown,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.analysis._view_types import PhaseSpeedBreakdownRowData, SpeedBreakdownRowData
+    from vibesensor.analysis.phase_segmentation import PhaseSegment
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,9 +76,9 @@ class AnalysisSummaryBuildContext:
     language: str
     metadata: JsonObject
     raw_sample_rate_hz: float | None
-    speed_breakdown: Sequence[SpeedBreakdownRowLike]
-    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike]
-    phase_segments: Sequence[PhaseSegmentLike]
+    speed_breakdown: Sequence[SpeedBreakdownRowData]
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData]
+    phase_segments: Sequence[PhaseSegment]
     run_noise_baseline_g: float | None
     speed_breakdown_skipped_reason: JsonObject | None
     findings: tuple[DomainFinding, ...]
@@ -106,9 +108,9 @@ def build_analysis_summary(
     language: str,
     metadata: JsonObject,
     raw_sample_rate_hz: float | None,
-    speed_breakdown: Sequence[SpeedBreakdownRowLike],
-    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike],
-    phase_segments: Sequence[PhaseSegmentLike],
+    speed_breakdown: Sequence[SpeedBreakdownRowData],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
+    phase_segments: Sequence[PhaseSegment],
     run_noise_baseline_g: float | None,
     speed_breakdown_skipped_reason: JsonObject | None,
     findings: tuple[DomainFinding, ...],

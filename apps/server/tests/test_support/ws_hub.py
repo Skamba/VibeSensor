@@ -6,7 +6,7 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.live.broadcaster import LiveBroadcaster, LivePayloadSource
+from vibesensor.live.broadcaster import LiveBroadcaster
 
 
 def make_websocket() -> AsyncMock:
@@ -24,7 +24,7 @@ def sent_json_sequence(ws: AsyncMock) -> list[dict[str, object]]:
 
 
 def build_broadcaster(
-    payload_source: LivePayloadSource,
+    payload_source: object,
     *selected_client_ids: str | None,
     ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     push_hz: int = 10,

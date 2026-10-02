@@ -2,57 +2,26 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
-from typing import TYPE_CHECKING, Protocol
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.live.payload_types import ClientApiRow, ClientMetrics
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
 if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry, ClientSnapshot
     from vibesensor.settings.sensor_settings import SensorSettingsService
 
 __all__ = [
-    "ClientSnapshotLike",
-    "ClientSnapshotSource",
     "build_client_api_row",
     "build_client_api_rows",
     "snapshot_for_api",
 ]
 
 
-class ClientSnapshotLike(Protocol):
-    """Protocol describing the client snapshot fields needed for payload projection."""
-
-    client_id: str
-    name: str
-    connected: bool
-    location_code: str
-    firmware_version: str
-    sample_rate_hz: int
-    frame_samples: int
-    last_seen_age_ms: int | None
-    frames_total: int
-    dropped_frames: int
-    latest_metrics: ClientMetrics | None
-    reset_count: int
-    last_reset_time: float | None
-
-
-class ClientSnapshotSource(Protocol):
-    """Collaborator that can project runtime state into client snapshots."""
-
-    def client_snapshots(
-        self,
-        now: float | None = None,
-        *,
-        now_mono: float | None = None,
-        metrics_by_client: dict[str, ClientMetrics] | None = None,
-    ) -> Sequence[ClientSnapshotLike]: ...
-
-
 def build_client_api_row(
-    snapshot: ClientSnapshotLike,
+    snapshot: ClientSnapshot,
     *,
     include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
@@ -94,7 +63,7 @@ def build_client_api_row(
 
 
 def build_client_api_rows(
-    snapshots: Iterable[ClientSnapshotLike],
+    snapshots: Iterable[ClientSnapshot],
     *,
     include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
@@ -112,7 +81,7 @@ def build_client_api_rows(
 
 
 def snapshot_for_api(
-    registry: ClientSnapshotSource,
+    registry: ClientRegistry,
     now: float | None = None,
     *,
     now_mono: float | None = None,

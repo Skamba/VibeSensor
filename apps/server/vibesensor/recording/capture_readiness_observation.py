@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
 
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.settings.sensor_config import SensorConfigPayload
@@ -14,6 +14,7 @@ from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRecord, ClientRegistry
     from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 
 __all__ = [
     "CaptureReadinessObservation",
@@ -22,38 +23,6 @@ __all__ = [
     "CaptureReadinessSpeedObservation",
     "observe_capture_readiness",
 ]
-
-
-class SpeedStatusSnapshotView(Protocol):
-    @property
-    def last_update_age_s(self) -> float | None: ...
-
-    @property
-    def effective_speed_kmh(self) -> float | None: ...
-
-    @property
-    def fallback_active(self) -> bool: ...
-
-    @property
-    def speed_source(self) -> str: ...
-
-
-class ObdStatusSnapshotView(Protocol):
-    @property
-    def last_rpm(self) -> float | None: ...
-
-    @property
-    def rpm_sample_age_s(self) -> float | None: ...
-
-
-@runtime_checkable
-class _SpeedStatusProvider(Protocol):
-    def status_snapshot(self) -> SpeedStatusSnapshotView: ...
-
-
-@runtime_checkable
-class _ObdStatusProvider(Protocol):
-    def obd_status(self) -> ObdStatusSnapshotView: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,7 +62,7 @@ def observe_capture_readiness(
     *,
     registry: ClientRegistry,
     run_context: RunContextSnapshot,
-    speed_provider: object,
+    speed_provider: SpeedSourceObservationService,
     sensor_metadata_reader: SensorSettingsService | None = None,
     now_mono: float | None = None,
 ) -> CaptureReadinessObservation:
@@ -143,23 +112,23 @@ def _sensor_observation(
     )
 
 
-def _speed_observation(speed_provider: object) -> CaptureReadinessSpeedObservation | None:
-    if isinstance(speed_provider, _SpeedStatusProvider):
-        speed_status = speed_provider.status_snapshot()
-        return CaptureReadinessSpeedObservation(
-            source=str(speed_status.speed_source),
-            speed_kmh=speed_status.effective_speed_kmh,
-            age_s=speed_status.last_update_age_s,
-            fallback_active=speed_status.fallback_active,
-        )
-    return None
+def _speed_observation(
+    speed_provider: SpeedSourceObservationService,
+) -> CaptureReadinessSpeedObservation:
+    speed_status = speed_provider.status_snapshot()
+    return CaptureReadinessSpeedObservation(
+        source=str(speed_status.speed_source),
+        speed_kmh=speed_status.effective_speed_kmh,
+        age_s=speed_status.last_update_age_s,
+        fallback_active=speed_status.fallback_active,
+    )
 
 
-def _obd_observation(speed_provider: object) -> CaptureReadinessObdObservation | None:
-    if isinstance(speed_provider, _ObdStatusProvider):
-        obd_status = speed_provider.obd_status()
-        return CaptureReadinessObdObservation(
-            rpm=obd_status.last_rpm,
-            rpm_age_s=obd_status.rpm_sample_age_s,
-        )
-    return None
+def _obd_observation(
+    speed_provider: SpeedSourceObservationService,
+) -> CaptureReadinessObdObservation:
+    obd_status = speed_provider.obd_status()
+    return CaptureReadinessObdObservation(
+        rpm=obd_status.last_rpm,
+        rpm_age_s=obd_status.rpm_sample_age_s,
+    )

@@ -5,34 +5,17 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Protocol
+from typing import TYPE_CHECKING
 
 from vibesensor.common.json_types import JsonObject, is_json_object
 from vibesensor.speed.gps_transport_lifecycle import TransportLifecycle
 from vibesensor.speed.gps_transport_updates import MetricReader, TpvModeReader
 
+if TYPE_CHECKING:
+    from vibesensor.speed.gps_transport import GPSTransportState
+
 LOGGER = logging.getLogger(__name__)
 _WATCH_ENABLE_PAYLOAD = b'?WATCH={"enable":true,"json":true};\n'
-
-
-class GPSTransportRuntimeState(Protocol):
-    """Minimal state seam required by the GPS transport runner."""
-
-    gps_enabled: bool
-    connection_state: str
-    speed_mps: float | None
-
-    def set_enabled(self, enabled: bool) -> None: ...
-
-    def _apply_transition_changes(self, changes: dict[str, object]) -> None: ...
-
-    def ingest_message(
-        self,
-        payload: JsonObject,
-        *,
-        tpv_mode: TpvModeReader | None = None,
-        read_metric: MetricReader | None = None,
-    ) -> None: ...
 
 
 class GPSTransportRunner:
@@ -55,7 +38,7 @@ class GPSTransportRunner:
 
     async def run(
         self,
-        state: GPSTransportRuntimeState,
+        state: GPSTransportState,
         *,
         host: str,
         port: int,
@@ -126,7 +109,7 @@ class GPSTransportRunner:
 
     async def _read_session(
         self,
-        state: GPSTransportRuntimeState,
+        state: GPSTransportState,
         reader: asyncio.StreamReader,
         lifecycle: TransportLifecycle,
         *,

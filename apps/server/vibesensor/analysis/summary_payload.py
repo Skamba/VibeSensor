@@ -2,39 +2,26 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping, Sequence
 from copy import deepcopy
-from typing import Protocol
+from typing import TYPE_CHECKING
 
-from vibesensor.common.json_types import JsonObject
 from vibesensor.common.time_utils import utc_now_iso
-from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
-from vibesensor.domain.driving_segment import DrivingPhaseInterval
 from vibesensor.domain.finding import Finding as DomainFinding
-from vibesensor.domain.location_hotspot import LocationIntensitySummary
-from vibesensor.domain.run_suitability import RunSuitability
-from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.domain.test_run import TestRun
-from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
-from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_to_json_objects
 from vibesensor.summary.builder import build_analysis_summary
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.data_quality_payload import AccelStatisticsLike
-from vibesensor.summary.plots_payload import (
-    PeakTableRowLike,
-    PhaseSegmentLike,
-    PhaseSpeedBreakdownRowLike,
-    SpeedBreakdownRowLike,
-    serialize_peak_table,
-)
+from vibesensor.summary.plots_payload import serialize_peak_table
 from vibesensor.summary.run_context_warning import (
     RunContextWarningsInput,
     build_summary_warnings,
 )
 from vibesensor.summary.test_plan_fields import step_payloads_from_plan
 from vibesensor.summary.warning_fields import summary_warning_payloads
+
+if TYPE_CHECKING:
+    from vibesensor.analysis._analysis_result import AnalysisResult
 
 __all__ = ["analysis_result_to_summary", "analysis_summary_with_warnings"]
 
@@ -46,7 +33,7 @@ def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
     return [float(value) for value in raw_values if isinstance(value, (int, float))]
 
 
-def _serialized_top_causes(result: AnalysisResultLike) -> tuple[DomainFinding, ...]:
+def _serialized_top_causes(result: AnalysisResult) -> tuple[DomainFinding, ...]:
     actionable = tuple(
         finding
         for finding in result.test_run.top_causes
@@ -68,7 +55,7 @@ def analysis_summary_with_warnings(
     return updated_summary
 
 
-def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
+def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
     """Serialize an app-level diagnostics result at an explicit boundary."""
     metadata = run_metadata_to_json_object(result.metadata)
     summary = build_analysis_summary(
@@ -113,94 +100,3 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     if not result.include_samples:
         summary.pop("samples", None)
     return summary
-
-
-class PreparedRunDataLike(Protocol):
-    @property
-    def run_id(self) -> str: ...
-
-    @property
-    def duration_s(self) -> float: ...
-
-    @property
-    def raw_sample_rate_hz(self) -> float | None: ...
-
-    @property
-    def speed_breakdown(self) -> Sequence[SpeedBreakdownRowLike]: ...
-
-    @property
-    def phase_speed_breakdown(self) -> Sequence[PhaseSpeedBreakdownRowLike]: ...
-
-    @property
-    def phase_segments(self) -> Sequence[PhaseSegmentLike]: ...
-
-    @property
-    def run_noise_baseline_g(self) -> float | None: ...
-
-    @property
-    def speed_breakdown_skipped_reason(self) -> JsonObject | None: ...
-
-    @property
-    def speed_stats_by_phase(self) -> Mapping[str, SpeedProfileSummary]: ...
-
-    @property
-    def speed_values(self) -> list[float]: ...
-
-    @property
-    def speed_non_null_pct(self) -> float: ...
-
-
-class AnalysisResultLike(Protocol):
-    @property
-    def file_name(self) -> str: ...
-
-    @property
-    def metadata(self) -> RunMetadata: ...
-
-    @property
-    def samples(self) -> Sequence: ...
-
-    @property
-    def language(self) -> str: ...
-
-    @property
-    def include_samples(self) -> bool: ...
-
-    @property
-    def prepared(self) -> PreparedRunDataLike: ...
-
-    @property
-    def accel_stats(self) -> AccelStatisticsLike: ...
-
-    @property
-    def reference_complete(self) -> bool: ...
-
-    @property
-    def run_suitability(self) -> RunSuitability | None: ...
-
-    @property
-    def most_likely_origin(self) -> VibrationOrigin | None: ...
-
-    @property
-    def phase_timeline(self) -> Sequence[DrivingPhaseInterval]: ...
-
-    @property
-    def sensor_locations(self) -> Sequence[str]: ...
-
-    @property
-    def connected_locations(self) -> Collection[str]: ...
-
-    @property
-    def sensor_intensity_by_location(self) -> Sequence[LocationIntensitySummary]: ...
-
-    @property
-    def summary_speed_stats(self) -> SpeedProfileSummary: ...
-
-    @property
-    def summary_phase_info(self) -> DrivingPhaseSummary: ...
-
-    @property
-    def peaks_table(self) -> Sequence[PeakTableRowLike]: ...
-
-    @property
-    def test_run(self) -> TestRun: ...

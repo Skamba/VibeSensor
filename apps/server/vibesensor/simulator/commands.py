@@ -3,9 +3,12 @@ from __future__ import annotations
 import asyncio
 import shlex
 from collections.abc import Sequence
-from typing import Protocol
+from typing import TYPE_CHECKING
 
 from vibesensor.simulator.sim_scene import _cross_corner_coupling, _normalize_wheel_slot
+
+if TYPE_CHECKING:
+    from vibesensor.simulator.sim_client import SimClient
 
 _DEFAULT_PROFILE_ORDER: tuple[str, ...] = (
     "engine_idle",
@@ -15,31 +18,11 @@ _DEFAULT_PROFILE_ORDER: tuple[str, ...] = (
 )
 
 
-class SimClientLike(Protocol):
-    name: str
-    client_id: bytes
-    profile_name: str
-    scene_mode: str
-    scene_gain: float
-    scene_noise_gain: float
-    amp_scale: float
-    noise_scale: float
-    common_event_gain: float
-    paused: bool
-
-    @property
-    def mac_address(self) -> str: ...
-
-    def pulse(self, strength: float) -> None: ...
-
-    def summary(self) -> str: ...
-
-
 def choose_default_profile(index: int) -> str:
     return _DEFAULT_PROFILE_ORDER[index % len(_DEFAULT_PROFILE_ORDER)]
 
 
-def apply_one_wheel_mild_scenario(clients: Sequence[SimClientLike], fault_wheel: str) -> None:
+def apply_one_wheel_mild_scenario(clients: Sequence[SimClient], fault_wheel: str) -> None:
     target = fault_wheel.strip().lower()
     target_slot = _normalize_wheel_slot(target)
     for client in clients:
@@ -68,7 +51,7 @@ def apply_one_wheel_mild_scenario(clients: Sequence[SimClientLike], fault_wheel:
             client.common_event_gain = 0.05 + 0.05 * coupling
 
 
-def apply_road_fixed_scenario(clients: Sequence[SimClientLike]) -> None:
+def apply_road_fixed_scenario(clients: Sequence[SimClient]) -> None:
     """Apply a deterministic baseline road scene for scripted scenarios.
 
     Unlike the ``road`` scenario, this does NOT start a background randomizer
@@ -86,7 +69,7 @@ def apply_road_fixed_scenario(clients: Sequence[SimClientLike]) -> None:
         client.noise_scale = 1.00
 
 
-def apply_engine_order_scenario(clients: Sequence[SimClientLike]) -> None:
+def apply_engine_order_scenario(clients: Sequence[SimClient]) -> None:
     """Apply a deterministic engine-order scenario across all sensors."""
     for client in clients:
         client.profile_name = "engine_order"
@@ -98,7 +81,7 @@ def apply_engine_order_scenario(clients: Sequence[SimClientLike]) -> None:
         client.noise_scale = 0.98
 
 
-def find_targets(clients: Sequence[SimClientLike], token: str) -> list[SimClientLike]:
+def find_targets(clients: Sequence[SimClient], token: str) -> list[SimClient]:
     target = token.strip().lower()
     if target == "all":
         return list(clients)
@@ -115,7 +98,7 @@ def find_targets(clients: Sequence[SimClientLike], token: str) -> list[SimClient
 
 
 def apply_command(
-    clients: Sequence[SimClientLike],
+    clients: Sequence[SimClient],
     line: str,
     stop_event: asyncio.Event,
     profile_names: list[str],

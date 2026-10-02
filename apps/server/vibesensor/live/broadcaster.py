@@ -11,7 +11,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING
 
 import anyio
 from fastapi import WebSocket
@@ -21,7 +21,10 @@ from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.live.payload_types import LiveWsPayload, WsErrorPayload
 from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
 
-__all__ = ["ERROR_PAYLOAD_TEXT", "LiveBroadcaster", "LivePayloadSource"]
+if TYPE_CHECKING:
+    from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
+
+__all__ = ["ERROR_PAYLOAD_TEXT", "LiveBroadcaster"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,12 +46,6 @@ _ERROR_PAYLOAD: WsErrorPayload = {"error": "payload_build_failed"}
 ERROR_PAYLOAD_TEXT = json_text_dumps(_ERROR_PAYLOAD)
 
 
-class LivePayloadSource(Protocol):
-    """Builds the live payload shared by all connections for one tick."""
-
-    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload: ...
-
-
 @dataclass(eq=False, slots=True)
 class _Connection:
     websocket: WebSocket
@@ -61,7 +58,7 @@ class LiveBroadcaster:
     def __init__(
         self,
         *,
-        payload_source: LivePayloadSource,
+        payload_source: LiveWsPayloadProjector,
         ingest_diagnostics: IngestDiagnosticsCollector,
         push_hz: int,
         heavy_push_hz: int,

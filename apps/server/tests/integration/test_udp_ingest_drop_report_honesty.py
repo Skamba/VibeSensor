@@ -41,6 +41,17 @@ class _FakeSpeedProvider:
     engine_rpm: float | None = None
     engine_rpm_source: str | None = None
 
+    def status_snapshot(self) -> SimpleNamespace:
+        return SimpleNamespace(
+            speed_source="none",
+            effective_speed_kmh=None,
+            last_update_age_s=None,
+            fallback_active=False,
+        )
+
+    def obd_status(self) -> SimpleNamespace:
+        return SimpleNamespace(last_rpm=None, rpm_sample_age_s=None)
+
     def resolve_speed(self) -> SpeedResolution:
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
 
