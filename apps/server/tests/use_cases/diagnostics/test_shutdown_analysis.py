@@ -11,6 +11,7 @@ import yaml
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 
 # ---------------------------------------------------------------------------
 # Minimal fakes (same style as test_metrics_log_helpers.py)
@@ -70,14 +71,14 @@ def _make_logger(tmp_path: Path, history_db=None) -> RunRecorder:
 
 
 # ---------------------------------------------------------------------------
-# wait_for_post_analysis return value tests
+# post_analysis.wait return value tests
 # ---------------------------------------------------------------------------
 
 
 def test_wait_returns_true_when_no_work(tmp_path: Path) -> None:
     """No queued analysis → should return True immediately."""
     logger = _make_logger(tmp_path)
-    assert logger.wait_for_post_analysis(timeout_s=0.5) is True
+    assert logger.post_analysis.wait(timeout_s=0.5) is True
 
 
 def test_wait_returns_true_when_analysis_finishes(tmp_path: Path, monkeypatch) -> None:
@@ -92,12 +93,12 @@ def test_wait_returns_true_when_analysis_finishes(tmp_path: Path, monkeypatch) -
         finish.wait(timeout=2.0)
         completed.append(run_id)
 
-    monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_analysis)
-    logger.schedule_post_analysis("run-a")
+    monkeypatch.setattr(logger.post_analysis, "_run_post_analysis", _slow_analysis)
+    logger.post_analysis.schedule("run-a")
     assert started.wait(timeout=2.0)
     finish.set()
 
-    result = logger.wait_for_post_analysis(timeout_s=5.0)
+    result = logger.post_analysis.wait(timeout_s=5.0)
     assert result is True
     assert completed == ["run-a"]
 
@@ -112,16 +113,16 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
         started.set()
         finish.wait(timeout=2.0)  # Keep blocked long enough for timeout-path assertion.
 
-    monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _very_slow_analysis)
-    logger.schedule_post_analysis("run-slow")
+    monkeypatch.setattr(logger.post_analysis, "_run_post_analysis", _very_slow_analysis)
+    logger.post_analysis.schedule("run-slow")
 
     assert started.wait(timeout=2.0)
     try:
-        result = logger.wait_for_post_analysis(timeout_s=0.3)
+        result = logger.post_analysis.wait(timeout_s=0.3)
         assert result is False
     finally:
         finish.set()
-    assert logger.wait_for_post_analysis(timeout_s=2.0) is True
+    assert logger.post_analysis.wait(timeout_s=2.0) is True
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +157,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         events.append("db_close")
         original_close(self)
 
-    original_wait = RunRecorder.wait_for_post_analysis
+    original_wait = PostAnalysisWorker.wait
 
     def _tracking_wait(self, timeout_s=30.0):
         result = original_wait(self, timeout_s)
@@ -165,7 +166,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _fake_start)
     monkeypatch.setattr(HistoryDB, "close", _tracking_close)
-    monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
+    monkeypatch.setattr(PostAnalysisWorker, "wait", _tracking_wait)
 
     app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):

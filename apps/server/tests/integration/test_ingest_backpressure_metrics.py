@@ -190,7 +190,7 @@ def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
     proto = DataDatagramProtocol(
         registry=registry,
         processor=processor,
-        raw_capture_sink=recorder,
+        raw_capture_sink=recorder.raw_capture,
         ingest_diagnostics=ingest_diagnostics,
         queue_maxsize=max(24, sensor_count * 6),
     )
@@ -435,7 +435,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
         start_utc = started.start_time_utc
         assert run_id is not None
         assert start_utc is not None
-        snapshot = ctx.recorder._session_snapshot()
+        snapshot = ctx.recorder._lifecycle.snapshot()
         assert snapshot is not None
         expected_processed_datagrams = await _drive_bounded_sensor_burst(
             ctx,
@@ -457,7 +457,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
             expected_processed_datagrams,
         )
         await asyncio.to_thread(ctx.recorder.stop_recording)
-        assert await asyncio.to_thread(ctx.recorder.wait_for_post_analysis, timeout_s=30.0)
+        assert await asyncio.to_thread(ctx.recorder.post_analysis.wait, timeout_s=30.0)
         stored = await asyncio.to_thread(history_db.get_run, run_id)
         assert stored is not None
         assert stored.raw_capture_manifest is not None

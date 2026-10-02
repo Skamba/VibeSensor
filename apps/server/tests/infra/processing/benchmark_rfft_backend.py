@@ -4,7 +4,8 @@ These are opt-in explicit benchmarks (``benchmark_*.py`` filenames are not
 collected under the default ``test_*`` pattern). Invoke with::
 
     pytest apps/server/tests/infra/processing/benchmark_rfft_backend.py \
-        --benchmark-only --benchmark-columns=min,mean,median,stddev,rounds
+        --benchmark-only -o addopts='' \
+        --benchmark-columns=min,mean,median,stddev,rounds
 
 The benchmark mirrors the real processing payload shape: one
 ``(axes, fft_n)`` window per call, windowed with a Hann window, with the

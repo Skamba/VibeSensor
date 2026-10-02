@@ -79,6 +79,9 @@ class LifecycleShutdownReport(Protocol):
 
 
 class LifecycleRunRecorder(Protocol):
+    @property
+    def raw_capture(self) -> object: ...
+
     async def run(self) -> object: ...
 
     def shutdown_report(self, timeout_s: float = ...) -> LifecycleShutdownReport: ...
@@ -287,7 +290,7 @@ class LifecycleManager:
             port=r.udp_data_port,
             registry=r.registry,
             processor=r.processor,
-            raw_capture_sink=r.run_recorder,
+            raw_capture_sink=r.run_recorder.raw_capture,
             ingest_diagnostics=r.ingest_diagnostics,
         )
         if consumer is not None:

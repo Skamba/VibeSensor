@@ -10,7 +10,7 @@ from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 # samples, status, and persisted output rather than recorder object shape.
 def _started_snapshot(logger) -> ActiveRunSnapshot:
     logger.start_recording()
-    snapshot = logger._session_snapshot()
+    snapshot = logger._lifecycle.snapshot()
     assert snapshot is not None
     return snapshot
 
@@ -181,7 +181,7 @@ def test_stop_recording_flushes_first_pending_sample_batch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     logger.start_recording()
     active = logger.registry.get("active")
@@ -244,7 +244,7 @@ def test_stop_recording_salvages_final_batch_when_recent_window_is_too_strict(
         registry=fake_registry,
         processor=_LateMetricsProcessor(),
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     logger.start_recording()
     active = logger.registry.get("active")
@@ -266,7 +266,7 @@ def test_start_recording_rollover_flushes_first_pending_sample_batch(
 ) -> None:
     scheduled: list[str] = []
     logger = make_logger(history_db=fake_history_db)
-    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+    monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
     initial_status = logger.start_recording()
     initial_run_id = str(initial_status.run_id)

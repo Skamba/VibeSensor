@@ -76,7 +76,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
         asyncio.run(logger.run())
 
     logger.stop_recording()
-    assert logger.wait_for_post_analysis(timeout_s=3.0)
+    assert logger.post_analysis.wait(timeout_s=3.0)
 
     stored_run = history_db.get_run(run_id)
     assert stored_run is not None
@@ -174,7 +174,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
         asyncio.run(logger.run())
 
     logger.stop_recording()
-    assert logger.wait_for_post_analysis(timeout_s=3.0)
+    assert logger.post_analysis.wait(timeout_s=3.0)
 
     stored_run = history_db.get_run(run_id)
     assert stored_run is not None

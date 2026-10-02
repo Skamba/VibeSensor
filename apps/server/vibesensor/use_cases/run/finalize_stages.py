@@ -25,7 +25,7 @@ from vibesensor.use_cases.run.raw_capture_writer import (
 )
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 
-RecordRawCaptureFinalize = Callable[[str, RawCaptureFinalizeResult], None]
+RecordRawCaptureFinalize = Callable[[str, RawCaptureFinalizeResult], object]
 RecordFinalizationStages = Callable[[str, str, tuple[RunFinalizationStageResult, ...]], bool]
 
 __all__ = ["ActiveRunFinalizeResult", "finalize_active_run"]

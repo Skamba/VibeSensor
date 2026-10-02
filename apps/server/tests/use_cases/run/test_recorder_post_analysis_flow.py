@@ -134,9 +134,9 @@ def test_shutdown_blocks_new_start_recording_until_wait_completes(
         allow_wait.set()
         return True
 
-    monkeypatch.setattr(logger._post_analysis, "wait", _wait)
+    monkeypatch.setattr(logger.post_analysis, "wait", _wait)
 
-    assert logger.shutdown() is True
+    assert logger.shutdown_report().completed is True
     assert allow_wait.is_set()
     restarted = logger.start_recording()
     assert restarted.enabled is True
@@ -151,9 +151,9 @@ def test_shutdown_report_exposes_timeout_state(
     logger = make_logger()
     logger.start_recording()
 
-    monkeypatch.setattr(logger._post_analysis, "wait", lambda timeout_s=30.0: False)
+    monkeypatch.setattr(logger.post_analysis, "wait", lambda timeout_s=30.0: False)
     monkeypatch.setattr(
-        logger._post_analysis,
+        logger.post_analysis,
         "snapshot",
         lambda: PostAnalysisHealthSnapshot(
             queue_depth=2,
@@ -209,7 +209,7 @@ def test_post_analysis_uses_run_language_from_metadata(
 
     # Private worker injection keeps this a recorder-flow test while forcing a
     # deterministic post-analysis result; worker mechanics have their own suite.
-    logger._post_analysis._analysis_runner = _analysis_runner
+    logger.post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()
 
     def _status():
@@ -271,7 +271,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 
     # The public recorder path intentionally owns scheduling; the injected
     # runner makes the sampled-run contract observable without real analysis.
-    logger._post_analysis._analysis_runner = _analysis_runner
+    logger.post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()
 
     def _status():

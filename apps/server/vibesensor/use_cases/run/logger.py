@@ -7,8 +7,6 @@ import time
 from threading import RLock
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     ClientTracker,
@@ -24,7 +22,6 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
     RawCaptureSensorClockSync,
 )
-from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.finalize_stages import (
@@ -57,12 +54,8 @@ from vibesensor.use_cases.run.status_reporting import (
 from . import _recorder_runtime, _recorder_types
 
 if TYPE_CHECKING:
-    from vibesensor.domain import RunContextSnapshot
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
     from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
-    from vibesensor.shared.types.raw_capture import RawCaptureManifest
-    from vibesensor.shared.types.run_schema import RunSensorMetadata
-    from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 
 LOGGER = logging.getLogger(__name__)
 _RAW_CAPTURE_MAX_SYNC_AGE_US = 15_000_000
@@ -130,13 +123,13 @@ class RunRecorder:
             logger_provider=lambda: LOGGER,
         )
 
-        self._post_analysis = PostAnalysisWorker(
+        self.post_analysis = PostAnalysisWorker(
             history_db=history_db,
             error_callback=self._persistence.set_last_write_error,
             clear_error_callback=self._persistence.clear_last_write_error,
             analysis_runner=build_post_analysis_summary,
         )
-        self._raw_capture = RunRawCaptureWriter(
+        self.raw_capture = RunRawCaptureWriter(
             history_db=history_db if config.persist_history_db else None,
             logger=LOGGER,
             ingest_diagnostics=ingest_diagnostics,
@@ -155,7 +148,7 @@ class RunRecorder:
             sensor_metadata_reader=sensor_metadata_reader,
             lifecycle=self._lifecycle,
             persistence=self._persistence,
-            raw_capture=self._raw_capture,
+            raw_capture=self.raw_capture,
             analysis_settings_snapshot=self._analysis_settings_snapshot,
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
             monotonic=lambda: time.monotonic(),
@@ -197,58 +190,12 @@ class RunRecorder:
     def _run_id(self) -> str | None:
         return self._lifecycle.run_id
 
-    @property
-    def _live_start_mono_s(self) -> float:
-        return self._recording_session.live_start_mono_s
-
     def _run_id_matches(self, run_id: str) -> bool:
         current = self._lifecycle.current_run
         return current is not None and current.run_id == run_id
 
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return _recorder_runtime.analysis_settings_snapshot(self._settings_reader)
-
-    def _raw_capture_manifest_for_run(self, run_id: str) -> RawCaptureManifest | None:
-        return self._raw_capture_finalize_registry.manifest_for_run(run_id)
-
-    def _raw_capture_finalize_for_run(self, run_id: str) -> RunRawCaptureFinalize | None:
-        return self._raw_capture_finalize_registry.finalize_for_run(run_id)
-
-    def _live_run_context_snapshot(self) -> RunContextSnapshot:
-        return self._recording_session.live_run_context_snapshot()
-
-    def _run_context_snapshot(self, run_id: str | None = None) -> RunContextSnapshot:
-        return self._recording_session.run_context_snapshot(run_id)
-
-    def _run_sensor_snapshots_for_run(self, run_id: str) -> tuple[RunSensorMetadata, ...]:
-        return self._recording_session.run_sensor_snapshots_for_run(run_id)
-
-    def _session_snapshot(self) -> ActiveRunSnapshot | None:
-        with self._lock:
-            return self._lifecycle.snapshot()
-
-    def _start_new_run_locked(self) -> ActiveRunSnapshot:
-        return self._recording_session.start_new_run()
-
-    def capture_raw_samples(
-        self,
-        *,
-        client_id: str,
-        sample_rate_hz: int | None,
-        t0_us: int,
-        samples: object,
-    ) -> None:
-        if not isinstance(samples, np.ndarray):
-            return
-        self._raw_capture.capture_raw_samples(
-            client_id=client_id,
-            sample_rate_hz=sample_rate_hz,
-            t0_us=t0_us,
-            samples=samples,
-        )
-
-    def note_late_packet_loss(self, *, client_id: str) -> None:
-        self._raw_capture.note_late_packet_loss(client_id=client_id)
 
     def status(self) -> RunRecorderStatusSnapshot:
         with self._lock:
@@ -260,7 +207,7 @@ class RunRecorder:
                 capture_readiness = self._capture_readiness.evaluate(
                     observe_capture_readiness(
                         registry=self.registry,
-                        run_context=self._live_run_context_snapshot(),
+                        run_context=self._recording_session.live_run_context_snapshot(),
                         speed_provider=self.gps_monitor,
                         sensor_metadata_reader=self._sensor_metadata_reader,
                         now_mono=time.monotonic(),
@@ -271,7 +218,7 @@ class RunRecorder:
             run_id=run_id,
             start_time_utc=start_time_utc,
             persistence=self._persistence,
-            post_analysis=self._post_analysis,
+            post_analysis=self.post_analysis,
             capture_readiness=capture_readiness,
         )
 
@@ -279,7 +226,7 @@ class RunRecorder:
         return build_run_recorder_health_snapshot(
             history_db=self._history_db,
             persistence=self._persistence,
-            post_analysis=self._post_analysis,
+            post_analysis=self.post_analysis,
             logger=LOGGER,
         )
 
@@ -318,8 +265,8 @@ class RunRecorder:
             ingest_drop_losses=self._recording_session.ingest_drop_losses(),
             sample_flush=self._sample_flush,
             persistence=self._persistence,
-            raw_capture=self._raw_capture,
-            record_raw_capture_finalize_result=self._record_raw_capture_finalize_result,
+            raw_capture=self.raw_capture,
+            record_raw_capture_finalize_result=self._raw_capture_finalize_registry.record_result,
             record_finalization_stage_results=self._persistence.update_finalization_stage_results,
             logger=LOGGER,
         )
@@ -353,7 +300,7 @@ class RunRecorder:
                             finalize_result.persistence_snapshot.dropped_sample_count,
                         )
                     )
-            started_run = self._start_new_run_locked()
+            started_run = self._recording_session.start_new_run()
             lifecycle_events.append(
                 (
                     "started",
@@ -385,7 +332,7 @@ class RunRecorder:
                 samples_dropped=event_samples_dropped,
             )
         if completed_run_id and self._history_db is not None:
-            self.schedule_post_analysis(completed_run_id)
+            self.post_analysis.schedule(completed_run_id)
         return result
 
     def stop_recording(
@@ -439,33 +386,11 @@ class RunRecorder:
                 samples_dropped=event_samples_dropped,
             )
         if run_id_to_analyze and self._history_db is not None:
-            self.schedule_post_analysis(run_id_to_analyze)
+            self.post_analysis.schedule(run_id_to_analyze)
         return result
-
-    def schedule_post_analysis(self, run_id: str) -> None:
-        self._post_analysis.schedule(run_id)
-
-    def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
-        return self._post_analysis.wait(timeout_s)
-
-    def shutdown_post_analysis(self, timeout_s: float = 5.0) -> bool:
-        return self._post_analysis.shutdown(timeout_s)
 
     def shutdown_report(self, timeout_s: float = 30.0) -> _recorder_types.RecorderShutdownReport:
         return _recorder_types._shutdown_report(self, timeout_s)
-
-    def shutdown(self, timeout_s: float = 30.0) -> bool:
-        return self.shutdown_report(timeout_s).completed
-
-    def shutdown_raw_capture(self, timeout_s: float = 5.0) -> bool:
-        return self._raw_capture.shutdown(timeout_s)
-
-    def _record_raw_capture_finalize_result(
-        self,
-        run_id: str,
-        result: RawCaptureFinalizeResult,
-    ) -> None:
-        self._raw_capture_finalize_registry.record_result(run_id, result)
 
     def _handle_late_raw_capture_finalize_result(
         self,
@@ -496,7 +421,7 @@ class RunRecorder:
                     raw_capture_finalize_status=result.status,
                 ),
             )
-            self.schedule_post_analysis(run_id)
+            self.post_analysis.schedule(run_id)
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)
