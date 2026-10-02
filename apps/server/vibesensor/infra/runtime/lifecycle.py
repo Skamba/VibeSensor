@@ -1,7 +1,7 @@
 """LifecycleManager – async service startup and graceful shutdown.
 
 Owns:
-- Named startup phases with health-state reporting and tracing spans
+- Named startup phases with health-state reporting
 - Background task creation (via ``BackgroundTaskCoordinator`` +
   ``TaskSupervisor``) and cancellation
 - UDP data-transport startup and cleanup
@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 import anyio
-from opentelemetry.trace import SpanKind
 
 from vibesensor.infra.runtime.background_tasks import (
     BackgroundTaskCoordinator,
@@ -35,7 +34,6 @@ from vibesensor.infra.runtime.background_tasks import (
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
-from vibesensor.shared.tracing import mark_span_error, start_span
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
@@ -238,24 +236,10 @@ class LifecycleManager:
         """Execute the named startup phases in order with health-state tracking."""
         phase_name = "starting"
         self._health_state.set_phase(phase_name)
-        cancelled_exc_class = anyio.get_cancelled_exc_class()
         try:
             for phase_name, run_phase in self._startup_phases():
                 self._health_state.set_phase(phase_name)
-                with start_span(
-                    __name__,
-                    "runtime.startup.phase",
-                    kind=SpanKind.INTERNAL,
-                    attributes={"vibesensor.phase": phase_name},
-                ) as span:
-                    try:
-                        await run_phase()
-                    except cancelled_exc_class:
-                        span.set_attribute("vibesensor.cancelled", True)
-                        raise
-                    except (OSError, RuntimeError) as exc:
-                        mark_span_error(span, exc)
-                        raise
+                await run_phase()
             self._health_state.mark_ready()
         except (OSError, RuntimeError) as exc:
             self._health_state.mark_failed(phase_name, task_failure_message(exc))

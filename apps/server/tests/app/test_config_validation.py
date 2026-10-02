@@ -1,14 +1,11 @@
-"""Tests for typed config dataclass validation (ports and tracing round-trip)."""
+"""Tests for typed config dataclass port validation."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import pytest
 
 from vibesensor.app.config_schema import (
     ServerConfig,
-    TracingConfig,
     UDPConfig,
 )
 
@@ -54,12 +51,3 @@ class TestUDPConfigValidation:
         kwargs[field] = bad_value
         with pytest.raises(ValueError, match=field):
             UDPConfig(**kwargs)  # type: ignore[arg-type]
-
-
-class TestTracingConfigValidation:
-    """TracingConfig stores the enabled flag and resolved output path."""
-
-    def test_tracing_config_round_trip(self) -> None:
-        cfg = TracingConfig(enabled=True, output_path=Path("/tmp/traces.jsonl"))
-        assert cfg.enabled is True
-        assert cfg.output_path == Path("/tmp/traces.jsonl")

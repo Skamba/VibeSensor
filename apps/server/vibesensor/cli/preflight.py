@@ -55,8 +55,6 @@ def _writable_path_checks(cfg: AppConfig) -> tuple[_WritablePathCheck, ...]:
         checks.append(_WritablePathCheck("logging.app_log_path", cfg.logging.app_log_path))
     if cfg.ap.self_heal.enabled:
         checks.append(_WritablePathCheck("ap.self_heal.state_file", cfg.ap.self_heal.state_file))
-    if cfg.tracing.enabled:
-        checks.append(_WritablePathCheck("tracing.output_path", cfg.tracing.output_path))
     checks.extend(
         (
             _WritablePathCheck(

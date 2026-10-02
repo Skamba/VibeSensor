@@ -37,7 +37,6 @@ from vibesensor.shared.process_settings import (
     load_bootstrap_env_settings,
 )
 from vibesensor.shared.structured_logging import configure_logging
-from vibesensor.shared.tracing import configure_tracing, shutdown_tracing
 
 __all__ = ["create_app", "create_app_from_env", "main"]
 
@@ -63,7 +62,6 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
     bootstrap_settings = load_bootstrap_env_settings()
     configure_logging(config.logging.app_log_path)
-    configure_tracing(config.tracing)
     runtime = build_runtime(config)
     lifecycle = LifecycleManager(
         runtime=runtime.lifecycle,
@@ -90,7 +88,6 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             yield
         finally:
             await lifecycle.stop()
-            shutdown_tracing()
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
@@ -214,7 +211,6 @@ def main() -> None:
     configure_logging(None)
     config = load_config(args.config)
     configure_logging(config.logging.app_log_path)
-    configure_tracing(config.tracing)
     export_config_path_env(args.config)
     _run_server_with_port_fallback(
         "vibesensor.app.bootstrap:create_app_from_env",

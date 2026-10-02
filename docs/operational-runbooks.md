@@ -45,43 +45,28 @@ tools such as `curl` without browser origin headers continue to work. If an
 operator reports a blocked settings/update/history action, compare the browser
 URL, proxy host, and request `Host` header before changing server config.
 
-## Enable and inspect backend traces
+## Read structured backend logs
 
-Tracing is disabled by default. When you need end-to-end backend traces, enable
-the offline JSONL exporter in the active server config:
+The console (`docker compose logs`, `journalctl -u vibesensor.service`) shows one
+line per event: `<UTC timestamp> [level] message [logger] key=value ...`. When
+`logging.app_log_path` is set, the same events are written as one JSON object per
+line with `timestamp`, `level`, `logger`, `message`, `event`, `request_id` (for
+request-scoped events), `exception` (when present), and the event's extra fields.
 
-```yaml
-tracing:
-  enabled: true
-  output_path: data/traces.jsonl
-```
+Useful events:
 
-`tracing.output_path` is resolved relative to the active config file unless you
-set an absolute path. The exporter never depends on internet access or an
-external SaaS collector.
-
-After restarting the backend, inspect the exported spans directly:
+- `http_request` / `http_request_failed` with `method`, `path`, `status_code`,
+  `duration_ms`, and `request_id` (echoed in the `X-Request-ID` response header)
+- `settings_change` audit entries with `before` / `after`
+- `run_lifecycle` (`run_action` `started` / `stopped`) and
+  `run_finalize_stage_result` (one per finalization stage)
+- `post_analysis_started` / `post_analysis_completed`, and `post_analysis_step`
+  (one per post-analysis step with `step`, `step_status`, `duration_ms`,
+  `details`) or `post_analysis_failed` / `post_analysis_retryable_failure`
 
 ```bash
-tail -f /path/to/traces.jsonl
+grep '"event": "post_analysis_step"' /path/to/app.log | tail -n 20
 ```
-
-The canonical high-value spans are:
-
-- `http.request`
-- `ws.broadcast.tick`
-- `udp.data.dispatch`
-- `runtime.startup.phase`
-- `runtime.managed_task`
-- `run.recording.start` / `run.recording.stop`
-- `run.post_analysis.execute`
-- `history.runs.list`, `history.run.get`, `history.run.insights`, `history.run.delete`
-- `history.report.load_request` / `history.report.build_pdf`
-- `update.startup_recover`, `update.workflow`, `update.runtime_refresh`
-
-Use `trace_id` / `span_id` plus the span attributes to correlate one request or
-background workflow across HTTP, background tasks, history/report work, and
-updater flows.
 
 ## Diagnose high dropped frames
 
@@ -94,13 +79,11 @@ updater flows.
 docker compose logs --tail 100
 ```
 
-5. Use `docker compose logs --tail 100` for the human-readable `structlog`
-   console stream. If file logging is enabled, use the `X-Request-ID` response
-   header from the failing HTTP call to find the matching structured JSON
-   app-log entry; the same `request_id` also appears on request-scoped
-   `settings_change` audit events. If tracing is enabled, inspect the matching
-   `http.request`, `udp.data.dispatch`, or `ws.broadcast.tick` spans in the
-   JSONL trace output.
+5. Use `docker compose logs --tail 100` for the human-readable console stream.
+   If file logging is enabled, use the `X-Request-ID` response header from the
+   failing HTTP call to find the matching structured JSON app-log entry; the
+   same `request_id` also appears on request-scoped `settings_change` audit
+   events.
 6. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
 
 ## Diagnose stale or missing live updates
@@ -205,11 +188,10 @@ df -h /var/lib/vibesensor /var/log/vibesensor
 sudo journalctl -u vibesensor.service -n 200 --no-pager
 ```
 
-4. Review the live `structlog` console output first with `journalctl` above. If
-   file logging is enabled, inspect the matching structured JSON app log
-   configured by `logging.app_log_path`. If tracing is enabled, also inspect the
-   JSONL spans written to `tracing.output_path` for `run.post_analysis.execute`
-   or `history.*` failures around the same time.
+4. Review the live console output first with `journalctl` above. If file
+   logging is enabled, inspect the matching structured JSON app log configured
+   by `logging.app_log_path`, especially `post_analysis_step` and
+   `post_analysis_failed` events around the same time.
 5. Before any manual DB recovery, copy `/var/lib/vibesensor/history.db` off the
    device (or snapshot the card) so the original evidence is preserved.
 6. If the device lost power and now reports repeated write failures, treat that

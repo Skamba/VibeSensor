@@ -35,10 +35,6 @@ DEFAULT_CONFIG: JsonObject = {
     "update": {
         "rollback_dir": "/var/lib/vibesensor/rollback",
     },
-    "tracing": {
-        "enabled": False,
-        "output_path": "data/traces.jsonl",
-    },
 }
 
 

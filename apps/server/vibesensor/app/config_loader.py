@@ -19,7 +19,6 @@ from .config_schema import (
     GPSConfig,
     LoggingConfig,
     ServerConfig,
-    TracingConfig,
     UDPConfig,
     UpdateConfig,
 )
@@ -104,7 +103,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
-    tracing_cfg = _require_config_section(merged.get("tracing", {}), "tracing")
     self_heal_cfg = _require_config_section(ap_cfg.get("self_heal", {}), "ap.self_heal")
 
     app_log_path_raw = logging_cfg.get("app_log_path")
@@ -138,13 +136,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         gps=GPSConfig(gps_enabled=bool(gps_cfg["gps_enabled"])),
         update=UpdateConfig(
             rollback_dir=_resolve_config_path(str(update_cfg["rollback_dir"]), path),
-        ),
-        tracing=TracingConfig(
-            enabled=bool(tracing_cfg["enabled"]),
-            output_path=_resolve_config_path(
-                str(tracing_cfg["output_path"]),
-                path,
-            ),
         ),
         config_path=path,
     )

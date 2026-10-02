@@ -30,11 +30,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
 
-from opentelemetry.trace import SpanKind
-
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
@@ -175,92 +172,80 @@ def execute_post_analysis(
     config: PostAnalysisExecutionConfig,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
-    with start_span(
-        __name__,
-        "run.post_analysis.execute",
-        kind=SpanKind.INTERNAL,
-        attributes={"vibesensor.run_id": run_id},
-    ) as span:
-        LOGGER.info(
-            "Analysis started for run %s",
-            run_id,
-            extra=log_extra(event="post_analysis_started", run_id=run_id),
-        )
-        try:
-            with _step(run_id, "load_run") as step:
-                load_result = config.load_run(run_id=run_id, db=db)
-                if isinstance(load_result, MissingPostAnalysisMetadata | EmptyPostAnalysisSamples):
-                    failure_kind = (
-                        "missing_metadata"
-                        if isinstance(load_result, MissingPostAnalysisMetadata)
-                        else "no_samples"
-                    )
-                    step.update(status="failed", failure_kind=failure_kind)
-                else:
-                    step.update(
-                        sample_count=len(load_result.samples),
-                        raw_capture_available=load_result.raw_capture is not None,
-                        raw_capture_manifest_available=(
-                            load_result.raw_capture_manifest is not None
-                        ),
-                    )
+    LOGGER.info(
+        "Analysis started for run %s",
+        run_id,
+        extra=log_extra(event="post_analysis_started", run_id=run_id),
+    )
+    try:
+        with _step(run_id, "load_run") as step:
+            load_result = config.load_run(run_id=run_id, db=db)
             if isinstance(load_result, MissingPostAnalysisMetadata | EmptyPostAnalysisSamples):
-                span.set_attribute("vibesensor.failure_kind", failure_kind)
-                return _store_load_error(
-                    db=db,
-                    run_id=run_id,
-                    completed_error=load_result.error_message,
-                    kind=failure_kind,
+                failure_kind = (
+                    "missing_metadata"
+                    if isinstance(load_result, MissingPostAnalysisMetadata)
+                    else "no_samples"
                 )
-            loaded = load_result
-
-            with _step(run_id, "build_input") as step:
-                run_input = build_post_analysis_input(loaded)
+                step.update(status="failed", failure_kind=failure_kind)
+            else:
                 step.update(
-                    summary_row_count=len(run_input.samples),
-                    raw_capture_available=run_input.raw_capture_available,
-                    sampling_method=run_input.sampling_method,
+                    sample_count=len(load_result.samples),
+                    raw_capture_available=load_result.raw_capture is not None,
+                    raw_capture_manifest_available=(load_result.raw_capture_manifest is not None),
                 )
-
-            artifacts = build_whole_run_artifacts(db=db, loaded=loaded, run_input=run_input)
-            summary = build_report_facts(
-                run_input=run_input,
-                analysis_runner=config.analysis_runner,
-                artifacts=artifacts,
+        if isinstance(load_result, MissingPostAnalysisMetadata | EmptyPostAnalysisSamples):
+            return _store_load_error(
+                db=db,
+                run_id=run_id,
+                completed_error=load_result.error_message,
+                kind=failure_kind,
             )
-            with _step(run_id, "persist_analysis"):
-                db.store_analysis(loaded.run_id, summary)
-        except _STEP_ERRORS as exc:
-            mark_span_error(span, exc)
-            if config.defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
-                return _retryable_failure_result(
-                    run_id=run_id,
-                    analysis_start=analysis_start,
-                    exc=exc,
-                )
-            return _persistence_failure_result(
+        loaded = load_result
+
+        with _step(run_id, "build_input") as step:
+            run_input = build_post_analysis_input(loaded)
+            step.update(
+                summary_row_count=len(run_input.samples),
+                raw_capture_available=run_input.raw_capture_available,
+                sampling_method=run_input.sampling_method,
+            )
+
+        artifacts = build_whole_run_artifacts(db=db, loaded=loaded, run_input=run_input)
+        summary = build_report_facts(
+            run_input=run_input,
+            analysis_runner=config.analysis_runner,
+            artifacts=artifacts,
+        )
+        with _step(run_id, "persist_analysis"):
+            db.store_analysis(loaded.run_id, summary)
+    except _STEP_ERRORS as exc:
+        if config.defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+            return _retryable_failure_result(
                 run_id=run_id,
                 analysis_start=analysis_start,
                 exc=exc,
-                db=db,
             )
-
-        duration_s = time.monotonic() - analysis_start
-        span.set_attribute("vibesensor.sample_count", len(run_input.samples))
-        span.set_attribute("vibesensor.duration_s", round(duration_s, 3))
-        LOGGER.info(
-            "Analysis completed for run %s: %d samples in %.2fs",
-            loaded.run_id,
-            len(run_input.samples),
-            duration_s,
-            extra=log_extra(
-                event="post_analysis_completed",
-                run_id=loaded.run_id,
-                sample_count=len(run_input.samples),
-                duration_s=round(duration_s, 3),
-            ),
+        return _persistence_failure_result(
+            run_id=run_id,
+            analysis_start=analysis_start,
+            exc=exc,
+            db=db,
         )
-        return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
+
+    duration_s = time.monotonic() - analysis_start
+    LOGGER.info(
+        "Analysis completed for run %s: %d samples in %.2fs",
+        loaded.run_id,
+        len(run_input.samples),
+        duration_s,
+        extra=log_extra(
+            event="post_analysis_completed",
+            run_id=loaded.run_id,
+            sample_count=len(run_input.samples),
+            duration_s=round(duration_s, 3),
+        ),
+    )
+    return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
 
 
 # ---------------------------------------------------------------------------

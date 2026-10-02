@@ -41,8 +41,6 @@ def test_logging_paths_resolve_relative_to_config(cfg_path: Path) -> None:
 
     assert cfg.logging.history_db_path == cfg_path.parent / "db/history.db"
     assert cfg.logging.app_log_path == cfg_path.parent / "logs/app.log"
-    assert cfg.tracing.enabled is False
-    assert cfg.tracing.output_path == cfg_path.parent / "data/traces.jsonl"
 
 
 def test_app_log_path_null_disables_file_logging(cfg_path: Path) -> None:
@@ -88,6 +86,7 @@ def test_legacy_device_config_with_removed_keys_still_loads(
             "shutdown_analysis_timeout_s": 10,
         },
         "gps": {"gps_enabled": False, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
+        "tracing": {"enabled": True, "output_path": "data/traces.jsonl"},
     }
 
     with caplog.at_level("WARNING", logger="vibesensor.app.settings"):
@@ -108,23 +107,9 @@ def test_legacy_device_config_with_removed_keys_still_loads(
         "processing",
         "logging.run_retention_days",
         "gps.gpsd_port",
+        "tracing",
     ):
         assert f"Ignoring unsupported config key {key}\n" in warned + "\n"
-
-
-def test_tracing_defaults_and_overrides(cfg_path: Path) -> None:
-    cfg = _write_and_load(
-        cfg_path,
-        {
-            "tracing": {
-                "enabled": True,
-                "output_path": "logs/traces.jsonl",
-            }
-        },
-    )
-
-    assert cfg.tracing.enabled is True
-    assert cfg.tracing.output_path == cfg_path.parent / "logs/traces.jsonl"
 
 
 def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_path: Path) -> None:

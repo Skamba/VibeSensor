@@ -131,13 +131,10 @@ vibesensor-sim --count 5 --server-host 127.0.0.1
 
 Open http://localhost:8000.
 
-Backend logs now flow through a shared `structlog` pipeline: `docker compose logs`
-shows human-readable structured lines, and optional `logging.app_log_path` files
-capture the same events as JSON for request/run correlation.
-Optional backend tracing uses the offline JSONL exporter configured by
-`tracing.enabled` and `tracing.output_path`, with canonical spans for HTTP,
-WebSocket broadcast, UDP ingest, run lifecycle, history/report work, updates,
-and startup/background tasks.
+Backend logs use stdlib `logging` formatters (`vibesensor/shared/structured_logging.py`):
+`docker compose logs` shows human-readable lines with `key=value` fields, and the
+optional `logging.app_log_path` file captures the same events as JSON for
+request/run correlation.
 
 If you want source-mounted hot-reload instead of a production-style container
 build, use the Docker dev mode below.
@@ -334,8 +331,7 @@ run log format. Synthetic analysis scenarios live in
   check AP channel
 - **Need backend log correlation** — use `docker compose logs` for live
   structured console output, or match the `X-Request-ID` response header
-  against the JSON file log configured by `logging.app_log_path`; if tracing is
-  enabled, inspect the matching JSONL spans written to `tracing.output_path`
+  against the JSON file log configured by `logging.app_log_path`
 - **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
 - **Need config details** — check [apps/server/README.md](apps/server/README.md)
   and [firmware/esp/README.md](firmware/esp/README.md) for AP/firmware settings

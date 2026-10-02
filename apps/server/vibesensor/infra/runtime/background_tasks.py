@@ -20,11 +20,9 @@ from contextlib import AbstractAsyncContextManager
 
 import anyio
 from anyio.abc import TaskGroup
-from opentelemetry.trace import SpanKind, Status, StatusCode
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.failure_utils import bounded_failure_message
-from vibesensor.shared.tracing import mark_span_error, start_span
 
 __all__ = ["BackgroundTaskCoordinator", "TaskSupervisor", "task_failure_message"]
 
@@ -98,63 +96,39 @@ class TaskSupervisor:
         cancelled_exc_class = anyio.get_cancelled_exc_class()
         restart_count = 0
         while True:
-            with start_span(
-                __name__,
-                "runtime.managed_task",
-                kind=SpanKind.INTERNAL,
-                attributes={
-                    "vibesensor.task.name": name,
-                    "vibesensor.task.attempt": restart_count + 1,
-                },
-            ) as span:
-                started_at = time.monotonic()
-                try:
-                    await task_factory()
-                except cancelled_exc_class:
-                    span.set_attribute("vibesensor.cancelled", True)
-                    raise
-                except restartable_exceptions as exc:
-                    runtime_s = time.monotonic() - started_at
-                    span.set_attribute("vibesensor.runtime_s", round(runtime_s, 3))
-                    mark_span_error(span, exc)
-                    if runtime_s >= self._reset_after_s:
-                        restart_count = 0
-                    if restart_count >= self._max_attempts:
-                        span.set_attribute("vibesensor.restart_exhausted", True)
-                        self._record_terminal_failure(name=name, exc=exc)
-                        return
-                    restart_count += 1
-                    delay_s = self._restart_delay_s(restart_count)
-                    span.set_attribute("vibesensor.restart_delay_s", delay_s)
-                    self._health_state.record_task_failure(name, task_failure_message(exc))
-                    self._logger.error(
-                        (
-                            "Managed task %s failed with restartable error; "
-                            "restarting in %.1fs (%d/%d)."
-                        ),
-                        name,
-                        delay_s,
-                        restart_count,
-                        self._max_attempts,
-                        exc_info=exc,
-                    )
-                    await anyio.sleep(delay_s)
-                    self._health_state.clear_task_failure(name)
-                    continue
-                except Exception as exc:
-                    runtime_s = time.monotonic() - started_at
-                    span.set_attribute("vibesensor.runtime_s", round(runtime_s, 3))
-                    mark_span_error(span, exc)
+            started_at = time.monotonic()
+            try:
+                await task_factory()
+            except cancelled_exc_class:
+                raise
+            except restartable_exceptions as exc:
+                runtime_s = time.monotonic() - started_at
+                if runtime_s >= self._reset_after_s:
+                    restart_count = 0
+                if restart_count >= self._max_attempts:
                     self._record_terminal_failure(name=name, exc=exc)
                     return
-
-                runtime_s = time.monotonic() - started_at
-                span.set_attribute("vibesensor.runtime_s", round(runtime_s, 3))
-                span.set_attribute("vibesensor.unexpected_exit", True)
-                terminal = RuntimeError(f"managed task {name} exited unexpectedly")
-                span.set_status(Status(StatusCode.ERROR, str(terminal)))
-                self._record_terminal_failure(name=name, exc=terminal)
+                restart_count += 1
+                delay_s = self._restart_delay_s(restart_count)
+                self._health_state.record_task_failure(name, task_failure_message(exc))
+                self._logger.error(
+                    ("Managed task %s failed with restartable error; restarting in %.1fs (%d/%d)."),
+                    name,
+                    delay_s,
+                    restart_count,
+                    self._max_attempts,
+                    exc_info=exc,
+                )
+                await anyio.sleep(delay_s)
+                self._health_state.clear_task_failure(name)
+                continue
+            except Exception as exc:
+                self._record_terminal_failure(name=name, exc=exc)
                 return
+
+            terminal = RuntimeError(f"managed task {name} exited unexpectedly")
+            self._record_terminal_failure(name=name, exc=terminal)
+            return
 
 
 class BackgroundTaskCoordinator:
