@@ -198,21 +198,12 @@ def registered_client_ids(base_url: str) -> set[str]:
 
 
 def remove_all_clients(base_url: str) -> None:
-    """Release every registered client's location, then remove it from the registry.
+    """Remove every registered client; the server releases their assigned locations.
 
-    Location assignments persist in sensor settings by sensor id and can only be
-    released through the API while that sensor is registered. A test that assigns
-    locations must call this before its clients age out of the registry, or later
-    tests on the same server get 409 conflicts for those locations.
+    A test that assigns locations must call this before its clients age out of the
+    registry, or later tests on the same server get 409 conflicts for those locations.
     """
     for client_id in registered_client_ids(base_url):
-        api_json(
-            base_url,
-            f"/api/clients/{client_id}/location",
-            method="POST",
-            body={"location_code": ""},
-            expected_status=(200, 404),
-        )
         api_json(base_url, f"/api/clients/{client_id}", method="DELETE", expected_status=(200, 404))
 
 

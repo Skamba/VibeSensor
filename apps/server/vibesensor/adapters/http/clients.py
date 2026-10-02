@@ -160,11 +160,21 @@ def create_client_routes(
         responses=_REMOVE_CLIENT_RESPONSES,
     )
     async def remove_client(client_id: str) -> RemoveClientResponse:
-        """Remove a disconnected sensor from the runtime registry."""
+        """Remove a disconnected sensor and release its assigned location."""
         normalized_client_id = normalize_client_id_or_400(client_id)
         removed = await asyncio.to_thread(registry.remove_client, normalized_client_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Sensor not found")
+        # A removed sensor can no longer be addressed by the location route, so a
+        # location left assigned here would block its replacement with a 409.
+        stored = await asyncio.to_thread(sensor_settings_store.get_sensors)
+        stored_sensor = stored.get(normalized_client_id)
+        if stored_sensor is not None and stored_sensor["location_code"]:
+            await asyncio.to_thread(
+                sensor_settings_store.assign_sensor_location,
+                normalized_client_id,
+                "",
+            )
         return RemoveClientResponse(id=normalized_client_id, status="removed")
 
     return router
