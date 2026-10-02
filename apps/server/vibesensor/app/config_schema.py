@@ -32,7 +32,7 @@ class APConfig:
     """Operator-owned Wi-Fi access-point settings (SSID and PSK).
 
     Interface, connection name, address, and channel are fixed in
-    ``vibesensor.adapters.hotspot.constants``.
+    ``vibesensor.updates.hotspot.constants``.
     """
 
     ssid: str

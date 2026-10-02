@@ -19,10 +19,10 @@ from vibesensor.shared.ports import (
     UiPreferencesStore,
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.updates.manager import UpdateManager
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.run.logger import RunRecorder
-from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot

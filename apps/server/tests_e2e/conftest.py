@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 import pytest
 
 from tests_e2e.e2e_helpers import ROOT
-from vibesensor.use_cases.isolated_server_runtime import (
+from vibesensor.updates.isolated_server_runtime import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
     build_isolated_server_env,

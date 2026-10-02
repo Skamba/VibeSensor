@@ -32,7 +32,7 @@ Only settings that differ between deployments (dev, Docker, Pi, isolated test
 runtimes) or that the operator owns (hotspot SSID/PSK) are configurable. Fixed
 tuning values live as Python constants next to the code that uses them (for
 example the live sample rate in `vibesensor/shared/constants/dsp.py`, hotspot
-address/channel/interface in `vibesensor/adapters/hotspot/constants.py`, and
+address/channel/interface in `vibesensor/updates/hotspot/constants.py`, and
 run retention in `vibesensor/app/composition/history.py`).
 
 Keys that are not listed below are ignored with an

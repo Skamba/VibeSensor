@@ -85,7 +85,7 @@ jobs:
           set -euo pipefail
           python_bin="${{ steps.setup-python.outputs.python-path }}"
           wheel_path="$(echo apps/server/dist/*.whl)"
-          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.use_cases.updates.releases.release_validation validate-wheel-metadata \
+          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.updates.releases.release_validation validate-wheel-metadata \
             --wheel-path "${wheel_path}" \
             --expected-version "${{ steps.version.outputs.version }}"
 
@@ -164,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           python_bin="${{ steps.setup-python.outputs.python-path }}"
-          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.use_cases.updates.releases.release_validation validate-firmware-manifest \
+          PYTHONPATH=apps/server "${python_bin}" -m vibesensor.updates.releases.release_validation validate-firmware-manifest \
             --dist-dir "firmware/esp/dist"
 
       - name: Create firmware bundle

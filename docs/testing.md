@@ -26,7 +26,7 @@ make test-full-suite
 
 pytest -q apps/server/tests/adapters/pdf/
 pytest -q apps/server/tests/use_cases/history/
-pytest -q apps/server/tests/use_cases/updates/
+pytest -q apps/server/tests/updates/
 pytest -q apps/server/tests/integration/
 ```
 

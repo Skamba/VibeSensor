@@ -11,7 +11,7 @@ from vibesensor.adapters.simulator.profiles import calc_order_hz
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.use_cases.updates.http_client import read_json_response, read_text_response
+from vibesensor.updates.http_client import read_json_response, read_text_response
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
 

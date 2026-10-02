@@ -25,11 +25,11 @@ from vibesensor.adapters.http.models.updates import (
     UpdateStatusResponse,
     UsbInternetStatusResponse,
 )
-from vibesensor.use_cases.updates.status.payload_codec import update_status_to_builtins
+from vibesensor.updates.status.payload_codec import update_status_to_builtins
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
-    from vibesensor.use_cases.updates.manager import UpdateManager
+    from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+    from vibesensor.updates.manager import UpdateManager
 
 __all__ = ["create_update_routes"]
 

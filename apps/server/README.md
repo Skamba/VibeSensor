@@ -38,7 +38,7 @@ pulling in runtime orchestration. Cross-cutting runtime helpers that are still
 owned by backend coordination, such as isolated server subprocess orchestration,
 belong in a focused `use_cases/**` module instead of the shared layer, while
 feature-local orchestration belongs in the owning `use_cases/**` package. The
-backend static guards keep `vibesensor.use_cases.isolated_server_runtime` as
+backend static guards keep `vibesensor.updates.isolated_server_runtime` as
 the owner of that runtime helper and keep `shared/subprocess_server.py`
 removed.
 
@@ -51,7 +51,7 @@ state. Current `main` is intentionally split more narrowly:
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
 - `BootstrapEnvSettings` and `UpdateEnvSettings` in
-  `vibesensor.shared.process_settings` own process-level env overrides and
+  `vibesensor.common.process_settings` own process-level env overrides and
   feature flags such as config-path selection, static-asset mounting, and
   updater/release path/repo defaults.
 - Focused persisted settings services own user-facing runtime settings: car
@@ -152,7 +152,7 @@ alongside the editable install path.
 ## Payload boundary pattern
 
 Updater status persistence and `/api/update/status` now share one msgspec-owned
-boundary in `vibesensor/use_cases/updates/status/payload_codec.py`. Persisted
+boundary in `vibesensor/updates/status/payload_codec.py`. Persisted
 settings snapshots now follow the same pattern in
 `vibesensor/shared/boundaries/settings.py`.
 
@@ -213,7 +213,7 @@ Startup maintenance prunes terminal (`complete` / `error`) runs older than 7 day
 
 Prefer YAML config for normal runtime settings. The backend resolves the
 environment-driven startup/static layer through
-`vibesensor.shared.process_settings` so env names, defaults, and validation
+`vibesensor.common.process_settings` so env names, defaults, and validation
 stay in one typed owner instead of being spread across bootstrap and updater
 modules.
 
@@ -387,20 +387,20 @@ The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`
 ## Updates
 
 Production devices use the wheel-based updater in
-`apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public
+`apps/server/vibesensor/updates/`, with `manager.py` as the public
 API and `job.py` holding the linear update flow (validate, prepare transport,
 check release, stage/snapshot/install with rollback via `rollback.py`,
 complete, clean up).
 
 Firmware update code lives under
-`apps/server/vibesensor/use_cases/updates/firmware/`:
+`apps/server/vibesensor/updates/firmware/`:
 `firmware_cache.py` is the thin public cache/CLI surface,
 `firmware_release_fetcher.py` owns GitHub firmware HTTP access,
 `firmware_bundle.py` owns bundle extraction/validation/metadata helpers,
 `firmware_types.py` owns updater-local cache/release contracts, and
 `esp_flash_manager.py` owns ESP flashing orchestration. Wi-Fi/uplink recovery
-code lives under `apps/server/vibesensor/use_cases/updates/wifi/` and
-`apps/server/vibesensor/use_cases/updates/transport/`.
+code lives under `apps/server/vibesensor/updates/wifi/` and
+`apps/server/vibesensor/updates/transport/`.
 
 - The updater's retry and polling loops are plain fixed-interval loops owned
   by each step: `wifi/wifi_uplink_setup.py` retries SSID scan lag,

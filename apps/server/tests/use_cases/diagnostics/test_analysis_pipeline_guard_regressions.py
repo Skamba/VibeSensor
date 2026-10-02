@@ -17,8 +17,8 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain.finding import speed_bin_label
+from vibesensor.updates.status.runtime_details import hash_tree
 from vibesensor.use_cases.diagnostics.orders.match_rate import _compute_effective_match_rate
-from vibesensor.use_cases.updates.status.runtime_details import hash_tree
 
 # ------------------------------------------------------------------
 # 1. Burstiness for near-zero median
