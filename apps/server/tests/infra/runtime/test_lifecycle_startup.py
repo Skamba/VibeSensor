@@ -41,8 +41,7 @@ def _make_runtime(started: list[str]) -> LifecycleRuntime:
         ingest_diagnostics=IngestDiagnosticsCollector(),
         control_plane=MagicMock(start=AsyncMock(), close=MagicMock()),
         processing_loop=MagicMock(run=_parking("processing-loop")),
-        ws_hub=MagicMock(run=_parking("ws-broadcast")),
-        ws_broadcast=MagicMock(),
+        ws_broadcaster=MagicMock(run=_parking("ws-broadcast")),
         run_recorder=MagicMock(
             run=_parking("metrics-log"),
             shutdown_report=MagicMock(return_value=SimpleNamespace(completed=True)),

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 from _history_endpoint_helpers import make_app_and_state
@@ -31,8 +31,8 @@ def test_ws_selected_client_id_validation() -> None:
             ws.send_text(json.dumps({"client_id": "not-a-mac"}))
             ws.send_text(json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"}))
 
-    assert None in state.ws_hub.selected_updates
-    assert "aabbccddeeff" in state.ws_hub.selected_updates
+    assert None in state.ws_broadcaster.selected_updates
+    assert "aabbccddeeff" in state.ws_broadcaster.selected_updates
 
 
 @pytest.mark.parametrize(
@@ -52,12 +52,12 @@ def test_ws_ignores_invalid_client_selection_messages(messages: list[str]) -> No
             for message in messages:
                 ws.send_text(message)
 
-    assert state.ws_hub.selected_updates == [None]
+    assert state.ws_broadcaster.selected_updates == [None]
 
 
 def test_ws_unexpected_update_error_propagates() -> None:
     app, state = make_app_and_state(language="en")
-    state.ws_hub.update_selected_client = AsyncMock(side_effect=RuntimeError("boom"))
+    state.ws_broadcaster.select = MagicMock(side_effect=RuntimeError("boom"))
 
     with TestClient(app) as client, pytest.raises(RuntimeError, match="boom"):
         with client.websocket_connect("/ws") as ws:

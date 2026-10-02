@@ -5,8 +5,8 @@ from dataclasses import dataclass, replace
 import pytest
 from _history_endpoint_helpers import (
     FakeHistoryDB,
+    FakeLiveWs,
     FakeState,
-    FakeWsHub,
     make_app_and_state,
     make_app_from_state,
     make_metadata,
@@ -75,7 +75,7 @@ def test_history_run_detail_includes_raw_capture_quality() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    app = make_app_from_state(FakeState(RawManifestDB(metadata, samples, analysis), FakeWsHub()))
+    app = make_app_from_state(FakeState(RawManifestDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:
         response = client.get("/api/history/run-1")
@@ -253,7 +253,7 @@ def test_history_run_strips_internal_analysis_fields() -> None:
 
     metadata = make_metadata()
     samples = [sample(0)]
-    app = make_app_from_state(FakeState(InternalFieldDB(metadata, samples, {}), FakeWsHub()))
+    app = make_app_from_state(FakeState(InternalFieldDB(metadata, samples, {}), FakeLiveWs()))
 
     with TestClient(app) as client:
         response = client.get("/api/history/run-1")
@@ -273,7 +273,7 @@ def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     analysis.pop("plots", None)
     analysis.pop("analysis_metadata", None)
     db = FakeHistoryDB(metadata, samples, analysis)
-    app = make_app_from_state(FakeState(db, FakeWsHub()))
+    app = make_app_from_state(FakeState(db, FakeLiveWs()))
     route = next(
         route
         for route in iter_api_routes(app.router.routes)
@@ -309,7 +309,7 @@ def test_history_run_allows_nested_processing_profile_metadata() -> None:
             }
         ],
     }
-    app = make_app_from_state(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    app = make_app_from_state(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:
         response = client.get("/api/history/run-1")

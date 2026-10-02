@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from vibesensor.adapters.http.dependencies import HealthDeps, LiveDeps
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.adapters.websocket import LiveBroadcaster
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
 from vibesensor.app.composition.speed import SpeedRuntimeBundle
 from vibesensor.app.config_schema import AppConfig
@@ -14,7 +14,6 @@ from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.shared.constants.dsp import (
     FFT_N,
@@ -42,8 +41,7 @@ class LiveRuntimeBundle:
     processing_loop_state: ProcessingLoopState
     ingest_diagnostics: IngestDiagnosticsCollector
     processing_loop: ProcessingLoop
-    ws_hub: WebSocketHub
-    ws_broadcast: WsBroadcastService
+    ws_broadcaster: LiveBroadcaster
     run_recorder: RunRecorder
 
     def http_health_deps(self, *, health_state: RuntimeHealthState) -> HealthDeps:
@@ -67,7 +65,7 @@ class LiveRuntimeBundle:
             sensor_metadata_store=sensor_metadata_store,
             processor=self.processor,
             run_recorder=self.run_recorder,
-            ws_hub=self.ws_hub,
+            ws_broadcaster=self.ws_broadcaster,
         )
 
 
@@ -115,7 +113,6 @@ def build_live_runtime(
         control_plane=control_plane,
     )
     ingest_diagnostics = IngestDiagnosticsCollector()
-    ws_hub = WebSocketHub()
     ws_payload_projector = LiveWsPayloadProjector(
         registry=registry,
         processor=processor,
@@ -125,10 +122,11 @@ def build_live_runtime(
         speed_source_reader=runtime_settings.speed_source_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
     )
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=UI_PUSH_HZ,
-        ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
+    ws_broadcaster = LiveBroadcaster(
         payload_source=ws_payload_projector,
+        ingest_diagnostics=ingest_diagnostics,
+        push_hz=UI_PUSH_HZ,
+        heavy_push_hz=UI_HEAVY_PUSH_HZ,
     )
     run_recorder = RunRecorder(
         RunRecorderConfig(
@@ -164,7 +162,6 @@ def build_live_runtime(
         processing_loop_state=processing_loop_state,
         ingest_diagnostics=ingest_diagnostics,
         processing_loop=processing_loop,
-        ws_hub=ws_hub,
-        ws_broadcast=ws_broadcast,
+        ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
     )

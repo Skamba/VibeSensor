@@ -13,15 +13,15 @@ from vibesensor.domain import normalize_sensor_id
 from vibesensor.shared.types.payload_types import WsClientSelectionPayload
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.adapters.websocket import LiveBroadcaster
 
 LOGGER = logging.getLogger(__name__)
 
 _WS_CLIENT_SELECTION_ADAPTER = TypeAdapter(WsClientSelectionPayload)
 
 
-async def route_ws_message(
-    ws_hub: WebSocketHub,
+def route_ws_message(
+    broadcaster: LiveBroadcaster,
     ws: WebSocket,
     message: str,
 ) -> None:
@@ -51,7 +51,7 @@ async def route_ws_message(
         return
     value = typed_payload["client_id"]
     if value is None:
-        await ws_hub.update_selected_client(ws, None)
+        broadcaster.select(ws, None)
         return
     try:
         normalized = normalize_sensor_id(value)
@@ -61,4 +61,4 @@ async def route_ws_message(
             value,
         )
         return
-    await ws_hub.update_selected_client(ws, normalized)
+    broadcaster.select(ws, normalized)

@@ -13,7 +13,6 @@ from vibesensor.shared.process_settings import (
     DEFAULT_UPDATE_STATE_PATH,
     load_bootstrap_env_settings,
     load_update_env_settings,
-    load_websocket_env_settings,
     summarize_process_settings,
 )
 
@@ -22,7 +21,6 @@ def _clear_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in (
         "VIBESENSOR_CONFIG_PATH",
         "VIBESENSOR_SERVE_STATIC",
-        "VIBESENSOR_WS_DEBUG",
         "VIBESENSOR_REPO_PATH",
         "VIBESENSOR_ROLLBACK_DIR",
         "VIBESENSOR_UPDATE_STATE_PATH",
@@ -61,12 +59,12 @@ def test_bootstrap_env_settings_accept_env_overrides(
     assert settings.serve_static is False
 
 
-def test_websocket_env_settings_reject_invalid_bool(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_env_bool_settings_reject_invalid_bool(monkeypatch: pytest.MonkeyPatch) -> None:
     _clear_backend_env(monkeypatch)
-    monkeypatch.setenv("VIBESENSOR_WS_DEBUG", "definitely")
+    monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "definitely")
 
-    with pytest.raises(ValueError, match="VIBESENSOR_WS_DEBUG"):
-        load_websocket_env_settings()
+    with pytest.raises(ValueError, match="VIBESENSOR_SERVE_STATIC"):
+        load_bootstrap_env_settings()
 
 
 @pytest.mark.parametrize(
@@ -84,18 +82,17 @@ def test_websocket_env_settings_reject_invalid_bool(monkeypatch: pytest.MonkeyPa
         ("off", False),
         ("f", False),
         ("n", False),
-        ("", False),
     ],
 )
-def test_websocket_env_settings_parse_bool_tokens(
+def test_env_bool_settings_parse_bool_tokens(
     monkeypatch: pytest.MonkeyPatch,
     raw: str,
     expected: bool,
 ) -> None:
     _clear_backend_env(monkeypatch)
-    monkeypatch.setenv("VIBESENSOR_WS_DEBUG", raw)
+    monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", raw)
 
-    assert load_websocket_env_settings().ws_debug is expected
+    assert load_bootstrap_env_settings().serve_static is expected
 
 
 def test_update_env_settings_strip_and_expand_values(monkeypatch: pytest.MonkeyPatch) -> None:

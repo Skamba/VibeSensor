@@ -42,7 +42,7 @@ def test_build_runtime_projects_config_into_lifecycle_runtime(tmp_path: Path) ->
         assert runtime.router.live.control_plane is lifecycle.control_plane
         assert runtime.router.live.processor is lifecycle.processor
         assert runtime.router.live.run_recorder is lifecycle.run_recorder
-        assert runtime.router.live.ws_hub is lifecycle.ws_hub
+        assert runtime.router.live.ws_broadcaster is lifecycle.ws_broadcaster
         assert runtime.router.health.health_state is lifecycle.health_state
         assert runtime.router.health.ingest_diagnostics is lifecycle.ingest_diagnostics
         assert runtime.router.updates.update_manager is lifecycle.update_manager

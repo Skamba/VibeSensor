@@ -9,10 +9,15 @@ who consumes it?" Then follow the linked deep dives for step-by-step details.
 | Field | Value |
 |------|-------------|
 | Source | UDP sensor datagrams from the ESP32 fleet |
-| Main path | `apps/server/vibesensor/adapters/udp/udp_data_rx.py` -> registry + `apps/server/vibesensor/infra/processing/` -> `apps/server/vibesensor/infra/runtime/ws_payload_projection.py` -> `apps/server/vibesensor/infra/runtime/ws_broadcast.py` |
+| Main path | `apps/server/vibesensor/adapters/udp/udp_data_rx.py` -> registry + `apps/server/vibesensor/infra/processing/` -> `apps/server/vibesensor/infra/runtime/ws_payload_projection.py` -> `apps/server/vibesensor/adapters/websocket/broadcaster.py` |
 | Boundary | Live WebSocket payload projection only; no history DB or post-stop analysis in this path |
 | Final consumer | Dashboard live UI |
 | Data shape | Live and transient, not replayable |
+
+One `LiveBroadcaster` task builds the payload at `UI_PUSH_HZ` (spectra on
+`UI_HEAVY_PUSH_HZ` of those ticks), serializes it once per distinct selected
+sensor, and sends it to every connected browser; a socket whose send fails or
+exceeds the send timeout is closed and dropped.
 
 Live flow is for "what is happening right now". It may expose connectivity,
 speed, spectra, and strength metrics, but it does not carry persisted findings

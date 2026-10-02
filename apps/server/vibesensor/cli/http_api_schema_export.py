@@ -54,7 +54,7 @@ def _build_openapi_app() -> FastAPI:
             sensor_metadata_store=placeholder,
             processor=placeholder,
             run_recorder=placeholder,
-            ws_hub=placeholder,
+            ws_broadcaster=placeholder,
         ),
         history=HistoryDeps(
             run_service=placeholder,

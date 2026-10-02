@@ -52,7 +52,6 @@ def test_preflight_cli_prints_resolved_config(monkeypatch, capsys, tmp_path: Pat
     config_path = tmp_path / "config.yaml"
     config_path.write_text("server:\n  port: 8000\n", encoding="utf-8")
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
-    monkeypatch.setenv("VIBESENSOR_WS_DEBUG", "1")
     monkeypatch.setenv("VIBESENSOR_REPO_PATH", str(tmp_path / "repo"))
     monkeypatch.setenv("GITHUB_TOKEN", "ghp_test123")
     monkeypatch.setattr(sys, "argv", ["vibesensor-config-preflight", str(config_path)])
@@ -65,7 +64,6 @@ def test_preflight_cli_prints_resolved_config(monkeypatch, capsys, tmp_path: Pat
     assert payload["config_path"] == str(config_path.resolve())
     assert payload["server"]["port"] == 8000
     assert payload["process_settings"]["serve_static"] is False
-    assert payload["process_settings"]["ws_debug"] is True
     assert payload["process_settings"]["repo_path"] == str(tmp_path / "repo")
     assert payload["process_settings"]["github_token_configured"] is True
 

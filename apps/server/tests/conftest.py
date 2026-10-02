@@ -28,7 +28,7 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.adapters.websocket import LiveBroadcaster
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -130,12 +130,8 @@ def _control_plane_mock() -> UDPControlPlane:
     return control_plane
 
 
-def _ws_hub_mock() -> WebSocketHub:
-    ws_hub = create_autospec(WebSocketHub, instance=True, spec_set=True)
-    ws_hub.add = AsyncMock(return_value=None)
-    ws_hub.update_selected_client = AsyncMock(return_value=None)
-    ws_hub.remove = AsyncMock(return_value=None)
-    return ws_hub
+def _ws_broadcaster_mock() -> LiveBroadcaster:
+    return create_autospec(LiveBroadcaster, instance=True, spec_set=True)
 
 
 def _gps_monitor_mock() -> GPSSpeedMonitor:
@@ -235,7 +231,7 @@ class FakeState:
     registry: ClientRegistry = field(default_factory=_registry_mock)
     processor: SignalProcessor = field(default_factory=_processor_mock)
     control_plane: UDPControlPlane = field(default_factory=_control_plane_mock)
-    ws_hub: WebSocketHub = field(default_factory=_ws_hub_mock)
+    ws_broadcaster: LiveBroadcaster = field(default_factory=_ws_broadcaster_mock)
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
     settings_store: MagicMock = field(default_factory=_settings_store_mock)
@@ -254,7 +250,6 @@ class FakeState:
         default_factory=IngestDiagnosticsCollector
     )
     processing_loop: object = field(default_factory=MagicMock)
-    ws_broadcast: object = field(default_factory=MagicMock)
     run_service: object | None = None
     report_service: object | None = None
     export_service: object | None = None
@@ -311,7 +306,7 @@ class FakeState:
             sensor_metadata_store=self.sensor_metadata_store,
             processor=self.processor,
             run_recorder=self.run_recorder,
-            ws_hub=self.ws_hub,
+            ws_broadcaster=self.ws_broadcaster,
         )
 
     @property

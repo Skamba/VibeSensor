@@ -32,8 +32,7 @@ def _make_lifecycle(*, update_job_task: asyncio.Task[None] | None = None) -> Lif
         ingest_diagnostics=IngestDiagnosticsCollector(),
         control_plane=MagicMock(close=MagicMock()),
         processing_loop=MagicMock(),
-        ws_hub=MagicMock(),
-        ws_broadcast=MagicMock(),
+        ws_broadcaster=MagicMock(),
         run_recorder=MagicMock(
             shutdown_report=MagicMock(
                 return_value=SimpleNamespace(
