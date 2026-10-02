@@ -65,11 +65,11 @@ def test_execute_post_analysis_success_stores_summary() -> None:
     stored: dict[str, object] = {}
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             stored["run_id"] = run_id
             stored["analysis"] = analysis
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     result = execute_post_analysis(
@@ -106,10 +106,10 @@ def test_execute_post_analysis_success_stores_summary() -> None:
 
 def test_execute_post_analysis_exports_trace_span(tmp_path: Path) -> None:
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             return None
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     with configured_trace_output(tmp_path) as trace_path:
@@ -143,10 +143,10 @@ def test_execute_post_analysis_handles_missing_metadata() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     result = execute_post_analysis(
@@ -170,10 +170,10 @@ def test_execute_post_analysis_handles_no_samples() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     result = execute_post_analysis(
@@ -195,10 +195,10 @@ def test_execute_post_analysis_handles_no_samples() -> None:
 
 def test_execute_post_analysis_propagates_unexpected_analysis_failure() -> None:
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     with pytest.raises(RuntimeError, match="boom"):
@@ -224,10 +224,10 @@ def test_execute_post_analysis_fails_run_without_strength_metrics_instead_of_rai
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     def _too_short(_run: PostAnalysisRunInput):
@@ -261,10 +261,10 @@ def test_execute_post_analysis_reports_persistence_failure() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise sqlite3.Error("db write failed")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     result = execute_post_analysis(
@@ -295,10 +295,10 @@ def test_execute_post_analysis_defers_retryable_persistence_failure() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise sqlite3.OperationalError("db locked")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     result = execute_post_analysis(
@@ -328,10 +328,10 @@ def test_execute_post_analysis_defers_retryable_load_failure() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     result = execute_post_analysis(
@@ -355,11 +355,11 @@ def test_execute_post_analysis_passes_canonical_typed_input_to_runner() -> None:
     captured: dict[str, object] = {}
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             captured["stored_run_id"] = run_id
             captured["stored_analysis"] = analysis
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     result = execute_post_analysis(

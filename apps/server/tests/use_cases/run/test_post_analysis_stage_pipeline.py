@@ -118,7 +118,7 @@ def test_run_load_run_stage_returns_terminal_missing_metadata_result() -> None:
     stored_errors: list[tuple[str, str]] = []
 
     class FakeDB:
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             stored_errors.append((run_id, error))
 
     stage = run_load_run_stage(
@@ -177,7 +177,7 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeyp
     )
 
     class FakeDB:
-        async def astore_whole_run_artifacts(self, run_id, manifest, *, artifact_contents):
+        def store_whole_run_artifacts(self, run_id, manifest, *, artifact_contents):
             stored["run_id"] = run_id
             stored["manifest"] = manifest
             stored["artifact_contents"] = artifact_contents
@@ -220,7 +220,7 @@ def test_run_whole_run_pipeline_stages_reports_degraded_context_fallback(monkeyp
         "PersistArtifactsStage",
     ]
     statuses = {stage.stage_name: stage.status for stage in result.stage_results}
-    assert statuses["BuildWholeRunSpectraStage"] == "skipped"
+    assert statuses["BuildWholeRunSpectraStage"] == "ok"
     assert statuses["BuildWholeRunContextStage"] == "degraded"
     assert statuses["BuildOrderTraceStage"] == "skipped"
     assert statuses["PersistArtifactsStage"] == "ok"
@@ -233,10 +233,10 @@ def test_whole_run_spectral_stage_uses_manifest_and_bounded_range_reader(monkeyp
     captured: dict[str, object] = {}
 
     class FakeDB:
-        async def aload_raw_capture(self, _run_id):  # pragma: no cover - regression guard
+        def load_raw_capture(self, _run_id):  # pragma: no cover - regression guard
             raise AssertionError("whole-run spectra must not load full raw capture")
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             run_id,
             client_id,
@@ -297,7 +297,7 @@ def test_run_persist_analysis_summary_stage_stores_summary() -> None:
     stored: list[tuple[str, object]] = []
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             stored.append((run_id, analysis))
 
     summary = make_persisted_analysis({"run_suitability": []})

@@ -18,7 +18,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.adapters.history.projection import project_analysis_summary
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
@@ -76,10 +76,10 @@ def _action_ids(summary: dict[str, Any]) -> list[str]:
 
 
 def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict[str, Any]:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     run: StoredHistoryRun | None = None
     try:
-        db.run_repository.create_run(
+        db.create_run(
             "characterization-roundtrip",
             "2026-01-01T00:00:00Z",
             run_metadata_from_mapping(
@@ -90,13 +90,11 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
                 }
             ),
         )
-        db.run_repository.finalize_run("characterization-roundtrip", "2026-01-01T00:01:00Z")
-        db.run_repository.store_analysis(
-            "characterization-roundtrip", make_persisted_analysis(summary)
-        )
-        run = db.run_repository.get_run("characterization-roundtrip")
+        db.finalize_run("characterization-roundtrip", "2026-01-01T00:01:00Z")
+        db.store_analysis("characterization-roundtrip", make_persisted_analysis(summary))
+        run = db.get_run("characterization-roundtrip")
     finally:
-        db.lifecycle.close()
+        db.close()
 
     assert run is not None
     analysis = run.analysis

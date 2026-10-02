@@ -1,4 +1,4 @@
-"""HistoryDB input sanitization, integrity checks, and warning-path coverage."""
+"""HistoryDB input sanitization and warning-path coverage."""
 
 from __future__ import annotations
 
@@ -7,62 +7,39 @@ from typing import cast
 
 import numpy as np
 import pytest
-from test_support.history_db_async import execute_statements
 from test_support.history_db_lifecycle import create_recording_run
 from test_support.history_db_lifecycle import make_analysis_summary as _analysis
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryPersistenceAdapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.json_utils import sanitize_value
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 
 
-def test_create_run_sanitizes_non_finite_metadata(db: HistoryPersistenceAdapters) -> None:
+def test_create_run_sanitizes_non_finite_metadata(db: HistoryDB) -> None:
     create_recording_run(db, "run-nan", reference_context={"tire_circumference_m": float("nan")})
-    run = db.run_repository.get_run("run-nan")
+    run = db.get_run("run-nan")
     assert run is not None
     assert run.metadata.wheel_circumference_m is None
     assert run.metadata.tire_circumference_m is None
 
 
-def test_list_runs_clamps_negative_limit_to_all_rows(db: HistoryPersistenceAdapters) -> None:
+def test_list_runs_clamps_negative_limit_to_all_rows(db: HistoryDB) -> None:
     for i in range(5):
-        db.run_repository.create_run(f"run-{i}", "2026-01-01T00:00:00Z", _metadata(f"run-{i}"))
-        db.run_repository.finalize_run(f"run-{i}", "2026-01-01T00:10:00Z")
+        db.create_run(f"run-{i}", "2026-01-01T00:00:00Z", _metadata(f"run-{i}"))
+        db.finalize_run(f"run-{i}", "2026-01-01T00:10:00Z")
 
-    result = db.run_repository.list_runs(limit=-1)
+    result = db.list_runs(limit=-1)
     assert len(result) == 5
 
 
-def test_resolve_keyset_offset_rejects_invalid_table(db: HistoryPersistenceAdapters) -> None:
-    create_recording_run(db, "run-guard")
-    db.run_repository.append_samples(
-        "run-guard", [sensor_frame_from_mapping({"i": i}) for i in range(3)]
-    )
-
-    with pytest.raises(ValueError, match="invalid table name"):
-        db.run_repository._run_sync(
-            db.run_repository._aresolve_keyset_offset("injected_table", "run-guard", 1)
-        )
-
-
 @pytest.mark.parametrize("run_id", [pytest.param("", id="empty"), pytest.param("   ", id="blank")])
-def test_append_samples_rejects_missing_run_id(db: HistoryPersistenceAdapters, run_id: str) -> None:
+def test_append_samples_rejects_missing_run_id(db: HistoryDB, run_id: str) -> None:
     with pytest.raises(ValueError, match="run_id"):
-        db.run_repository.append_samples(run_id, [sensor_frame_from_mapping({"i": 1})])
-
-
-def test_iter_run_samples_negative_offset_raises(db: HistoryPersistenceAdapters) -> None:
-    create_recording_run(db, "run-neg-off")
-    db.run_repository.append_samples(
-        "run-neg-off", [sensor_frame_from_mapping({"i": i}) for i in range(3)]
-    )
-
-    with pytest.raises(ValueError, match="offset"):
-        list(db.run_repository.iter_run_samples("run-neg-off", offset=-1))
+        db.append_samples(run_id, [sensor_frame_from_mapping({"i": 1})])
 
 
 @pytest.mark.parametrize(
@@ -103,56 +80,11 @@ def test_sanitize_value_handles_numpy_arrays() -> None:
     json.dumps(result2d)
 
 
-# -- verify_run_integrity tests -----------------------------------------------
-
-
-def test_verify_run_integrity_clean_run(db: HistoryPersistenceAdapters) -> None:
-    create_recording_run(db, "run-ok", sensor_model="a", sample_rate_hz=100)
-    db.run_repository.append_samples(
-        "run-ok", [sensor_frame_from_mapping({"i": i}) for i in range(5)]
-    )
-    db.run_repository.finalize_run("run-ok", "2026-01-01T00:10:00Z")
-    db.run_repository.store_analysis("run-ok", make_persisted_analysis(_analysis("run-ok")))
-    assert db.run_repository.verify_run_integrity("run-ok") == []
-
-
-def test_verify_run_integrity_sample_count_mismatch(db: HistoryPersistenceAdapters) -> None:
-    create_recording_run(db, "run-m", sensor_model="a", sample_rate_hz=100)
-    db.run_repository.append_samples(
-        "run-m", [sensor_frame_from_mapping({"i": i}) for i in range(5)]
-    )
-    db.run_repository.finalize_run("run-m", "2026-01-01T00:10:00Z")
-    db.run_repository.store_analysis("run-m", make_persisted_analysis(_analysis("run-m")))
-    # Manually corrupt sample_count
-    execute_statements(
-        db.lifecycle,
-        ("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'", ()),
-    )
-    problems = db.run_repository.verify_run_integrity("run-m")
-    assert any("sample_count mismatch" in p for p in problems)
-
-
-def test_verify_run_integrity_complete_without_analysis(db: HistoryPersistenceAdapters) -> None:
-    create_recording_run(db, "run-na", sensor_model="a", sample_rate_hz=100)
-    db.run_repository.finalize_run("run-na", "2026-01-01T00:10:00Z")
-    # Force status to complete without analysis
-    execute_statements(
-        db.lifecycle,
-        ("UPDATE runs SET status = 'complete' WHERE run_id = 'run-na'", ()),
-    )
-    problems = db.run_repository.verify_run_integrity("run-na")
-    assert any("missing analysis_json" in p for p in problems)
-
-
-def test_verify_run_integrity_run_not_found(db: HistoryPersistenceAdapters) -> None:
-    assert db.run_repository.verify_run_integrity("no-such-run") == ["run not found"]
-
-
 # -- metadata validation warning tests ----------------------------------------
 
 
 def test_create_run_warns_on_missing_metadata_keys(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     incomplete_meta = run_metadata_from_mapping(
@@ -163,18 +95,18 @@ def test_create_run_warns_on_missing_metadata_keys(
         }
     )
     with caplog.at_level("WARNING"):
-        db.run_repository.create_run("run-w", "2026-01-01T00:00:00Z", incomplete_meta)
+        db.create_run("run-w", "2026-01-01T00:00:00Z", incomplete_meta)
     assert "missing recommended keys" in caplog.text
     assert "raw_sample_rate_hz" in caplog.text
 
 
 def test_create_run_no_warning_when_metadata_complete(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     meta = _metadata("run-ok", sensor_model="a", raw_sample_rate_hz=100)
     with caplog.at_level("WARNING"):
-        db.run_repository.create_run("run-ok", "2026-01-01T00:00:00Z", meta)
+        db.create_run("run-ok", "2026-01-01T00:00:00Z", meta)
     assert "missing recommended keys" not in caplog.text
 
 
@@ -182,28 +114,28 @@ def test_create_run_no_warning_when_metadata_complete(
 
 
 def test_store_analysis_warns_on_missing_summary_keys(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     meta = _metadata("run-w2", sensor_model="a", raw_sample_rate_hz=100)
-    db.run_repository.create_run("run-w2", "2026-01-01T00:00:00Z", meta)
-    db.run_repository.finalize_run("run-w2", "2026-01-01T00:10:00Z")
+    db.create_run("run-w2", "2026-01-01T00:00:00Z", meta)
+    db.finalize_run("run-w2", "2026-01-01T00:10:00Z")
     incomplete_summary = cast(AnalysisSummary, {"run_id": "run-w2", "score": 42})
     with caplog.at_level("WARNING"):
-        db.run_repository.store_analysis("run-w2", make_persisted_analysis(incomplete_summary))
+        db.store_analysis("run-w2", make_persisted_analysis(incomplete_summary))
     assert "missing expected keys" in caplog.text
 
 
 # -- atomic state transition tests ---------------------------------------------
 
 
-def test_store_analysis_rejects_terminal_status(db: HistoryPersistenceAdapters) -> None:
+def test_store_analysis_rejects_terminal_status(db: HistoryDB) -> None:
     create_recording_run(db, "run-t", sensor_model="a", sample_rate_hz=100)
-    db.run_repository.finalize_run("run-t", "2026-01-01T00:10:00Z")
-    db.run_repository.store_analysis("run-t", make_persisted_analysis(_analysis("run-t")))
+    db.finalize_run("run-t", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-t", make_persisted_analysis(_analysis("run-t")))
     # Second store_analysis should return False (already complete)
     assert (
-        db.run_repository.store_analysis(
+        db.store_analysis(
             "run-t",
             make_persisted_analysis(_analysis("run-t", top_causes=["unexpected"])),
         )
@@ -211,9 +143,9 @@ def test_store_analysis_rejects_terminal_status(db: HistoryPersistenceAdapters) 
     )
 
 
-def test_store_analysis_error_rejects_terminal_status(db: HistoryPersistenceAdapters) -> None:
+def test_store_analysis_error_rejects_terminal_status(db: HistoryDB) -> None:
     create_recording_run(db, "run-te", sensor_model="a", sample_rate_hz=100)
-    db.run_repository.finalize_run("run-te", "2026-01-01T00:10:00Z")
-    db.run_repository.store_analysis("run-te", make_persisted_analysis(_analysis("run-te")))
+    db.finalize_run("run-te", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-te", make_persisted_analysis(_analysis("run-te")))
     # Error after complete should return False
-    assert db.run_repository.store_analysis_error("run-te", "late failure") is False
+    assert db.store_analysis_error("run-te", "late failure") is False

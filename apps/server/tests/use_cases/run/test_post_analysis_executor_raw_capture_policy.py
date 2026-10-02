@@ -53,11 +53,11 @@ def test_execute_post_analysis_skips_whole_run_artifacts_for_fatal_raw_capture_l
     )
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             stored["run_id"] = run_id
             stored["analysis"] = analysis
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     def artifact_builder(**_kwargs):

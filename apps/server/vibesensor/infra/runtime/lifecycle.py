@@ -17,12 +17,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
+import sqlite3
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
-import aiosqlite
 import anyio
 from opentelemetry.trace import SpanKind
 
@@ -114,7 +114,7 @@ class LifecycleUpdateManager(LifecycleManagedJobs, Protocol):
 
 
 class LifecycleHistoryDb(Protocol):
-    async def aclose(self) -> None: ...
+    def close(self) -> None: ...
 
 
 class UdpQueueConsumer(Protocol):
@@ -384,8 +384,8 @@ class LifecycleManager:
         except (OSError, RuntimeError) as exc:
             issues.append(("Error shutting down worker pool", exc))
         try:
-            await r.history_db.aclose()
-        except (aiosqlite.Error, OSError) as exc:
+            await anyio.to_thread.run_sync(r.history_db.close)
+        except (sqlite3.Error, OSError) as exc:
             issues.append(("Error closing history DB", exc))
         if not lingering_background:
             await self._background_tasks.close()

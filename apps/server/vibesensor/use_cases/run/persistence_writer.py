@@ -7,14 +7,11 @@ the injected ``RunPersistence`` boundary.
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from collections.abc import Awaitable, Callable
+import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from threading import RLock
-from typing import Any
-
-import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.run_schema import (
@@ -23,24 +20,6 @@ from vibesensor.shared.types.run_schema import (
     RunRawCaptureFinalize,
 )
 from vibesensor.shared.types.sensor_frame import SensorFrame
-
-
-def _sync_call[T](db: Any, coro: Awaitable[T]) -> T:
-    """Synchronously resolve *coro* bound to *db*.
-
-    If *db* exposes a persistent engine loop, route through it so
-    aiosqlite futures resolve on the owning loop. Otherwise fall back
-    to ``asyncio.run`` (test stubs) which creates a short-lived loop.
-    """
-    runner = getattr(db, "_run_on_engine_loop", None)
-    if callable(runner):
-        return runner(coro)  # type: ignore[no-any-return]
-
-    async def _runner() -> T:
-        return await coro
-
-    return asyncio.run(_runner())
-
 
 __all__ = [
     "AppendRowsResult",
@@ -224,7 +203,7 @@ class RunPersistenceWriter:
                 self._history_create_fail_count = 0
         metadata = self._metadata_builder(run_id, start_time_utc)
         try:
-            _sync_call(history_db, history_db.acreate_run(run_id, start_time_utc, metadata))
+            history_db.create_run(run_id, start_time_utc, metadata)
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
@@ -233,7 +212,7 @@ class RunPersistenceWriter:
                 self._retry_cycle_count = 0
                 self._retry_after_mono_s = 0.0
             self.clear_last_write_error()
-        except (aiosqlite.Error, OSError) as exc:
+        except (sqlite3.Error, OSError) as exc:
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
@@ -294,9 +273,7 @@ class RunPersistenceWriter:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = self._monotonic()
-                        rows_written = _sync_call(
-                            history_db, history_db.aappend_samples(run_id, rows)
-                        )
+                        rows_written = history_db.append_samples(run_id, rows)
                         write_dur = self._monotonic() - write_start
                         with self._lock:
                             if not self._run_id_matches(run_id):
@@ -318,7 +295,7 @@ class RunPersistenceWriter:
                             return AppendRowsResult(history_created=True, rows_written=0)
                         self.clear_last_write_error()
                         return AppendRowsResult(history_created=True, rows_written=rows_written)
-                    except (aiosqlite.Error, OSError) as exc:
+                    except (sqlite3.Error, OSError) as exc:
                         last_exc = exc
                         if attempt < _MAX_APPEND_RETRIES - 1:
                             self._sleep(_APPEND_RETRY_DELAYS_S[attempt])
@@ -359,14 +336,7 @@ class RunPersistenceWriter:
         try:
             latest_metadata = self._metadata_builder(run_id, start_time_utc)
             latest_metadata.end_time_utc = end_utc
-            finalized = _sync_call(
-                history_db,
-                history_db.afinalize_run(
-                    run_id,
-                    end_utc,
-                    metadata=latest_metadata,
-                ),
-            )
+            finalized = history_db.finalize_run(run_id, end_utc, metadata=latest_metadata)
             if finalized is False:
                 self.set_last_write_error("history finalize_run skipped due to invalid state")
                 self._logger_provider().warning(
@@ -376,7 +346,7 @@ class RunPersistenceWriter:
                 return False
             self.clear_last_write_error()
             return True
-        except (aiosqlite.Error, OSError) as exc:
+        except (sqlite3.Error, OSError) as exc:
             self.set_last_write_error(f"history finalize_run failed: {exc}")
             self._logger_provider().warning(
                 "Failed to finalize run in history DB",
@@ -393,7 +363,7 @@ class RunPersistenceWriter:
         if history_db is None:
             return False
         try:
-            metadata = _sync_call(history_db, history_db.aget_run_metadata(run_id))
+            metadata = history_db.get_run_metadata(run_id)
             if metadata is None:
                 self.set_last_write_error(
                     f"history metadata update failed: run {run_id} metadata not found"
@@ -404,10 +374,7 @@ class RunPersistenceWriter:
                 )
                 return False
             updated = replace(metadata, raw_capture_finalize=raw_capture_finalize)
-            persisted = _sync_call(
-                history_db,
-                history_db.aupdate_run_metadata(run_id, updated),
-            )
+            persisted = history_db.update_run_metadata(run_id, updated)
             if not persisted:
                 self.set_last_write_error(
                     f"history metadata update skipped for missing run {run_id}"
@@ -419,7 +386,7 @@ class RunPersistenceWriter:
                 return False
             self.clear_last_write_error()
             return True
-        except (aiosqlite.Error, OSError) as exc:
+        except (sqlite3.Error, OSError) as exc:
             self.set_last_write_error(f"history metadata update failed: {exc}")
             self._logger_provider().warning(
                 "Failed to update raw capture finalize metadata for run %s",
@@ -443,10 +410,7 @@ class RunPersistenceWriter:
         try:
             metadata = self._metadata_builder(run_id, start_time_utc)
             updated = replace(metadata, finalization_stages=tuple(stage_results))
-            persisted = _sync_call(
-                history_db,
-                history_db.aupdate_run_metadata(run_id, updated),
-            )
+            persisted = history_db.update_run_metadata(run_id, updated)
             if not persisted:
                 self.set_last_write_error(
                     f"history finalization stage update skipped for missing run {run_id}"
@@ -458,7 +422,7 @@ class RunPersistenceWriter:
                 return False
             self.clear_last_write_error()
             return True
-        except (aiosqlite.Error, OSError) as exc:
+        except (sqlite3.Error, OSError) as exc:
             self.set_last_write_error(f"history finalization stage update failed: {exc}")
             self._logger_provider().warning(
                 "Failed to update finalization stage metadata for run %s",

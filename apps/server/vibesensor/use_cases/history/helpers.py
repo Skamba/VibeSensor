@@ -7,6 +7,7 @@ routes layer translates domain exceptions to HTTP status codes.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Mapping
 from typing import cast
 
@@ -33,7 +34,7 @@ def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:
 
 async def async_require_run(history_db: RunPersistence, run_id: str) -> StoredHistoryRun:
     """Fetch a history run or raise a domain exception."""
-    run = await history_db.aget_run(run_id)
+    run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:
         raise RunNotFoundError(f"Run {run_id!r} not found")
     return run

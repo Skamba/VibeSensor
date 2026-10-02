@@ -29,10 +29,10 @@ def test_delete_run_returns_deleted_status_for_safe_run() -> None:
 def test_delete_active_run_returns_409() -> None:
     @dataclass
     class ActiveDB(FakeHistoryDB):
-        async def aget_active_run_id(self) -> str | None:
+        def get_active_run_id(self) -> str | None:
             return "run-1"
 
-        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "active"
             return False, "not_found"
@@ -51,12 +51,12 @@ def test_delete_active_run_returns_409() -> None:
 def test_delete_analyzing_run_returns_409() -> None:
     @dataclass
     class AnalyzingDB(FakeHistoryDB):
-        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "analyzing"
             return False, "not_found"
 
-        async def adelete_run(self, run_id: str) -> bool:
+        def delete_run(self, run_id: str) -> bool:
             raise AssertionError("delete_run should not be called for analyzing run")
 
     metadata = make_metadata()
@@ -82,7 +82,7 @@ def test_delete_run_returns_404_for_not_found_reason() -> None:
 def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
     @dataclass
     class LockedDB(FakeHistoryDB):
-        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "locked"
             return False, "not_found"

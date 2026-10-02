@@ -10,12 +10,12 @@ from typing import Any
 
 import pytest
 from test_support import response_payload
-from test_support.history_db_async import execute_statements, fetch_all
+from test_support.history_db_sql import execute_statements, fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
 from tests.conftest import FakeState
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
@@ -72,11 +72,11 @@ def _stored_run(
 
 def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
     """Fresh DB should have analysis_started_at, analysis_completed_at."""
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    columns = {row[1] for row in fetch_all(db.lifecycle, "PRAGMA table_info(runs)")}
+    db = HistoryDB(tmp_path / "history.db")
+    columns = {row[1] for row in fetch_all(db, "PRAGMA table_info(runs)")}
     assert "analysis_started_at" in columns
     assert "analysis_completed_at" in columns
-    db.lifecycle.close()
+    db.close()
 
 
 def test_old_schema_version_raises_when_no_migration_registered(tmp_path: Path) -> None:
@@ -115,43 +115,43 @@ CREATE TABLE client_names (
     conn.close()
 
     with pytest.raises(RuntimeError, match="incompatible"):
-        create_history_persistence_adapters(db_path)
+        HistoryDB(db_path)
 
 
 # -- Analysis storage tests ---------------------------------------------------
 
 
 def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
-    db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
     # Check analyzing state has analysis_started_at
-    run = db.run_repository.get_run("r1")
+    run = db.get_run("r1")
     assert run is not None
     assert run.status.value == "analyzing"
     assert run.analysis_started_at is not None
 
-    db.run_repository.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
-    run = db.run_repository.get_run("r1")
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
+    run = db.get_run("r1")
     assert run is not None
     assert run.status.value == "complete"
     assert run.analysis_completed_at is not None
     assert run.analysis == {"lang": "en", "findings": []}
-    db.lifecycle.close()
+    db.close()
 
 
 def test_store_analysis_persists_summary_directly(
     tmp_path: Path,
 ) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
-    db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
-    db.run_repository.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
 
     row = fetch_all(
-        db.lifecycle,
+        db,
         "SELECT analysis_json FROM runs WHERE run_id = ?",
         ("r1",),
     )[0]
@@ -161,55 +161,55 @@ def test_store_analysis_persists_summary_directly(
     assert '"summary"' not in raw
     assert payload["_schema_version"] == 1
     assert payload["lang"] == "en"
-    run = db.run_repository.get_run("r1")
+    run = db.get_run("r1")
     assert run is not None
     assert run.analysis == {"lang": "en", "findings": []}
-    db.lifecycle.close()
+    db.close()
 
 
 def test_get_run_marks_unknown_analysis_storage_version_corrupt(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
-    db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
     execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET analysis_json = ? WHERE run_id = ?",
             ('{"_schema_version": 99, "findings": []}', "r1"),
         ),
     )
 
-    run = db.run_repository.get_run("r1")
+    run = db.get_run("r1")
     assert run is not None
     assert run.analysis is None
     assert run.analysis_corrupt is True
-    db.lifecycle.close()
+    db.close()
 
 
 def test_store_analysis_error_sets_completed_at(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
-    db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
-    db.run_repository.store_analysis_error("r1", "Test error")
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
+    db.store_analysis_error("r1", "Test error")
 
-    run = db.run_repository.get_run("r1")
+    run = db.get_run("r1")
     assert run is not None
     assert run.status.value == "error"
     assert run.error_message == "Test error"
     assert run.analysis_completed_at is not None
-    db.lifecycle.close()
+    db.close()
 
 
 def test_list_runs_includes_analysis_version(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
-    db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
-    db.run_repository.store_analysis("r1", make_persisted_analysis({"lang": "en"}))
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en"}))
 
-    runs = db.run_repository.list_runs()
+    runs = db.list_runs()
     assert len(runs) == 1
-    db.lifecycle.close()
+    db.close()
 
 
 # -- Post-analysis lifecycle tests (integration) ------------------------------
@@ -244,11 +244,7 @@ def _sample(i: int) -> dict[str, Any]:
 
 def _make_fake_state(history_db: Any) -> Any:
     """Build a minimal fake ``RuntimeState``-alike using shared FakeState."""
-    return FakeState(
-        history_db=history_db.run_repository
-        if hasattr(history_db, "run_repository")
-        else history_db
-    )
+    return FakeState(history_db=history_db if hasattr(history_db, "run_repository") else history_db)
 
 
 def _find_endpoint(router, path: str):
@@ -266,8 +262,8 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     gps_monitor = GPSSpeedMonitor(gps_enabled=False)
     processor = SignalProcessor(
         sample_rate_hz=800,
@@ -288,7 +284,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        history_db=db.run_repository,
+        history_db=db,
         language_reader=SimpleNamespace(language="en"),
     )
 
@@ -298,12 +294,10 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     assert isinstance(run_id, str) and len(run_id) > 0
 
     # Manually create history and append samples (simulate the metrics loop)
-    db.run_repository.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, language="en"))
+    db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, language="en"))
     logger._persistence.history_run_created = True
     samples = [_sample(i) for i in range(20)]
-    db.run_repository.append_samples(
-        run_id, [sensor_frame_from_mapping(sample) for sample in samples]
-    )
+    db.append_samples(run_id, [sensor_frame_from_mapping(sample) for sample in samples])
     logger._persistence.written_sample_count = len(samples)
 
     # Monkeypatch the adapter summarize_run_data wrapper to a lightweight version for speed
@@ -322,14 +316,14 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     logger.wait_for_post_analysis(timeout_s=5.0)
 
     # Verify analysis is persisted
-    run = db.run_repository.get_run(run_id)
+    run = db.get_run(run_id)
     assert run is not None
     assert run.status.value == "complete"
     assert run.analysis is not None
     assert run.analysis["lang"] == "en"
     assert run.analysis_started_at is not None
     assert run.analysis_completed_at is not None
-    db.lifecycle.close()
+    db.close()
 
 
 # -- API endpoint reuse tests ------------------------------------------------
@@ -360,25 +354,25 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
 
     @dataclass
     class _FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             if run_id != "run-pdf":
                 return None
             return _stored_run(run_id, metadata=metadata, analysis=analysis)
 
-        async def aiter_run_samples(self, run_id, batch_size=1000, *, stride=1):
+        def iter_run_samples(self, run_id, batch_size=1000, *, stride=1):
             if run_id != "run-pdf":
                 return
             frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]
 
-        async def alist_runs(self, limit=500):
+        def list_runs(self, limit=500):
             return []
 
-        async def aget_active_run_id(self):
+        def get_active_run_id(self):
             return None
 
-        async def adelete_run(self, run_id):
+        def delete_run(self, run_id):
             return False
 
     app = FastAPI()
@@ -415,7 +409,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
 
     @dataclass
     class _DB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             if run_id != "run-ins":
                 return None
             return _stored_run(run_id, metadata=metadata, analysis=analysis)
@@ -444,10 +438,10 @@ async def test_export_offloaded_to_thread() -> None:
 
     @dataclass
     class _DB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _stored_run(run_id, metadata={})
 
-        async def aiter_run_samples(self, run_id, batch_size=1000, *, stride=1):
+        def iter_run_samples(self, run_id, batch_size=1000, *, stride=1):
             frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]

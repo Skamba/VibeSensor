@@ -10,15 +10,15 @@ from test_support.runtime_lifecycle import (
 )
 from test_support.runtime_lifecycle import make_data_message as _data_msg
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import snapshot_for_api
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -43,8 +43,8 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
 
 
 def test_registry_rejects_far_behind_duplicate_without_clearing_dedup(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -90,8 +90,8 @@ def test_registry_rejects_far_behind_duplicate_without_clearing_dedup(tmp_path: 
 
 
 def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
     hello = HelloMessage(
         client_id=client_id,

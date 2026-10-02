@@ -44,20 +44,20 @@ class _HistoryDbStub:
     runs: list[HistoryRunListEntry] | None = None
     list_runs_error: Exception | None = None
 
-    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
+    def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
             return None
         return _stored_run(dict(self.run))
 
-    async def alist_runs(self) -> list[HistoryRunListEntry]:
+    def list_runs(self) -> list[HistoryRunListEntry]:
         if self.list_runs_error is not None:
             raise self.list_runs_error
         return list(self.runs or [])
 
-    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
         return self.delete_result
 
-    async def aiter_run_samples(self, run_id: str, batch_size: int = 1000, *, stride: int = 1):
+    def iter_run_samples(self, run_id: str, batch_size: int = 1000, *, stride: int = 1):
         rows = [
             row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in (self.samples or [])
@@ -220,7 +220,7 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     request = await loader.load_report_request("run-1", "en")
     prepared = request.prepared
 
-    stored_analysis = await history_db.aget_run("run-1")
+    stored_analysis = history_db.get_run("run-1")
     assert stored_analysis is not None
     assert stored_analysis.analysis is not None
     assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [

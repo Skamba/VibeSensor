@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from collections.abc import Callable
 from threading import RLock
 from typing import TypeVar
-
-import aiosqlite
 
 from vibesensor.infra.config.car_settings import CarSettingsState
 from vibesensor.infra.config.sensor_settings import SensorSettingsState
@@ -76,7 +75,7 @@ class SettingsPersistenceCoordinator:
     def _load(self) -> None:
         if self._db is None:
             return
-        snapshot = self._db.get_settings_snapshot()  # type: ignore[attr-defined]
+        snapshot = self._db.get_settings_snapshot()
         if snapshot is None:
             return
 
@@ -115,8 +114,8 @@ class SettingsPersistenceCoordinator:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(payload)  # type: ignore[attr-defined]
-        except (aiosqlite.Error, OSError) as exc:
+            self._db.set_settings_snapshot(payload)
+        except (sqlite3.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
 

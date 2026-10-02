@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Never, cast
@@ -43,7 +44,7 @@ class HistoryRunService:
     async def list_runs(self) -> list[HistoryRunListEntry]:
         with start_span(__name__, "history.runs.list", kind=SpanKind.INTERNAL) as span:
             with _mark_history_span_errors(span):
-                runs = await self._history_db.alist_runs()
+                runs = await asyncio.to_thread(self._history_db.list_runs)
             span.set_attribute("vibesensor.run_count", len(runs))
             return runs
 
@@ -112,7 +113,9 @@ class HistoryRunService:
             attributes={"vibesensor.run_id": run_id},
         ) as span:
             with _mark_history_span_errors(span):
-                deleted, reason = await self._history_db.adelete_run_if_safe(run_id)
+                deleted, reason = await asyncio.to_thread(
+                    self._history_db.delete_run_if_safe, run_id
+                )
                 if deleted:
                     span.set_attribute("vibesensor.deleted", True)
                     return {"run_id": run_id, "status": "deleted"}

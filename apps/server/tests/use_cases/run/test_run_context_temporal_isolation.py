@@ -4,8 +4,9 @@ import asyncio
 from pathlib import Path
 
 import pytest
+from test_support.history_db_lifecycle import run_samples
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import CarSnapshot
 from vibesensor.use_cases.run import _recorder_runtime
 
@@ -21,7 +22,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    history_db = HistoryDB(tmp_path / "history.db")
     active_car_holder = [
         CarSnapshot(
             car_id="car-1",
@@ -46,7 +47,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     logger = make_logger(
         settings_reader=mutable_fake_settings,
         gps_monitor=fake_gps_monitor,
-        history_db=history_db.run_repository,
+        history_db=history_db,
     )
     status = logger.start_recording()
     run_id = status.run_id
@@ -94,7 +95,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=3.0)
 
-    stored_run = history_db.run_repository.get_run(run_id)
+    stored_run = history_db.get_run(run_id)
     assert stored_run is not None
     metadata = stored_run.metadata
     assert metadata.analysis_settings.tire_width_mm == pytest.approx(285.0)
@@ -102,7 +103,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     assert metadata.car.car_id == "car-1"
     assert metadata.car.name == "Primary"
 
-    stored_samples = history_db.run_repository.get_run_samples(run_id)
+    stored_samples = run_samples(history_db, run_id)
     assert len(stored_samples) == 2
     reference_rpm = stored_samples[0].engine_rpm
     assert reference_rpm is not None

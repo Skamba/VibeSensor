@@ -7,18 +7,43 @@ from typing import cast
 
 from test_support.core import canonicalize_run_context_metadata
 from test_support.persisted_analysis import make_persisted_analysis
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 
-def build_history_db(tmp_path: Path) -> HistoryPersistenceAdapters:
-    return create_history_persistence_adapters(tmp_path / "history.db")
+def build_history_db(tmp_path: Path) -> HistoryDB:
+    return HistoryDB(tmp_path / "history.db")
+
+
+def make_stored_run(
+    metadata: RunMetadata,
+    *,
+    sample_count: int = 0,
+    raw_capture_manifest: RawCaptureManifest | None = None,
+) -> StoredHistoryRun:
+    """An ``analyzing`` stored run for fake ``RunPersistence.get_run`` implementations."""
+    return StoredHistoryRun(
+        run_id=metadata.run_id,
+        status=RunStatus.ANALYZING,
+        start_time_utc=metadata.start_time_utc,
+        end_time_utc=metadata.end_time_utc,
+        metadata=metadata,
+        created_at=metadata.start_time_utc,
+        sample_count=sample_count,
+        raw_capture_manifest=raw_capture_manifest,
+    )
+
+
+def run_samples(db: HistoryDB, run_id: str) -> list[SensorFrame]:
+    """Every stored sample of *run_id*, flattened from ``iter_run_samples`` batches."""
+    return [frame for batch in db.iter_run_samples(run_id) for frame in batch]
 
 
 def make_run_metadata(run_id: str, **overrides: object) -> RunMetadata:
@@ -60,7 +85,7 @@ def make_settings_snapshot() -> SettingsSnapshotPayload:
 
 
 def create_recording_run(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -69,12 +94,12 @@ def create_recording_run(
     **metadata_overrides: object,
 ) -> RunMetadata:
     metadata_obj = metadata or make_run_metadata(run_id, **metadata_overrides)
-    db.run_repository.create_run(run_id, started_at, metadata_obj, case_id=case_id)
+    db.create_run(run_id, started_at, metadata_obj, case_id=case_id)
     return metadata_obj
 
 
 def create_analyzing_run(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -90,12 +115,12 @@ def create_analyzing_run(
         metadata=metadata,
         **metadata_overrides,
     )
-    db.run_repository.finalize_run(run_id, finalized_at, metadata=metadata_obj, case_id=case_id)
+    db.finalize_run(run_id, finalized_at, metadata=metadata_obj, case_id=case_id)
     return metadata_obj
 
 
 def create_completed_run(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -116,12 +141,12 @@ def create_completed_run(
         **(metadata_overrides or {}),
     )
     analysis_obj = analysis or make_analysis_summary(run_id, **(analysis_overrides or {}))
-    db.run_repository.store_analysis(run_id, make_persisted_analysis(analysis_obj))
+    db.store_analysis(run_id, make_persisted_analysis(analysis_obj))
     return analysis_obj
 
 
 def create_error_run(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -138,4 +163,4 @@ def create_error_run(
         metadata=metadata,
         **(metadata_overrides or {}),
     )
-    db.run_repository.store_analysis_error(run_id, error_message)
+    db.store_analysis_error(run_id, error_message)

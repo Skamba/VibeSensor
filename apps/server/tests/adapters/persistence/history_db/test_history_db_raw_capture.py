@@ -4,14 +4,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
-from test_support.history_db_async import execute_statements as _execute_statements
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_completed_run,
     create_recording_run,
 )
+from test_support.history_db_sql import execute_statements as _execute_statements
 
-from vibesensor.adapters.persistence.history_db import HistoryPersistenceAdapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
@@ -35,29 +35,7 @@ def _append_chunk(
         sample_count=int(samples.shape[0]),
         samples_i16le=np.ascontiguousarray(samples, dtype=np.int16).tobytes(order="C"),
     )
-    db.run_repository._run_sync(db.run_repository.aappend_raw_capture_chunk(run_id, chunk))
-
-
-def _finalize_raw_capture(
-    db,
-    run_id: str,
-    *,
-    run_start_monotonic_us: int | None = None,
-    sensor_clock_sync: dict[str, RawCaptureSensorClockSync] | None = None,
-    sensor_losses: dict[str, RawCaptureLossStats] | None = None,
-):
-    return db.run_repository._run_sync(
-        db.run_repository.afinalize_raw_capture(
-            run_id,
-            run_start_monotonic_us=run_start_monotonic_us,
-            sensor_clock_sync=sensor_clock_sync,
-            sensor_losses=sensor_losses,
-        )
-    )
-
-
-def _load_raw_capture(db, run_id: str):
-    return db.run_repository._run_sync(db.run_repository.aload_raw_capture(run_id))
+    db.append_raw_capture_chunk(run_id, chunk)
 
 
 def _load_raw_capture_range(
@@ -68,18 +46,16 @@ def _load_raw_capture_range(
     sample_start: int,
     sample_count: int,
 ):
-    return db.run_repository._run_sync(
-        db.run_repository.aload_raw_capture_sensor_range(
-            run_id,
-            client_id,
-            sample_start=sample_start,
-            sample_count=sample_count,
-        )
+    return db.load_raw_capture_sensor_range(
+        run_id,
+        client_id,
+        sample_start=sample_start,
+        sample_count=sample_count,
     )
 
 
 def test_raw_capture_round_trip_persists_manifest_and_samples(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_recording_run(db, "run-raw")
     first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
@@ -88,8 +64,7 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(
     _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=1000, samples=first)
     _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=3500, samples=second)
 
-    manifest = _finalize_raw_capture(
-        db,
+    manifest = db.finalize_raw_capture(
         "run-raw",
         run_start_monotonic_us=1_234_567,
         sensor_clock_sync={
@@ -114,11 +89,11 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(
     assert manifest.sensor_manifest("sensor-a").declared_sample_rate_hz == 800
     assert manifest.sensor_manifest("sensor-a").sample_rate_proof_state == "observed_consistent"
 
-    stored = db.run_repository.get_run("run-raw")
+    stored = db.get_run("run-raw")
     assert stored is not None
     assert stored.raw_capture_manifest == manifest
 
-    loaded = _load_raw_capture(db, "run-raw")
+    loaded = db.load_raw_capture("run-raw")
     assert loaded is not None
     assert loaded.manifest.run_start_monotonic_us == 1_234_567
     sensor = loaded.sensor_data("sensor-a")
@@ -132,14 +107,13 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(
 
 
 def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(
-    tmp_path: Path, db: HistoryPersistenceAdapters
+    tmp_path: Path, db: HistoryDB
 ) -> None:
     create_recording_run(db, "run-losses")
     samples = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-losses", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = _finalize_raw_capture(
-        db,
+    manifest = db.finalize_raw_capture(
         "run-losses",
         sensor_losses={
             "sensor-a": RawCaptureLossStats(
@@ -169,9 +143,9 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(
     assert manifest.sensor_loss("sensor-b") is not None
     assert manifest.sensor_loss("sensor-b").losses.write_error_chunk_count == 1
 
-    db.lifecycle.close()
+    db.close()
     reopened = build_history_db(tmp_path)
-    stored = reopened.run_repository.get_run("run-losses")
+    stored = reopened.get_run("run-losses")
 
     assert stored is not None
     assert stored.raw_capture_manifest is not None
@@ -184,33 +158,33 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(
     assert stored.raw_capture_manifest.sensor_loss("sensor-b").losses.invalid_chunk_count == 1
 
 
-def test_delete_run_removes_raw_capture_artifacts(
-    tmp_path: Path, db: HistoryPersistenceAdapters
-) -> None:
+def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path, db: HistoryDB) -> None:
     create_recording_run(db, "run-delete")
     samples = np.asarray([[11, 12, 13]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-delete", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = _finalize_raw_capture(db, "run-delete")
+    manifest = db.finalize_raw_capture("run-delete")
 
     assert manifest is not None
     raw_dir = tmp_path / "raw-runs" / "run-delete"
     assert raw_dir.exists()
 
-    db.run_repository.delete_run("run-delete")
+    db.finalize_run("run-delete", "2026-01-01T00:01:00Z")
+    db.store_analysis_error("run-delete", "failed")
+    assert db.delete_run_if_safe("run-delete") == (True, None)
 
     assert not raw_dir.exists()
 
 
 def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
     tmp_path: Path,
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_completed_run(db, "run-prune-raw")
     samples = np.asarray([[11, 12, 13]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-prune-raw", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = _finalize_raw_capture(db, "run-prune-raw")
+    manifest = db.finalize_raw_capture("run-prune-raw")
 
     assert manifest is not None
     raw_dir = tmp_path / "raw-runs" / "run-prune-raw"
@@ -218,27 +192,27 @@ def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
     _execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-prune-raw"),
         ),
     )
 
-    pruned = db.run_repository.prune_raw_capture_artifacts_older_than_days(7)
+    pruned = db.prune_raw_capture_artifacts_older_than_days(7)
 
     assert pruned == 1
     assert not raw_dir.exists()
-    stored = db.run_repository.get_run("run-prune-raw")
+    stored = db.get_run("run-prune-raw")
     assert stored is not None
     assert stored.raw_capture_manifest is not None
     assert stored.artifact_availability is not None
     assert stored.artifact_availability.raw_capture == "missing"
-    assert _load_raw_capture(db, "run-prune-raw") is None
+    assert db.load_raw_capture("run-prune-raw") is None
 
 
 def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capture(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_recording_run(db, "run-range")
     first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
@@ -246,7 +220,7 @@ def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capt
 
     _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=1000, samples=first)
     _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=3500, samples=second)
-    manifest = _finalize_raw_capture(db, "run-range")
+    manifest = db.finalize_raw_capture("run-range")
 
     assert manifest is not None
     loaded = _load_raw_capture_range(
@@ -266,7 +240,7 @@ def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capt
 
 
 def test_raw_capture_finalization_persists_corrected_observed_sample_rate(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_recording_run(db, "run-observed-rate")
     samples = np.asarray([[1, 2, 3]] * 8, dtype=np.int16)
@@ -288,7 +262,7 @@ def test_raw_capture_finalization_persists_corrected_observed_sample_rate(
         sample_rate_hz=800,
     )
 
-    manifest = _finalize_raw_capture(db, "run-observed-rate")
+    manifest = db.finalize_raw_capture("run-observed-rate")
 
     assert manifest is not None
     sensor_manifest = manifest.sensor_manifest("sensor-a")
@@ -299,13 +273,13 @@ def test_raw_capture_finalization_persists_corrected_observed_sample_rate(
 
 
 def test_raw_capture_range_read_marks_partial_and_missing_coverage(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_recording_run(db, "run-partial")
     samples = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-partial", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = _finalize_raw_capture(db, "run-partial")
+    manifest = db.finalize_raw_capture("run-partial")
 
     assert manifest is not None
     partial = _load_raw_capture_range(
@@ -335,14 +309,12 @@ def test_raw_capture_range_read_marks_partial_and_missing_coverage(
     assert missing.returned_sample_count == 0
 
 
-def test_prune_terminal_runs_removes_raw_capture_artifacts(
-    tmp_path: Path, db: HistoryPersistenceAdapters
-) -> None:
+def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path, db: HistoryDB) -> None:
     create_completed_run(db, "run-prune")
     samples = np.asarray([[21, 22, 23]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-prune", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = _finalize_raw_capture(db, "run-prune")
+    manifest = db.finalize_raw_capture("run-prune")
 
     assert manifest is not None
     raw_dir = tmp_path / "raw-runs" / "run-prune"
@@ -350,13 +322,13 @@ def test_prune_terminal_runs_removes_raw_capture_artifacts(
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
     _execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-prune"),
         ),
     )
 
-    db.run_repository.prune_terminal_runs_older_than_days(1)
+    db.prune_terminal_runs_older_than_days(1)
 
     assert not raw_dir.exists()

@@ -28,20 +28,10 @@ class WholeRunRawCapturePolicy:
             self.loss_policy.reason if self.loss_policy.gate_whole_run else "missing_prerequisites"
         )
 
-    def spectra_prerequisites_met(self, *, raw_range_reader_available: bool) -> bool:
-        return self.manifest is not None and raw_range_reader_available and self.whole_run_allowed
-
-    def spectra_prerequisite_reason(self, *, raw_range_reader_available: bool) -> str:
-        if self.manifest is None:
-            return "raw_capture_manifest_missing"
-        if not raw_range_reader_available:
-            return "raw_capture_range_reader_missing"
-        return self.prerequisite_reason
-
-    def context_prerequisites_met(self) -> bool:
+    def raw_capture_prerequisites_met(self) -> bool:
         return self.manifest is not None and self.whole_run_allowed
 
-    def context_prerequisite_reason(self) -> str:
+    def raw_capture_skip_reason(self) -> str:
         return "raw_capture_manifest_missing" if self.manifest is None else self.prerequisite_reason
 
 

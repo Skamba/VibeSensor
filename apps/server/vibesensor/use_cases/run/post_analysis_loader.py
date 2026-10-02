@@ -70,71 +70,49 @@ def load_post_analysis_run(
     run_id: str,
     db: RunPersistence,
 ) -> PostAnalysisLoadResult:
-    async def _aload() -> PostAnalysisLoadResult:
-        aget_run = getattr(db, "aget_run", None)
-        stored_run = await aget_run(run_id) if callable(aget_run) else None
-        raw_capture_manifest: RawCaptureManifest | None = None
-        if stored_run is not None:
-            metadata = stored_run.metadata
-            total_summary_row_count = max(0, int(stored_run.sample_count))
-            raw_capture_manifest = getattr(stored_run, "raw_capture_manifest", None)
-        else:
-            metadata = await db.aget_run_metadata(run_id)
-            if metadata is None:
-                return MissingPostAnalysisMetadata(
-                    run_id=run_id,
-                    error_message="Metadata not found or corrupt; cannot analyse",
-                )
-            total_summary_row_count = 0
-            get_raw_capture_manifest = getattr(db, "aget_raw_capture_manifest", None)
-            if callable(get_raw_capture_manifest):
-                raw_capture_manifest = await get_raw_capture_manifest(run_id)
-
-        full_samples: list[SensorFrame] = []
-        async for batch in db.aiter_run_samples(run_id, batch_size=1024):
-            full_samples.extend(batch)
-        samples = full_samples
-        if total_summary_row_count <= 0:
-            total_summary_row_count = len(full_samples)
-        if not samples:
-            return EmptyPostAnalysisSamples(
-                run_id=run_id,
-                error_message="No samples collected during run",
-            )
-        summary_duration_s = _summary_duration_s(
-            full_samples,
-            total_summary_row_count=total_summary_row_count,
-            feature_interval_s=metadata.feature_interval_s,
-        )
-        sample_selection = _select_post_analysis_samples(full_samples)
-        context_samples: list[SensorFrame] | None = None
-        if raw_capture_manifest is not None:
-            context_samples = list(full_samples)
-        load_raw_capture = getattr(db, "aload_raw_capture", None)
-        raw_capture = await load_raw_capture(run_id) if callable(load_raw_capture) else None
-
-        return LoadedPostAnalysisRun(
+    stored_run = db.get_run(run_id)
+    if stored_run is None:
+        return MissingPostAnalysisMetadata(
             run_id=run_id,
-            metadata=metadata,
-            language=metadata.language or "en",
-            samples=sample_selection.samples,
-            context_samples=context_samples,
-            total_summary_row_count=total_summary_row_count,
-            summary_duration_s=summary_duration_s,
-            stride=sample_selection.stride,
-            sampling_method=sample_selection.sampling_method,
-            evenly_spaced_sample_count=sample_selection.evenly_spaced_sample_count,
-            event_sample_count=sample_selection.event_sample_count,
-            raw_capture=raw_capture,
-            raw_capture_manifest=raw_capture_manifest,
+            error_message="Metadata not found or corrupt; cannot analyse",
         )
+    metadata = stored_run.metadata
+    total_summary_row_count = max(0, int(stored_run.sample_count))
+    raw_capture_manifest = stored_run.raw_capture_manifest
 
-    runner = getattr(db, "_run_on_engine_loop", None)
-    if callable(runner):
-        return runner(_aload())  # type: ignore[no-any-return]
-    import asyncio as _asyncio
+    full_samples: list[SensorFrame] = []
+    for batch in db.iter_run_samples(run_id, batch_size=1024):
+        full_samples.extend(batch)
+    if total_summary_row_count <= 0:
+        total_summary_row_count = len(full_samples)
+    if not full_samples:
+        return EmptyPostAnalysisSamples(
+            run_id=run_id,
+            error_message="No samples collected during run",
+        )
+    summary_duration_s = _summary_duration_s(
+        full_samples,
+        total_summary_row_count=total_summary_row_count,
+        feature_interval_s=metadata.feature_interval_s,
+    )
+    sample_selection = _select_post_analysis_samples(full_samples)
+    context_samples = list(full_samples) if raw_capture_manifest is not None else None
 
-    return _asyncio.run(_aload())
+    return LoadedPostAnalysisRun(
+        run_id=run_id,
+        metadata=metadata,
+        language=metadata.language or "en",
+        samples=sample_selection.samples,
+        context_samples=context_samples,
+        total_summary_row_count=total_summary_row_count,
+        summary_duration_s=summary_duration_s,
+        stride=sample_selection.stride,
+        sampling_method=sample_selection.sampling_method,
+        evenly_spaced_sample_count=sample_selection.evenly_spaced_sample_count,
+        event_sample_count=sample_selection.event_sample_count,
+        raw_capture=db.load_raw_capture(run_id),
+        raw_capture_manifest=raw_capture_manifest,
+    )
 
 
 def _summary_duration_s(

@@ -1,19 +1,15 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from collections.abc import Callable
-
-import aiosqlite
 
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
 from vibesensor.adapters.http.dependencies import HistoryDeps
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.ports import SettingsReader
@@ -35,15 +31,13 @@ def create_history_db(
     config: AppConfig,
     *,
     corruption_reporter: Callable[[str], None] | None = None,
-    engine_failure_reporter: Callable[[str, str], None] | None = None,
-) -> HistoryPersistenceAdapters:
-    """Create and initialise the shared history persistence collaborators."""
-    history = create_history_persistence_adapters(
+) -> HistoryDB:
+    """Open the history DB and run startup recovery plus retention pruning."""
+    history = HistoryDB(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
-        engine_failure_reporter=engine_failure_reporter,
     )
-    if history.lifecycle.corruption_detected:
+    if history.corruption_detected:
         LOGGER.error(
             "History DB corruption detected at startup; skipping stale-run recovery, "
             "retention pruning, and "
@@ -51,10 +45,10 @@ def create_history_db(
         )
         return history
     try:
-        recovered_runs = history.run_repository.recover_stale_recording_runs()
-    except (aiosqlite.Error, OSError):
+        recovered_runs = history.recover_stale_recording_runs()
+    except (sqlite3.Error, OSError):
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
-        history.lifecycle.close()
+        history.close()
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
@@ -62,12 +56,10 @@ def create_history_db(
     summary_retention_days = config.logging.run_retention_days
     if raw_capture_retention_days < summary_retention_days:
         try:
-            pruned_raw_captures = (
-                history.run_repository.prune_raw_capture_artifacts_older_than_days(
-                    raw_capture_retention_days,
-                )
+            pruned_raw_captures = history.prune_raw_capture_artifacts_older_than_days(
+                raw_capture_retention_days,
             )
-        except (aiosqlite.Error, OSError):
+        except (sqlite3.Error, OSError):
             LOGGER.warning(
                 "Failed to prune raw capture artifacts older than %d day(s) during "
                 "startup maintenance",
@@ -84,10 +76,10 @@ def create_history_db(
                     summary_retention_days,
                 )
     try:
-        pruned_runs = history.run_repository.prune_terminal_runs_older_than_days(
+        pruned_runs = history.prune_terminal_runs_older_than_days(
             summary_retention_days,
         )
-    except (aiosqlite.Error, OSError):
+    except (sqlite3.Error, OSError):
         LOGGER.warning(
             "Failed to prune terminal runs older than %d day(s) during startup maintenance",
             summary_retention_days,
@@ -105,21 +97,21 @@ def create_history_db(
 
 def build_history_deps(
     *,
-    history: HistoryPersistenceAdapters,
+    history: HistoryDB,
     current_car_reader: SettingsReader,
 ) -> HistoryDeps:
     """Build the history/reporting HTTP services over shared persistence."""
 
     return HistoryDeps(
         run_service=ProjectedHistoryRunService(
-            HistoryRunService(history.run_repository),
+            HistoryRunService(history),
             current_car_reader=current_car_reader,
         ),
         report_service=HistoryReportService(
-            history.run_repository,
+            history,
             pdf_renderer=_build_prepared_pdf_bytes,
         ),
         export_service=ProjectedHistoryExportService(
-            HistoryExportService(history.run_repository),
+            HistoryExportService(history),
         ),
     )

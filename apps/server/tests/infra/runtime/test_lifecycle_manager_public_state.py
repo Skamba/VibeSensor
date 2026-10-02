@@ -203,7 +203,6 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     run_recorder.shutdown_report = MagicMock(return_value=shutdown_report)
     history_db = MagicMock()
-    history_db.aclose = AsyncMock()
     worker_pool = MagicMock()
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -242,5 +241,5 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
     assert lifecycle.tasks == []
     run_recorder.shutdown_report.assert_called_once_with(5.0)
     worker_pool.shutdown.assert_called_once_with(True)
-    history_db.aclose.assert_called_once()
+    history_db.close.assert_called_once()
     transport.close.assert_called_once()

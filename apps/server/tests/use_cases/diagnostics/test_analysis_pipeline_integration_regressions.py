@@ -9,14 +9,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_support.history_db_lifecycle import run_samples
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.persistence.history_db import (
-    RunHistoryRepository,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.boundaries.runs.log import normalize_sample_record
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
@@ -34,12 +32,12 @@ _END = "2026-01-01T00:05:00Z"
 
 
 @pytest.fixture
-def db(tmp_path: Path) -> RunHistoryRepository:
-    adapters = create_history_persistence_adapters(tmp_path / "pipeline_test.db")
+def db(tmp_path: Path) -> HistoryDB:
+    adapters = HistoryDB(tmp_path / "pipeline_test.db")
     try:
-        yield adapters.run_repository
+        yield adapters
     finally:
-        adapters.lifecycle.close()
+        adapters.close()
 
 
 def _simple_metadata(run_id: str = "test-run", lang: str = "en") -> dict[str, Any]:
@@ -177,7 +175,7 @@ class TestWorkerThreadRace:
 # ---------------------------------------------------------------------------
 
 
-def test_finalize_run_only_from_recording(db: RunHistoryRepository) -> None:
+def test_finalize_run_only_from_recording(db: HistoryDB) -> None:
     """Fix 7: finalize_run only transitions from 'recording' state."""
     db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
@@ -192,7 +190,7 @@ def test_finalize_run_only_from_recording(db: RunHistoryRepository) -> None:
     assert run.status.value == "analyzing"
 
 
-def test_store_analysis_idempotent(db: RunHistoryRepository) -> None:
+def test_store_analysis_idempotent(db: HistoryDB) -> None:
     """Fix 10: store_analysis skips already-complete runs."""
     db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
@@ -266,7 +264,7 @@ def test_build_findings_uses_shared_speed_prep() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _setup_stale_pair(db: RunHistoryRepository) -> None:
+def _setup_stale_pair(db: HistoryDB) -> None:
     """Shared setup: r1 finalized (analyzing), r2 still recording."""
     db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
@@ -277,13 +275,13 @@ def _setup_stale_pair(db: RunHistoryRepository) -> None:
     )
 
 
-def test_stale_analyzing_run_ids(db: RunHistoryRepository) -> None:
+def test_stale_analyzing_run_ids(db: HistoryDB) -> None:
     """Fix 14: stale_analyzing_run_ids finds stuck runs."""
     _setup_stale_pair(db)
     assert db.stale_analyzing_run_ids() == ["r1"]
 
 
-def test_recover_stale_does_not_touch_analyzing(db: RunHistoryRepository) -> None:
+def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
     """Fix 14: recover_stale_recording_runs leaves 'analyzing' runs alone."""
     _setup_stale_pair(db)
     assert db.recover_stale_recording_runs() == 1  # only r2
@@ -343,7 +341,7 @@ def test_report_cli_summary_excludes_samples_for_pdf() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_end_to_end_pipeline(db: RunHistoryRepository) -> None:
+def test_end_to_end_pipeline(db: HistoryDB) -> None:
     """Full pipeline: create → record → finalize → analyze → persist → report."""
     run_id = "e2e-test-run"
     metadata = _simple_metadata(run_id)
@@ -360,7 +358,7 @@ def test_end_to_end_pipeline(db: RunHistoryRepository) -> None:
     assert run is not None
     assert run.status.value == "analyzing"
 
-    read_samples = db.get_run_samples(run_id)
+    read_samples = run_samples(db, run_id)
     normalized = [sensor_frame_to_json_object(sample) for sample in read_samples]
     summary = summarize_run_data(
         metadata,

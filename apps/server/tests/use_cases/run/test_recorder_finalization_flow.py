@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from tests.use_cases.run.test_metrics_log_helpers import _started_snapshot_with_sample
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
 def test_stop_recording_continues_when_raw_capture_finalize_degrades(
@@ -57,7 +57,7 @@ class _DelegatingHistoryDB:
 
 
 class _FinalizeSkippedHistoryDB(_DelegatingHistoryDB):
-    async def afinalize_run(
+    def finalize_run(
         self,
         run_id: str,
         end_time_utc: str,
@@ -68,7 +68,7 @@ class _FinalizeSkippedHistoryDB(_DelegatingHistoryDB):
 
 
 class _ZeroAppendHistoryDB(_DelegatingHistoryDB):
-    async def aappend_samples(self, run_id: str, samples) -> int:
+    def append_samples(self, run_id: str, samples) -> int:
         return 0
 
 
@@ -132,8 +132,8 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
 ) -> None:
     from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
 
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db_factory(history_db.run_repository))
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = make_logger(history_db=history_db_factory(history_db))
     snapshot = _started_snapshot_with_sample(logger)
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
@@ -147,7 +147,7 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
 
     logger.stop_recording()
 
-    stored_metadata = history_db.run_repository.get_run_metadata(snapshot.run_id)
+    stored_metadata = history_db.get_run_metadata(snapshot.run_id)
     assert stored_metadata is not None
     stage_by_name = {stage.stage_name: stage for stage in stored_metadata.finalization_stages}
     assert [stage.stage_name for stage in stored_metadata.finalization_stages] == list(
@@ -169,9 +169,9 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
 ) -> None:
     from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
 
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    history_db = HistoryDB(tmp_path / "history.db")
     scheduled: list[str] = []
-    logger = make_logger(history_db=history_db.run_repository)
+    logger = make_logger(history_db=history_db)
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection keeps the test on recorder finalization
     # behavior without running the asynchronous raw writer.
@@ -191,7 +191,7 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
     )
 
     assert scheduled == [snapshot.run_id]
-    stored_metadata = history_db.run_repository.get_run_metadata(snapshot.run_id)
+    stored_metadata = history_db.get_run_metadata(snapshot.run_id)
     assert stored_metadata is not None
     assert stored_metadata.raw_capture_finalize is not None
     assert stored_metadata.raw_capture_finalize.status == "completed"

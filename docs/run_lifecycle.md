@@ -168,7 +168,7 @@ because there is nothing persistent to close.
   analysis output or an analysis error record
 - the loaded post-stop input includes persisted summary rows and raw manifests;
   compact raw replay may load a full raw-capture bundle, while whole-run spectra
-  read bounded ranges through `RunPersistence.aload_raw_capture_sensor_range()`
+  read bounded ranges through `RunPersistence.load_raw_capture_sensor_range()`
 - the current whole-run sidecar stages are spectra, context labels, order trace
   points, order trace summaries, order family summaries, spatial coherence, and
   artifact persistence; dense artifacts stay under `whole-run-artifacts/`, while

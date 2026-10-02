@@ -39,13 +39,13 @@ def _run_metadata(run_id: str, *, language: str | None = "en") -> RunMetadata:
 
 def test_load_post_analysis_run_returns_loaded_run() -> None:
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(
                 metadata=_run_metadata(run_id, language="nl"),
                 sample_count=2,
             )
 
-        async def aiter_run_samples(self, run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, run_id, batch_size=1024, *, stride=1):
             assert run_id == "run-ok"
             assert batch_size == 1024
             assert stride == 1
@@ -56,10 +56,10 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
                 ]
             )
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -86,16 +86,16 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
 
 def test_load_post_analysis_run_handles_missing_metadata() -> None:
     class FakeDB:
-        async def aget_run(self, _run_id):
+        def get_run(self, _run_id):
             return None
 
-        async def aget_run_metadata(self, _run_id):
+        def get_run_metadata(self, _run_id):
             return None
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -118,18 +118,18 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
 
 def test_load_post_analysis_run_handles_no_samples() -> None:
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(metadata=_run_metadata(run_id), sample_count=0)
 
-        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert stride == 1
             return
             yield  # pragma: no cover
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -160,10 +160,10 @@ def test_load_post_analysis_run_preserves_transient_events_when_capped(
     iter_calls: list[tuple[int, int]] = []
 
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(metadata=_run_metadata(run_id), sample_count=4)
 
-        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             iter_calls.append((batch_size, stride))
             yield sensor_frames_from_mappings(
                 [
@@ -174,10 +174,10 @@ def test_load_post_analysis_run_preserves_transient_events_when_capped(
                 ]
             )
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -213,10 +213,10 @@ def test_load_post_analysis_run_keeps_event_preserving_selection_deterministic(
     )
 
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(metadata=_run_metadata(run_id), sample_count=6)
 
-        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert batch_size == 1024
             assert stride == 1
             yield sensor_frames_from_mappings(
@@ -230,10 +230,10 @@ def test_load_post_analysis_run_keeps_event_preserving_selection_deterministic(
                 ]
             )
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -275,14 +275,14 @@ def test_load_post_analysis_run_loads_full_context_samples_when_whole_run_artifa
     )
 
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(
                 metadata=_run_metadata(run_id),
                 sample_count=4,
                 raw_capture_manifest=raw_capture_manifest,
             )
 
-        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert batch_size == 1024
             assert stride == 1
             yield sensor_frames_from_mappings(
@@ -294,7 +294,7 @@ def test_load_post_analysis_run_loads_full_context_samples_when_whole_run_artifa
                 ]
             )
 
-        async def aget_run_samples(self, _run_id):
+        def get_run_samples(self, _run_id):
             return sensor_frames_from_mappings(
                 [
                     {"t_s": 1.0, "vibration_strength_db": 10.0},
@@ -304,10 +304,10 @@ def test_load_post_analysis_run_loads_full_context_samples_when_whole_run_artifa
                 ]
             )
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,
@@ -333,20 +333,20 @@ def test_load_post_analysis_run_loads_full_context_samples_when_whole_run_artifa
 
 def test_load_post_analysis_run_defaults_language_to_en() -> None:
     class FakeDB:
-        async def aget_run(self, run_id):
+        def get_run(self, run_id):
             return _StoredRun(
                 metadata=_run_metadata(run_id, language=None),
                 sample_count=1,
             )
 
-        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert stride == 1
             yield sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 
-        async def aload_raw_capture(self, _run_id):
+        def load_raw_capture(self, _run_id):
             return None
 
-        async def aload_raw_capture_sensor_range(
+        def load_raw_capture_sensor_range(
             self,
             _run_id,
             client_id,

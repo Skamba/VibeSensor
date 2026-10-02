@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.persistence.history_db import SQLiteHistoryEngine
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -153,11 +153,11 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     events: list[str] = []
 
-    original_close = SQLiteHistoryEngine.aclose
+    original_close = HistoryDB.close
 
-    async def _tracking_close(self):
+    def _tracking_close(self: HistoryDB) -> None:
         events.append("db_close")
-        await original_close(self)
+        original_close(self)
 
     original_wait = RunRecorder.wait_for_post_analysis
 
@@ -167,7 +167,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         return result
 
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _fake_start)
-    monkeypatch.setattr(SQLiteHistoryEngine, "aclose", _tracking_close)
+    monkeypatch.setattr(HistoryDB, "close", _tracking_close)
     monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
 
     app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)

@@ -16,10 +16,7 @@ from pypdf import PdfReader
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.persistence.history_db import (
-    HistoryPersistenceAdapters,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.domain import TireSpec
@@ -78,10 +75,10 @@ class _FakeTransport:
 
 
 @pytest.fixture
-def history_db(tmp_path: Path) -> Iterator[HistoryPersistenceAdapters]:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
+    db = HistoryDB(tmp_path / "history.db")
     yield db
-    db.lifecycle.close()
+    db.close()
 
 
 def _register_sensor(registry: ClientRegistry, sensor: _SensorConfig) -> None:
@@ -158,12 +155,12 @@ def _data_trust_row(report_document: object, check: str):
 
 
 def _run_pipeline(
-    history_db: HistoryPersistenceAdapters,
+    history_db: HistoryDB,
     *,
     sensors: tuple[_SensorConfig, ...] = SENSORS,
     before_step: _BeforeStepHook | None = None,
 ) -> _PipelineArtifacts:
-    registry = ClientRegistry(db=history_db.client_name_repository)
+    registry = ClientRegistry(db=history_db)
     processor = SignalProcessor(
         sample_rate_hz=_SAMPLE_RATE_HZ,
         waveform_seconds=4,
@@ -184,7 +181,7 @@ def _run_pipeline(
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        history_db=history_db.run_repository,
+        history_db=history_db,
         language_reader=SimpleNamespace(language="en"),
     )
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=256)
@@ -244,7 +241,7 @@ def _run_pipeline(
     logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=20.0)
 
-    run = history_db.run_repository.get_run(run_id)
+    run = history_db.get_run(run_id)
     assert run is not None
     assert run.status.value == "complete"
     analysis = run.analysis
@@ -270,7 +267,7 @@ def _run_pipeline(
 
 
 def test_sample_rate_mismatch_warns_in_health_but_pipeline_completes(
-    history_db: HistoryPersistenceAdapters,
+    history_db: HistoryDB,
 ) -> None:
     sensors = tuple(
         replace(
@@ -299,7 +296,7 @@ def test_sample_rate_mismatch_warns_in_health_but_pipeline_completes(
 
 
 def test_dropped_frames_surface_in_health_and_report_data_trust(
-    history_db: HistoryPersistenceAdapters,
+    history_db: HistoryDB,
 ) -> None:
     glitched_sensor = next(sensor for sensor in SENSORS if sensor.location == "rear-right")
 
@@ -327,7 +324,7 @@ def test_dropped_frames_surface_in_health_and_report_data_trust(
 
 
 def test_sensor_queue_overflow_counter_reaches_report_data_trust(
-    history_db: HistoryPersistenceAdapters,
+    history_db: HistoryDB,
 ) -> None:
     overflow_sensor = next(sensor for sensor in SENSORS if sensor.location == "front-right")
 

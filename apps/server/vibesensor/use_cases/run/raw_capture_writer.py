@@ -8,7 +8,6 @@ import threading
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, cast
 
 import numpy as np
 
@@ -27,8 +26,6 @@ __all__ = ["RawCaptureFinalizeResult", "RunRawCaptureWriter"]
 _QUEUE_MAXSIZE = 2048
 _FINALIZE_WAIT_TIMEOUT_S = 5.0
 _CONTROL_REQUEST_ENQUEUE_TIMEOUT_S = 1.0
-_RAW_CAPTURE_APPEND_DB_TIMEOUT_S = 5.0
-_RAW_CAPTURE_FINALIZE_DB_TIMEOUT_S = 10.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,27 +38,6 @@ class RawCaptureFinalizeResult:
     @property
     def completed(self) -> bool:
         return self.status == "completed"
-
-
-def _sync_call(
-    db: Any,
-    coro: Any,
-    *,
-    timeout_s: float | None = None,
-    operation: str = "raw_capture",
-) -> object:
-    runner = getattr(db, "_run_on_engine_loop", None)
-    if callable(runner):
-        if timeout_s is not None:
-            return runner(
-                coro,
-                timeout_s=timeout_s,
-                operation=operation,
-            )
-        return runner(coro)
-    import asyncio
-
-    return asyncio.run(coro)
 
 
 @dataclass(slots=True)
@@ -164,13 +140,7 @@ class RunRawCaptureWriter:
         ) = None,
         late_finalize_callback: Callable[[str, RawCaptureFinalizeResult], None] | None = None,
     ) -> None:
-        self._history_db = (
-            history_db
-            if history_db is not None
-            and callable(getattr(history_db, "aappend_raw_capture_chunk", None))
-            and callable(getattr(history_db, "afinalize_raw_capture", None))
-            else None
-        )
+        self._history_db = history_db
         self._logger = logger
         self._ingest_diagnostics = ingest_diagnostics
         self._late_finalize_callback = late_finalize_callback
@@ -391,23 +361,15 @@ class RunRawCaptureWriter:
                     return
                 if isinstance(item, _FinalizeRequest):
                     try:
-                        item.manifest = cast(
-                            RawCaptureManifest | None,
-                            _sync_call(
-                                history_db,
-                                history_db.afinalize_raw_capture(
-                                    item.run_id,
-                                    run_start_monotonic_us=item.run_start_monotonic_us,
-                                    sensor_clock_sync=item.sensor_clock_sync,
-                                    sensor_losses=_merge_sensor_losses(
-                                        item.sensor_losses.freeze()
-                                        if item.sensor_losses is not None
-                                        else None,
-                                        item.extra_sensor_losses,
-                                    ),
-                                ),
-                                timeout_s=_RAW_CAPTURE_FINALIZE_DB_TIMEOUT_S,
-                                operation="raw_capture_finalize",
+                        item.manifest = history_db.finalize_raw_capture(
+                            item.run_id,
+                            run_start_monotonic_us=item.run_start_monotonic_us,
+                            sensor_clock_sync=item.sensor_clock_sync,
+                            sensor_losses=_merge_sensor_losses(
+                                item.sensor_losses.freeze()
+                                if item.sensor_losses is not None
+                                else None,
+                                item.extra_sensor_losses,
                             ),
                         )
                     except BaseException as exc:  # noqa: BLE001
@@ -424,12 +386,7 @@ class RunRawCaptureWriter:
                     continue
                 run_id, chunk, run_stats = item
                 try:
-                    _sync_call(
-                        history_db,
-                        history_db.aappend_raw_capture_chunk(run_id, chunk),
-                        timeout_s=_RAW_CAPTURE_APPEND_DB_TIMEOUT_S,
-                        operation="raw_capture_append",
-                    )
+                    history_db.append_raw_capture_chunk(run_id, chunk)
                 except BaseException:  # noqa: BLE001
                     if run_stats is not None:
                         run_stats.record_write_error(chunk.client_id)

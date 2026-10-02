@@ -15,22 +15,21 @@
    whole-run facts into the persisted analysis.
 5. ``PersistAnalysisSummaryStage`` stores the persisted analysis.
 
-A storage or memory error (``aiosqlite.Error``, ``OSError``, ``MemoryError``)
+A storage or memory error (``sqlite3.Error``, ``OSError``, ``MemoryError``)
 inside a stage aborts the sequence. The error is either deferred for a retry
 or stored as the run's analysis error.
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import sqlite3
 import time
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Literal, NoReturn, Protocol, cast
+from typing import Literal, NoReturn, Protocol
 
-import aiosqlite
 from opentelemetry.trace import Span, SpanKind
 
 from vibesensor.shared.ports import RunPersistence
@@ -66,7 +65,6 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralArtifactBundle,
     WholeRunSpectralBuildResult,
     build_whole_run_spectral_artifact_bundle_from_ranges,
-    raw_capture_range_reader_from_capture,
 )
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -116,7 +114,7 @@ LOGGER = logging.getLogger(__name__)
 
 # MissingStrengthMetricsError is a data outcome (recording shorter than one
 # analysis window), so it fails the run instead of halting the worker.
-_STAGE_ERRORS = (aiosqlite.Error, OSError, MemoryError, MissingStrengthMetricsError)
+_STAGE_ERRORS = (sqlite3.Error, OSError, MemoryError, MissingStrengthMetricsError)
 
 type PostAnalysisStageStatus = Literal["ok", "skipped", "degraded", "failed"]
 
@@ -344,18 +342,6 @@ def _handle_stage_failure(
 # ---------------------------------------------------------------------------
 # Stage helpers
 # ---------------------------------------------------------------------------
-
-
-def sync_run_persistence_call(db: Any, method_name: str, *args: Any, **kwargs: Any) -> Any:
-    """Invoke ``db.<method_name>`` synchronously from a worker thread."""
-    method = getattr(db, method_name)
-    result = method(*args, **kwargs)
-    if asyncio.iscoroutine(result):
-        runner = getattr(db, "_run_on_engine_loop", None)
-        if callable(runner):
-            return runner(result)
-        return asyncio.run(result)
-    return result
 
 
 def make_stage_result(
@@ -710,19 +696,10 @@ def _whole_run_spectra_stage(
     policy: WholeRunRawCapturePolicy,
 ) -> WholeRunSpectralBuildResult | None:
     stage_name = "BuildWholeRunSpectraStage"
-    range_reader_available = callable(getattr(db, "aload_raw_capture_sensor_range", None)) or (
-        loaded.raw_capture is not None
-    )
     stage_start = time.monotonic()
-    if not policy.spectra_prerequisites_met(raw_range_reader_available=range_reader_available):
+    if not policy.raw_capture_prerequisites_met():
         stage_results.append(
-            _skipped_stage_result(
-                stage_name,
-                stage_start,
-                policy.spectra_prerequisite_reason(
-                    raw_range_reader_available=range_reader_available,
-                ),
-            )
+            _skipped_stage_result(stage_name, stage_start, policy.raw_capture_skip_reason())
         )
         return None
     raw_capture_manifest = policy.manifest
@@ -751,10 +728,7 @@ def _whole_run_spectra_stage(
 
 
 def _raw_range_reader(db: RunPersistence, loaded: LoadedPostAnalysisRun) -> RawCaptureRangeReader:
-    """Read raw ranges through the persistence port, or from an in-memory capture."""
-    if not callable(getattr(db, "aload_raw_capture_sensor_range", None)):
-        assert loaded.raw_capture is not None
-        return raw_capture_range_reader_from_capture(loaded.raw_capture)
+    """Read raw waveform ranges for *loaded* through the persistence port."""
 
     def read_range(
         client_id: str,
@@ -762,16 +736,11 @@ def _raw_range_reader(db: RunPersistence, loaded: LoadedPostAnalysisRun) -> RawC
         sample_start: int,
         sample_count: int,
     ) -> RawCaptureSensorRange | None:
-        return cast(
-            RawCaptureSensorRange | None,
-            sync_run_persistence_call(
-                db,
-                "aload_raw_capture_sensor_range",
-                loaded.run_id,
-                client_id,
-                sample_start=sample_start,
-                sample_count=sample_count,
-            ),
+        return db.load_raw_capture_sensor_range(
+            loaded.run_id,
+            client_id,
+            sample_start=sample_start,
+            sample_count=sample_count,
         )
 
     return read_range
@@ -787,9 +756,9 @@ def _whole_run_context_stage(
 ) -> WholeRunContextArtifactBundle | None:
     stage_name = "BuildWholeRunContextStage"
     stage_start = time.monotonic()
-    if not policy.context_prerequisites_met():
+    if not policy.raw_capture_prerequisites_met():
         stage_results.append(
-            _skipped_stage_result(stage_name, stage_start, policy.context_prerequisite_reason())
+            _skipped_stage_result(stage_name, stage_start, policy.raw_capture_skip_reason())
         )
         return None
     raw_capture_manifest = policy.manifest
@@ -980,15 +949,10 @@ def _persist_artifacts_stage(
         )
         return None
     with _stage_failures(stage_name, stage_start, run_id):
-        stored_manifest = cast(
-            WholeRunArtifactManifest | None,
-            sync_run_persistence_call(
-                db,
-                "astore_whole_run_artifacts",
-                run_id,
-                merged_bundle.manifest,
-                artifact_contents=merged_bundle.artifact_contents,
-            ),
+        stored_manifest = db.store_whole_run_artifacts(
+            run_id,
+            merged_bundle.manifest,
+            artifact_contents=merged_bundle.artifact_contents,
         )
         if stored_manifest is None:
             raise OSError(f"Failed to persist whole-run artifacts for run {run_id}")
@@ -1184,7 +1148,7 @@ def run_persist_analysis_summary_stage(
     stage_name = "PersistAnalysisSummaryStage"
     stage_start = time.monotonic()
     with _stage_failures(stage_name, stage_start, run_id):
-        sync_run_persistence_call(db, "astore_analysis", run_id, summary)
+        db.store_analysis(run_id, summary)
     return make_stage_result(
         stage_name=stage_name,
         status="ok",
@@ -1206,8 +1170,8 @@ def _store_load_error(
     kind: str,
 ) -> PostAnalysisExecutionResult:
     try:
-        sync_run_persistence_call(db, "astore_analysis_error", run_id, completed_error)
-    except aiosqlite.Error:
+        db.store_analysis_error(run_id, completed_error)
+    except sqlite3.Error:
         LOGGER.warning(
             "Failed to store analysis error for run %s",
             run_id,
@@ -1290,8 +1254,8 @@ def _persistence_failure_result(
     callback_errors = (callback_error,)
 
     try:
-        sync_run_persistence_call(db, "astore_analysis_error", run_id, completed_error)
-    except aiosqlite.Error as store_exc:
+        db.store_analysis_error(run_id, completed_error)
+    except sqlite3.Error as store_exc:
         LOGGER.warning(
             "Failed to store analysis error for run %s",
             run_id,

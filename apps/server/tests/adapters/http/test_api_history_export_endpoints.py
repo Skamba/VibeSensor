@@ -46,7 +46,7 @@ def test_history_export_csv_nested_values_are_json() -> None:
 def test_history_export_single_pass_fixed_columns() -> None:
     app, state = make_app_and_state(language="en", sample_count=50)
     db = state.history_db
-    original_iter = db.aiter_run_samples
+    original_iter = db.iter_run_samples
     call_count = 0
 
     def counting_iter(*args, **kwargs):
@@ -54,7 +54,7 @@ def test_history_export_single_pass_fixed_columns() -> None:
         call_count += 1
         return original_iter(*args, **kwargs)
 
-    db.aiter_run_samples = counting_iter
+    db.iter_run_samples = counting_iter
     with TestClient(app) as client:
         response = client.get("/api/history/run-1/export")
 

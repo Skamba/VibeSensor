@@ -31,11 +31,10 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     history = create_history_db(
         config,
         corruption_reporter=health_state.mark_db_corrupted,
-        engine_failure_reporter=health_state.mark_db_engine_unhealthy,
     )
     speed_runtime = build_speed_runtime(config)
     settings_services = build_settings_service_bundle(
-        snapshot_repository=history.settings_snapshot_repository,
+        snapshot_repository=history,
         speed_control=speed_runtime.speed_services.control,
     )
     runtime_settings = settings_services.runtime_deps()
@@ -73,7 +72,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         update_manager=updates.update_manager,
         esp_flash_manager=updates.esp_flash_manager,
         worker_pool=live.worker_pool,
-        history_db=history.lifecycle,
+        history_db=history,
     )
     router = RouterDeps(
         health=live.http_health_deps(health_state=health_state),

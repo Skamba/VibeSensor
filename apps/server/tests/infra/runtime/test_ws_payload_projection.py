@@ -140,14 +140,14 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
     tmp_path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     try:
         registry = ClientRegistry(
-            db=db.client_name_repository,
+            db=db,
             live_ttl_seconds=5.0,
             retention_ttl_seconds=30.0,
         )
@@ -181,4 +181,4 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
         assert payload["clients"][0]["connected"] is False
         assert payload["clients"][0]["last_seen_age_ms"] == 8000
     finally:
-        db.lifecycle.close()
+        db.close()
