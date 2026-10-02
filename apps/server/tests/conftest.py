@@ -8,6 +8,8 @@ when sub-directory ``conftest.py`` files exist (which shadow this module in
 
 from __future__ import annotations
 
+import os
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock, create_autospec
 
@@ -37,6 +39,20 @@ from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _isolate_git_environment() -> Iterator[None]:
+    """Drop inherited ``GIT_*`` variables so tests that run git use their own repos.
+
+    Under a git hook or ``git rebase -x``, variables such as ``GIT_DIR`` point at the
+    developer's repository, and a test's ``git -C <tmp>`` would modify it instead.
+    """
+    with pytest.MonkeyPatch.context() as mp:
+        for name in [key for key in os.environ if key.startswith("GIT_")]:
+            mp.delenv(name)
+        yield
+
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
