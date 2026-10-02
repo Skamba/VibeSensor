@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.persistence.history_db import SQLiteHistoryEngine
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 
@@ -40,18 +40,20 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
         return None
 
     async def _fake_stop(self):
-        await self._runtime.history_db.aclose()
+        self._runtime.history_db.close()
 
     closed = {"value": False}
+    original_close = HistoryDB.close
 
-    async def _fake_close(self):
+    def _tracking_close(self: HistoryDB) -> None:
         closed["value"] = True
+        original_close(self)
 
     monkeypatch.setattr(bootstrap_mod, "start_udp_data_receiver", _fake_udp_receiver)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _fake_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
-    monkeypatch.setattr(SQLiteHistoryEngine, "aclose", _fake_close)
+    monkeypatch.setattr(HistoryDB, "close", _tracking_close)
 
     app = await asyncio.to_thread(bootstrap_mod.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):

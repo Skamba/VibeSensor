@@ -83,7 +83,7 @@ def _append_chunk(
         sample_count=int(samples.shape[0]),
         samples_i16le=np.ascontiguousarray(samples, dtype=np.int16).tobytes(order="C"),
     )
-    db.run_repository._run_sync(db.run_repository.aappend_raw_capture_chunk(run_id, chunk))
+    db.append_raw_capture_chunk(run_id, chunk)
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,13 +102,11 @@ class _WholeRunBenchmarkFixture:
         sample_start: int,
         sample_count: int,
     ) -> RawCaptureSensorRange | None:
-        return self.db.run_repository._run_sync(
-            self.db.run_repository.aload_raw_capture_sensor_range(
-                self.run_id,
-                client_id,
-                sample_start=sample_start,
-                sample_count=sample_count,
-            )
+        return self.db.load_raw_capture_sensor_range(
+            self.run_id,
+            client_id,
+            sample_start=sample_start,
+            sample_count=sample_count,
         )
 
 
@@ -139,11 +137,9 @@ def whole_run_fixture(tmp_path_factory: pytest.TempPathFactory) -> _WholeRunBenc
                 sample_start=sample_start,
                 samples=chunk,
             )
-    raw_capture_manifest = db.run_repository._run_sync(
-        db.run_repository.afinalize_raw_capture(run_id)
-    )
+    raw_capture_manifest = db.finalize_raw_capture(run_id)
     assert raw_capture_manifest is not None
-    raw_capture = db.run_repository._run_sync(db.run_repository.aload_raw_capture(run_id))
+    raw_capture = db.load_raw_capture(run_id)
     assert raw_capture is not None
     plan = plan_whole_run_windows(metadata=metadata, total_sample_count=_TOTAL_SAMPLES)
     return _WholeRunBenchmarkFixture(

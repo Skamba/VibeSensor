@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 
 from vibesensor.adapters.http.dependencies import HealthDeps, LiveDeps
-from vibesensor.adapters.persistence.history_db import HistoryPersistenceAdapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
@@ -81,14 +81,14 @@ def build_live_runtime(
     *,
     config: AppConfig,
     accel_scale_g_per_lsb: float,
-    history: HistoryPersistenceAdapters,
+    history: HistoryDB,
     speed_runtime: SpeedRuntimeBundle,
     runtime_settings: RuntimeSettingsDeps,
 ) -> LiveRuntimeBundle:
     """Build the grouped live processing, broadcast, and recording services."""
 
     registry = ClientRegistry(
-        db=history.client_name_repository,
+        db=history,
         live_ttl_seconds=config.processing.client_live_ttl_seconds,
         retention_ttl_seconds=config.processing.client_ttl_seconds,
     )
@@ -147,14 +147,14 @@ def build_live_runtime(
         registry=registry,
         gps_monitor=speed_runtime.speed_services.observation,
         processor=processor,
-        history_db=history.run_repository,
+        history_db=history,
         settings_reader=runtime_settings.settings_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
         language_reader=runtime_settings.language_reader,
         ingest_diagnostics=ingest_diagnostics,
     )
 
-    stale_analyzing = history.run_repository.stale_analyzing_run_ids()
+    stale_analyzing = history.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
         run_recorder.schedule_post_analysis(stale_run_id)

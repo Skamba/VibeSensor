@@ -6,8 +6,9 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from test_support.history_db_lifecycle import run_samples
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.use_cases.run import _recorder_runtime
 
 
@@ -21,7 +22,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    history_db = HistoryDB(tmp_path / "history.db")
     sensor_id = "AA:BB:CC:DD:EE:01"
     active_ids = [sensor_id]
     fake_registry._records[sensor_id] = replace(
@@ -44,7 +45,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     logger = make_logger(
         registry=fake_registry,
         sensor_metadata_reader=sensor_metadata_reader,
-        history_db=history_db.run_repository,
+        history_db=history_db,
     )
     status = logger.start_recording()
     run_id = status.run_id
@@ -77,7 +78,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=3.0)
 
-    stored_run = history_db.run_repository.get_run(run_id)
+    stored_run = history_db.get_run(run_id)
     assert stored_run is not None
     sensor_snapshot = stored_run.metadata.sensor_snapshot_for(sensor_id)
     assert sensor_snapshot is not None
@@ -85,7 +86,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     assert sensor_snapshot.location_code == "front_left_wheel"
     assert sensor_snapshot.mount_orientation == "radial"
 
-    stored_samples = history_db.run_repository.get_run_samples(run_id)
+    stored_samples = run_samples(history_db, run_id)
     assert len(stored_samples) == 2
     assert {sample.client_name for sample in stored_samples} == {"Configured front left"}
     assert {sample.location for sample in stored_samples} == {"front_left_wheel"}
@@ -97,7 +98,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    history_db = HistoryDB(tmp_path / "history.db")
     active_sensor_id = "AA:BB:CC:DD:EE:01"
     late_sensor_id = "AA:BB:CC:DD:EE:02"
     active_ids = [active_sensor_id]
@@ -121,7 +122,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     logger = make_logger(
         registry=fake_registry,
         sensor_metadata_reader=sensor_metadata_reader,
-        history_db=history_db.run_repository,
+        history_db=history_db,
     )
     status = logger.start_recording()
     run_id = status.run_id
@@ -175,7 +176,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=3.0)
 
-    stored_run = history_db.run_repository.get_run(run_id)
+    stored_run = history_db.get_run(run_id)
     assert stored_run is not None
     stored_metadata = stored_run.metadata
     late_snapshot = stored_metadata.sensor_snapshot_for(late_sensor_id)
@@ -184,7 +185,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     assert late_snapshot.location_code == "rear_left_wheel"
     assert late_snapshot.mount_orientation == "axial"
 
-    stored_samples = history_db.run_repository.get_run_samples(run_id)
+    stored_samples = run_samples(history_db, run_id)
     late_rows = [sample for sample in stored_samples if sample.client_id == late_sensor_id]
     assert len(late_rows) == 2
     assert {sample.client_name for sample in late_rows} == {"Configured rear left"}

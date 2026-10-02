@@ -60,7 +60,7 @@ below.
    `.raw.i16le` and `.index.jsonl` files via
    `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
 - Indexed raw range reads exist through
-   `RunPersistence.aload_raw_capture_sensor_range(...)`.
+   `RunPersistence.load_raw_capture_sensor_range(...)`.
 - The current connected dense sidecar path is owned by the whole-run stage
   functions in `apps/server/vibesensor/use_cases/run/post_analysis_executor.py`
   and the `whole_run_*` diagnostics modules:

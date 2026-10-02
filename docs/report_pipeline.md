@@ -36,7 +36,7 @@ Recording stops
         → run_analysis.py + run_data_preparation.py + findings_bundle.py + _analysis_result_builder.py
         → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
       → append compact whole-run report-facing summaries
-      → astore_analysis() [vibesensor.adapters.persistence.history_db]
+      → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]

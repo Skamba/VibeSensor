@@ -9,7 +9,7 @@ from test_support.runtime_lifecycle import build_history_db as _build_history_db
 from test_support.runtime_lifecycle import build_registry as _build_registry
 from test_support.runtime_lifecycle import make_hello_message as _make_hello_message
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import snapshot_for_api
@@ -61,9 +61,9 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
 
 
 def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(
-        db=db.client_name_repository,
+        db=db,
         live_ttl_seconds=5.0,
         retention_ttl_seconds=30.0,
     )
@@ -88,8 +88,8 @@ def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> No
 
 
 def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("001122334455")
     hello = HelloMessage(
         client_id=client_id,
@@ -126,8 +126,8 @@ def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Pa
 
 
 def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(db=db.client_name_repository)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("001122334455")
     hello = HelloMessage(
         client_id=client_id,

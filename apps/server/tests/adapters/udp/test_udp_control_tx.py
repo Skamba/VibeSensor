@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import (
     HELLO_CAP_EXPLICIT_ACK,
     MSG_HELLO_ACK,
@@ -23,8 +23,8 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 
 
 def _make_registry(tmp_path: Path) -> ClientRegistry:
-    adapters = create_history_persistence_adapters(tmp_path / "history.db")
-    return ClientRegistry(db=adapters.client_name_repository)
+    adapters = HistoryDB(tmp_path / "history.db")
+    return ClientRegistry(db=adapters)
 
 
 @pytest.mark.parametrize(

@@ -132,10 +132,10 @@ def test_sanitize_converts_to_float() -> None:
 def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
 
-    db = create_history_persistence_adapters(tmp_path / "test.db")
-    services = build_settings_services(db=db.settings_snapshot_repository)
+    db = HistoryDB(tmp_path / "test.db")
+    services = build_settings_services(db=db)
     snap = services.analysis_settings.analysis_settings_snapshot()
     # Frozen dataclass — values match defaults and instance is immutable
     assert snap.tire_width_mm == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
@@ -145,10 +145,10 @@ def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
 def test_update_merges_valid_values(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
 
-    db = create_history_persistence_adapters(tmp_path / "test.db")
-    services = build_settings_services(db=db.settings_snapshot_repository)
+    db = HistoryDB(tmp_path / "test.db")
+    services = build_settings_services(db=db)
     initial = services.car_settings.add_car({"name": "Test"})
     services.car_settings.set_active_car(initial.cars[0]["id"])
     services.analysis_settings.update_active_car_aspects({"tire_width_mm": 225.0})
@@ -160,10 +160,10 @@ def test_update_merges_valid_values(tmp_path) -> None:
 def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
 
-    db = create_history_persistence_adapters(tmp_path / "test.db")
-    services = build_settings_services(db=db.settings_snapshot_repository)
+    db = HistoryDB(tmp_path / "test.db")
+    services = build_settings_services(db=db)
     initial = services.car_settings.add_car({"name": "Test"})
     services.car_settings.set_active_car(initial.cars[0]["id"])
     services.analysis_settings.update_active_car_aspects({"tire_width_mm": -5.0})

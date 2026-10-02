@@ -36,9 +36,6 @@ V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
 # Row offset: skip autoincrement id column in SELECT results.
 _V2_COL_OFFSET: int = 1
 
-# Allowed table names for keyset pagination.
-ALLOWED_SAMPLE_TABLES: frozenset[str] = frozenset({"samples_v2"})
-
 # -- Row conversion -----------------------------------------------------------
 
 

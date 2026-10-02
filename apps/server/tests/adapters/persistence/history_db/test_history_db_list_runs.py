@@ -2,56 +2,56 @@
 
 from __future__ import annotations
 
-from test_support.history_db_async import execute_statements as _execute_statements
 from test_support.history_db_lifecycle import create_recording_run
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
+from test_support.history_db_sql import execute_statements as _execute_statements
 
-from vibesensor.adapters.persistence.history_db import HistoryPersistenceAdapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
-def test_list_runs_includes_recorded_car_name(db: HistoryPersistenceAdapters) -> None:
+def test_list_runs_includes_recorded_car_name(db: HistoryDB) -> None:
     create_recording_run(db, "run-car", active_car_snapshot={"name": "Track Car"})
 
-    run = db.run_repository.list_runs()[0]
+    run = db.list_runs()[0]
 
     assert run.car_name == "Track Car"
 
 
 def test_list_runs_uses_denormalized_car_name_when_metadata_json_is_invalid(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
     create_recording_run(db, "run-car", active_car_snapshot={"name": "Track Car"})
     _execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
             ("[1, 2, 3]", "run-car"),
         ),
     )
 
-    run = db.run_repository.list_runs()[0]
+    run = db.list_runs()[0]
 
     assert run.car_name == "Track Car"
 
 
-def test_update_run_metadata_refreshes_list_run_car_name(db: HistoryPersistenceAdapters) -> None:
+def test_update_run_metadata_refreshes_list_run_car_name(db: HistoryDB) -> None:
     create_recording_run(db, "run-meta", active_car_snapshot={"name": "Track Car"})
 
-    updated = db.run_repository.update_run_metadata(
+    updated = db.update_run_metadata(
         "run-meta",
         _metadata("run-meta", active_car_snapshot={"name": "Updated Car"}),
     )
 
-    listed_run = db.run_repository.list_runs()[0]
+    listed_run = db.list_runs()[0]
 
     assert updated is True
     assert listed_run.car_name == "Updated Car"
 
 
 def test_list_runs_projects_degraded_raw_capture_finalize_state(
-    db: HistoryPersistenceAdapters,
+    db: HistoryDB,
 ) -> None:
-    db.run_repository.create_run(
+    db.create_run(
         "run-degraded",
         "2026-01-01T00:00:00Z",
         _metadata(
@@ -64,7 +64,7 @@ def test_list_runs_projects_degraded_raw_capture_finalize_state(
         ),
     )
 
-    run = db.run_repository.list_runs()[0]
+    run = db.list_runs()[0]
 
     assert run.lifecycle is not None
     assert run.lifecycle.raw_capture == "degraded"
@@ -77,8 +77,8 @@ def test_list_runs_projects_degraded_raw_capture_finalize_state(
     assert run.raw_capture_finalize.error_summary == "raw capture finalize timed out"
 
 
-def test_get_run_projects_raw_capture_finalize_state(db: HistoryPersistenceAdapters) -> None:
-    db.run_repository.create_run(
+def test_get_run_projects_raw_capture_finalize_state(db: HistoryDB) -> None:
+    db.create_run(
         "run-degraded",
         "2026-01-01T00:00:00Z",
         _metadata(
@@ -91,7 +91,7 @@ def test_get_run_projects_raw_capture_finalize_state(db: HistoryPersistenceAdapt
         ),
     )
 
-    run = db.run_repository.get_run("run-degraded")
+    run = db.get_run("run-degraded")
 
     assert run is not None
     assert run.lifecycle is not None

@@ -14,7 +14,11 @@ from test_support.golden_replay_types import (
 )
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import RawCaptureSensorRange, RawRunCapture
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    raw_capture_range_reader_from_capture,
+)
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionConfig,
     execute_post_analysis,
@@ -26,15 +30,29 @@ from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_s
 
 
 class GoldenReplayRecorder:
-    """Minimal async persistence port used by the executor harness."""
+    """Minimal persistence port used by the executor harness.
 
-    def __init__(self) -> None:
+    Raw ranges are served from the fixture's in-memory capture; writes are recorded.
+    """
+
+    def __init__(self, raw_capture: RawRunCapture) -> None:
+        self._read_range = raw_capture_range_reader_from_capture(raw_capture)
         self.analysis: dict[str, object] | None = None
         self.manifest: WholeRunArtifactManifest | None = None
         self.artifact_contents: dict[str, bytes] = {}
         self.errors: list[tuple[str, str]] = []
 
-    async def astore_whole_run_artifacts(
+    def load_raw_capture_sensor_range(
+        self,
+        _run_id: str,
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        return self._read_range(client_id, sample_start=sample_start, sample_count=sample_count)
+
+    def store_whole_run_artifacts(
         self,
         run_id: str,
         manifest: WholeRunArtifactManifest,
@@ -45,7 +63,7 @@ class GoldenReplayRecorder:
         self.artifact_contents = dict(artifact_contents)
         return manifest
 
-    async def astore_analysis(
+    def store_analysis(
         self,
         _run_id: str,
         analysis: PersistedAnalysis | Mapping[str, object],
@@ -55,7 +73,7 @@ class GoldenReplayRecorder:
         else:
             self.analysis = dict(analysis)
 
-    async def astore_analysis_error(self, run_id: str, error: str) -> None:
+    def store_analysis_error(self, run_id: str, error: str) -> None:
         self.errors.append((run_id, error))
 
 
@@ -66,7 +84,7 @@ def execute_golden_replay_fixture(
     analysis_runner: object | None = None,
 ) -> GoldenReplayResult:
     run = fixture.build(duration_s=duration_s)
-    recorder = GoldenReplayRecorder()
+    recorder = GoldenReplayRecorder(run.raw_capture)
     result = execute_post_analysis(
         run_id=run.run_id,
         db=cast(RunPersistence, recorder),

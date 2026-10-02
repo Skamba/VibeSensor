@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
-from typing import Any
 
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.app.composition.settings import build_settings_service_bundle
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
@@ -51,16 +50,12 @@ def build_settings_services(
     )
 
 
-def write_raw_settings_snapshot(db: Any, value_json: str) -> None:
+def write_raw_settings_snapshot(db: HistoryDB, value_json: str) -> None:
     """Write raw JSON into the settings snapshot table for load-path tests."""
-
-    async def _run() -> None:
-        async with db._cursor() as cur:
-            await cur.execute(
-                "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
-                "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
-                "updated_at = excluded.updated_at",
-                (value_json, utc_now_iso()),
-            )
-
-    asyncio.run(_run())
+    with db._write() as cur:
+        cur.execute(
+            "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
+            "updated_at = excluded.updated_at",
+            (value_json, utc_now_iso()),
+        )

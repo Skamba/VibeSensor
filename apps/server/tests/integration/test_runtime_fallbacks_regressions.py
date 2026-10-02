@@ -15,7 +15,7 @@ from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor import report_i18n
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
@@ -78,29 +78,29 @@ class TestStoreAnalysisErrorGuard:
     """Regression: store_analysis_error must not overwrite a completed run."""
 
     def test_error_does_not_overwrite_complete(self, tmp_path: Path) -> None:
-        db = create_history_persistence_adapters(tmp_path / "test.db")
+        db = HistoryDB(tmp_path / "test.db")
         try:
             run_id = "test-run-001"
-            db.run_repository.create_run(
+            db.create_run(
                 run_id,
                 "2024-01-01T00:00:00",
                 _metadata(run_id, test=True),
             )
 
-            db.run_repository.store_analysis(run_id, make_persisted_analysis({"result": "ok"}))
-            run_before = db.run_repository.get_run(run_id)
+            db.store_analysis(run_id, make_persisted_analysis({"result": "ok"}))
+            run_before = db.get_run(run_id)
             assert run_before is not None
             assert run_before.status.value == "complete"
 
-            db.run_repository.store_analysis_error(run_id, "spurious error")
-            run_after = db.run_repository.get_run(run_id)
+            db.store_analysis_error(run_id, "spurious error")
+            run_after = db.get_run(run_id)
             assert run_after is not None
             assert run_after.status.value == "complete", (
                 "store_analysis_error must not overwrite a completed run"
             )
             assert run_after.analysis == run_before.analysis
         finally:
-            db.lifecycle.close()
+            db.close()
 
 
 class TestEvidencePeakPresentFormat:

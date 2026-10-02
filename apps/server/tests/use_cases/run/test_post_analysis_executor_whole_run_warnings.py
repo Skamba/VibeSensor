@@ -56,11 +56,11 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
     )
 
     class FakeDB:
-        async def astore_analysis(self, run_id, analysis):
+        def store_analysis(self, run_id, analysis):
             stored["analysis_run_id"] = run_id
             stored["analysis"] = analysis
 
-        async def astore_analysis_error(self, run_id, error):
+        def store_analysis_error(self, run_id, error):
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     spectral_result = WholeRunSpectralBuildResult(

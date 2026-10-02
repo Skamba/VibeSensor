@@ -17,12 +17,10 @@ from test_support import (
     make_noise_samples,
     standard_metadata,
 )
+from test_support.history_db_lifecycle import run_samples
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.persistence.history_db import (
-    RunHistoryRepository,
-    create_history_persistence_adapters,
-)
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
@@ -35,9 +33,9 @@ pytestmark = pytest.mark.smoke
 def _create_populated_db(
     meta: dict,
     samples: list[dict],
-) -> tuple[RunHistoryRepository, str]:
+) -> tuple[HistoryDB, str]:
     """Create an in-memory DB with a run containing *samples*."""
-    db = create_history_persistence_adapters(Path(":memory:")).run_repository
+    db = HistoryDB(Path(":memory:"))
     run_id = "contract-test-run"
     db.create_run(
         run_id,
@@ -77,7 +75,7 @@ def test_persisted_samples_produce_valid_analysis():
     )
 
     db, run_id = _create_populated_db(meta, samples)
-    read_back = db.get_run_samples(run_id)
+    read_back = run_samples(db, run_id)
 
     summary = summarize_run_data(
         meta,
@@ -99,7 +97,7 @@ def test_noise_only_round_trip():
     )
 
     db, run_id = _create_populated_db(meta, samples)
-    read_back = db.get_run_samples(run_id)
+    read_back = run_samples(db, run_id)
 
     summary = summarize_run_data(
         meta,
@@ -122,7 +120,7 @@ def test_sample_count_preserved_through_db():
     original_count = len(samples)
 
     db, run_id = _create_populated_db(meta, samples)
-    read_back = db.get_run_samples(run_id)
+    read_back = run_samples(db, run_id)
 
     assert len(read_back) == original_count
 
@@ -137,7 +135,7 @@ def test_key_sample_fields_survive_persistence():
     )
 
     db, run_id = _create_populated_db(meta, samples)
-    read_back = db.get_run_samples(run_id)
+    read_back = run_samples(db, run_id)
 
     required_fields = {"t_s", "speed_kmh", "client_name", "vibration_strength_db"}
     for expected, row in zip(samples, read_back, strict=True):

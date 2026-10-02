@@ -3,9 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from test_support.history_db_lifecycle import run_samples
 
 from tests.use_cases.run.test_metrics_log_helpers import _started_snapshot_with_sample
-from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 
@@ -63,12 +64,12 @@ def test_run_metadata_captures_recorded_utc_offset(
 
 
 def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
-    history_db = create_history_persistence_adapters(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db.run_repository, persist_history_db=True)
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = make_logger(history_db=history_db, persist_history_db=True)
 
     snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
     logger.stop_recording()
 
-    assert history_db.run_repository.get_run(run_id) is not None
-    assert history_db.run_repository.get_run_samples(run_id)
+    assert history_db.get_run(run_id) is not None
+    assert run_samples(history_db, run_id)

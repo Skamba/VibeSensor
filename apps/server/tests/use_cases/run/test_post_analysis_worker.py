@@ -9,9 +9,9 @@ from __future__ import annotations
 import sqlite3
 import threading
 import time
-from dataclasses import dataclass
 
 import pytest
+from test_support.history_db_lifecycle import make_stored_run
 
 from tests.test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
@@ -24,12 +24,20 @@ from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 # ---------------------------------------------------------------------------
 
 
+class _ErrorSinkHistoryDB:
+    """Accepts the analysis-error writes the worker's bug recorder makes."""
+
+    def store_analysis_error(self, _run_id: str, _error: str) -> bool:
+        return True
+
+
 @pytest.fixture
 def make_worker():
     """Factory for PostAnalysisWorker with an optional mock ``_run_post_analysis``."""
-    _sentinel = object()
 
-    def _factory(*, run_fn=None, history_db=_sentinel, **kwargs):
+    def _factory(*, run_fn=None, history_db=None, **kwargs):
+        if history_db is None:
+            history_db = _ErrorSinkHistoryDB()
         worker = PostAnalysisWorker(history_db=history_db, **kwargs)
         if run_fn is not None:
             worker._run_post_analysis = run_fn
@@ -55,12 +63,6 @@ def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
             "language": language,
         }
     )
-
-
-@dataclass(frozen=True, slots=True)
-class _StoredRun:
-    metadata: RunMetadata
-    sample_count: int
 
 
 def _patch_fast_retry_delays(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -210,11 +212,14 @@ class TestPostAnalysisWorkerErrorHandling:
         stored: dict[str, object] = {}
 
         class FakeDB:
-            async def aget_run_metadata(self, run_id):
+            def get_run(self, run_id):
                 assert run_id == "run-ok"
-                return _run_metadata(run_id, language="nl")
+                return make_stored_run(_run_metadata(run_id, language="nl"))
 
-            async def aiter_run_samples(self, run_id, batch_size=1024):
+            def load_raw_capture(self, _run_id):
+                return None
+
+            def iter_run_samples(self, run_id, batch_size=1024):
                 assert run_id == "run-ok"
                 yield sensor_frames_from_mappings(
                     [
@@ -223,11 +228,11 @@ class TestPostAnalysisWorkerErrorHandling:
                     ]
                 )
 
-            async def astore_analysis(self, run_id, analysis):
+            def store_analysis(self, run_id, analysis):
                 stored["run_id"] = run_id
                 stored["analysis"] = analysis
 
-            async def astore_analysis_error(self, run_id, msg):
+            def store_analysis_error(self, run_id, msg):
                 raise AssertionError(f"unexpected error storage for {run_id}: {msg}")
 
         def _analysis_runner(run):
@@ -273,15 +278,18 @@ class TestPostAnalysisWorkerErrorHandling:
         errors: list[str] = []
 
         class FakeDB:
-            async def aget_run_metadata(self, run_id):
-                return _run_metadata(run_id, language="en")
+            def get_run(self, run_id):
+                return make_stored_run(_run_metadata(run_id, language="en"))
 
-            async def aiter_run_samples(self, run_id, batch_size=1024):
+            def load_raw_capture(self, _run_id):
+                return None
+
+            def iter_run_samples(self, run_id, batch_size=1024):
                 if False:
                     yield []
                 raise RuntimeError("boom")
 
-            async def astore_analysis_error(self, run_id, msg):
+            def store_analysis_error(self, run_id, msg):
                 pass
 
         worker = PostAnalysisWorker(
@@ -338,7 +346,7 @@ class TestPostAnalysisWorkerErrorHandling:
         stored_errors: list[tuple[str, str]] = []
 
         class FakeDB:
-            async def astore_analysis_error(self, run_id, msg):
+            def store_analysis_error(self, run_id, msg):
                 stored_errors.append((run_id, msg))
 
         def _fail(_rid: str) -> None:
@@ -374,10 +382,13 @@ class TestPostAnalysisWorkerErrorHandling:
             def __init__(self) -> None:
                 self._store_attempts = 0
 
-            async def aget_run(self, run_id):
-                return _StoredRun(metadata=_run_metadata(run_id), sample_count=2)
+            def get_run(self, run_id):
+                return make_stored_run(_run_metadata(run_id), sample_count=2)
 
-            async def aiter_run_samples(self, run_id, batch_size=1024):
+            def load_raw_capture(self, _run_id):
+                return None
+
+            def iter_run_samples(self, run_id, batch_size=1024):
                 assert run_id == "run-retry"
                 yield sensor_frames_from_mappings(
                     [
@@ -386,13 +397,13 @@ class TestPostAnalysisWorkerErrorHandling:
                     ]
                 )
 
-            async def astore_analysis(self, run_id, analysis):
+            def store_analysis(self, run_id, analysis):
                 self._store_attempts += 1
                 if self._store_attempts == 1:
                     raise sqlite3.OperationalError("db locked")
                 stored.append((run_id, analysis))
 
-            async def astore_analysis_error(self, run_id, msg):
+            def store_analysis_error(self, run_id, msg):
                 raise AssertionError(f"unexpected persisted error for {run_id}: {msg}")
 
         worker = PostAnalysisWorker(
@@ -424,10 +435,13 @@ class TestPostAnalysisWorkerErrorHandling:
         final_error_stored = threading.Event()
 
         class FakeDB:
-            async def aget_run(self, run_id):
-                return _StoredRun(metadata=_run_metadata(run_id), sample_count=2)
+            def get_run(self, run_id):
+                return make_stored_run(_run_metadata(run_id), sample_count=2)
 
-            async def aiter_run_samples(self, run_id, batch_size=1024):
+            def load_raw_capture(self, _run_id):
+                return None
+
+            def iter_run_samples(self, run_id, batch_size=1024):
                 assert run_id == "run-exhausted"
                 yield sensor_frames_from_mappings(
                     [
@@ -436,10 +450,10 @@ class TestPostAnalysisWorkerErrorHandling:
                     ]
                 )
 
-            async def astore_analysis(self, run_id, analysis):
+            def store_analysis(self, run_id, analysis):
                 raise sqlite3.OperationalError("db locked")
 
-            async def astore_analysis_error(self, run_id, msg):
+            def store_analysis_error(self, run_id, msg):
                 stored_errors.append((run_id, msg))
                 final_error_stored.set()
 

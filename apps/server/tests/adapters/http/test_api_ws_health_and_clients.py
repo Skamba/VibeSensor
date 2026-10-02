@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 
 async def _close_history_db(db) -> None:
-    await db.aclose()
+    db.close()
 
 
 def _client_routes_app(registry, control_plane, settings_store, processor) -> FastAPI:
@@ -233,14 +233,14 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     try:
-        settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
-        registry = ClientRegistry(db=db.client_name_repository)
+        settings_store = build_settings_services(db=db).sensor_settings
+        registry = ClientRegistry(db=db)
         registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),
@@ -276,13 +276,13 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 
 
 def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     try:
-        registry = ClientRegistry(db=db.client_name_repository)
+        registry = ClientRegistry(db=db)
         registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),
@@ -304,7 +304,7 @@ def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) ->
 
         assert response.status_code == 200
         assert response.json() == {"id": "001122334455", "status": "removed"}
-        assert db.client_name_repository.list_client_names() == {}
+        assert db.list_client_names() == {}
     finally:
         asyncio.run(_close_history_db(db))
 
@@ -313,14 +313,14 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     try:
         registry = ClientRegistry(
-            db=db.client_name_repository,
+            db=db,
             live_ttl_seconds=5.0,
             retention_ttl_seconds=30.0,
         )
@@ -366,20 +366,20 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
 ) -> None:
     from test_support.settings_services import build_settings_services
 
-    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db = HistoryDB(tmp_path / "history.db")
     try:
-        initial_settings = build_settings_services(db=db.settings_snapshot_repository)
+        initial_settings = build_settings_services(db=db)
         initial_settings.sensor_settings.assign_sensor_location(
             "00:11:22:33:44:55",
             "rear_left_wheel",
         )
 
-        settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
-        registry = ClientRegistry(db=db.client_name_repository)
+        settings_store = build_settings_services(db=db).sensor_settings
+        registry = ClientRegistry(db=db)
         registry.update_from_hello(
             HelloMessage(
                 client_id=bytes.fromhex("001122334455"),

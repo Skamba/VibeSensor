@@ -3,13 +3,16 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from test_support.history_db_async import execute_statements as _execute_statements
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_completed_run,
     create_recording_run,
 )
+from test_support.history_db_sql import execute_statements as _execute_statements
 
+from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
+    HistoryWholeRunArtifactStore,
+)
 from vibesensor.shared.types.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactFile,
@@ -77,15 +80,13 @@ def _store_whole_run_artifacts(
     run_id: str,
     manifest: WholeRunArtifactManifest,
 ) -> WholeRunArtifactManifest | None:
-    return db.run_repository._run_sync(
-        db.run_repository.astore_whole_run_artifacts(
-            run_id,
-            manifest,
-            artifact_contents={
-                "window-spectra": b"spec-data",
-                "order-traces": b'{"window_index":0}\n',
-            },
-        )
+    return db.store_whole_run_artifacts(
+        run_id,
+        manifest,
+        artifact_contents={
+            "window-spectra": b"spec-data",
+            "order-traces": b'{"window_index":0}\n',
+        },
     )
 
 
@@ -97,45 +98,32 @@ def test_whole_run_artifact_round_trip_persists_manifest_and_bytes(tmp_path: Pat
     stored_manifest = _store_whole_run_artifacts(db, "run-artifacts", manifest)
 
     assert stored_manifest == manifest
-    stored_run = db.run_repository.get_run("run-artifacts")
+    stored_run = db.get_run("run-artifacts")
     assert stored_run is not None
     assert stored_run.whole_run_artifact_manifest == manifest
     assert stored_run.artifact_availability is not None
     assert stored_run.artifact_availability.whole_run_artifacts == "available"
-    loaded_manifest = db.run_repository._run_sync(
-        db.run_repository.aget_whole_run_artifact_manifest("run-artifacts")
-    )
-    assert loaded_manifest == manifest
-    assert loaded_manifest is not None
-    assert loaded_manifest.generated_artifact_paths == {
+    assert manifest.generated_artifact_paths == {
         "window-spectra": "window-spectra.bin",
         "order-traces": "orders/order-traces.jsonl",
     }
-    loaded_bytes = db.run_repository._run_sync(
-        db.run_repository.aload_whole_run_artifact("run-artifacts", "window-spectra")
-    )
-    assert loaded_bytes == b"spec-data"
+    store = HistoryWholeRunArtifactStore(data_dir=tmp_path)
+    assert store.load_artifact_bytes(manifest, artifact_key="window-spectra") == b"spec-data"
 
 
 def test_legacy_run_without_whole_run_sidecar_remains_readable(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
     create_completed_run(db, "run-legacy")
 
-    stored_run = db.run_repository.get_run("run-legacy")
+    stored_run = db.get_run("run-legacy")
 
     assert stored_run is not None
     assert stored_run.whole_run_artifact_manifest is None
-    assert (
-        db.run_repository._run_sync(
-            db.run_repository.aget_whole_run_artifact_manifest("run-legacy")
-        )
-        is None
-    )
 
 
 def test_delete_run_removes_whole_run_artifacts(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
-    create_recording_run(db, "run-delete")
+    create_completed_run(db, "run-delete")
     manifest = _manifest("run-delete")
 
     stored_manifest = _store_whole_run_artifacts(db, "run-delete", manifest)
@@ -144,7 +132,7 @@ def test_delete_run_removes_whole_run_artifacts(tmp_path: Path) -> None:
     artifact_dir = tmp_path / WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME / "run-delete"
     assert artifact_dir.exists()
 
-    db.run_repository.delete_run("run-delete")
+    assert db.delete_run_if_safe("run-delete") == (True, None)
 
     assert not artifact_dir.exists()
 
@@ -159,9 +147,9 @@ def test_missing_whole_run_artifact_is_reported_without_breaking_history(
     assert stored_manifest is not None
     (tmp_path / manifest.relative_dir / "window-spectra.bin").unlink()
 
-    stored_run = db.run_repository.get_run("run-missing-artifact")
-    loaded_bytes = db.run_repository._run_sync(
-        db.run_repository.aload_whole_run_artifact("run-missing-artifact", "window-spectra")
+    stored_run = db.get_run("run-missing-artifact")
+    loaded_bytes = HistoryWholeRunArtifactStore(data_dir=tmp_path).load_artifact_bytes(
+        manifest, artifact_key="window-spectra"
     )
 
     assert stored_run is not None
@@ -178,15 +166,15 @@ def test_corrupt_whole_run_manifest_is_ignored_for_history_reads(tmp_path: Path)
     stored_manifest = _store_whole_run_artifacts(db, "run-corrupt-manifest", manifest)
     assert stored_manifest is not None
     _execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET whole_run_artifact_manifest_json = ? WHERE run_id = ?",
             ('{"window_policy": "not-an-object"}', "run-corrupt-manifest"),
         ),
     )
 
-    stored_run = db.run_repository.get_run("run-corrupt-manifest")
-    listed_run = db.run_repository.list_runs(limit=1)[0]
+    stored_run = db.get_run("run-corrupt-manifest")
+    listed_run = db.list_runs(limit=1)[0]
 
     assert stored_run is not None
     assert stored_run.whole_run_artifact_manifest is None
@@ -205,8 +193,8 @@ def test_unreadable_whole_run_artifact_returns_none(tmp_path: Path) -> None:
     artifact_path.unlink()
     artifact_path.mkdir()
 
-    loaded_bytes = db.run_repository._run_sync(
-        db.run_repository.aload_whole_run_artifact("run-corrupt-artifact", "window-spectra")
+    loaded_bytes = HistoryWholeRunArtifactStore(data_dir=tmp_path).load_artifact_bytes(
+        manifest, artifact_key="window-spectra"
     )
 
     assert loaded_bytes is None
@@ -236,13 +224,13 @@ def test_prune_terminal_runs_removes_whole_run_artifacts(tmp_path: Path) -> None
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
     _execute_statements(
-        db.lifecycle,
+        db,
         (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-prune"),
         ),
     )
 
-    db.run_repository.prune_terminal_runs_older_than_days(1)
+    db.prune_terminal_runs_older_than_days(1)
 
     assert not artifact_dir.exists()

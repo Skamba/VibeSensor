@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import logging
@@ -110,7 +111,7 @@ class HistoryExportService:
 
     async def build_export_context(self, run_id: str) -> HistoryExportContext:
         run = await async_require_run(self._history_db, run_id)
-        raw_csv_spool, sample_count = await self._build_raw_csv_spool(run_id)
+        raw_csv_spool, sample_count = await asyncio.to_thread(self._build_raw_csv_spool, run_id)
         return HistoryExportContext(
             run_id=run_id,
             safe_name=safe_filename(run_id),
@@ -119,7 +120,7 @@ class HistoryExportService:
             raw_csv_spool=raw_csv_spool,
         )
 
-    async def _build_raw_csv_spool(
+    def _build_raw_csv_spool(
         self,
         run_id: str,
     ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
@@ -136,7 +137,7 @@ class HistoryExportService:
                 extrasaction="ignore",
             )
             writer.writeheader()
-            async for batch in self._history_db.aiter_run_samples(
+            for batch in self._history_db.iter_run_samples(
                 run_id,
                 batch_size=EXPORT_BATCH_SIZE,
             ):

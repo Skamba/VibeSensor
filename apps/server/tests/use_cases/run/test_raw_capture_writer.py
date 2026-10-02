@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import threading
 
@@ -40,25 +39,19 @@ def _overfill_capture_queue(
 
 
 class _FirstAppendBlocksHistoryDb:
-    """Park the writer worker on its first append until ``block_append`` is set.
-
-    Only the first append blocks: once released, the remaining queued chunks
-    are persisted without a per-chunk worker-thread hop, so draining a full
-    queue on shutdown costs one event-loop round trip per chunk instead of one
-    thread spawn per chunk (which made the drain CPU-load sensitive).
-    """
+    """Park the writer worker on its first append until ``block_append`` is set."""
 
     def __init__(self) -> None:
         self.first_started = threading.Event()
         self.block_append = threading.Event()
 
-    async def aappend_raw_capture_chunk(self, _run_id: str, _chunk: RawCaptureChunk) -> None:
+    def append_raw_capture_chunk(self, _run_id: str, _chunk: RawCaptureChunk) -> None:
         if self.first_started.is_set():
             return
         self.first_started.set()
-        await asyncio.to_thread(self.block_append.wait)
+        self.block_append.wait()
 
-    async def afinalize_raw_capture(
+    def finalize_raw_capture(
         self,
         _run_id: str,
         *,
@@ -150,16 +143,16 @@ def test_raw_capture_writer_finalize_returns_manifest_with_persisted_loss_counts
             self.first_write_completed = threading.Event()
             self.stored_chunks: dict[str, list[RawCaptureChunk]] = {}
 
-        async def aappend_raw_capture_chunk(self, _run_id: str, chunk: RawCaptureChunk) -> None:
+        def append_raw_capture_chunk(self, _run_id: str, chunk: RawCaptureChunk) -> None:
             if not self.first_started.is_set():
                 self.first_started.set()
-                await asyncio.to_thread(self.allow_first_write.wait)
+                self.allow_first_write.wait()
             if chunk.client_id == "sensor-b":
                 raise OSError("simulated raw capture write failure")
             self.stored_chunks.setdefault(chunk.client_id, []).append(chunk)
             self.first_write_completed.set()
 
-        async def afinalize_raw_capture(
+        def finalize_raw_capture(
             self,
             run_id: str,
             *,
@@ -246,10 +239,10 @@ def test_raw_capture_writer_finalize_timeout_returns_degraded_result() -> None:
         def __init__(self) -> None:
             self.block_finalize = threading.Event()
 
-        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+        def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
             return None
 
-        async def afinalize_raw_capture(
+        def finalize_raw_capture(
             self,
             _run_id: str,
             *,
@@ -258,7 +251,7 @@ def test_raw_capture_writer_finalize_timeout_returns_degraded_result() -> None:
             sensor_losses=None,
         ):
             del run_start_monotonic_us, sensor_clock_sync, sensor_losses
-            await asyncio.to_thread(self.block_finalize.wait)
+            self.block_finalize.wait()
 
     history_db = HangingHistoryDb()
     writer = RunRawCaptureWriter(
@@ -281,10 +274,10 @@ def test_raw_capture_writer_notifies_late_finalize_after_timeout() -> None:
         def __init__(self) -> None:
             self.block_finalize = threading.Event()
 
-        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+        def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
             return None
 
-        async def afinalize_raw_capture(
+        def finalize_raw_capture(
             self,
             _run_id: str,
             *,
@@ -293,7 +286,7 @@ def test_raw_capture_writer_notifies_late_finalize_after_timeout() -> None:
             sensor_losses=None,
         ):
             del run_start_monotonic_us, sensor_clock_sync, sensor_losses
-            await asyncio.to_thread(self.block_finalize.wait)
+            self.block_finalize.wait()
             return None
 
     history_db = HangingHistoryDb()
@@ -345,10 +338,10 @@ def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_queue_stays_fu
 
 def test_raw_capture_writer_finalize_failure_returns_failed_result() -> None:
     class FailingHistoryDb:
-        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+        def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
             return None
 
-        async def afinalize_raw_capture(
+        def finalize_raw_capture(
             self,
             _run_id: str,
             *,

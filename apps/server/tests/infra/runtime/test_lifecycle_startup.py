@@ -52,7 +52,7 @@ def _make_runtime(started: list[str]) -> LifecycleRuntime:
         update_manager=MagicMock(startup_recover=AsyncMock(side_effect=_recover), job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),
-        history_db=MagicMock(aclose=AsyncMock()),
+        history_db=MagicMock(),
     )
 
 

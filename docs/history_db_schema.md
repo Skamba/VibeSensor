@@ -14,25 +14,20 @@ application settings and client names in a single SQLite file located at
 
 ## Module organization
 
-`adapters/persistence/history_db/` now builds a shared SQLite engine plus narrow
-repositories over the same database file:
+`adapters/persistence/history_db/` is one synchronous repository over stdlib `sqlite3`:
 
-- `_engine.py`: shared SQLite connection/lock/cursor ownership, schema
-  initialization, incompatible-schema backup/export protection, and
-  corruption detection.
-- `_run_repository.py`: run persistence composed from `_run_lifecycle.py`,
-  `_sample_io.py`, and `_queries.py` over the shared engine.
-- `_settings_repository.py`: `settings_snapshot` table persistence only.
-- `_client_names_repository.py`: `client_names` table persistence only.
-- `__init__.py`: adapter bundle factory plus a temporary `HistoryDB`
-  compatibility facade for tests/legacy call sites.
-- `_run_lifecycle.py`: run creation/finalization, sample appends, analysis writes, delete
-  flows, stale-recording recovery, and startup retention pruning for old terminal runs.
-- `_sample_io.py`: batched sample reads and keyset-pagination helpers.
-- `_queries.py`: run listing/detail queries, metadata reads, health reads, and integrity
-  checks.
+- `_history_db.py`: `HistoryDB`. Constructing it opens a writer connection and a
+  `query_only` reader connection (WAL lets reads proceed during writes), each guarded by a
+  `threading.Lock`, then enforces the schema and runs `PRAGMA quick_check`. It owns run
+  creation/finalization, sample appends and keyset-paginated reads, analysis writes, delete
+  and retention flows, stale-recording recovery, settings snapshots, and client names.
+  Async callers (route handlers, history use cases) offload calls with `asyncio.to_thread`.
+- `_schema.py`: schema DDL, `SCHEMA_VERSION`, open-time schema enforcement, quick check, and
+  incompatible-schema backup/run-summary export.
+- `_projection.py`: row-to-record projection for history list/detail reads.
 - `_samples.py`: row-serialization helpers for `samples_v2`.
-- `_schema.py`: schema DDL and `SCHEMA_VERSION`.
+- `_raw_capture_store.py` / `_whole_run_artifact_store.py`: file-backed raw waveform and
+  whole-run artifact sidecars next to the DB file.
 
 ## Tables
 
@@ -129,7 +124,7 @@ home for persisted sensor name/location semantics.
 ## Schema version policy
 
 Schema versioning uses SQLite's `PRAGMA user_version`. The current schema is the
-only supported runtime schema. On startup the shared SQLite history engine checks
+only supported runtime schema. On startup `HistoryDB` checks
 the stored integer version:
 
 | Stored version | Action |
@@ -142,7 +137,7 @@ the stored integer version:
 | Newer than `15` | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` (downgrade not supported) |
 
 There are no in-place migrations from older history DB versions. Before
-rejecting a populated non-current database, the engine writes a backup copy under
+rejecting a populated non-current database, `HistoryDB` writes a backup copy under
 `history-db-backups/` next to the live database and, when a readable `runs` table
 exists, exports a best-effort JSONL summary of stored runs. The server then
 raises a clear error; reset or reinstall to create a fresh current-schema DB.
@@ -154,6 +149,8 @@ raises a clear error; reset or reinstall to create a fresh current-schema DB.
 | `journal_mode` | WAL | Allows concurrent reads during writes |
 | `wal_autocheckpoint` | 500 | Prevents unbounded WAL growth |
 | `foreign_keys` | ON | Cascade deletes for samples when a run is deleted |
+| `busy_timeout` | 5000 ms | Waits out short lock contention instead of failing |
+| `query_only` | ON (reader connection) | The reader connection can never write |
 | Batch insert size | 256 | Balances transaction overhead vs. memory usage |
 | Read batch size | 1000 (default) | Keyset pagination for streaming reads |
 
@@ -174,7 +171,7 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 
 ## Startup retention policy
 
-On startup, the container builds the shared history engine and run repository,
+On startup, the container opens `HistoryDB`,
 first recovers stale `recording` rows into `error`, then applies retention in
 two stages:
 
