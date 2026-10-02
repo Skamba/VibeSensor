@@ -184,7 +184,8 @@ class CommandRunner:
             if proc is not None:
                 await _kill_process(proc)
             await _cancel_output_tasks(stdout_task, stderr_task)
-            LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))
+            # The command line may carry credentials; the status reporter logs a redacted copy.
+            LOGGER.warning("Updater command timed out after %.0fs", timeout)
             return (124, "", "Command timed out")
         except asyncio.CancelledError:
             # Kill the subprocess so it doesn't outlive the cancelled task.
@@ -193,7 +194,7 @@ class CommandRunner:
             await _cancel_output_tasks(stdout_task, stderr_task)
             raise
         except FileNotFoundError:
-            LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)
+            LOGGER.warning("Updater command not found", exc_info=True)
             return (127, "", f"Command not found: {args[0]}")
         except OSError as exc:
             return (1, "", str(exc))

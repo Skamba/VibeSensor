@@ -68,7 +68,7 @@ def _free_udp_port_block(size: int) -> int:
             for offset in range(size):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 socks.append(sock)
-                sock.bind(("0.0.0.0", base + offset))
+                sock.bind((_HOST, base + offset))
         except OSError:
             continue
         finally:

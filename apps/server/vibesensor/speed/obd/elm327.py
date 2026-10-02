@@ -49,7 +49,7 @@ def normalize_elm_response(command: str, raw_response: bytes | str) -> str:
     command_compact = re.sub(r"\s+", "", command).upper()
     cleaned: list[str] = []
     for line in lines:
-        compact = re.sub(r"[^0-9A-FA-Z]", "", line.upper())
+        compact = re.sub(r"[^0-9A-Z]", "", line.upper())
         if compact == command_compact:
             continue
         cleaned.append(line)
