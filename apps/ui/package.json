@@ -31,7 +31,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
     "@playwright/test": "^1.63.0",
-    "dependency-cruiser": "^17.4.0",
+    "dependency-cruiser": "^18.4.0",
     "happy-dom": "^20.14.5",
     "knip": "^6.38.0",
     "msw": "^2.15.0",
