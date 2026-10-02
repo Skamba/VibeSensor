@@ -6,9 +6,9 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
 from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,

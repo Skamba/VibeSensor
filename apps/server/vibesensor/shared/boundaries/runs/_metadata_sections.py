@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.scalars import text_or_none
 from vibesensor.domain.diagnostic_case import Symptom
-from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.runs._metadata_codecs import (
     PayloadDecoder,
     PayloadFieldSpec,
@@ -23,7 +24,6 @@ from vibesensor.shared.boundaries.runs._metadata_codecs import (
     required_text_decoder,
     tuple_text_decoder,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import (
     RawCaptureFinalizeStatus,
     RunFinalizationStageResult,

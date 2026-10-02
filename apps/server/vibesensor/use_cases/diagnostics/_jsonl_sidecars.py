@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Protocol
 
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.common.json_types import JsonObject, is_json_object
+from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
 
 
 class _JsonSidecarObject(Protocol):

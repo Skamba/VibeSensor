@@ -19,8 +19,8 @@ from vibesensor.app.config_schema import (
     UDPConfig,
     UpdateConfig,
 )
-from vibesensor.shared.json_utils import deep_merge
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.common.json_types import JsonObject, is_json_object
+from vibesensor.common.json_utils import deep_merge
 
 __all__ = ["load_config"]
 

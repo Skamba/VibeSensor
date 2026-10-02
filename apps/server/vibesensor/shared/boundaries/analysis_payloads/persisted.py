@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,
     STORAGE_SCHEMA_VERSION_KEY,

@@ -14,14 +14,14 @@ from typing import cast
 
 import msgspec
 
-from vibesensor.domain._numeric import coerce_float
-from vibesensor.shared.types.json_types import (
+from vibesensor.common.json_types import (
     JsonObject,
     JsonSchemaObject,
     JsonSchemaValue,
     JsonValue,
     is_json_object,
 )
+from vibesensor.domain._numeric import coerce_float
 
 __all__ = [
     "as_float_or_none",

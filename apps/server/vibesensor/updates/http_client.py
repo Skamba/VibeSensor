@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 import msgspec
 
-from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.common.json_types import JsonValue
 
 __all__ = [
     "build_request",

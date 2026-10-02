@@ -9,10 +9,10 @@ import importlib
 
 import pytest
 
+from vibesensor.common.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.dsp.order_bands import build_order_bands
 from vibesensor.ingest.client_metadata import sanitize_client_name
 from vibesensor.settings.car_config import new_car_id
-from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -39,7 +39,7 @@ class TestDomainModelsPublicAPI:
 
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float
+        from vibesensor.common.json_utils import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 

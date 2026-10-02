@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from vibesensor.shared.exceptions import (
+from vibesensor.common.exceptions import (
     AnalysisNotReadyError,
     ConfigurationError,
     ProtocolError,
@@ -16,7 +16,7 @@ from vibesensor.shared.exceptions import (
     UpdateError,
     VibeSensorError,
 )
-from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
+from vibesensor.common.operational_errors import OperationalError, ServiceUnavailableError
 
 __all__ = [
     "http_exception_for_operational_error",

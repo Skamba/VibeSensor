@@ -7,7 +7,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from vibesensor.shared.exceptions import UpdatePreparationError
+from vibesensor.common.exceptions import UpdatePreparationError
 from vibesensor.updates.models import (
     UpdateRequest,
     UpdateTransport,

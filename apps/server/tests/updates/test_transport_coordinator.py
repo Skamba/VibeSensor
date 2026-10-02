@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from test_support.update_status import build_update_status_harness
 
-from vibesensor.shared.exceptions import UpdateTransportError
+from vibesensor.common.exceptions import UpdateTransportError
 from vibesensor.updates.models import UpdateRequest, UpdateState, UpdateTransport
 from vibesensor.updates.transport.coordinator import UpdateTransportCoordinator
 

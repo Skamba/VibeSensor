@@ -7,8 +7,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import cast
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.json_types import JsonObject
 
 __all__ = [
     "PERSISTED_ANALYSIS_SCHEMA_VERSION",

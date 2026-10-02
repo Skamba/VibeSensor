@@ -8,7 +8,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
+from vibesensor.common.operational_errors import OperationalError, ServiceUnavailableError
 from vibesensor.speed.obd.admin_client import ObdAdminClient
 from vibesensor.speed.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.speed.obd.elm327 import Elm327Session, ObdTransportError

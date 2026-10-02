@@ -10,6 +10,7 @@ from typing import Protocol
 
 import numpy as np
 
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer, float_list
 from vibesensor.dsp.vibration_strength import StrengthPeak
@@ -21,7 +22,6 @@ from vibesensor.shared.raw_capture_timeline import (
     raw_anchor_reason,
     resolve_raw_window_end_time,
 )
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureLossStats,

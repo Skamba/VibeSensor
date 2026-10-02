@@ -6,9 +6,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
+from vibesensor.common.json_types import JsonObject, is_json_object
+from vibesensor.common.json_utils import i18n_ref
 from vibesensor.dsp.vibration_strength import StrengthPeak
 from vibesensor.dsp.window_quality_types import WindowQuality, clean_window_quality
-from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
     raw_timeline_has_unverified_sync,
@@ -18,7 +19,6 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureManifest,

@@ -7,6 +7,7 @@ import time
 from threading import RLock
 from typing import TYPE_CHECKING
 
+from vibesensor.common.structured_logging import log_extra
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     ClientTracker,
@@ -17,7 +18,6 @@ from vibesensor.shared.ports import (
     SignalSource,
     SpeedProvider,
 )
-from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
     RawCaptureSensorClockSync,

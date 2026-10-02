@@ -1,7 +1,7 @@
 """Shared helpers for history service workflows.
 
 These helpers are framework-agnostic: they raise domain exceptions from
-``vibesensor.shared.exceptions`` rather than HTTP-specific exceptions.  The
+``vibesensor.common.exceptions`` rather than HTTP-specific exceptions.  The
 routes layer translates domain exceptions to HTTP status codes.
 """
 
@@ -11,14 +11,14 @@ import asyncio
 from collections.abc import Mapping
 from typing import cast
 
-from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.exceptions import (
+from vibesensor.common.exceptions import (
     AnalysisNotReadyError,
     RunNotFoundError,
 )
+from vibesensor.common.json_types import JsonObject
+from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 

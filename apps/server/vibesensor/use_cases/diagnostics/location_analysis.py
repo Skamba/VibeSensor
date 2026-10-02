@@ -6,9 +6,9 @@ from collections.abc import Collection, Set
 from dataclasses import replace
 from math import pow
 
+from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.constants.analysis import MULTI_SENSOR_CORROBORATION_DB
-from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.use_cases.diagnostics.location_grouping import (
     group_matches_by_speed_bin,
     location_speed_weight_pairs,

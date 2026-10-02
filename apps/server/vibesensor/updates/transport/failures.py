@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.exceptions import UpdateTransportError
+from vibesensor.common.exceptions import UpdateTransportError
 from vibesensor.updates.models import UpdatePhase
 
 __all__ = ["UpdateTransportStepError"]

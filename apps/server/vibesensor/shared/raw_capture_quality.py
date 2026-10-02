@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorLossStats,

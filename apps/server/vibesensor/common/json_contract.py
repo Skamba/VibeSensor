@@ -25,7 +25,7 @@ from typing import Any, ClassVar, Self, cast
 
 from pydantic import ConfigDict, SerializerFunctionWrapHandler, TypeAdapter, WrapSerializer
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 
 __all__ = [
     "AsJsonObject",

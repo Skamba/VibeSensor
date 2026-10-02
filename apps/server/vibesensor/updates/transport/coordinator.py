@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.updates.models import UpdateJobStatus, UpdateRequest, UpdateTransport
 from vibesensor.updates.transport.lifecycles import (
     PreparedUpdateTransport,

@@ -8,7 +8,7 @@ import pytest
 from test_support.update_status import build_update_status_harness
 from updates._update_manager_test_helpers import FakeRunner
 
-from vibesensor.shared.exceptions import UpdateTransportError
+from vibesensor.common.exceptions import UpdateTransportError
 from vibesensor.updates.models import (
     UpdateIssue,
     UpdatePhase,

@@ -7,7 +7,7 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-from vibesensor.shared.json_utils import json_text_dumps
+from vibesensor.common.json_utils import json_text_dumps
 
 LOGGER = logging.getLogger(__name__)
 

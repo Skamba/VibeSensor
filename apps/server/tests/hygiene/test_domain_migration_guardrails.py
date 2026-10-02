@@ -54,7 +54,7 @@ def test_no_compat_dual_base_exceptions() -> None:
     This prevents accidental dual-base compatibility shims that let callers
     catch stdlib types and bypass the domain exception hierarchy.
     """
-    from vibesensor.shared.exceptions import VibeSensorError
+    from vibesensor.common.exceptions import VibeSensorError
 
     # stdlib exception types that should never appear as co-parents
     stdlib_bases = (

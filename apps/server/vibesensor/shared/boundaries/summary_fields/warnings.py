@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from functools import partial
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.json_utils import payload_value_from_json
 from vibesensor.report.i18n import tr as _tr
-from vibesensor.shared.json_utils import payload_value_from_json
 from vibesensor.shared.run_context_warning import (
     RunContextWarning,
     RunContextWarningsInput,
@@ -14,7 +15,6 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.history_analysis_contracts import (
     SummaryWarningResponse as SummaryWarningPayload,
 )
-from vibesensor.shared.types.json_types import JsonObject
 
 
 def summary_warning_payload(warning: RunContextWarning) -> SummaryWarningPayload:

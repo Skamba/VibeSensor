@@ -7,6 +7,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
+from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.protocol_validator import (
     ACCEL_AXES,
     CLIENT_ID_BYTES,
@@ -22,7 +23,6 @@ from vibesensor.ingest.protocol_validator import (
     validate_minimum_size,
     validate_samples_array,
 )
-from vibesensor.shared.exceptions import ProtocolError
 
 
 def _validate_header_example() -> None:

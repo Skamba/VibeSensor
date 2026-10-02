@@ -14,6 +14,8 @@ from typing import Annotated, Literal, Required, TypedDict
 
 from pydantic import ConfigDict, with_config
 
+from vibesensor.common.json_contract import AsJsonObject
+from vibesensor.common.json_types import JsonSchemaObject, JsonSchemaValue
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
     PlotDataResult,
@@ -21,8 +23,6 @@ from vibesensor.shared.types.analysis_views import (
 )
 from vibesensor.shared.types.data_quality_contracts import DataQualityResponse
 from vibesensor.shared.types.finding_payload_parts import FindingPayload
-from vibesensor.shared.types.json_contract import AsJsonObject
-from vibesensor.shared.types.json_types import JsonSchemaObject, JsonSchemaValue
 from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from vibesensor.shared.types.json_types import JsonSchemaObject, JsonSchemaValue
+from vibesensor.common.json_types import JsonSchemaObject, JsonSchemaValue
 
 type ApiPayloadObject = JsonSchemaObject
 type ApiPayloadValue = JsonSchemaValue

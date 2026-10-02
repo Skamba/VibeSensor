@@ -12,7 +12,7 @@ from test_support.firmware_bundles import write_firmware_bundle
 from test_support.routes import iter_api_routes
 
 from vibesensor.adapters.http.updates import create_update_routes
-from vibesensor.shared.exceptions import ConfigurationError, UpdateError
+from vibesensor.common.exceptions import ConfigurationError, UpdateError
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.firmware.esp_flash_types import (
     FlashCommandRunner,

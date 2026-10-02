@@ -6,6 +6,8 @@ from collections.abc import Collection, Mapping, Sequence
 from copy import deepcopy
 from typing import Protocol
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseInterval
 from vibesensor.domain.finding import Finding as DomainFinding
@@ -31,9 +33,7 @@ from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     build_summary_warnings,
 )
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = ["analysis_result_to_summary", "analysis_summary_with_warnings"]

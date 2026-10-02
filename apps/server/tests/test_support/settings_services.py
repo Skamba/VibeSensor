@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.app.composition.settings import build_settings_service_bundle
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.settings.car_settings import CarSettingsService
 from vibesensor.settings.sensor_settings import SensorSettingsService
@@ -14,7 +15,6 @@ from vibesensor.settings.settings_persistence import SettingsPersistenceCoordina
 from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
 from vibesensor.settings.ui_preferences import UiPreferencesService
 from vibesensor.shared.ports import SettingsSnapshotPersistence
-from vibesensor.shared.time_utils import utc_now_iso
 
 __all__ = ["PersistedSettingsServices", "build_settings_services", "write_raw_settings_snapshot"]
 

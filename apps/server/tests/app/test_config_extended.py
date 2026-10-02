@@ -130,7 +130,7 @@ def test_load_config_null_section_keeps_defaults_and_logs_warning(
     config_path = tmp_path / "config.yaml"
     _write_config(config_path, {"ap": None})
 
-    with caplog.at_level("WARNING", logger="vibesensor.shared.json_utils"):
+    with caplog.at_level("WARNING", logger="vibesensor.common.json_utils"):
         result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True

@@ -9,6 +9,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
+from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.protocol import (
     ACK_STRUCT,
     CMD_HEADER_BYTES,
@@ -31,7 +32,6 @@ from vibesensor.ingest.protocol import (
     parse_hello,
     parse_hello_ack,
 )
-from vibesensor.shared.exceptions import ProtocolError
 
 
 def test_parse_hello_rejects_missing_capabilities() -> None:

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateReleaseError
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateReleaseError
 from vibesensor.updates.artifact_validation import sha256_file
 from vibesensor.updates.models import UpdatePhase
 

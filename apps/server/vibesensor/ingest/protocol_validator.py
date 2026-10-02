@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.shared.exceptions import ProtocolError
+from vibesensor.common.exceptions import ProtocolError
 
 VERSION = 1
 CLIENT_ID_BYTES = 6

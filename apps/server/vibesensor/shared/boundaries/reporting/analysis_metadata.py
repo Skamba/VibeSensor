@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.codecs.scalars import coerce_count, text_or_none
+from vibesensor.common.scalars import coerce_count, text_or_none
 
 __all__ = [
     "REPORT_ANALYSIS_METADATA_STABLE_KEYS",

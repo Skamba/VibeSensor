@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from vibesensor.common.exceptions import ProcessingError
 from vibesensor.live.processing_loop import (
     MAX_CONSECUTIVE_FAILURES,
     MAX_FATAL_BACKOFF_CYCLES,
@@ -20,7 +21,6 @@ from vibesensor.live.processing_loop import (
     ProcessingTickRunner,
 )
 from vibesensor.live.runtime_failures import ProcessingLoopFailure
-from vibesensor.shared.exceptions import ProcessingError
 
 # ---------------------------------------------------------------------------
 # Minimal stubs

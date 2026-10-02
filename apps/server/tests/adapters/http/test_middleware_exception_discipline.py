@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
-from vibesensor.shared.operational_errors import ServiceUnavailableError
+from vibesensor.common.operational_errors import ServiceUnavailableError
 
 
 def _app_with_endpoint(endpoint):

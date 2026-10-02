@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 from threading import RLock
 from uuid import uuid4
 
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.settings.sensor_config import SensorConfigPayload
@@ -15,7 +16,6 @@ from vibesensor.shared.ports import (
     SettingsReader,
     SignalSource,
 )
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import RawCaptureLossStats
 from vibesensor.shared.types.run_schema import RunSensorMetadata
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState

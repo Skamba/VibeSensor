@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.shared.structured_logging import log_extra
+from vibesensor.common.structured_logging import log_extra
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult

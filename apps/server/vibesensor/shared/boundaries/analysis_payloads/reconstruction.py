@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
+from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain._numeric import coerce_int
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.finding import Finding
@@ -26,7 +27,6 @@ from vibesensor.shared.boundaries.runs.capture import (
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_payload
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 __all__ = ["test_run_from_persisted_analysis", "test_run_from_summary"]

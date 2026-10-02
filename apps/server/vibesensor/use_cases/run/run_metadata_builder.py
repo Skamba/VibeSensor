@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from vibesensor.common.time_utils import coerce_utc_offset_seconds
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.dsp.vibration_strength import (
@@ -10,7 +11,6 @@ from vibesensor.dsp.vibration_strength import (
     STRENGTH_ALGORITHM_VERSION,
 )
 from vibesensor.shared.ports import ClientTracker, LanguageReader
-from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import (
     RunCarMetadata,

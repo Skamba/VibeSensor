@@ -10,8 +10,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.common.type_checks import NUMERIC_TYPES
-from vibesensor.shared.types.json_types import JsonObject
 
 
 @dataclass(frozen=True, slots=True)

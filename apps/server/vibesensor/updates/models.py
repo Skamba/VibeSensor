@@ -6,7 +6,7 @@ import enum
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from vibesensor.shared.exceptions import ConfigurationError
+from vibesensor.common.exceptions import ConfigurationError
 
 _SSID_MAX_LEN = 64
 _PASSWORD_MAX_LEN = 128
@@ -90,7 +90,7 @@ def validate_update_request(
 ) -> UpdateRequest:
     """Validate raw SSID/password inputs and return an ``UpdateRequest``.
 
-    Raises :class:`~vibesensor.shared.exceptions.ConfigurationError` when the
+    Raises :class:`~vibesensor.common.exceptions.ConfigurationError` when the
     request shape is invalid.
     """
     if password and len(password) > _PASSWORD_MAX_LEN:

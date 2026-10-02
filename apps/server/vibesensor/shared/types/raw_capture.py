@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from pydantic import model_validator
 
-from vibesensor.shared.types.json_contract import JsonContract
+from vibesensor.common.json_contract import JsonContract
 
 __all__ = [
     "RawCaptureChunk",

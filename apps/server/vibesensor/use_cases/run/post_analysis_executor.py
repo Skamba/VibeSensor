@@ -30,9 +30,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
 
+from vibesensor.common.json_types import JsonObject, JsonValue
+from vibesensor.common.structured_logging import log_extra
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest

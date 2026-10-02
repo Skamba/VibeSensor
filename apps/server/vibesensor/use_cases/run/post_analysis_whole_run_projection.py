@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.common.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     report_analysis_metadata_from_mapping,
@@ -17,7 +18,6 @@ from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     normalize_run_context_warnings,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.boundaries.sensor_frames.fields import (
     sensor_frame_from_mapping_payload,
     sensor_frame_to_mapping_payload,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 
 type ProcessingProfile = Literal["live_display", "diagnostic_raw", "diagnostic_filtered"]
 type ProcessingFilterId = Literal["median_3_sample_time_domain"]

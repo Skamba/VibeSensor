@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, replace
 from typing import Any, cast
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 from vibesensor.speed import gps_transport_lifecycle as _transport_lifecycle
 from vibesensor.speed import gps_transport_updates as _transport_updates
 from vibesensor.speed.gps_transport_runner import GPSTransportRunner

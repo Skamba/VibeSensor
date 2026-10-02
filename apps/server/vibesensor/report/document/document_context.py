@@ -6,6 +6,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.common.json_types import JsonValue
+from vibesensor.common.time_utils import (
+    format_timestamp_in_recorded_timezone,
+    utc_now_iso,
+)
 from vibesensor.report.confidence_presentation import proof_caveat_text
 from vibesensor.report.document._candidate_resolver import (
     PrimaryCandidateContext,
@@ -32,11 +37,6 @@ from vibesensor.report.presentation import (
     display_speed_band,
     runner_up_corner,
 )
-from vibesensor.shared.time_utils import (
-    format_timestamp_in_recorded_timezone,
-    utc_now_iso,
-)
-from vibesensor.shared.types.json_types import JsonValue
 
 if TYPE_CHECKING:
     from vibesensor.domain.finding import Finding

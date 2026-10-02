@@ -6,11 +6,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import _run_noise_baseline_g
 from vibesensor.use_cases.diagnostics._types import Sample

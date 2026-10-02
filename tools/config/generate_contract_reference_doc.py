@@ -26,7 +26,7 @@ from vibesensor.ingest.protocol import (
     VERSION,
 )
 from vibesensor.app.config_defaults import DEFAULT_CONFIG
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 
 
 def render_contract_reference_markdown() -> str:

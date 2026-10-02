@@ -12,14 +12,14 @@ from vibesensor.adapters.http.error_boundary import (
     http_status_for_analysis_not_ready_error,
     route_errors_to_http,
 )
-from vibesensor.shared.exceptions import (
+from vibesensor.common.exceptions import (
     AnalysisNotReadyError,
     ConfigurationError,
     ProtocolError,
     UpdateError,
     VibeSensorError,
 )
-from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
+from vibesensor.common.operational_errors import OperationalError, ServiceUnavailableError
 
 
 @pytest.mark.parametrize(

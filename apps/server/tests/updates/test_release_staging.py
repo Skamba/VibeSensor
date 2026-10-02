@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from test_support.update_status import build_update_status_harness
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateReleaseError
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateReleaseError
 from vibesensor.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.updates.release_staging import ServerReleaseStager
 from vibesensor.updates.status.tracker import UpdateStatusTracker

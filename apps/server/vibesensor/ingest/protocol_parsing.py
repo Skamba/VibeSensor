@@ -8,6 +8,7 @@ from typing import cast
 
 import numpy as np
 
+from vibesensor.common.exceptions import ProtocolError as _ProtocolError
 from vibesensor.ingest.protocol_messages import (
     AckMessage,
     CmdMessage,
@@ -49,7 +50,6 @@ from vibesensor.ingest.protocol_wire import (
     MSG_HELLO_ACK,
     SAMPLE_DTYPE,
 )
-from vibesensor.shared.exceptions import ProtocolError as _ProtocolError
 
 LOGGER = logging.getLogger("vibesensor.ingest.protocol")
 

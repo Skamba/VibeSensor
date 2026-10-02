@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 

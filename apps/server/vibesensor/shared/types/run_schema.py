@@ -5,12 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [

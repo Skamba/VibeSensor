@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.exceptions import ConfigurationError
+from vibesensor.common.exceptions import ConfigurationError
 from vibesensor.updates.models import validate_update_request
 
 

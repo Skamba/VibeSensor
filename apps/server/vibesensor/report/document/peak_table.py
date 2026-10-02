@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
+from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.report.model.sections import PeakRow
@@ -12,7 +13,6 @@ from vibesensor.report.presentation import (
     order_label_human,
     peak_classification_text,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [

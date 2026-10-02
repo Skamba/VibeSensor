@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 from vibesensor.speed import speed_resolution as _speed_resolution
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.gps_transport import (

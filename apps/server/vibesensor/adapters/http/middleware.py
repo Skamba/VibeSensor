@@ -10,9 +10,9 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from vibesensor.shared.exceptions import VibeSensorError
-from vibesensor.shared.operational_errors import OperationalError
-from vibesensor.shared.structured_logging import (
+from vibesensor.common.exceptions import VibeSensorError
+from vibesensor.common.operational_errors import OperationalError
+from vibesensor.common.structured_logging import (
     REQUEST_ID_HEADER,
     bind_request_id,
     current_request_id,

@@ -6,13 +6,13 @@ from typing import Required, TypedDict
 
 from pydantic import ConfigDict, with_config
 
+from vibesensor.common.json_types import JsonSchemaValue
 from vibesensor.shared.types.analysis_views import (
     FindingEvidenceMetrics,
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
 )
-from vibesensor.shared.types.json_types import JsonSchemaValue
 
 __all__ = [
     "AmplitudeMetric",

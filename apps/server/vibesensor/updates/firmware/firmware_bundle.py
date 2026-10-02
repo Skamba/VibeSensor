@@ -11,7 +11,7 @@ from pathlib import Path
 
 import msgspec
 
-from vibesensor.shared.types.json_types import is_json_array, is_json_object
+from vibesensor.common.json_types import is_json_array, is_json_object
 from vibesensor.updates.firmware.firmware_types import (
     BundleMeta,
     BundleMetaRecord,

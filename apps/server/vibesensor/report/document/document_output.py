@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from vibesensor.common.time_utils import format_utc_timestamp
 from vibesensor.report.document.document_context import ReportDocumentContext
 from vibesensor.report.document.document_sections import ReportDocumentSections
 from vibesensor.report.document.verdict_page import build_observed_signature
 from vibesensor.report.model.document import ReportDocument
-from vibesensor.shared.time_utils import format_utc_timestamp
 
 __all__ = ["assemble_report_document"]
 

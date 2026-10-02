@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.common.json_utils import as_float_or_none
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
 

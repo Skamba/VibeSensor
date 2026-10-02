@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from test_support.update_status import build_update_status_harness
 
-from vibesensor.shared.exceptions import UpdatePreparationError
+from vibesensor.common.exceptions import UpdatePreparationError
 from vibesensor.updates.models import (
     UpdateRequest,
     UpdateTransport,

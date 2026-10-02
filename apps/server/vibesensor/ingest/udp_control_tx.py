@@ -14,6 +14,7 @@ import threading
 import time
 from typing import cast
 
+from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.protocol import (
     MSG_ACK,
     MSG_DATA_ACK,
@@ -28,7 +29,6 @@ from vibesensor.ingest.protocol import (
 )
 from vibesensor.ingest.protocol_validator import ProtocolVersionMismatch
 from vibesensor.ingest.registry import ClientRegistry
-from vibesensor.shared.exceptions import ProtocolError
 
 LOGGER = logging.getLogger(__name__)
 

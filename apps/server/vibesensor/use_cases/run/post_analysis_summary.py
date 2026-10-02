@@ -6,6 +6,8 @@ from collections.abc import Callable
 from math import ceil
 from typing import TYPE_CHECKING
 
+from vibesensor.common.json_types import JsonArray, JsonObject
+from vibesensor.common.json_utils import i18n_ref, payload_object_from_json
 from vibesensor.live.processing_profile import (
     MEDIAN_FILTER_WINDOW_SAMPLES,
     PROCESSING_FILTER_MEDIAN_3_SAMPLE,
@@ -28,14 +30,12 @@ from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning
 from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
     serialize_location_intensity_rows,
 )
-from vibesensor.shared.json_utils import i18n_ref, payload_object_from_json
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.json_types import JsonArray, JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput

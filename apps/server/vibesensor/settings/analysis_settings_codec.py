@@ -7,6 +7,8 @@ from collections.abc import Mapping
 from dataclasses import fields
 from typing import Any, cast
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.scalars import float_or
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.settings.analysis_settings_schema import (
     ANALYSIS_SETTINGS_FIELDS,
@@ -16,8 +18,6 @@ from vibesensor.settings.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_axle_from_mapping,
 )
-from vibesensor.shared.boundaries.codecs.scalars import float_or
-from vibesensor.shared.types.json_types import JsonObject
 
 type ScalarSettingValue = int | float | bool | str
 type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]

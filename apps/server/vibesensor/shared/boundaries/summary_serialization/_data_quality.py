@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.statistics_utils import _outlier_summary, _percent_missing
 from vibesensor.shared.types.data_quality_contracts import (
     DataQualityResponse as DataQualityPayload,
@@ -13,7 +14,6 @@ from vibesensor.shared.types.data_quality_contracts import (
 from vibesensor.shared.types.data_quality_contracts import (
     OutlierSummaryResponse as OutlierSummaryPayload,
 )
-from vibesensor.shared.types.json_types import JsonObject
 
 AccelStatisticsLike = Mapping[str, object]
 

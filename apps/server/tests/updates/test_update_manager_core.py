@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from _update_manager_test_helpers import FakeRunner, cancel_task, patch_validation_environment
 
-from vibesensor.shared.exceptions import ConfigurationError, UpdateError
+from vibesensor.common.exceptions import ConfigurationError, UpdateError
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdatePhase, UpdateState
 from vibesensor.updates.runtime import build_update_manager

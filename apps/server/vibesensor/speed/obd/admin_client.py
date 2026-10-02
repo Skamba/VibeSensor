@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
-from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 
 __all__ = ["CommandResult", "ObdAdminClient"]

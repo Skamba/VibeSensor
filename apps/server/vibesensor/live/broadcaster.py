@@ -16,10 +16,10 @@ from typing import Protocol
 import anyio
 from fastapi import WebSocket
 
+from vibesensor.common.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.live.payload_types import LiveWsPayload, WsErrorPayload
 from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
-from vibesensor.shared.json_utils import json_text_dumps, sanitize_for_json
 
 __all__ = ["ERROR_PAYLOAD_TEXT", "LiveBroadcaster", "LivePayloadSource"]
 

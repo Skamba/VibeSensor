@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd import admin_client as admin_client_module
 from vibesensor.speed.obd.admin_client import CommandResult, ObdAdminClient
 

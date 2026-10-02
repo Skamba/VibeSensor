@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.scalars import float_or, optional_float, text_or_none
 from vibesensor.domain.strength_metrics import StrengthMetrics, StrengthPeak
-from vibesensor.shared.boundaries.codecs.scalars import float_or, optional_float, text_or_none
-from vibesensor.shared.types.json_types import JsonObject
 
 
 def strength_peak_from_mapping(payload: object) -> StrengthPeak:

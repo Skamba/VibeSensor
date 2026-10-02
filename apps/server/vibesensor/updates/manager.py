@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.updates.job import UpdateJob
 from vibesensor.updates.models import (
     UpdateJobStatus,

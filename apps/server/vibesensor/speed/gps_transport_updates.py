@@ -6,8 +6,8 @@ import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Protocol
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.common.type_checks import NUMERIC_TYPES
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.speed.gpsd_message_handler import (
     GpsdVersionInfo,
     NormalizedTpvData,

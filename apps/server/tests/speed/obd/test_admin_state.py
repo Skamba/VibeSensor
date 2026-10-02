@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd.admin_state import observe_configured_obd_device
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 

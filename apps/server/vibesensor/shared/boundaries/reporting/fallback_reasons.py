@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Literal
 
-from vibesensor.shared.boundaries.codecs.scalars import text_or_none
+from vibesensor.common.scalars import text_or_none
 from vibesensor.shared.boundaries.reporting.analysis_metadata import ReportAnalysisMetadata
 
 __all__ = [

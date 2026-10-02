@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.failure_utils import bounded_failure_message
+from vibesensor.common.failure_utils import bounded_failure_message
 
 __all__ = ["BroadcastTickLoopFailure", "ProcessingLoopFailure"]
 

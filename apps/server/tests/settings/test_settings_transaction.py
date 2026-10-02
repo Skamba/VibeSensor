@@ -6,8 +6,8 @@ from threading import RLock
 
 import pytest
 
+from vibesensor.common.exceptions import PersistenceError
 from vibesensor.settings.settings_transaction import update_with_rollback
-from vibesensor.shared.exceptions import PersistenceError
 
 
 def _make_state() -> dict[str, int]:

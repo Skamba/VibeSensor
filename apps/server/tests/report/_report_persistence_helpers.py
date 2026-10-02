@@ -9,12 +9,12 @@ from test_support.report_helpers import analysis_metadata as make_metadata
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.common.json_types import JsonObject
 from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
     sensor_frames_from_mappings,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics.findings import _build_persistent_peak_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

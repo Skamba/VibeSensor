@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 
 __all__ = [

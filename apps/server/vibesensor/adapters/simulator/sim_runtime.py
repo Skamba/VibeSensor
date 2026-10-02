@@ -11,6 +11,7 @@ from vibesensor.adapters.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LI
 from vibesensor.adapters.simulator.server_http import fetch_active_car_order_hz
 from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import RoadSceneController
+from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.protocol import (
     CMD_IDENTIFY,
     CMD_SYNC_CLOCK,
@@ -25,7 +26,6 @@ from vibesensor.ingest.protocol import (
     parse_cmd,
     parse_hello_ack,
 )
-from vibesensor.shared.exceptions import ProtocolError
 
 _HANDSHAKE_POLL_S = 0.05
 _ACTIVE_CAR_POLL_S = 2.0

@@ -21,8 +21,8 @@ from contextlib import AbstractAsyncContextManager
 import anyio
 from anyio.abc import TaskGroup
 
+from vibesensor.common.failure_utils import bounded_failure_message
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.shared.failure_utils import bounded_failure_message
 
 __all__ = ["BackgroundTaskCoordinator", "TaskSupervisor", "task_failure_message"]
 

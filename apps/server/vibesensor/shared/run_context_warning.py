@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.types.json_types import JsonValue, is_json_object
+from vibesensor.common.json_types import JsonValue, is_json_object
+from vibesensor.common.json_utils import i18n_ref
 
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"

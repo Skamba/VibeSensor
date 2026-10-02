@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import (
     UpdateRequest,

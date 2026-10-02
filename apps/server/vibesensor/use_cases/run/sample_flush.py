@@ -6,9 +6,9 @@ import time
 from collections.abc import Callable
 from dataclasses import replace
 
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, SignalSource, SpeedProvider
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter

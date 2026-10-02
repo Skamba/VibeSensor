@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.report.pdf.diagram_layout import (
     build_sensor_render_plan,
     extract_amp_by_location,
@@ -28,7 +29,6 @@ from vibesensor.report.pdf.pdf_style import (
 from vibesensor.report.pdf.pdf_style import (
     REPORT_COLORS,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping

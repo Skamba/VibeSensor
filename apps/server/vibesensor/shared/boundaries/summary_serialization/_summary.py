@@ -5,6 +5,15 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
+from vibesensor.common.json_types import JsonObject, JsonValue
+from vibesensor.common.json_utils import as_float_or_none as _as_float
+from vibesensor.common.json_utils import (
+    i18n_ref,
+    payload_object_from_json,
+    payload_objects_from_json,
+    payload_value_from_json,
+)
+from vibesensor.common.time_utils import format_duration_mm_ss
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseInterval
 from vibesensor.domain.finding import Finding as DomainFinding
@@ -35,14 +44,6 @@ from vibesensor.shared.boundaries.summary_serialization._plots import (
     serialize_speed_breakdown,
 )
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.json_utils import (
-    i18n_ref,
-    payload_object_from_json,
-    payload_objects_from_json,
-    payload_value_from_json,
-)
-from vibesensor.shared.time_utils import format_duration_mm_ss
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     PayloadObject,
@@ -60,7 +61,6 @@ from vibesensor.shared.types.history_analysis_contracts import (
 from vibesensor.shared.types.history_analysis_contracts import (
     TestPlanStepResponse as TestPlanStepPayload,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 
 @dataclass(frozen=True, slots=True)

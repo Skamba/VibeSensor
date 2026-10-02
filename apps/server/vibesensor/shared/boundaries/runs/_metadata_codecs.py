@@ -6,10 +6,10 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.shared.boundaries.codecs.scalars import text_or_none
-from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.time_utils import coerce_utc_offset_seconds
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.common.json_types import JsonObject, is_json_object
+from vibesensor.common.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.common.scalars import text_or_none
+from vibesensor.common.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.run_schema import (
     RawCaptureFinalizeStatus,
     RunFinalizationStageStatus,

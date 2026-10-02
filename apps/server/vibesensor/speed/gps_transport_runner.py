@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Protocol
 
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.common.json_types import JsonObject, is_json_object
 from vibesensor.speed.gps_transport_lifecycle import TransportLifecycle
 from vibesensor.speed.gps_transport_updates import MetricReader, TpvModeReader
 

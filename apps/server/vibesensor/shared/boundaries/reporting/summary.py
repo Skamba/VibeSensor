@@ -24,12 +24,12 @@ from typing import (
     get_type_hints,
 )
 
-from vibesensor.domain.location_hotspot import LocationIntensitySummary
-from vibesensor.shared.boundaries.codecs.scalars import (
+from vibesensor.common.scalars import (
     coerce_count,
     optional_float,
     text_or_none,
 )
+from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,

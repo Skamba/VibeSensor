@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.common.json_utils import as_float_or_none
 from vibesensor.dsp.order_bands import (
     build_diagnostic_settings,
     vehicle_orders_hz,
 )
 from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
-from vibesensor.shared.json_utils import as_float_or_none
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 

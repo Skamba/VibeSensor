@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTracePoint,
     OrderTraceSummary,

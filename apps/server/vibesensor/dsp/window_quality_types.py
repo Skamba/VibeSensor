@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Literal
 
+from vibesensor.common.json_types import JsonObject, JsonValue
 from vibesensor.live.payload_types import WindowQualityPayload
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 type WindowQualityState = Literal["usable", "limited", "excluded"]
 type WindowQualityReason = Literal[

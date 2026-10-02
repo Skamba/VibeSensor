@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.time_utils import current_utc_offset_seconds
+from vibesensor.common.time_utils import current_utc_offset_seconds
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.run_metadata_builder import (
     build_run_metadata,

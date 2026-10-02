@@ -10,8 +10,8 @@ from collections.abc import Callable
 from logging import Logger
 from threading import RLock
 
-from vibesensor.shared.exceptions import PersistenceError
-from vibesensor.shared.structured_logging import log_extra
+from vibesensor.common.exceptions import PersistenceError
+from vibesensor.common.structured_logging import log_extra
 
 
 def log_settings_change(

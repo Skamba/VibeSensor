@@ -15,7 +15,7 @@ from test_support.obd_runtime import (
 )
 
 from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
-from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd.connection_executor import ObdConnectionLoopState
 from vibesensor.speed.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.speed.obd.elm327 import ObdTransportError

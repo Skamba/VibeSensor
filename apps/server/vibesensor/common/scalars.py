@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.common.json_utils import as_float_or_none, as_int_or_none
 
 __all__ = ["coerce_count", "float_or", "optional_float", "optional_int", "text_or_none"]
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.common.scalars import optional_float
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.codecs.scalars import optional_float
 
 __all__ = [
     "driving_phase_summary_from_mapping",

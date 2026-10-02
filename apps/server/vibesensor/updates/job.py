@@ -21,8 +21,8 @@ import logging
 import sys
 from pathlib import Path
 
-from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateReleaseError
-from vibesensor.shared.structured_logging import log_extra
+from vibesensor.common.exceptions import UpdateCleanupError, UpdateError, UpdateReleaseError
+from vibesensor.common.structured_logging import log_extra
 from vibesensor.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.updates.models import (
     UpdateJobStatus,

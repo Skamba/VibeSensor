@@ -7,9 +7,9 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
-from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
+from vibesensor.common.structured_logging import log_extra
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import RawCaptureLossStats
 from vibesensor.shared.types.run_schema import (
     RunFinalizationStageResult,

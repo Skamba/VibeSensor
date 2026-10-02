@@ -11,12 +11,12 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Literal
 
-from vibesensor.domain.diagnosis_assessment import DiagnosisAssessmentFactor
-from vibesensor.shared.types.json_contract import (
+from vibesensor.common.json_contract import (
     JsonContract,
     require_non_empty_text,
     require_non_negative,
 )
+from vibesensor.domain.diagnosis_assessment import DiagnosisAssessmentFactor
 from vibesensor.shared.types.spatial_evidence_contracts import LocationProofBasis
 
 __all__ = [

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.failure_utils import bounded_failure_message
-from vibesensor.shared.operational_errors import OperationalError
+from vibesensor.common.failure_utils import bounded_failure_message
+from vibesensor.common.operational_errors import OperationalError
 from vibesensor.speed.obd.admin_client import ObdAdminClient
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.shared.structured_logging import (
+from vibesensor.common.structured_logging import (
     StructuredLogFormatter,
     bind_request_id,
     configure_logging,

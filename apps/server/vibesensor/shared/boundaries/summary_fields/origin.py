@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.common.json_types import JsonValue
+from vibesensor.common.json_utils import as_float_or_none as _as_float
+from vibesensor.common.json_utils import as_int_or_none as _as_int
+from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.json_utils import as_int_or_none as _as_int
-from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.history_analysis_contracts import (
     SuspectedVibrationOriginPayload as SuspectedVibrationOrigin,
 )
-from vibesensor.shared.types.json_types import JsonValue
 
 _SOURCES_BY_VALUE: dict[str, VibrationSource] = {
     str(source.value): source for source in VibrationSource

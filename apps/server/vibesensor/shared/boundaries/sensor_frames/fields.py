@@ -7,7 +7,9 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.shared.boundaries.codecs.scalars import optional_float, optional_int
+from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_json_array
+from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.common.scalars import optional_float, optional_int
 from vibesensor.shared.boundaries.codecs.sensor_frame_values import (
     SensorFrameDecodeError,
     strict_optional_float,
@@ -17,8 +19,6 @@ from vibesensor.shared.boundaries.codecs.strength_metrics import (
     strength_peak_payloads,
     strength_peaks_from_sequence,
 )
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.shared.types.json_types import JsonArray, JsonObject, JsonValue, is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [

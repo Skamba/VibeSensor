@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
-from vibesensor.shared.exceptions import UpdateTransportError
+from vibesensor.common.exceptions import UpdateTransportError
 from vibesensor.updates.models import (
     UpdateJobStatus,
     UpdatePhase,

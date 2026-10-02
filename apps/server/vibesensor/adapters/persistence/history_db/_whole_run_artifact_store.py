@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from threading import RLock
 
-from vibesensor.shared.json_utils import safe_json_dumps
+from vibesensor.common.json_utils import safe_json_dumps
 from vibesensor.shared.types.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactManifest,

@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterable
 
-from vibesensor.shared.exceptions import UpdateError
+from vibesensor.common.exceptions import UpdateError
 from vibesensor.updates.models import (
     UpdateIssue,
     UpdateJobStatus,

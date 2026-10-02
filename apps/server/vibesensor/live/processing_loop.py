@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING
 
 import anyio
 
+from vibesensor.common.exceptions import ProcessingError
+from vibesensor.common.failure_utils import bounded_failure_message
 from vibesensor.live.runtime_failures import ProcessingLoopFailure
-from vibesensor.shared.exceptions import ProcessingError
-from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import ClockSyncBroadcaster
 
 if TYPE_CHECKING:

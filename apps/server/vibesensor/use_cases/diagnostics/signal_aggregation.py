@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
@@ -14,7 +15,6 @@ from vibesensor.domain.location_hotspot import (
     StrengthBucketDistribution,
 )
 from vibesensor.dsp.vibration_strength import percentile
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._counters import counter_delta
 from vibesensor.use_cases.diagnostics._sample_metrics import _primary_vibration_strength_db
 from vibesensor.use_cases.diagnostics._sensor_locations import (

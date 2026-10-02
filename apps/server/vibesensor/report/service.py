@@ -1,6 +1,6 @@
 """PDF report build coordination for persisted history runs.
 
-Framework-agnostic: raises domain exceptions from ``vibesensor.shared.exceptions``
+Framework-agnostic: raises domain exceptions from ``vibesensor.common.exceptions``
 rather than HTTP-specific exceptions.  The routes layer translates domain
 exceptions to HTTP status codes.
 """

@@ -6,13 +6,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.common.json_utils import i18n_ref
+from vibesensor.common.scalars import text_or_none
 from vibesensor.domain.diagnosis_assessment import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
-from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     ReportAnalysisMetadata,
     report_analysis_metadata_from_payload,
 )
-from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_CONTEXT_INCOMPLETE,
     WARNING_CODE_WHOLE_RUN_CONTEXT_LEGACY_FALLBACK,

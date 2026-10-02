@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
+from vibesensor.common.json_types import JsonValue
+from vibesensor.common.json_utils import payload_value_from_json
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
-from vibesensor.shared.json_utils import payload_value_from_json
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.json_types import JsonValue
 
 
 def _check_details_from_payload(payload: Mapping[str, object]) -> tuple[tuple[str, int], ...]:

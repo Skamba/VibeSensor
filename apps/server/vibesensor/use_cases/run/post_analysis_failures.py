@@ -7,7 +7,7 @@ import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from vibesensor.shared.failure_utils import bounded_failure_message
+from vibesensor.common.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 
 LOGGER = logging.getLogger(__name__)

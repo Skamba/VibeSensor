@@ -8,6 +8,7 @@ from collections.abc import Callable
 from threading import RLock
 from typing import TypeVar
 
+from vibesensor.common.exceptions import PersistenceError
 from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
 from vibesensor.settings.car_settings import CarSettingsState
 from vibesensor.settings.sensor_config import SensorConfig
@@ -16,7 +17,6 @@ from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.settings.settings_transaction import update_with_rollback
 from vibesensor.settings.speed_source_settings import SpeedSourceSettingsState
 from vibesensor.settings.ui_preferences import UiPreferencesState
-from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 

@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.http.settings import create_settings_routes
-from vibesensor.shared.operational_errors import ServiceUnavailableError
-from vibesensor.shared.structured_logging import REQUEST_ID_HEADER, log_extra
+from vibesensor.common.operational_errors import ServiceUnavailableError
+from vibesensor.common.structured_logging import REQUEST_ID_HEADER, log_extra
 
 
 def _log_record(caplog: pytest.LogCaptureFixture, message: str):

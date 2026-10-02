@@ -11,9 +11,9 @@ from typing import BinaryIO, TextIO
 
 import numpy as np
 
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.common.json_types import is_json_object
+from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureChunkIndex,

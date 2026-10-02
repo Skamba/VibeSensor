@@ -2,7 +2,7 @@
 
 These exceptions represent failures caused by environment state, external
 commands, or service availability rather than domain invariants. They are kept
-separate from ``vibesensor.shared.exceptions`` so HTTP and runtime boundaries
+separate from ``vibesensor.common.exceptions`` so HTTP and runtime boundaries
 can distinguish operational recovery cases from programmer/domain faults.
 """
 

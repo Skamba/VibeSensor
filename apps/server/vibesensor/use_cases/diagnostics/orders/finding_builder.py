@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.domain.finding_types import FindingKind
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
-from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
 from vibesensor.use_cases.diagnostics.orders.physics import (
     OrderHypothesis,

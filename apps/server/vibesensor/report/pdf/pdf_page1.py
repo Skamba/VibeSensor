@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.common.json_types import JsonValue
 from vibesensor.report.i18n import tr as _tr
 from vibesensor.report.pdf.page1_actions import draw_actions_block
 from vibesensor.report.pdf.page1_header import draw_header_strip, draw_hero_block
 from vibesensor.report.pdf.page1_proof import draw_proof_block
 from vibesensor.report.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W
-from vibesensor.shared.types.json_types import JsonValue
 
 if TYPE_CHECKING:
     from vibesensor.report.pdf.report_types import Page1RenderPlan

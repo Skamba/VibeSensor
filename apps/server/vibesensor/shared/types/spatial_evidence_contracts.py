@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from vibesensor.shared.types.json_contract import (
+from vibesensor.common.json_contract import (
     JsonContract,
     require_non_empty_text,
     require_non_negative,

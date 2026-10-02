@@ -11,13 +11,13 @@ from pathlib import Path
 
 import msgspec
 
+from vibesensor.common.json_types import (
+    JsonObject,
+    is_json_object,
+)
 from vibesensor.common.process_settings import (
     DEFAULT_UPDATE_STATE_PATH,
     load_update_env_settings,
-)
-from vibesensor.shared.types.json_types import (
-    JsonObject,
-    is_json_object,
 )
 from vibesensor.updates.models import (
     UPDATE_STATUS_LOG_TAIL_LIMIT,

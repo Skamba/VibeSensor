@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.ingest.client_payloads import snapshot_for_api
 from vibesensor.live.payload_types import SCHEMA_VERSION, LiveWsPayload
 from vibesensor.live.processing_loop import STALE_DATA_AGE_S
@@ -17,7 +18,6 @@ from vibesensor.shared.ports import (
     SpeedProvider,
     SpeedSourceSettingsReader,
 )
-from vibesensor.shared.time_utils import utc_now_iso
 
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry

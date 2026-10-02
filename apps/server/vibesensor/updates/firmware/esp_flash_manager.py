@@ -10,7 +10,7 @@ import sys
 import time
 from pathlib import Path
 
-from vibesensor.shared.exceptions import UpdateError
+from vibesensor.common.exceptions import UpdateError
 from vibesensor.updates.firmware.esp_flash_runner import SubprocessFlashCommandRunner
 from vibesensor.updates.firmware.esp_flash_types import (
     EspFlashHistoryEntry,

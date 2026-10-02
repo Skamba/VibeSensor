@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import cast
 
+from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
@@ -37,7 +38,6 @@ from vibesensor.shared.boundaries.summary_fields.test_plan import (
 )
 from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.exports import serialize_run_details_json

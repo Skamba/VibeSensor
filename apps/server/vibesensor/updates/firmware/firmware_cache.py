@@ -128,7 +128,7 @@ class FirmwareCache:
             sha = dir_sha256(extract_dir)
             validate_bundle(extract_dir)
 
-            from vibesensor.shared.time_utils import utc_now_iso
+            from vibesensor.common.time_utils import utc_now_iso
 
             meta = BundleMeta(
                 tag=tag,
