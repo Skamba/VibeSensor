@@ -235,100 +235,6 @@ Treat these gzip budgets as review thresholds for the named build artifacts:
 These budgets are guidance, not hard CI gates. If a change pushes a chunk over
 budget, attach the analyzer output to the PR review and explain the growth.
 
-## Source Modules
-
-| File | Purpose |
-|------|---------|
-| `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware public startup entry that mounts one `UiAppRoot` and returns a disposable app handle |
-| `app/ui_app_mount.ts` | Pure mount helper that creates the runtime, renders the root tree, and composes teardown for tests and startup callers |
-| `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections |
-| `app/ui_panel_host_registry.ts` | Ref-backed settings-shell host registry for the per-tab settings panels mounted inside the settings subtree |
-| `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
-| `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles |
-| `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator, then exposes one composed runtime `dispose()` |
-| `app/ui_app_state.ts` | Thin AppState composition root and compatibility export surface for feature-owned state modules |
-| `app/{shell,transport,realtime,history,settings,spectrum}_state.ts` | Feature-owned state types, defaults, factories, and pure update helpers for the top-level AppState slices |
-| `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
-| `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
-| `app/runtime/ui_shell_controller.ts` | Menu/view shell (including lazy view activation and the auto-hiding app error banner), language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners; preferences, status badges, and confirmations stay in their focused `ui_shell_*`/`ui_confirmation_module.ts` owners |
-| `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
-| `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that owns Comlink worker lifecycle for heavy spectrum frame preparation, splits data refreshes from lighter settings-driven decoration refreshes, and wires overlay, canvas, interaction, and panel modules |
-| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner (and its startup-only feature contract) that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
-| `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable chart buffer reuse for same-shape frames, and canvas draw plugin orchestration |
-| `app/runtime/spectrum_frame_preparer.ts` | Typed spectrum frame-prep contract plus pure interpolation/dB conversion core shared by worker and focused tests |
-| `app/runtime/spectrum_frame_preparer_worker.ts` | Canonical Comlink worker entrypoint for off-main-thread spectrum frame preparation plus transferable response packing |
-| `app/runtime/spectrum_frame_preparer_worker_client.ts` | Runtime-owned worker client wrapper that creates, proxies, and disposes the spectrum frame-prep worker |
-| `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
-| `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
-| `app/app_feature_bundle.ts` | Composition root for feature controllers: builds realtime and the dashboard speed-status poller eagerly, lazy-loads `app_feature_secondary_bundle.ts` (history, settings, cars, update, ESP flash) per view, and returns handler binding, view readiness, startup loads, and disposal to the runtime |
-| `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
-| `app/features/esp_flash_feature.ts` | ESP flash controller for query-backed port refreshes, flash status polling while the ESP flash tab is visible, log/history hydration, and start/cancel orchestration behind the typed panel bridge |
-| `app/features/cars_feature.ts` | Car-management controller: saved-car list activation/deletion and creation feedback plus the add-car wizard (step transitions, car-library loading, finish validation), calling the `api/*` wrappers directly behind the typed `CarsPanelView` bridge |
-| `app/features/cars_wizard_state.ts` | Pure add-car wizard state helpers: wizard step state, option load states, manual spec input store, finish readiness, and summary data |
-| `app/features/realtime_feature.ts` | Realtime controller for query-backed logging status polling and start/stop, idle capture-readiness refreshes, location updates, and client mutations, binding the logging and sensors panel actions |
-| `app/features/settings_analysis_module.ts` | Analysis-settings controller for validation, save/reset orchestration (gated on a resolved active car), language-driven draft resync, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
-| `app/features/speed_source_feature.ts` | Speed-source settings controller for draft state, validation, query-backed save/load, OBD scan/pair with background rescans, and the tab's GPS/OBD status polling behind the typed speed-source panel bridge |
-| `app/views/analysis_panel.tsx` | Signal-backed Preact owner for the analysis-settings shell; local refs/effects handle guidance and field focus while analysis and car-selection modules feed typed model and availability updates |
-| `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts, keep tab selection in signal-backed shell state, and expose typed settings navigation APIs |
-| `app/views/esp_flash_panel.tsx` | Signal-backed Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle while feature/presenter code updates a semantic panel bridge |
-| `app/views/internet_panel.tsx` | Signal-backed Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a semantic panel bridge |
-| `app/views/update_panel.tsx` | Signal-backed Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a semantic panel bridge |
-| `app/views/sensors_panel.tsx` | Signal-backed Preact owner for the sensors settings shell that keeps the sensor table reactive while exposing typed identify/remove/location callbacks to the realtime feature |
-| `app/views/speed_source_panel.tsx` | Signal-backed Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes semantic `setModel()` / `setDiagnostics()` bridge updates to the speed-source controller |
-| `app/views/cars_panel.tsx` | Signal-backed Preact owner for the full car-management surface; it renders saved-car guidance/list rows, delegates wizard focus/return-focus/scroll lifecycle to the extracted wizard focus hook, and exposes typed list and wizard bridges |
-| `app/views/cars_wizard_focus.ts` | Focus/ref owner for the add-car wizard that centralizes return-focus, scroll reset, requested-focus handling, and target resolution now that the wizard lifecycle lives beside the cars panel surface |
-| `app/views/cars_wizard_panel.tsx` | Modal shell for the add-car wizard; it keeps dialog chrome and typed action wiring small while delegating step content to focused wizard sections |
-| `app/views/cars_wizard_sections.tsx` | Extracted add-car wizard step sections, option grids, manual-spec inputs, and summary helpers that keep the main wizard panel readable while preserving the existing selectors and flow |
-| `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Updater controller for query-backed update/health/internet polling while the internet or update tab is visible and start/cancel command orchestration, binding the typed update and internet panel actions |
-| `app/features/history_feature.ts` | Single owner for query-backed history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
-| `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
-| `app/views/esp_flash_feature_presenter.ts` | Pure ESP flash view-model builders: start readiness, status banner, staged journey progress, log, and recent-attempt history models composed into the panel render model |
-| `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
-| `app/views/history_heatmap_presenter.ts` | Heatmap presenter helpers that normalize location labels and turn preview intensity stats into typed history heatmap zones |
-| `app/views/history_detail_presenter.ts` | Expanded history detail presenter that builds typed findings, warnings, and heatmap-backed diagnosis sections |
-| `app/views/history_table_presenters.ts` | Top-level history row presenter that composes summary/collapsed row state and delegates expanded detail sections to focused history presenter modules |
-| `app/views/history_panel.tsx` | Signal-backed Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a semantic bridge |
-| `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
-| `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
-| `app/views/realtime_capture_readiness_models.ts` | Typed capture-readiness helpers and checklist builders reused by realtime logging and sensor-health derivation |
-| `app/views/realtime_logging_summary_models.ts` | Typed realtime logging summary-panel builders for blocked/setup/post-run states and CTA mapping |
-| `app/views/realtime_logging_view_models.ts` | Thin realtime logging panel compositor and stable re-export surface over the focused readiness and summary builders |
-| `app/views/realtime_live_overview.tsx` | Signal-backed Preact owner for the live overview card that consumes typed status/sensor models without manual island rerender loops |
-| `app/views/realtime_logging_panel.tsx` | Signal-backed Preact owner for the run-recording card that renders typed logging/readiness models, owns the setup-layout marker locally, and binds start/stop plus summary CTA actions through the shared bridge |
-| `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
-| `app/views/settings_speed_source_presenter.ts` | Pure speed-source view-model builders that turn controller render state and live status payloads into panel and diagnostics render models (plus their defaults) |
-| `app/views/update_feature_presenter.ts` | Update presenter that owns the Wi-Fi form draft and derives typed update/internet panel models from controller state |
-| `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
-| `app/views/update_status_models.ts` | Shared update-status badge, row, and section interfaces consumed by the update and internet panels |
-| `app/views/update_journey_builder.ts` | Update journey and recovery-summary builders for phase formatting, staged progress, and retry guidance |
-| `app/views/update_current_status_builders.ts` | Typed update-status builders for current status, issue list, and latest-attempt sections plus shared runtime/lifecycle rows |
-| `app/views/update_health_status_builders.ts` | Typed update-health builders for degradation reasons, data-loss summaries, and persistence-analysis status |
-| `app/views/update_log_status_builder.ts` | Typed update log-section builder for running, failed, and empty log states |
-| `app/views/update_status_builders.ts` | Slim update-status panel assembler and re-export surface for the focused section builders |
-| `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model and Preact component contract reused by update and ESP flash readiness flows |
-| `app/views/` | Focused render-model builders, event-target decoding, and signal-backed Preact surfaces for settings, cars wizard, realtime, history, and updater flows |
-| `app/features/realtime_feature_view_state.ts` | Signal-backed realtime view-state owner that derives live overview, logging, and sensors models plus idle readiness signatures without presenter render fan-out |
-| `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
-| `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
-| `ws.ts` | WebSocket client with auto-reconnect, stale detection, and direct writes into the signal-backed transport slice |
-| `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
-| `i18n.ts` | Internationalization dictionary (English, Dutch) |
-| `spectrum.ts` | Shared spectrum math helpers such as amplitude-to-dB conversion that stay safe to import on the startup path |
-| `spectrum_chart.ts` | Lazy-loaded canvas chart wrapper, explicit `setData`/`redraw` bridge, and stylesheet entry for interactive spectrum visualization |
-| `spectrum_css_vars.ts` | Shared cached spectrum CSS-variable snapshot for chart and canvas renderer colors |
-| `server_payload.ts` | Transport-boundary WebSocket payload adaptation and schema-version guardrails around the generated WS types |
-| `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
-| `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
-| `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Generated backend-owned UI constants such as sensor location codes, analysis defaults, and live-analysis metadata |
-| `theme.ts` | Chart color palette and order band fill colors |
-| `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
-| `styles/{tokens,shell,components,maintenance-*,realtime-*,history-*,settings-*,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
-
-- AppState top-level slices returned by `createAppState()` are stable signal-field objects composed from feature-owned state modules. Keep new slice defaults and pure update helpers in `app/{shell,transport,realtime,history,settings,spectrum}_state.ts`, and keep `ui_app_state.ts` as the thin composition/compatibility surface.
-
 ## Features
 
 - **Live view** — multi-sensor spectrum chart and recording controls
@@ -400,6 +306,7 @@ instead of controller-side variant class interpolation.
 
 ## Shared reactive state contract
 
+- AppState top-level slices returned by `createAppState()` are stable signal-field objects composed from feature-owned state modules. Keep new slice defaults and pure update helpers in `app/{shell,transport,realtime,history,settings,spectrum}_state.ts`, and keep `ui_app_state.ts` as the thin composition/compatibility surface.
 - Import shared reactive primitives from `app/ui_signals.ts` so runtime,
   feature, presenter, and view code shares one documented signals entrypoint.
 - Use `signal()` for shared state that spans modules or needs to outlive a
@@ -555,26 +462,12 @@ npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
 npm run test:visual:audit         # run wider multi-viewport audit on purpose
-npm run wiki:screenshots          # capture curated wiki screenshots (build dist first)
 ```
 
 Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
 payloads. The default lane stays on `laptop-light`; the audit command keeps the
 older multi-viewport sweep available when broader visual review is worth the
 cost. Both visual commands only run `tests/visual.spec.ts`.
-
-To refresh the curated GitHub wiki screenshots intentionally, build the preview
-bundle first, then capture the screenshots into the wiki bundle's `images/`
-directory before running the wiki seed generator:
-
-```bash
-cd apps/ui
-npm run build:prevalidated-contracts
-npx playwright install chromium   # first time only
-npm run wiki:screenshots -- /tmp/vibesensor-wiki/images
-cd ../..
-python3 tools/wiki/generate_wiki.py --output-dir /tmp/vibesensor-wiki
-```
 
 ## Signal-driven island tests
 

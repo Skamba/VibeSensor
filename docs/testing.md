@@ -28,15 +28,13 @@ pytest -q apps/server/tests/use_cases/updates/
 pytest -q apps/server/tests/integration/
 ```
 
-Benchmarks and fuzzers are opt-in evidence, not default validation:
+Benchmarks are opt-in evidence, not default validation:
 
 ```bash
 make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
 make benchmark-golden-replay BENCHMARK_OPTS="--benchmark-save=golden-replay"
 make benchmark-compare-backend
 make test-golden-replay
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
-python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60 --processes 16
 ```
 
 Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do not disable benchmark mode.

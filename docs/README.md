@@ -42,7 +42,6 @@ links onward to the scoped instruction files and repo map below.
 |------|--------|-------------|
 | `docs/designs/final-report-redesign.md` | Active | Report/PDF design guidance for the verdict page and appendices. |
 | `docs/designs/whole-run-post-analysis-program.md` | Active | Whole-run post-analysis architecture guidance. |
-| `docs/designs/whole-run-post-analysis-history.md` | Historical | Whole-run post-analysis issue plan, branch notes, and benchmark snapshots. |
 
 ## Infrastructure & Operations
 
@@ -79,7 +78,6 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | `README.md` | Project overview and quickstart. |
 | `docs/README.md` | This documentation inventory. |
 | `CONTRIBUTING.md` | Development workflow and setup paths. |
-| `CHANGELOG.md` | Release history. |
 | `apps/server/README.md` | Backend setup, deployment, and CLI usage. |
 | `apps/ui/README.md` | Frontend setup and build workflow. |
 | `firmware/esp/README.md` | ESP32 firmware setup and flashing. |

@@ -4,9 +4,6 @@
 > **Use:** Current source-of-truth architecture guidance for whole-run
 > post-analysis. Follow this document for current owners, contracts, and design
 > constraints.
-> **Historical record:**
-> `docs/designs/whole-run-post-analysis-history.md` keeps old issue plans,
-> branch notes, and benchmark snapshots for reference only.
 
 This document records the implemented architecture, the remaining debt, and the
 shared contracts that must stay stable. Completed checklist items are kept only
