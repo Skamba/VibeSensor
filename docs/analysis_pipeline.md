@@ -146,7 +146,7 @@ summaries to the persisted analysis.
 | 9 | Run suitability | `RunSuitability.evaluate` | `prepared_analysis_context.py`, `domain/run_suitability.py` | Check reference completeness plus data-quality and run-condition checks |
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
-| 12 | Plot generation | `_plot_data`, `top_peaks_table_rows` | plots, `peaks/table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
+| 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
 | 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_payloads/summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Data Flow
@@ -196,8 +196,8 @@ Input: PostAnalysisRunInput + optional whole-run stage output
   │
   ├─ _analysis_result_builder.build_analysis_result() → AnalysisResult/TestRun/DiagnosticCase
   │
-  ├─ plots._plot_data() → diagnostics-local PlotDataResultData
-  │    └─ serialize_plot_data() → persisted chart payload + labeled peak table
+  ├─ peaks.table.top_peaks_table_rows() → labeled peak table rows
+  │    └─ serialize_peak_table() → persisted `plots.peaks_table`
   │
   ├─ post_analysis_executor.append_whole_run_*() → compact persisted summaries
   │

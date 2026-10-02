@@ -12,17 +12,7 @@ from vibesensor.shared.types.analysis_views import (
     PeakTableRow,
     PhaseEvidence,
     PlotDataResult,
-    SpectrogramResult,
 )
-
-_SPECTROGRAM: SpectrogramResult = {
-    "x_axis": "speed_kmh",
-    "x_label_key": "speed",
-    "x_bins": [10.0, 20.0],
-    "y_bins": [5.0, 10.0],
-    "cells": [[0.1, 0.2]],
-    "max_amp": 0.2,
-}
 
 
 @pytest.mark.parametrize(
@@ -84,28 +74,12 @@ _SPECTROGRAM: SpectrogramResult = {
             },
         ),
         (
-            SpectrogramResult,
-            {
-                **_SPECTROGRAM,
-                "unexpected": "drop-me",
-            },
-        ),
-        (
             PlotDataResult,
             {
-                "vib_magnitude": [(0.0, 1.0, "front-left")],
-                "dominant_freq": [(0.0, 12.0)],
-                "amp_vs_speed": [(50.0, 0.2)],
-                "amp_vs_phase": [],
-                "matched_amp_vs_speed": [],
-                "freq_vs_speed_by_finding": [],
-                "steady_speed_distribution": None,
-                "fft_spectrum": [(12.0, 0.2)],
-                "fft_spectrum_raw": [(12.0, 0.2)],
-                "peaks_spectrogram": _SPECTROGRAM,
-                "peaks_spectrogram_raw": _SPECTROGRAM,
                 "peaks_table": [],
-                "phase_segments": [],
+                # Series written by older versions stay readable and are dropped.
+                "vib_magnitude": [(0.0, 1.0, "front-left")],
+                "fft_spectrum": [(12.0, 0.2)],
                 "phase_boundaries": [],
                 "unexpected": "drop-me",
             },

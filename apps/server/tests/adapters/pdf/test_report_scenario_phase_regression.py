@@ -259,29 +259,6 @@ class TestPhaseSpeedBreakdown:
             },
         ]
 
-    def test_amp_vs_phase_in_plots(self) -> None:
-        summary = summarize_run_data(
-            standard_metadata(),
-            build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)]),
-            include_samples=False,
-        )
-        assert summary["plots"]["amp_vs_phase"] == [
-            {
-                "phase": "idle",
-                "count": 5,
-                "mean_vib_db": 15.0,
-                "max_vib_db": 15.0,
-                "mean_speed_kmh": None,
-            },
-            {
-                "phase": "acceleration",
-                "count": 15,
-                "mean_vib_db": 15.0,
-                "max_vib_db": 15.0,
-                "mean_speed_kmh": 45.0,
-            },
-        ]
-
 
 class TestPhaseInfoInSummary:
     """Summary output should propagate serialized phase information consistently."""

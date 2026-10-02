@@ -808,22 +808,6 @@ export interface components {
             car_id: string;
         };
         /**
-         * AmpVsPhaseRow
-         * @description Typed HTTP contract for one phase-grouped vibration aggregate row.
-         */
-        AmpVsPhaseRow: {
-            /** Count */
-            count: number;
-            /** Max Vib Db */
-            max_vib_db: number | null;
-            /** Mean Speed Kmh */
-            mean_speed_kmh: number | null;
-            /** Mean Vib Db */
-            mean_vib_db: number;
-            /** Phase */
-            phase: string;
-        };
-        /**
          * AmplitudeMetric
          * @description HTTP contract for finding amplitude/strength metadata.
          */
@@ -1785,24 +1769,6 @@ export interface components {
             /** Weak Spatial Separation */
             weak_spatial_separation?: boolean | null;
         };
-        /**
-         * FreqVsSpeedByFindingSeries
-         * @description Typed HTTP contract for one finding's freq-vs-speed series.
-         */
-        FreqVsSpeedByFindingSeries: {
-            /** Label */
-            label: string;
-            /** Matched */
-            matched: [
-                number,
-                number
-            ][];
-            /** Predicted */
-            predicted: [
-                number,
-                number
-            ][];
-        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2534,19 +2500,6 @@ export interface components {
         /** @enum {string} */
         LocationProofBasis: "whole_run_summary" | "supporting_windows_raw_backed" | "supporting_windows_summary_only";
         /**
-         * MatchedAmpVsSpeedSeries
-         * @description Typed HTTP contract for one finding's amp-vs-speed series.
-         */
-        MatchedAmpVsSpeedSeries: {
-            /** Label */
-            label: string;
-            /** Points */
-            points: [
-                number,
-                number
-            ][];
-        };
-        /**
          * MatchedPoint
          * @description HTTP contract for one serialized finding matched-point observation.
          */
@@ -2887,18 +2840,6 @@ export interface components {
             typical_speed_band: string;
         };
         /**
-         * PhaseBoundary
-         * @description Typed HTTP contract for a phase-boundary marker.
-         */
-        PhaseBoundary: {
-            /** End T S */
-            end_t_s: number | null;
-            /** Phase */
-            phase: string;
-            /** T S */
-            t_s: number | null;
-        };
-        /**
          * PhaseEvidence
          * @description HTTP contract for optional driving-phase evidence attached to a finding.
          */
@@ -2947,18 +2888,6 @@ export interface components {
             max_intensity_db: number | null;
             /** Mean Intensity Db */
             mean_intensity_db: number | null;
-        };
-        /**
-         * PhaseSegmentOut
-         * @description Typed HTTP contract for a serialized driving-phase segment.
-         */
-        PhaseSegmentOut: {
-            /** End T S */
-            end_t_s: number | null;
-            /** Phase */
-            phase: string;
-            /** Start T S */
-            start_t_s: number | null;
         };
         /**
          * PhaseSegmentSummaryResponse
@@ -3020,53 +2949,14 @@ export interface components {
         };
         /**
          * PlotDataResult
-         * @description Typed HTTP contract for serialized plot data attached to a run summary.
+         * @description Typed HTTP contract for the ``plots`` section of a run summary.
+         *
+         *     Only the ranked peak table is produced. Runs persisted by older versions may
+         *     still carry additional plot series; they are ignored on validation.
          */
         PlotDataResult: {
-            /** Amp Vs Phase */
-            amp_vs_phase: components["schemas"]["AmpVsPhaseRow"][];
-            /** Amp Vs Speed */
-            amp_vs_speed: [
-                number,
-                number
-            ][];
-            /** Dominant Freq */
-            dominant_freq: [
-                number,
-                number
-            ][];
-            /** Fft Spectrum */
-            fft_spectrum: [
-                number,
-                number
-            ][];
-            /** Fft Spectrum Raw */
-            fft_spectrum_raw: [
-                number,
-                number
-            ][];
-            /** Freq Vs Speed By Finding */
-            freq_vs_speed_by_finding: components["schemas"]["FreqVsSpeedByFindingSeries"][];
-            /** Matched Amp Vs Speed */
-            matched_amp_vs_speed: components["schemas"]["MatchedAmpVsSpeedSeries"][];
-            peaks_spectrogram: components["schemas"]["SpectrogramResult"];
-            peaks_spectrogram_raw: components["schemas"]["SpectrogramResult"];
             /** Peaks Table */
             peaks_table: components["schemas"]["PeakTableRow"][];
-            /** Phase Boundaries */
-            phase_boundaries: components["schemas"]["PhaseBoundary"][];
-            /** Phase Segments */
-            phase_segments: components["schemas"]["PhaseSegmentOut"][];
-            /** Steady Speed Distribution */
-            steady_speed_distribution: {
-                [key: string]: number;
-            } | null;
-            /** Vib Magnitude */
-            vib_magnitude: [
-                number,
-                number,
-                string
-            ][];
         };
         /** @constant */
         ProcessingFilterId: "median_3_sample_time_domain";
@@ -3233,28 +3123,6 @@ export interface components {
             support_ratio: number;
             /** Supporting Window Count */
             supporting_window_count: number;
-        };
-        /**
-         * SpectrogramResult
-         * @description Typed HTTP contract for a serialized spectrogram grid.
-         */
-        SpectrogramResult: {
-            /** Cells */
-            cells: number[][];
-            /** Max Amp */
-            max_amp: number;
-            /** X Axis */
-            x_axis: string;
-            /** X Bin Width */
-            x_bin_width?: number | null;
-            /** X Bins */
-            x_bins: number[];
-            /** X Label Key */
-            x_label_key: string;
-            /** Y Bin Width */
-            y_bin_width?: number | null;
-            /** Y Bins */
-            y_bins: number[];
         };
         /**
          * SpeedBreakdownRow
